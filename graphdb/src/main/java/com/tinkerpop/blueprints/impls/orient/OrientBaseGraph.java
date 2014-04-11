@@ -411,6 +411,19 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return vertex;
   }
 
+  /**
+   * Creates an edge between a source Vertex and a destination Vertex setting label as Edge's label.
+   * 
+   * @param id
+   *          Optional, can contains the Edge's class name by prefixing with "class:"
+   * @param outVertex
+   *          Source vertex
+   * @param inVertex
+   *          Destination vertex
+   * @param label
+   *          Edge's label
+   * @return
+   */
   @Override
   public OrientEdge addEdge(final Object id, Vertex outVertex, Vertex inVertex, final String label) {
     String className = null;
@@ -434,6 +447,12 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
   }
 
+  /**
+   * Returns a vertex by an ID.
+   * 
+   * @param id
+   *          Can by a String, ODocument or an OIdentifiable object.
+   */
   public OrientVertex getVertex(final Object id) {
     if (null == id)
       throw ExceptionFactory.vertexIdCanNotBeNull();
@@ -469,27 +488,72 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return new OrientVertex(this, doc);
   }
 
+  /**
+   * Removes a vertex from the Graph. All the edges connected to the Vertex are automatically removed.
+   * 
+   * @param vertex
+   *          Vertex to remove
+   */
   public void removeVertex(final Vertex vertex) {
     vertex.remove();
   }
 
+  /**
+   * Get all the Vertices in Graph.
+   * 
+   * @return Vertices as Iterable
+   */
   public Iterable<Vertex> getVertices() {
     return getVerticesOfClass(OrientVertexType.CLASS_NAME, true);
   }
 
+  /**
+   * Get all the Vertices in Graph specifying if consider or not sub-classes of V.
+   * 
+   * @param iPolymorphic
+   *          If true then get all the vertices of any sub-class
+   * @return Vertices as Iterable
+   */
   public Iterable<Vertex> getVertices(final boolean iPolymorphic) {
     return getVerticesOfClass(OrientVertexType.CLASS_NAME, iPolymorphic);
   }
 
+  /**
+   * Get all the Vertices in Graph of a specific vertex class and all sub-classes.
+   * 
+   * @param iClassName
+   *          Vertex class name to filter
+   * @return Vertices as Iterable
+   */
   public Iterable<Vertex> getVerticesOfClass(final String iClassName) {
     return getVerticesOfClass(iClassName, true);
   }
 
+  /**
+   * Get all the Vertices in Graph of a specific vertex class and all sub-classes only if iPolymorphic is true.
+   * 
+   * @param iClassName
+   *          Vertex class name to filter
+   * @param iPolymorphic
+   *          If true consider also Vertex iClassName sub-classes
+   * @return Vertices as Iterable
+   */
   public Iterable<Vertex> getVerticesOfClass(final String iClassName, final boolean iPolymorphic) {
     getContext(true);
     return new OrientElementScanIterable<Vertex>(this, iClassName, iPolymorphic);
   }
 
+  /**
+   * Get all the Vertices in Graph filtering by field name and value. Example:<code>
+   *   Iterable<Vertex> resultset = getVertices("name", "Jay");
+   * </code>
+   * 
+   * @param iKey
+   *          Field name
+   * @param iValue
+   *          Field value
+   * @return Vertices as Iterable
+   */
   public Iterable<Vertex> getVertices(final String iKey, Object iValue) {
     if (iKey.equals("@class"))
       return getVerticesOfClass(iValue.toString());
@@ -536,23 +600,62 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return query().has(key, iValue).vertices();
   }
 
+  /**
+   * Returns all the edges in Graph.
+   * 
+   * @return Edges as Iterable
+   */
   public Iterable<Edge> getEdges() {
     return getEdgesOfClass(OrientEdgeType.CLASS_NAME, true);
   }
 
+  /**
+   * Get all the Edges in Graph specifying if consider or not sub-classes of E.
+   * 
+   * @param iPolymorphic
+   *          If true then get all the edge of any sub-class
+   * @return Edges as Iterable
+   */
   public Iterable<Edge> getEdges(final boolean iPolymorphic) {
     return getEdgesOfClass(OrientEdgeType.CLASS_NAME, iPolymorphic);
   }
 
+  /**
+   * Get all the Edges in Graph of a specific edge class and all sub-classes.
+   * 
+   * @param iClassName
+   *          Edge class name to filter
+   * @return Edges as Iterable
+   */
   public Iterable<Edge> getEdgesOfClass(final String iClassName) {
     return getEdgesOfClass(iClassName, true);
   }
 
+  /**
+   * Get all the Edges in Graph of a specific edges class and all sub-classes only if iPolymorphic is true.
+   * 
+   * @param iClassName
+   *          Edge class name to filter
+   * @param iPolymorphic
+   *          If true consider also iClassName Edge sub-classes
+   * @return Edges as Iterable
+   */
   public Iterable<Edge> getEdgesOfClass(final String iClassName, final boolean iPolymorphic) {
     getContext(true);
     return new OrientElementScanIterable<Edge>(this, iClassName, iPolymorphic);
   }
 
+  /**
+   * Get all the Edges in Graph filtering by field name and value. Example:<code>
+   *   Iterable<Edges> resultset = getEdges("name", "Jay");
+   * </code>
+   * 
+   * @param iKey
+   *          Field name
+   * @param iValue
+   *          Field value
+   * @return Edges as Iterable
+   */
   public Iterable<Edge> getEdges(final String iKey, Object iValue) {
     if (iKey.equals("@class"))
       return getEdgesOfClass(iValue.toString());
@@ -583,6 +686,12 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return query().has(key, iValue).edges();
   }
 
+  /**
+   * Returns a edge by an ID.
+   * 
+   * @param id
+   *          Can by a String, ODocument or an OIdentifiable object.
+   */
   public OrientEdge getEdge(final Object id) {
     if (null == id)
       throw ExceptionFactory.edgeIdCanNotBeNull();
@@ -624,6 +733,12 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return new OrientEdge(this, rec);
   }
 
+  /**
+   * Removes an edge from the Graph.
+   * 
+   * @param edge
+   *          Edge to remove
+   */
   public void removeEdge(final Edge edge) {
     edge.remove();
   }
@@ -651,11 +766,19 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return this;
   }
 
+  /**
+   * Checks if the Graph has been closed.
+   * 
+   * @return True if it is closed, otherwise false
+   */
   public boolean isClosed() {
     final OrientGraphContext context = getContext(false);
     return context == null || context.rawGraph.isClosed();
   }
 
+  /**
+   * Closes the Graph. After closing the Graph cannot be used.
+   */
   public void shutdown() {
     removeContext();
 
@@ -664,24 +787,45 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     password = null;
   }
 
+  /**
+   * Returns the Graph URL.
+   */
   public String toString() {
     return StringFactory.graphString(this, getRawGraph().getURL());
   }
 
+  /**
+   * Returns the underlying Database instance as ODatabaseDocumentTx instance.
+   */
   public ODatabaseDocumentTx getRawGraph() {
     return getContext(true).rawGraph;
   }
 
+  /**
+   * Commits the current active transaction.
+   */
   public void commit() {
   }
 
+  /**
+   * Rollbacks the current active transaction. All the pending changes are rollbacked.
+   */
   public void rollback() {
   }
 
+  /**
+   * Returns the V persistent class as OrientVertexType instance.
+   */
   public OrientVertexType getVertexBaseType() {
     return new OrientVertexType(this, getRawGraph().getMetadata().getSchema().getClass(OrientVertexType.CLASS_NAME));
   }
 
+  /**
+   * Returns the persistent class for type iTypeName as OrientVertexType instance.
+   * 
+   * @param iTypeName
+   *          Vertex class name
+   */
   public final OrientVertexType getVertexType(final String iTypeName) {
     final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iTypeName);
     if (cls == null)
@@ -692,14 +836,39 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
   }
 
+  /**
+   * Creates a new Vertex persistent class.
+   * 
+   * @param iClassName
+   *          Vertex class name
+   * @return OrientVertexType instance representing the persistent class
+   */
   public OrientVertexType createVertexType(final String iClassName) {
     return createVertexType(iClassName, (String) null);
   }
 
+  /**
+   * Creates a new Vertex persistent class specifying the super class.
+   * 
+   * @param iClassName
+   *          Vertex class name
+   * @param iSuperClassName
+   *          Vertex class name to extend
+   * @return OrientVertexType instance representing the persistent class
+   */
   public OrientVertexType createVertexType(final String iClassName, final String iSuperClassName) {
     return createVertexType(iClassName, iSuperClassName == null ? getVertexBaseType() : getVertexType(iSuperClassName));
   }
 
+  /**
+   * Creates a new Vertex persistent class specifying the super class.
+   * 
+   * @param iClassName
+   *          Vertex class name
+   * @param iSuperClass
+   *          OClass Vertex to extend
+   * @return OrientVertexType instance representing the persistent class
+   */
   public OrientVertexType createVertexType(final String iClassName, final OClass iSuperClass) {
     OrientVertexType.checkType(iSuperClass);
 
@@ -711,6 +880,12 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }, "create vertex type '", iClassName, "' as subclass of '", iSuperClass.getName(), "'");
   }
 
+  /**
+   * Drop a vertex class.
+   * 
+   * @param iTypeName
+   *          Vertex class name
+   */
   public final void dropVertexType(final String iTypeName) {
     executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
       @Override
@@ -721,10 +896,19 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }, "drop vertex type '", iTypeName, "'");
   }
 
+  /**
+   * Returns the E persistent class as OrientEdgeType instance.
+   */
   public OrientEdgeType getEdgeBaseType() {
     return new OrientEdgeType(this);
   }
 
+  /**
+   * Returns the persistent class for type iTypeName as OrientEdgeType instance.
+   * 
+   * @param iTypeName
+   *          Edge class name
+   */
   public final OrientEdgeType getEdgeType(final String iTypeName) {
     final OClass cls = getRawGraph().getMetadata().getSchema().getClass(iTypeName);
     if (cls == null)
@@ -734,14 +918,39 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return new OrientEdgeType(this, cls);
   }
 
+  /**
+   * Creates a new Edge persistent class.
+   * 
+   * @param iClassName
+   *          Edge class name
+   * @return OrientEdgeType instance representing the persistent class
+   */
   public OrientEdgeType createEdgeType(final String iClassName) {
     return createEdgeType(iClassName, (String) null);
   }
 
+  /**
+   * Creates a new Edge persistent class specifying the super class.
+   * 
+   * @param iClassName
+   *          Edge class name
+   * @param iSuperClassName
+   *          Edge class name to extend
+   * @return OrientEdgeType instance representing the persistent class
+   */
   public OrientEdgeType createEdgeType(final String iClassName, final String iSuperClassName) {
     return createEdgeType(iClassName, iSuperClassName == null ? getEdgeBaseType() : getEdgeType(iSuperClassName));
   }
 
+  /**
+   * Creates a new Edge persistent class specifying the super class.
+   * 
+   * @param iClassName
+   *          Edge class name
+   * @param iSuperClass
+   *          OClass Edge to extend
+   * @return OrientEdgeType instance representing the persistent class
+   */
   public OrientEdgeType createEdgeType(final String iClassName, final OClass iSuperClass) {
     OrientEdgeType.checkType(iSuperClass);
     return executeOutsideTx(new OCallable<OrientEdgeType, OrientBaseGraph>() {
@@ -752,6 +961,12 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }, "create edge type '", iClassName, "' as subclass of '", iSuperClass.getName(), "'");
   }
 
+  /**
+   * Drops an edge class.
+   * 
+   * @param iTypeName
+   *          Edge class name
+   */
   public final void dropEdgeType(final String iTypeName) {
     executeOutsideTx(new OCallable<OClass, OrientBaseGraph>() {
       @Override
@@ -762,11 +977,27 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }, "drop edge type '", iTypeName, "'");
   }
 
+  /**
+   * Detaches a Graph Element to be used offline. All the changes will be committed on further @attach call.
+   * 
+   * @param iElement
+   *          Graph element to detach
+   * @return The detached element
+   * @see #attach(OrientElement)
+   */
   public OrientElement detach(final OrientElement iElement) {
     iElement.detach();
     return iElement;
   }
 
+  /**
+   * Attaches a previously detached Graph Element to the current Graph. All the pending changes will be committed.
+   * 
+   * @param iElement
+   *          Graph element to attach
+   * @return The attached element
+   * @see #detach(OrientElement)
+   */
   public OrientElement attach(final OrientElement iElement) {
     return iElement.attach(this);
   }
@@ -775,7 +1006,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    * Returns a graph element, vertex or edge, starting from an ID.
    * 
    * @param id
-   *          element id
+   *          Can by a String, ODocument or an OIdentifiable object.
    * @return OrientElement subclass such as OrientVertex or OrientEdge
    */
   public OrientElement getElement(final Object id) {
@@ -813,43 +1044,14 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return null;
   }
 
-  public void removeContext() {
-    final List<OrientGraphContext> contextsToRemove = new ArrayList<OrientGraphContext>();
-    synchronized (contexts) {
-      for (OrientGraphContext contextItem : contexts) {
-        if (!contextItem.thread.isAlive())
-          contextsToRemove.add(contextItem);
-      }
-    }
-
-    final OrientGraphContext context = getContext(false);
-    if (context != null)
-      contextsToRemove.add(context);
-
-    for (OrientGraphContext contextItem : contextsToRemove) {
-      try {
-        if (!contextItem.rawGraph.isClosed())
-          contextItem.rawGraph.commit();
-
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during context close for db " + url, e);
-      } finally {
-        try {
-          contextItem.rawGraph.close();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during context close for db " + url, e);
-        }
-      }
-    }
-
-    synchronized (contexts) {
-      for (OrientGraphContext contextItem : contextsToRemove)
-        contexts.remove(contextItem);
-    }
-
-    threadContext.set(null);
-  }
-
+  /**
+   * Drops the index against a field name.
+   * 
+   * @param key
+   *          Field name
+   * @param elementClass
+   *          Element class as instances of Vertex and Edge
+   */
   public <T extends Element> void dropKeyIndex(final String key, final Class<T> elementClass) {
     if (elementClass == null)
       throw ExceptionFactory.classForElementCannotBeNull();
@@ -866,7 +1068,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   /**
-   * Create an automatic indexing structure for indexing provided key for element class.
+   * Creates an automatic indexing structure for indexing provided key for element class.
    * 
    * @param key
    *          the key to create the index for
@@ -884,6 +1086,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    *          the element class specification
    */
   @SuppressWarnings({ "rawtypes" })
+  @Override
   public <T extends Element> void createKeyIndex(final String key, final Class<T> elementClass, final Parameter... indexParameters) {
     if (elementClass == null)
       throw ExceptionFactory.classForElementCannotBeNull();
@@ -929,10 +1132,27 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     }, "create key index on '", elementClass.getSimpleName(), ".", key, "'");
   }
 
+  /**
+   * Returns the indexed properties.
+   * 
+   * @param elementClass
+   *          the element class that the index is for
+   * @return Set of String containing the indexed properties
+   */
+  @Override
   public <T extends Element> Set<String> getIndexedKeys(final Class<T> elementClass) {
     return getIndexedKeys(elementClass, false);
   }
 
+  /**
+   * Returns the indexed properties.
+   * 
+   * @param elementClass
+   *          the element class that the index is for
+   * @param includeClassNames
+   *          If true includes also the class name as prefix of fields
+   * @return Set of String containing the indexed properties
+   */
   public <T extends Element> Set<String> getIndexedKeys(final Class<T> elementClass, final boolean includeClassNames) {
     if (elementClass == null)
       throw ExceptionFactory.classForElementCannotBeNull();
@@ -959,6 +1179,12 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return result;
   }
 
+  /**
+   * Returns a GraphQuery object to execute queries against the Graph.
+   * 
+   * @return new GraphQuery instance
+   */
+  @Override
   public GraphQuery query() {
     return new OrientGraphQuery(this);
   }
@@ -980,14 +1206,29 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return new OrientGraphCommand(this, getRawGraph().command(iCommand));
   }
 
+  /**
+   * Counts the vertices in graph.
+   * 
+   * @return Long as number of total vertices
+   */
   public long countVertices() {
     return getRawGraph().countClass(OrientVertexType.CLASS_NAME);
   }
 
+  /**
+   * Counts the vertices in graph of a particular class.
+   * 
+   * @return Long as number of total vertices
+   */
   public long countVertices(final String iClassName) {
     return getRawGraph().countClass(iClassName);
   }
 
+  /**
+   * Counts the edges in graph. Edge counting works only if useLightweightEdges is false.
+   * 
+   * @return Long as number of total edges
+   */
   public long countEdges() {
     if (settings.useLightweightEdges)
       throw new UnsupportedOperationException("Graph set to use Lightweight Edges, count against edges is not supported");
@@ -995,6 +1236,11 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return getRawGraph().countClass(OrientEdgeType.CLASS_NAME);
   }
 
+  /**
+   * Counts the edges in graph of a particular class. Edge counting works only if useLightweightEdges is false.
+   * 
+   * @return Long as number of total edges
+   */
   public long countEdges(final String iClassName) {
     if (settings.useLightweightEdges)
       throw new UnsupportedOperationException("Graph set to use Lightweight Edges, count against edges is not supported");
@@ -1002,66 +1248,116 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return getRawGraph().countClass(iClassName);
   }
 
+  /**
+   * Returns true if is using lightweight edges, otherwise false.
+   */
   public boolean isUseLightweightEdges() {
     return settings.useLightweightEdges;
   }
 
+  /**
+   * Changes the setting about usage of lightweight edges.
+   */
   public void setUseLightweightEdges(final boolean useDynamicEdges) {
     settings.useLightweightEdges = useDynamicEdges;
   }
 
+  /**
+   * Returns true if it saves the original Id, otherwise false.
+   */
   public boolean isSaveOriginalIds() {
     return settings.saveOriginalIds;
   }
 
+  /**
+   * Changes the setting about usage of lightweight edges.
+   */
   public void setSaveOriginalIds(final boolean saveIds) {
     settings.saveOriginalIds = saveIds;
   }
 
+  /**
+   * Returns true if the references are kept in memory.
+   */
   public boolean isKeepInMemoryReferences() {
     return settings.keepInMemoryReferences;
   }
 
+  /**
+   * Changes the setting about using references in memory.
+   */
   public void setKeepInMemoryReferences(boolean useReferences) {
     settings.keepInMemoryReferences = useReferences;
   }
 
+  /**
+   * Returns true if the class are use for Edge labels.
+   */
   public boolean isUseClassForEdgeLabel() {
     return settings.useClassForEdgeLabel;
   }
 
+  /**
+   * Changes the setting to use the Edge class for Edge labels.
+   */
   public void setUseClassForEdgeLabel(final boolean useCustomClassesForEdges) {
     settings.useClassForEdgeLabel = useCustomClassesForEdges;
   }
 
+  /**
+   * Returns true if the class are use for Vertex labels.
+   */
   public boolean isUseClassForVertexLabel() {
     return settings.useClassForVertexLabel;
   }
 
+  /**
+   * Changes the setting to use the Vertex class for Vertex labels.
+   */
   public void setUseClassForVertexLabel(final boolean useCustomClassesForVertex) {
     this.settings.useClassForVertexLabel = useCustomClassesForVertex;
   }
 
+  /**
+   * Returns true if the out/in fields in vertex are post-fixed with edge labels. This improves traversal time by partitioning edges
+   * on different collections, one per Edge's class.
+   */
   public boolean isUseVertexFieldsForEdgeLabels() {
     return settings.useVertexFieldsForEdgeLabels;
   }
 
+  /**
+   * Changes the setting to postfix vertices fields with edge labels. This improves traversal time by partitioning edges on
+   * different collections, one per Edge's class.
+   */
   public void setUseVertexFieldsForEdgeLabels(final boolean useVertexFieldsForEdgeLabels) {
     this.settings.useVertexFieldsForEdgeLabels = useVertexFieldsForEdgeLabels;
   }
 
+  /**
+   * Returns true if Blueprints standard constraints are applied to elements.
+   */
   public boolean isStandardElementConstraints() {
     return settings.standardElementConstraints;
   }
 
+  /**
+   * Changes the setting to apply the Blueprints standard constraints against elements.
+   */
   public void setStandardElementConstraints(final boolean allowsPropertyValueNull) {
     this.settings.standardElementConstraints = allowsPropertyValueNull;
   }
 
+  /**
+   * Returns true if the warning is generated on force the graph closing.
+   */
   public boolean isWarnOnForceClosingTx() {
     return settings.warnOnForceClosingTx;
   }
 
+  /**
+   * Changes the setting to generate a warning if the graph closing has been forced.
+   */
   public OrientBaseGraph setWarnOnForceClosingTx(final boolean warnOnSchemaChangeInTx) {
     this.settings.warnOnForceClosingTx = warnOnSchemaChangeInTx;
     return this;
@@ -1103,6 +1399,46 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   public OrientBaseGraph setThreadMode(final THREAD_MODE iControl) {
     this.settings.threadMode = iControl;
     return this;
+  }
+
+  /**
+   * Removes the current context.
+   */
+  protected void removeContext() {
+    final List<OrientGraphContext> contextsToRemove = new ArrayList<OrientGraphContext>();
+    synchronized (contexts) {
+      for (OrientGraphContext contextItem : contexts) {
+        if (!contextItem.thread.isAlive())
+          contextsToRemove.add(contextItem);
+      }
+    }
+
+    final OrientGraphContext context = getContext(false);
+    if (context != null)
+      contextsToRemove.add(context);
+
+    for (OrientGraphContext contextItem : contextsToRemove) {
+      try {
+        if (!contextItem.rawGraph.isClosed())
+          contextItem.rawGraph.commit();
+
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during context close for db " + url, e);
+      } finally {
+        try {
+          contextItem.rawGraph.close();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during context close for db " + url, e);
+        }
+      }
+    }
+
+    synchronized (contexts) {
+      for (OrientGraphContext contextItem : contextsToRemove)
+        contexts.remove(contextItem);
+    }
+
+    threadContext.set(null);
   }
 
   protected void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
