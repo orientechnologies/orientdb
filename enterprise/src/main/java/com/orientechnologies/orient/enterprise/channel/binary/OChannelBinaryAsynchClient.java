@@ -42,13 +42,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
 public class OChannelBinaryAsynchClient extends OChannelBinary {
-  protected final int                 socketTimeout;                                          // IN MS
+  protected final int                 socketTimeout;                                               // IN MS
   protected final short               srvProtocolVersion;
-  private final Condition             readCondition = lockRead.getUnderlying().newCondition();
+  private final Condition             readCondition      = lockRead.getUnderlying().newCondition();
   private final int                   maxUnreadResponses;
   private final String                serverURL;
-  private volatile boolean            channelRead   = false;
-  private volatile boolean            waitingForResponse=false;
+  private volatile boolean            channelRead        = false;
+  private volatile boolean            waitingForResponse = false;
   private byte                        currentStatus;
   private int                         currentSessionId;
   private OAsynchChannelServiceThread serviceThread;
@@ -60,8 +60,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
       final int protocolVersion, final ORemoteServerEventListener asynchEventListener) throws IOException {
-	super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
-        
+    super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
+
     maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES.getValueAsInteger();
     serverURL = remoteHost + ":" + remotePort;
     socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
@@ -389,7 +389,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     return iClientTxId;
   }
 
-  private void throwSerializedException(byte[] serializedException) throws IOException {
+  private void throwSerializedException(final byte[] serializedException) throws IOException {
     final OMemoryInputStream inputStream = new OMemoryInputStream(serializedException);
     final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
 
@@ -402,7 +402,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
     objectInputStream.close();
 
-    if (throwable instanceof Throwable)
+    if (throwable instanceof OException)
+      throw (OException) throwable;
+    else if (throwable instanceof Throwable)
+      // WRAP IT
       throw new OResponseProcessingException("Exception during response processing.", (Throwable) throwable);
     else
       OLogManager.instance().error(

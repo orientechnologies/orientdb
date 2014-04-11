@@ -394,7 +394,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   /**
-   * Creates a temporary vertex. The vertex is not saved and the transaction is not started.
+   * (Blueprints Extension) Creates a temporary vertex. The vertex is not saved and the transaction is not started.
    * 
    * @param iClassName
    *          Vertex's class name
@@ -411,6 +411,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     return vertex;
   }
 
+  @Override
   public OrientEdge addEdge(final Object id, Vertex outVertex, Vertex inVertex, final String label) {
     String className = null;
     if (id != null && id instanceof String && id.toString().startsWith(CLASS_PREFIX))

@@ -89,7 +89,7 @@
     <target name="javadoc" depends="init">
         <!-- YOU NEED TO INSTALL GRAPH-VIZ TO GENERATE UML DIAGRAMS, OTHERWISE DISABLE IT TO HAVE PLAIN JAVADOCS -->
         <javadoc sourcepath="." packagenames="com.orientechnologies.*,com.tinkerpop.blueprints.*"
-                 excludepackagenames="com.orientechnologies.core.storage.*,com.orientechnologies.core.iterator.*,,com.orientechnologies.core.processor.*"
+                 excludepackagenames="com.orientechnologies.core.storage.*,com.orientechnologies.core.iterator.*,com.orientechnologies.core.processor.*"
                  destdir="${community.release}/javadoc"
                  public="true"
                  useexternalfile="yes" linksource="yes" author="true" version="true" use="yes" verbose="no"
@@ -107,7 +107,7 @@
                 <include name="core/src/main/java/**/*.java"/>
                 <include name="object/src/main/java/**/*.java"/>
                 <include name="../../os/tinkerpop/blueprints/blueprints-core/src/main/java/**/*.java"/>
-                <include name="../../os/tinkerpop/blueprints/blueprints-orient-graph/src/main/java/**/*.java"/>
+                <include name="graphdb/src/main/java/**/*.java"/>
             </fileset>
             <doclet name="org.umlgraph.doclet.UmlGraphDoc" path="_base/lib/UmlGraph.jar">
                 <param name="-hide" value="java.*"/>
