@@ -10,6 +10,27 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 
 /**
+ * Configuration class for Rexster (http://rexster.tinkerpop.com).  Example usage within rexster.xml:
+ * <br/>
+ * <pre>
+ * {@code
+ * <graph>
+ *   <graph-enabled>false</graph-enabled>
+ *   <graph-name>orientdbsample</graph-name>
+ *   <graph-type>orientgraph</graph-type>
+ *   <graph-location>local:/tmp/orientdb-graph</graph-location>
+ *   <properties>
+ *     <username>admin</username>
+ *     <password>admin</password>
+ *   </properties>
+ *   <extensions>
+ *     <allows>
+ *       <allow>tp:gremlin</allow>
+ *     </allows>
+ *   </extensions>
+ * </graph>
+ * }
+ * </pre>
  * @author Stephen Mallette (http://stephen.genoprime.com)
  */
 public class OrientGraphRexsterConfiguration implements GraphConfiguration {
