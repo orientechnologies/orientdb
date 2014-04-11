@@ -323,19 +323,21 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       else if (v instanceof OCommandRequest)
         v = ((OCommandRequest) v).execute(record, null, context);
 
+      if (v instanceof OIdentifiable)
+        // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
+        v = ((OIdentifiable) v).getIdentity();
+
       if (coll != null) {
         if (v instanceof OIdentifiable)
-          coll.add((OIdentifiable) v);
+          coll.add(v);
         else
           OMultiValue.add(coll, v);
-      }
-      else {
+      } else {
         if (!(v instanceof OIdentifiable))
           throw new OCommandExecutionException("Only links or records can be added to LINKBAG");
 
         bag.add((OIdentifiable) v);
       }
-
       updatedRecords.add(record);
     }
 
@@ -374,6 +376,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
           else if (v instanceof OCommandRequest)
             v = ((OCommandRequest) v).execute(record, null, context);
 
+          if (v instanceof OIdentifiable)
+            // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
+            v = ((OIdentifiable) v).getIdentity();
+
           map.put(pair.getKey(), v);
           updatedRecords.add(record);
         }
@@ -384,6 +390,18 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       // REMOVE FIELD IF ANY
       for (OPair<String, Object> entry : removeEntries) {
         v = entry.getValue();
+
+        if (v instanceof OSQLFilterItem)
+          v = ((OSQLFilterItem) v).getValue(record, null, context);
+        else if (entry.getValue() instanceof OSQLFunctionRuntime)
+          v = ((OSQLFunctionRuntime) v).execute(record, record, null, context);
+        else if (v instanceof OCommandRequest)
+          v = ((OCommandRequest) v).execute(record, null, context);
+
+        if (v instanceof OIdentifiable)
+          // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
+          v = ((OIdentifiable) v).getIdentity();
+
         if (v == EMPTY_VALUE) {
           record.removeField(entry.getKey());
           updatedRecords.add(record);
