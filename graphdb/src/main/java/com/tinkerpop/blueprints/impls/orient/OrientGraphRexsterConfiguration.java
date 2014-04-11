@@ -17,7 +17,7 @@ import org.apache.commons.configuration.SubnodeConfiguration;
  * <graph>
  *   <graph-enabled>false</graph-enabled>
  *   <graph-name>orientdbsample</graph-name>
- *   <graph-type>orientgraph</graph-type>
+ *   <graph-type>com.tinkerpop.blueprints.impls.orient.OrientGraphRexsterConfiguration</graph-type>
  *   <graph-location>local:/tmp/orientdb-graph</graph-location>
  *   <properties>
  *     <username>admin</username>
