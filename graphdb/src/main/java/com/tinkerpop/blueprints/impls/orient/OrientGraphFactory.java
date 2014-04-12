@@ -2,19 +2,20 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
- *
+ * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientGraphFactory {
-  protected final String url;
-  protected final String user;
-  protected final String password;
+  protected final String          url;
+  protected final String          user;
+  protected final String          password;
 
   protected ODatabaseDocumentPool pool;
-  protected boolean transactional = true;
+  protected boolean               transactional = true;
 
   public OrientGraphFactory(final String iURL) {
     this(iURL, "admin", "admin");
@@ -34,7 +35,7 @@ public class OrientGraphFactory {
   }
 
   public void drop() {
-    getDatabase().drop();
+    getDatabase(false).drop();
   }
 
   public OrientBaseGraph get() {
@@ -58,16 +59,23 @@ public class OrientGraphFactory {
   }
 
   public ODatabaseDocumentTx getDatabase() {
-    if (pool != null) {
+    return getDatabase(true);
+  }
+
+  public ODatabaseDocumentTx getDatabase(final boolean iCreate) {
+    if (pool != null)
+      // USE THE POOL
       return pool.acquire();
-    }
 
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
     if (!db.getURL().startsWith("remote:") && !db.exists()) {
-      db.create();
-    } else {
+      if (iCreate)
+        db.create();
+      else
+        throw new ODatabaseException("Database '" + url + "' not found");
+    } else
       db.open(user, password);
-    }
+
     return db;
   }
 
