@@ -53,6 +53,11 @@ public class OMemoryInputStream extends InputStream {
     return portion;
   }
 
+  @Override
+  public int available() throws IOException {
+    return length - position;
+  }
+
   /**
    * Browse the stream but just return the begin of the byte array. This is used to lazy load the information only when needed.
    * 
@@ -183,7 +188,7 @@ public class OMemoryInputStream extends InputStream {
     buffer = iBuffer;
     position = iOffset;
     offset = iOffset;
-    length = iLength;
+    length = iLength + iOffset;
   }
 
   public OMemoryInputStream jump(final int iOffset) {
