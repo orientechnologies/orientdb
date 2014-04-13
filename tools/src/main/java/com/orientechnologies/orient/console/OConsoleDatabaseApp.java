@@ -2078,7 +2078,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     Object result = currentDatabase.command(new OCommandScript(iLanguage, iText)).execute();
     float elapsedSeconds = getElapsedSecs(start);
 
-    if (OMultiValue.isMultiValue(result)) {
+    if (OMultiValue.isMultiValue(result) && !(result instanceof Map<?, ?>)) {
       if (result instanceof List<?>)
         currentResultSet = (List<OIdentifiable>) result;
       else if (result instanceof Collection<?>) {
@@ -2093,8 +2093,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       dumpResultSet(-1);
       message("\nServer side script executed in %f sec(s). Returned %d records", elapsedSeconds, currentResultSet.size());
-    } else
-      message("\nServer side script executed in %f sec(s). Value returned is: %s", elapsedSeconds, result);
+    } else {
+      String lineFeed = result instanceof Map<?, ?> ? "\n" : "";
+      message("\nServer side script executed in %f sec(s). Value returned is: %s%s", elapsedSeconds, lineFeed, result);
+    }
   }
 
   private void dumpRecordDetails() {

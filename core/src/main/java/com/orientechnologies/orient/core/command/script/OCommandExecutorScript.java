@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -36,6 +37,8 @@ import javax.script.ScriptException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -241,7 +244,70 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
               lastResult = null;
             else if (variable.startsWith("$"))
               lastResult = getContext().getVariable(variable);
-            else
+            else if (variable.startsWith("[") && variable.endsWith("]")) {
+              // ARRAY - COLLECTION
+              final List<String> items = new ArrayList<String>();
+
+              OStringSerializerHelper.getCollection(variable, 0, items);
+              final List<Object> result = new ArrayList<Object>(items.size());
+
+              for (int i = 0; i < items.size(); ++i) {
+                String item = items.get(i);
+
+                Object res;
+                if (item.startsWith("$"))
+                  res = getContext().getVariable(item);
+                else
+                  res = item;
+
+                if (OMultiValue.isMultiValue(res) && OMultiValue.getSize(res) == 1)
+                  res = OMultiValue.getFirstValue(res);
+
+                result.add(res);
+              }
+              lastResult = result;
+            } else if (variable.startsWith("{") && variable.endsWith("}")) {
+              // MAP
+              final Map<String, String> map = OStringSerializerHelper.getMap(variable);
+              final Map<Object, Object> result = new HashMap<Object, Object>(map.size());
+
+              for (Map.Entry<String, String> entry : map.entrySet()) {
+                // KEY
+                String stringKey = entry.getKey();
+                if (stringKey == null)
+                  continue;
+
+                stringKey = stringKey.trim();
+
+                Object key;
+                if (stringKey.startsWith("$"))
+                  key = getContext().getVariable(stringKey);
+                else
+                  key = stringKey;
+
+                if (OMultiValue.isMultiValue(key) && OMultiValue.getSize(key) == 1)
+                  key = OMultiValue.getFirstValue(key);
+
+                // VALUE
+                String stringValue = entry.getValue();
+                if (stringValue == null)
+                  continue;
+
+                stringValue = stringValue.trim();
+
+                Object value;
+                if (stringValue.toString().startsWith("$"))
+                  value = getContext().getVariable(stringValue);
+                else
+                  value = stringValue;
+
+                if (OMultiValue.isMultiValue(value) && OMultiValue.getSize(value) == 1)
+                  value = OMultiValue.getFirstValue(value);
+
+                result.put(key, value);
+              }
+              lastResult = result;
+            } else
               lastResult = variable;
 
             // END OF THE SCRIPT
