@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.query.OQuery;
@@ -52,7 +53,7 @@ import java.util.Set;
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware implements OCommandResultListener {
+public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract implements OCommandResultListener {
   public static final String                 KEYWORD_UPDATE    = "UPDATE";
   private static final String                KEYWORD_ADD       = "ADD";
   private static final String                KEYWORD_PUT       = "PUT";
@@ -136,6 +137,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         upsertMode = true;
       else if (word.equals(KEYWORD_RETURN))
         returning = parseReturn();
+      else if (word.equals(KEYWORD_RETRY))
+        parseRetry();
       else
         break;
 
@@ -199,7 +202,26 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     if (lockStrategy.equals("RECORD"))
       query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
 
-    getDatabase().query(query, queryArgs);
+    for (int r = 0; r < retry; ++r) {
+      try {
+
+        getDatabase().query(query, queryArgs);
+
+        break;
+
+      } catch (OConcurrentModificationException e) {
+        if (r + 1 >= retry)
+          // NO RETRY; PROPAGATE THE EXCEPTION
+          throw e;
+        
+        // RETRY?
+        if (wait > 0)
+          try {
+            Thread.sleep(wait);
+          } catch (InterruptedException e1) {
+          }
+      }
+    }
 
     // IF UPDATE DOES NOT PRODUCE RESULTS AND UPSERT MODE IS ENABLED, CREATE DOCUMENT AND APPLY SET/ADD/PUT/MERGE and so on
     if (upsertMode && recordCount == 0) {

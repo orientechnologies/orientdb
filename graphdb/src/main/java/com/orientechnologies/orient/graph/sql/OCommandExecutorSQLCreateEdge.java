@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRetryAbstract;
 import com.orientechnologies.orient.core.sql.OCommandParameters;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -44,17 +44,14 @@ import java.util.Set;
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
-  public static final String            NAME          = "CREATE EDGE";
-  public static final String            KEYWORD_RETRY = "RETRY";
+public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstract {
+  public static final String            NAME = "CREATE EDGE";
 
   private String                        from;
   private String                        to;
   private OClass                        clazz;
   private String                        clusterName;
   private LinkedHashMap<String, Object> fields;
-  private int                           retry         = 1;
-  private int                           wait          = 0;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateEdge parse(final OCommandRequest iRequest) {
@@ -171,6 +168,10 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
                 break;
 
               } catch (OConcurrentModificationException e) {
+                if (r + 1 >= retry)
+                  // NO RETRY; PROPAGATE THE EXCEPTION
+                  throw e;
+
                 // RETRY?
                 if (wait > 0)
                   try {
@@ -196,21 +197,5 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
   @Override
   public String getSyntax() {
     return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) [SET <field> = <expression>[,]*]|CONTENT {<JSON>} [RETRY <retry> [WAIT <pauseBetweenRetriesInMs]]";
-  }
-
-  /**
-   * Parses the RETRY number of times
-   */
-  protected void parseRetry() throws OCommandSQLParsingException {
-    parserNextWord(true);
-    retry = Integer.parseInt(parserGetLastWord());
-
-    String temp = parseOptionalWord(true);
-
-    if (temp.equals("WAIT")) {
-      parserNextWord(true);
-      wait = Integer.parseInt(parserGetLastWord());
-    } else
-      parserGoBack();
   }
 }
