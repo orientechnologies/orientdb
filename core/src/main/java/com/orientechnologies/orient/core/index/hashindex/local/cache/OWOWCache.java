@@ -15,6 +15,27 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
+import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -38,27 +59,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.CRC32;
-
-import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 /**
  * @author Andrey Lomakin
@@ -89,9 +89,9 @@ public class OWOWCache {
 
   private final AtomicInteger                               cacheSize             = new AtomicInteger();
   private final OLockManager<GroupKey, Thread>              lockManager           = new OLockManager<GroupKey, Thread>(
-                                                                                      true,
-                                                                                      OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT
-                                                                                          .getValueAsInteger());
+                                                                                                                        true,
+                                                                                                                        OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT
+                                                                                                                          .getValueAsInteger());
 
   private volatile int                                      cacheMaxSize;
 
@@ -115,7 +115,7 @@ public class OWOWCache {
   private File                                              nameIdMapHolderFile;
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
-      int cacheMaxSize, OStorageLocalAbstract storageLocal, boolean checkMinSize) {
+                    int cacheMaxSize, OStorageLocalAbstract storageLocal, boolean checkMinSize) {
     this.files = new ConcurrentHashMap<Long, OFileClassic>();
 
     this.syncOnPageFlush = syncOnPageFlush;
@@ -150,6 +150,7 @@ public class OWOWCache {
         fileId = ++fileCounter;
 
         fileClassic = createFile(fileName);
+
 
         files.put(fileId, fileClassic);
         nameIdMap.put(fileName, fileId);
@@ -209,7 +210,7 @@ public class OWOWCache {
         return true;
 
       final File file = new File(storageLocal.getVariableParser().resolveVariables(
-          storageLocal.getStoragePath() + File.separator + fileName));
+                                                                                    storageLocal.getStoragePath() + File.separator + fileName));
       return file.exists();
     }
   }
@@ -469,7 +470,7 @@ public class OWOWCache {
       final String osFileName = file.getName();
       if (osFileName.startsWith(oldFileName)) {
         final File newFile = new File(storageLocal.getStoragePath() + File.separator + newFileName
-            + osFileName.substring(osFileName.lastIndexOf(oldFileName) + oldFileName.length()));
+                                        + osFileName.substring(osFileName.lastIndexOf(oldFileName) + oldFileName.length()));
         boolean renamed = file.renameTo(newFile);
         while (!renamed) {
           OMemoryWatchDog.freeMemoryForResourceCleanup(100);
@@ -563,6 +564,9 @@ public class OWOWCache {
     byte[] content = new byte[pageSize];
     OCachePointer dataPointer;
     final OFileClassic fileClassic = files.get(fileId);
+
+    if (fileClassic == null)
+      throw new IllegalArgumentException("File with id " + fileId + " not found in WOW Cache");
 
     if (fileClassic.getFilledUpTo() >= endPosition) {
       fileClassic.read(startPosition, content, content.length);
@@ -660,7 +664,7 @@ public class OWOWCache {
               magicNumberIncorrect = true;
               if (commandOutputListener != null)
                 commandOutputListener.onMessage("Error: Magic number for page " + (pos / pageSize) + " in file "
-                    + fileClassic.getName() + " does not much !!!");
+                                                  + fileClassic.getName() + " does not much !!!");
               fileIsCorrect = false;
             }
 
@@ -671,13 +675,13 @@ public class OWOWCache {
               checkSumIncorrect = true;
               if (commandOutputListener != null)
                 commandOutputListener.onMessage("Error: Checksum for page " + (pos / pageSize) + " in file "
-                    + fileClassic.getName() + " is incorrect !!!");
+                                                  + fileClassic.getName() + " is incorrect !!!");
               fileIsCorrect = false;
             }
 
             if (magicNumberIncorrect || checkSumIncorrect)
               errors.add(new OPageDataVerificationError(magicNumberIncorrect, checkSumIncorrect, pos / pageSize, fileClassic
-                  .getName()));
+                                                                                                                   .getName()));
 
             if (commandOutputListener != null && System.currentTimeMillis() - time > notificationTimeOut) {
               time = notificationTimeOut;
@@ -687,7 +691,7 @@ public class OWOWCache {
         } catch (IOException ioe) {
           if (commandOutputListener != null)
             commandOutputListener.onMessage("Error: Error during processing of file " + fileClassic.getName() + ". "
-                + ioe.getMessage());
+                                              + ioe.getMessage());
 
           fileIsCorrect = false;
         }
@@ -860,7 +864,7 @@ public class OWOWCache {
     }
 
     private int iterateBySubRing(NavigableMap<GroupKey, WriteGroup> subMap, int writeGroupsToFlush, int flushedWriteGroups,
-        boolean forceFlush) throws IOException {
+                                  boolean forceFlush) throws IOException {
       Iterator<Map.Entry<GroupKey, WriteGroup>> entriesIterator = subMap.entrySet().iterator();
       long currentTime = System.currentTimeMillis();
 

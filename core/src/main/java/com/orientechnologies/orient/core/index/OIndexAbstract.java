@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -45,11 +50,6 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-import java.util.Map.Entry;
-
 /**
  * Handles indexing when records change.
  * 
@@ -57,24 +57,19 @@ import java.util.Map.Entry;
  * 
  */
 public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal implements OIndexInternal<T> {
-  protected final OModificationLock    modificationLock = new OModificationLock();
-
   protected static final String        CONFIG_MAP_RID   = "mapRid";
   protected static final String        CONFIG_CLUSTERS  = "clusters";
-
-  private String                       name;
-  protected String                     type;
-  private String                       algorithm;
-  protected String                     valueContainerAlgorithm;
-
+  protected final OModificationLock    modificationLock = new OModificationLock();
   protected final OIndexEngine<T>      indexEngine;
-  private Set<String>                  clustersToIndex  = new HashSet<String>();
-  private OIndexDefinition             indexDefinition;
   private final String                 databaseName;
-
+  protected String                     type;
+  protected String                     valueContainerAlgorithm;
   @ODocumentInstance
   protected ODocument                  configuration;
-
+  private String                       name;
+  private String                       algorithm;
+  private Set<String>                  clustersToIndex  = new HashSet<String>();
+  private OIndexDefinition             indexDefinition;
   private volatile boolean             rebuilding       = false;
 
   private Thread                       rebuildThread    = null;
@@ -85,6 +80,15 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
                                                             return new IndexTxSnapshot();
                                                           }
                                                         };
+
+  protected static final class RemovedValue {
+    public static final RemovedValue INSTANCE = new RemovedValue();
+  }
+
+  protected static final class IndexTxSnapshot {
+    public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
+    public boolean             clear         = false;
+  }
 
   public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine, String valueContainerAlgorithm) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
@@ -101,12 +105,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     } finally {
       releaseExclusiveLock();
     }
-  }
-
-  protected Object getCollatingValue(final Object key) {
-    if (key != null && getDefinition() != null)
-      return getDefinition().getCollate().transform(key);
-    return key;
   }
 
   public void flush() {
@@ -689,6 +687,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       try {
         indexEngine.delete();
 
+        // REMOVE THE INDEX ALSO FROM CLASS MAP
+        if (getDatabase().getMetadata() != null)
+          getDatabase().getMetadata().getIndexManager().removeClassPropertyIndex(this);
+
         if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
           final OStorage storage = getDatabase().getStorage();
           if (storage instanceof OStorageLocal) {
@@ -956,16 +958,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     txSnapshot.set(new IndexTxSnapshot());
   }
 
-  protected abstract void commitSnapshot(Map<Object, Object> snapshot);
-
-  protected abstract void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot);
-
-  protected abstract void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot);
-
-  protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
-    snapshot.put(key, RemovedValue.INSTANCE);
-  }
-
   public ODocument getConfiguration() {
     acquireSharedLock();
     try {
@@ -1049,23 +1041,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  protected void checkForKeyType(final Object iKey) {
-    if (indexDefinition == null) {
-      // RECOGNIZE THE KEY TYPE AT RUN-TIME
-
-      final OType type = OType.getTypeByClass(iKey.getClass());
-      if (type == null)
-        return;
-
-      indexDefinition = new OSimpleKeyIndexDefinition(type);
-      updateConfiguration();
-    }
-  }
-
-  protected ODatabaseRecord getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-
   public OType[] getKeyTypes() {
     acquireSharedLock();
     try {
@@ -1136,18 +1111,42 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return rebuilding;
   }
 
+  protected Object getCollatingValue(final Object key) {
+    if (key != null && getDefinition() != null)
+      return getDefinition().getCollate().transform(key);
+    return key;
+  }
+
+  protected abstract void commitSnapshot(Map<Object, Object> snapshot);
+
+  protected abstract void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot);
+
+  protected abstract void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot);
+
+  protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
+    snapshot.put(key, RemovedValue.INSTANCE);
+  }
+
+  protected void checkForKeyType(final Object iKey) {
+    if (indexDefinition == null) {
+      // RECOGNIZE THE KEY TYPE AT RUN-TIME
+
+      final OType type = OType.getTypeByClass(iKey.getClass());
+      if (type == null)
+        return;
+
+      indexDefinition = new OSimpleKeyIndexDefinition(type);
+      updateConfiguration();
+    }
+  }
+
+  protected ODatabaseRecord getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
   protected void checkForRebuild() {
     if (rebuilding && !Thread.currentThread().equals(rebuildThread)) {
       throw new OIndexException("Index " + name + " is rebuilding now and can not be used.");
     }
-  }
-
-  protected static final class RemovedValue {
-    public static final RemovedValue INSTANCE = new RemovedValue();
-  }
-
-  protected static final class IndexTxSnapshot {
-    public Map<Object, Object> indexSnapshot = new HashMap<Object, Object>();
-    public boolean             clear         = false;
   }
 }

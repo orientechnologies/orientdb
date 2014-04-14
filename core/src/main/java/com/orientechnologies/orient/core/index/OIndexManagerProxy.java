@@ -65,12 +65,13 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata) {
+                                final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata) {
     return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener, metadata);
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, String iType, OIndexDefinition iIndexDefinition, int[] iClusterIdsToIndex, OProgressListener iProgressListener, ODocument metadata, String algorithm) {
+  public OIndex<?> createIndex(String iName, String iType, OIndexDefinition iIndexDefinition, int[] iClusterIdsToIndex,
+                                OProgressListener iProgressListener, ODocument metadata, String algorithm) {
     return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener, metadata, algorithm);
   }
 
@@ -153,7 +154,11 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   }
 
   @Override
-  public<RET extends ODocumentWrapper> RET save() {
+  public <RET extends ODocumentWrapper> RET save() {
     return delegate.save();
+  }
+
+  public void removeClassPropertyIndex(final OIndex<?> idx) {
+    delegate.removeClassPropertyIndex(idx);
   }
 }
