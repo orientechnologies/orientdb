@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -41,7 +42,8 @@ import java.util.Map;
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract implements OCommandResultListener {
+public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest,
+    OCommandResultListener {
   public static final String NAME      = "DELETE VERTEX";
   private ORecordId          rid;
   private int                removed   = 0;

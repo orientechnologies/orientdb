@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -53,7 +54,8 @@ import java.util.Set;
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract implements OCommandResultListener {
+public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest,
+    OCommandResultListener {
   public static final String                 KEYWORD_UPDATE    = "UPDATE";
   private static final String                KEYWORD_ADD       = "ADD";
   private static final String                KEYWORD_PUT       = "PUT";
@@ -213,7 +215,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         if (r + 1 >= retry)
           // NO RETRY; PROPAGATE THE EXCEPTION
           throw e;
-        
+
         // RETRY?
         if (wait > 0)
           try {

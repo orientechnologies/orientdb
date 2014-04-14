@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -38,7 +39,7 @@ import java.util.Map.Entry;
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware {
+public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
   public static final String            NAME = "CREATE VERTEX";
   private OClass                        clazz;
   private String                        clusterName;
@@ -126,5 +127,4 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
   public String getSyntax() {
     return "CREATE VERTEX [<class>] [CLUSTER <cluster>] [SET <field> = <expression>[,]*]";
   }
-
 }

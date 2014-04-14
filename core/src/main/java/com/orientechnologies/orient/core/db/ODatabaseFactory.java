@@ -15,16 +15,16 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.WeakHashMap;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.WeakHashMap;
 
 /**
  * Factory to create high-level ODatabase instances. The global instance is managed by Orient class.
@@ -101,7 +101,7 @@ public class ODatabaseFactory {
       return new ODatabaseDocumentTx(url) {
         @Override
         public <THISDB extends ODatabase> THISDB create() {
-					final THISDB db = super.create();
+          final THISDB db = super.create();
 
           checkSchema();
 
@@ -109,20 +109,27 @@ public class ODatabaseFactory {
         }
 
         private void checkSchema() {
-          getMetadata().getSchema().getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+          // FORCE NON DISTRIBUTION ON CREATION
+          OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+          try {
 
-          OClass vertexBaseClass = getMetadata().getSchema().getClass("V");
-          OClass edgeBaseClass = getMetadata().getSchema().getClass("E");
+            getMetadata().getSchema().getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
-          if (vertexBaseClass == null) {
-            // CREATE THE META MODEL USING THE ORIENT SCHEMA
-            vertexBaseClass = getMetadata().getSchema().createClass("V");
-            vertexBaseClass.setOverSize(2);
-          }
+            OClass vertexBaseClass = getMetadata().getSchema().getClass("V");
+            OClass edgeBaseClass = getMetadata().getSchema().getClass("E");
 
-          if (edgeBaseClass == null) {
-            edgeBaseClass = getMetadata().getSchema().createClass("E");
-            edgeBaseClass.setShortName("E");
+            if (vertexBaseClass == null) {
+              // CREATE THE META MODEL USING THE ORIENT SCHEMA
+              vertexBaseClass = getMetadata().getSchema().createClass("V");
+              vertexBaseClass.setOverSize(2);
+            }
+
+            if (edgeBaseClass == null) {
+              edgeBaseClass = getMetadata().getSchema().createClass("E");
+              edgeBaseClass.setShortName("E");
+            }
+          } finally {
+            OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
           }
         }
       };

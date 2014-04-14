@@ -1,5 +1,12 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -22,13 +29,6 @@ import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * OrientDB Vertex implementation of TinkerPop Blueprints standard.
  * 
@@ -40,6 +40,13 @@ public class OrientVertex extends OrientElement implements Vertex {
   public static final String CONNECTION_IN_PREFIX  = OrientBaseGraph.CONNECTION_IN + "_";
 
   private static final long  serialVersionUID      = 1L;
+
+  /**
+   * (Internal) Called by serialization.
+   */
+  public OrientVertex() {
+    super(null, null);
+  }
 
   protected OrientVertex(final OrientBaseGraph graph, String className, final Object... fields) {
     super(graph, null);

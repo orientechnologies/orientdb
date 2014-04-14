@@ -1121,8 +1121,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           channel.writeByte((byte) 'l');
           channel.writeInt(OMultiValue.getSize(result));
           for (Object o : OMultiValue.getMultiValueIterable(result)) {
-            listener.result(o);
-            writeIdentifiable((OIdentifiable) o);
+            try {
+              listener.result(o);
+              writeIdentifiable((OIdentifiable) o);
+            } catch (Exception e) {
+              OLogManager.instance().warn(this, "Cannot serialize record: " + o);
+              // WRITE NULL RECORD TO AVOID BREAKING PROTOCOL
+              writeIdentifiable(null);
+            }
           }
         } else {
           // ANY OTHER (INCLUDING LITERALS)

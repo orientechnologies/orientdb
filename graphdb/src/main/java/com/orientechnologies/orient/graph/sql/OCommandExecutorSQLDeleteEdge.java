@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -46,7 +47,8 @@ import java.util.Set;
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstract implements OCommandResultListener {
+public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest,
+    OCommandResultListener {
   public static final String NAME    = "DELETE EDGE";
   private ORecordId          rid;
   private String             fromExpr;

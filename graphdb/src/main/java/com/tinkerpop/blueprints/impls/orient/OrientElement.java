@@ -21,6 +21,10 @@ import com.tinkerpop.blueprints.util.ElementHelper;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Map;
 
 /**
@@ -29,14 +33,14 @@ import java.util.Map;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 @SuppressWarnings("unchecked")
-public abstract class OrientElement implements Element, OSerializableStream, OIdentifiable {
-  public static final String         LABEL_FIELD_NAME          = "label";
-  public static final Object         DEF_ORIGINAL_ID_FIELDNAME = "origId";
-  private static final long          serialVersionUID          = 1L;
+public abstract class OrientElement implements Element, OSerializableStream, Externalizable, OIdentifiable {
+  public static final String                   LABEL_FIELD_NAME          = "label";
+  public static final Object                   DEF_ORIGINAL_ID_FIELDNAME = "origId";
+  private static final long                    serialVersionUID          = 1L;
   // TODO: CAN REMOVE THIS REF IN FAVOR OF CONTEXT INSTANCE?
-  protected OrientBaseGraph          graph;
-  protected OIdentifiable            rawElement;
-  protected OrientBaseGraph.Settings settings;
+  protected transient OrientBaseGraph          graph;
+  protected transient OrientBaseGraph.Settings settings;
+  protected OIdentifiable                      rawElement;
 
   protected OrientElement(final OrientBaseGraph rawGraph, final OIdentifiable iRawElement) {
     graph = rawGraph;
@@ -240,6 +244,16 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
     return this;
   }
 
+  @Override
+  public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeObject(rawElement != null ? rawElement.getIdentity() : null);
+  }
+
+  @Override
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    rawElement = (OIdentifiable) in.readObject();
+  }
+
   /**
    * (Blueprints Extension) Locks current Element to prevent concurrent access. If lock is exclusive, then no concurrent threads can
    * read/write it. If the lock is shared, then concurrent threads can only read Element properties, but can't change them. Locks
@@ -421,7 +435,8 @@ public abstract class OrientElement implements Element, OSerializableStream, OId
     if (iClassName == null)
       return null;
 
-    checkIfAttached();
+    if( isDetached() )
+      return iClassName;
 
     final OSchema schema = graph.getRawGraph().getMetadata().getSchema();
 

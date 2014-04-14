@@ -203,10 +203,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
   }
 
-  protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
-    return Hazelcast.newHazelcastInstance(new FileSystemXmlConfig(hazelcastConfigFile));
-  }
-
   @Override
   public long getDistributedTime(final long iTime) {
     return iTime - timeOffset;
@@ -528,6 +524,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       updateCachedDatabaseConfiguration(key.substring(CONFIG_DATABASE_PREFIX.length()), (ODocument) iEvent.getValue(), true, false);
       OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+
+      if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember()))
+        installNewDatabases(false);
+
     } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
       ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
           "received added status %s=%s", key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
@@ -654,6 +654,41 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return new OHazelcastDistributionPartition(partition);
   }
 
+  @Override
+  public OHazelcastDistributedMessageService getMessageService() {
+    return messageService;
+  }
+
+  public void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster) {
+    final boolean updated = super.updateCachedDatabaseConfiguration(iDatabaseName, cfg, iSaveToDisk);
+
+    if (updated && iDeployToCluster)
+      // DEPLOY THE CONFIGURATION TO THE CLUSTER
+      getConfigurationMap().put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + iDatabaseName, cfg);
+  }
+
+  public long getLastClusterChangeOn() {
+    return lastClusterChangeOn;
+  }
+
+  @Override
+  public void onMessage(String iText) {
+    OLogManager.instance().info(this, iText);
+  }
+
+  public int getAvailableNodes(final String iDatabaseName) {
+    int availableNodes = 0;
+    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
+      if (isNodeAvailable(entry.getKey(), iDatabaseName))
+        availableNodes++;
+    }
+    return availableNodes;
+  }
+
+  protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
+    return Hazelcast.newHazelcastInstance(new FileSystemXmlConfig(hazelcastConfigFile));
+  }
+
   protected IMap<String, Object> getConfigurationMap() {
     return getHazelcastInstance().getMap("orientdb");
   }
@@ -687,11 +722,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           db.initDatabaseInstance();
       }
     }
-  }
-
-  @Override
-  public OHazelcastDistributedMessageService getMessageService() {
-    return messageService;
   }
 
   protected void installNewDatabases(final boolean iStartup) {
@@ -819,14 +849,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     }
   }
 
-  public void updateCachedDatabaseConfiguration(String iDatabaseName, ODocument cfg, boolean iSaveToDisk, boolean iDeployToCluster) {
-    final boolean updated = super.updateCachedDatabaseConfiguration(iDatabaseName, cfg, iSaveToDisk);
-
-    if (updated && iDeployToCluster)
-      // DEPLOY THE CONFIGURATION TO THE CLUSTER
-      getConfigurationMap().put(OHazelcastPlugin.CONFIG_DATABASE_PREFIX + iDatabaseName, cfg);
-  }
-
   protected long writeDatabaseChunk(final int iChunkId, final ODistributedDatabaseChunk chunk, final FileOutputStream out)
       throws IOException {
 
@@ -868,15 +890,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN, "error on copying database '%s' on local server", e,
           databaseName);
     }
-  }
-
-  public long getLastClusterChangeOn() {
-    return lastClusterChangeOn;
-  }
-
-  @Override
-  public void onMessage(String iText) {
-    OLogManager.instance().info(this, iText);
   }
 
   @Override
@@ -927,14 +940,5 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       } catch (InterruptedException e) {
       }
     }
-  }
-
-  public int getAvailableNodes(final String iDatabaseName) {
-    int availableNodes = 0;
-    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-      if (isNodeAvailable(entry.getKey(), iDatabaseName))
-        availableNodes++;
-    }
-    return availableNodes;
   }
 }

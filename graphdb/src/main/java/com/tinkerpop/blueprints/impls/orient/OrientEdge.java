@@ -11,6 +11,9 @@ import com.tinkerpop.blueprints.Index;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -30,6 +33,13 @@ public class OrientEdge extends OrientElement implements Edge {
   protected OIdentifiable   vOut;
   protected OIdentifiable   vIn;
   protected String          label;
+
+  /**
+   * (Internal) Called by serialization
+   */
+  public OrientEdge() {
+    super(null, null);
+  }
 
   protected OrientEdge(final OrientBaseGraph rawGraph, final OIdentifiable rawEdge) {
     super(rawGraph, rawEdge);
@@ -131,7 +141,8 @@ public class OrientEdge extends OrientElement implements Edge {
    */
   @Override
   public OrientVertex getVertex(final Direction direction) {
-    graph.setCurrentGraphInThreadLocal();
+    if (graph != null)
+      graph.setCurrentGraphInThreadLocal();
 
     if (direction.equals(Direction.OUT))
       return new OrientVertex(graph, getOutVertex());
@@ -149,13 +160,14 @@ public class OrientEdge extends OrientElement implements Edge {
       // LIGHTWEIGHT EDGE
       return vOut;
 
-    graph.setCurrentGraphInThreadLocal();
+    if (graph != null)
+      graph.setCurrentGraphInThreadLocal();
 
     final ODocument doc = getRecord();
     if (doc == null)
       return null;
 
-    if (settings.keepInMemoryReferences)
+    if (settings != null && settings.keepInMemoryReferences)
       // AVOID LAZY RESOLVING+SETTING OF RECORD
       return doc.rawField(OrientBaseGraph.CONNECTION_OUT);
     else
@@ -170,13 +182,14 @@ public class OrientEdge extends OrientElement implements Edge {
       // LIGHTWEIGHT EDGE
       return vIn;
 
-    graph.setCurrentGraphInThreadLocal();
+    if (graph != null)
+      graph.setCurrentGraphInThreadLocal();
 
     final ODocument doc = getRecord();
     if (doc == null)
       return null;
 
-    if (settings.keepInMemoryReferences)
+    if (settings != null && settings.keepInMemoryReferences)
       // AVOID LAZY RESOLVING+SETTING OF RECORD
       return doc.rawField(OrientBaseGraph.CONNECTION_IN);
     else
@@ -201,7 +214,8 @@ public class OrientEdge extends OrientElement implements Edge {
           return OrientBaseGraph.decodeClassName(clsName);
       }
 
-      graph.setCurrentGraphInThreadLocal();
+      if (graph != null)
+        graph.setCurrentGraphInThreadLocal();
 
       final ODocument doc = (ODocument) rawElement.getRecord();
       if (doc == null)
@@ -233,7 +247,8 @@ public class OrientEdge extends OrientElement implements Edge {
       // CREATE A TEMPORARY ID
       return vOut.getIdentity() + "->" + vIn.getIdentity();
 
-    graph.setCurrentGraphInThreadLocal();
+    if (graph != null)
+      graph.setCurrentGraphInThreadLocal();
 
     return super.getId();
   }
@@ -400,7 +415,7 @@ public class OrientEdge extends OrientElement implements Edge {
       final ODocument tmp = new ODocument(getClassName(label)).setTrackingChanges(false);
       tmp.field("in", vIn);
       tmp.field("out", vOut);
-      if (label != null && !settings.useClassForEdgeLabel)
+      if (label != null && settings != null && !settings.useClassForEdgeLabel)
         tmp.field("label", label);
       return tmp;
     }
@@ -454,11 +469,29 @@ public class OrientEdge extends OrientElement implements Edge {
    * (Blueprints Extension) Returns the class name based on graph settings.
    */
   public String getClassName(final String iLabel) {
-    if (iLabel != null && settings.useClassForEdgeLabel)
+    if (iLabel != null && (settings == null || settings.useClassForEdgeLabel))
       // USE THE LABEL AS DOCUMENT CLASS
       return checkForClassInSchema(iLabel);
 
     return OrientEdgeType.CLASS_NAME;
+  }
+
+  @Override
+  public void writeExternal(final ObjectOutput out) throws IOException {
+    super.writeExternal(out);
+
+    out.writeObject(vOut != null ? vOut.getIdentity() : null);
+    out.writeObject(vIn != null ? vIn.getIdentity() : null);
+    out.writeUTF(label);
+  }
+
+  @Override
+  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    super.readExternal(in);
+
+    vOut = (OIdentifiable) in.readObject();
+    vIn = (OIdentifiable) in.readObject();
+    label = in.readUTF();
   }
 
   /**
@@ -520,4 +553,5 @@ public class OrientEdge extends OrientElement implements Edge {
     } else
       throw new IllegalStateException("Wrong type found in the field '" + iFieldName + "': " + iFieldValue.getClass());
   }
+
 }
