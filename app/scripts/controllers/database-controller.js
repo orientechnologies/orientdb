@@ -5,6 +5,13 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.limit = 20;
 
     $scope.countPage = 5;
+    $scope.hideSettings = localStorageService.get("hideSettings");
+    if ($scope.hideSettings == null) {
+        $scope.hideSettings = false;
+        localStorageService.add("hideSettings", $scope.hideSettings);
+    } else {
+        $scope.hideSettings = JSON.parse($scope.hideSettings);
+    }
     $scope.keepLimit = localStorageService.get("keepLimit");
     if (!$scope.keepLimit) {
         $scope.keepLimit = 10;
@@ -16,6 +23,8 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         $scope.shallow = true;
         localStorageService.add("shallowCollection", $scope.shallow);
 
+    } else {
+        $scope.shallow = JSON.parse($scope.shallow);
     }
     $scope.countPageOptions = [5, 10, 20, 50, 100, 500, 1000, 2000, 5000];
     var dbTime = localStorageService.get("Timeline");
@@ -94,6 +103,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         if ($scope.selectedContentType == 'CSV')
             conttype = 'text/csv';
 
+        console.log($scope.shallow);
         CommandApi.queryText({database: $routeParams.database, contentType: conttype, language: $scope.language, text: $scope.queryText, limit: $scope.limit, shallow: $scope.shallow, verbose: false}, function (data) {
 
             if (data.result) {
@@ -160,6 +170,20 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         $scope.timeline.splice(idx, 1);
         localStorageService.add("Timeline", $scope.timeline);
     }
+    $scope.$watch("limit", function (data) {
+        $scope.limit = data;
+    });
+    $scope.$watch("selectedContentType", function (data) {
+        $scope.selectedContentType = data;
+    });
+    $scope.$watch("shallow", function (data) {
+        $scope.shallow = data;
+        localStorageService.add("shallowCollection", data);
+    });
+    $scope.$watch("keepLimit", function (data) {
+        $scope.keepLimit = data;
+        localStorageService.add("keepLimit", data);
+    });
 
 }]);
 dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller', '$ojson', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller, $ojson) {
@@ -186,13 +210,14 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
         total: data.length, // length of data
         getData: function ($defer, params) {
             // use build-in angular filter
-//            var orderedData = params.sorting() ?
-//                $filter('orderBy')(data, params.orderBy()) :
-//                data;
-            $defer.resolve(data.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+            var orderedData = params.sorting() ?
+                $filter('orderBy')(data, params.orderBy()) :
+                data;
+            $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
         }
     });
 
+    $scope.tableParams.settings().counts = [10, 25, 50, 100, 1000, 5000];
     $scope.switchPage = function (index) {
         if (index != $scope.item.currentPage) {
             $scope.item.currentPage = index;
@@ -245,11 +270,37 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
     });
     $scope.$watch("shallow", function (data) {
         $scope.$parent.shallow = data;
+        localStorageService.add("shallowCollection", data);
     });
     $scope.$watch("keepLimit", function (data) {
         $scope.$parent.keepLimit = data;
         localStorageService.add("keepLimit", data);
     });
+    $scope.$watch("hideSettings", function (data) {
+        $scope.$parent.hideSettings = data;
+        console.log(data);
+        localStorageService.add("hideSettings", data);
+        if ($scope.hide) {
+            $scope.hide();
+        }
+    });
+    $scope.$parent.$watch("limit", function (data) {
+        $scope.limit = data;
+    });
+    $scope.$parent.$watch("selectedContentType", function (data) {
+        $scope.selectedContentType = data;
+    });
+    $scope.$parent.$watch("shallow", function (data) {
+        $scope.shallow = data;
+    });
+    $scope.$parent.$watch("keepLimit", function (data) {
+        $scope.keepLimit = data;
+    });
+    $scope.$parent.$watch("hideSettings", function (data) {
+        $scope.hideSettings = data;
+    });
+
+
 }]);
 
 

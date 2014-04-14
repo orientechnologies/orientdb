@@ -26,8 +26,6 @@ body div.container-studio {
 
 }
 
-
-
 .console_class_functions .CodeMirror {
     height: 300px;
 }
@@ -37,8 +35,11 @@ body div.container-studio {
 }
 
 .CodeMirror-scroll {
-    overflow-y: hidden;
-    overflow-x: auto;
+    overflow: auto;
+}
+
+.CodeMirror-wrap .CodeMirror-scroll {
+    overflow: auto;
 }
 
 .queryText {
@@ -193,6 +194,7 @@ div.edge form.bs-docs-example:after {
 .odoc .query-header a {
     display: inline;
 }
+
 .query-header a {
     text-overflow: ellipsis;
     overflow: hidden;
@@ -274,7 +276,7 @@ div.edge form.bs-docs-example:after {
 
 .master-query .query-info {
     background-color: #F5F5F5;
-    height: 30px;
+    height: 40px;
     border-radius: 0px 0px 4px 4px;
     padding: 0;
     border-top: none;
@@ -289,6 +291,13 @@ div.edge form.bs-docs-example:after {
     margin-bottom: 0;
 }
 
+.master-query .query-info > form {
+    margin-right: 10px;
+    color: #333333;
+}
+.input-xxsmall {
+    width: 30px;
+}
 .query-info {
     background-color: #FFFFFF;
     border-top: 1px solid #E7E9EB;

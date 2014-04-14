@@ -1,5 +1,5 @@
 var schemaModule = angular.module('schema.controller', ['database.services']);
-schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window','Spinner', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window,Spinner) {
+schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window, Spinner) {
 
     //for pagination
     $scope.countPage = 10;
@@ -409,6 +409,10 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
     $scope.database = Database;
     $scope.listClasses = $scope.database.listNameOfClasses();
 
+
+    $scope.$watch("property['type']", function (data) {
+        console.log(data);
+    });
     $scope.salvaProperty = function () {
 
         var prop = $scope.property;

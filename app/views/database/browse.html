@@ -3,7 +3,8 @@
         <!--<div class="query-header">-->
         <!--<h5>Query Builder</h5>-->
         <!--</div>-->
-        <div class="query-actions">
+        <div class="query-actions" ng-show="hideSettings">
+
             <div class="btn-toolbar pull-right">
                 <div class="btn-group">
                     <button ng-click="query()" ng-disabled="!queryText" class="btn btn-small btn-primary"><i
@@ -30,7 +31,32 @@
             </form>
         </div>
         <div class="query-info">
+            <form class="form-inline pull-right" ng-show="!hideSettings">
+                <fieldset>
 
+                    <label>Content Type
+                        <select ng-model="selectedContentType" class="input-small"
+                                ng-options="q for q in contentType"></select>
+                    </label>
+                    <label>Limit
+                        <input type="text" class="input-xxsmall" ng-model="limit"/>
+                    </label>
+                    <label> Keep result set in history
+                        <input type="text" class="input-xxsmall" ng-model="keepLimit"/>
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" class="input-xxsmall" ng-model="shallow"/> Shallow collection
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" class="input-xxsmall" ng-model="hideSettings"/> Hide settings
+                    </label>
+                    <button ng-click="query()" ng-disabled="!queryText" class="btn btn-small btn-primary"><i
+                            class="icon-white icon-cog"></i>
+                        Run
+                    </button>
+
+                </fieldset>
+            </form>
         </div>
     </div>
     <div id="download">

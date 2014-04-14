@@ -534,3 +534,16 @@ Widget.directive('autofill', function ($timeout) {
         }
     }
 });
+Widget.directive('select', [
+    '$timeout',
+
+    function ($timeout) {
+        return {
+            restrict: 'E',
+            link: function (scope, element, attrs) {
+                element.bind('blur', function () {
+                    element.trigger('change');
+                });
+            }
+        };
+    }]);
