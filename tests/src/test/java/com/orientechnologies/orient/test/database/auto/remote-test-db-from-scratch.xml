@@ -91,6 +91,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.IndexTxTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OrderByIndexReuseTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.LinkSetIndexTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.CompositeIndexWithNullTest"/>
         </classes>
     </test>
     <test name="Dictionary">

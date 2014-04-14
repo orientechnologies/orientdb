@@ -1,15 +1,15 @@
 package com.orientechnologies.orient.core.index;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.*;
 
 @Test
 public class OCompositeKeyTest {
 
-  @Test
   public void testEqualSameKeys() {
     final OCompositeKey compositeKey = new OCompositeKey();
 
@@ -24,7 +24,6 @@ public class OCompositeKeyTest {
     assertTrue(compositeKey.hashCode() == anotherCompositeKey.hashCode());
   }
 
-  @Test
   public void testEqualNotSameKeys() {
     final OCompositeKey compositeKey = new OCompositeKey();
 
@@ -39,25 +38,21 @@ public class OCompositeKeyTest {
     assertFalse(compositeKey.equals(anotherCompositeKey));
   }
 
-  @Test
   public void testEqualNull() {
     final OCompositeKey compositeKey = new OCompositeKey();
     assertFalse(compositeKey.equals(null));
   }
 
-  @Test
   public void testEqualSame() {
     final OCompositeKey compositeKey = new OCompositeKey();
     assertTrue(compositeKey.equals(compositeKey));
   }
 
-  @Test
   public void testEqualDiffClass() {
     final OCompositeKey compositeKey = new OCompositeKey();
     assertFalse(compositeKey.equals("1"));
   }
 
-  @Test
   public void testAddKeyComparable() {
     final OCompositeKey compositeKey = new OCompositeKey();
 
@@ -67,7 +62,6 @@ public class OCompositeKeyTest {
     assertTrue(compositeKey.getKeys().contains("a"));
   }
 
-  @Test
   public void testAddKeyComposite() {
     final OCompositeKey compositeKey = new OCompositeKey();
 
@@ -84,7 +78,6 @@ public class OCompositeKeyTest {
     assertTrue(compositeKey.getKeys().contains("b"));
   }
 
-  @Test
   public void testCompareToSame() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey("a");
@@ -97,7 +90,6 @@ public class OCompositeKeyTest {
     assertEquals(compositeKey.compareTo(anotherCompositeKey), 0);
   }
 
-  @Test
   public void testCompareToPartiallyOneCase() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey("a");
@@ -111,7 +103,6 @@ public class OCompositeKeyTest {
     assertEquals(compositeKey.compareTo(anotherCompositeKey), 0);
   }
 
-  @Test
   public void testCompareToPartiallySecondCase() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey("a");
@@ -125,7 +116,6 @@ public class OCompositeKeyTest {
     assertEquals(compositeKey.compareTo(anotherCompositeKey), 0);
   }
 
-  @Test
   public void testCompareToGT() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey("b");
@@ -137,7 +127,6 @@ public class OCompositeKeyTest {
     assertEquals(compositeKey.compareTo(anotherCompositeKey), 1);
   }
 
-  @Test
   public void testCompareToLT() {
     final OCompositeKey compositeKey = new OCompositeKey();
     compositeKey.addKey("a");
@@ -150,7 +139,6 @@ public class OCompositeKeyTest {
     assertEquals(compositeKey.compareTo(anotherCompositeKey), -1);
   }
 
-  @Test
   public void testCompareToSymmetryOne() {
     final OCompositeKey compositeKeyOne = new OCompositeKey();
     compositeKeyOne.addKey(1);
@@ -165,7 +153,6 @@ public class OCompositeKeyTest {
     assertEquals(compositeKeyTwo.compareTo(compositeKeyOne), 1);
   }
 
-  @Test
   public void testCompareToSymmetryTwo() {
     final OCompositeKey compositeKeyOne = new OCompositeKey();
     compositeKeyOne.addKey(1);
@@ -178,5 +165,92 @@ public class OCompositeKeyTest {
 
     assertEquals(compositeKeyOne.compareTo(compositeKeyTwo), 0);
     assertEquals(compositeKeyTwo.compareTo(compositeKeyOne), 0);
+  }
+
+  public void testCompareNullAtTheEnd() {
+    final OCompositeKey compositeKeyOne = new OCompositeKey();
+    compositeKeyOne.addKey(2);
+    compositeKeyOne.addKey(2);
+
+    final OCompositeKey compositeKeyTwo = new OCompositeKey();
+    compositeKeyTwo.addKey(2);
+    compositeKeyTwo.addKey(null);
+
+    final OCompositeKey compositeKeyThree = new OCompositeKey();
+    compositeKeyThree.addKey(2);
+    compositeKeyThree.addKey(null);
+
+    assertEquals(compositeKeyOne.compareTo(compositeKeyTwo), 1);
+    assertEquals(compositeKeyTwo.compareTo(compositeKeyOne), -1);
+    assertEquals(compositeKeyTwo.compareTo(compositeKeyThree), 0);
+  }
+
+  public void testCompareNullAtTheMiddle() {
+    final OCompositeKey compositeKeyOne = new OCompositeKey();
+    compositeKeyOne.addKey(2);
+    compositeKeyOne.addKey(2);
+    compositeKeyOne.addKey(3);
+
+    final OCompositeKey compositeKeyTwo = new OCompositeKey();
+    compositeKeyTwo.addKey(2);
+    compositeKeyTwo.addKey(null);
+    compositeKeyTwo.addKey(3);
+
+    final OCompositeKey compositeKeyThree = new OCompositeKey();
+    compositeKeyThree.addKey(2);
+    compositeKeyThree.addKey(null);
+    compositeKeyThree.addKey(3);
+
+    assertEquals(compositeKeyOne.compareTo(compositeKeyTwo), 1);
+    assertEquals(compositeKeyTwo.compareTo(compositeKeyOne), -1);
+    assertEquals(compositeKeyTwo.compareTo(compositeKeyThree), 0);
+  }
+
+  public void testDocumentSerializationCompositeKeyNull() {
+    final OCompositeKey compositeKeyOne = new OCompositeKey();
+    compositeKeyOne.addKey(1);
+    compositeKeyOne.addKey(null);
+    compositeKeyOne.addKey(2);
+
+    ODocument document = compositeKeyOne.toDocument();
+
+    final OCompositeKey compositeKeyTwo = new OCompositeKey();
+    compositeKeyTwo.fromDocument(document);
+
+    assertEquals(compositeKeyOne, compositeKeyTwo);
+    assertNotSame(compositeKeyOne, compositeKeyTwo);
+  }
+
+  public void testNativeBinarySerializationCompositeKeyNull() {
+    final OCompositeKey compositeKeyOne = new OCompositeKey();
+    compositeKeyOne.addKey(1);
+    compositeKeyOne.addKey(null);
+    compositeKeyOne.addKey(2);
+
+    int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKeyOne);
+    byte[] data = new byte[len];
+    OCompositeKeySerializer.INSTANCE.serializeNative(compositeKeyOne, data, 0);
+
+    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeNative(data, 0);
+
+    assertEquals(compositeKeyOne, compositeKeyTwo);
+    assertNotSame(compositeKeyOne, compositeKeyTwo);
+  }
+
+  public void testDirectMemoryBinarySerializationCompositeKeyNull() {
+    final OCompositeKey compositeKeyOne = new OCompositeKey();
+    compositeKeyOne.addKey(1);
+    compositeKeyOne.addKey(null);
+    compositeKeyOne.addKey(2);
+
+    int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKeyOne);
+    ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(len);
+
+    OCompositeKeySerializer.INSTANCE.serializeInDirectMemory(compositeKeyOne, directMemoryPointer, 0);
+
+    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeFromDirectMemory(directMemoryPointer, 0);
+
+    assertEquals(compositeKeyOne, compositeKeyTwo);
+    assertNotSame(compositeKeyOne, compositeKeyTwo);
   }
 }

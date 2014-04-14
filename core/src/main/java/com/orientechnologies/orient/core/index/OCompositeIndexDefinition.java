@@ -141,7 +141,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
     for (final OIndexDefinition indexDefinition : indexDefinitions) {
       final Object result = indexDefinition.getDocumentValueToIndex(iDocument);
 
-      if (result == null)
+      if (result == null && isNullValuesIgnored())
         return null;
 
       containsCollection = addKey(firstKey, compositeKeys, containsCollection, result);
@@ -191,7 +191,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
 
       final Object keyValue = indexDefinition.createValue(indexParams);
 
-      if (keyValue == null)
+      if (keyValue == null && isNullValuesIgnored())
         return null;
 
       containsCollection = addKey(firstKey, compositeKeys, containsCollection, keyValue);
@@ -234,7 +234,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
       else
         keyValue = indexDefinition.createValue(indexParams);
 
-      if (keyValue == null)
+      if (keyValue == null && isNullValuesIgnored())
         return null;
 
       compositeKey.addKey(keyValue);

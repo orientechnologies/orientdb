@@ -544,7 +544,7 @@ public class SBTreeTest {
       if (ascSortOrder)
         valuesIterator = keyValues.tailMap(fromKey, keyInclusive).values().iterator();
       else
-        valuesIterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).values().iterator();
+        valuesIterator = keyValues.tailMap(fromKey, keyInclusive).descendingMap().values().iterator();
 
       Iterator<OIdentifiable> resultIterator = orids.iterator();
 
@@ -566,7 +566,7 @@ public class SBTreeTest {
   }
 
   private void assertIterateMajorEntries(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive,
-																				 boolean ascSortOrder) {
+      boolean ascSortOrder) {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
       int fromKey;
@@ -650,7 +650,7 @@ public class SBTreeTest {
   }
 
   private void assertIterateMinorEntries(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive,
-																				 boolean ascSortOrder) {
+      boolean ascSortOrder) {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
       int toKey;
@@ -762,8 +762,8 @@ public class SBTreeTest {
       System.out.println("Iterations per second : " + (totalIterations * 1000) / totalTime);
   }
 
-  private void assertIterateBetweenEntries(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean fromInclusive,
-																					 boolean toInclusive, boolean ascSortOrder) {
+  private void assertIterateBetweenEntries(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random,
+      boolean fromInclusive, boolean toInclusive, boolean ascSortOrder) {
     long totalTime = 0;
     long totalIterations = 0;
 

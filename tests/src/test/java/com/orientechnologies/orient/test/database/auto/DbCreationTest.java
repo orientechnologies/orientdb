@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.Locale;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
@@ -37,6 +29,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.Locale;
 
 @Test(groups = "db")
 public class DbCreationTest {
@@ -248,16 +247,17 @@ public class DbCreationTest {
   }
 
   public void testZipCompression() {
-    String currentCompression = OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString();
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("gzip");
 
-    final OrientGraphFactory factory = new OrientGraphFactory("plocal:target/gzipfail", "admin", "admin");
+		final String buildDirectory = System.getProperty("buildDirectory", ".");
+		String dburl = "plocal:" + buildDirectory + "/test-db/" + this.getClass().getSimpleName();
+
+    final OrientGraphFactory factory = new OrientGraphFactory(dburl, "admin", "admin");
     if (factory.exists())
       factory.drop();
     OrientGraphNoTx db = factory.getNoTx();
     db.drop();
-
-    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue(currentCompression);
+    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
   }
 
 }

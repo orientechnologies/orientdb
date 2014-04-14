@@ -25,13 +25,7 @@ import com.sun.swing.internal.plaf.metal.resources.metal;
 import sun.misc.resources.Messages_pt_BR;
 
 /**
- * Container for the list of heterogeneous values that are going to be stored in
- * {@link com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree} as composite keys.
- * 
- * Such keys is allowed to use only in
- * {@link com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree#subMap(Object, boolean, Object, boolean)},
- * {@link com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree#tailMap(Object, boolean)} and
- * {@link com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree#headMap(Object, boolean)} methods.
+ * Container for the list of heterogeneous values that are going to be stored in in index as composite keys.
  * 
  * @see com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree.PartialSearchMode
  * @author Andrey lomakin, Artem Orobets
@@ -56,6 +50,7 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
   public OCompositeKey(final Object... keys) {
     this.keys = new ArrayList<Object>(keys.length);
     this.comparator = ODefaultComparator.INSTANCE;
+
     for (final Object key : keys)
       addKey(key);
   }
@@ -178,7 +173,7 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
 
   @Override
   public void fromDocument(ODocument document) {
-		document.setLazyLoad(false);
+    document.setLazyLoad(false);
 
     final String[] fieldNames = document.fieldNames();
 

@@ -28,7 +28,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  * 
  */
 public abstract class OAbstractIndexDefinition extends ODocumentWrapperNoClass implements OIndexDefinition {
-  protected OCollate collate = new ODefaultCollate();
+  protected OCollate collate           = new ODefaultCollate();
+  private boolean    nullValuesIgnored = true;
 
   protected OAbstractIndexDefinition() {
     super(new ODocument());
@@ -63,11 +64,26 @@ public abstract class OAbstractIndexDefinition extends ODocumentWrapperNoClass i
     if (!collate.equals(that.collate))
       return false;
 
+    if (nullValuesIgnored != that.nullValuesIgnored)
+      return false;
+
     return true;
   }
 
   @Override
   public int hashCode() {
-    return collate.hashCode();
+    int result = collate.hashCode();
+    result = 31 * result + (nullValuesIgnored ? 1 : 0);
+    return result;
+  }
+
+  @Override
+  public boolean isNullValuesIgnored() {
+    return nullValuesIgnored;
+  }
+
+  @Override
+  public void setNullValuesIgnored(boolean value) {
+    nullValuesIgnored = value;
   }
 }

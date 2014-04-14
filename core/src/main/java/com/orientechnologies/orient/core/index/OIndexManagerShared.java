@@ -162,6 +162,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         }
       }
 
+      if (metadata != null && Boolean.FALSE.equals(metadata.field("ignoreNullValues")))
+        indexDefinition.setNullValuesIgnored(false);
+
       index.create(iName, indexDefinition, clusterName, clustersToIndex, true, iProgressListener);
       addIndexInternal(index);
 
