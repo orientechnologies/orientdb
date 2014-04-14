@@ -53,9 +53,10 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public IndexWriter openIndexWriter(Directory directory) throws IOException {
-    Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_47);
-    IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_47, analyzer);
+  public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {
+    Analyzer analyzer = getAnalyzer(metadata);
+    Version version = getVersion(metadata);
+    IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     return new IndexWriter(directory, iwc);
   }
@@ -63,7 +64,8 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
   @Override
   public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
     Analyzer analyzer = getAnalyzer(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_47, analyzer);
+    Version version = getVersion(metadata);
+    IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     return new IndexWriter(directory, iwc);
   }
@@ -272,22 +274,23 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
   }
 
-    @Override
-    public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-        return null;
-    }
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer transformer) {
+    return null;
+  }
 
-    @Override
-    public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-        return null;
-    }
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return null;
+  }
 
-    @Override
-    public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-        return null;
-    }
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return null;
+  }
 
-    @Override
+  @Override
   public boolean hasRangeQuerySupport() {
     return false;
   }

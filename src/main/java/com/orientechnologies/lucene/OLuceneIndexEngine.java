@@ -65,7 +65,7 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
   @Override
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
-    lucene.load(indexRid, indexName, indexDefinition, isAutomatic);
+    lucene.load(indexRid, indexName, indexDefinition, isAutomatic, indexMetadata);
   }
 
   @Override

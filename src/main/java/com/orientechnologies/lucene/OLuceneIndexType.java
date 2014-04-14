@@ -64,51 +64,6 @@ public class OLuceneIndexType {
         booleanQ.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.KEY, key.toString())), BooleanClause.Occur.SHOULD);
       }
       query = booleanQ;
-    } else if (key instanceof Number) {
-      String idx = index.getFields().iterator().next();
-      Number number = (Number) key;
-      if (key instanceof Long) {
-        query = NumericRangeQuery.newLongRange(idx, number.longValue(), number.longValue(), true, true);
-      } else if (key instanceof Float) {
-        query = NumericRangeQuery.newFloatRange(idx, number.floatValue(), number.floatValue(), true, true);
-      } else if (key instanceof Double) {
-        query = NumericRangeQuery.newDoubleRange(idx, number.doubleValue(), number.doubleValue(), true, true);
-      } else {
-        query = NumericRangeQuery.newIntRange(idx, number.intValue(), number.intValue(), true, true);
-      }
-    } else if (key instanceof Date) {
-      String idx = index.getFields().iterator().next();
-      query = NumericRangeQuery.newLongRange(idx, ((Date) key).getTime(), ((Date) key).getTime(), true, true);
-    }
-    return query;
-  }
-
-  public static Query createRangeQuery(OIndexDefinition index, Object fromValue, Object toValue, boolean includeFrom,
-      boolean includeTo) {
-
-    Query query = null;
-    if (fromValue instanceof Number || toValue instanceof Number) {
-      String idx = index.getFields().iterator().next();
-      Number from = (Number) fromValue;
-      Number to = (Number) toValue;
-
-      if (from instanceof Long || to instanceof Long) {
-        return NumericRangeQuery.newLongRange(idx, from != null ? from.longValue() : 0, to != null ? to.longValue()
-            : Long.MAX_VALUE, includeFrom, includeTo);
-      } else if (from instanceof Double || to instanceof Double) {
-        return NumericRangeQuery.newDoubleRange(idx, from != null ? from.doubleValue() : 0, to != null ? to.doubleValue()
-            : Double.MAX_VALUE, includeFrom, includeTo);
-      } else if (from instanceof Float || to instanceof Float) {
-        return NumericRangeQuery.newFloatRange(idx, from != null ? from.floatValue() : 0, to != null ? to.floatValue()
-            : Float.MAX_VALUE, includeFrom, includeTo);
-      } else {
-        return NumericRangeQuery.newIntRange(idx, from != null ? from.intValue() : 0, to != null ? to.intValue()
-            : Integer.MAX_VALUE, includeFrom, includeTo);
-      }
-
-    } else if (fromValue instanceof Date && toValue instanceof Date) {
-      String idx = index.getFields().iterator().next();
-      query = NumericRangeQuery.newLongRange(idx, ((Date) fromValue).getTime(), ((Date) toValue).getTime(), includeFrom, includeTo);
     }
     return query;
   }
@@ -117,15 +72,15 @@ public class OLuceneIndexType {
     return new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.toString()));
   }
 
-  public static Query createFullQuery(OIndexDefinition index, Object key, Analyzer analyzer) throws ParseException {
+  public static Query createFullQuery(OIndexDefinition index, Object key, Analyzer analyzer, Version version) throws ParseException {
     QueryParser queryParser = null;
     String query = null;
     if (key instanceof String) {
       query = (String) key;
       if (((String) key).startsWith("(")) {
-        queryParser = new QueryParser(Version.LUCENE_47, "", analyzer);
+        queryParser = new QueryParser(version, "", analyzer);
       } else {
-        queryParser = new MultiFieldQueryParser(Version.LUCENE_47, index.getFields().toArray(new String[0]), analyzer);
+        queryParser = new MultiFieldQueryParser(version, index.getFields().toArray(new String[0]), analyzer);
       }
     } else {
       query = key.toString();
@@ -148,6 +103,5 @@ public class OLuceneIndexType {
 
     return new Sort(new SortField(key, fieldType, ascSortOrder));
   }
-
 
 }

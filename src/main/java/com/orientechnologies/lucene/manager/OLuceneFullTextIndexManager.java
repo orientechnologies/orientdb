@@ -40,16 +40,17 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   public IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException {
 
     Analyzer analyzer = getAnalyzer(metadata);
-    IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_47, analyzer);
+    Version version = getVersion(metadata);
+    IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
     return new IndexWriter(directory, iwc);
   }
 
   @Override
-  public IndexWriter openIndexWriter(Directory directory) throws IOException {
-    Analyzer analyzer = new StandardAnalyzer(Version.LUCENE_47);
-    IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_47, analyzer);
-
+  public IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException {
+    Analyzer analyzer = getAnalyzer(metadata);
+    Version version = getVersion(metadata);
+    IndexWriterConfig iwc = new IndexWriterConfig(version, analyzer);
     iwc.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
     return new IndexWriter(directory, iwc);
   }
@@ -104,7 +105,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     Set<OIdentifiable> results = new HashSet<OIdentifiable>();
     Query q = null;
     try {
-      q = OLuceneIndexType.createFullQuery(index, key, indexWriter.getAnalyzer());
+      q = OLuceneIndexType.createFullQuery(index, key, indexWriter.getAnalyzer(), getVersion(metadata));
       return getResults(q);
     } catch (ParseException e) {
       throw new RuntimeException("Error parsing query ", e);
@@ -132,7 +133,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     try {
       IndexSearcher searcher = getSearcher();
 
-      TopDocs docs = searcher.search(query, 20);
+      TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
       ScoreDoc[] hits = docs.scoreDocs;
       for (ScoreDoc score : hits) {
         Document ret = searcher.doc(score.doc);
@@ -190,22 +191,23 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   }
 
-    @Override
-    public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-        return null;
-    }
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer transformer) {
+    return null;
+  }
 
-    @Override
-    public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-        return null;
-    }
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return null;
+  }
 
-    @Override
-    public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-        return null;
-    }
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return null;
+  }
 
-    @Override
+  @Override
   public boolean hasRangeQuerySupport() {
     return false;
   }

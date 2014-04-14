@@ -45,10 +45,11 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  */
 public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
 
-  public static final String               RID         = "RID";
-  public static final String               KEY         = "KEY";
+  public static final String               RID            = "RID";
+  public static final String               KEY            = "KEY";
+  public static final Version              LUCENE_VERSION = Version.LUCENE_47;
 
-  protected IndexWriter                    indexWriter = null;
+  protected IndexWriter                    indexWriter    = null;
   protected SearcherManager                manager;
   protected OIndexDefinition               index;
   protected TrackingIndexWriter            mgrWriter;
@@ -60,7 +61,9 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   protected ControlledRealTimeReopenThread nrt;
   private boolean                          rebuilding;
   private long                             reopenToken;
-  private ODocument                        metadata;
+  protected ODocument                      metadata;
+
+  protected Version                        version;
 
   public OLuceneIndexManagerAbstract() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
@@ -74,6 +77,11 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   public void createIndex(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
+      OStreamSerializer valueSerializer, boolean isAutomatic, ODocument metadata) {
+    initIndex(indexName, indexDefinition, clusterIndexName, valueSerializer, isAutomatic, metadata);
+  }
+
+  protected void initIndex(String indexName, OIndexDefinition indexDefinition, String clusterIndexName,
       OStreamSerializer valueSerializer, boolean isAutomatic, ODocument metadata) {
     this.index = indexDefinition;
     this.indexName = indexName;
@@ -119,7 +127,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  public abstract IndexWriter openIndexWriter(Directory directory) throws IOException;
+  public abstract IndexWriter openIndexWriter(Directory directory, ODocument metadata) throws IOException;
 
   public abstract IndexWriter createIndexWriter(Directory directory, ODocument metadata) throws IOException;
 
@@ -261,29 +269,17 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   @Override
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
-    try {
-      this.index = indexDefinition;
-      this.indexName = indexName;
-      this.automatic = isAutomatic;
-      this.clusterIndexName = clusterIndexName;
-      ODatabaseRecord database = getDatabase();
-      final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
-      Directory dir = FSDirectory.open(new File(storageLocalAbstract.getStoragePath() + File.separator + indexName));
-      indexWriter = openIndexWriter(dir);
-      mgrWriter = new TrackingIndexWriter(indexWriter);
-      manager = new SearcherManager(indexWriter, true, null);
-      nrt = new ControlledRealTimeReopenThread(mgrWriter, manager, 60.00, 0.1);
-      nrt.start();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+
+  }
+
+  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic, ODocument metadata) {
+    initIndex(indexName, indexDefinition, null, null, isAutomatic, metadata);
   }
 
   public long size(ValuesTransformer<V> transformer) {
-    Directory d = indexWriter.getDirectory();
     IndexReader reader = null;
     try {
-      reader = IndexReader.open(d);
+      reader = getSearcher().getIndexReader();
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -310,7 +306,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         try {
           Class classAnalyzer = Class.forName(analyzerString);
           Constructor constructor = classAnalyzer.getConstructor(Version.class);
-          analyzer = (Analyzer) constructor.newInstance(Version.LUCENE_47);
+          analyzer = (Analyzer) constructor.newInstance(getVersion(metadata));
         } catch (ClassNotFoundException e) {
           e.printStackTrace();
         } catch (NoSuchMethodException e) {
@@ -324,9 +320,15 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         }
       }
     } else {
-      analyzer = new StandardAnalyzer(Version.LUCENE_47);
+      analyzer = new StandardAnalyzer(getVersion(metadata));
     }
     return analyzer;
   }
 
+  public Version getVersion(ODocument metadata) {
+    if (version == null) {
+      version = LUCENE_VERSION;
+    }
+    return version;
+  }
 }
