@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexEngine;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -111,7 +113,7 @@ public class OLuceneNotUniqueIndexManager extends OLuceneIndexManagerAbstract<Se
     try {
       IndexSearcher searcher = getSearcher();
 
-      TopDocs docs = searcher.search(query, 100);
+      TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
       ScoreDoc[] hits = docs.scoreDocs;
       for (ScoreDoc score : hits) {
         Document ret = searcher.doc(score.doc);
@@ -128,7 +130,7 @@ public class OLuceneNotUniqueIndexManager extends OLuceneIndexManagerAbstract<Se
     try {
 
       IndexSearcher searcher = getSearcher();
-      TopDocs docs = searcher.search(query, 100);
+      TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
       ScoreDoc[] hits = docs.scoreDocs;
       for (ScoreDoc score : hits) {
         Document ret = searcher.doc(score.doc);
@@ -221,7 +223,22 @@ public class OLuceneNotUniqueIndexManager extends OLuceneIndexManagerAbstract<Se
 
   }
 
-  @Override
+    @Override
+    public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder, ValuesTransformer<Set<OIdentifiable>> transformer) {
+    return null;
+    }
+
+    @Override
+    public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<Set<OIdentifiable>> transformer) {
+        return null;
+    }
+
+    @Override
+    public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<Set<OIdentifiable>> transformer) {
+        return null;
+    }
+
+    @Override
   public boolean hasRangeQuerySupport() {
     return true;
   }

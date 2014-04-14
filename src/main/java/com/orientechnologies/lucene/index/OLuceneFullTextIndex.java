@@ -19,7 +19,7 @@ public class OLuceneFullTextIndex extends OIndexFullText implements OLuceneIndex
 
   public OLuceneFullTextIndex(String typeId, String algorithm, OLuceneIndexEngine indexEngine, String valueContainerAlgorithm,
       ODocument metadata) {
-    super(typeId, algorithm, indexEngine, valueContainerAlgorithm);
+    super(typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     indexEngine.setIndexMetadata(metadata);
   }
 

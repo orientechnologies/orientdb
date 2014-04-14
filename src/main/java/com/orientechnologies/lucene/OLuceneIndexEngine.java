@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -217,6 +218,23 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascSortOrder,
       ValuesTransformer<V> transformer, EntriesResultListener entriesResultListener) {
     lucene.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, ascSortOrder, transformer, entriesResultListener);
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer<V> transformer) {
+    return lucene.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer) {
+    return lucene.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
+    return lucene.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
   }
 
   @Override

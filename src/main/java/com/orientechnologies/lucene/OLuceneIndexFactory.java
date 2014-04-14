@@ -9,6 +9,7 @@ import com.orientechnologies.lucene.index.OLuceneIndexNotUnique;
 import com.orientechnologies.lucene.index.OLuceneIndexUnique;
 import com.orientechnologies.lucene.index.OLuceneSpatialIndex;
 import com.orientechnologies.lucene.manager.*;
+import com.orientechnologies.lucene.shape.OShapeFactoryImpl;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -75,7 +76,7 @@ public class OLuceneIndexFactory implements OIndexFactory {
           new OLuceneFullTextIndexManager(), indexType), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
       return new OLuceneSpatialIndex(indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneSpatialIndexManager(), indexType), valueContainerAlgorithm);
+          new OLuceneSpatialIndexManager(new OShapeFactoryImpl()), indexType), valueContainerAlgorithm);
     } else if (OClass.INDEX_TYPE.DICTIONARY.toString().equals(indexType)) {
       return new OIndexDictionary(indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<OIdentifiable>(
           new OLuceneDictionaryIndexManager(), indexType), valueContainerAlgorithm);

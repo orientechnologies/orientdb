@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -40,9 +41,9 @@ public class OLuceneNearOperator extends OQueryOperatorEqualityNotNulls {
 
     SpatialContext ctx = SpatialContext.GEO;
     Object[] points = parseParams(iRecord, iCondition);
-    Point p = ctx.makePoint((Double) points[2], (Double) points[3]);
+    Point p = ctx.makePoint((Double) points[3], (Double) points[2]);
 
-    double docDistDEG = ctx.getDistCalc().distance(p, (Double) points[0], (Double) points[1]);
+    double docDistDEG = ctx.getDistCalc().distance(p, (Double) points[1], (Double) points[0]);
     double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
     iContext.setVariable("$distance", docDistInKM);
     return true;
@@ -73,9 +74,9 @@ public class OLuceneNearOperator extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
-      OIndex.IndexValuesResultListener resultListener) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
 
+    OIndexCursor cursor;
     OIndexDefinition definition = index.getDefinition();
     int idxSize = definition.getFields().size();
     int paramsSize = keyParams.size();
@@ -89,25 +90,19 @@ public class OLuceneNearOperator extends OQueryOperatorEqualityNotNulls {
       } else if (spatial instanceof Map) {
         Map<String, Object> params = (Map<String, Object>) spatial;
 
-        Object dst = params.get("distance");
+        Object dst = params.get("maxDistance");
         if (dst != null && dst instanceof Number) {
           distance = ((Double) OType.convert(dst, Double.class)).doubleValue();
         }
       }
     }
-    Object result = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance));
-    convertIndexResult(result, resultListener);
-    return true;
-  }
-
-  private void convertIndexResult(Object indexResult, OIndex.IndexValuesResultListener resultListener) {
-    if (indexResult instanceof Collection) {
-      for (OIdentifiable identifiable : (Collection<OIdentifiable>) indexResult) {
-        if (!resultListener.addResult(identifiable))
-          return;
-      }
-    } else if (indexResult != null)
-      resultListener.addResult((OIdentifiable) indexResult);
+    Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance));
+    if (indexResult == null || indexResult instanceof OIdentifiable)
+      cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
+    else
+      cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(),
+          new OSpatialCompositeKey(keyParams));
+    return cursor;
   }
 
   @Override

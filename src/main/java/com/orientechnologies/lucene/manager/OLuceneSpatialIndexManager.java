@@ -3,6 +3,9 @@ package com.orientechnologies.lucene.manager;
 import java.io.IOException;
 import java.util.*;
 
+import com.orientechnologies.lucene.shape.OShapeFactory;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexEngine;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
@@ -37,13 +40,14 @@ import com.spatial4j.core.shape.Shape;
  */
 public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
-  private SpatialContext  ctx;
-  private SpatialStrategy strategy;
+  private final OShapeFactory factory;
+  private SpatialContext      ctx;
+  private SpatialStrategy     strategy;
 
-  public OLuceneSpatialIndexManager() {
+  public OLuceneSpatialIndexManager(OShapeFactory factory) {
     super();
     this.ctx = SpatialContext.GEO;
-
+    this.factory = factory;
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 11);
     this.strategy = new RecursivePrefixTreeStrategy(grid, "location");
   }
@@ -143,7 +147,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
         }
       } else if (SpatialOperation.IsWithin.equals(strategy)) {
         try {
-          return searchBBox(newKey);
+          return searchWithin(newKey);
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -176,8 +180,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     ValueSource valueSource = strategy.makeDistanceValueSource(p);
     Sort distSort = new Sort(valueSource.getSortField(false)).rewrite(searcher);
 
-    int limit = 1000;
-    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limit, distSort);
+    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, 1000, distSort);
     ScoreDoc[] scoreDocs = topDocs.scoreDocs;
 
     for (ScoreDoc s : scoreDocs) {
@@ -189,20 +192,18 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     return result;
   }
 
-  public Object searchBBox(OCompositeKey key) throws IOException {
+  public Object searchWithin(OSpatialCompositeKey key) throws IOException {
 
-    Double minLat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class)).doubleValue();
-    Double minLng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class)).doubleValue();
-    Double maxLat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(2), Double.class)).doubleValue();
-    Double maxLng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(3), Double.class)).doubleValue();
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
-    SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, ctx.makeRectangle(minLat, maxLat, minLng, maxLng));
+    Shape shape = factory.makeShape(key, ctx);
+    if (shape == null)
+      return null;
+    SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
     IndexSearcher searcher = getSearcher();
 
     Filter filter = strategy.makeFilter(args);
-    int limit = 1000;
-    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limit);
+    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, 1000);
 
     ScoreDoc[] scoreDocs = topDocs.scoreDocs;
     for (ScoreDoc s : scoreDocs) {
@@ -217,12 +218,11 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
   public void put(Object key, Object value) {
 
     OCompositeKey compositeKey = (OCompositeKey) key;
-    List<Object> numbers = compositeKey.getKeys();
+    if (key instanceof OCompositeKey) {
+    }
     Set<OIdentifiable> container = (Set<OIdentifiable>) value;
     for (OIdentifiable oIdentifiable : container) {
-      Number x = (Number) numbers.get(0);
-      Number y = (Number) numbers.get(1);
-      addDocument(newGeoDocument(oIdentifiable.getIdentity().toString(), ctx.makePoint(y.doubleValue(), x.doubleValue())));
+      addDocument(newGeoDocument(oIdentifiable.getIdentity().toString(), factory.makeShape(compositeKey, ctx)));
     }
   }
 
@@ -272,7 +272,22 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
   }
 
-  @Override
+    @Override
+    public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+        return null;
+    }
+
+    @Override
+    public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+        return null;
+    }
+
+    @Override
+    public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+        return null;
+    }
+
+    @Override
   public boolean hasRangeQuerySupport() {
     return false;
   }

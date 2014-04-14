@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -189,7 +190,22 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   }
 
-  @Override
+    @Override
+    public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+        return null;
+    }
+
+    @Override
+    public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+        return null;
+    }
+
+    @Override
+    public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+        return null;
+    }
+
+    @Override
   public boolean hasRangeQuerySupport() {
     return false;
   }

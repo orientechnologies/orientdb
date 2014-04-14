@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
+import com.sun.jna.platform.FileUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -58,6 +60,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   protected ControlledRealTimeReopenThread nrt;
   private boolean                          rebuilding;
   private long                             reopenToken;
+  private ODocument                        metadata;
 
   public OLuceneIndexManagerAbstract() {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
@@ -77,21 +80,30 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     this.serializer = valueSerializer;
     this.automatic = isAutomatic;
     this.clusterIndexName = clusterIndexName;
+    this.metadata = metadata;
     try {
-      ODatabaseRecord database = getDatabase();
-      final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
-      Directory dir = NIOFSDirectory.open(new File(storageLocalAbstract.getStoragePath() + File.separator + indexName));
+
       this.index = indexDefinition;
 
-      indexWriter = createIndexWriter(dir, metadata);
-      mgrWriter = new TrackingIndexWriter(indexWriter);
-      manager = new SearcherManager(indexWriter, true, null);
-      nrt = new ControlledRealTimeReopenThread(mgrWriter, manager, 60.00, 0.1);
-      nrt.start();
+      reOpen(metadata);
 
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  private void reOpen(ODocument metadata) throws IOException {
+    ODatabaseRecord database = getDatabase();
+    final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
+    Directory dir = NIOFSDirectory.open(new File(storageLocalAbstract.getStoragePath() + File.separator + indexName));
+    indexWriter = createIndexWriter(dir, metadata);
+    mgrWriter = new TrackingIndexWriter(indexWriter);
+    manager = new SearcherManager(indexWriter, true, null);
+    if (nrt != null) {
+      nrt.close();
+    }
+    nrt = new ControlledRealTimeReopenThread(mgrWriter, manager, 60.00, 0.1);
+    nrt.start();
   }
 
   protected IndexSearcher getSearcher() throws IOException {
@@ -149,7 +161,8 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
       ODatabaseRecord database = getDatabase();
       final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
       File f = new File(storageLocalAbstract.getStoragePath() + File.separator + indexName);
-      f.delete();
+
+      OLuceneIndexUtils.deleteFolder(f);
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -217,6 +230,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   @Override
   public void close() {
     try {
+      nrt.close();
       indexWriter.close();
     } catch (IOException e) {
       e.printStackTrace();
@@ -239,6 +253,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public void rollback() {
     try {
       indexWriter.rollback();
+      reOpen(metadata);
     } catch (IOException e) {
       e.printStackTrace();
     }

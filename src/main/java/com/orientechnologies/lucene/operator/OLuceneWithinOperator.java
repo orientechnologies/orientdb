@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -38,26 +39,18 @@ public class OLuceneWithinOperator extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public boolean executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder,
-      OIndex.IndexValuesResultListener resultListener) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     OIndexDefinition definition = index.getDefinition();
     int idxSize = definition.getFields().size();
     int paramsSize = keyParams.size();
-
-    List<Object> params = new ArrayList<Object>();
-
-    for (Object param : keyParams) {
-      if (param instanceof Collection) {
-        for (Object p : (Collection) param) {
-          params.add(p);
-        }
-      } else {
-        return false;
-      }
-    }
-    Object result = index.get(new OSpatialCompositeKey(params).setOperation(SpatialOperation.IsWithin));
-    convertIndexResult(result, resultListener);
-    return true;
+    OIndexCursor cursor;
+    Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setOperation(SpatialOperation.IsWithin));
+    if (indexResult == null || indexResult instanceof OIdentifiable)
+      cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
+    else
+      cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(),
+          new OSpatialCompositeKey(keyParams));
+    return cursor;
   }
 
   private void convertIndexResult(Object indexResult, OIndex.IndexValuesResultListener resultListener) {
