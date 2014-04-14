@@ -16,8 +16,6 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.*;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -25,11 +23,15 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeInverseMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -37,6 +39,10 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -626,8 +632,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     private final OSBTree.OSBTreeCursor<Object, V> treeCursor;
     private final ValuesTransformer<V>             valuesTransformer;
 
-    private Iterator<OIdentifiable>                currentIterator = Collections.emptyIterator();
-    private Object                                 currentKey      = null;
+    private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private Object                  currentKey      = null;
 
     private OSBTreeIndexCursor(OSBTree.OSBTreeCursor<Object, V> treeCursor, ValuesTransformer<V> valuesTransformer) {
       this.treeCursor = treeCursor;

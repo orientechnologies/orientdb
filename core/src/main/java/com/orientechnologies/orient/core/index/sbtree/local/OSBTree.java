@@ -16,21 +16,19 @@
 
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.io.IOException;
-import java.util.*;
-
-import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
-import com.orientechnologies.orient.core.index.OAlwaysLessKey;
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
+import com.orientechnologies.orient.core.index.OAlwaysLessKey;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
+import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -39,6 +37,15 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoper
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -1981,19 +1988,18 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   }
 
   private final class OSBTreeCursorForward implements OSBTreeCursor<K, V> {
-    private final K                   fromKey;
-    private final K                   toKey;
-    private final boolean             fromKeyInclusive;
-    private final boolean             toKeyInclusive;
+    private final K       fromKey;
+    private final K       toKey;
+    private final boolean fromKeyInclusive;
+    private final boolean toKeyInclusive;
 
-    private long                      pageIndex;
-    private int                       itemIndex;
+    private long pageIndex;
+    private int  itemIndex;
 
     private List<Map.Entry<K, V>>     dataCache         = new ArrayList<Map.Entry<K, V>>();
-    private Iterator<Map.Entry<K, V>> dataCacheIterator = Collections.emptyIterator();
+    private Iterator<Map.Entry<K, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
 
-    private OSBTreeCursorForward(long startPageIndex, int startItemIndex, K fromKey, K toKey, boolean fromKeyInclusive,
-        boolean toKeyInclusive) {
+    private OSBTreeCursorForward(long startPageIndex, int startItemIndex, K fromKey, K toKey, boolean fromKeyInclusive, boolean toKeyInclusive) {
       this.fromKey = fromKey;
       this.toKey = toKey;
       this.fromKeyInclusive = fromKeyInclusive;
@@ -2012,7 +2018,7 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       dataCache.clear();
 
-      if (prefetchSize < 0 || prefetchSize > OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger())
+      if (prefetchSize<0 || prefetchSize>OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger())
         prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
 
       if (prefetchSize == 0)
@@ -2020,11 +2026,11 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       acquireSharedLock();
       try {
-        while (dataCache.size() < prefetchSize) {
+        while (dataCache.size()<prefetchSize) {
           if (pageIndex == -1)
             break;
 
-          if (pageIndex >= diskCache.getFilledUpTo(fileId)) {
+          if (pageIndex>=diskCache.getFilledUpTo(fileId)) {
             pageIndex = -1;
             break;
           }
@@ -2033,10 +2039,9 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
           final OCachePointer pointer = cacheEntry.getCachePointer();
 
           try {
-            final OSBTreeBucket<K, V> bucket = new OSBTreeBucket<K, V>(pointer.getDataPointer(), keySerializer, keyTypes,
-                valueSerializer, ODurablePage.TrackMode.NONE);
+            final OSBTreeBucket<K, V> bucket = new OSBTreeBucket<K, V>(pointer.getDataPointer(), keySerializer, keyTypes, valueSerializer, ODurablePage.TrackMode.NONE);
 
-            if (itemIndex >= bucket.size()) {
+            if (itemIndex>=bucket.size()) {
               pageIndex = bucket.getRightSibling();
               itemIndex = 0;
               continue;
@@ -2045,13 +2050,10 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
             final Map.Entry<K, V> entry = convertToMapEntry(bucket.getEntry(itemIndex));
             itemIndex++;
 
-            if (fromKey != null
-                && (fromKeyInclusive ? comparator.compare(entry.getKey(), fromKey) < 0 : comparator
-                    .compare(entry.getKey(), fromKey) <= 0))
+            if (fromKey != null && (fromKeyInclusive ? comparator.compare(entry.getKey(), fromKey)<0 : comparator.compare(entry.getKey(), fromKey)<=0))
               continue;
 
-            if (toKey != null
-                && (toKeyInclusive ? comparator.compare(entry.getKey(), toKey) > 0 : comparator.compare(entry.getKey(), toKey) >= 0)) {
+            if (toKey != null && (toKeyInclusive ? comparator.compare(entry.getKey(), toKey)>0 : comparator.compare(entry.getKey(), toKey)>=0)) {
               pageIndex = -1;
               break;
             }
@@ -2079,19 +2081,18 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
   }
 
   private final class OSBTreeCursorBackward implements OSBTreeCursor<K, V> {
-    private final K                   fromKey;
-    private final K                   toKey;
-    private final boolean             fromKeyInclusive;
-    private final boolean             toKeyInclusive;
+    private final K       fromKey;
+    private final K       toKey;
+    private final boolean fromKeyInclusive;
+    private final boolean toKeyInclusive;
 
-    private long                      pageIndex;
-    private int                       itemIndex;
+    private long pageIndex;
+    private int  itemIndex;
 
     private List<Map.Entry<K, V>>     dataCache         = new ArrayList<Map.Entry<K, V>>();
-    private Iterator<Map.Entry<K, V>> dataCacheIterator = Collections.emptyIterator();
+    private Iterator<Map.Entry<K, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
 
-    private OSBTreeCursorBackward(long endPageIndex, int endItemIndex, K fromKey, K toKey, boolean fromKeyInclusive,
-        boolean toKeyInclusive) {
+    private OSBTreeCursorBackward(long endPageIndex, int endItemIndex, K fromKey, K toKey, boolean fromKeyInclusive, boolean toKeyInclusive) {
       this.fromKey = fromKey;
       this.toKey = toKey;
       this.fromKeyInclusive = fromKeyInclusive;
@@ -2110,13 +2111,13 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
       dataCache.clear();
 
-      if (prefetchSize < 0 || prefetchSize > OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger())
+      if (prefetchSize<0 || prefetchSize>OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger())
         prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
 
       acquireSharedLock();
       try {
-        while (dataCache.size() < prefetchSize) {
-          if (pageIndex >= diskCache.getFilledUpTo(fileId))
+        while (dataCache.size()<prefetchSize) {
+          if (pageIndex>=diskCache.getFilledUpTo(fileId))
             pageIndex = diskCache.getFilledUpTo(fileId) - 1;
 
           if (pageIndex == -1)
@@ -2126,13 +2127,12 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
           final OCachePointer pointer = cacheEntry.getCachePointer();
 
           try {
-            final OSBTreeBucket<K, V> bucket = new OSBTreeBucket<K, V>(pointer.getDataPointer(), keySerializer, keyTypes,
-                valueSerializer, ODurablePage.TrackMode.NONE);
+            final OSBTreeBucket<K, V> bucket = new OSBTreeBucket<K, V>(pointer.getDataPointer(), keySerializer, keyTypes, valueSerializer, ODurablePage.TrackMode.NONE);
 
-            if (itemIndex >= bucket.size())
+            if (itemIndex>=bucket.size())
               itemIndex = bucket.size() - 1;
 
-            if (itemIndex < 0) {
+            if (itemIndex<0) {
               pageIndex = bucket.getLeftSibling();
               itemIndex = Integer.MAX_VALUE;
               continue;
@@ -2141,13 +2141,10 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
             final Map.Entry<K, V> entry = convertToMapEntry(bucket.getEntry(itemIndex));
             itemIndex--;
 
-            if (toKey != null
-                && (toKeyInclusive ? comparator.compare(entry.getKey(), toKey) > 0 : comparator.compare(entry.getKey(), toKey) >= 0))
+            if (toKey != null && (toKeyInclusive ? comparator.compare(entry.getKey(), toKey)>0 : comparator.compare(entry.getKey(), toKey)>=0))
               continue;
 
-            if (fromKey != null
-                && (fromKeyInclusive ? comparator.compare(entry.getKey(), fromKey) < 0 : comparator
-                    .compare(entry.getKey(), fromKey) <= 0)) {
+            if (fromKey != null && (fromKeyInclusive ? comparator.compare(entry.getKey(), fromKey)<0 : comparator.compare(entry.getKey(), fromKey)<=0)) {
               pageIndex = -1;
               break;
             }

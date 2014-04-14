@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
-import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
@@ -33,9 +25,13 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -44,6 +40,11 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderAbstract;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -1008,8 +1009,8 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     private final Iterator<Map.Entry<Object, V>> treeIterator;
     private final ValuesTransformer<V>           valuesTransformer;
 
-    private Iterator<OIdentifiable>              currentIterator = Collections.emptyIterator();
-    private Object                               currentKey      = null;
+    private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private Object                  currentKey      = null;
 
     private OMBRBTreeIndexCursor(Iterator<Map.Entry<Object, V>> treeIterator, ValuesTransformer<V> valuesTransformer) {
       this.treeIterator = treeIterator;
@@ -1027,7 +1028,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
       if (valuesTransformer == null) {
         final Map.Entry<Object, V> entry = treeIterator.next();
         currentKey = entry.getKey();
-        currentIterator = Collections.singletonList((OIdentifiable)entry.getValue()).iterator();
+        currentIterator = Collections.singletonList((OIdentifiable) entry.getValue()).iterator();
       } else {
         while (!currentIterator.hasNext() && treeIterator.hasNext()) {
           final Map.Entry<Object, V> entry = treeIterator.next();

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -667,10 +668,10 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   private final class ExternalIndexCursor implements OIndexCursor {
-    private final OIndexCursor        internalCursor;
+    private final OIndexCursor internalCursor;
 
-    private final List<OIdentifiable> queryResult     = new ArrayList<OIdentifiable>();
-    private Iterator<OIdentifiable>   currentIterator = Collections.emptyIterator();
+    private final List<OIdentifiable>     queryResult     = new ArrayList<OIdentifiable>();
+    private       Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
 
     private ExternalIndexCursor(OIndexCursor internalCursor) {
       this.internalCursor = internalCursor;

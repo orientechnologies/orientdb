@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -30,6 +23,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Fast index for full-text searches.
@@ -215,16 +215,16 @@ public class OIndexFullText extends OIndexMultiValues {
   protected void configWithMetadata(ODocument metadata) {
     if (metadata != null) {
       if (metadata.containsField(CONFIG_IGNORE_CHARS))
-        ignoreChars = metadata.field(CONFIG_IGNORE_CHARS);
+        ignoreChars = (String) metadata.field(CONFIG_IGNORE_CHARS);
 
       if (metadata.containsField(CONFIG_INDEX_RADIX))
-        indexRadix = metadata.field(CONFIG_INDEX_RADIX);
+        indexRadix = (Boolean) metadata.field(CONFIG_INDEX_RADIX);
 
       if (metadata.containsField(CONFIG_SEPARATOR_CHARS))
-        separatorChars = metadata.field(CONFIG_SEPARATOR_CHARS);
+        separatorChars = (String) metadata.field(CONFIG_SEPARATOR_CHARS);
 
       if (metadata.containsField(CONFIG_MIN_WORD_LEN))
-        minWordLength = metadata.field(CONFIG_MIN_WORD_LEN);
+        minWordLength = (Integer) metadata.field(CONFIG_MIN_WORD_LEN);
 
       if (metadata.containsField(CONFIG_STOP_WORDS))
         stopWords = new HashSet<String>((Collection<? extends String>) metadata.field(CONFIG_STOP_WORDS));
