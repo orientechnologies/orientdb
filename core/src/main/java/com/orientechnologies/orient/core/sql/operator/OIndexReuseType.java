@@ -17,32 +17,35 @@ package com.orientechnologies.orient.core.sql.operator;
 
 /**
  * Represents hint how index can be used to calculate result of operator execution.
- *
+ * 
  * @author Andrey Lomakin
- *
- * @see  OQueryOperator#getIndexReuseType(Object, Object)
+ * 
+ * @see OQueryOperator#getIndexReuseType(Object, Object)
  */
 public enum OIndexReuseType {
-	/**
-	 * Results of this operator can be calculated as intersection of
-	 * results for left and right operators.
-	 */
-	INDEX_INTERSECTION,
+  /**
+   * Results of this operator can be calculated as intersection of results for left and right operators.
+   */
+  INDEX_INTERSECTION,
 
-	/**
-	 * Results of this operator can be calculated as union of
-	 * results for left and right operators.
-	 */
-	INDEX_UNION,
+  /**
+   * Results of this operator can be calculated as union of results for left and right operators.
+   */
+  INDEX_UNION,
 
-	/**
-	 * Index cna be used to calculate result of given operator.
-	 */
-	NO_INDEX,
+  /**
+   * Index cna be used to calculate result of given operator.
+   */
+  NO_INDEX,
 
-	/**
-	 * Result of execution of this operator can be replaced by call to one of
-	 * {@link com.orientechnologies.orient.core.index.OIndex} methods.
-	 */
-	INDEX_METHOD
+  /**
+   * Result of execution of this operator can be replaced by call to one of {@link com.orientechnologies.orient.core.index.OIndex}
+   * methods.
+   */
+  INDEX_METHOD,
+  /**
+   * Result of execution of this operator can be replaced by call to one of {@link com.orientechnologies.orient.core.index.OIndex}
+   * methods with custom args.
+   */
+  INDEX_CUSTOM
 }

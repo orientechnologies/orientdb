@@ -164,7 +164,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private static OIndexSearchResult analyzeQueryBranch(final OClass iSchemaClass, OSQLFilterCondition iCondition,
-      final List<OIndexSearchResult> iIndexSearchResults) {
+      final List<OIndexSearchResult> iIndexSearchResults, final OCommandContext context) {
     if (iCondition == null)
       return null;
 
@@ -182,9 +182,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OIndexReuseType indexReuseType = operator.getIndexReuseType(iCondition.getLeft(), iCondition.getRight());
     if (indexReuseType.equals(OIndexReuseType.INDEX_INTERSECTION)) {
       final OIndexSearchResult leftResult = analyzeQueryBranch(iSchemaClass, (OSQLFilterCondition) iCondition.getLeft(),
-          iIndexSearchResults);
+          iIndexSearchResults, context);
       final OIndexSearchResult rightResult = analyzeQueryBranch(iSchemaClass, (OSQLFilterCondition) iCondition.getRight(),
-          iIndexSearchResults);
+          iIndexSearchResults, context);
 
       if (leftResult != null && rightResult != null) {
         if (leftResult.canBeMerged(rightResult)) {
@@ -208,6 +208,58 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         iIndexSearchResults.add(result);
 
       return result;
+    } else if (indexReuseType.equals(OIndexReuseType.INDEX_CUSTOM)) {
+      if (iCondition.getLeft() instanceof Collection) {
+        OIndexSearchResult lastResult = null;
+
+        Collection left = (Collection) iCondition.getLeft();
+        int i = 0;
+        for (Object obj : left) {
+          if (obj instanceof OSQLFilterItemField) {
+            OSQLFilterItemField item = (OSQLFilterItemField) obj;
+
+            Object value = null;
+            if (iCondition.getRight() instanceof Collection) {
+              List<Object> right = (List<Object>) iCondition.getRight();
+              value = right.get(i);
+            } else {
+              value = iCondition.getRight();
+            }
+            if (lastResult == null) {
+              lastResult = new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
+            } else {
+              lastResult = lastResult.merge(new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value));
+            }
+
+          } else if (obj instanceof OSQLFilterItemVariable) {
+            OSQLFilterItemVariable item = (OSQLFilterItemVariable) obj;
+            Object value = null;
+            if (iCondition.getRight() instanceof Collection) {
+              List<Object> right = (List<Object>) iCondition.getRight();
+              value = right.get(i);
+            } else {
+              value = iCondition.getRight();
+            }
+            context.setVariable(item.toString(), value);
+          }
+          i++;
+        }
+        if (lastResult != null && checkIndexExistence(iSchemaClass, lastResult))
+          iIndexSearchResults.add(lastResult);
+        return lastResult;
+      } else {
+        OIndexSearchResult result = createIndexedProperty(iCondition, iCondition.getLeft());
+        if (result == null)
+          result = createIndexedProperty(iCondition, iCondition.getRight());
+
+        if (result == null)
+          return null;
+
+        if (checkIndexExistence(iSchemaClass, result))
+          iIndexSearchResults.add(result);
+
+        return result;
+      }
     }
 
     return null;
@@ -1114,7 +1166,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return false;
     }
 
-    analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults);
+    analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults, context);
 
     // most specific will be processed first
     Collections.sort(indexSearchResults, new Comparator<OIndexSearchResult>() {
@@ -1229,7 +1281,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             }
           }
 
-
           final List<String> indexInvolvedFields = searchResult.getInvolvedFields();
           final List<String> whereInvolvedFields = compiledFilter.getInvolvedFields();
           boolean evaluateRecords = true;
@@ -1244,8 +1295,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               }
           }
 
-
-          if (compiledFilter == null || !evaluateRecords  || evaluateRecord(record)) {
+          if (compiledFilter == null || !evaluateRecords || evaluateRecord(record)) {
             if (!handleResult(record, true))
               break;
           }
