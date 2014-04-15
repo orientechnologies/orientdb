@@ -29,7 +29,7 @@ public class OIndexSearchResult {
   final OSQLFilterItemField.FieldChain lastField;
   final Object                         lastValue;
 
-  OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
+  public OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
     this.lastOperator = lastOperator;
     lastField = field;
     lastValue = value;
@@ -48,7 +48,7 @@ public class OIndexSearchResult {
    *          Query subset to merge.
    * @return New instance that presents merged query.
    */
-  OIndexSearchResult merge(final OIndexSearchResult searchResult) {
+  public OIndexSearchResult merge(final OIndexSearchResult searchResult) {
     final OQueryOperator operator;
     final OIndexSearchResult result;
 
@@ -79,7 +79,7 @@ public class OIndexSearchResult {
     return isIndexEqualityOperator(lastOperator) || isIndexEqualityOperator(searchResult.lastOperator);
   }
 
-  List<String> fields() {
+  public List<String> fields() {
     final List<String> result = new ArrayList<String>(fieldValuePairs.size() + 1);
     result.addAll(fieldValuePairs.keySet());
     result.add(lastField.getItemName(0));
@@ -96,5 +96,9 @@ public class OIndexSearchResult {
     for (String f : fieldValuePairs.keySet())
       list.add(f);
     return list;
+  }
+
+  public OSQLFilterItemField.FieldChain getLastField() {
+    return lastField;
   }
 }
