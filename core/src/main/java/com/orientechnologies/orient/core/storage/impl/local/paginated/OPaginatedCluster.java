@@ -391,12 +391,12 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   public OPhysicalPosition createRecord(byte[] content, final ORecordVersion recordVersion, final byte recordType)
       throws IOException {
+    content = compression.compress(content);
+
     externalModificationLock.requestModificationLock();
     try {
       acquireExclusiveLock();
       try {
-
-        content = compression.compress(content);
 
         int grownContentSize = (int) (config.recordGrowFactor * content.length);
         int entryContentLength = grownContentSize + 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
@@ -805,6 +805,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   public void updateRecord(OClusterPosition clusterPosition, byte[] content, final ORecordVersion recordVersion,
       final byte recordType) throws IOException {
+    content = compression.compress(content);
+
     externalModificationLock.requestModificationLock();
     try {
       acquireExclusiveLock();
@@ -832,8 +834,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
             throw new OStorageException("Content of record for cluster with id " + id + " and position " + clusterPosition
                 + " is broken.");
         }
-
-        content = compression.compress(content);
 
         int updatedContentLength = content.length + 2 * OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE
             + OLongSerializer.LONG_SIZE;
