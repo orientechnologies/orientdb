@@ -484,6 +484,23 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   @Override
   public OrientEdge addEdge(final Object id, Vertex outVertex, Vertex inVertex, final String label) {
     String className = null;
+    String clusterName = null;
+
+    if (id != null) {
+      if (id instanceof String) {
+        // PARSE ARGUMENTS
+        final String[] args = ((String) id).split(",");
+        for (String s : args) {
+          if (s.startsWith(CLASS_PREFIX))
+            // GET THE CLASS NAME
+            className = s.substring(CLASS_PREFIX.length());
+          else if (s.startsWith(CLUSTER_PREFIX))
+            // GET THE CLASS NAME
+            clusterName = s.substring(CLUSTER_PREFIX.length());
+        }
+      }
+    }
+
     if (id != null && id instanceof String && id.toString().startsWith(CLASS_PREFIX))
       // GET THE CLASS NAME
       className = id.toString().substring(CLASS_PREFIX.length());
@@ -500,7 +517,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       // WRAPPED: GET THE BASE VERTEX
       inVertex = ((PartitionVertex) inVertex).getBaseVertex();
 
-    return ((OrientVertex) outVertex).addEdge(label, (OrientVertex) inVertex, className, null, fields);
+    return ((OrientVertex) outVertex).addEdge(label, (OrientVertex) inVertex, className, clusterName, fields);
 
   }
 
