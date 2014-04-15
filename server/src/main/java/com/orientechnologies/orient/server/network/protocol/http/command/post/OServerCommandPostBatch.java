@@ -84,7 +84,8 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
     ODatabaseDocumentTx db = null;
 
     ODocument batch = null;
-    int executed = 0;
+
+    Object lastResult = null;
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
@@ -116,17 +117,17 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
           // CREATE
           final ODocument doc = getRecord(operation);
           doc.save();
-          executed++;
+          lastResult = doc;
         } else if (type.equals("u")) {
           // UPDATE
           final ODocument doc = getRecord(operation);
           doc.save();
-          executed++;
+          lastResult = doc;
         } else if (type.equals("d")) {
           // DELETE
           final ODocument doc = getRecord(operation);
           db.delete(doc.getIdentity());
-          executed++;
+          lastResult = doc.getIdentity();
         } else if (type.equals("cmd")) {
           // COMMAND
           final String language = (String) operation.get("language");
@@ -134,8 +135,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
 
           final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
           cmd.setText(command);
-          db.command(cmd).execute();
-          executed++;
+          lastResult = db.command(cmd).execute();
         } else if (type.equals("script")) {
           // COMMAND
           final String language = (String) operation.get("language");
@@ -147,7 +147,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
             int i = 0;
             for (Object o : OMultiValue.getMultiValueIterable(script)) {
               if (o != null) {
-                if (i > 0)
+                if (i++ > 0)
                   text.append("\n");
                 text.append(o.toString());
               }
@@ -155,8 +155,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
           } else
             text.append(script);
 
-          db.command(new OCommandScript(language, text.toString())).execute();
-          executed++;
+          lastResult = db.command(new OCommandScript(language, text.toString())).execute();
         }
       }
 
@@ -168,8 +167,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         db.close();
     }
 
-    iResponse
-        .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, executed, null, true);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, lastResult, null, true);
     return false;
   }
 
