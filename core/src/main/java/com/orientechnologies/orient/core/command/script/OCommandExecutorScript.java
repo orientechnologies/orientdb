@@ -170,6 +170,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
         if (line == txBegunAtLine)
           // SKIP PREVIOUS COMMAND PART AND JUMP TO THE BEGIN IF ANY
           linePart = txBegunAtPart;
+        else
+          linePart = 0;
 
         for (; linePart < lineParts.size(); ++linePart) {
           final String lastCommand = lineParts.get(linePart);
