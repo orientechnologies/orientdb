@@ -2,6 +2,7 @@ package com.orientechnologies.lucene;
 
 import java.util.Date;
 
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.shape.Point;
@@ -80,10 +81,11 @@ public class OLuceneIndexType {
       if (((String) key).startsWith("(")) {
         queryParser = new QueryParser(version, "", analyzer);
       } else {
-        queryParser = new MultiFieldQueryParser(version, index.getFields().toArray(new String[0]), analyzer);
+        queryParser = new MultiFieldQueryParser(version, index.getFields().toArray(new String[index.getFields().size()]), analyzer);
       }
-    } else {
-      query = key.toString();
+    } else if (key instanceof OCompositeKey) {
+      queryParser = new QueryParser(version, "", analyzer);
+      query = ((OCompositeKey) key).getKeys().get(0).toString();
     }
     return queryParser.parse(query);
   }

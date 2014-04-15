@@ -6,9 +6,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.index.OIndexCursor;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
@@ -25,7 +23,10 @@ import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -102,15 +103,13 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   @Override
   public Object get(Object key) {
-    Set<OIdentifiable> results = new HashSet<OIdentifiable>();
     Query q = null;
     try {
       q = OLuceneIndexType.createFullQuery(index, key, indexWriter.getAnalyzer(), getVersion(metadata));
       return getResults(q);
     } catch (ParseException e) {
-      throw new RuntimeException("Error parsing query ", e);
+      throw new OIndexException("Error parsing lucene query ", e);
     }
-
   }
 
   @Override
@@ -120,8 +119,16 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       Document doc = new Document();
       doc.add(OLuceneIndexType.createField(RID, oIdentifiable, oIdentifiable.getIdentity().toString(), Field.Store.YES,
           Field.Index.NOT_ANALYZED_NO_NORMS));
+      int i = 0;
       for (String f : index.getFields()) {
-        doc.add(OLuceneIndexType.createField(f, oIdentifiable, key, Field.Store.NO, Field.Index.ANALYZED));
+        Object val = null;
+        if (key instanceof OCompositeKey) {
+          val = ((OCompositeKey) key).getKeys().get(i);
+          i++;
+        } else {
+          val = key;
+        }
+        doc.add(OLuceneIndexType.createField(f, oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
       }
       addDocument(doc);
 

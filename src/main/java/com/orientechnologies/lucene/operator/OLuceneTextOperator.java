@@ -1,32 +1,28 @@
 package com.orientechnologies.lucene.operator;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEqualityNotNulls;
-import org.apache.lucene.spatial.query.SpatialOperation;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
- * Created by enricorisa on 07/04/14.
+ * Created by enricorisa on 14/04/14.
  */
-public class OLuceneWithinOperator extends OQueryOperatorEqualityNotNulls {
+public class OLuceneTextOperator extends OQueryOperatorEqualityNotNulls {
 
-  protected OLuceneWithinOperator() {
-    super("WITHIN", 5, false, 1, true);
+  public OLuceneTextOperator() {
+    super("LUCENE", 5, false, 1, true);
   }
 
   @Override
@@ -36,17 +32,9 @@ public class OLuceneWithinOperator extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
-    return OIndexReuseType.INDEX_OPERATOR;
-  }
-
-  @Override
   public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
-    OIndexDefinition definition = index.getDefinition();
-    int idxSize = definition.getFields().size();
-    int paramsSize = keyParams.size();
     OIndexCursor cursor;
-    Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setOperation(SpatialOperation.IsWithin));
+    Object indexResult = index.get(new OCompositeKey(keyParams));
     if (indexResult == null || indexResult instanceof OIdentifiable)
       cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else
@@ -55,14 +43,9 @@ public class OLuceneWithinOperator extends OQueryOperatorEqualityNotNulls {
     return cursor;
   }
 
-  private void convertIndexResult(Object indexResult, OIndex.IndexValuesResultListener resultListener) {
-    if (indexResult instanceof Collection) {
-      for (OIdentifiable identifiable : (Collection<OIdentifiable>) indexResult) {
-        if (!resultListener.addResult(identifiable))
-          return;
-      }
-    } else if (indexResult != null)
-      resultListener.addResult((OIdentifiable) indexResult);
+  @Override
+  public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
+    return OIndexReuseType.INDEX_OPERATOR;
   }
 
   @Override

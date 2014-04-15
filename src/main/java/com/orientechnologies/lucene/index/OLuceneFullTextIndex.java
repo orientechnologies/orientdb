@@ -15,11 +15,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * Created by enricorisa on 22/03/14.
  */
-public class OLuceneFullTextIndex extends OIndexFullText implements OLuceneIndex {
+public class OLuceneFullTextIndex extends OIndexMultiValues implements OLuceneIndex {
 
   public OLuceneFullTextIndex(String typeId, String algorithm, OLuceneIndexEngine indexEngine, String valueContainerAlgorithm,
       ODocument metadata) {
-    super(typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata);
+    super(typeId, algorithm, indexEngine, valueContainerAlgorithm);
     indexEngine.setIndexMetadata(metadata);
   }
 
@@ -32,7 +32,7 @@ public class OLuceneFullTextIndex extends OIndexFullText implements OLuceneIndex
   }
 
   @Override
-  public OIndexFullText put(Object key, OIdentifiable iSingleValue) {
+  public OIndexMultiValues put(Object key, OIdentifiable iSingleValue) {
     if (key == null)
       return this;
 

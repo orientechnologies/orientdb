@@ -1,4 +1,4 @@
-package main.java.com.orientechnologies.lucene.exception;
+package com.orientechnologies.lucene.exception;
 
 /**
  * Created by enricorisa on 28/03/14.

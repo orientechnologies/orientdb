@@ -16,4 +16,9 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
   protected void populateIndex(ODocument doc, Object fieldValue) {
     put(fieldValue, doc);
   }
+
+  @Override
+  protected Object getCollatingValue(Object key) {
+    return key;
+  }
 }

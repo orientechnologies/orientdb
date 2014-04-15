@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
 import com.sun.jna.platform.FileUtils;
 import org.apache.lucene.analysis.Analyzer;
@@ -253,10 +254,6 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
       e.printStackTrace();
     }
   }
-
-  public abstract V get(Object key);
-
-  public abstract void put(Object key, V value);
 
   public void rollback() {
     try {
