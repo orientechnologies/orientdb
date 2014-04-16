@@ -169,6 +169,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * Drops a cluster.
    * 
    * @param iId
+   *          id of the cluster to delete
    * @return true if has been removed, otherwise false
    */
   public boolean dropCluster(int iId, final boolean iTruncate);

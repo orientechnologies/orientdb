@@ -59,23 +59,47 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   protected static ORecordSerializer defaultSerializer = ORecordSerializerFactory.instance().getFormat(
                                                            ORecordSerializerSchemaAware2CSV.NAME);
 
+  /**
+   * Creates a new connection to the database.
+   * 
+   * @param iURL
+   *          of the database
+   */
   public ODatabaseDocumentTx(final String iURL) {
     super(new ODatabaseRecordTx(iURL, ODocument.RECORD_TYPE));
     underlying.setSerializer(defaultSerializer);
   }
 
+  /**
+   * For internal usage. Creates a new instance with specific {@link ODatabaseRecordTx}.
+   * 
+   * @param iSource
+   *          to wrap
+   */
   public ODatabaseDocumentTx(final ODatabaseRecordTx iSource) {
     super(iSource);
   }
 
+  /**
+   * @return default serializer which is used to serialize documents. Default serializer is common for all database instances.
+   */
   public static ORecordSerializer getDefaultSerializer() {
     return defaultSerializer;
   }
 
+  /**
+   * Sets default serializer. The default serializer is common for all database instances.
+   * 
+   * @param iDefaultSerializer
+   *          new default serializer value
+   */
   public static void setDefaultSerializer(ORecordSerializer iDefaultSerializer) {
     defaultSerializer = iDefaultSerializer;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void freeze(final boolean throwException) {
     if (!(getStorage() instanceof OFreezableStorage)) {
@@ -99,6 +123,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
         .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void freeze() {
     if (!(getStorage() instanceof OFreezableStorage)) {
@@ -122,6 +149,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
         .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void release() {
     if (!(getStorage() instanceof OFreezableStorage)) {
@@ -149,15 +179,28 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return new ODocument();
   }
 
+  /**
+   * Creates a document with specific class.
+   * 
+   * @param iClassName
+   *          the name of class that should be used as a class of created document.
+   * @return new instance of document.
+   */
+  @Override
   public ODocument newInstance(final String iClassName) {
-    checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
     return new ODocument(iClassName);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public ORecordIteratorClass<ODocument> browseClass(final String iClassName) {
     return browseClass(iClassName, true);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public ORecordIteratorClass<ODocument> browseClass(final String iClassName, final boolean iPolymorphic) {
     if (getMetadata().getSchema().getClass(iClassName) == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
@@ -167,6 +210,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return new ORecordIteratorClass<ODocument>(this, underlying, iClassName, iPolymorphic, true, false);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
@@ -174,6 +220,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName), true);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, OClusterPosition startClusterPosition,
       OClusterPosition endClusterPosition, boolean loadTombstones) {
@@ -228,7 +277,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
+   *          callback that is called after creation of new record
    * @param iRecordUpdatedCallback
+   *          callback that is called after record update
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
@@ -327,7 +378,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
+   *          callback that is called after creation of new record
    * @param iRecordUpdatedCallback
+   *          callback that is called after record update
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
@@ -395,6 +448,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@link OConcurrentModificationException} exception is thrown.
    * 
    * @param iRecord
+   *          record to delete
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
@@ -419,7 +473,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return this;
   }
 
-	/**
+  /**
    * Returns the number of the records of the class iClassName.
    */
   public long countClass(final String iClassName) {
@@ -431,48 +485,80 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return cls.count();
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public ODatabaseComplex<ORecordInternal<?>> commit() {
     return commit(false);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ODatabaseComplex<ORecordInternal<?>> commit(boolean force) throws OTransactionException {
     return underlying.commit(force);
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public ODatabaseComplex<ORecordInternal<?>> rollback() {
     return rollback(false);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ODatabaseComplex<ORecordInternal<?>> rollback(final boolean force) throws OTransactionException {
     return underlying.rollback(force);
   }
 
+  /**
+   * Returns "document".
+   */
   public String getType() {
     return TYPE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OSBTreeCollectionManager getSbTreeCollectionManager() {
     return underlying.getSbTreeCollectionManager();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OCurrentStorageComponentsFactory getStorageVersions() {
     return underlying.getStorageVersions();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ORecordSerializer getSerializer() {
     return underlying.getSerializer();
   }
 
+  /**
+   * Sets serializer for the database which will be used for document serialization.
+   * 
+   * @param iSerializer
+   *          the serializer to set.
+   */
   public void setSerializer(final ORecordSerializer iSerializer) {
     underlying.setSerializer(iSerializer);
   }
 
-  private void freezeIndexes( final List<OIndexAbstract<?>> indexesToFreeze, final boolean throwException) {
+  private void freezeIndexes(final List<OIndexAbstract<?>> indexesToFreeze, final boolean throwException) {
     if (indexesToFreeze != null) {
       for (OIndexAbstract<?> indexToLock : indexesToFreeze) {
         indexToLock.freeze(throwException);

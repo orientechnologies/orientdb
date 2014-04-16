@@ -342,11 +342,11 @@ public interface ODatabase extends OBackupable, Closeable {
       Object... iParameters);
 
   /**
-   * 
    * Drops a cluster by its name. Physical clusters will be completely deleted
    * 
    * @param iClusterName
-   * @return
+   *          the name of the cluster
+   * @return true if has been removed, otherwise false
    */
   public boolean dropCluster(String iClusterName, final boolean iTruncate);
 
@@ -354,6 +354,7 @@ public interface ODatabase extends OBackupable, Closeable {
    * Drops a cluster by its id. Physical clusters will be completely deleted.
    * 
    * @param iClusterId
+   *          id of cluster to delete
    * @return true if has been removed, otherwise false
    */
   public boolean dropCluster(int iClusterId, final boolean iTruncate);
@@ -414,7 +415,7 @@ public interface ODatabase extends OBackupable, Closeable {
    *          Attributes between #ATTRIBUTES enum
    * @param iValue
    *          Value to set
-   * @return
+   * @return underlying
    */
   public <DB extends ODatabase> DB set(ATTRIBUTES iAttribute, Object iValue);
 
@@ -422,6 +423,7 @@ public interface ODatabase extends OBackupable, Closeable {
    * Registers a listener to the database events.
    * 
    * @param iListener
+   *          the listener to register
    */
   public void registerListener(ODatabaseListener iListener);
 
@@ -429,6 +431,7 @@ public interface ODatabase extends OBackupable, Closeable {
    * Unregisters a listener to the database events.
    * 
    * @param iListener
+   *          the listener to unregister
    */
   public void unregisterListener(ODatabaseListener iListener);
 

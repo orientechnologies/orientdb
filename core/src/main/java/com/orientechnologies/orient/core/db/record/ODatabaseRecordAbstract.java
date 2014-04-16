@@ -147,7 +147,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
           replicaToUpdate = mergeWithRecord(rid);
           callbackHooks(TYPE.BEFORE_REPLICA_UPDATE, replicaToUpdate);
-        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
+        } else if (!loadedRecordMetadata.getRecordVersion().isTombstone()) {
           replicaToUpdate = load(rid, "*:0", false, true, OStorage.LOCKING_STRATEGY.DEFAULT);
           replicaToUpdate.getRecordVersion().copyFrom(replicaVersion);
 
@@ -257,6 +257,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
     setCurrentDatabaseinThreadLocal();
@@ -330,6 +333,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return (DB) this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public <DB extends ODatabase> DB create() {
     setCurrentDatabaseinThreadLocal();
@@ -386,16 +392,25 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return (DB) this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OBinarySerializerFactory getSerializerFactory() {
     return componentsFactory.binarySerializerFactory;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OCurrentStorageComponentsFactory getStorageVersions() {
     return componentsFactory;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void drop() {
     checkOpeness();
@@ -413,6 +428,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     super.drop();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void close() {
     setCurrentDatabaseinThreadLocal();
@@ -442,21 +460,33 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public ODictionary<ORecordInternal<?>> getDictionary() {
     checkOpeness();
     return metadata.getIndexManager().getDictionary();
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <RET extends ORecordInternal<?>> RET getRecord(final OIdentifiable iIdentifiable) {
     if (iIdentifiable instanceof ORecord<?>)
       return (RET) iIdentifiable;
     return (RET) load(iIdentifiable.getIdentity());
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord) {
     return (RET) load(iRecord, null);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void reload() {
     metadata.reload();
@@ -485,12 +515,18 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <RET extends ORecordInternal<?>> RET load(final ORecordInternal<?> iRecord, final String iFetchPlan,
       final boolean iIgnoreCache) {
     return (RET) executeReadRecord((ORecordId) iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
         OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache,
       boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
@@ -498,18 +534,30 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         iLockingStrategy);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
     return (RET) executeReadRecord((ORecordId) iRecordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {
     return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan, final boolean iIgnoreCache) {
     return (RET) executeReadRecord((ORecordId) iRecordId, null, iFetchPlan, iIgnoreCache, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
@@ -548,6 +596,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         null, null);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public ORecordSerializer getSerializer() {
     return serializer;
   }
@@ -628,6 +679,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
       final Class<REC> iClass) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
@@ -639,6 +693,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return new ORecordIteratorCluster<REC>(this, this, clusterId, true);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
       final Class<REC> iRecordClass, final OClusterPosition startClusterPosition, final OClusterPosition endClusterPosition,
@@ -653,6 +710,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
       final OClusterPosition startClusterPosition, final OClusterPosition endClusterPosition, final boolean loadTombstones) {
@@ -666,6 +726,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public ORecordIteratorCluster<?> browseCluster(final String iClusterName) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
@@ -676,6 +739,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return new ORecordIteratorCluster<ORecordInternal<?>>(this, this, clusterId, true);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public OCommandRequest command(final OCommandRequest iCommand) {
     checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
@@ -692,6 +758,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs) {
     setCurrentDatabaseinThreadLocal();
 
@@ -699,24 +768,39 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return (RET) iCommand.execute(iArgs);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public byte getRecordType() {
     return recordType;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <RET> RET newInstance() {
     return (RET) Orient.instance().getRecordFactoryManager().newInstance(recordType);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public long countClusterElements(final int[] iClusterIds) {
     return countClusterElements(iClusterIds, false);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public long countClusterElements(final int iClusterId) {
     return countClusterElements(iClusterId, false);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public long countClusterElements(int iClusterId, boolean countTombstones) {
     final String name = getClusterNameById(iClusterId);
@@ -728,6 +812,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return super.countClusterElements(iClusterId, countTombstones);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public long countClusterElements(int[] iClusterIds, boolean countTombstones) {
     String name;
@@ -739,6 +826,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return super.countClusterElements(iClusterIds, countTombstones);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public long countClusterElements(final String iClusterName) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
@@ -746,11 +836,17 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return super.countClusterElements(iClusterName);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public OMetadataDefault getMetadata() {
     checkOpeness();
     return metadata;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <DB extends ODatabaseRecord> DB checkSecurity(final String iResource, final int iOperation) {
     if (user != null) {
       try {
@@ -768,6 +864,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return (DB) this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <DB extends ODatabaseRecord> DB checkSecurity(final String iResourceGeneric, final int iOperation,
       final Object... iResourcesSpecific) {
 
@@ -815,6 +914,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return (DB) this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <DB extends ODatabaseRecord> DB checkSecurity(final String iResourceGeneric, final int iOperation,
       final Object iResourceSpecific) {
 
@@ -860,6 +962,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return (DB) this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <RET extends ORecordInternal<?>> RET executeReadRecord(final ORecordId iRid, ORecordInternal<?> iRecord,
       final String iFetchPlan, final boolean iIgnoreCache, final boolean loadTombstones,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
@@ -1091,7 +1196,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       return;
 
     record = record.getRecord();
-    if( record == null )
+    if (record == null)
       return;
 
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
@@ -1175,12 +1280,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       if (!operationResult.isMoved())
         getLevel1Cache().deleteRecord(rid);
 
-			return operationResult.getResult();
+      return operationResult.getResult();
     } finally {
       ORecordSerializationContext.pullContext();
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ODatabaseComplex<?> getDatabaseOwner() {
     ODatabaseComplex<?> current = databaseOwner;
@@ -1191,21 +1299,33 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return current;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ODatabaseComplex<ORecordInternal<?>> setDatabaseOwner(ODatabaseComplex<?> iOwner) {
     databaseOwner = iOwner;
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public boolean isRetainRecords() {
     return retainRecords;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public ODatabaseRecord setRetainRecords(boolean retainRecords) {
     this.retainRecords = retainRecords;
     return this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <DB extends ODatabase> DB setStatus(final STATUS status) {
     final String cmd = String.format("alter database status %s", status.toString());
     command(new OCommandSQL(cmd)).execute();
@@ -1220,27 +1340,45 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     getStorage().setDefaultClusterId(iDefClusterId);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void setInternal(final ATTRIBUTES iAttribute, final Object iValue) {
     underlying.set(iAttribute, iValue);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public OUser getUser() {
     return user;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void setUser(OUser user) {
     this.user = user;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public boolean isMVCC() {
     return mvcc;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <DB extends ODatabaseComplex<?>> DB setMVCC(boolean mvcc) {
     this.mvcc = mvcc;
     return (DB) this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
     final Map<ORecordHook, ORecordHook.HOOK_POSITION> tmp = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>(hooks);
     tmp.put(iHookImpl, iPosition);
@@ -1254,24 +1392,39 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return (DB) this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl) {
     return (DB) registerHook(iHookImpl, ORecordHook.HOOK_POSITION.REGULAR);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <DB extends ODatabaseComplex<?>> DB unregisterHook(final ORecordHook iHookImpl) {
     hooks.remove(iHookImpl);
     return (DB) this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public OSBTreeCollectionManager getSbTreeCollectionManager() {
     return sbTreeCollectionManager;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OLevel1RecordCache getLevel1Cache() {
     return level1Cache;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public Map<ORecordHook, ORecordHook.HOOK_POSITION> getHooks() {
     return unmodifiableHooks;
   }
@@ -1326,19 +1479,31 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     }
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public boolean isValidationEnabled() {
     return !getStatus().equals(STATUS.IMPORTING) && validation;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public <DB extends ODatabaseRecord> DB setValidationEnabled(final boolean iEnabled) {
     validation = iEnabled;
     return (DB) this;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public ODataSegmentStrategy getDataSegmentStrategy() {
     return dataSegmentStrategy;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy) {
     this.dataSegmentStrategy = dataSegmentStrategy;
   }
@@ -1347,6 +1512,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return ORecordSerializerFactory.instance().getFormatForObject(iObject, recordFormat);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   protected void checkOpeness() {
     if (isClosed())
