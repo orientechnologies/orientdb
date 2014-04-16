@@ -42,7 +42,7 @@ public class OIntentMassiveInsert implements OIntent {
     removedHooks = new HashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
     HashMap<ORecordHook, ORecordHook.HOOK_POSITION> hooks = new HashMap<ORecordHook, ORecordHook.HOOK_POSITION>(ownerDb.getHooks());
     for (Map.Entry<ORecordHook, ORecordHook.HOOK_POSITION> hook : hooks.entrySet()) {
-      if (!(hook instanceof OClassIndexManager)) {
+      if (!(hook.getKey() instanceof OClassIndexManager)) {
         removedHooks.put(hook.getKey(), hook.getValue());
         ownerDb.unregisterHook(hook.getKey());
       }
