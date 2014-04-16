@@ -49,7 +49,8 @@ import java.util.Map;
  * @since 8/30/13
  */
 public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
-  public static final String DATA_FILE_EXTENSION = ".sbt";
+  public static final String DATA_FILE_EXTENSION        = ".sbt";
+  public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private ORID               identity;
   private OSBTree<Object, V> sbTree;
@@ -82,7 +83,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       if (indexDefinition != null) {
         if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
           sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1,
-              OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+              OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
           keySerializer = ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();
         } else {
           if (indexDefinition.getTypes().length > 1) {
@@ -91,11 +92,11 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
             keySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(indexDefinition.getTypes()[0]);
           }
           sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, indexDefinition.getTypes().length,
-              OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+              OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
         }
       } else {
         sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1,
-            OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+            OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
         keySerializer = new OSimpleKeySerializer();
       }
 
@@ -107,7 +108,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       identity = identityRecord.getIdentity();
 
       sbTree.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
-          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract);
+          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, indexDefinition != null
+              && !indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }
@@ -130,7 +132,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       final ODatabaseRecord database = getDatabase();
       final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
 
-      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1, OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1,
+          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
       sbTree.deleteWithoutLoad(indexName, storageLocalAbstract);
     } finally {
       releaseExclusiveLock();
@@ -148,12 +151,13 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
         keySize = indexDefinition.getTypes().length;
 
       sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, keySize,
-          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
 
       ODatabaseRecord database = getDatabase();
       final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
 
-      sbTree.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract);
+      sbTree.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract,
+          indexDefinition != null && indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }
@@ -632,8 +636,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     private final OSBTree.OSBTreeCursor<Object, V> treeCursor;
     private final ValuesTransformer<V>             valuesTransformer;
 
-    private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-    private Object                  currentKey      = null;
+    private Iterator<OIdentifiable>                currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private Object                                 currentKey      = null;
 
     private OSBTreeIndexCursor(OSBTree.OSBTreeCursor<Object, V> treeCursor, ValuesTransformer<V> valuesTransformer) {
       this.treeCursor = treeCursor;
