@@ -25,7 +25,9 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.math.*;
 
@@ -105,6 +107,12 @@ public abstract class OQueryOperator {
    * @return Hint how index can be used to calculate result of operator execution.
    */
   public abstract OIndexReuseType getIndexReuseType(Object iLeft, Object iRight);
+
+  public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
+      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
+
+    return null;
+  }
 
   /**
    * Performs index query and returns index cursor which presents subset of index data which corresponds to result of execution of

@@ -570,12 +570,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
                 if (fieldValue != null) {
                   try {
-                    if (fieldValue instanceof Collection) {
-                      for (final Object fieldValueItem : (Collection<?>) fieldValue) {
-                        put(fieldValueItem, doc);
-                      }
-                    } else
-                      put(fieldValue, doc);
+                    populateIndex(doc, fieldValue);
                   } catch (OIndexException e) {
                     OLogManager.instance().error(
                         this,
@@ -629,6 +624,15 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
 
     return documentIndexed;
+  }
+
+  protected void populateIndex(ODocument doc, Object fieldValue) {
+    if (fieldValue instanceof Collection) {
+      for (final Object fieldValueItem : (Collection<?>) fieldValue) {
+        put(fieldValueItem, doc);
+      }
+    } else
+      put(fieldValue, doc);
   }
 
   public boolean remove(final Object key, final OIdentifiable value) {
