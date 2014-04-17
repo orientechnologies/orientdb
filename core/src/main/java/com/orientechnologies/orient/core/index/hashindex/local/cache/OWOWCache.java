@@ -108,7 +108,7 @@ public class OWOWCache {
                                                                                         public Thread newThread(Runnable r) {
                                                                                           Thread thread = new Thread(r);
                                                                                           thread.setDaemon(true);
-                                                                                          thread.setName("Write Cache Flush Task");
+                                                                                          thread.setName("OrientDB Write Cache Flush Task ("+storageLocal.getName()+")");
                                                                                           return thread;
                                                                                         }
                                                                                       });

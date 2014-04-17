@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.List;
-
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -41,6 +37,10 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.List;
+
 public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
   private static final String ORIENT_SERVER_DB         = "OrientDB Server v." + OConstants.getVersion();
   private static final int    CURRENT_PROTOCOL_VERSION = 10;
@@ -49,7 +49,8 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
   public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfiguration,
       final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
     server = iServer;
-    setName("HTTP-DB");
+    setName("OrientDB HTTP Connection " + iSocket.getLocalAddress() + ":" + iSocket.getLocalPort() + "<-"
+        + iSocket.getRemoteSocketAddress());
 
     if (sharedCmdManager == null)
       // FIRST TIME REGISTERS THE STATELESS COMMANDS
@@ -71,13 +72,13 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     return CURRENT_PROTOCOL_VERSION;
   }
 
+  public String getType() {
+    return "http";
+  }
+
   @Override
   protected void afterExecution() throws InterruptedException {
     ODatabaseRecordThreadLocal.INSTANCE.remove();
-  }
-
-  public String getType() {
-    return "http";
   }
 
   protected void registerStatelessCommands(final List<?> iStatelessCommands) {
