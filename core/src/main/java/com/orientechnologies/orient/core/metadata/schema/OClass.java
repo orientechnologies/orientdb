@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -38,7 +39,7 @@ public interface OClass extends Comparable<OClass> {
     UNIQUE(true), NOTUNIQUE(true), FULLTEXT(true), DICTIONARY(false), PROXY(true), UNIQUE_HASH_INDEX(true), NOTUNIQUE_HASH_INDEX(
         true), FULLTEXT_HASH_INDEX(true), DICTIONARY_HASH_INDEX(false), SPATIAL(true);
 
-    private final boolean automaticIndexable;
+    private boolean automaticIndexable;
 
     INDEX_TYPE(boolean iValue) {
       automaticIndexable = iValue;
@@ -73,27 +74,33 @@ public interface OClass extends Comparable<OClass> {
 
   public Collection<OProperty> getIndexedProperties();
 
-  public OProperty getProperty(final String iPropertyName);
+  public OProperty getProperty(String iPropertyName);
 
-  public OProperty createProperty(final String iPropertyName, final OType iType);
+  public OProperty createProperty(String iPropertyName, OType iType);
 
-  public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass);
+  public OProperty createProperty(String iPropertyName, OType iType, OClass iLinkedClass);
 
-  public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType);
+  public OProperty createProperty(String iPropertyName, OType iType, OType iLinkedType);
 
-  public void dropProperty(final String iPropertyName);
+  public void dropProperty(String iPropertyName);
 
-  public boolean existsProperty(final String iPropertyName);
+  public boolean existsProperty(String iPropertyName);
 
   public Class<?> getJavaClass();
 
   public int getDefaultClusterId();
 
+  public abstract void setDefaultClusterId(int iDefaultClusterId);
+
   public int[] getClusterIds();
 
-  public OClass addClusterId(final int iId);
+  public OClass addClusterId(int iId);
 
-  public OClass removeClusterId(final int iId);
+  public OClass addCluster(String iClusterName);
+
+  public OClass addCluster(String iClusterName, OStorage.CLUSTER_TYPE iClusterType);
+
+  public OClass removeClusterId(int iId);
 
   public int[] getPolymorphicClusterIds();
 
@@ -119,7 +126,7 @@ public interface OClass extends Comparable<OClass> {
    * @return Oversize factor
    * @see #getOverSize()
    */
-  public OClass setOverSize(final float overSize);
+  public OClass setOverSize(float overSize);
 
   /**
    * Returns the number of the records of this class considering also subclasses (polymorphic).
@@ -129,7 +136,7 @@ public interface OClass extends Comparable<OClass> {
   /**
    * Returns the number of the records of this class and based on polymorphic parameter it consider or not the subclasses.
    */
-  public long count(final boolean iPolymorphic);
+  public long count(boolean iPolymorphic);
 
   /**
    * Truncates all the clusters the class uses.
@@ -145,7 +152,7 @@ public interface OClass extends Comparable<OClass> {
    * @return true if the current instance extends the passed schema class (iClass).
    * @see #isSuperClassOf(OClass)
    */
-  public boolean isSubClassOf(final String iClassName);
+  public boolean isSubClassOf(String iClassName);
 
   /**
    * Returns true if the current instance extends the passed schema class (iClass).
@@ -154,7 +161,7 @@ public interface OClass extends Comparable<OClass> {
    * @return
    * @see #isSuperClassOf(OClass)
    */
-  public boolean isSubClassOf(final OClass iClass);
+  public boolean isSubClassOf(OClass iClass);
 
   /**
    * Returns true if the passed schema class (iClass) extends the current instance.
@@ -163,11 +170,11 @@ public interface OClass extends Comparable<OClass> {
    * @return Returns true if the passed schema class extends the current instance
    * @see #isSubClassOf(OClass)
    */
-  public boolean isSuperClassOf(final OClass iClass);
+  public boolean isSuperClassOf(OClass iClass);
 
   public String getShortName();
 
-  public OClass setShortName(final String shortName);
+  public OClass setShortName(String shortName);
 
   public Object get(ATTRIBUTES iAttribute);
 
@@ -357,13 +364,11 @@ public interface OClass extends Comparable<OClass> {
    */
   public Set<OIndex<?>> getIndexes();
 
-  public abstract void setDefaultClusterId(final int iDefaultClusterId);
+  public String getCustom(String iName);
 
-  public String getCustom(final String iName);
+  public OClassImpl setCustom(String iName, String iValue);
 
-  public OClassImpl setCustom(final String iName, final String iValue);
-
-  public void removeCustom(final String iName);
+  public void removeCustom(String iName);
 
   public void clearCustom();
 
