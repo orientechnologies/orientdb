@@ -15,6 +15,16 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -48,16 +58,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -290,9 +290,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
       if (iNoMap || hasTypeField(fields)) {
         // OBJECT
-        final ORecordInternal<?> recordInternal = fromString(iFieldValue, new ODocument(), null, iOptions, false);
-        if (iType != null && iType.isLink()) {
-        } else if (recordInternal instanceof ODocument)
+        boolean shouldReload = new ORecordId(OStringSerializerHelper.getStringContent(getFieldValue("@rid", fields))).isTemporary();
+        final ORecordInternal<?> recordInternal = fromString(iFieldValue, new ODocument(), null, iOptions, shouldReload);
+        if ((iType == null || !iType.isLink()) && recordInternal instanceof ODocument)
           ((ODocument) recordInternal).addOwner(iRecord);
         return recordInternal;
       } else {
@@ -575,12 +575,31 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   private boolean hasTypeField(final String[] fields) {
+    return hasField("@type", fields);
+  }
+
+  /**
+   * Checks if given collection of fields contain field with specified name.
+   * 
+   * @param field
+   *          to find
+   * @param fields
+   *          collection of fields where search
+   * @return true if collection contain specified field, false otherwise.
+   */
+  private boolean hasField(final String field, final String[] fields) {
+    return getFieldValue(field, fields) != null;
+  }
+
+  private String getFieldValue(final String field, final String[] fields) {
+    String doubleQuotes = "\"" + field + "\"";
+    String singleQuotes = "'" + field + "'";
     for (int i = 0; i < fields.length; i = i + 2) {
-      if (fields[i].equals("\"@type\"") || fields[i].equals("'@type'")) {
-        return true;
+      if (fields[i].equals(doubleQuotes) || fields[i].equals(singleQuotes)) {
+        return fields[i + 1];
       }
     }
-    return false;
+    return null;
   }
 
   @Override
