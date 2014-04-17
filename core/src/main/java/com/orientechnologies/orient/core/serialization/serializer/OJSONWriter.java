@@ -73,6 +73,9 @@ public class OJSONWriter {
     if (iValue == null)
       buffer.append("null");
 
+    else if (iValue instanceof Boolean || iValue instanceof Number)
+      buffer.append(iValue.toString());
+
     else if (iValue instanceof OIdentifiable) {
       final OIdentifiable linked = (OIdentifiable) iValue;
       if (linked.getIdentity().isValid()) {
@@ -145,8 +148,6 @@ public class OJSONWriter {
     else if (iValue instanceof Iterable<?>)
       iteratorToJSON(((Iterable<?>) iValue).iterator(), iFormat, buffer);
 
-    else if (iValue instanceof Number)
-      buffer.append(iValue.toString());
     else {
       // TREAT IT AS STRING
       final String v = iValue.toString();
