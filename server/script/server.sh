@@ -28,8 +28,6 @@ echo "       \`\`        \`.                                                    
 echo "                 \`\`                                         www.orientdb.org "
 echo "                 \`                                    "
 
-cd `dirname $0`
-
 # resolve links - $0 may be a softlink
 PRG="$0"
 
@@ -46,9 +44,14 @@ done
 # Get standard environment variables
 PRGDIR=`dirname "$PRG"`
 
-# Only set ORIENTDB_HOME if not already set
-[ -f "$ORIENTDB_HOME"/bin/orient.sh ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
+# Set ORIENTDB_HOME if not already set.
+if [ -z "$ORIENTDB_HOME" ]; then
+	ORIENTDB_HOME="$PRGDIR/.."
+fi
 export ORIENTDB_HOME
+
+# always run from the home directory
+cd $ORIENTDB_HOME
 
 if [ ! -f "${CONFIG_FILE}" ]
 then
@@ -62,7 +65,7 @@ fi
 export JAVA_OPTS
 
 # Set JavaHome if it exists
-if [ -f "${JAVA_HOME}/bin/java" ]; then 
+if [ -f "${JAVA_HOME}/bin/java" ]; then
    JAVA=${JAVA_HOME}/bin/java
 else
    JAVA=java
@@ -74,4 +77,7 @@ WWW_PATH=$ORIENTDB_HOME/www
 ORIENTDB_SETTINGS="-Dprofiler.enabled=true"
 JAVA_OPTS_SCRIPT="-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9"
 
-$JAVA $JAVA_OPTS $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="@BUILD@" -cp "$ORIENTDB_HOME/lib/orientdb-server-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerMain
+ORIENTDB_CLASSPATH=$ORIENTDB_HOME/lib/orientdb-server-1.7-rc2.jar:$ORIENTDB_HOME/lib/*
+
+$JAVA $JAVA_OPTS $JAVA_OPTS_SCRIPT $ORIENTDB_SETTINGS -Djava.util.logging.config.file="$LOG_FILE" -Dorientdb.config.file="$CONFIG_FILE" -Dorientdb.www.path="$WWW_PATH" -Dorientdb.build.number="UNKNOWN@r${buildNumber}; 2014-03-25 15:54:54+0100" -cp "$ORIENTDB_CLASSPATH" com.orientechnologies.orient.server.OServerMain
+
