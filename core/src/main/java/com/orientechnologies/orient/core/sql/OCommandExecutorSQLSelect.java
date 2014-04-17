@@ -164,7 +164,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private static OIndexSearchResult analyzeQueryBranch(final OClass iSchemaClass, OSQLFilterCondition iCondition,
-      final List<OIndexSearchResult> iIndexSearchResults,OCommandContext iContext) {
+      final List<OIndexSearchResult> iIndexSearchResults, OCommandContext iContext) {
     if (iCondition == null)
       return null;
 
@@ -182,9 +182,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OIndexReuseType indexReuseType = operator.getIndexReuseType(iCondition.getLeft(), iCondition.getRight());
     if (indexReuseType.equals(OIndexReuseType.INDEX_INTERSECTION)) {
       final OIndexSearchResult leftResult = analyzeQueryBranch(iSchemaClass, (OSQLFilterCondition) iCondition.getLeft(),
-          iIndexSearchResults,iContext);
+          iIndexSearchResults, iContext);
       final OIndexSearchResult rightResult = analyzeQueryBranch(iSchemaClass, (OSQLFilterCondition) iCondition.getRight(),
-          iIndexSearchResults,iContext);
+          iIndexSearchResults, iContext);
 
       if (leftResult != null && rightResult != null) {
         if (leftResult.canBeMerged(rightResult)) {
@@ -208,8 +208,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         iIndexSearchResults.add(result);
 
       return result;
-    }else if(indexReuseType.equals(OIndexReuseType.INDEX_OPERATOR)){
-        return iCondition.getOperator().getOIndexSearchResult(iSchemaClass,iCondition,iIndexSearchResults,iContext);
+    } else if (indexReuseType.equals(OIndexReuseType.INDEX_OPERATOR)) {
+      return iCondition.getOperator().getOIndexSearchResult(iSchemaClass, iCondition, iIndexSearchResults, iContext);
     }
 
     return null;
@@ -1116,7 +1116,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return false;
     }
 
-    analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults,context);
+    analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults, context);
 
     // most specific will be processed first
     Collections.sort(indexSearchResults, new Comparator<OIndexSearchResult>() {
@@ -1231,8 +1231,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             }
           }
 
-
           final List<String> indexInvolvedFields = searchResult.getInvolvedFields();
+          context.setVariable("involvedFields", indexInvolvedFields);
           final List<String> whereInvolvedFields = compiledFilter.getInvolvedFields();
           boolean evaluateRecords = true;
 
@@ -1246,8 +1246,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               }
           }
 
-
-          if (compiledFilter == null || !evaluateRecords  || evaluateRecord(record)) {
+          if (compiledFilter == null || !evaluateRecords || evaluateRecord(record)) {
             if (!handleResult(record, true))
               break;
           }
