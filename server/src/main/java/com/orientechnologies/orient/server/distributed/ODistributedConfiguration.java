@@ -233,18 +233,6 @@ public class ODistributedConfiguration {
 
   public List<String> addNewNodeInPartitions(final String iNode) {
     synchronized (configuration) {
-      // GET DATABASE CFG
-      for (String clusterName : getClusterNames()) {
-        final List<List<String>> partitions = getPartitions(clusterName);
-        if (partitions != null)
-          for (List<String> partition : partitions) {
-            for (String node : partition)
-              if (node.equals(iNode))
-                // FOUND: DO NOTHING
-                return null;
-          }
-      }
-
       final List<String> changedPartitions = new ArrayList<String>();
       // NOT FOUND: ADD THE NODE IN CONFIGURATION. LOOK FOR $newNode TAG
       for (String clusterName : getClusterNames()) {

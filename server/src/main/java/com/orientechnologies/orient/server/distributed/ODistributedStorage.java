@@ -205,7 +205,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       // ASSIGN DESTINATION NODE
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
+      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+      if (!dbCfg.isReplicationActive(clusterName) && dbCfg.getPartitioningConfiguration(clusterName) == null)
         // DON'T REPLICATE
         return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
@@ -364,12 +365,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     }
   }
 
-	@Override
-	public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
-		throw new UnsupportedOperationException();
-	}
+  @Override
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
+    throw new UnsupportedOperationException();
+  }
 
-	@Override
+  @Override
   public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
       throws IOException {
     return wrapped.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);
@@ -715,18 +716,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     return "distributed";
   }
 
-  protected void handleDistributedException(final String iMessage, Exception e, Object... iParams) {
-    OLogManager.instance().error(this, iMessage, e, iParams);
-    final Throwable t = e.getCause();
-    if (t != null) {
-      if (t instanceof OException)
-        throw (OException) t;
-      else if (t.getCause() instanceof OException)
-        throw (OException) t.getCause();
-    }
-    throw new OStorageException(String.format(iMessage, iParams), e);
-  }
-
   @Override
   public void freeze(boolean throwException) {
     getFreezableStorage().freeze(throwException);
@@ -758,13 +747,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     this.lastOperationId.set(lastOperationId);
   }
 
-  private OFreezableStorage getFreezableStorage() {
-    if (wrapped instanceof OFreezableStorage)
-      return ((OFreezableStorage) wrapped);
-    else
-      throw new UnsupportedOperationException("Storage engine " + wrapped.getType() + " does not support freeze operation");
-  }
-
   public void pushDeletedRecord(final ORecordId rid, final ORecordVersion version) {
     deletedRecords.putIfAbsent(rid, new OPair<Long, ORecordVersion>(System.currentTimeMillis(), version));
   }
@@ -773,7 +755,26 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     return deletedRecords.remove(rid) != null;
   }
 
+  protected void handleDistributedException(final String iMessage, Exception e, Object... iParams) {
+    OLogManager.instance().error(this, iMessage, e, iParams);
+    final Throwable t = e.getCause();
+    if (t != null) {
+      if (t instanceof OException)
+        throw (OException) t;
+      else if (t.getCause() instanceof OException)
+        throw (OException) t.getCause();
+    }
+    throw new OStorageException(String.format(iMessage, iParams), e);
+  }
+
   protected Object sendRequest(String iDatabaseName, String iClusterName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode) {
     return dManager.sendRequest(iDatabaseName, iClusterName, iTask, iExecutionMode);
+  }
+
+  private OFreezableStorage getFreezableStorage() {
+    if (wrapped instanceof OFreezableStorage)
+      return ((OFreezableStorage) wrapped);
+    else
+      throw new UnsupportedOperationException("Storage engine " + wrapped.getType() + " does not support freeze operation");
   }
 }

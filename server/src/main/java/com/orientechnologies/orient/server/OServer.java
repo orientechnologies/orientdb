@@ -37,16 +37,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
-import com.orientechnologies.orient.server.config.OServerConfiguration;
-import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
-import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
-import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
-import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.config.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -78,28 +69,31 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
   private static ThreadGroup                               threadGroup;
-  private static Map<String, OServer>                      distributedServers = new ConcurrentHashMap<String, OServer>();
-  private final CountDownLatch                             startupLatch       = new CountDownLatch(1);
-  protected ReentrantLock                                  lock               = new ReentrantLock();
-  protected volatile boolean                               running            = true;
+  private static Map<String, OServer>                      distributedServers     = new ConcurrentHashMap<String, OServer>();
+  private final CountDownLatch                             startupLatch           = new CountDownLatch(1);
+  protected ReentrantLock                                  lock                   = new ReentrantLock();
+  protected volatile boolean                               running                = true;
   protected OServerConfigurationLoaderXml                  configurationLoader;
   protected OServerConfiguration                           configuration;
   protected OContextConfiguration                          contextConfiguration;
   protected OServerShutdownHook                            shutdownHook;
-  protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols   = new HashMap<String, Class<? extends ONetworkProtocol>>();
-  protected Map<String, OServerSocketFactory> networkSocketFactories   = new HashMap<String, OServerSocketFactory>();  
-  protected List<OServerNetworkListener>                   networkListeners   = new ArrayList<OServerNetworkListener>();
-  protected List<OServerLifecycleListener>                 lifecycleListeners = new ArrayList<OServerLifecycleListener>();
+  protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols       = new HashMap<String, Class<? extends ONetworkProtocol>>();
+  protected Map<String, OServerSocketFactory>              networkSocketFactories = new HashMap<String, OServerSocketFactory>();
+  protected List<OServerNetworkListener>                   networkListeners       = new ArrayList<OServerNetworkListener>();
+  protected List<OServerLifecycleListener>                 lifecycleListeners     = new ArrayList<OServerLifecycleListener>();
   protected OServerPluginManager                           pluginManager;
   protected OConfigurableHooksManager                      hookManager;
   protected ODistributedServerManager                      distributedManager;
   private ODatabaseDocumentPool                            dbPool;
-  private Random                                           random             = new Random();
-  private Map<String, Object>                              variables          = new HashMap<String, Object>();
+  private Random                                           random                 = new Random();
+  private Map<String, Object>                              variables              = new HashMap<String, Object>();
+  private String                                           serverRootDirectory;
   private String                                           databaseDirectory;
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
+    serverRootDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}", ".");
+
     defaultSettings();
 
     OLogManager.installCustomFormatter();
@@ -138,19 +132,19 @@ public class OServer {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
-            new OProfilerHookValue() {
-              @Override
-              public Object getValue() {
-                final StringBuilder dbs = new StringBuilder();
-                for (String dbName : getAvailableStorageNames().keySet()) {
-                  if (dbs.length() > 0)
-                    dbs.append(',');
-                  dbs.append(dbName);
-                }
-                return dbs.toString();
+        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT, new OProfilerHookValue() {
+            @Override
+            public Object getValue() {
+              final StringBuilder dbs = new StringBuilder();
+              for (String dbName : getAvailableStorageNames().keySet()) {
+                if (dbs.length()>0)
+                  dbs.append(',');
+                dbs.append(dbName);
               }
-            });
+              return dbs.toString();
+            }
+          }
+        );
 
     return this;
   }
@@ -205,7 +199,7 @@ public class OServer {
         contextConfiguration.getValueAsLong(OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT),
         contextConfiguration.getValueAsLong(OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY));
 
-    databaseDirectory = contextConfiguration.getValue("server.database.path", "${" + Orient.ORIENTDB_HOME + "}/databases/");
+    databaseDirectory = contextConfiguration.getValue("server.database.path", serverRootDirectory + "/databases/");
     databaseDirectory = OSystemVariableResolver.resolveSystemVariables(databaseDirectory);
     databaseDirectory = databaseDirectory.replace("//", "/");
 
@@ -218,20 +212,19 @@ public class OServer {
   public OServer activate() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     for (OServerLifecycleListener l : lifecycleListeners)
       l.onBeforeActivate();
-    
-    // REGISTER/CREATE SOCKET FACTORIES  
+
+    // REGISTER/CREATE SOCKET FACTORIES
     if (configuration.network.sockets != null) {
-	    for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
-	        Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) Class.forName(f.implementation);
-	        OServerSocketFactory factory = fClass.newInstance();
-	        try {
-	                factory.config(f.name, f.parameters);
-	                networkSocketFactories.put(f.name, factory);
-	        }
-	        catch (OConfigurationException e) {
-	                OLogManager.instance().error(this, "Error creating socket factory", e);
-	        }
-	    }    
+      for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
+        Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) Class.forName(f.implementation);
+        OServerSocketFactory factory = fClass.newInstance();
+        try {
+          factory.config(f.name, f.parameters);
+          networkSocketFactories.put(f.name, factory);
+        } catch (OConfigurationException e) {
+          OLogManager.instance().error(this, "Error creating socket factory", e);
+        }
+      }
     }
 
     // REGISTER PROTOCOLS
@@ -240,8 +233,8 @@ public class OServer {
 
     // STARTUP LISTENERS
     for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-      networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange, l.protocol, networkProtocols.get(l.protocol),
-          l.parameters, l.commands));
+      networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
+          l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
 
     registerPlugins();
 
@@ -369,7 +362,8 @@ public class OServer {
 
     for (OStorage storage : Orient.instance().getStorages()) {
       final String storageUrl = storage.getURL();
-      if (storage.exists() && !storages.containsValue(storageUrl))
+      // TEST IT'S OF CURRENT SERVER INSTANCE BY CHECKING THE PATH
+      if (storage.exists() && !storages.containsValue(storageUrl) && storageUrl.contains( rootDirectory ))
         storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
     }
 
@@ -582,6 +576,10 @@ public class OServer {
 
   public ODatabaseDocumentPool getDatabasePool() {
     return dbPool;
+  }
+
+  public void setServerRootDirectory(final String rootDirectory) {
+    this.serverRootDirectory = rootDirectory;
   }
 
   protected void loadConfiguration(final OServerConfiguration iConfiguration) {

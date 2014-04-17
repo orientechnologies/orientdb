@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClassAbstractDelegate;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyAbstractDelegate;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.tinkerpop.blueprints.Direction;
 
 /**
@@ -56,6 +57,15 @@ public class OrientVertexType extends OClassAbstractDelegate {
     this.graph = graph;
   }
 
+  protected static final void checkType(final OClass iType) {
+    if (iType == null)
+      throw new IllegalArgumentException("Vertex class is null");
+
+    if (!iType.isSubClassOf(CLASS_NAME))
+      throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + CLASS_NAME
+          + "' and therefore cannot be considered a Vertex");
+  }
+
   @Override
   public OrientVertexProperty createProperty(final String iPropertyName, final OType iType) {
     return new OrientVertexProperty(graph, delegate.createProperty(iPropertyName, iType));
@@ -86,13 +96,16 @@ public class OrientVertexType extends OClassAbstractDelegate {
     return new OrientVertexType(graph, super.getSuperClass());
   }
 
-  protected static final void checkType(final OClass iType) {
-    if (iType == null)
-      throw new IllegalArgumentException("Vertex class is null");
+  @Override
+  public OrientVertexType addCluster(final String iClusterName) {
+    delegate.addCluster(iClusterName);
+    return this;
+  }
 
-    if (!iType.isSubClassOf(CLASS_NAME))
-      throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + CLASS_NAME
-          + "' and therefore cannot be considered a Vertex");
+  @Override
+  public OrientVertexType addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType) {
+    delegate.addCluster(iClusterName, iClusterType);
+    return this;
   }
 
 }

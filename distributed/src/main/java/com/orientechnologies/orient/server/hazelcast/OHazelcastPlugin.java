@@ -217,9 +217,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void shutdown() {
     if (!enabled)
       return;
+
+    OLogManager.instance().warn(this, "Shutting down node %s...", getLocalNodeName());
     setNodeStatus(NODE_STATUS.SHUTDOWNING);
 
-    messageService.shutdown();
+    if (messageService != null)
+      messageService.shutdown();
 
     super.shutdown();
 
@@ -231,13 +234,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     // AVOID TO REMOVE THE CFG TO PREVENT OTHER NODES TO UN-REGISTER IT
     // getConfigurationMap().remove(CONFIG_NODE_PREFIX + getLocalNodeId());
 
-    try {
-      hazelcastInstance.shutdown();
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on shutting down Hazelcast instance", e);
-    } finally {
-      hazelcastInstance = null;
-    }
+    if (hazelcastInstance != null)
+      try {
+        hazelcastInstance.shutdown();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on shutting down Hazelcast instance", e);
+      } finally {
+        hazelcastInstance = null;
+      }
 
     setNodeStatus(NODE_STATUS.OFFLINE);
   }
@@ -878,7 +882,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       }
 
       db.close();
-      Orient.instance().unregisterStorageByName(db.getName());
+      Orient.instance().unregisterStorageByName(db.getURL().substring(db.getStorage().getType().length() + 1));
 
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "installed database '%s'", databaseName);
 

@@ -8,7 +8,6 @@ import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -1199,7 +1198,8 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
         db.getMetadata()
             .getIndexManager()
-            .createIndex(className + "." + key, indexType, new OPropertyIndexDefinition(className, key, keyType), cls.getPolymorphicClusterIds(), null, null);
+            .createIndex(className + "." + key, indexType, new OPropertyIndexDefinition(className, key, keyType),
+                cls.getPolymorphicClusterIds(), null, null);
         return null;
 
       }
@@ -1516,52 +1516,46 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   }
 
   protected void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
-    // FORCE NON DISTRIBUTION ON CREATION
-    OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
-    try {
-      final OSchema schema = iDatabase.getMetadata().getSchema();
+    final OSchema schema = iDatabase.getMetadata().getSchema();
 
-      schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+    schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
-      final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
-      final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
+    final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
+    final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
 
-      if (vertexBaseClass == null)
-        // CREATE THE META MODEL USING THE ORIENT SCHEMA
-        schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
+    if (vertexBaseClass == null)
+      // CREATE THE META MODEL USING THE ORIENT SCHEMA
+      schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
 
-      if (edgeBaseClass == null)
-        schema.createClass(OrientEdgeType.CLASS_NAME);
+    if (edgeBaseClass == null)
+      schema.createClass(OrientEdgeType.CLASS_NAME);
 
-      // @COMPATIBILITY < 1.4.0:
-      boolean warn = false;
-      final String MSG_SUFFIX = ". Probably you are using a database created with a previous version of OrientDB. Export in graphml format and reimport it";
+    // @COMPATIBILITY < 1.4.0:
+    boolean warn = false;
+    final String MSG_SUFFIX = ". Probably you are using a database created with a previous version of OrientDB. Export in graphml format and reimport it";
 
-      if (vertexBaseClass != null) {
-        if (!vertexBaseClass.getName().equals(OrientVertexType.CLASS_NAME)) {
-          OLogManager.instance().warn(this, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
-          warn = true;
-        }
-
-        if (vertexBaseClass.existsProperty(CONNECTION_OUT) || vertexBaseClass.existsProperty(CONNECTION_IN)) {
-          OLogManager.instance().warn(this, "Found property in/out against V");
-          warn = true;
-        }
+    if (vertexBaseClass != null) {
+      if (!vertexBaseClass.getName().equals(OrientVertexType.CLASS_NAME)) {
+        OLogManager.instance().warn(this, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
+        warn = true;
       }
 
-      if (edgeBaseClass != null) {
-        if (!warn && !edgeBaseClass.getName().equals(OrientEdgeType.CLASS_NAME)) {
-          OLogManager.instance().warn(this, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
-          warn = true;
-        }
-
-        if (edgeBaseClass.existsProperty(CONNECTION_OUT) || edgeBaseClass.existsProperty(CONNECTION_IN)) {
-          OLogManager.instance().warn(this, "Found property in/out against E");
-          warn = true;
-        }
+      if (vertexBaseClass.existsProperty(CONNECTION_OUT) || vertexBaseClass.existsProperty(CONNECTION_IN)) {
+        OLogManager.instance().warn(this, "Found property in/out against V");
+        warn = true;
       }
-    } finally {
-      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+    }
+
+    if (edgeBaseClass != null) {
+      if (!warn && !edgeBaseClass.getName().equals(OrientEdgeType.CLASS_NAME)) {
+        OLogManager.instance().warn(this, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
+        warn = true;
+      }
+
+      if (edgeBaseClass.existsProperty(CONNECTION_OUT) || edgeBaseClass.existsProperty(CONNECTION_IN)) {
+        OLogManager.instance().warn(this, "Found property in/out against E");
+        warn = true;
+      }
     }
   }
 

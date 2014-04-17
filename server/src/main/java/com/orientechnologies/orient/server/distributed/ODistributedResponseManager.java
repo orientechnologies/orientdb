@@ -122,7 +122,8 @@ public class ODistributedResponseManager {
       boolean foundBucket = false;
       for (int i = 0; i < responseGroups.size(); ++i) {
         final List<ODistributedResponse> sameResponse = responseGroups.get(i);
-        if (sameResponse.isEmpty() || sameResponse.get(0).getPayload().equals(response.getPayload())) {
+        if (sameResponse.isEmpty() || (sameResponse.get(0).getPayload() == null && response.getPayload() == null)
+            || sameResponse.get(0).getPayload().equals(response.getPayload())) {
           sameResponse.add(response);
           foundBucket = true;
           break;
@@ -233,136 +234,6 @@ public class ODistributedResponseManager {
       }
     }
     return servers;
-  }
-
-  protected void manageConflicts() {
-    if (request.getTask().getQuorumType() == OAbstractRemoteTask.QUORUM_TYPE.NONE)
-      // NO QUORUM
-      return;
-
-    final int bestResponsesGroupIndex = getBestResponsesGroup();
-    final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
-
-    final int maxCoherentResponses = bestResponsesGroup.size();
-    final int conflicts = getExpectedResponses() - maxCoherentResponses;
-
-    if (isMinimumQuorumReached(true)) {
-      // QUORUM SATISFIED
-
-      if (responseGroups.size() == 1)
-        // NO CONFLICT
-        return;
-
-      if (checkNoWinnerCase(bestResponsesGroup))
-        return;
-
-      // NO FIFTY/FIFTY CASE: FIX THE CONFLICTED NODES BY OVERWRITING THE RECORD WITH THE WINNER'S RESULT
-      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-          "detected %d conflicts, but the quorum (%d) has been reached. Fixing remote records. Request: %s", conflicts, quorum,
-          request);
-
-      fixNodesInConflict(bestResponsesGroup);
-
-    } else {
-      // QUORUM HASN'T BEEN REACHED
-      ODistributedServerLog
-          .warn(
-              this,
-              dManager.getLocalNodeName(),
-              null,
-              DIRECTION.NONE,
-              "detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request: %s",
-              conflicts, quorum, request);
-
-      undoRequest();
-
-      final StringBuilder msg = new StringBuilder();
-      msg.append("Quorum " + getQuorum() + " not reached for request=" + request + ". Servers in timeout/conflict are:");
-      final List<ODistributedResponse> res = getConflictResponses();
-      if (res.isEmpty())
-        msg.append(" no server in conflict");
-      else {
-        for (ODistributedResponse r : res) {
-          msg.append("\n- ");
-          msg.append(r.getExecutorNodeName());
-          msg.append(": ");
-          msg.append(r.getPayload());
-        }
-        msg.append("\n");
-      }
-
-      msg.append(". Received: ");
-      msg.append(responses);
-
-      throw new ODistributedException(msg.toString());
-    }
-  }
-
-  protected void undoRequest() {
-    for (ODistributedResponse r : getReceivedResponses()) {
-      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-          "sending undo message for request=%s to server %s", request, r.getExecutorNodeName());
-
-      final OAbstractRemoteTask task = request.getTask();
-      if (task instanceof OAbstractReplicatedTask) {
-        final OAbstractRemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request, r.getPayload());
-
-        if (undoTask != null)
-          dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), undoTask,
-              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
-      }
-    }
-  }
-
-  protected void fixNodesInConflict(List<ODistributedResponse> bestResponsesGroup) {
-    final ODistributedResponse goodResponse = bestResponsesGroup.get(0);
-
-    for (List<ODistributedResponse> responseGroup : responseGroups) {
-      if (responseGroup != bestResponsesGroup) {
-        // CONFLICT GROUP: FIX THEM ONE BY ONE
-        for (ODistributedResponse r : responseGroup) {
-          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "fixing response for request=%s in server %s to be: %s", request, r.getExecutorNodeName(), goodResponse);
-
-          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r.getPayload(),
-              goodResponse.getPayload());
-
-          if (fixTask != null)
-            dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), fixTask,
-                ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
-        }
-      }
-    }
-  }
-
-  protected boolean checkNoWinnerCase(List<ODistributedResponse> bestResponsesGroup) {
-    // CHECK IF THERE ARE 2 PARTITIONS EQUAL IN SIZE
-    int maxCoherentResponses = bestResponsesGroup.size();
-
-    for (List<ODistributedResponse> responseGroup : responseGroups) {
-      if (responseGroup != bestResponsesGroup && responseGroup.size() == maxCoherentResponses) {
-        final List<String> a = new ArrayList<String>();
-        for (ODistributedResponse r : bestResponsesGroup)
-          a.add(r.getExecutorNodeName());
-
-        final List<String> b = new ArrayList<String>();
-        for (ODistributedResponse r : responseGroup)
-          b.add(r.getExecutorNodeName());
-
-        ODistributedServerLog
-            .error(
-                this,
-                dManager.getLocalNodeName(),
-                null,
-                DIRECTION.NONE,
-                "detected possible split brain network where 2 groups of servers A%s and B%s have different contents. Cannot decide who is the winner even if the quorum (%d) has been reached. Request: %s",
-                a, b, quorum, request);
-
-        // DON'T FIX RECORDS BECAUSE THERE ISN'T A CLEAR WINNER
-        return true;
-      }
-    }
-    return false;
   }
 
   public long getMessageId() {
@@ -539,5 +410,135 @@ public class ODistributedResponseManager {
 
   public String getDatabaseName() {
     return request.getDatabaseName();
+  }
+
+  protected void manageConflicts() {
+    if (request.getTask().getQuorumType() == OAbstractRemoteTask.QUORUM_TYPE.NONE)
+      // NO QUORUM
+      return;
+
+    final int bestResponsesGroupIndex = getBestResponsesGroup();
+    final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
+
+    final int maxCoherentResponses = bestResponsesGroup.size();
+    final int conflicts = getExpectedResponses() - maxCoherentResponses;
+
+    if (isMinimumQuorumReached(true)) {
+      // QUORUM SATISFIED
+
+      if (responseGroups.size() == 1)
+        // NO CONFLICT
+        return;
+
+      if (checkNoWinnerCase(bestResponsesGroup))
+        return;
+
+      // NO FIFTY/FIFTY CASE: FIX THE CONFLICTED NODES BY OVERWRITING THE RECORD WITH THE WINNER'S RESULT
+      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+          "detected %d conflicts, but the quorum (%d) has been reached. Fixing remote records. Request: %s", conflicts, quorum,
+          request);
+
+      fixNodesInConflict(bestResponsesGroup);
+
+    } else {
+      // QUORUM HASN'T BEEN REACHED
+      ODistributedServerLog
+          .warn(
+              this,
+              dManager.getLocalNodeName(),
+              null,
+              DIRECTION.NONE,
+              "detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request: %s",
+              conflicts, quorum, request);
+
+      undoRequest();
+
+      final StringBuilder msg = new StringBuilder();
+      msg.append("Quorum " + getQuorum() + " not reached for request=" + request + ". Servers in timeout/conflict are:");
+      final List<ODistributedResponse> res = getConflictResponses();
+      if (res.isEmpty())
+        msg.append(" no server in conflict");
+      else {
+        for (ODistributedResponse r : res) {
+          msg.append("\n- ");
+          msg.append(r.getExecutorNodeName());
+          msg.append(": ");
+          msg.append(r.getPayload());
+        }
+        msg.append("\n");
+      }
+
+      msg.append(". Received: ");
+      msg.append(responses);
+
+      throw new ODistributedException(msg.toString());
+    }
+  }
+
+  protected void undoRequest() {
+    for (ODistributedResponse r : getReceivedResponses()) {
+      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+          "sending undo message for request=%s to server %s", request, r.getExecutorNodeName());
+
+      final OAbstractRemoteTask task = request.getTask();
+      if (task instanceof OAbstractReplicatedTask) {
+        final OAbstractRemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request, r.getPayload());
+
+        if (undoTask != null)
+          dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), undoTask,
+              ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+      }
+    }
+  }
+
+  protected void fixNodesInConflict(List<ODistributedResponse> bestResponsesGroup) {
+    final ODistributedResponse goodResponse = bestResponsesGroup.get(0);
+
+    for (List<ODistributedResponse> responseGroup : responseGroups) {
+      if (responseGroup != bestResponsesGroup) {
+        // CONFLICT GROUP: FIX THEM ONE BY ONE
+        for (ODistributedResponse r : responseGroup) {
+          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+              "fixing response for request=%s in server %s to be: %s", request, r.getExecutorNodeName(), goodResponse);
+
+          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r.getPayload(),
+              goodResponse.getPayload());
+
+          if (fixTask != null)
+            dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), fixTask,
+                ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
+        }
+      }
+    }
+  }
+
+  protected boolean checkNoWinnerCase(List<ODistributedResponse> bestResponsesGroup) {
+    // CHECK IF THERE ARE 2 PARTITIONS EQUAL IN SIZE
+    int maxCoherentResponses = bestResponsesGroup.size();
+
+    for (List<ODistributedResponse> responseGroup : responseGroups) {
+      if (responseGroup != bestResponsesGroup && responseGroup.size() == maxCoherentResponses) {
+        final List<String> a = new ArrayList<String>();
+        for (ODistributedResponse r : bestResponsesGroup)
+          a.add(r.getExecutorNodeName());
+
+        final List<String> b = new ArrayList<String>();
+        for (ODistributedResponse r : responseGroup)
+          b.add(r.getExecutorNodeName());
+
+        ODistributedServerLog
+            .error(
+                this,
+                dManager.getLocalNodeName(),
+                null,
+                DIRECTION.NONE,
+                "detected possible split brain network where 2 groups of servers A%s and B%s have different contents. Cannot decide who is the winner even if the quorum (%d) has been reached. Request: %s",
+                a, b, quorum, request);
+
+        // DON'T FIX RECORDS BECAUSE THERE ISN'T A CLEAR WINNER
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -36,6 +29,13 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -76,9 +76,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       } else if (param.name.equalsIgnoreCase("nodeName"))
         nodeName = param.value;
       else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
-        defaultDatabaseConfigFile = new File(OSystemVariableResolver.resolveSystemVariables(param.value));
-        if (!defaultDatabaseConfigFile.exists())
-          throw new OConfigurationException("Cannot find distributed database config file: " + defaultDatabaseConfigFile);
+        setDefaultDatabaseConfigFile(param.value);
       } else if (param.name.equalsIgnoreCase("conflict.resolver.impl"))
         try {
           confictResolverClass = (Class<? extends OReplicationConflictResolver>) Class.forName(param.value);
@@ -105,6 +103,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       } catch (IOException e) {
         throw new OConfigurationException("Error on creating 'replicator' user", e);
       }
+  }
+
+  public void setDefaultDatabaseConfigFile(final String iFile) {
+    defaultDatabaseConfigFile = new File(OSystemVariableResolver.resolveSystemVariables(iFile));
+    if (!defaultDatabaseConfigFile.exists())
+      throw new OConfigurationException("Cannot find distributed database config file: " + defaultDatabaseConfigFile);
   }
 
   @Override
@@ -146,6 +150,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     }
   }
 
+  @Override
+  public void onCreate(ODatabase iDatabase) {
+    onOpen(iDatabase);
+  }
+
   /**
    * Remove myself as hook.
    */
@@ -183,38 +192,18 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     return strategies.get(iStrategyName);
   }
 
-  protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file) {
-    if (!file.exists() || file.length() == 0)
-      return null;
-
-    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "loaded database configuration from disk: %s", file);
-
-    FileInputStream f = null;
-    try {
-      f = new FileInputStream(file);
-      final byte[] buffer = new byte[(int) file.length()];
-      f.read(buffer);
-
-      final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
-      doc.field("version", 0);
-      updateCachedDatabaseConfiguration(iDatabaseName, doc, false);
-      return doc;
-
-    } catch (Exception e) {
-    } finally {
-      if (f != null)
-        try {
-          f.close();
-        } catch (IOException e) {
-        }
-    }
-    return null;
-  }
-
   public boolean updateCachedDatabaseConfiguration(final String iDatabaseName, final ODocument cfg, final boolean iSaveToDisk) {
     synchronized (cachedDatabaseConfiguration) {
-      final ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
-      if (oldCfg != null && (Integer) oldCfg.field("version") > (Integer) cfg.field("version")) {
+      ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
+      Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
+      if (oldVersion == null)
+        oldVersion = 1;
+
+      Integer currVersion = (Integer) cfg.field("version");
+      if (currVersion == null)
+        currVersion = 1;
+
+      if (oldCfg != null && oldVersion > currVersion) {
         // NO CHANGE, SKIP IT
         OLogManager.instance().debug(this,
             "Skip saving of distributed configuration file for database '%s' because is unchanged (version %d)", iDatabaseName,
@@ -270,6 +259,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
           cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
           if (cfg == null)
             throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
+
+          cachedDatabaseConfiguration.put(iDatabaseName, cfg);
         }
       }
       return new ODistributedConfiguration(cfg);
@@ -282,5 +273,33 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
   public OServer getServerInstance() {
     return serverInstance;
+  }
+
+  protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file) {
+    if (!file.exists() || file.length() == 0)
+      return null;
+
+    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "loaded database configuration from disk: %s", file);
+
+    FileInputStream f = null;
+    try {
+      f = new FileInputStream(file);
+      final byte[] buffer = new byte[(int) file.length()];
+      f.read(buffer);
+
+      final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
+      doc.field("version", 0);
+      updateCachedDatabaseConfiguration(iDatabaseName, doc, false);
+      return doc;
+
+    } catch (Exception e) {
+    } finally {
+      if (f != null)
+        try {
+          f.close();
+        } catch (IOException e) {
+        }
+    }
+    return null;
   }
 }

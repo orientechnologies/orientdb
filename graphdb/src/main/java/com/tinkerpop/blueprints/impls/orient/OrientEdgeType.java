@@ -18,6 +18,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassAbstractDelegate;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Represents an Edge class.
@@ -38,11 +39,6 @@ public class OrientEdgeType extends OClassAbstractDelegate {
     this.graph = graph;
   }
 
-  @Override
-  public OrientEdgeType getSuperClass() {
-    return new OrientEdgeType(graph, super.getSuperClass());
-  }
-
   protected static final void checkType(final OClass iType) {
     if (iType == null)
       throw new IllegalArgumentException("Edge class is null");
@@ -51,4 +47,22 @@ public class OrientEdgeType extends OClassAbstractDelegate {
       throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + CLASS_NAME
           + "' and therefore cannot be considered an Edge");
   }
+
+  @Override
+  public OrientEdgeType getSuperClass() {
+    return new OrientEdgeType(graph, super.getSuperClass());
+  }
+
+  @Override
+  public OrientEdgeType addCluster(final String iClusterName) {
+    delegate.addCluster(iClusterName);
+    return this;
+  }
+
+  @Override
+  public OrientEdgeType addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType) {
+    delegate.addCluster(iClusterName, iClusterType);
+    return this;
+  }
+
 }

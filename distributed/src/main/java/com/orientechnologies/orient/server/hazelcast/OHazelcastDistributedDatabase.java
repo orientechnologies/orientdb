@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
+import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -180,6 +182,131 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return send2Nodes(iRequest, nodes);
   }
 
+  public boolean isRestoringMessages() {
+    return restoringMessages;
+  }
+
+  public OHazelcastDistributedDatabase configureDatabase(final boolean iRestoreMessages, final boolean iUnqueuePendingMessages) {
+    // CREATE A QUEUE PER DATABASE
+    final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(manager.getLocalNodeName(), databaseName);
+    final IQueue<ODistributedRequest> requestQueue = msgService.getQueue(queueName);
+
+    if (ODistributedServerLog.isDebugEnabled())
+      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "listening for incoming requests on queue: %s",
+          queueName);
+
+    // UNDO PREVIOUS MESSAGE IF ANY
+    final IMap<Object, Object> undoMap = restoreMessagesBeforeFailure(iRestoreMessages);
+
+    restoringMessages = msgService.checkForPendingMessages(requestQueue, queueName, iUnqueuePendingMessages);
+
+    listenerThread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        Thread.currentThread().setName("OrientDB Node Request " + queueName);
+        while (!Thread.interrupted()) {
+          if (restoringMessages && requestQueue.isEmpty()) {
+            // END OF RESTORING MESSAGES, SET IT ONLINE
+            restoringMessages = false;
+            setOnline();
+          }
+
+          String senderNode = null;
+          ODistributedRequest message = null;
+          try {
+            message = readRequest(requestQueue);
+
+            // SAVE THE MESSAGE IN THE UNDO MAP IN CASE OF FAILURE
+            undoMap.put(databaseName, message);
+
+            if (message != null) {
+              senderNode = message.getSenderNodeName();
+              onMessage(message);
+            }
+
+            // OK: REMOVE THE UNDO BUFFER
+            undoMap.remove(databaseName);
+
+          } catch (InterruptedException e) {
+            // EXIT CURRENT THREAD
+            Thread.interrupted();
+            break;
+          } catch (DistributedObjectDestroyedException e) {
+            Thread.interrupted();
+            break;
+          } catch (HazelcastInstanceNotActiveException e) {
+            Thread.interrupted();
+            break;
+
+          } catch (Throwable e) {
+            ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
+                "error on reading distributed request: %s", e, message != null ? message.getTask() : "-");
+          }
+        }
+
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+            "end of reading requests for database %s", databaseName);
+      }
+    });
+    listenerThread.start();
+
+    return this;
+  }
+
+  public void initDatabaseInstance() {
+    if (database == null) {
+      // OPEN IT
+      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
+          ODistributedAbstractPlugin.REPLICATOR_USER);
+      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
+          replicatorUser.password);
+    }
+  }
+
+  @Override
+  public void setOnline() {
+    initDatabaseInstance();
+
+    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Publishing online status for database %s.%s...",
+        manager.getLocalNodeName(), databaseName);
+
+    // SET THE NODE.DB AS ONLINE
+    manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+
+    status.set(true);
+
+    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+        "Database %s.%s is online, waking up listeners on local node...", manager.getLocalNodeName(), databaseName);
+
+    // WAKE UP ANY WAITERS
+    synchronized (waitForOnline) {
+      waitForOnline.notifyAll();
+    }
+  }
+
+  public OHazelcastDistributedDatabase setWaitForMessage(final long iMessageId) {
+    ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+        "waiting for message id %d (discard all previous ones if any)...", iMessageId);
+
+    waitForMessageId.set(iMessageId);
+    return this;
+  }
+
+  public void shutdown() {
+    if (listenerThread != null)
+      listenerThread.interrupt();
+
+    try {
+      if (database != null)
+        database.close();
+    } catch (Exception e) {
+    }
+  }
+
+  public ODatabaseDocumentTx getDatabase() {
+    return database;
+  }
+
   protected int calculateQuorum(final ODistributedRequest iRequest, final String clusterName, final ODistributedConfiguration cfg,
       final Collection<String> nodes) {
     final OAbstractRemoteTask.QUORUM_TYPE quorumType = iRequest.getTask().getQuorumType();
@@ -238,107 +365,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           "no response received from local node about request %s", iRequest);
 
     return currentResponseMgr.getFinalResponse();
-  }
-
-  public boolean isRestoringMessages() {
-    return restoringMessages;
-  }
-
-  public OHazelcastDistributedDatabase configureDatabase(final boolean iRestoreMessages, final boolean iUnqueuePendingMessages) {
-    // CREATE A QUEUE PER DATABASE
-    final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(manager.getLocalNodeName(), databaseName);
-    final IQueue<ODistributedRequest> requestQueue = msgService.getQueue(queueName);
-
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "listening for incoming requests on queue: %s",
-          queueName);
-
-    // UNDO PREVIOUS MESSAGE IF ANY
-    final IMap<Object, Object> undoMap = restoreMessagesBeforeFailure(iRestoreMessages);
-
-    restoringMessages = msgService.checkForPendingMessages(requestQueue, queueName, iUnqueuePendingMessages);
-
-    listenerThread = new Thread(new Runnable() {
-      @Override
-      public void run() {
-        Thread.currentThread().setName("OrientDB Node Request " + queueName);
-        while (!Thread.interrupted()) {
-          if (restoringMessages && requestQueue.isEmpty()) {
-            // END OF RESTORING MESSAGES, SET IT ONLINE
-            restoringMessages = false;
-            setOnline();
-          }
-
-          String senderNode = null;
-          ODistributedRequest message = null;
-          try {
-            message = readRequest(requestQueue);
-
-            // SAVE THE MESSAGE IN THE UNDO MAP IN CASE OF FAILURE
-            undoMap.put(databaseName, message);
-
-            if (message != null) {
-              senderNode = message.getSenderNodeName();
-              onMessage(message);
-            }
-
-            // OK: REMOVE THE UNDO BUFFER
-            undoMap.remove(databaseName);
-
-          } catch (InterruptedException e) {
-            // EXIT CURRENT THREAD
-            Thread.interrupted();
-            break;
-
-          } catch (Throwable e) {
-            ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
-                "error on reading distributed request: %s", e, message != null ? message.getTask() : "-");
-          }
-        }
-      }
-    });
-    listenerThread.start();
-
-    return this;
-  }
-
-  public void initDatabaseInstance() {
-    if (database == null) {
-      // OPEN IT
-      final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-          ODistributedAbstractPlugin.REPLICATOR_USER);
-      database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
-          replicatorUser.password);
-    }
-  }
-
-  @Override
-  public void setOnline() {
-    initDatabaseInstance();
-
-    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Publishing online status for database %s.%s...",
-        manager.getLocalNodeName(), databaseName);
-
-    // SET THE NODE.DB AS ONLINE
-    manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
-
-    status.set(true);
-
-    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-        "Database %s.%s is online, waking up listeners on local node...", manager.getLocalNodeName(), databaseName);
-
-    // WAKE UP ANY WAITERS
-    synchronized (waitForOnline) {
-      waitForOnline.notifyAll();
-    }
-  }
-
-  public OHazelcastDistributedDatabase setWaitForMessage(final long iMessageId) {
-    ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-        "waiting for message id %d (discard all previous ones if any)...", iMessageId);
-
-    waitForMessageId.set(iMessageId);
-    return this;
   }
 
   protected ODistributedRequest readRequest(final IQueue<ODistributedRequest> requestQueue) throws InterruptedException {
@@ -442,16 +468,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return queues;
   }
 
-  public void shutdown() {
-    if (listenerThread != null)
-      listenerThread.interrupt();
-
-    try {
-      database.close();
-    } catch (Exception e) {
-    }
-  }
-
   /**
    * Composes the undo queue name based on node name.
    */
@@ -488,10 +504,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     }
     return undoMap;
-  }
-
-  public ODatabaseDocumentTx getDatabase() {
-    return database;
   }
 
   protected void checkLocalNodeInConfiguration() {

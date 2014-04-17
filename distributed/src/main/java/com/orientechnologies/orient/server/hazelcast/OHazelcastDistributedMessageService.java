@@ -15,9 +15,11 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.monitor.LocalQueueStats;
+import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -110,11 +112,19 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
             // EXIT CURRENT THREAD
             Thread.interrupted();
             break;
+          } catch (DistributedObjectDestroyedException e) {
+            Thread.interrupted();
+            break;
+          } catch (HazelcastInstanceNotActiveException e) {
+            Thread.interrupted();
+            break;
           } catch (Throwable e) {
             ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
                 "error on reading distributed response", e, message != null ? message.getPayload() : "-");
           }
         }
+
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "end of reading responses");
       }
     });
 
@@ -157,43 +167,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     return new OHazelcastDistributedRequest();
   }
 
-  /**
-   * Not synchronized, it's called when a message arrives
-   * 
-   * @param response
-   */
-  protected long dispatchResponseToThread(final ODistributedResponse response) {
-    try {
-      final long reqId = response.getRequestId();
-
-      // GET ASYNCHRONOUS MSG MANAGER IF ANY
-      final ODistributedResponseManager asynchMgr = responsesByRequestIds.get(reqId);
-      if (asynchMgr == null) {
-        if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), DIRECTION.IN,
-              "received response for message %d after the timeout (%dms)", reqId,
-              OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
-      } else if (asynchMgr.collectResponse(response)) {
-        // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
-        responsesByRequestIds.remove(reqId);
-
-        // RETURN THE ASYNCH RESPONSE TIME
-        return System.currentTimeMillis() - asynchMgr.getSentOn();
-      }
-    } finally {
-      Orient.instance().getProfiler()
-          .updateCounter("distributed.replication.msgReceived", "Number of replication messages received in current node", +1);
-
-      Orient
-          .instance()
-          .getProfiler()
-          .updateCounter("distributed.replication." + response.getExecutorNodeName() + ".msgReceived",
-              "Number of replication messages received in current node from a node", +1, "distributed.replication.*.msgReceived");
-    }
-
-    return -1;
-  }
-
   public void shutdown() {
     if (responseThread != null) {
       responseThread.interrupt();
@@ -210,77 +183,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       nodeResponseQueue.clear();
       nodeResponseQueue.destroy();
     }
-  }
-
-  protected String getLocalNodeNameAndThread() {
-    return manager.getLocalNodeName() + ":" + Thread.currentThread().getId();
-  }
-
-  protected void purgePendingMessages() {
-    final long now = System.currentTimeMillis();
-
-    final long timeout = OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong();
-
-    for (Iterator<Entry<Long, ODistributedResponseManager>> it = responsesByRequestIds.entrySet().iterator(); it.hasNext();) {
-      final Entry<Long, ODistributedResponseManager> item = it.next();
-
-      final ODistributedResponseManager resp = item.getValue();
-
-      final long timeElapsed = now - resp.getSentOn();
-
-      if (timeElapsed > timeout) {
-        // EXPIRED REQUEST, FREE IT!
-        final List<String> missingNodes = resp.getMissingNodes();
-
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), missingNodes.toString(), DIRECTION.IN,
-            "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms", missingNodes.size(),
-            resp.getMessageId(), missingNodes, timeElapsed, timeout);
-
-        Orient
-            .instance()
-            .getProfiler()
-            .updateCounter("distributed.replication." + resp.getDatabaseName() + ".timeouts",
-                "Number of timeouts on replication messages responses", +1, "distributed.replication.*.timeouts");
-
-        resp.timeout();
-        it.remove();
-      }
-    }
-  }
-
-  protected boolean checkForPendingMessages(final IQueue<?> iQueue, final String iQueueName, final boolean iUnqueuePendingMessages) {
-    final int queueSize = iQueue.size();
-    if (queueSize > 0) {
-      if (!iUnqueuePendingMessages) {
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-            "found %d previous messages in queue %s, clearing them...", queueSize, iQueueName);
-        iQueue.clear();
-      } else {
-        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-            "found %d previous messages in queue %s, aligning the database...", queueSize, iQueueName);
-        return true;
-      }
-    } else
-      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "found no previous messages in queue %s",
-          iQueueName);
-
-    return false;
-  }
-
-  /**
-   * Return the queue. If not exists create and register it.
-   */
-  @SuppressWarnings("unchecked")
-  protected <T> IQueue<T> getQueue(final String iQueueName) {
-    return manager.getHazelcastInstance().getQueue(iQueueName);
-  }
-
-  /**
-   * Remove the queue.
-   */
-  protected void removeQueue(final String iQueueName) {
-    IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
-    queue.clear();
   }
 
   public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {
@@ -371,6 +273,114 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
   public Set<String> getDatabases() {
     return databases.keySet();
+  }
+
+  /**
+   * Not synchronized, it's called when a message arrives
+   * 
+   * @param response
+   */
+  protected long dispatchResponseToThread(final ODistributedResponse response) {
+    try {
+      final long reqId = response.getRequestId();
+
+      // GET ASYNCHRONOUS MSG MANAGER IF ANY
+      final ODistributedResponseManager asynchMgr = responsesByRequestIds.get(reqId);
+      if (asynchMgr == null) {
+        if (ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), DIRECTION.IN,
+              "received response for message %d after the timeout (%dms)", reqId,
+              OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
+      } else if (asynchMgr.collectResponse(response)) {
+        // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
+        responsesByRequestIds.remove(reqId);
+
+        // RETURN THE ASYNCH RESPONSE TIME
+        return System.currentTimeMillis() - asynchMgr.getSentOn();
+      }
+    } finally {
+      Orient.instance().getProfiler()
+          .updateCounter("distributed.replication.msgReceived", "Number of replication messages received in current node", +1);
+
+      Orient
+          .instance()
+          .getProfiler()
+          .updateCounter("distributed.replication." + response.getExecutorNodeName() + ".msgReceived",
+              "Number of replication messages received in current node from a node", +1, "distributed.replication.*.msgReceived");
+    }
+
+    return -1;
+  }
+
+  protected String getLocalNodeNameAndThread() {
+    return manager.getLocalNodeName() + ":" + Thread.currentThread().getId();
+  }
+
+  protected void purgePendingMessages() {
+    final long now = System.currentTimeMillis();
+
+    final long timeout = OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong();
+
+    for (Iterator<Entry<Long, ODistributedResponseManager>> it = responsesByRequestIds.entrySet().iterator(); it.hasNext();) {
+      final Entry<Long, ODistributedResponseManager> item = it.next();
+
+      final ODistributedResponseManager resp = item.getValue();
+
+      final long timeElapsed = now - resp.getSentOn();
+
+      if (timeElapsed > timeout) {
+        // EXPIRED REQUEST, FREE IT!
+        final List<String> missingNodes = resp.getMissingNodes();
+
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), missingNodes.toString(), DIRECTION.IN,
+            "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms", missingNodes.size(),
+            resp.getMessageId(), missingNodes, timeElapsed, timeout);
+
+        Orient
+            .instance()
+            .getProfiler()
+            .updateCounter("distributed.replication." + resp.getDatabaseName() + ".timeouts",
+                "Number of timeouts on replication messages responses", +1, "distributed.replication.*.timeouts");
+
+        resp.timeout();
+        it.remove();
+      }
+    }
+  }
+
+  protected boolean checkForPendingMessages(final IQueue<?> iQueue, final String iQueueName, final boolean iUnqueuePendingMessages) {
+    final int queueSize = iQueue.size();
+    if (queueSize > 0) {
+      if (!iUnqueuePendingMessages) {
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+            "found %d previous messages in queue %s, clearing them...", queueSize, iQueueName);
+        iQueue.clear();
+      } else {
+        ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+            "found %d previous messages in queue %s, aligning the database...", queueSize, iQueueName);
+        return true;
+      }
+    } else
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "found no previous messages in queue %s",
+          iQueueName);
+
+    return false;
+  }
+
+  /**
+   * Return the queue. If not exists create and register it.
+   */
+  @SuppressWarnings("unchecked")
+  protected <T> IQueue<T> getQueue(final String iQueueName) {
+    return manager.getHazelcastInstance().getQueue(iQueueName);
+  }
+
+  /**
+   * Remove the queue.
+   */
+  protected void removeQueue(final String iQueueName) {
+    IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
+    queue.clear();
   }
 
   protected void collectMetric(final long iTime) {

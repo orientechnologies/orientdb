@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedPartition;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedPartition;
 
 /**
  * Hazelcast implementation for distributed partition.
@@ -34,7 +34,7 @@ public class OHazelcastDistributionPartition implements ODistributedPartition {
   public OHazelcastDistributionPartition(final List<String> nodes) {
     for (String n : nodes)
       if (!n.equals(ODistributedConfiguration.NEW_NODE_TAG))
-        this.nodes.add(n);
+        this.nodes.add(n.trim());
   }
 
   public Set<String> getNodes() {
