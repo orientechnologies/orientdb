@@ -281,7 +281,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    *           In case current version of cluster does not support given operation.
    * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException
    *           if record is already deleted/hidden.
-	 *
+   * 
    * @return <code>true</code> if record was hidden and <code>false</code> if record does not exits in database.
    */
 
@@ -360,7 +360,7 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * @param iCommand
    *          Command request to execute.
    * @return The same Command request received as parameter.
-   * @see OStorageRemote
+   * @see com.orientechnologies.orient.client.remote.OStorageRemote
    */
   public <RET extends OCommandRequest> RET command(OCommandRequest iCommand);
 

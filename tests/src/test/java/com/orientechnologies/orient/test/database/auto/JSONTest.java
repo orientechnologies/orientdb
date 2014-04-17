@@ -41,10 +41,10 @@ import java.util.Map;
 public class JSONTest {
   private String url;
 
-//  public static final void  main(String[] args) throws Exception {
-//    JSONTest test = new JSONTest("memory:test");
-//    test.testList();
-//  }
+  // public static void main(String[] args) throws Exception {
+  // JSONTest test = new JSONTest("memory:test");
+  // test.testEmbeddedList();
+  // }
 
   @Parameters(value = "url")
   public JSONTest(final String iURL) {
