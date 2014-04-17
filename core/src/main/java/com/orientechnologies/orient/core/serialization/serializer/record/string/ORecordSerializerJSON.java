@@ -66,10 +66,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   public static final ORecordSerializerJSON INSTANCE              = new ORecordSerializerJSON();
   public static final String                ATTRIBUTE_FIELD_TYPES = "@fieldTypes";
   public static final char[]                PARAMETER_SEPARATOR   = new char[] { ':', ',' };
-  private static final Long                 MAX_INT               = new Long(Integer.MAX_VALUE);
-  private static final Long                 MIN_INT               = new Long(Integer.MIN_VALUE);
-  private static final Double               MAX_FLOAT             = new Double(Float.MAX_VALUE);
-  private static final Double               MIN_FLOAT             = new Double(Float.MIN_VALUE);
+  private static final Long                 MAX_INT               = (long) Integer.MAX_VALUE;
+  private static final Long                 MIN_INT               = (long) Integer.MIN_VALUE;
+  private static final Double               MAX_FLOAT             = (double) Float.MAX_VALUE;
+  private static final Double               MIN_FLOAT             = (double) Float.MIN_VALUE;
 
   public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, boolean needReload) {
     return fromString(iSource, iRecord, iFields, null, needReload);
@@ -177,12 +177,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
           } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
             continue;
-          } else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument)
-            // JUMP IT
+          } else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
             continue;
-
-          // RECORD VALUE(S)
-          else if (fieldName.equals("value") && !(iRecord instanceof ODocument)) {
+          } else if (fieldName.equals("value") && !(iRecord instanceof ODocument)) {
+            // RECORD VALUE(S)
             if ("null".equals(fieldValue))
               iRecord.fromStream(new byte[] {});
             else if (iRecord instanceof ORecordBytes) {
@@ -360,10 +358,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes, iNoMap,
                 iOptions);
 
-          if (iType != null && iType.isLink()) {
-            // LINK
-          } else if (collectionItem instanceof ODocument && iRecord instanceof ODocument)
-            // SET THE OWNER
+          if ((iType == null || !iType.isLink()) && collectionItem instanceof ODocument && iRecord instanceof ODocument)
             ((ODocument) collectionItem).addOwner(iRecord);
 
           if (collectionItem instanceof String && ((String) collectionItem).length() == 0)
@@ -399,7 +394,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             else if (OStringSerializerHelper.contains(iFieldValue, '.')) {
               // DECIMAL FORMAT: DETERMINE IF DOUBLE OR FLOAT
               final Double v = new Double(OStringSerializerHelper.getStringContent(iFieldValue));
-              if (v.doubleValue() > 0) {
+              if (v > 0) {
                 // POSITIVE NUMBER
                 if (v.compareTo(MAX_FLOAT) <= 0)
                   return v.floatValue();
@@ -411,7 +406,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             } else {
               final Long v = new Long(OStringSerializerHelper.getStringContent(iFieldValue));
               // INTEGER FORMAT: DETERMINE IF DOUBLE OR FLOAT
-              if (v.longValue() > 0) {
+              if (v > 0) {
                 // POSITIVE NUMBER
                 if (v.compareTo(MAX_INT) <= 0)
                   return v.intValue();
@@ -436,13 +431,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
               if (parts.get(1).matches("\\d+")) {
                 iType = OType.LINK;
               }
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
         }
 
         if (iFieldTypes != null) {
-          Character c = null;
-          c = iFieldTypes.get(iFieldName);
+          Character c = iFieldTypes.get(iFieldName);
           if (c != null)
             iType = ORecordSerializerStringAbstract.getType(iFieldValueAsString, c);
         }
