@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,15 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
 /**
  * Maintains information about current HTTP response.
@@ -196,32 +196,23 @@ public class OHttpResponse {
       if (iResult == null)
         send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
       else if (iResult instanceof Iterator<?>)
-        writeRecords((Iterator<OIdentifiable>) iResult, null, iFormat, accept);
+        writeRecords(iResult, null, iFormat, accept);
     }
   }
 
-  public void writeRecords(final Iterable<OIdentifiable> iRecords) throws IOException {
-    if (iRecords == null)
-      return;
-
-    writeRecords(iRecords.iterator(), null, null, null);
-  }
-
-  public void writeRecords(final Iterable<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
-    if (iRecords == null)
-      return;
-
-    writeRecords(iRecords.iterator(), iFetchPlan, null, null);
-  }
-
-  public void writeRecords(final Iterator<OIdentifiable> iRecords) throws IOException {
+  public void writeRecords(final Object iRecords) throws IOException {
     writeRecords(iRecords, null, null, null);
   }
 
-  public void writeRecords(final Iterator<OIdentifiable> iRecords, final String iFetchPlan, String iFormat, final String accept)
-      throws IOException {
+  public void writeRecords(final Object iRecords, final String iFetchPlan) throws IOException {
+    writeRecords(iRecords, iFetchPlan, null, null);
+  }
+
+  public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept) throws IOException {
     if (iRecords == null)
       return;
+
+    final Iterator<Object> it = OMultiValue.getMultiValueIterator(iRecords);
 
     if (accept != null && accept.contains("text/csv")) {
       sendStream(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "data.csv", new OCallable<Void, OChunkedResponse>() {
@@ -233,10 +224,10 @@ public class OHttpResponse {
 
           // BROWSE ALL THE RECORD TO HAVE THE COMPLETE COLUMN
           // NAMES LIST
-          while (iRecords.hasNext()) {
-            final OIdentifiable r = iRecords.next();
-            if (r != null) {
-              final ORecord<?> rec = r.getRecord();
+          while (it.hasNext()) {
+            final Object r = it.next();
+            if (r != null && r instanceof OIdentifiable) {
+              final ORecord<?> rec = ((OIdentifiable) r).getRecord();
               if (rec != null) {
                 if (rec instanceof ODocument) {
                   final ODocument doc = (ODocument) rec;
@@ -299,7 +290,7 @@ public class OHttpResponse {
 
       // WRITE RECORDS
       json.beginCollection(-1, true, "result");
-      formatMultiValue(iRecords, buffer, format);
+      formatMultiValue(it, buffer, format);
       json.endCollection(-1, true);
 
       json.endObject();
