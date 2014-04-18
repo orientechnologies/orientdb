@@ -131,10 +131,21 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         } else if (type.equals("cmd")) {
           // COMMAND
           final String language = (String) operation.get("language");
-          final String command = (String) operation.get("command");
+          final Object command = operation.get("command");
+
+          String commandAsString = null;
+          if (OMultiValue.isMultiValue(command)) {
+            for (Object c : OMultiValue.getMultiValueIterable(command)) {
+              if (commandAsString == null)
+                commandAsString = c.toString();
+              else
+                commandAsString += ";" + c.toString();
+            }
+          } else
+            commandAsString = command.toString();
 
           final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
-          cmd.setText(command);
+          cmd.setText(commandAsString);
           lastResult = db.command(cmd).execute();
         } else if (type.equals("script")) {
           // COMMAND
@@ -167,7 +178,8 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         db.close();
     }
 
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, lastResult, null, true);
+    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, lastResult, null,
+        true);
     return false;
   }
 
