@@ -126,7 +126,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public OClass createClass(final String iClassName) {
-    return createClass(iClassName, (OClass) null, (int[]) null);
+    return createClass(iClassName, null, OStorage.CLUSTER_TYPE.PHYSICAL);
   }
 
   public OClass createClass(final String iClassName, final OClass iSuperClass) {
@@ -207,17 +207,15 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
 
-    StringBuilder cmd = null;
-
     final String key = iClassName.toLowerCase();
-    rwLock.readLock().lock();
+    rwLock.writeLock().lock();
     try {
       if (classes.containsKey(key))
         throw new OSchemaException("Class " + iClassName + " already exists in current database");
 
       checkClustersAreAbsent(iClusterIds);
 
-      cmd = new StringBuilder("create class ");
+      final StringBuilder cmd = new StringBuilder("create class ");
       cmd.append(iClassName);
 
       if (iSuperClass != null) {
@@ -241,20 +239,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         }
       }
 
-    } finally {
-      rwLock.readLock().unlock();
-    }
+      getDatabase().command(new OCommandSQL(cmd.toString())).execute();
 
-    getDatabase().command(new OCommandSQL(cmd.toString())).execute();
-
-    // LOCK IT IN EXCLUSIVE MODE TO UPDATE CLASS MAP
-    rwLock.writeLock().lock();
-    try {
       if (classes.containsKey(key))
         return classes.get(key);
-
-      // ADD IT LOCALLY AVOIDING TO RELOAD THE ENTIRE SCHEMA
-      createClassInternal(iClassName, iSuperClass, iClusterIds);
+      else
+        // ADD IT LOCALLY AVOIDING TO RELOAD THE ENTIRE SCHEMA
+        createClassInternal(iClassName, iSuperClass, iClusterIds);
 
       OClass cls = classes.get(key);
       addClusterClassMap(cls);
@@ -409,27 +400,20 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     final String key = iClassName.toLowerCase();
 
-    final OClass cls;
-    rwLock.readLock().lock();
-    try {
-      cls = classes.get(key);
-    } finally {
-      rwLock.readLock().unlock();
-    }
-
-    if (cls == null)
-      throw new OSchemaException("Class " + iClassName + " was not found in current database");
-
-    if (!cls.getBaseClasses().isEmpty())
-      throw new OSchemaException("Class " + iClassName
-          + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
-
-    StringBuilder cmd = new StringBuilder("drop class ");
-    cmd.append(iClassName);
-    Object result = getDatabase().command(new OCommandSQL(cmd.toString())).execute();
-
     rwLock.writeLock().lock();
     try {
+      final OClass cls = classes.get(key);
+      if (cls == null)
+        throw new OSchemaException("Class " + iClassName + " was not found in current database");
+
+      if (!cls.getBaseClasses().isEmpty())
+        throw new OSchemaException("Class " + iClassName
+            + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
+
+      final StringBuilder cmd = new StringBuilder("drop class ");
+      cmd.append(iClassName);
+
+      Object result = getDatabase().command(new OCommandSQL(cmd.toString())).execute();
       if (result instanceof Boolean && (Boolean) result) {
         classes.remove(key);
       }

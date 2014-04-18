@@ -19,7 +19,6 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -139,11 +138,6 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public void setDefaultClusterId(int iDefaultClusterId) {
-    delegate.setDefaultClusterId(iDefaultClusterId);
-  }
-
-  @Override
   public int[] getClusterIds() {
     return delegate.getClusterIds();
   }
@@ -151,16 +145,6 @@ public class OClassAbstractDelegate implements OClass {
   @Override
   public OClass addClusterId(int iId) {
     return delegate.addClusterId(iId);
-  }
-
-  @Override
-  public OClass addCluster(final String iClusterName) {
-    return delegate.addCluster(iClusterName);
-  }
-
-  @Override
-  public OClass addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType) {
-    return delegate.addCluster(iClusterName, iClusterType);
   }
 
   @Override
@@ -318,6 +302,11 @@ public class OClassAbstractDelegate implements OClass {
   @Override
   public Set<OIndex<?>> getIndexes() {
     return delegate.getIndexes();
+  }
+
+  @Override
+  public void setDefaultClusterId(int iDefaultClusterId) {
+    delegate.setDefaultClusterId(iDefaultClusterId);
   }
 
   @Override
