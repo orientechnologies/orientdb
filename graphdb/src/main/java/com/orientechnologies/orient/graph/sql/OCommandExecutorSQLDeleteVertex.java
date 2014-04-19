@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
@@ -70,6 +71,14 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
       if (word.startsWith("#")) {
         rid = new ORecordId(word);
+
+      } else if (word.equalsIgnoreCase("from")) {
+        final StringBuilder q = new StringBuilder();
+        final int newPos = OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, q);
+
+        query = database.command(new OSQLAsynchQuery<ODocument>(q.toString(), this));
+
+        parserSetCurrentPosition(newPos);
 
       } else if (word.equals(KEYWORD_WHERE)) {
         if (clazz == null)
@@ -162,7 +171,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
   @Override
   public String getSyntax() {
-    return "DELETE VERTEX <rid>|<[<class>] [WHERE <conditions>] [LIMIT <max-records>]>";
+    return "DELETE VERTEX [FROM <query>]|<rid>|<[<class>] [WHERE <conditions>] [LIMIT <max-records>]>";
   }
 
   @Override
