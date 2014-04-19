@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
@@ -40,15 +49,6 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -248,30 +248,14 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     final ODatabaseRecord db = getDatabase();
     db.command(new OCommandSQL(cmd.toString())).execute();
 
-    if (db.getURL().startsWith("remote")) {
-      // TODO: MANAGE BETTER THE STORAGE TYPE
+    final OClass cls = classes.get(key);
+    if (cls == null) {
       // UPDATE THE SCHEMA
       getDatabase().reload();
       reload();
+      return classes.get(key);
     }
-
-    // LOCK IT IN EXCLUSIVE MODE TO UPDATE CLASS MAP
-    rwLock.writeLock().lock();
-    try {
-      if (classes.containsKey(key))
-        return classes.get(key);
-
-      // ADD IT LOCALLY AVOIDING TO RELOAD THE ENTIRE SCHEMA
-      createClassInternal(iClassName, iSuperClass, iClusterIds);
-
-      OClass cls = classes.get(key);
-      addClusterClassMap(cls);
-
-      return cls;
-    } finally {
-      rwLock.writeLock().unlock();
-    }
-
+    return cls;
   }
 
   public OClass createClassInternal(final String iClassName, final OClass superClass, final int[] iClusterIds) {
@@ -330,6 +314,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
 
       addClusterClassMap(cls);
+
+      saveInternal();
 
       return cls;
     } finally {
@@ -417,7 +403,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     final String key = iClassName.toLowerCase();
 
-    final OClass cls;
+    OClass cls;
     rwLock.readLock().lock();
     try {
       cls = classes.get(key);
@@ -436,18 +422,14 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     cmd.append(iClassName);
     Object result = getDatabase().command(new OCommandSQL(cmd.toString())).execute();
 
-    rwLock.writeLock().lock();
-    try {
-      if (result instanceof Boolean && (Boolean) result) {
-        classes.remove(key);
-      }
+    getDatabase().reload();
+    reload();
 
+    cls = classes.get(key);
+    if (cls == null) {
+      // UPDATE THE SCHEMA
       getDatabase().reload();
       reload();
-
-      removeClusterClassMap(cls);
-    } finally {
-      rwLock.writeLock().unlock();
     }
   }
 
@@ -486,6 +468,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         classes.remove(cls.getShortName().toLowerCase());
 
       removeClusterClassMap(cls);
+      saveInternal();
+
     } finally {
       rwLock.writeLock().unlock();
     }

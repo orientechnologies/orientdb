@@ -93,7 +93,6 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
     final int clusterId = oClass.getDefaultClusterId();
 
     ((OSchemaProxy) database.getMetadata().getSchema()).dropClassInternal(className);
-    ((OSchemaProxy) database.getMetadata().getSchema()).saveInternal();
     database.getMetadata().getSchema().reload();
 
     deleteDefaultCluster(clusterId);
