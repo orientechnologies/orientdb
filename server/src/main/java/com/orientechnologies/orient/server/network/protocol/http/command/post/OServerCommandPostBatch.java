@@ -131,18 +131,24 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         } else if (type.equals("cmd")) {
           // COMMAND
           final String language = (String) operation.get("language");
+          if (language == null)
+            throw new IllegalArgumentException("language parameter is null");
+
           final Object command = operation.get("command");
+          if (command == null)
+            throw new IllegalArgumentException("command parameter is null");
 
           String commandAsString = null;
-          if (OMultiValue.isMultiValue(command)) {
-            for (Object c : OMultiValue.getMultiValueIterable(command)) {
-              if (commandAsString == null)
-                commandAsString = c.toString();
-              else
-                commandAsString += ";" + c.toString();
-            }
-          } else
-            commandAsString = command.toString();
+          if (command != null)
+            if (OMultiValue.isMultiValue(command)) {
+              for (Object c : OMultiValue.getMultiValueIterable(command)) {
+                if (commandAsString == null)
+                  commandAsString = c.toString();
+                else
+                  commandAsString += ";" + c.toString();
+              }
+            } else
+              commandAsString = command.toString();
 
           final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
           cmd.setText(commandAsString);
@@ -150,7 +156,12 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
         } else if (type.equals("script")) {
           // COMMAND
           final String language = (String) operation.get("language");
+          if (language == null)
+            throw new IllegalArgumentException("language parameter is null");
+
           final Object script = operation.get("script");
+          if (script == null)
+            throw new IllegalArgumentException("script parameter is null");
 
           StringBuilder text = new StringBuilder();
           if (OMultiValue.isMultiValue(script)) {
