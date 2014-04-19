@@ -245,11 +245,15 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       rwLock.readLock().unlock();
     }
 
-    getDatabase().command(new OCommandSQL(cmd.toString())).execute();
+    final ODatabaseRecord db = getDatabase();
+    db.command(new OCommandSQL(cmd.toString())).execute();
 
-    // UPDATE THE SCHEMA
-    getDatabase().reload();
-    reload();
+    if (db.getURL().startsWith("remote")) {
+      // TODO: MANAGE BETTER THE STORAGE TYPE
+      // UPDATE THE SCHEMA
+      getDatabase().reload();
+      reload();
+    }
 
     // LOCK IT IN EXCLUSIVE MODE TO UPDATE CLASS MAP
     rwLock.writeLock().lock();
