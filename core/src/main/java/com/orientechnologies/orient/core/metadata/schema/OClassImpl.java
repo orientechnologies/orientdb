@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
@@ -529,6 +530,24 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
+  @Override
+  public OClass addCluster(final String iClusterName) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    final String cmd = String.format("alter class %s addcluster %s", name, iClusterName);
+    final Integer clusterId = getDatabase().command(new OCommandSQL(cmd)).execute();
+    addClusterIdInternal(clusterId);
+    return this;
+  }
+
+  @Override
+  public OClass addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    final String cmd = String.format("alter class %s addcluster %s %s", name, iClusterName, iClusterType);
+    final Integer clusterId = getDatabase().command(new OCommandSQL(cmd)).execute();
+    addClusterIdInternal(clusterId);
+    return this;
+  }
+
   public OClass addClusterIdInternal(final int clusterId) {
     owner.checkClusterCanBeAdded(clusterId, this);
 
@@ -876,12 +895,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
   }
 
-  public void setInternalAndSave(final ATTRIBUTES attribute, final Object iValue) {
+  public Object setInternalAndSave(final ATTRIBUTES attribute, final Object iValue) {
     if (attribute == null)
       throw new IllegalArgumentException("attribute is null");
 
     final String stringValue = iValue != null ? iValue.toString() : null;
     final boolean isNull = stringValue == null || stringValue.equalsIgnoreCase("NULL");
+
+    Object result = null;
 
     switch (attribute) {
     case NAME:
@@ -909,10 +930,28 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       setAbstractInternal(Boolean.parseBoolean(stringValue));
       break;
     case ADDCLUSTER: {
-      int clId = getClusterId(stringValue);
-      if (clId == NOT_EXISTENT_CLUSTER_ID)
-        throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be added");
+      String[] parts = stringValue.split(" ");
+      int clId = getClusterId(parts[0]);
+
+      if (clId == NOT_EXISTENT_CLUSTER_ID) {
+        try {
+          clId = Integer.parseInt(parts[0]);
+          throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be added");
+        } catch (NumberFormatException e) {
+          // CREATE THE CLUSTER AT THE FLY
+          if (parts.length == 1)
+            // SET THE DEFAULT TYPE
+            parts = new String[] {
+                parts[0],
+                getDatabase().getURL().startsWith(OEngineMemory.NAME.toLowerCase()) ? OStorage.CLUSTER_TYPE.MEMORY.toString()
+                    : OStorage.CLUSTER_TYPE.PHYSICAL.toString() };
+
+          clId = getDatabase().addCluster(parts[0], OStorage.CLUSTER_TYPE.valueOf(parts[1]));
+        }
+      }
       addClusterIdInternal(clId);
+
+      result = clId;
       break;
     }
     case REMOVECLUSTER: {
@@ -935,6 +974,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
 
     saveInternal();
+
+    return result;
   }
 
   public OClass set(final ATTRIBUTES attribute, final Object iValue) {
@@ -964,16 +1005,17 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       setAbstract(Boolean.parseBoolean(stringValue));
       break;
     case ADDCLUSTER: {
-      int clId = getClusterId(stringValue);
-      if (clId == NOT_EXISTENT_CLUSTER_ID)
-        throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be added");
-      addClusterId(clId);
+      String[] parts = stringValue.split(" ");
+      if (parts.length == 1)
+        // SET THE DEFAULT TYPE
+        parts = new String[] { parts[0], "" };
+      addCluster(parts[0], OStorage.CLUSTER_TYPE.valueOf(parts[1]));
       break;
     }
     case REMOVECLUSTER:
       int clId = getClusterId(stringValue);
       if (clId == NOT_EXISTENT_CLUSTER_ID)
-        throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be added");
+        throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be removed");
       removeClusterId(clId);
       break;
     case CUSTOM:
