@@ -31,13 +31,37 @@ import java.lang.reflect.InvocationTargetException;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ServerRun {
-  protected String       rootPath;
   protected final String serverId;
+  protected String       rootPath;
   protected OServer      server;
 
   public ServerRun(final String iRootPath, final String serverId) {
     this.rootPath = iRootPath;
     this.serverId = serverId;
+  }
+
+  public static String getServerHome(final String iServerId) {
+    return "target/server" + iServerId;
+  }
+
+  public static String getDatabasePath(final String iServerId, final String iDatabaseName) {
+    return getServerHome(iServerId) + "/databases/" + iDatabaseName;
+  }
+
+  public OServer getServerInstance() {
+    return server;
+  }
+
+  public String getServerId() {
+    return serverId;
+  }
+
+  public String getBinaryProtocolAddress() {
+    return server.getListenerByProtocol(ONetworkProtocolBinary.class).getListeningAddress();
+  }
+
+  public void deleteNode() {
+    OFileUtils.deleteRecursively(new File(getServerHome()));
   }
 
   protected ODatabaseDocumentTx createDatabase(final String iName) {
@@ -67,22 +91,15 @@ public class ServerRun {
     OFileUtils.copyDirectory(new File(getDatabasePath(iDatabaseName)), new File(iDestinationDirectory));
   }
 
-  public OServer getServerInstance() {
-    return server;
-  }
-
-  public String getServerId() {
-    return serverId;
-  }
-
-  protected OServer startServer(final String iConfigFile) throws Exception, InstantiationException, IllegalAccessException,
+  protected OServer startServer(final String iServerConfigFile) throws Exception, InstantiationException, IllegalAccessException,
       ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException {
     System.out.println("Starting server " + serverId + " from " + getServerHome() + "...");
 
     System.setProperty("ORIENTDB_HOME", getServerHome());
 
     server = new OServer();
-    server.startup(getClass().getClassLoader().getResourceAsStream(iConfigFile));
+    server.setServerRootDirectory(getServerHome());
+    server.startup(getClass().getClassLoader().getResourceAsStream(iServerConfigFile));
     server.activate();
     return server;
   }
@@ -100,15 +117,4 @@ public class ServerRun {
     return getDatabasePath(serverId, iDatabaseName);
   }
 
-  public String getBinaryProtocolAddress() {
-    return server.getListenerByProtocol(ONetworkProtocolBinary.class).getListeningAddress();
-  }
-
-  public static String getServerHome(final String iServerId) {
-    return "target/server" + iServerId;
-  }
-
-  public static String getDatabasePath(final String iServerId, final String iDatabaseName) {
-    return getServerHome(iServerId) + "/databases/" + iDatabaseName;
-  }
 }

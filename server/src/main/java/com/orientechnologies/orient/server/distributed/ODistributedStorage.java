@@ -146,7 +146,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       // ALREADY DISTRIBUTED
       return wrapped.command(iCommand);
 
-    if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(null))
+    final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+    if (!dbCfg.isReplicationActive(null) && dbCfg.getPartitioningConfiguration(null) == null)
       // DON'T REPLICATE
       return wrapped.command(iCommand);
 
@@ -249,12 +250,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
-      final ODistributedConfiguration dConfig = dManager.getDatabaseConfiguration(getName());
-      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
+
+      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+      if (!dbCfg.isReplicationActive(clusterName) && dbCfg.getPartitioningConfiguration(clusterName) == null)
         // DON'T REPLICATE
         return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
-      final ODistributedPartitioningStrategy strategy = dManager.getPartitioningStrategy(dConfig.getPartitionStrategy(clusterName));
+      final ODistributedPartitioningStrategy strategy = dManager.getPartitioningStrategy(dbCfg.getPartitionStrategy(clusterName));
       final ODistributedPartition partition = strategy.getPartition(dManager, getName(), clusterName);
       if (partition.getNodes().contains(dManager.getLocalNodeName()))
         // LOCAL NODE OWNS THE DATA: GET IT LOCALLY BECAUSE IT'S FASTER
@@ -293,12 +295,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
+      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+      if (!dbCfg.isReplicationActive(clusterName) && dbCfg.getPartitioningConfiguration(clusterName) == null)
         // DON'T REPLICATE
         return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
 
       // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
-      final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(iRecordId, null, false, null, false,
+      final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
           LOCKING_STRATEGY.DEFAULT);
 
       // REPLICATE IT
@@ -337,7 +340,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
-      if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(clusterName))
+      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+      if (!dbCfg.isReplicationActive(clusterName) && dbCfg.getPartitioningConfiguration(clusterName) == null)
         // DON'T REPLICATE
         return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
@@ -441,7 +445,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       wrapped.commit(iTx, callback);
     else {
       try {
-        if (!dManager.getDatabaseConfiguration(getName()).isReplicationActive(null))
+        final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+        if (!dbCfg.isReplicationActive(null) && dbCfg.getPartitioningConfiguration(null) == null)
           // DON'T REPLICATE
           wrapped.commit(iTx, callback);
         else {
