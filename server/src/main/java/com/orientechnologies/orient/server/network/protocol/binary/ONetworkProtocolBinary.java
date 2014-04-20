@@ -1661,8 +1661,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     byte[] keyStream = channel.readBytes();
     boolean inclusive = channel.readBoolean();
+    int pageSize = 128;
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
+    if (connection.data.protocolVersion>=21)
+        pageSize = channel.readInt();
+
+      OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
 
     final OBinarySerializer<OIdentifiable> keySerializer = tree.getKeySerializer();
     OIdentifiable key = keySerializer.deserialize(keyStream, 0);
@@ -1670,7 +1674,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final OBinarySerializer<Integer> valueSerializer = tree.getValueSerializer();
 
     OTreeInternal.AccumulativeListener<OIdentifiable, Integer> listener = new OTreeInternal.AccumulativeListener<OIdentifiable, Integer>(
-        5);
+        pageSize);
     tree.loadEntriesMajor(key, inclusive, true, listener);
     List<Entry<OIdentifiable, Integer>> result = listener.getResult();
     byte[] stream = serializeSBTreeEntryCollection(result, keySerializer, valueSerializer);
