@@ -65,57 +65,357 @@ import java.util.zip.CRC32;
  * @since 7/23/13
  */
 public class OWOWCache {
-  public static final String                                NAME_ID_MAP_EXTENSION = ".cm";
+  public static final String NAME_ID_MAP_EXTENSION = ".cm";
 
-  private static final String                               NAME_ID_MAP           = "name_id_map" + NAME_ID_MAP_EXTENSION;
+  private static final String NAME_ID_MAP = "name_id_map" + NAME_ID_MAP_EXTENSION;
 
-  public static final int                                   MIN_CACHE_SIZE        = 16;
+  public static final int MIN_CACHE_SIZE = 16;
 
-  public static final long                                  MAGIC_NUMBER          = 0xFACB03FEL;
+  public static final long MAGIC_NUMBER = 0xFACB03FEL;
 
-  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups           = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
-  private final OBinarySerializer<String>                   stringSerializer;
+  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
+  private final OBinarySerializer<String> stringSerializer;
+  private final Map<Long, OFileClassic>   files;
+  private final boolean                   syncOnPageFlush;
+  private final int                       pageSize;
+  private final long                      groupTTL;
+  private final OWriteAheadLog            writeAheadLog;
+  private final AtomicInteger                  cacheSize   = new AtomicInteger();
+  private final OLockManager<GroupKey, Thread> lockManager = new OLockManager<GroupKey, Thread>(true, OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT.getValueAsInteger()
+  );
+  private final OStorageLocalAbstract storageLocal;
+  private final Object                   syncObject     = new Object();
+  private final ScheduledExecutorService commitExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+    @Override
+    public Thread newThread(Runnable r) {
+      Thread thread = new Thread(r);
+      thread.setDaemon(true);
+      thread.setName("OrientDB Write Cache Flush Task (" + storageLocal.getName() + ")");
+      return thread;
+    }
+  });
+  private          Map<String, Long> nameIdMap;
+  private          RandomAccessFile  nameIdMapHolder;
+  private volatile int               cacheMaxSize;
+  private long     fileCounter  = 0;
+  private GroupKey lastGroupKey = new GroupKey(0, -1);
+  private File nameIdMapHolderFile;
 
-  private Map<String, Long>                                 nameIdMap;
+  private static final class NameFileIdEntry {
+    private final String name;
+    private final long   fileId;
 
-  private RandomAccessFile                                  nameIdMapHolder;
+    private NameFileIdEntry(String name, long fileId) {
+      this.name = name;
+      this.fileId = fileId;
+    }
 
-  private final Map<Long, OFileClassic>                     files;
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
 
-  private final boolean                                     syncOnPageFlush;
-  private final int                                         pageSize;
-  private final long                                        groupTTL;
-  private final OWriteAheadLog                              writeAheadLog;
+      NameFileIdEntry that = (NameFileIdEntry) o;
 
-  private final AtomicInteger                               cacheSize             = new AtomicInteger();
-  private final OLockManager<GroupKey, Thread>              lockManager           = new OLockManager<GroupKey, Thread>(
-                                                                                                                        true,
-                                                                                                                        OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT
-                                                                                                                          .getValueAsInteger());
+      if (fileId != that.fileId)
+        return false;
+      if (!name.equals(that.name))
+        return false;
 
-  private volatile int                                      cacheMaxSize;
+      return true;
+    }
 
-  private final OStorageLocalAbstract                       storageLocal;
+    @Override
+    public int hashCode() {
+      int result = name.hashCode();
+      result = 31 * result + (int) (fileId ^ (fileId >>> 32));
+      return result;
+    }
+  }
 
-  private final Object                                      syncObject            = new Object();
-  private long                                              fileCounter           = 0;
+  private final class GroupKey implements Comparable<GroupKey> {
+    private final long fileId;
+    private final long groupIndex;
 
-  private GroupKey                                          lastGroupKey          = new GroupKey(0, -1);
+    private GroupKey(long fileId, long groupIndex) {
+      this.fileId = fileId;
+      this.groupIndex = groupIndex;
+    }
 
-  private final ScheduledExecutorService                    commitExecutor        = Executors
-                                                                                      .newSingleThreadScheduledExecutor(new ThreadFactory() {
-                                                                                        @Override
-                                                                                        public Thread newThread(Runnable r) {
-                                                                                          Thread thread = new Thread(r);
-                                                                                          thread.setDaemon(true);
-                                                                                          thread.setName("OrientDB Write Cache Flush Task ("+storageLocal.getName()+")");
-                                                                                          return thread;
-                                                                                        }
-                                                                                      });
-  private File                                              nameIdMapHolderFile;
+    @Override
+    public int compareTo(GroupKey other) {
+      if (fileId>other.fileId)
+        return 1;
+      if (fileId<other.fileId)
+        return -1;
+
+      if (groupIndex>other.groupIndex)
+        return 1;
+      if (groupIndex<other.groupIndex)
+        return -1;
+
+      return 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      GroupKey groupKey = (GroupKey) o;
+
+      if (fileId != groupKey.fileId)
+        return false;
+      if (groupIndex != groupKey.groupIndex)
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = (int) (fileId ^ (fileId >>> 32));
+      result = 31 * result + (int) (groupIndex ^ (groupIndex >>> 32));
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "GroupKey{" + "fileId=" + fileId + ", groupIndex=" + groupIndex + '}';
+    }
+  }
+
+  private final class PeriodicFlushTask implements Runnable {
+
+    @Override
+    public void run() {
+      try {
+        if (writeGroups.isEmpty())
+          return;
+
+        int writeGroupsToFlush;
+        boolean useForceSync = false;
+        double threshold = ((double) cacheSize.get()) / cacheMaxSize;
+        if (threshold>0.8) {
+          writeGroupsToFlush = (int) (0.2 * writeGroups.size());
+          useForceSync = true;
+        } else if (threshold>0.9) {
+          writeGroupsToFlush = (int) (0.4 * writeGroups.size());
+          useForceSync = true;
+        } else
+          writeGroupsToFlush = 1;
+
+        if (writeGroupsToFlush<1)
+          writeGroupsToFlush = 1;
+
+        int flushedGroups = 0;
+
+        flushedGroups = flushRing(writeGroupsToFlush, flushedGroups, false);
+
+        if (flushedGroups<writeGroupsToFlush && useForceSync)
+          flushedGroups = flushRing(writeGroupsToFlush, flushedGroups, true);
+
+        if (flushedGroups<writeGroupsToFlush && cacheSize.get()>cacheMaxSize) {
+          if (OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean()) {
+            final long oldCacheMaxSize = cacheMaxSize;
+
+            cacheMaxSize = (int) Math.ceil(cacheMaxSize * (1 + OGlobalConfiguration.SERVER_CACHE_INCREASE_STEP.getValueAsFloat()));
+            OLogManager.instance().warn(this, "Write cache size is increased from %d to %d", oldCacheMaxSize, cacheMaxSize);
+          } else {
+            throw new OAllCacheEntriesAreUsedException("All records in write cache are used!");
+          }
+        }
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Exception during data flush.", e);
+      }
+    }
+
+    private int flushRing(int writeGroupsToFlush, int flushedGroups, boolean forceFlush) throws IOException {
+      NavigableMap<GroupKey, WriteGroup> subMap = writeGroups.tailMap(lastGroupKey, false);
+
+      if (!subMap.isEmpty()) {
+        flushedGroups = iterateBySubRing(subMap, writeGroupsToFlush, 0, forceFlush);
+        if (flushedGroups < writeGroupsToFlush) {
+          if (!subMap.isEmpty()) {
+            subMap = writeGroups.headMap(subMap.firstKey(), false);
+            flushedGroups = iterateBySubRing(subMap, writeGroupsToFlush, flushedGroups, forceFlush);
+          }
+        }
+      } else
+        flushedGroups = iterateBySubRing(writeGroups, writeGroupsToFlush, flushedGroups, forceFlush);
+
+      return flushedGroups;
+    }
+
+    private int iterateBySubRing(NavigableMap<GroupKey, WriteGroup> subMap, int writeGroupsToFlush, int flushedWriteGroups,
+        boolean forceFlush) throws IOException {
+      Iterator<Map.Entry<GroupKey, WriteGroup>> entriesIterator = subMap.entrySet().iterator();
+      long currentTime = System.currentTimeMillis();
+
+      groupsLoop: while (entriesIterator.hasNext() && flushedWriteGroups < writeGroupsToFlush) {
+        Map.Entry<GroupKey, WriteGroup> entry = entriesIterator.next();
+        final WriteGroup group = entry.getValue();
+        final GroupKey groupKey = entry.getKey();
+
+        final boolean weakLockMode = group.creationTime - currentTime < groupTTL && !forceFlush;
+        if (group.recencyBit && weakLockMode) {
+          group.recencyBit = false;
+          continue;
+        }
+
+        lockManager.acquireLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
+        try {
+          if (group.recencyBit && weakLockMode)
+            group.recencyBit = false;
+          else {
+            group.recencyBit = false;
+
+            int flushedPages = 0;
+
+            for (int i = 0; i < 16; i++) {
+              final OCachePointer pagePointer = group.pages[i];
+              if (pagePointer != null) {
+                if (!pagePointer.tryAcquireSharedLock())
+                  continue groupsLoop;
+
+                try {
+                  flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
+                  flushedPages++;
+
+                  final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(pagePointer.getDataPointer());
+                  pagePointer.setLastFlushedLsn(flushedLSN);
+                } finally {
+                  pagePointer.releaseSharedLock();
+                }
+              }
+            }
+
+            for (OCachePointer pagePointer : group.pages)
+              if (pagePointer != null)
+                pagePointer.decrementReferrer();
+
+            entriesIterator.remove();
+            flushedWriteGroups++;
+
+            cacheSize.addAndGet(-flushedPages);
+          }
+        } finally {
+          lockManager.releaseLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
+        }
+
+        lastGroupKey = groupKey;
+      }
+
+      return flushedWriteGroups;
+    }
+  }
+
+  private final class FileFlushTask implements Callable<Void> {
+    private final long fileId;
+
+    private FileFlushTask(long fileId) {
+      this.fileId = fileId;
+    }
+
+    @Override
+    public Void call() throws Exception {
+      final GroupKey firstKey = new GroupKey(fileId, 0);
+      final GroupKey lastKey = new GroupKey(fileId, Long.MAX_VALUE);
+
+      NavigableMap<GroupKey, WriteGroup> subMap = writeGroups.subMap(firstKey, true, lastKey, true);
+      Iterator<Map.Entry<GroupKey, WriteGroup>> entryIterator = subMap.entrySet().iterator();
+
+      groupsLoop: while (entryIterator.hasNext()) {
+        Map.Entry<GroupKey, WriteGroup> entry = entryIterator.next();
+        final WriteGroup writeGroup = entry.getValue();
+        final GroupKey groupKey = entry.getKey();
+
+        lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
+        try {
+          int flushedPages = 0;
+
+          for (int i = 0; i < 16; i++) {
+            OCachePointer pagePointer = writeGroup.pages[i];
+
+            if (pagePointer != null) {
+              if (!pagePointer.tryAcquireSharedLock())
+                continue groupsLoop;
+
+              try {
+                flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
+                flushedPages++;
+              } finally {
+                pagePointer.releaseSharedLock();
+              }
+            }
+          }
+
+          for (OCachePointer pagePointer : writeGroup.pages)
+            if (pagePointer != null)
+              pagePointer.decrementReferrer();
+
+          cacheSize.addAndGet(-flushedPages);
+          entryIterator.remove();
+        } finally {
+          lockManager.releaseLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
+        }
+      }
+
+      files.get(fileId).synch();
+      return null;
+    }
+  }
+
+  private final class RemoveFilePagesTask implements Callable<Void> {
+    private final long fileId;
+
+    private RemoveFilePagesTask(long fileId) {
+      this.fileId = fileId;
+    }
+
+    @Override
+    public Void call() throws Exception {
+      final GroupKey firstKey = new GroupKey(fileId, 0);
+      final GroupKey lastKey = new GroupKey(fileId, Long.MAX_VALUE);
+
+      NavigableMap<GroupKey, WriteGroup> subMap = writeGroups.subMap(firstKey, true, lastKey, true);
+      Iterator<Map.Entry<GroupKey, WriteGroup>> entryIterator = subMap.entrySet().iterator();
+
+      while (entryIterator.hasNext()) {
+        Map.Entry<GroupKey, WriteGroup> entry = entryIterator.next();
+        WriteGroup writeGroup = entry.getValue();
+        GroupKey groupKey = entry.getKey();
+
+        lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
+        try {
+          for (OCachePointer pagePointer : writeGroup.pages) {
+            if (pagePointer != null) {
+              pagePointer.acquireExclusiveLock();
+              try {
+                pagePointer.decrementReferrer();
+                cacheSize.decrementAndGet();
+              } finally {
+                pagePointer.releaseExclusiveLock();
+              }
+            }
+          }
+
+          entryIterator.remove();
+        } finally {
+          lockManager.releaseLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
+        }
+      }
+
+      return null;
+    }
+  }
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
-                    int cacheMaxSize, OStorageLocalAbstract storageLocal, boolean checkMinSize) {
+      int cacheMaxSize, OStorageLocalAbstract storageLocal, boolean checkMinSize) {
     this.files = new ConcurrentHashMap<Long, OFileClassic>();
 
     this.syncOnPageFlush = syncOnPageFlush;
@@ -135,6 +435,15 @@ public class OWOWCache {
       commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
   }
 
+  private static int calculatePageCrc(byte[] pageData) {
+    int systemSize = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
+
+    final CRC32 crc32 = new CRC32();
+    crc32.update(pageData, systemSize, pageData.length - systemSize);
+
+    return (int) crc32.getValue();
+  }
+
   public long openFile(String fileName) throws IOException {
     synchronized (syncObject) {
       initNameIdMapping();
@@ -151,7 +460,6 @@ public class OWOWCache {
 
         fileClassic = createFile(fileName);
 
-
         files.put(fileId, fileClassic);
         nameIdMap.put(fileName, fileId);
         writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
@@ -163,33 +471,16 @@ public class OWOWCache {
     }
   }
 
-  private void openFile(OFileClassic fileClassic) throws IOException {
-    if (fileClassic.exists()) {
-      if (!fileClassic.isOpen())
-        fileClassic.open();
-    } else
-      fileClassic.create(-1);
-  }
-
-  private void initNameIdMapping() throws IOException {
-    if (nameIdMapHolder == null) {
-      final File storagePath = new File(storageLocal.getStoragePath());
-      if (!storagePath.exists())
-        if (!storagePath.mkdirs())
-          throw new OStorageException("Can not create directories for the path " + storagePath);
-
-      nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP);
-
-      nameIdMapHolder = new RandomAccessFile(nameIdMapHolderFile, "rw");
-      readNameIdMap();
+  public void lock() throws IOException {
+    for (OFileClassic file : files.values()) {
+      file.lock();
     }
   }
 
-  private OFileClassic createFile(String fileName) {
-    OFileClassic fileClassic = new OFileClassic();
-    String path = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath() + File.separator + fileName);
-    fileClassic.init(path, storageLocal.getMode());
-    return fileClassic;
+  public void unlock() throws IOException {
+    for (OFileClassic file : files.values()) {
+      file.unlock();
+    }
   }
 
   public void openFile(long fileId) throws IOException {
@@ -210,69 +501,9 @@ public class OWOWCache {
         return true;
 
       final File file = new File(storageLocal.getVariableParser().resolveVariables(
-                                                                                    storageLocal.getStoragePath() + File.separator + fileName));
+          storageLocal.getStoragePath() + File.separator + fileName));
       return file.exists();
     }
-  }
-
-  private void readNameIdMap() throws IOException {
-    nameIdMap = new HashMap<String, Long>();
-    long localFileCounter = -1;
-
-    nameIdMapHolder.seek(0);
-
-    NameFileIdEntry nameFileIdEntry;
-    while ((nameFileIdEntry = readNextNameIdEntry()) != null) {
-      if (localFileCounter < nameFileIdEntry.fileId)
-        localFileCounter = nameFileIdEntry.fileId;
-
-      if (nameFileIdEntry.fileId >= 0)
-        nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
-      else
-        nameIdMap.remove(nameFileIdEntry.name);
-    }
-
-    if (localFileCounter > 0)
-      fileCounter = localFileCounter;
-
-    for (Map.Entry<String, Long> nameIdEntry : nameIdMap.entrySet()) {
-      if (!files.containsKey(nameIdEntry.getValue())) {
-        OFileClassic fileClassic = createFile(nameIdEntry.getKey());
-        files.put(nameIdEntry.getValue(), fileClassic);
-      }
-    }
-  }
-
-  private NameFileIdEntry readNextNameIdEntry() throws IOException {
-    try {
-      final int nameSize = nameIdMapHolder.readInt();
-      byte[] serializedName = new byte[nameSize];
-
-      nameIdMapHolder.readFully(serializedName);
-
-      final String name = stringSerializer.deserialize(serializedName, 0);
-      final long fileId = nameIdMapHolder.readLong();
-
-      return new NameFileIdEntry(name, fileId);
-    } catch (EOFException eof) {
-      return null;
-    }
-  }
-
-  private void writeNameIdEntry(NameFileIdEntry nameFileIdEntry, boolean sync) throws IOException {
-
-    nameIdMapHolder.seek(nameIdMapHolder.length());
-
-    final int nameSize = stringSerializer.getObjectSize(nameFileIdEntry.name);
-    byte[] serializedName = new byte[nameSize];
-    stringSerializer.serialize(nameFileIdEntry.name, serializedName, 0);
-
-    nameIdMapHolder.writeInt(nameSize);
-    nameIdMapHolder.write(serializedName);
-    nameIdMapHolder.writeLong(nameFileIdEntry.fileId);
-
-    if (sync)
-      nameIdMapHolder.getFD().sync();
   }
 
   public Future store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
@@ -437,23 +668,6 @@ public class OWOWCache {
     }
   }
 
-  private String doDeleteFile(long fileId) throws IOException {
-    if (isOpen(fileId))
-      truncateFile(fileId);
-
-    final OFileClassic fileClassic = files.remove(fileId);
-
-    String name = null;
-    if (fileClassic != null) {
-      name = fileClassic.getName();
-
-      if (fileClassic.exists())
-        fileClassic.delete();
-    }
-
-    return name;
-  }
-
   public void truncateFile(long fileId) throws IOException {
     synchronized (syncObject) {
       removeCachedPages(fileId);
@@ -470,7 +684,7 @@ public class OWOWCache {
       final String osFileName = file.getName();
       if (osFileName.startsWith(oldFileName)) {
         final File newFile = new File(storageLocal.getStoragePath() + File.separator + newFileName
-                                        + osFileName.substring(osFileName.lastIndexOf(oldFileName) + oldFileName.length()));
+            + osFileName.substring(osFileName.lastIndexOf(oldFileName) + oldFileName.length()));
         boolean renamed = file.renameTo(newFile);
         while (!renamed) {
           OMemoryWatchDog.freeMemoryForResourceCleanup(100);
@@ -545,6 +759,245 @@ public class OWOWCache {
     }
   }
 
+  public void close(long fileId, boolean flush) throws IOException {
+    synchronized (syncObject) {
+      if (flush)
+        flush(fileId);
+      else
+        removeCachedPages(fileId);
+
+      files.get(fileId).close();
+    }
+  }
+
+  public OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener) {
+    final int notificationTimeOut = 5000;
+    final List<OPageDataVerificationError> errors = new ArrayList<OPageDataVerificationError>();
+
+    synchronized (syncObject) {
+      for (long fileId : files.keySet()) {
+
+        OFileClassic fileClassic = files.get(fileId);
+
+        boolean fileIsCorrect;
+        try {
+
+          if (commandOutputListener != null)
+            commandOutputListener.onMessage("Flashing file " + fileClassic.getName() + "... ");
+
+          flush(fileId);
+
+          if (commandOutputListener != null)
+            commandOutputListener.onMessage("Start verification of content of " + fileClassic.getName() + "file ...");
+
+          long time = System.currentTimeMillis();
+
+          long filledUpTo = fileClassic.getFilledUpTo();
+          fileIsCorrect = true;
+
+          for (long pos = 0; pos < filledUpTo; pos += pageSize) {
+            boolean checkSumIncorrect = false;
+            boolean magicNumberIncorrect = false;
+
+            byte[] data = new byte[pageSize];
+
+            fileClassic.read(pos, data, data.length);
+
+            long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, 0);
+
+            if (magicNumber != MAGIC_NUMBER) {
+              magicNumberIncorrect = true;
+              if (commandOutputListener != null)
+                commandOutputListener.onMessage("Error: Magic number for page " + (pos / pageSize) + " in file "
+                    + fileClassic.getName() + " does not much !!!");
+              fileIsCorrect = false;
+            }
+
+            final int storedCRC32 = OIntegerSerializer.INSTANCE.deserializeNative(data, OLongSerializer.LONG_SIZE);
+
+            final int calculatedCRC32 = calculatePageCrc(data);
+            if (storedCRC32 != calculatedCRC32) {
+              checkSumIncorrect = true;
+              if (commandOutputListener != null)
+                commandOutputListener.onMessage("Error: Checksum for page " + (pos / pageSize) + " in file "
+                    + fileClassic.getName() + " is incorrect !!!");
+              fileIsCorrect = false;
+            }
+
+            if (magicNumberIncorrect || checkSumIncorrect)
+              errors.add(new OPageDataVerificationError(magicNumberIncorrect, checkSumIncorrect, pos / pageSize, fileClassic
+                  .getName()));
+
+            if (commandOutputListener != null && System.currentTimeMillis() - time > notificationTimeOut) {
+              time = notificationTimeOut;
+              commandOutputListener.onMessage((pos / pageSize) + " pages were processed ...");
+            }
+          }
+        } catch (IOException ioe) {
+          if (commandOutputListener != null)
+            commandOutputListener.onMessage("Error: Error during processing of file " + fileClassic.getName() + ". "
+                + ioe.getMessage());
+
+          fileIsCorrect = false;
+        }
+
+        if (!fileIsCorrect) {
+          if (commandOutputListener != null)
+            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is finished with errors.");
+        } else {
+          if (commandOutputListener != null)
+            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is successfully finished.");
+        }
+      }
+
+      return errors.toArray(new OPageDataVerificationError[errors.size()]);
+    }
+  }
+
+  public void delete() throws IOException {
+    synchronized (syncObject) {
+      for (long fileId : files.keySet())
+        doDeleteFile(fileId);
+
+      if (nameIdMapHolderFile != null) {
+        if (nameIdMapHolderFile.exists()) {
+          nameIdMapHolder.close();
+
+          if (!nameIdMapHolderFile.delete())
+            throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
+        }
+
+        nameIdMapHolder = null;
+        nameIdMapHolderFile = null;
+      }
+    }
+
+    if (!commitExecutor.isShutdown()) {
+      commitExecutor.shutdown();
+      try {
+        if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
+          throw new OException("Background data flush task can not be stopped.");
+      } catch (InterruptedException e) {
+        OLogManager.instance().error(this, "Data flush thread was interrupted");
+
+        Thread.interrupted();
+        throw new OException("Data flush thread was interrupted", e);
+      }
+    }
+  }
+
+  public String fileNameById(long fileId) {
+    synchronized (syncObject) {
+      return files.get(fileId).getName();
+    }
+  }
+
+  private void openFile(OFileClassic fileClassic) throws IOException {
+    if (fileClassic.exists()) {
+      if (!fileClassic.isOpen())
+        fileClassic.open();
+    } else
+      fileClassic.create(-1);
+  }
+
+  private void initNameIdMapping() throws IOException {
+    if (nameIdMapHolder == null) {
+      final File storagePath = new File(storageLocal.getStoragePath());
+      if (!storagePath.exists())
+        if (!storagePath.mkdirs())
+          throw new OStorageException("Can not create directories for the path " + storagePath);
+
+      nameIdMapHolderFile = new File(storagePath, NAME_ID_MAP);
+
+      nameIdMapHolder = new RandomAccessFile(nameIdMapHolderFile, "rw");
+      readNameIdMap();
+    }
+  }
+
+  private OFileClassic createFile(String fileName) {
+    OFileClassic fileClassic = new OFileClassic();
+    String path = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath() + File.separator + fileName);
+    fileClassic.init(path, storageLocal.getMode());
+    return fileClassic;
+  }
+
+  private void readNameIdMap() throws IOException {
+    nameIdMap = new HashMap<String, Long>();
+    long localFileCounter = -1;
+
+    nameIdMapHolder.seek(0);
+
+    NameFileIdEntry nameFileIdEntry;
+    while ((nameFileIdEntry = readNextNameIdEntry()) != null) {
+      if (localFileCounter < nameFileIdEntry.fileId)
+        localFileCounter = nameFileIdEntry.fileId;
+
+      if (nameFileIdEntry.fileId >= 0)
+        nameIdMap.put(nameFileIdEntry.name, nameFileIdEntry.fileId);
+      else
+        nameIdMap.remove(nameFileIdEntry.name);
+    }
+
+    if (localFileCounter > 0)
+      fileCounter = localFileCounter;
+
+    for (Map.Entry<String, Long> nameIdEntry : nameIdMap.entrySet()) {
+      if (!files.containsKey(nameIdEntry.getValue())) {
+        OFileClassic fileClassic = createFile(nameIdEntry.getKey());
+        files.put(nameIdEntry.getValue(), fileClassic);
+      }
+    }
+  }
+
+  private NameFileIdEntry readNextNameIdEntry() throws IOException {
+    try {
+      final int nameSize = nameIdMapHolder.readInt();
+      byte[] serializedName = new byte[nameSize];
+
+      nameIdMapHolder.readFully(serializedName);
+
+      final String name = stringSerializer.deserialize(serializedName, 0);
+      final long fileId = nameIdMapHolder.readLong();
+
+      return new NameFileIdEntry(name, fileId);
+    } catch (EOFException eof) {
+      return null;
+    }
+  }
+
+  private void writeNameIdEntry(NameFileIdEntry nameFileIdEntry, boolean sync) throws IOException {
+
+    nameIdMapHolder.seek(nameIdMapHolder.length());
+
+    final int nameSize = stringSerializer.getObjectSize(nameFileIdEntry.name);
+    byte[] serializedName = new byte[nameSize];
+    stringSerializer.serialize(nameFileIdEntry.name, serializedName, 0);
+
+    nameIdMapHolder.writeInt(nameSize);
+    nameIdMapHolder.write(serializedName);
+    nameIdMapHolder.writeLong(nameFileIdEntry.fileId);
+
+    if (sync)
+      nameIdMapHolder.getFD().sync();
+  }
+
+  private String doDeleteFile(long fileId) throws IOException {
+    if (isOpen(fileId))
+      truncateFile(fileId);
+
+    final OFileClassic fileClassic = files.remove(fileId);
+
+    String name = null;
+    if (fileClassic != null) {
+      name = fileClassic.getName();
+
+      if (fileClassic.exists())
+        fileClassic.delete();
+    }
+
+    return name;
+  }
+
   private void removeCachedPages(long fileId) {
     Future<Void> future = commitExecutor.submit(new RemoveFilePagesTask(fileId));
     try {
@@ -603,460 +1056,5 @@ public class OWOWCache {
 
     if (syncOnPageFlush)
       fileClassic.synch();
-  }
-
-  private static int calculatePageCrc(byte[] pageData) {
-    int systemSize = OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
-
-    final CRC32 crc32 = new CRC32();
-    crc32.update(pageData, systemSize, pageData.length - systemSize);
-
-    return (int) crc32.getValue();
-  }
-
-  public void close(long fileId, boolean flush) throws IOException {
-    synchronized (syncObject) {
-      if (flush)
-        flush(fileId);
-      else
-        removeCachedPages(fileId);
-
-      files.get(fileId).close();
-    }
-  }
-
-  public OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener) {
-    final int notificationTimeOut = 5000;
-    final List<OPageDataVerificationError> errors = new ArrayList<OPageDataVerificationError>();
-
-    synchronized (syncObject) {
-      for (long fileId : files.keySet()) {
-
-        OFileClassic fileClassic = files.get(fileId);
-
-        boolean fileIsCorrect;
-        try {
-
-          if (commandOutputListener != null)
-            commandOutputListener.onMessage("Flashing file " + fileClassic.getName() + "... ");
-
-          flush(fileId);
-
-          if (commandOutputListener != null)
-            commandOutputListener.onMessage("Start verification of content of " + fileClassic.getName() + "file ...");
-
-          long time = System.currentTimeMillis();
-
-          long filledUpTo = fileClassic.getFilledUpTo();
-          fileIsCorrect = true;
-
-          for (long pos = 0; pos < filledUpTo; pos += pageSize) {
-            boolean checkSumIncorrect = false;
-            boolean magicNumberIncorrect = false;
-
-            byte[] data = new byte[pageSize];
-
-            fileClassic.read(pos, data, data.length);
-
-            long magicNumber = OLongSerializer.INSTANCE.deserializeNative(data, 0);
-
-            if (magicNumber != MAGIC_NUMBER) {
-              magicNumberIncorrect = true;
-              if (commandOutputListener != null)
-                commandOutputListener.onMessage("Error: Magic number for page " + (pos / pageSize) + " in file "
-                                                  + fileClassic.getName() + " does not much !!!");
-              fileIsCorrect = false;
-            }
-
-            final int storedCRC32 = OIntegerSerializer.INSTANCE.deserializeNative(data, OLongSerializer.LONG_SIZE);
-
-            final int calculatedCRC32 = calculatePageCrc(data);
-            if (storedCRC32 != calculatedCRC32) {
-              checkSumIncorrect = true;
-              if (commandOutputListener != null)
-                commandOutputListener.onMessage("Error: Checksum for page " + (pos / pageSize) + " in file "
-                                                  + fileClassic.getName() + " is incorrect !!!");
-              fileIsCorrect = false;
-            }
-
-            if (magicNumberIncorrect || checkSumIncorrect)
-              errors.add(new OPageDataVerificationError(magicNumberIncorrect, checkSumIncorrect, pos / pageSize, fileClassic
-                                                                                                                   .getName()));
-
-            if (commandOutputListener != null && System.currentTimeMillis() - time > notificationTimeOut) {
-              time = notificationTimeOut;
-              commandOutputListener.onMessage((pos / pageSize) + " pages were processed ...");
-            }
-          }
-        } catch (IOException ioe) {
-          if (commandOutputListener != null)
-            commandOutputListener.onMessage("Error: Error during processing of file " + fileClassic.getName() + ". "
-                                              + ioe.getMessage());
-
-          fileIsCorrect = false;
-        }
-
-        if (!fileIsCorrect) {
-          if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is finished with errors.");
-        } else {
-          if (commandOutputListener != null)
-            commandOutputListener.onMessage("Verification of file " + fileClassic.getName() + " is successfully finished.");
-        }
-      }
-
-      return errors.toArray(new OPageDataVerificationError[errors.size()]);
-    }
-  }
-
-  public void delete() throws IOException {
-    synchronized (syncObject) {
-      for (long fileId : files.keySet())
-        doDeleteFile(fileId);
-
-      if (nameIdMapHolderFile != null) {
-        if (nameIdMapHolderFile.exists()) {
-          nameIdMapHolder.close();
-
-          if (!nameIdMapHolderFile.delete())
-            throw new OStorageException("Can not delete disk cache file which contains name-id mapping.");
-        }
-
-        nameIdMapHolder = null;
-        nameIdMapHolderFile = null;
-      }
-    }
-
-    if (!commitExecutor.isShutdown()) {
-      commitExecutor.shutdown();
-      try {
-        if (!commitExecutor.awaitTermination(5, TimeUnit.MINUTES))
-          throw new OException("Background data flush task can not be stopped.");
-      } catch (InterruptedException e) {
-        OLogManager.instance().error(this, "Data flush thread was interrupted");
-
-        Thread.interrupted();
-        throw new OException("Data flush thread was interrupted", e);
-      }
-    }
-  }
-
-  public String fileNameById(long fileId) {
-    synchronized (syncObject) {
-      return files.get(fileId).getName();
-    }
-  }
-
-  private final class GroupKey implements Comparable<GroupKey> {
-    private final long fileId;
-    private final long groupIndex;
-
-    private GroupKey(long fileId, long groupIndex) {
-      this.fileId = fileId;
-      this.groupIndex = groupIndex;
-    }
-
-    @Override
-    public int compareTo(GroupKey other) {
-      if (fileId > other.fileId)
-        return 1;
-      if (fileId < other.fileId)
-        return -1;
-
-      if (groupIndex > other.groupIndex)
-        return 1;
-      if (groupIndex < other.groupIndex)
-        return -1;
-
-      return 0;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-      GroupKey groupKey = (GroupKey) o;
-
-      if (fileId != groupKey.fileId)
-        return false;
-      if (groupIndex != groupKey.groupIndex)
-        return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = (int) (fileId ^ (fileId >>> 32));
-      result = 31 * result + (int) (groupIndex ^ (groupIndex >>> 32));
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "GroupKey{" + "fileId=" + fileId + ", groupIndex=" + groupIndex + '}';
-    }
-  }
-
-  private final class PeriodicFlushTask implements Runnable {
-
-    @Override
-    public void run() {
-      try {
-        if (writeGroups.isEmpty())
-          return;
-
-        int writeGroupsToFlush;
-        boolean useForceSync = false;
-        double threshold = ((double) cacheSize.get()) / cacheMaxSize;
-        if (threshold > 0.8) {
-          writeGroupsToFlush = (int) (0.2 * writeGroups.size());
-          useForceSync = true;
-        } else if (threshold > 0.9) {
-          writeGroupsToFlush = (int) (0.4 * writeGroups.size());
-          useForceSync = true;
-        } else
-          writeGroupsToFlush = 1;
-
-        if (writeGroupsToFlush < 1)
-          writeGroupsToFlush = 1;
-
-        int flushedGroups = 0;
-
-        flushedGroups = flushRing(writeGroupsToFlush, flushedGroups, false);
-
-        if (flushedGroups < writeGroupsToFlush && useForceSync)
-          flushedGroups = flushRing(writeGroupsToFlush, flushedGroups, true);
-
-        if (flushedGroups < writeGroupsToFlush && cacheSize.get() > cacheMaxSize) {
-          if (OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean()) {
-            final long oldCacheMaxSize = cacheMaxSize;
-
-            cacheMaxSize = (int) Math.ceil(cacheMaxSize * (1 + OGlobalConfiguration.SERVER_CACHE_INCREASE_STEP.getValueAsFloat()));
-            OLogManager.instance().warn(this, "Write cache size is increased from %d to %d", oldCacheMaxSize, cacheMaxSize);
-          } else {
-            throw new OAllCacheEntriesAreUsedException("All records in write cache are used!");
-          }
-        }
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Exception during data flush.", e);
-      }
-    }
-
-    private int flushRing(int writeGroupsToFlush, int flushedGroups, boolean forceFlush) throws IOException {
-      NavigableMap<GroupKey, WriteGroup> subMap = writeGroups.tailMap(lastGroupKey, false);
-
-      if (!subMap.isEmpty()) {
-        flushedGroups = iterateBySubRing(subMap, writeGroupsToFlush, 0, forceFlush);
-        if (flushedGroups < writeGroupsToFlush) {
-          if (!subMap.isEmpty()) {
-            subMap = writeGroups.headMap(subMap.firstKey(), false);
-            flushedGroups = iterateBySubRing(subMap, writeGroupsToFlush, flushedGroups, forceFlush);
-          }
-        }
-      } else
-        flushedGroups = iterateBySubRing(writeGroups, writeGroupsToFlush, flushedGroups, forceFlush);
-
-      return flushedGroups;
-    }
-
-    private int iterateBySubRing(NavigableMap<GroupKey, WriteGroup> subMap, int writeGroupsToFlush, int flushedWriteGroups,
-                                  boolean forceFlush) throws IOException {
-      Iterator<Map.Entry<GroupKey, WriteGroup>> entriesIterator = subMap.entrySet().iterator();
-      long currentTime = System.currentTimeMillis();
-
-      groupsLoop: while (entriesIterator.hasNext() && flushedWriteGroups < writeGroupsToFlush) {
-        Map.Entry<GroupKey, WriteGroup> entry = entriesIterator.next();
-        final WriteGroup group = entry.getValue();
-        final GroupKey groupKey = entry.getKey();
-
-        final boolean weakLockMode = group.creationTime - currentTime < groupTTL && !forceFlush;
-        if (group.recencyBit && weakLockMode) {
-          group.recencyBit = false;
-          continue;
-        }
-
-        lockManager.acquireLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
-        try {
-          if (group.recencyBit && weakLockMode)
-            group.recencyBit = false;
-          else {
-            group.recencyBit = false;
-
-            int flushedPages = 0;
-
-            for (int i = 0; i < 16; i++) {
-              final OCachePointer pagePointer = group.pages[i];
-              if (pagePointer != null) {
-                if (!pagePointer.tryAcquireSharedLock())
-                  continue groupsLoop;
-
-                try {
-                  flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
-                  flushedPages++;
-
-                  final OLogSequenceNumber flushedLSN = ODurablePage.getLogSequenceNumberFromPage(pagePointer.getDataPointer());
-                  pagePointer.setLastFlushedLsn(flushedLSN);
-                } finally {
-                  pagePointer.releaseSharedLock();
-                }
-              }
-            }
-
-            for (OCachePointer pagePointer : group.pages)
-              if (pagePointer != null)
-                pagePointer.decrementReferrer();
-
-            entriesIterator.remove();
-            flushedWriteGroups++;
-
-            cacheSize.addAndGet(-flushedPages);
-          }
-        } finally {
-          lockManager.releaseLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
-        }
-
-        lastGroupKey = groupKey;
-      }
-
-      return flushedWriteGroups;
-    }
-  }
-
-  private final class FileFlushTask implements Callable<Void> {
-    private final long fileId;
-
-    private FileFlushTask(long fileId) {
-      this.fileId = fileId;
-    }
-
-    @Override
-    public Void call() throws Exception {
-      final GroupKey firstKey = new GroupKey(fileId, 0);
-      final GroupKey lastKey = new GroupKey(fileId, Long.MAX_VALUE);
-
-      NavigableMap<GroupKey, WriteGroup> subMap = writeGroups.subMap(firstKey, true, lastKey, true);
-      Iterator<Map.Entry<GroupKey, WriteGroup>> entryIterator = subMap.entrySet().iterator();
-
-      groupsLoop: while (entryIterator.hasNext()) {
-        Map.Entry<GroupKey, WriteGroup> entry = entryIterator.next();
-        final WriteGroup writeGroup = entry.getValue();
-        final GroupKey groupKey = entry.getKey();
-
-        lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
-        try {
-          int flushedPages = 0;
-
-          for (int i = 0; i < 16; i++) {
-            OCachePointer pagePointer = writeGroup.pages[i];
-
-            if (pagePointer != null) {
-              if (!pagePointer.tryAcquireSharedLock())
-                continue groupsLoop;
-
-              try {
-                flushPage(groupKey.fileId, (groupKey.groupIndex << 4) + i, pagePointer.getDataPointer());
-                flushedPages++;
-              } finally {
-                pagePointer.releaseSharedLock();
-              }
-            }
-          }
-
-          for (OCachePointer pagePointer : writeGroup.pages)
-            if (pagePointer != null)
-              pagePointer.decrementReferrer();
-
-          cacheSize.addAndGet(-flushedPages);
-          entryIterator.remove();
-        } finally {
-          lockManager.releaseLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
-        }
-      }
-
-      files.get(fileId).synch();
-      return null;
-    }
-  }
-
-  private final class RemoveFilePagesTask implements Callable<Void> {
-    private final long fileId;
-
-    private RemoveFilePagesTask(long fileId) {
-      this.fileId = fileId;
-    }
-
-    @Override
-    public Void call() throws Exception {
-      final GroupKey firstKey = new GroupKey(fileId, 0);
-      final GroupKey lastKey = new GroupKey(fileId, Long.MAX_VALUE);
-
-      NavigableMap<GroupKey, WriteGroup> subMap = writeGroups.subMap(firstKey, true, lastKey, true);
-      Iterator<Map.Entry<GroupKey, WriteGroup>> entryIterator = subMap.entrySet().iterator();
-
-      while (entryIterator.hasNext()) {
-        Map.Entry<GroupKey, WriteGroup> entry = entryIterator.next();
-        WriteGroup writeGroup = entry.getValue();
-        GroupKey groupKey = entry.getKey();
-
-        lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
-        try {
-          for (OCachePointer pagePointer : writeGroup.pages) {
-            if (pagePointer != null) {
-              pagePointer.acquireExclusiveLock();
-              try {
-                pagePointer.decrementReferrer();
-                cacheSize.decrementAndGet();
-              } finally {
-                pagePointer.releaseExclusiveLock();
-              }
-            }
-          }
-
-          entryIterator.remove();
-        } finally {
-          lockManager.releaseLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
-        }
-      }
-
-      return null;
-    }
-  }
-
-  private static final class NameFileIdEntry {
-    private final String name;
-    private final long   fileId;
-
-    private NameFileIdEntry(String name, long fileId) {
-      this.name = name;
-      this.fileId = fileId;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-      NameFileIdEntry that = (NameFileIdEntry) o;
-
-      if (fileId != that.fileId)
-        return false;
-      if (!name.equals(that.name))
-        return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = name.hashCode();
-      result = 31 * result + (int) (fileId ^ (fileId >>> 32));
-      return result;
-    }
   }
 }

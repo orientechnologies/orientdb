@@ -1281,18 +1281,27 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     synch();
 
     try {
+      unlock();
+
       diskCache.setSoftlyClosed(true);
 
       if (configuration != null)
         configuration.setSoftlyClosed(true);
 
     } catch (IOException e) {
+      modificationLock.allowModifications();
+      try {
+        lock();
+      } catch (IOException e1) {
+      }
       throw new OStorageException("Error on freeze of storage '" + name + "'", e);
     }
   }
 
   public void release() {
     try {
+      lock();
+
       diskCache.setSoftlyClosed(false);
 
       if (configuration != null)
@@ -1427,6 +1436,20 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     cluster.getExternalModificationLock().allowModifications();
 
+  }
+
+  /**
+   * Locks all the clusters to avoid access outside current process.
+   */
+  protected void lock() throws IOException {
+    diskCache.lock();
+  }
+
+  /**
+   * Unlocks all the clusters to allow access outside current process.
+   */
+  protected void unlock() throws IOException {
+    diskCache.unlock();
   }
 
   @Override
