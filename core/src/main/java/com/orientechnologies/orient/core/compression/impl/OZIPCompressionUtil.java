@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.compression.impl;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 
 import java.io.BufferedOutputStream;
@@ -138,6 +139,12 @@ public class OZIPCompressionUtil {
           } finally {
             in.close();
           }
+        } catch (IOException e) {
+          if (iOutput != null)
+            iOutput.onMessage("error: " + e);
+
+          OLogManager.instance().error(OZIPCompression.class, "Cannot compress file: %s", e, folderName);
+          throw e;
         } finally {
           zos.closeEntry();
         }

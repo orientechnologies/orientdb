@@ -1442,6 +1442,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
    * Locks all the clusters to avoid access outside current process.
    */
   protected void lock() throws IOException {
+    OLogManager.instance().debug(this, "Locking storage %s...", name);
     diskCache.lock();
   }
 
@@ -1449,6 +1450,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
    * Unlocks all the clusters to allow access outside current process.
    */
   protected void unlock() throws IOException {
+    OLogManager.instance().debug(this, "Unlocking storage %s...", name);
     diskCache.unlock();
   }
 
