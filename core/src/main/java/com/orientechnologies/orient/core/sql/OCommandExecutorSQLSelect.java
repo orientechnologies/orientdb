@@ -1220,35 +1220,37 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           final OIdentifiable identifiable = entryRecord.getValue();
           final ORecord record = identifiable.getRecord();
 
-          if (record instanceof ORecordSchemaAware<?>) {
-            final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) record;
-            final Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
-            if ((targetClasses != null) && (!targetClasses.isEmpty())) {
-              for (OClass targetClass : targetClasses.keySet()) {
-                if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
-                  return true;
+          if (record != null) {
+            if (record instanceof ORecordSchemaAware<?>) {
+              final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) record;
+              final Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
+              if ((targetClasses != null) && (!targetClasses.isEmpty())) {
+                for (OClass targetClass : targetClasses.keySet()) {
+                  if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
+                    return true;
+                }
               }
             }
-          }
 
-          final List<String> indexInvolvedFields = searchResult.getInvolvedFields();
-          context.setVariable("involvedFields", indexInvolvedFields);
-          final List<String> whereInvolvedFields = compiledFilter.getInvolvedFields();
-          boolean evaluateRecords = true;
+            final List<String> indexInvolvedFields = searchResult.getInvolvedFields();
+            context.setVariable("involvedFields", indexInvolvedFields);
+            final List<String> whereInvolvedFields = compiledFilter.getInvolvedFields();
+            boolean evaluateRecords = true;
 
-          if (indexInvolvedFields.size() == whereInvolvedFields.size()) {
-            evaluateRecords = false;
-            for (String f : indexInvolvedFields)
-              if (!whereInvolvedFields.contains(f)) {
-                // NOT THE SAME,
-                evaluateRecords = true;
+            if (indexInvolvedFields.size() == whereInvolvedFields.size()) {
+              evaluateRecords = false;
+              for (String f : indexInvolvedFields)
+                if (!whereInvolvedFields.contains(f)) {
+                  // NOT THE SAME,
+                  evaluateRecords = true;
+                  break;
+                }
+            }
+
+            if (compiledFilter == null || !evaluateRecords || evaluateRecord(record)) {
+              if (!handleResult(record, true))
                 break;
-              }
-          }
-
-          if (compiledFilter == null || !evaluateRecords || evaluateRecord(record)) {
-            if (!handleResult(record, true))
-              break;
+            }
           }
 
           entryRecord = cursor.next(needsToFetch);
