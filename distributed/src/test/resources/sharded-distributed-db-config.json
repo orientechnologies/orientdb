@@ -1,8 +1,8 @@
 {
     "replication": true,
     "autoDeploy": true,
-    "hotAlignment": true,
-    "resyncEvery": 15,
+    "hotAlignment": false,
+    "offlineMsgQueueSize" : 0,
     "clusters": {
         "internal": {
             "replication": false

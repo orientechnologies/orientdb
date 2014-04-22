@@ -56,7 +56,7 @@ public class ODistributedResponseManager {
   private volatile boolean                       receivedCurrentNode;
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
-      final Set<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
+      final List<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
       final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout) {
     this.dManager = iManager;
     this.request = iRequest;
