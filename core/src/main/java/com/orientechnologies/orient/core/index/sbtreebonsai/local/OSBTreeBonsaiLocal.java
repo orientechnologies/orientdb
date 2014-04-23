@@ -160,8 +160,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       try {
         OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootPointer.getDataPointer(),
             this.rootBucketPointer.getPageOffset(), true, keySerializer, valueSerializer, getTrackMode());
-        rootBucket.setKeySerializerId(keySerializer.getId());
-        rootBucket.setValueSerializerId(valueSerializer.getId());
         rootBucket.setTreeSize(0);
 
         super.logPageChanges(rootBucket, fileId, this.rootBucketPointer.getPageIndex(), true);
