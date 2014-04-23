@@ -16,6 +16,10 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -39,10 +43,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -79,26 +79,12 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       OStreamSerializer valueSerializer, boolean isAutomatic) {
     acquireExclusiveLock();
     try {
-      final OBinarySerializer keySerializer;
-      if (indexDefinition != null) {
-        if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
-          sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1,
-              OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
-          keySerializer = ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();
-        } else {
-          if (indexDefinition.getTypes().length > 1) {
-            keySerializer = OCompositeKeySerializer.INSTANCE;
-          } else {
-            keySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(indexDefinition.getTypes()[0]);
-          }
-          sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, indexDefinition.getTypes().length,
-              OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
-        }
-      } else {
-        sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1,
-            OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
-        keySerializer = new OSimpleKeySerializer();
-      }
+
+      final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
+      final int keySize = determineKeySize(indexDefinition);
+
+      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, keySize,
+          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
 
       final ORecordBytes identityRecord = new ORecordBytes();
       ODatabaseRecord database = getDatabase();
@@ -113,6 +99,31 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  private int determineKeySize(OIndexDefinition indexDefinition) {
+    if (indexDefinition == null || indexDefinition instanceof ORuntimeKeyIndexDefinition)
+      return 1;
+    else
+      return indexDefinition.getTypes().length;
+  }
+
+  private OBinarySerializer determineKeySerializer(OIndexDefinition indexDefinition) {
+    final OBinarySerializer keySerializer;
+    if (indexDefinition != null) {
+      if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
+        keySerializer = ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();
+      } else {
+        if (indexDefinition.getTypes().length > 1) {
+          keySerializer = OCompositeKeySerializer.INSTANCE;
+        } else {
+          keySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(indexDefinition.getTypes()[0]);
+        }
+      }
+    } else {
+      keySerializer = new OSimpleKeySerializer();
+    }
+    return keySerializer;
   }
 
   @Override
@@ -141,22 +152,18 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
+  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
+      boolean isAutomatic) {
     acquireExclusiveLock();
     try {
-      final int keySize;
-      if (indexDefinition == null || indexDefinition instanceof ORuntimeKeyIndexDefinition)
-        keySize = 1;
-      else
-        keySize = indexDefinition.getTypes().length;
-
-      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, keySize,
+      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, determineKeySize(indexDefinition),
           OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
 
       ODatabaseRecord database = getDatabase();
       final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
 
-      sbTree.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract,
+      sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
+          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract,
           indexDefinition != null && indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();

@@ -15,6 +15,16 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
@@ -30,16 +40,6 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Abstract index implementation that supports multi-values for the same key.
@@ -235,14 +235,16 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   public OIndexMultiValues create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
-    final OStreamSerializer serializer;
-    if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
-      serializer = OStreamSerializerSBTreeIndexRIDContainer.INSTANCE;
-    else
-      serializer = OStreamSerializerListRID.INSTANCE;
 
     return (OIndexMultiValues) super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
-        serializer);
+        determineValueSerializer());
+  }
+
+  protected OStreamSerializer determineValueSerializer() {
+    if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
+      return OStreamSerializerSBTreeIndexRIDContainer.INSTANCE;
+    else
+      return OStreamSerializerListRID.INSTANCE;
   }
 
   public void getValuesBetween(Object iRangeFrom, final boolean fromInclusive, Object iRangeTo, final boolean toInclusive,
@@ -401,10 +403,10 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     Collections.sort(sortedKeys, comparator);
 
     return new OIndexCursor() {
-      private Iterator<?> keysIterator = sortedKeys.iterator();
+      private Iterator<?>             keysIterator    = sortedKeys.iterator();
 
       private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-      private Object currentKey;
+      private Object                  currentKey;
 
       @Override
       public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
@@ -457,45 +459,48 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     };
   }
 
-  public void getEntriesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
+  public void getEntriesMajor(Object iRangeFrom, final boolean isInclusive, boolean ascOrder,
+      final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesMajor(iRangeFrom, isInclusive, ascOrder, MultiValuesTransformer.INSTANCE, new OIndexEngine.EntriesResultListener() {
-          @Override
-          public boolean addResult(ODocument entry) {
-            return entriesResultListener.addResult(entry);
-          }
-        }
-      );
+      indexEngine.getEntriesMajor(iRangeFrom, isInclusive, ascOrder, MultiValuesTransformer.INSTANCE,
+          new OIndexEngine.EntriesResultListener() {
+            @Override
+            public boolean addResult(ODocument entry) {
+              return entriesResultListener.addResult(entry);
+            }
+          });
     } finally {
       releaseSharedLock();
     }
   }
 
-  public void getEntriesMinor(Object iRangeTo, boolean isInclusive, boolean ascOrder, final IndexEntriesResultListener entriesResultListener) {
+  public void getEntriesMinor(Object iRangeTo, boolean isInclusive, boolean ascOrder,
+      final IndexEntriesResultListener entriesResultListener) {
     checkForRebuild();
 
     iRangeTo = getCollatingValue(iRangeTo);
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesMinor(iRangeTo, isInclusive, ascOrder, MultiValuesTransformer.INSTANCE, new OIndexEngine.EntriesResultListener() {
-          @Override
-          public boolean addResult(ODocument entry) {
-            return entriesResultListener.addResult(entry);
-          }
-        }
-      );
+      indexEngine.getEntriesMinor(iRangeTo, isInclusive, ascOrder, MultiValuesTransformer.INSTANCE,
+          new OIndexEngine.EntriesResultListener() {
+            @Override
+            public boolean addResult(ODocument entry) {
+              return entriesResultListener.addResult(entry);
+            }
+          });
     } finally {
       releaseSharedLock();
     }
   }
 
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean inclusive, boolean ascOrder, final IndexEntriesResultListener indexEntriesResultListener) {
+  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean inclusive, boolean ascOrder,
+      final IndexEntriesResultListener indexEntriesResultListener) {
     checkForRebuild();
 
     iRangeFrom = getCollatingValue(iRangeFrom);
@@ -509,13 +514,13 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     acquireSharedLock();
     try {
-      indexEngine.getEntriesBetween(iRangeFrom, iRangeTo, inclusive, ascOrder, MultiValuesTransformer.INSTANCE, new OIndexEngine.EntriesResultListener() {
-          @Override
-          public boolean addResult(ODocument entry) {
-            return indexEntriesResultListener.addResult(entry);
-          }
-        }
-      );
+      indexEngine.getEntriesBetween(iRangeFrom, iRangeTo, inclusive, ascOrder, MultiValuesTransformer.INSTANCE,
+          new OIndexEngine.EntriesResultListener() {
+            @Override
+            public boolean addResult(ODocument entry) {
+              return indexEntriesResultListener.addResult(entry);
+            }
+          });
     } finally {
       releaseSharedLock();
     }
@@ -581,7 +586,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     acquireSharedLock();
     try {
 
-      return new OSharedResourceIterator<OIdentifiable>(this, new OMultiCollectionIterator<OIdentifiable>(indexEngine.valuesIterator()));
+      return new OSharedResourceIterator<OIdentifiable>(this, new OMultiCollectionIterator<OIdentifiable>(
+          indexEngine.valuesIterator()));
 
     } finally {
       releaseSharedLock();

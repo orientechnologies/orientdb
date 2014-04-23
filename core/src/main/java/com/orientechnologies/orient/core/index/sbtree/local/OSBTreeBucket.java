@@ -77,8 +77,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     setLongValue(TREE_SIZE_OFFSET, 0);
     setLongValue(FREE_VALUES_LIST_OFFSET, -1);
 
-    setByteValue(KEY_SERIALIZER_OFFSET, (byte) -1);
-    setByteValue(VALUE_SERIALIZER_OFFSET, (byte) -1);
+    setByteValue(KEY_SERIALIZER_OFFSET, this.keySerializer.getId());
+    setByteValue(VALUE_SERIALIZER_OFFSET, this.valueSerializer.getId());
   }
 
   public OSBTreeBucket(ODirectMemoryPointer cachePointer, OBinarySerializer<K> keySerializer, OType[] keyTypes,

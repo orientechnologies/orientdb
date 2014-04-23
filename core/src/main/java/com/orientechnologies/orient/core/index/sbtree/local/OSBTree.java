@@ -16,6 +16,15 @@
 
 package com.orientechnologies.orient.core.index.sbtree.local;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -30,22 +39,13 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -126,8 +126,6 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
 
         OSBTreeBucket<K, V> rootBucket = new OSBTreeBucket<K, V>(rootPointer.getDataPointer(), true, keySerializer, keyTypes,
             valueSerializer, getTrackMode());
-        rootBucket.setKeySerializerId(keySerializer.getId());
-        rootBucket.setValueSerializerId(valueSerializer.getId());
         rootBucket.setTreeSize(0);
 
         super.logPageChanges(rootBucket, fileId, ROOT_INDEX, true);
@@ -658,7 +656,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
     }
   }
 
-  public void load(String name, OType[] keyTypes, OStorageLocalAbstract storageLocal, boolean nullPointerSupport) {
+  public void load(String name, OBinarySerializer<K> keySerializer, OStreamSerializer valueSerializer, OType[] keyTypes,
+      OStorageLocalAbstract storageLocal, boolean nullPointerSupport) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -673,18 +672,8 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       if (nullPointerSupport)
         nullBucketFileId = diskCache.openFile(name + nullFileExtension);
 
-      OCacheEntry rootCacheEntry = diskCache.load(fileId, ROOT_INDEX, false);
-      OCachePointer rootPointer = rootCacheEntry.getCachePointer();
-      try {
-        OSBTreeBucket<K, V> rootBucket = new OSBTreeBucket<K, V>(rootPointer.getDataPointer(), keySerializer, keyTypes,
-            valueSerializer, ODurablePage.TrackMode.NONE);
-        keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance().getObjectSerializer(
-            rootBucket.getKeySerializerId());
-        valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance().getObjectSerializer(
-            rootBucket.getValueSerializerId());
-      } finally {
-        diskCache.release(rootCacheEntry);
-      }
+      this.keySerializer = keySerializer;
+      this.valueSerializer = (OBinarySerializer<V>) valueSerializer;
 
       initDurableComponent(storageLocal);
     } catch (IOException e) {
@@ -1919,8 +1908,6 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
             getTrackMode());
 
         bucketToSplit.setTreeSize(treeSize);
-        bucketToSplit.setKeySerializerId(keySerializeId);
-        bucketToSplit.setValueSerializerId(valueSerializerId);
         bucketToSplit.setValuesFreeListFirstIndex(freeListPage);
 
         bucketToSplit.addEntry(0,

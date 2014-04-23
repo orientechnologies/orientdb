@@ -25,7 +25,8 @@ public interface OIndexEngine<V> {
 
   void deleteWithoutLoad(String indexName);
 
-  void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic);
+  void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
+      boolean isAutomatic);
 
   boolean contains(Object key);
 

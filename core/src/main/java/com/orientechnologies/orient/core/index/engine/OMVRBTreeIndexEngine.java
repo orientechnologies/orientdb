@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
+
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
@@ -40,11 +45,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeDatabaseLazySave;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProviderAbstract;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -165,7 +165,8 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     throw new UnsupportedOperationException("deleteWithoutLoad");
   }
 
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
+  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
+      boolean isAutomatic) {
     acquireExclusiveLock();
     try {
       maxUpdatesBeforeSave = lazyUpdates(isAutomatic);
@@ -1009,8 +1010,8 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     private final Iterator<Map.Entry<Object, V>> treeIterator;
     private final ValuesTransformer<V>           valuesTransformer;
 
-    private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
-    private Object                  currentKey      = null;
+    private Iterator<OIdentifiable>              currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private Object                               currentKey      = null;
 
     private OMBRBTreeIndexCursor(Iterator<Map.Entry<Object, V>> treeIterator, ValuesTransformer<V> valuesTransformer) {
       this.treeIterator = treeIterator;
