@@ -1,3 +1,19 @@
+/*
+ * Copyright 2014 Orient Technologies.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.orientechnologies.lucene;
 
 import java.util.Date;
@@ -78,16 +94,22 @@ public class OLuceneIndexType {
     String query = null;
     if (key instanceof String) {
       query = (String) key;
-      if (((String) key).startsWith("(")) {
-        queryParser = new QueryParser(version, "", analyzer);
-      } else {
-        queryParser = new MultiFieldQueryParser(version, index.getFields().toArray(new String[index.getFields().size()]), analyzer);
-      }
+      queryParser = getQueryParser(index, query, analyzer, version);
     } else if (key instanceof OCompositeKey) {
-      queryParser = new QueryParser(version, "", analyzer);
       query = ((OCompositeKey) key).getKeys().get(0).toString();
+      queryParser = getQueryParser(index, query, analyzer, version);
     }
     return queryParser.parse(query);
+  }
+
+  protected static QueryParser getQueryParser(OIndexDefinition index, String key, Analyzer analyzer, Version version) {
+    QueryParser queryParser;
+    if (((String) key).startsWith("(")) {
+      queryParser = new QueryParser(version, "", analyzer);
+    } else {
+      queryParser = new MultiFieldQueryParser(version, index.getFields().toArray(new String[index.getFields().size()]), analyzer);
+    }
+    return queryParser;
   }
 
   public static Sort sort(Query query, OIndexDefinition index, boolean ascSortOrder) {

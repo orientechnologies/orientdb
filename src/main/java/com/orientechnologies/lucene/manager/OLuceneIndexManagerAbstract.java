@@ -1,3 +1,19 @@
+/*
+ * Copyright 2014 Orient Technologies.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.orientechnologies.lucene.manager;
 
 import java.io.File;
@@ -10,6 +26,7 @@ import java.util.Map;
 
 import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.sun.jna.platform.FileUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -41,9 +58,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
-/**
- * Created by enricorisa on 21/03/14.
- */
 public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
 
   public static final String               RID            = "RID";
@@ -164,9 +178,11 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public void delete() {
     try {
-      indexWriter.deleteAll();
-      indexWriter.close();
-      indexWriter.getDirectory().close();
+      if (indexWriter != null) {
+        indexWriter.deleteAll();
+        indexWriter.close();
+        indexWriter.getDirectory().close();
+      }
       ODatabaseRecord database = getDatabase();
       final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
       File f = new File(storageLocalAbstract.getStoragePath() + File.separator + indexName);
@@ -305,7 +321,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
           Constructor constructor = classAnalyzer.getConstructor(Version.class);
           analyzer = (Analyzer) constructor.newInstance(getVersion(metadata));
         } catch (ClassNotFoundException e) {
-          e.printStackTrace();
+          throw new OIndexException("Analyzer: " + analyzerString + " not found", e);
         } catch (NoSuchMethodException e) {
           e.printStackTrace();
         } catch (InvocationTargetException e) {
