@@ -144,26 +144,6 @@ public class GEOTest {
   }
 
   @Test(dependsOnMethods = "queryCreatePoints")
-  public void spatialRange() {
-    database.open("admin", "admin");
-
-    final Set<OIndex<?>> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
-    Assert.assertEquals(xIndexes.size(), 1);
-
-    final Set<OIndex<?>> yIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
-    Assert.assertEquals(yIndexes.size(), 1);
-
-    final Collection<OIdentifiable> xResult = xIndexes.iterator().next().getValuesBetween(52.20472, 82.20472, true);
-    final Collection<OIdentifiable> yResult = yIndexes.iterator().next().getValuesBetween(0.14056, 30.14056, true);
-
-    xResult.retainAll(yResult);
-
-    Assert.assertTrue(xResult.size() != 0);
-
-    database.close();
-  }
-
-  @Test(dependsOnMethods = "spatialRange")
   public void testQueryIndexWithConversionDouble2Float() {
     database.open("admin", "admin");
 

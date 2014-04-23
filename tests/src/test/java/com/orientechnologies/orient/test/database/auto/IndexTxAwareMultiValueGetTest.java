@@ -103,8 +103,8 @@ public class IndexTxAwareMultiValueGetTest {
     index.clear();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetTest"));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 0);
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 0);
+    Assert.assertNull(((OIndexTxAwareMultiValue) index).get(1));
+    Assert.assertNull(((OIndexTxAwareMultiValue) index).get(2));
 
     database.rollback();
 
@@ -139,7 +139,7 @@ public class IndexTxAwareMultiValueGetTest {
     index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(3)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetTest"));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 0);
+    Assert.assertNull(index.get(1));
     Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 1);
 
     database.rollback();
@@ -174,7 +174,7 @@ public class IndexTxAwareMultiValueGetTest {
     index.remove(1);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetTest"));
-    Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(1).size(), 0);
+    Assert.assertNull(((OIndexTxAwareMultiValue) index).get(1));
     Assert.assertEquals(((OIndexTxAwareMultiValue) index).get(2).size(), 1);
 
     database.rollback();
@@ -289,7 +289,7 @@ public class IndexTxAwareMultiValueGetTest {
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetTest"));
     Collection<?> result = ((OIndexTxAwareMultiValue) index).get(1);
-    Assert.assertEquals(result.size(), 0);
+    Assert.assertNull(result);
 
     database.commit();
 
@@ -311,7 +311,7 @@ public class IndexTxAwareMultiValueGetTest {
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareMultiValueGetTest"));
     Collection<?> result = ((OIndexTxAwareMultiValue) index).get(1);
-    Assert.assertEquals(result.size(), 0);
+    Assert.assertNull(result);
 
     database.commit();
 

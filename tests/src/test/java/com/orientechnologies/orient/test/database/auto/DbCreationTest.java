@@ -247,6 +247,9 @@ public class DbCreationTest {
   }
 
   public void testZipCompression() {
+    if (!database.getURL().startsWith("plocal:"))
+      return;
+
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("gzip");
 
 		final String buildDirectory = System.getProperty("buildDirectory", ".");

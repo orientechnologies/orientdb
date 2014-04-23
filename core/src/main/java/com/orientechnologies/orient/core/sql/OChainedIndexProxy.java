@@ -131,156 +131,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
     final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
-    applyTailIndexes(lastIndexResult, new IndexValuesResultListener() {
-      @Override
-      public boolean addResult(OIdentifiable value) {
-        result.add(value);
-        return true;
-      }
-    });
+    result.addAll(applyTailIndexes(lastIndexResult));
 
     return (T) result;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo, boolean ascSortOrder) {
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-    final Object lastIndexValuesBetween = lastIndex.getValuesBetween(iRangeFrom, iRangeTo, true);
-
-    applyTailIndexes(lastIndexValuesBetween, new IndexValuesResultListener() {
-      @Override
-      public boolean addResult(OIdentifiable value) {
-        result.add(value);
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo,
-      boolean iToInclusive, boolean ascSortOrder) {
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-
-    final Object lastIndexValuesBetween = lastIndex.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, true);
-
-    applyTailIndexes(lastIndexValuesBetween, new IndexValuesResultListener() {
-      @Override
-      public boolean addResult(OIdentifiable value) {
-        result.add(value);
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive,
-      boolean ascSortOrder, IndexValuesResultListener resultListener) {
-    final Object result = lastIndex.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, true);
-
-    applyTailIndexes(result, resultListener);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder) {
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-
-    final Object lastIndexValuesMajor = lastIndex.getValuesMajor(fromKey, isInclusive, true);
-
-    applyTailIndexes(lastIndexValuesMajor, new IndexValuesResultListener() {
-      @Override
-      public boolean addResult(OIdentifiable value) {
-        result.add(value);
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, IndexValuesResultListener resultListener) {
-    final Object result = lastIndex.getValuesMajor(fromKey, isInclusive, true);
-
-    applyTailIndexes(result, resultListener);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder) {
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-
-    final Object lastIndexValuesMinor = lastIndex.getValuesMinor(toKey, isInclusive, true);
-
-    applyTailIndexes(lastIndexValuesMinor, new IndexValuesResultListener() {
-      @Override
-      public boolean addResult(OIdentifiable value) {
-        result.add(value);
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, IndexValuesResultListener resultListener) {
-    final Object result = lastIndex.getValuesMinor(toKey, isInclusive, true);
-
-    applyTailIndexes(result, resultListener);
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Collection<OIdentifiable> getValues(Collection<?> iKeys, boolean ascSortOrder) {
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-
-    final Object lastIndexResult = lastIndex.getValues(iKeys, ascSortOrder);
-
-    applyTailIndexes(lastIndexResult, new IndexValuesResultListener() {
-      @Override
-      public boolean addResult(OIdentifiable value) {
-        result.add(value);
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void getValues(Collection<?> iKeys, boolean ascSortOrder, IndexValuesResultListener resultListener) {
-    final Object result = lastIndex.getValues(iKeys, ascSortOrder);
-
-    applyTailIndexes(result, resultListener);
   }
 
   /**
@@ -297,7 +150,17 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return lastIndex.getDefinition();
   }
 
-  private void applyTailIndexes(final Object result, IndexValuesResultListener resultListener) {
+  @Override
+  public OIndexCursor cursor() {
+    throw new UnsupportedOperationException("cursor");
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    throw new UnsupportedOperationException("keyCursor");
+  }
+
+  private List<OIdentifiable> applyTailIndexes(final Object result) {
     final OIndex<?> previousIndex = indexChain.get(indexChain.size() - 2);
     Set<Comparable> currentKeys = prepareKeys(previousIndex, result);
     for (int j = indexChain.size() - 2; j > 0; j--) {
@@ -305,7 +168,14 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
       final OIndex<?> currentIndex = indexChain.get(j);
       for (Comparable currentKey : currentKeys) {
-        final Object currentResult = currentIndex.getValuesBetween(currentKey, true, currentKey, true, true);
+        final List<OIdentifiable> currentResult = new ArrayList<OIdentifiable>();
+        final OIndexCursor cursor = currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true);
+
+        Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
+        while (entry != null) {
+          currentResult.add(entry.getValue());
+          entry = cursor.next(-1);
+        }
 
         final Set<Comparable> preparedKeys;
         preparedKeys = prepareKeys(indexChain.get(j - 1), currentResult);
@@ -317,7 +187,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
       currentKeys = newKeys;
     }
 
-    applyMainIndex(currentKeys, resultListener);
+    return applyMainIndex(currentKeys);
   }
 
   private Set<Comparable> convertResult(Object result, Class<?> targetType) {
@@ -348,19 +218,20 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return convertResult(keys, targetType);
   }
 
-  private void applyMainIndex(Iterable<Comparable> currentKeys, IndexValuesResultListener resultListener) {
-    keysLoop: for (Comparable key : currentKeys) {
+  private List<OIdentifiable> applyMainIndex(Iterable<Comparable> currentKeys) {
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+    for (Comparable key : currentKeys) {
       Object preparedKey = firstIndex.getDefinition().createValue(key);
-      final Collection<OIdentifiable> result = firstIndex.getValuesBetween(preparedKey, true, preparedKey, true, true);
-      if (result != null) {
-        for (OIdentifiable o : result) {
-          if (!resultListener.addResult(o))
-            break keysLoop;
-        }
+      final OIndexCursor cursor = firstIndex.iterateEntriesBetween(preparedKey, true, preparedKey, true, true);
+      Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
+      while (entry != null) {
+        result.add(entry.getValue());
+        entry = cursor.next(-1);
       }
     }
 
     updateStatistic(firstIndex);
+    return result;
   }
 
   private static Iterable<List<OIndex<?>>> getIndexesForChain(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,
@@ -472,51 +343,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   @Override
   public OIndex<T> create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
       boolean rebuild, OProgressListener progressListener) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, IndexEntriesResultListener resultListener) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, IndexEntriesResultListener resultListener) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder,
-      IndexEntriesResultListener resultListener) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  @Override
-  public Collection<ODocument> getEntries(Collection<?> iKeys) {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  public void getEntries(Collection<?> iKeys, IndexEntriesResultListener resultListener) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -668,10 +494,10 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   private final class ExternalIndexCursor implements OIndexCursor {
-    private final OIndexCursor internalCursor;
+    private final OIndexCursor        internalCursor;
 
-    private final List<OIdentifiable>     queryResult     = new ArrayList<OIdentifiable>();
-    private       Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private final List<OIdentifiable> queryResult     = new ArrayList<OIdentifiable>();
+    private Iterator<OIdentifiable>   currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
 
     private ExternalIndexCursor(OIndexCursor internalCursor) {
       this.internalCursor = internalCursor;
@@ -691,13 +517,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
         }
 
         queryResult.clear();
-        applyTailIndexes(entry.getValue(), new IndexValuesResultListener() {
-          @Override
-          public boolean addResult(OIdentifiable value) {
-            queryResult.add(value);
-            return true;
-          }
-        });
+        queryResult.addAll(applyTailIndexes(entry.getValue()));
 
         currentIterator = queryResult.iterator();
       }

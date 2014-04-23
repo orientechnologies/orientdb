@@ -78,10 +78,10 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
     if (o == null || getClass() != o.getClass())
       return false;
 
-		if (!super.equals(o))
-			return false;
+    if (!super.equals(o))
+      return false;
 
-		final OPropertyIndexDefinition that = (OPropertyIndexDefinition) o;
+    final OPropertyIndexDefinition that = (OPropertyIndexDefinition) o;
 
     if (!className.equals(that.className))
       return false;
@@ -105,7 +105,7 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   @Override
   public String toString() {
     return "OPropertyIndexDefinition{" + "className='" + className + '\'' + ", field='" + field + '\'' + ", keyType=" + keyType
-        + ", collate=" + collate + '}';
+        + ", collate=" + collate + ", null values ignored = " + isNullValuesIgnored() + '}';
   }
 
   public Object createValue(final List<?> params) {
@@ -150,6 +150,7 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
     document.field("field", field);
     document.field("keyType", keyType.toString());
     document.field("collate", collate.getName());
+    document.field("nullValuesIgnored", isNullValuesIgnored());
   }
 
   protected void serializeFromStream() {
@@ -160,6 +161,7 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
     keyType = OType.valueOf(keyTypeStr);
 
     setCollate((String) document.field("collate"));
+    setNullValuesIgnored(document.<Boolean> field("nullValuesIgnored"));
   }
 
   /**

@@ -32,6 +32,8 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -344,40 +346,31 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
 
       if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY")) || !indexOne.isAutomatic())) {
-        final Iterator<Map.Entry<Object, Object>> indexIteratorOne = makeDbCall(databaseDocumentTxOne,
-            new ODbRelatedCall<Iterator<Map.Entry<Object, Object>>>() {
-              public Iterator<Map.Entry<Object, Object>> call() {
-                return indexOne.iterator();
-              }
-            });
-
-        while (makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Boolean>() {
-          public Boolean call() {
-            return indexIteratorOne.hasNext();
+        final OIndexKeyCursor indexKeyCursorOne = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<OIndexKeyCursor>() {
+          public OIndexKeyCursor call() {
+            return indexOne.keyCursor();
           }
-        })) {
-          final Map.Entry<Object, Object> indexOneEntry = makeDbCall(databaseDocumentTxOne,
-              new ODbRelatedCall<Map.Entry<Object, Object>>() {
-                public Map.Entry<Object, Object> call() {
-                  return indexIteratorOne.next();
-                }
-              });
+        });
 
-          final Object key = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
-            public Object call() {
-              return indexOneEntry.getKey();
-            }
-          });
+        Object key = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
+          @Override
+          public Object call() {
+            return indexKeyCursorOne.next(-1);
+          }
+        });
+
+        while (key != null) {
+          final Object indexKey = key;
 
           Object indexOneValue = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
             public Object call() {
-              return indexOneEntry.getValue();
+              return indexOne.get(indexKey);
             }
           });
 
           final Object indexTwoValue = makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Object>() {
             public Object call() {
-              return indexTwo.get(key);
+              return indexTwo.get(indexKey);
             }
           });
 
@@ -412,6 +405,13 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             ok = false;
             reportIndexDiff(indexOne, key, indexOneValue, indexTwoValue);
           }
+
+          key = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call() {
+              return indexKeyCursorOne.next(-1);
+            }
+          });
         }
       }
     }
@@ -530,7 +530,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               && rid.equals(new ORecordId(storage2.getConfiguration().indexMgrRecordId)))
             continue;
 
-          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
+          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+              .getResult();
           final ORawBuffer buffer2;
           if (ridMapper == null)
             buffer2 = storage2.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
@@ -539,7 +540,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             if (newRid == null)
               buffer2 = storage2.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
             else
-              buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
+              buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+                  .getResult();
           }
 
           if (buffer1 == null && buffer2 == null)

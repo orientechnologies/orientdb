@@ -15,18 +15,14 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
@@ -185,52 +181,6 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public Iterator<Map.Entry<Object, V>> iterator() {
-    return new EntriesIterator();
-  }
-
-  @Override
-  public Iterable<Object> keys() {
-    return new KeysIterable();
-  }
-
-  @Override
-  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
-      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
-    throw new UnsupportedOperationException("getValuesBetween");
-  }
-
-  @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-      ValuesResultListener valuesResultListener) {
-    throw new UnsupportedOperationException("getValuesMajor");
-  }
-
-  @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-      ValuesResultListener valuesResultListener) {
-    throw new UnsupportedOperationException("getValuesMinor");
-  }
-
-  @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener) {
-    throw new UnsupportedOperationException("getEntriesMajor");
-  }
-
-  @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener) {
-    throw new UnsupportedOperationException("getEntriesMinor");
-  }
-
-  @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder,
-      ValuesTransformer<V> transformer, EntriesResultListener entriesResultListener) {
-    throw new UnsupportedOperationException("getEntriesBetween");
-  }
-
-  @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer<V> transformer) {
     throw new UnsupportedOperationException("iterateEntriesBetween");
@@ -243,19 +193,8 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder,
-      ValuesTransformer<V> transformer) {
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
     throw new UnsupportedOperationException("iterateEntriesMinor");
-  }
-
-  @Override
-  public Iterator<V> valuesIterator() {
-    throw new UnsupportedOperationException("valuesIterator");
-  }
-
-  @Override
-  public Iterator<V> inverseValuesIterator() {
-    throw new UnsupportedOperationException("inverseValuesIterator");
   }
 
   @Override
@@ -266,6 +205,122 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public Object getLastKey() {
     throw new UnsupportedOperationException("lastKey");
+  }
+
+  @Override
+  public OIndexCursor cursor(final ValuesTransformer<V> valuesTransformer) {
+    return new OIndexCursor() {
+      private int                                 nextEntriesIndex;
+      private OHashIndexBucket.Entry<Object, V>[] entries;
+
+      private Iterator<OIdentifiable>             currentIterator = Collections.emptyIterator();
+      private Object                              currentKey;
+
+      {
+        OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
+        if (firstEntry == null)
+          entries = new OHashIndexBucket.Entry[0];
+        else
+          entries = hashTable.ceilingEntries(firstEntry.key);
+
+        if (entries.length == 0)
+          currentIterator = null;
+      }
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+        if (currentIterator == null)
+          return null;
+
+        if (currentIterator.hasNext())
+          return nextCursorValue();
+
+        while (currentIterator != null && !currentIterator.hasNext()) {
+          if (entries.length == 0) {
+            currentIterator = null;
+            return null;
+          }
+
+          final OHashIndexBucket.Entry<Object, V> bucketEntry = entries[nextEntriesIndex];
+
+          currentKey = bucketEntry.key;
+
+          V value = bucketEntry.value;
+          if (valuesTransformer != null)
+            currentIterator = valuesTransformer.transformFromValue(value).iterator();
+          else
+            currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+
+          nextEntriesIndex++;
+
+          if (nextEntriesIndex >= entries.length) {
+            entries = hashTable.higherEntries(entries[entries.length - 1].key);
+
+            nextEntriesIndex = 0;
+          }
+        }
+
+        if (currentIterator != null && !currentIterator.hasNext())
+          return nextCursorValue();
+
+        currentIterator = null;
+        return null;
+      }
+
+      private Map.Entry<Object, OIdentifiable> nextCursorValue() {
+        final OIdentifiable identifiable = currentIterator.next();
+
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return currentKey;
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return identifiable;
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+    };
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    return new OIndexKeyCursor() {
+      private int                                 nextEntriesIndex;
+      private OHashIndexBucket.Entry<Object, V>[] entries;
+
+      {
+        OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
+        if (firstEntry == null)
+          entries = new OHashIndexBucket.Entry[0];
+        else
+          entries = hashTable.ceilingEntries(firstEntry.key);
+      }
+
+      @Override
+      public Object next(int prefetchSize) {
+        if (entries.length == 0) {
+          return null;
+        }
+
+        final OHashIndexBucket.Entry<Object, V> bucketEntry = entries[nextEntriesIndex];
+        nextEntriesIndex++;
+        if (nextEntriesIndex >= entries.length) {
+          entries = hashTable.higherEntries(entries[entries.length - 1].key);
+
+          nextEntriesIndex = 0;
+        }
+
+        return bucketEntry.key;
+      }
+    };
   }
 
   @Override
@@ -288,94 +343,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   public void beforeTxBegin() {
   }
 
-  @Override
-  public Iterator<Map.Entry<Object, V>> inverseIterator() {
-    throw new UnsupportedOperationException("inverseIterator");
-  }
-
   private ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-
-  private final class EntriesIterator implements Iterator<Map.Entry<Object, V>> {
-    private int                                 size = 0;
-    private int                                 nextEntriesIndex;
-    private OHashIndexBucket.Entry<Object, V>[] entries;
-
-    private EntriesIterator() {
-      OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
-      if (firstEntry == null)
-        entries = new OHashIndexBucket.Entry[0];
-      else
-        entries = hashTable.ceilingEntries(firstEntry.key);
-
-      size += entries.length;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return entries.length > 0;
-    }
-
-    @Override
-    public Map.Entry<Object, V> next() {
-      if (entries.length == 0)
-        throw new NoSuchElementException();
-
-      final OHashIndexBucket.Entry<Object, V> bucketEntry = entries[nextEntriesIndex];
-      nextEntriesIndex++;
-
-      if (nextEntriesIndex >= entries.length) {
-        entries = hashTable.higherEntries(entries[entries.length - 1].key);
-        size += entries.length;
-
-        nextEntriesIndex = 0;
-      }
-
-      return new Map.Entry<Object, V>() {
-        @Override
-        public Object getKey() {
-          return bucketEntry.key;
-        }
-
-        @Override
-        public V getValue() {
-          return bucketEntry.value;
-        }
-
-        @Override
-        public V setValue(V value) {
-          throw new UnsupportedOperationException("setValue");
-        }
-      };
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("remove");
-    }
-  }
-
-  private final class KeysIterable implements Iterable<Object> {
-    @Override
-    public Iterator<Object> iterator() {
-      final EntriesIterator entriesIterator = new EntriesIterator();
-      return new Iterator<Object>() {
-        @Override
-        public boolean hasNext() {
-          return entriesIterator.hasNext();
-        }
-
-        @Override
-        public Object next() {
-          return entriesIterator.next().getKey();
-        }
-
-        @Override
-        public void remove() {
-          entriesIterator.remove();
-        }
-      };
-    }
   }
 }

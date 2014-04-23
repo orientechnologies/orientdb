@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -22,6 +23,7 @@ import org.junit.Test;
  */
 public class ServerClusterLocalTxTest extends AbstractServerClusterTxTest {
   @Test
+  @Ignore
   public void test() throws Exception {
     init(3);
     prepare(false);

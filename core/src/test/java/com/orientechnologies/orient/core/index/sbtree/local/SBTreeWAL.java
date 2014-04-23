@@ -252,24 +252,6 @@ public class SBTreeWAL extends SBTreeTest {
 
   @Test(enabled = false)
   @Override
-  public void testValuesMajor() {
-    super.testValuesMajor();
-  }
-
-  @Test(enabled = false)
-  @Override
-  public void testValuesMinor() {
-    super.testValuesMinor();
-  }
-
-  @Test(enabled = false)
-  @Override
-  public void testValuesBetween() {
-    super.testValuesBetween();
-  }
-
-  @Test(enabled = false)
-  @Override
   public void testIterateEntriesMajor() {
     super.testIterateEntriesMajor();
   }
