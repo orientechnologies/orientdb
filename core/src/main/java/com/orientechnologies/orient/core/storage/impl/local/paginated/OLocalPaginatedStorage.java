@@ -102,7 +102,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       ".ocs", ".oef", ".oem", ".oet", OWriteAheadLog.WAL_SEGMENT_EXTENSION, OWriteAheadLog.MASTER_RECORD_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION,
-      OWOWCache.NAME_ID_MAP_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION };
+      OWOWCache.NAME_ID_MAP_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
+      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION                        };
   private final int                    DELETE_MAX_RETRIES;
   private final int                    DELETE_WAIT_TIME;
   private final Map<String, OCluster>  clusterMap                           = new LinkedHashMap<String, OCluster>();
@@ -1281,18 +1282,27 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     synch();
 
     try {
+      unlock();
+
       diskCache.setSoftlyClosed(true);
 
       if (configuration != null)
         configuration.setSoftlyClosed(true);
 
     } catch (IOException e) {
+      modificationLock.allowModifications();
+      try {
+        lock();
+      } catch (IOException e1) {
+      }
       throw new OStorageException("Error on freeze of storage '" + name + "'", e);
     }
   }
 
   public void release() {
     try {
+      lock();
+
       diskCache.setSoftlyClosed(false);
 
       if (configuration != null)
@@ -1427,6 +1437,22 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     cluster.getExternalModificationLock().allowModifications();
 
+  }
+
+  /**
+   * Locks all the clusters to avoid access outside current process.
+   */
+  protected void lock() throws IOException {
+    OLogManager.instance().debug(this, "Locking storage %s...", name);
+    diskCache.lock();
+  }
+
+  /**
+   * Unlocks all the clusters to allow access outside current process.
+   */
+  protected void unlock() throws IOException {
+    OLogManager.instance().debug(this, "Unlocking storage %s...", name);
+    diskCache.unlock();
   }
 
   @Override

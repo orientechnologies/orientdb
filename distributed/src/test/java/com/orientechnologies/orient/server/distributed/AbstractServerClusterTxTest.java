@@ -131,7 +131,12 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
       try {
         while (!Thread.interrupted()) {
           try {
-            printStats(databaseUrl);
+            if (printStats(databaseUrl) >= beginInstances + serverInstance.size() * count) {
+              // REACHED END
+              System.out.println("Reader END");
+              break;
+            }
+
             Thread.sleep(delayReader);
 
           } catch (Exception e) {
@@ -227,15 +232,16 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
     new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
   }
 
-  private void printStats(final String databaseUrl) {
+  private long printStats(final String databaseUrl) {
     final ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(databaseUrl, "admin", "admin");
     try {
+      long total = database.countClass("Person");
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
 
       final String name = database.getURL();
 
-      System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
-          + " counting cluster: " + database.countClusterElements("Person"));
+      System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + total + " counting cluster: "
+          + database.countClusterElements("Person"));
 
       if (database.getMetadata().getSchema().existsClass("ODistributedConflict"))
         try {
@@ -248,9 +254,10 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
           // IGNORE IT
         }
 
+      return total;
+
     } finally {
       database.close();
     }
-
   }
 }

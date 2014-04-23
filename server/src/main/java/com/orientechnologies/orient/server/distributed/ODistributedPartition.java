@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * 
@@ -23,5 +23,5 @@ import java.util.Set;
  * 
  */
 public interface ODistributedPartition {
-  Set<String> getNodes();
+  List<String> getNodes();
 }

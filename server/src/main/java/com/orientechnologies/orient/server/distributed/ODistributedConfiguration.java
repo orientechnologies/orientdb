@@ -76,7 +76,7 @@ public class ODistributedConfiguration {
       if (value != null)
         return (Integer) value;
       else {
-        OLogManager.instance().warn(this, "readQuorum setting not found in distributed-config.json");
+        OLogManager.instance().warn(this, "readQuorum setting not found for cluster=%s in distributed-config.json", iClusterName);
         return 1;
       }
     }
@@ -91,7 +91,7 @@ public class ODistributedConfiguration {
       if (value != null)
         return (Integer) value;
       else {
-        OLogManager.instance().warn(this, "writeQuorum setting not found in distributed-config.json");
+        OLogManager.instance().warn(this, "writeQuorum setting not found for cluster=%s in distributed-config.json", iClusterName);
         return 2;
       }
     }
@@ -106,7 +106,8 @@ public class ODistributedConfiguration {
       if (value != null)
         return (Boolean) value;
       else {
-        OLogManager.instance().warn(this, "failureAvailableNodesLessQuorum setting not found in distributed-config.json");
+        OLogManager.instance().warn(this,
+            "failureAvailableNodesLessQuorum setting not found for cluster=%s in distributed-config.json", iClusterName);
         return false;
       }
     }
@@ -121,23 +122,25 @@ public class ODistributedConfiguration {
       if (value != null)
         return (Boolean) value;
       else {
-        OLogManager.instance().warn(this, "readYourWrites setting not found in distributed-config.json");
+        OLogManager.instance().warn(this, "readYourWrites setting not found for cluster=%s in distributed-config.json",
+            iClusterName);
         return true;
       }
     }
   }
 
   /**
-   * Returns the delay timer to resync asynchronous nodes.
+   * Returns maximum queue size for offline nodes. After this threshold the queue is removed and the offline server needs a complete
+   * database deployment as soon as return online.
    */
-  public int getResyncEvery() {
+  public int getOfflineMsgQueueSize() {
     synchronized (configuration) {
-      final Object value = configuration.field("resyncEvery");
+      final Object value = configuration.field("offlineMsgQueueSize");
       if (value != null)
         return (Integer) value;
       else {
-        OLogManager.instance().warn(this, "resyncEvery setting not found in distributed-config.json");
-        return 15;
+        OLogManager.instance().debug(this, "offlineMsgQueueSize setting not found in distributed-config.json");
+        return 100;
       }
     }
   }
@@ -148,7 +151,7 @@ public class ODistributedConfiguration {
       if (value != null)
         return (Integer) value;
       else {
-        OLogManager.instance().warn(this, "default setting not found in distributed-config.json");
+        OLogManager.instance().warn(this, "default setting not found for cluster=%s in distributed-config.json", iClusterName);
         return 0;
       }
     }
@@ -160,7 +163,7 @@ public class ODistributedConfiguration {
       if (value != null)
         return (String) value;
       else {
-        OLogManager.instance().warn(this, "strategy setting not found in distributed-config.json");
+        OLogManager.instance().warn(this, "strategy setting not found for cluster=%s in distributed-config.json", iClusterName);
         return "round-robin";
       }
     }
@@ -241,7 +244,7 @@ public class ODistributedConfiguration {
           for (int p = 0; p < partitions.size(); ++p) {
             List<String> partition = partitions.get(p);
             for (String node : partition)
-              if (node.equalsIgnoreCase(ODistributedConfiguration.NEW_NODE_TAG)) {
+              if (node.equalsIgnoreCase(ODistributedConfiguration.NEW_NODE_TAG) && !partition.contains(iNode)) {
                 partition.add(iNode);
                 changedPartitions.add(clusterName + "." + p);
                 break;

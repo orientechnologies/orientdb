@@ -1,14 +1,5 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.Future;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -22,6 +13,15 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.Future;
 
 /**
  * @author Andrey Lomakin
@@ -139,6 +139,16 @@ public class OReadWriteDiskCache implements ODiskCache {
     synchronized (syncObject) {
       return writeCache.fileNameById(fileId);
     }
+  }
+
+  @Override
+  public void lock() throws IOException {
+    writeCache.lock();
+  }
+
+  @Override
+  public void unlock() throws IOException {
+    writeCache.unlock();
   }
 
   @Override

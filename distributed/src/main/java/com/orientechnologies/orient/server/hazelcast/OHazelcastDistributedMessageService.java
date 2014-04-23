@@ -48,7 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OHazelcastDistributedMessageService implements ODistributedMessageService {
 
-  public static final int                                              MAX_MESSAGES                = 20;
+  public static final int                                              STATS_MAX_MESSAGES          = 20;
   public static final String                                           NODE_QUEUE_PREFIX           = "orientdb.node.";
   public static final String                                           NODE_QUEUE_REQUEST_POSTFIX  = ".request";
   public static final String                                           NODE_QUEUE_RESPONSE_POSTFIX = ".response";
@@ -238,13 +238,13 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     doc.field("ownedItemCount", stats.getOwnedItemCount());
     doc.field("rejectedOfferOperationCount", stats.getRejectedOfferOperationCount());
 
-    List<Object> nextMessages = new ArrayList<Object>(MAX_MESSAGES);
+    List<Object> nextMessages = new ArrayList<Object>(STATS_MAX_MESSAGES);
     for (Iterator<Object> it = queue.iterator(); it.hasNext();) {
       Object next = it.next();
       if (next != null)
         nextMessages.add(next.toString());
 
-      if (nextMessages.size() >= MAX_MESSAGES)
+      if (nextMessages.size() >= STATS_MAX_MESSAGES)
         break;
     }
 
@@ -368,19 +368,20 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   }
 
   /**
-   * Return the queue. If not exists create and register it.
+   * Returns the queue. If not exists create and register it.
    */
-  @SuppressWarnings("unchecked")
   protected <T> IQueue<T> getQueue(final String iQueueName) {
     return manager.getHazelcastInstance().getQueue(iQueueName);
   }
 
   /**
-   * Remove the queue.
+   * Removes the queue. Hazelcast doesn't allow to remove the queue, so now we just clear it.
    */
   protected void removeQueue(final String iQueueName) {
-    IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
-    queue.clear();
+    final IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
+    if (queue != null) {
+      queue.clear();
+    }
   }
 
   protected void collectMetric(final long iTime) {

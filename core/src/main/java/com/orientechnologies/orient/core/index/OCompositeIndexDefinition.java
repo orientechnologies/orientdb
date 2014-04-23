@@ -364,6 +364,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
       }
       document.field("indexDefinitions", inds, OType.EMBEDDEDLIST);
       document.field("indClasses", indClasses, OType.EMBEDDEDLIST);
+      document.field("nullValuesIgnored", isNullValuesIgnored());
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
@@ -431,6 +432,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
           multiValueDefinitionIndex = indexDefinitions.size() - 1;
       }
 
+      setNullValuesIgnored(document.<Boolean> field("nullValuesIgnored"));
     } catch (final ClassNotFoundException e) {
       throw new OIndexException("Error during composite index deserialization", e);
     } catch (final NoSuchMethodException e) {
@@ -595,7 +597,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
 
     @Override
     public String toString() {
-      return "OCompositeCollate{" + "collates=" + collates + '}';
+      return "OCompositeCollate{" + "collates=" + collates + ", null values ignored = " + isNullValuesIgnored() + '}';
     }
   }
 }

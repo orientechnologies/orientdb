@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -74,10 +73,13 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     this.requestLock = manager.getHazelcastInstance().getLock(NODE_LOCK_PREFIX + iDatabaseName);
 
     checkLocalNodeInConfiguration();
+
+    // CREATE THE QUEUE
+    msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(manager.getLocalNodeName(), databaseName));
   }
 
   @Override
-  public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Set<String> nodes) {
+  public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final List<String> nodes) {
     final String databaseName = iRequest.getDatabaseName();
     final String clusterName = iRequest.getClusterName();
 
@@ -88,29 +90,53 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           + iRequest);
     }
 
+    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+
     final IQueue<ODistributedRequest>[] reqQueues = getRequestQueues(databaseName, nodes);
 
-    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
     int quorum = calculateQuorum(iRequest, clusterName, cfg, nodes);
 
     iRequest.setSenderNodeName(manager.getLocalNodeName());
+
+    final int maxOfflineMessages = cfg.getOfflineMsgQueueSize();
 
     int availableNodes;
     if (iRequest.getTask().isRequireNodeOnline()) {
       // CHECK THE ONLINE NODES
       availableNodes = 0;
-      for (String node : nodes) {
-        if (manager.isNodeAvailable(node, databaseName))
+      for (int i = 0; i < nodes.size(); ++i) {
+        final String node = nodes.get(i);
+
+        if (reqQueues[i] != null && manager.isNodeAvailable(node, databaseName))
           availableNodes++;
         else {
+          // // CHECK IF THE NODE SHOULD BE REMOVED FROM CFG
+          // if (reqQueues[i] != null && maxOfflineMessages > 0 && reqQueues[i].size() > maxOfflineMessages) {
+          // final ODistributedServerManager.DB_STATUS dbStatus = manager.getDatabaseStatus(node, databaseName);
+          //
+          // if (dbStatus == null || dbStatus == ODistributedServerManager.DB_STATUS.OFFLINE) {
+          // // REACHED THRESHOLD: REMOVE THE QUEUE
+          // ODistributedServerLog.warn(this, getLocalNodeName(), node, DIRECTION.OUT,
+          // "reached threshold on offlineQueueSize (%d) for node '%s' database '%s': remove the req queue",
+          // maxOfflineMessages, node, databaseName);
+          //
+          // msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(node, databaseName));
+          // }
+          // }
+
           if (ODistributedServerLog.isDebugEnabled())
             ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
-                "skip expected response from node '%s' for request %s because it's not online", node, iRequest);
+                "skip expected response from node '%s' for request %s because it's not online (queue=%s)", node, iRequest,
+                reqQueues[i] != null);
         }
       }
-    } else
-      // EXPECT ANSWER FROM ALL NODES
-      availableNodes = nodes.size();
+    } else {
+      // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
+      availableNodes = 0;
+      for (IQueue<ODistributedRequest> q : reqQueues)
+        if (q != null)
+          availableNodes++;
+    }
 
     final int queueSize = nodes.size();
     int expectedSynchronousResponses = quorum > 0 ? Math.min(quorum, availableNodes) : 1;
@@ -140,10 +166,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
         // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
         for (IQueue<ODistributedRequest> queue : reqQueues) {
-          // ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "****** sending msg %d to queue %s",
-          // iRequest.getId(), queue);
-
-          queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+          if (queue != null)
+            queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
         }
 
       } finally {
@@ -177,7 +201,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final ODistributedPartitioningStrategy strategy = manager.getPartitioningStrategy(cfg.getPartitionStrategy(clusterName));
     final ODistributedPartition partition = strategy.getPartition(manager, databaseName, clusterName);
-    final Set<String> nodes = partition.getNodes();
+    final List<String> nodes = partition.getNodes();
 
     return send2Nodes(iRequest, nodes);
   }
@@ -457,13 +481,16 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
   }
 
-  @SuppressWarnings("unchecked")
-  protected IQueue<ODistributedRequest>[] getRequestQueues(final String iDatabaseName, final Collection<String> nodes) {
+  protected IQueue<ODistributedRequest>[] getRequestQueues(final String iDatabaseName, final List<String> nodes) {
     final IQueue<ODistributedRequest>[] queues = new IQueue[nodes.size()];
 
-    int i = 0;
-    for (String node : nodes)
-      queues[i++] = msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(node, iDatabaseName));
+    for (int i = 0; i < nodes.size(); ++i) {
+      // GET ALL THE EXISTENT QUEUES
+      final IQueue<ODistributedRequest> queue = msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(
+          nodes.get(i), iDatabaseName));
+
+      queues[i] = queue;
+    }
 
     return queues;
   }
@@ -522,17 +549,21 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   protected void removeNodeInConfiguration(final String iNode, final boolean iForce) {
-    // GET DATABASE CFG
-    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+    try {
+      // GET DATABASE CFG
+      final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
-    final List<String> foundPartition = cfg.removeNodeInPartition(iNode, iForce);
-    if (foundPartition != null) {
-      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "removing node '%s' in partition: db=%s %s", iNode, databaseName, foundPartition);
+      final List<String> foundPartition = cfg.removeNodeInPartition(iNode, iForce);
+      if (foundPartition != null) {
+        ODistributedServerLog.info(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+            "removing node '%s' in partition: db=%s %s", iNode, databaseName, foundPartition);
 
-      msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName));
-      manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+        msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(iNode, databaseName));
+        manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+      }
+    } catch (Exception e) {
+      ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "unable to remove node '%s' in distributed configuration, db=%s", e, iNode, databaseName);
     }
   }
-
 }

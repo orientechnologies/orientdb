@@ -2,11 +2,13 @@ package com.orientechnologies.common.test;
 
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Constructor;
+
 @Test(enabled = false)
 public abstract class SpeedTestMultiThreads extends SpeedTestAbstract {
-  protected Class<? extends SpeedTestThread> threadClass;
-  protected int                              threads;
-  protected long                             threadCycles;
+  protected final Class<? extends SpeedTestThread> threadClass;
+  protected final int                              threads;
+  protected long                                   threadCycles;
 
   protected SpeedTestMultiThreads(long iCycles, int iThreads, Class<? extends SpeedTestThread> iThreadClass) {
     super(1);
@@ -15,16 +17,20 @@ public abstract class SpeedTestMultiThreads extends SpeedTestAbstract {
     threadCycles = iCycles;
   }
 
+  public int getThreads() {
+    return threads;
+  }
+
   @Override
   public void cycle() throws InterruptedException {
-    SpeedTestThread[] ts = new SpeedTestThread[threads];
+    final SpeedTestThread[] ts = new SpeedTestThread[threads];
     SpeedTestThread t;
     for (int i = 0; i < threads; ++i)
       try {
-        t = threadClass.newInstance();
+        final Constructor<? extends SpeedTestThread> c = threadClass.getConstructor(SpeedTestMultiThreads.class, Integer.TYPE);
+        t = c.newInstance(this, i);
         ts[i] = t;
 
-        t.setOwner(this);
         t.setCycles(threadCycles / threads);
         t.start();
       } catch (Exception e) {

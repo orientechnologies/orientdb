@@ -23,17 +23,27 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import java.io.IOException;
 
 /**
+ * 
+ * Bucket which is intended to save values stored in sbtree under <code>null</code> key. Bucket has following layout:
+ * <ol>
+ * <li>First byte is flag which indicates presence of value in bucket</li>
+ * <li>Second byte indicates whether value is presented by link to the "bucket list" where actual value is stored or real value
+ * passed be user.</li>
+ * <li>The rest is serialized value whether link or passed in value.</li>
+ * </ol>
+ * 
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 4/15/14
  */
 public class ONullBucket<V> extends ODurablePage {
   private final OBinarySerializer<V> valueSerializer;
 
-  public ONullBucket(ODirectMemoryPointer pagePointer, TrackMode trackMode, OBinarySerializer<V> valueSerializer) {
+  public ONullBucket(ODirectMemoryPointer pagePointer, TrackMode trackMode, OBinarySerializer<V> valueSerializer, boolean isNew) {
     super(pagePointer, trackMode);
     this.valueSerializer = valueSerializer;
 
-    setByteValue(0, (byte) 0);
+    if (isNew)
+      setByteValue(0, (byte) 0);
   }
 
   public void setEntry(OSBTreeValue<V> value) throws IOException {

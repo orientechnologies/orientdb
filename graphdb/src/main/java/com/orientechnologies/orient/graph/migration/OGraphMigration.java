@@ -5,14 +5,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -85,13 +82,15 @@ public class OGraphMigration {
             .createIndex("__@recordmap@___" + index.getName(), OClass.INDEX_TYPE.DICTIONARY.toString(),
                 new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null);
 
-        final Iterator<Map.Entry<Object, Collection<OIdentifiable>>> iterator = index.iterator();
-        while (iterator.hasNext()) {
-          final Map.Entry<Object, Collection<OIdentifiable>> entry = iterator.next();
-          final String keyTemp = entry.getKey().toString();
+        OIndexCursor cursor = index.cursor();
+        Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
 
-          for (OIdentifiable identifiable : entry.getValue())
-            recordKeyValueIndex.put(new OCompositeKey(identifiable.getIdentity(), keyTemp), identifiable.getIdentity());
+        while (entry != null) {
+          final String keyTemp = entry.getKey().toString();
+          final OIdentifiable identifiable = entry.getValue();
+          recordKeyValueIndex.put(new OCompositeKey(identifiable.getIdentity(), keyTemp), identifiable.getIdentity());
+
+          entry = cursor.next(-1);
         }
 
         metadata = new ODocument();

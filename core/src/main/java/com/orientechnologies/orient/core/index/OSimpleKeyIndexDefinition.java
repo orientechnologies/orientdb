@@ -31,16 +31,16 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
     return null;
   }
 
-  public Comparable<?> createValue(final List<?> params) {
+  public Object createValue(final List<?> params) {
     return createValue(params != null ? params.toArray() : null);
   }
 
-  public Comparable<?> createValue(final Object... params) {
+  public Object createValue(final Object... params) {
     if (params == null || params.length == 0)
       return null;
 
     if (keyTypes.length == 1)
-      return (Comparable<?>) OType.convert(params[0], keyTypes[0].getDefaultJavaType());
+      return OType.convert(params[0], keyTypes[0].getDefaultJavaType());
 
     final OCompositeKey compositeKey = new OCompositeKey();
 
@@ -75,6 +75,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
 
       document.field("keyTypes", keyTypeNames, OType.EMBEDDEDLIST);
       document.field("collate", collate.getName());
+      document.field("nullValuesIgnored", isNullValuesIgnored());
       return document;
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -93,6 +94,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
     }
 
     setCollate((String) document.field("collate"));
+    setNullValuesIgnored(document.<Boolean> field("nullValuesIgnored"));
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {

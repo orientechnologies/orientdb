@@ -64,7 +64,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   private final static int                      FREE_LIST_SIZE           = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
 
-  private OCompression                          compression;
+  private volatile OCompression                 compression;
 
   public static final String                    TYPE                     = "PHYSICAL";
 

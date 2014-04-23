@@ -315,7 +315,6 @@ public class OServer {
     }
 
     OLogManager.instance().info(this, "OrientDB Server shutdown complete");
-    System.out.println();
     OLogManager.instance().flush();
     return true;
   }

@@ -71,26 +71,6 @@ public class SBTreeCompositeKeyTest {
     databaseDocumentTx.drop();
   }
 
-  public void testBetweenValuesInclusive() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0), true, compositeKey(3.0), true, -1, true);
-    assertEquals(orids.size(), 18);
-
-    for (int i = 2; i <= 3; i++) {
-      for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong(j))));
-      }
-    }
-
-    orids = localSBTree.getValuesBetween(compositeKey(2.0), true, compositeKey(3.0), true, -1, false);
-    assertEquals(orids.size(), 18);
-
-    for (int i = 2; i <= 3; i++) {
-      for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong(j))));
-      }
-    }
-  }
-
   public void testIterateBetweenValuesInclusive() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), true,
         compositeKey(3.0), true, true);
@@ -116,24 +96,6 @@ public class SBTreeCompositeKeyTest {
     }
   }
 
-  public void testBetweenValuesFromInclusive() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0), true, compositeKey(3.0), false, -1, true);
-
-    assertEquals(orids.size(), 9);
-
-    for (int j = 1; j <= 9; j++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong(j))));
-    }
-
-    orids = localSBTree.getValuesBetween(compositeKey(2.0), true, compositeKey(3.0), false, -1, false);
-
-    assertEquals(orids.size(), 9);
-
-    for (int j = 1; j <= 9; j++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong(j))));
-    }
-  }
-
   public void testIterateBetweenValuesFromInclusive() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), true,
         compositeKey(3.0), false, true);
@@ -155,22 +117,6 @@ public class SBTreeCompositeKeyTest {
     }
   }
 
-  public void testBetweenValuesToInclusive() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0), false, compositeKey(3.0), true, -1, true);
-    assertEquals(orids.size(), 9);
-
-    for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(3, new OClusterPositionLong((i)))));
-    }
-
-    orids = localSBTree.getValuesBetween(compositeKey(2.0), false, compositeKey(3.0), true, -1, false);
-    assertEquals(orids.size(), 9);
-
-    for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(3, new OClusterPositionLong((i)))));
-    }
-  }
-
   public void testIterateBetweenValuesToInclusive() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), false,
         compositeKey(3.0), true, true);
@@ -189,32 +135,6 @@ public class SBTreeCompositeKeyTest {
 
     for (int i = 1; i <= 9; i++) {
       assertTrue(orids.contains(new ORecordId(3, new OClusterPositionLong((i)))));
-    }
-  }
-
-  public void testBetweenValuesNonInclusive() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0), false, compositeKey(3.0), false, -1, true);
-
-    assertEquals(orids.size(), 0);
-
-    orids = localSBTree.getValuesBetween(compositeKey(2.0), false, compositeKey(3.0), false, -1, false);
-
-    assertEquals(orids.size(), 0);
-
-    orids = localSBTree.getValuesBetween(compositeKey(1.0), false, compositeKey(3.0), false, -1, true);
-
-    assertEquals(orids.size(), 9);
-
-    for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((i)))));
-    }
-
-    orids = localSBTree.getValuesBetween(compositeKey(1.0), false, compositeKey(3.0), false, -1, false);
-
-    assertEquals(orids.size(), 9);
-
-    for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((i)))));
     }
   }
 
@@ -249,32 +169,6 @@ public class SBTreeCompositeKeyTest {
     }
   }
 
-  public void testBetweenValuesInclusivePartialKey() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), true, -1, true);
-
-    assertEquals(orids.size(), 15);
-
-    for (int i = 2; i <= 3; i++) {
-      for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j < 4)
-          continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-    }
-
-    orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), true, -1, false);
-
-    assertEquals(orids.size(), 15);
-
-    for (int i = 2; i <= 3; i++) {
-      for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j < 4)
-          continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-    }
-  }
-
   public void testIterateBetweenValuesInclusivePartialKey() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), true,
         compositeKey(3.0), true, true);
@@ -304,25 +198,6 @@ public class SBTreeCompositeKeyTest {
     }
   }
 
-  public void testBetweenValuesFromInclusivePartialKey() {
-    Collection<OIdentifiable> orids = localSBTree
-        .getValuesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), false, -1, true);
-
-    assertEquals(orids.size(), 6);
-
-    for (int j = 4; j <= 9; j++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((j)))));
-    }
-
-    orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), false, -1, false);
-
-    assertEquals(orids.size(), 6);
-
-    for (int j = 4; j <= 9; j++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((j)))));
-    }
-  }
-
   public void testIterateBetweenValuesFromInclusivePartialKey() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), true,
         compositeKey(3.0), false, true);
@@ -342,34 +217,6 @@ public class SBTreeCompositeKeyTest {
     for (int j = 4; j <= 9; j++) {
       assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((j)))));
     }
-  }
-
-  public void testBetweenValuesToInclusivePartialKey() {
-    Collection<OIdentifiable> orids = localSBTree
-        .getValuesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), true, -1, true);
-
-    assertEquals(orids.size(), 14);
-
-    for (int i = 2; i <= 3; i++) {
-      for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j <= 4)
-          continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-    }
-
-    orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), true, -1, false);
-
-    assertEquals(orids.size(), 14);
-
-    for (int i = 2; i <= 3; i++) {
-      for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j <= 4)
-          continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-    }
-
   }
 
   public void testIterateBetweenValuesToInclusivePartialKey() {
@@ -401,23 +248,6 @@ public class SBTreeCompositeKeyTest {
 
   }
 
-  public void testBetweenValuesNonInclusivePartial() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), false, -1,
-        true);
-    assertEquals(orids.size(), 5);
-
-    for (int i = 5; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((i)))));
-    }
-
-    orids = localSBTree.getValuesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), false, -1, false);
-    assertEquals(orids.size(), 5);
-
-    for (int i = 5; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((i)))));
-    }
-  }
-
   public void testIterateBetweenValuesNonInclusivePartial() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), false,
         compositeKey(3.0), false, true);
@@ -437,24 +267,6 @@ public class SBTreeCompositeKeyTest {
     for (int i = 5; i <= 9; i++) {
       assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((i)))));
     }
-  }
-
-  public void testValuesMajorInclusivePartial() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesMajor(compositeKey(2.0), true, -1, true);
-    assertEquals(orids.size(), 18);
-
-    for (int i = 2; i <= 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-
-    orids = localSBTree.getValuesMajor(compositeKey(2.0), true, -1, false);
-    assertEquals(orids.size(), 18);
-
-    for (int i = 2; i <= 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
   }
 
   public void testIterateValuesMajorInclusivePartial() {
@@ -479,22 +291,6 @@ public class SBTreeCompositeKeyTest {
       }
   }
 
-  public void testValuesMajorNonInclusivePartial() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesMajor(compositeKey(2.0), false, -1, true);
-    assertEquals(orids.size(), 9);
-
-    for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(3, new OClusterPositionLong((i)))));
-    }
-
-    orids = localSBTree.getValuesMajor(compositeKey(2.0), false, -1, false);
-    assertEquals(orids.size(), 9);
-
-    for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(3, new OClusterPositionLong((i)))));
-    }
-  }
-
   public void testIterateMajorNonInclusivePartial() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0), false, true);
     Set<ORID> orids = extractRids(cursor);
@@ -512,30 +308,6 @@ public class SBTreeCompositeKeyTest {
     for (int i = 1; i <= 9; i++) {
       assertTrue(orids.contains(new ORecordId(3, new OClusterPositionLong((i)))));
     }
-  }
-
-  public void testValuesMajorInclusive() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesMajor(compositeKey(2.0, 3.0), true, -1, true);
-
-    assertEquals(orids.size(), 16);
-
-    for (int i = 2; i <= 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j < 3)
-          continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-
-    orids = localSBTree.getValuesMajor(compositeKey(2.0, 3.0), true, -1, false);
-
-    assertEquals(orids.size(), 16);
-
-    for (int i = 2; i <= 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j < 3)
-          continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
   }
 
   public void testIterateValuesMajorInclusive() {
@@ -559,28 +331,6 @@ public class SBTreeCompositeKeyTest {
     for (int i = 2; i <= 3; i++)
       for (int j = 1; j <= 9; j++) {
         if (i == 2 && j < 3)
-          continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-  }
-
-  public void testValuesMajorNonInclusive() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesMajor(compositeKey(2.0, 3.0), false, -1, true);
-    assertEquals(orids.size(), 15);
-
-    for (int i = 2; i <= 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j <= 3)
-          continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-
-    orids = localSBTree.getValuesMajor(compositeKey(2.0, 3.0), false, -1, false);
-    assertEquals(orids.size(), 15);
-
-    for (int i = 2; i <= 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j <= 3)
           continue;
         assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
       }
@@ -612,25 +362,6 @@ public class SBTreeCompositeKeyTest {
       }
   }
 
-  public void testValuesMinorInclusivePartial() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesMinor(compositeKey(3.0), true, -1, true);
-    assertEquals(orids.size(), 27);
-
-    for (int i = 1; i <= 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-
-    orids = localSBTree.getValuesMinor(compositeKey(3.0), true, -1, false);
-    assertEquals(orids.size(), 27);
-
-    for (int i = 1; i <= 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-
-  }
-
   public void testIterateValuesMinorInclusivePartial() {
     OSBTree.OSBTreeCursor<OCompositeKey, OIdentifiable> cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0), true, true);
     Set<ORID> orids = extractRids(cursor);
@@ -647,25 +378,6 @@ public class SBTreeCompositeKeyTest {
     assertEquals(orids.size(), 27);
 
     for (int i = 1; i <= 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-
-  }
-
-  public void testValuesMinorNonInclusivePartial() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesMinor(compositeKey(3.0), false, -1, true);
-    assertEquals(orids.size(), 18);
-
-    for (int i = 1; i < 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-
-    orids = localSBTree.getValuesMinor(compositeKey(3.0), false, -1, false);
-    assertEquals(orids.size(), 18);
-
-    for (int i = 1; i < 3; i++)
       for (int j = 1; j <= 9; j++) {
         assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
       }
@@ -689,30 +401,6 @@ public class SBTreeCompositeKeyTest {
 
     for (int i = 1; i < 3; i++)
       for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-  }
-
-  public void testValuesMinorInclusive() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesMinor(compositeKey(3.0, 2.0), true, -1, true);
-    assertEquals(orids.size(), 20);
-
-    for (int i = 1; i <= 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        if (i == 3 && j > 2)
-          continue;
-
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-
-    localSBTree.getValuesMinor(compositeKey(3.0, 2.0), true, -1, false);
-    assertEquals(orids.size(), 20);
-
-    for (int i = 1; i <= 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        if (i == 3 && j > 2)
-          continue;
-
         assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
       }
   }
@@ -741,24 +429,6 @@ public class SBTreeCompositeKeyTest {
         if (i == 3 && j > 2)
           continue;
 
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-  }
-
-  public void testValuesMinorNonInclusive() {
-    Collection<OIdentifiable> orids = localSBTree.getValuesMinor(compositeKey(3.0, 2.0), false, -1, true);
-    assertEquals(orids.size(), 19);
-
-    for (int i = 1; i < 3; i++)
-      for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
-      }
-
-    orids = localSBTree.getValuesMinor(compositeKey(3.0, 2.0), false, -1, false);
-    assertEquals(orids.size(), 19);
-
-    for (int i = 1; i < 3; i++)
-      for (int j = 1; j <= 9; j++) {
         assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
       }
   }

@@ -16,14 +16,14 @@ import java.io.IOException;
 public class ONullBucketTest {
   public void testEmptyBucket() {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
-    ONullBucket<String> bucket = new ONullBucket<String>(pointer, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE);
+    ONullBucket<String> bucket = new ONullBucket<String>(pointer, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE, true);
     Assert.assertNull(bucket.getValue());
     pointer.free();
   }
 
   public void testAddGetValue() throws IOException {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
-    ONullBucket<String> bucket = new ONullBucket<String>(pointer, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE);
+    ONullBucket<String> bucket = new ONullBucket<String>(pointer, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE, true);
 
     bucket.setEntry(new OSBTreeValue<String>(false, -1, "test"));
     OSBTreeValue<String> treeValue = bucket.getValue();
@@ -34,7 +34,7 @@ public class ONullBucketTest {
 
   public void testAddRemoveValue() throws IOException {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
-    ONullBucket<String> bucket = new ONullBucket<String>(pointer, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE);
+    ONullBucket<String> bucket = new ONullBucket<String>(pointer, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE, true);
 
     bucket.setEntry(new OSBTreeValue<String>(false, -1, "test"));
     bucket.removeValue();
@@ -47,7 +47,7 @@ public class ONullBucketTest {
 
   public void testAddRemoveAddValue() throws IOException {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
-    ONullBucket<String> bucket = new ONullBucket<String>(pointer, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE);
+    ONullBucket<String> bucket = new ONullBucket<String>(pointer, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE, true);
 
     bucket.setEntry(new OSBTreeValue<String>(false, -1, "test"));
     bucket.removeValue();

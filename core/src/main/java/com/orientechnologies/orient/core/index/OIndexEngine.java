@@ -36,16 +36,6 @@ public interface OIndexEngine<V> {
 
   void clear();
 
-  Iterator<Map.Entry<Object, V>> iterator();
-
-  Iterator<Map.Entry<Object, V>> inverseIterator();
-
-  Iterator<V> valuesIterator();
-
-  Iterator<V> inverseValuesIterator();
-
-  Iterable<Object> keys();
-
   void unload();
 
   void startTransaction();
@@ -70,24 +60,6 @@ public interface OIndexEngine<V> {
 
   public Object getLastKey();
 
-  void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
-      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener);
-
-  void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-      ValuesResultListener valuesResultListener);
-
-  void getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-      ValuesResultListener valuesResultListener);
-
-  void getEntriesMajor(final Object fromKey, final boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener);
-
-  void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener);
-
-  void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder,
-      ValuesTransformer<V> transformer, EntriesResultListener entriesResultListener);
-
   OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer<V> transformer);
 
@@ -96,21 +68,15 @@ public interface OIndexEngine<V> {
   OIndexCursor iterateEntriesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer<V> transformer);
 
+  OIndexCursor cursor(ValuesTransformer<V> valuesTransformer);
+
+  OIndexKeyCursor keyCursor();
+
   long size(ValuesTransformer<V> transformer);
 
   boolean hasRangeQuerySupport();
 
   interface ValuesTransformer<V> {
     Collection<OIdentifiable> transformFromValue(V value);
-
-    V transformToValue(Collection<OIdentifiable> collection);
-  }
-
-  interface ValuesResultListener {
-    boolean addResult(OIdentifiable identifiable);
-  }
-
-  interface EntriesResultListener {
-    boolean addResult(ODocument entry);
   }
 }

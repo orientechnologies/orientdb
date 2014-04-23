@@ -70,7 +70,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -366,14 +365,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   public Object sendRequest2Node(final String iDatabaseName, final String iTargetNodeName, final OAbstractRemoteTask iTask,
       final EXECUTION_MODE iExecutionMode) {
-    final Set<String> nodeNames = new HashSet<String>();
+    final List<String> nodeNames = new ArrayList<String>();
     nodeNames.add(iTargetNodeName);
 
     return sendRequest2Nodes(iDatabaseName, nodeNames, iTask, iExecutionMode);
   }
 
   @Override
-  public Object sendRequest2Nodes(final String iDatabaseName, final Set<String> iTargetNodeNames, final OAbstractRemoteTask iTask,
+  public Object sendRequest2Nodes(final String iDatabaseName, final List<String> iTargetNodeNames, final OAbstractRemoteTask iTask,
       final EXECUTION_MODE iExecutionMode) {
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, null, iTask,
         iExecutionMode);

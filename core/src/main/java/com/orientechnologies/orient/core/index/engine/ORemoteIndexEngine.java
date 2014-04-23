@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
@@ -72,31 +73,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
 
   @Override
   public void clear() {
-  }
-
-  @Override
-  public Iterator<Map.Entry> iterator() {
-    return null;
-  }
-
-  @Override
-  public Iterator<Map.Entry> inverseIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterator valuesIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterator inverseValuesIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterable<Object> keys() {
-    return null;
   }
 
   @Override
@@ -151,36 +127,6 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer, ValuesResultListener resultListener) {
-  }
-
-  @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
-      ValuesResultListener valuesResultListener) {
-  }
-
-  @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
-      ValuesResultListener valuesResultListener) {
-  }
-
-  @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
-  }
-
-  @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
-  }
-
-  @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder,
-      ValuesTransformer transformer, EntriesResultListener entriesResultListener) {
-  }
-
-  @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
     return new OIndexCursor() {
@@ -219,5 +165,15 @@ public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public boolean hasRangeQuerySupport() {
     return false;
+  }
+
+  @Override
+  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+    throw new UnsupportedOperationException("cursor");
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    throw new UnsupportedOperationException("keyCursor");
   }
 }
