@@ -1,23 +1,22 @@
 package com.orientechnologies.common.test;
 
 public abstract class SpeedTestThread extends Thread implements SpeedTest {
-  protected SpeedTestData         data;
-  protected SpeedTestMultiThreads owner;
+  protected final int                   threadId;
+  protected final SpeedTestData         data;
+  protected final SpeedTestMultiThreads owner;
 
-  protected SpeedTestThread() {
-    data = new SpeedTestData();
+  protected SpeedTestThread(final SpeedTestMultiThreads iParent, final int threadId) {
+    this(iParent, threadId, 1);
   }
 
-  protected SpeedTestThread(long iCycles) {
-    data = new SpeedTestData(iCycles);
+  protected SpeedTestThread(final SpeedTestMultiThreads iParent, final int threadId, long iCycles) {
+    this.owner = iParent;
+    this.threadId = threadId;
+    this.data = new SpeedTestData(iCycles);
   }
 
   public void setCycles(long iCycles) {
     data.cycles = iCycles;
-  }
-
-  public void setOwner(SpeedTestMultiThreads iOwner) {
-    owner = iOwner;
   }
 
   @Override
@@ -36,5 +35,9 @@ public abstract class SpeedTestThread extends Thread implements SpeedTest {
   }
 
   public void beforeCycle() throws Exception {
+  }
+
+  public int getThreadId() {
+    return threadId;
   }
 }

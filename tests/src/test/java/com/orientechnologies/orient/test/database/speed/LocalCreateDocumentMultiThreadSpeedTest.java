@@ -20,6 +20,7 @@ import java.util.Date;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -33,36 +34,15 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
   private ODatabaseDocument database;
   private long              foundObjects;
 
-  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-    // System.setProperty("url", "memory:test");
-    LocalCreateDocumentMultiThreadSpeedTest test = new LocalCreateDocumentMultiThreadSpeedTest();
-    test.data.go(test);
-  }
-
-  public LocalCreateDocumentMultiThreadSpeedTest() {
-    super(1000000, 20, CreateObjectsThread.class);
-  }
-
-  @Override
-  public void init() {
-    database = new ODatabaseDocumentTx(System.getProperty("url"));
-    if (database.exists())
-      // database.open("admin", "admin");
-      // else
-      database.drop();
-
-    database.create();
-
-    foundObjects = 0;// database.countClusterElements("Account");
-
-    System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
-  }
-
   @Test(enabled = false)
   public static class CreateObjectsThread extends OrientThreadTest {
     private ODatabaseDocument database;
     private ODocument         record;
     private Date              date = new Date();
+
+    public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
+      super(parent, threadId);
+    }
 
     @Override
     public void init() {
@@ -94,6 +74,31 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
         database.close();
       super.deinit();
     }
+  }
+
+  public LocalCreateDocumentMultiThreadSpeedTest() {
+    super(1000000, 20, CreateObjectsThread.class);
+  }
+
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    // System.setProperty("url", "memory:test");
+    LocalCreateDocumentMultiThreadSpeedTest test = new LocalCreateDocumentMultiThreadSpeedTest();
+    test.data.go(test);
+  }
+
+  @Override
+  public void init() {
+    database = new ODatabaseDocumentTx(System.getProperty("url"));
+    if (database.exists())
+      // database.open("admin", "admin");
+      // else
+      database.drop();
+
+    database.create();
+
+    foundObjects = 0;// database.countClusterElements("Account");
+
+    System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
   }
 
   @Override
