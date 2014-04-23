@@ -15,11 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Date;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
+import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -31,11 +27,63 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.util.Date;
 
 @Test(enabled = false)
 public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiThreadTest {
   private ODatabaseDocument database;
   private long              foundObjects;
+
+  @Test(enabled = false)
+  public static class CreateObjectsThread extends OrientThreadTest {
+    private ODatabaseDocument database;
+    private ODocument         record;
+    private Date              date = new Date();
+
+    public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
+      super(parent, threadId);
+    }
+
+    @Override
+    public void init() {
+      database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+      record = database.newInstance();
+      database.declareIntent(new OIntentMassiveInsert());
+      database.begin(TXTYPE.NOTX);
+    }
+
+    public void cycle() {
+      record.reset();
+
+      record.setClassName("Account");
+      record.field("id", data.getCyclesDone());
+      record.field("name", "Luca");
+      record.field("surname", "Garulli");
+      record.field("birthDate", date);
+      record.field("salary", 3000f + data.getCyclesDone());
+
+      record.save();
+
+      if (data.getCyclesDone() == data.getCycles() - 1)
+        database.commit();
+    }
+
+    @Override
+    public void deinit() throws Exception {
+      if (database != null)
+        database.close();
+      super.deinit();
+    }
+  }
+
+  public LocalCreateDocumentMultiThreadIndexedSpeedTest(int tot, int threads) {
+    super(tot, threads, CreateObjectsThread.class);
+
+    Orient.instance().getProfiler().startRecording();
+  }
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     // System.setProperty("url", "remote:localhost/demo");
@@ -48,12 +96,6 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 
     LocalCreateDocumentMultiThreadIndexedSpeedTest test = new LocalCreateDocumentMultiThreadIndexedSpeedTest(tot, threads);
     test.data.go(test);
-  }
-
-  public LocalCreateDocumentMultiThreadIndexedSpeedTest(int tot, int threads) {
-    super(tot, threads, CreateObjectsThread.class);
-
-    Orient.instance().getProfiler().startRecording();
   }
 
   @Override
@@ -89,44 +131,6 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
     }
 
     System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
-  }
-
-  @Test(enabled = false)
-  public static class CreateObjectsThread extends OrientThreadTest {
-    private ODatabaseDocument database;
-    private ODocument         record;
-    private Date              date = new Date();
-
-    @Override
-    public void init() {
-      database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
-      record = database.newInstance();
-      database.declareIntent(new OIntentMassiveInsert());
-      database.begin(TXTYPE.NOTX);
-    }
-
-    public void cycle() {
-      record.reset();
-
-      record.setClassName("Account");
-      record.field("id", data.getCyclesDone());
-      record.field("name", "Luca");
-      record.field("surname", "Garulli");
-      record.field("birthDate", date);
-      record.field("salary", 3000f + data.getCyclesDone());
-
-      record.save();
-
-      if (data.getCyclesDone() == data.getCycles() - 1)
-        database.commit();
-    }
-
-    @Override
-    public void deinit() throws Exception {
-      if (database != null)
-        database.close();
-      super.deinit();
-    }
   }
 
   @Override

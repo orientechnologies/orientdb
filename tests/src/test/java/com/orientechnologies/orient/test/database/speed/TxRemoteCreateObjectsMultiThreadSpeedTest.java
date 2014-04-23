@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -26,29 +27,13 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
   protected ODatabaseFlat database;
   protected long          foundObjects;
 
-  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-    TxRemoteCreateObjectsMultiThreadSpeedTest test = new TxRemoteCreateObjectsMultiThreadSpeedTest();
-    test.data.go(test);
-  }
-
-  public TxRemoteCreateObjectsMultiThreadSpeedTest() {
-    super(1000000, 10, CreateObjectsThread.class);
-  }
-
-  @Override
-  public void init() {
-    database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
-
-    if (!database.getStorage().getClusterNames().contains("Animal"))
-      database.addCluster("Animal", OStorage.CLUSTER_TYPE.PHYSICAL);
-
-    foundObjects = database.countClusterElements("Animal");
-    System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
-  }
-
   public static class CreateObjectsThread extends OrientThreadTest {
     protected ODatabaseFlat database;
     protected ORecordFlat   record = new ORecordFlat();
+
+    public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
+      super(parent, threadId);
+    }
 
     @Override
     public void init() {
@@ -71,6 +56,26 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
       database.close();
       super.deinit();
     }
+  }
+
+  public TxRemoteCreateObjectsMultiThreadSpeedTest() {
+    super(1000000, 10, CreateObjectsThread.class);
+  }
+
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    TxRemoteCreateObjectsMultiThreadSpeedTest test = new TxRemoteCreateObjectsMultiThreadSpeedTest();
+    test.data.go(test);
+  }
+
+  @Override
+  public void init() {
+    database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
+
+    if (!database.getStorage().getClusterNames().contains("Animal"))
+      database.addCluster("Animal", OStorage.CLUSTER_TYPE.PHYSICAL);
+
+    foundObjects = database.countClusterElements("Animal");
+    System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
   }
 
   @Override

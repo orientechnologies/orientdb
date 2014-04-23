@@ -158,7 +158,7 @@ public class SpeedTestData {
       System.out.println("   Cycles Elapsed....................: " + cyclesElapsed + " ms");
       System.out.println("   Elapsed...........................: " + elapsed + " ms");
       System.out.println("   Medium cycle elapsed:.............: "
-          + (cyclesDone > 0 ? new BigDecimal((float) elapsed / cyclesDone).toPlainString() : 0));
+          + (cyclesDone > 0 && elapsed > 0 ? new BigDecimal((float) elapsed / cyclesDone).toPlainString() : 0));
       System.out.println("   Cycles per second.................: "
           + new BigDecimal((float) cyclesDone / elapsed * 1000).toPlainString());
       System.out.println("   Committed heap memory diff........: " + heapCommittedMemory + " (" + currentTestHeapCommittedMemory
