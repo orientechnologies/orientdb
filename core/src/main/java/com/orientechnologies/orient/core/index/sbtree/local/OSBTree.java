@@ -603,8 +603,6 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
         OSBTreeBucket<K, V> rootBucket = new OSBTreeBucket<K, V>(rootPointer.getDataPointer(), true, keySerializer, keyTypes,
             valueSerializer, getTrackMode());
 
-        rootBucket.setKeySerializerId(keySerializer.getId());
-        rootBucket.setValueSerializerId(valueSerializer.getId());
         rootBucket.setTreeSize(0);
 
         logPageChanges(rootBucket, fileId, ROOT_INDEX, true);
@@ -1858,9 +1856,6 @@ public class OSBTree<K, V> extends ODurableComponent implements OTreeInternal<K,
       } else {
         final long freeListPage = bucketToSplit.getValuesFreeListFirstIndex();
         final long treeSize = bucketToSplit.getTreeSize();
-
-        final byte keySerializeId = bucketToSplit.getKeySerializerId();
-        final byte valueSerializerId = bucketToSplit.getValueSerializerId();
 
         final List<OSBTreeBucket.SBTreeEntry<K, V>> leftEntries = new ArrayList<OSBTreeBucket.SBTreeEntry<K, V>>(indexToSplit);
 
