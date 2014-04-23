@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
@@ -373,17 +372,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
    */
   protected <T> IQueue<T> getQueue(final String iQueueName) {
     return manager.getHazelcastInstance().getQueue(iQueueName);
-  }
-
-  /**
-   * Returns the queue only if exists, otherwise NULL.
-   */
-  protected <T> IQueue<T> getQueueIfExists(final String iQueueName) {
-    final Map<String, QueueConfig> queues = manager.getHazelcastInstance().getConfig().getQueueConfigs();
-    if (queues.containsKey(iQueueName))
-      return manager.getHazelcastInstance().getQueue(iQueueName);
-
-    return null;
   }
 
   /**

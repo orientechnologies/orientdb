@@ -110,19 +110,19 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         if (reqQueues[i] != null && manager.isNodeAvailable(node, databaseName))
           availableNodes++;
         else {
-//          // CHECK IF THE NODE SHOULD BE REMOVED FROM CFG
-//          if (reqQueues[i] != null && maxOfflineMessages > 0 && reqQueues[i].size() > maxOfflineMessages) {
-//            final ODistributedServerManager.DB_STATUS dbStatus = manager.getDatabaseStatus(node, databaseName);
-//
-//            if (dbStatus == null || dbStatus == ODistributedServerManager.DB_STATUS.OFFLINE) {
-//              // REACHED THRESHOLD: REMOVE THE QUEUE
-//              ODistributedServerLog.warn(this, getLocalNodeName(), node, DIRECTION.OUT,
-//                  "reached threshold on offlineQueueSize (%d) for node '%s' database '%s': remove the req queue",
-//                  maxOfflineMessages, node, databaseName);
-//
-//              msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(node, databaseName));
-//            }
-//          }
+          // // CHECK IF THE NODE SHOULD BE REMOVED FROM CFG
+          // if (reqQueues[i] != null && maxOfflineMessages > 0 && reqQueues[i].size() > maxOfflineMessages) {
+          // final ODistributedServerManager.DB_STATUS dbStatus = manager.getDatabaseStatus(node, databaseName);
+          //
+          // if (dbStatus == null || dbStatus == ODistributedServerManager.DB_STATUS.OFFLINE) {
+          // // REACHED THRESHOLD: REMOVE THE QUEUE
+          // ODistributedServerLog.warn(this, getLocalNodeName(), node, DIRECTION.OUT,
+          // "reached threshold on offlineQueueSize (%d) for node '%s' database '%s': remove the req queue",
+          // maxOfflineMessages, node, databaseName);
+          //
+          // msgService.removeQueue(OHazelcastDistributedMessageService.getRequestQueueName(node, databaseName));
+          // }
+          // }
 
           if (ODistributedServerLog.isDebugEnabled())
             ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
@@ -486,8 +486,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     for (int i = 0; i < nodes.size(); ++i) {
       // GET ALL THE EXISTENT QUEUES
-      final IQueue<ODistributedRequest> queue = msgService.getQueueIfExists(OHazelcastDistributedMessageService
-          .getRequestQueueName(nodes.get(i), iDatabaseName));
+      final IQueue<ODistributedRequest> queue = msgService.getQueue(OHazelcastDistributedMessageService.getRequestQueueName(
+          nodes.get(i), iDatabaseName));
 
       queues[i] = queue;
     }
