@@ -20,12 +20,13 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 @Test(enabled = false)
@@ -51,7 +52,8 @@ public class PLocalCreateVerticesMultiThreadSpeedTest extends OrientMultiThreadT
     }
 
     public void cycle() {
-      OrientVertex v = graph.addVertex("class:Client,cluster:client_" + currentThreadId(), "name", "shard_" + currentThreadId());
+      graph
+          .addVertex("class:Client,cluster:client_" + currentThreadId(), "uid", "" + currentThreadId() + "_" + data.getCyclesDone());
     }
 
     @Override
@@ -67,7 +69,7 @@ public class PLocalCreateVerticesMultiThreadSpeedTest extends OrientMultiThreadT
   }
 
   public PLocalCreateVerticesMultiThreadSpeedTest() {
-    super(1000000, 32, CreateObjectsThread.class);
+    super(1000000, 4, CreateObjectsThread.class);
   }
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
@@ -82,6 +84,9 @@ public class PLocalCreateVerticesMultiThreadSpeedTest extends OrientMultiThreadT
     try {
       if (graph.getVertexType("Client") == null) {
         final OrientVertexType clientType = graph.createVertexType("Client");
+
+        final OrientVertexType.OrientVertexProperty property = clientType.createProperty("uid", OType.STRING);
+        property.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
 
         // CREATE ONE CLUSTER PER THREAD
         for (int i = 0; i < getThreads(); ++i) {
@@ -107,6 +112,10 @@ public class PLocalCreateVerticesMultiThreadSpeedTest extends OrientMultiThreadT
       System.out.println("\nTotal objects in Client cluster after the test: " + total);
       System.out.println("Created " + (total - foundObjects));
       Assert.assertEquals(total - foundObjects, threadCycles);
+
+      final long indexedItems = graph.getRawGraph().getMetadata().getIndexManager().getIndex("Client.uid").getSize();
+      System.out.println("\nTotal indexed objects after the test: " + indexedItems);
+
     } finally {
       graph.shutdown();
     }
