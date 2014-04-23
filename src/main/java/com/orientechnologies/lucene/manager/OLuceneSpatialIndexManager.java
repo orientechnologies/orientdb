@@ -22,6 +22,7 @@ import java.util.*;
 import com.orientechnologies.lucene.shape.OShapeFactory;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
@@ -123,26 +124,6 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
   @Override
   public ORID getIdentity() {
-    return null;
-  }
-
-  @Override
-  public Iterator<Map.Entry> inverseIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterator valuesIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterator inverseValuesIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterable<Object> keys() {
     return null;
   }
 
@@ -252,42 +233,6 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
-      ValuesTransformer transformer, ValuesResultListener valuesResultListener) {
-
-  }
-
-  @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
-      ValuesResultListener valuesResultListener) {
-
-  }
-
-  @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer,
-      ValuesResultListener valuesResultListener) {
-
-  }
-
-  @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascOrder, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
-
-  }
-
-  @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascOrder, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
-
-  }
-
-  @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascOrder,
-      ValuesTransformer transformer, EntriesResultListener entriesResultListener) {
-
-  }
-
-  @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
     return null;
@@ -303,7 +248,17 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     return null;
   }
 
-  @Override
+    @Override
+    public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+        return null;
+    }
+
+    @Override
+    public OIndexKeyCursor keyCursor() {
+        return null;
+    }
+
+    @Override
   public boolean hasRangeQuerySupport() {
     return false;
   }

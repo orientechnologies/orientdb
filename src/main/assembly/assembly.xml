@@ -7,23 +7,13 @@
     <dependencySets>
         <dependencySet>
             <outputDirectory/>
-            <unpack>false</unpack>
-            <includes>
-
-            </includes>
-        </dependencySet>
-        <dependencySet>
-            <outputDirectory>main</outputDirectory>
+            <unpack>true</unpack>
             <includes>
                 <include>${groupId}:${artifactId}</include>
+                <include>org.apache.lucene:*</include>
+                <include>com.spatial4j:*</include>
             </includes>
-        </dependencySet>
-        <dependencySet>
-            <outputDirectory>lib</outputDirectory>
-            <scope>runtime</scope>
-            <excludes>
-                <exclude>${groupId}:${artifactId}</exclude>
-            </excludes>
+
         </dependencySet>
     </dependencySets>
 </assembly>

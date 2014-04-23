@@ -69,15 +69,7 @@ public class OLuceneWithinOperator extends OQueryOperatorEqualityNotNulls {
     return cursor;
   }
 
-  private void convertIndexResult(Object indexResult, OIndex.IndexValuesResultListener resultListener) {
-    if (indexResult instanceof Collection) {
-      for (OIdentifiable identifiable : (Collection<OIdentifiable>) indexResult) {
-        if (!resultListener.addResult(identifiable))
-          return;
-      }
-    } else if (indexResult != null)
-      resultListener.addResult((OIdentifiable) indexResult);
-  }
+
 
   @Override
   public ORID getBeginRidRange(Object iLeft, Object iRight) {

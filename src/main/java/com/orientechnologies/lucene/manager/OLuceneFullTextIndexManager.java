@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.index.*;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -39,12 +40,7 @@ import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 
 public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
@@ -92,26 +88,6 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   @Override
   public ORID getIdentity() {
-    return null;
-  }
-
-  @Override
-  public Iterator<Map.Entry> inverseIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterator valuesIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterator inverseValuesIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterable<Object> keys() {
     return null;
   }
 
@@ -177,42 +153,6 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   @Override
-  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
-      OIndexEngine.ValuesTransformer transformer, OIndexEngine.ValuesResultListener valuesResultListener) {
-
-  }
-
-  @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, OIndexEngine.ValuesTransformer transformer,
-      OIndexEngine.ValuesResultListener valuesResultListener) {
-
-  }
-
-  @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, OIndexEngine.ValuesTransformer transformer,
-      OIndexEngine.ValuesResultListener valuesResultListener) {
-
-  }
-
-  @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
-      OIndexEngine.ValuesTransformer transformer, OIndexEngine.EntriesResultListener entriesResultListener) {
-
-  }
-
-  @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, OIndexEngine.ValuesTransformer transformer,
-      OIndexEngine.EntriesResultListener entriesResultListener) {
-
-  }
-
-  @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascSortOrder,
-      OIndexEngine.ValuesTransformer transformer, OIndexEngine.EntriesResultListener entriesResultListener) {
-
-  }
-
-  @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
     return null;
@@ -225,6 +165,16 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return null;
+  }
+
+  @Override
+  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+    return null;
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
     return null;
   }
 

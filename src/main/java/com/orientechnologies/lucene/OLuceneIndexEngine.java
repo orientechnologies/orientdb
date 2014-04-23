@@ -24,13 +24,9 @@ import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-
 
 public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
 
@@ -112,31 +108,6 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public Iterator<Map.Entry<Object, V>> iterator() {
-    return lucene.iterator();
-  }
-
-  @Override
-  public Iterator<Map.Entry<Object, V>> inverseIterator() {
-    return lucene.inverseIterator();
-  }
-
-  @Override
-  public Iterator<V> valuesIterator() {
-    return lucene.valuesIterator();
-  }
-
-  @Override
-  public Iterator<V> inverseValuesIterator() {
-    return lucene.inverseValuesIterator();
-  }
-
-  @Override
-  public Iterable<Object> keys() {
-    return null;
-  }
-
-  @Override
   public void unload() {
     lucene.commit();
   }
@@ -197,44 +168,6 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, boolean ascSortOrder,
-      ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener) {
-
-    lucene.getValuesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer, valuesResultListener);
-  }
-
-  @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-      ValuesResultListener valuesResultListener) {
-    lucene.getValuesMajor(fromKey, isInclusive, ascSortOrder, transformer, valuesResultListener);
-  }
-
-  @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-      ValuesResultListener valuesResultListener) {
-    lucene.getValuesMinor(toKey, isInclusive, ascSortOrder, transformer, valuesResultListener);
-  }
-
-  @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener) {
-
-    lucene.getEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer, entriesResultListener);
-  }
-
-  @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener) {
-    lucene.getEntriesMajor(toKey, isInclusive, ascSortOrder, transformer, entriesResultListener);
-  }
-
-  @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, boolean ascSortOrder,
-      ValuesTransformer<V> transformer, EntriesResultListener entriesResultListener) {
-    lucene.getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, ascSortOrder, transformer, entriesResultListener);
-  }
-
-  @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer<V> transformer) {
     return lucene.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, transformer);
@@ -249,6 +182,16 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
     return lucene.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);
+  }
+
+  @Override
+  public OIndexCursor cursor(ValuesTransformer<V> valuesTransformer) {
+    return lucene.cursor(valuesTransformer);
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    return lucene.keyCursor();
   }
 
   @Override
