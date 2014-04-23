@@ -78,14 +78,6 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
     return map.entrySet().iterator();
   }
 
-  public Iterator<OIdentifiable> valuesIterator() {
-    throw new UnsupportedOperationException();
-  }
-
-  public Iterator<OIdentifiable> valuesInverseIterator() {
-    throw new UnsupportedOperationException();
-  }
-
   @Override
   public boolean supportsOrderedIterations() {
     return false;

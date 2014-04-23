@@ -69,7 +69,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   private String                       name;
   private String                       algorithm;
   private Set<String>                  clustersToIndex  = new HashSet<String>();
-  private OIndexDefinition             indexDefinition;
+
+  private volatile OIndexDefinition    indexDefinition;
   private volatile boolean             rebuilding       = false;
 
   private Thread                       rebuildThread    = null;
@@ -281,198 +282,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     } finally {
       releaseSharedLock();
     }
-  }
-
-  /**
-   * Returns a set of records with key between the range passed as parameter. Range bounds are included.
-   * <p/>
-   * In case of {@link OCompositeKey}s partial keys can be used as values boundaries.
-   * 
-   * 
-   * 
-   * @param iRangeFrom
-   *          Starting range
-   * @param iRangeTo
-   *          Ending range
-   * @param ascSortOrder
-   * @return a set of records with key between the range passed as parameter. Range bounds are included.
-   * @see OCompositeKey#compareTo(OCompositeKey)
-   * @see OIndex#getValuesBetween(Object, boolean, Object, boolean, boolean)
-   */
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, boolean ascSortOrder) {
-    checkForRebuild();
-
-    return getValuesBetween(iRangeFrom, true, iRangeTo, true, ascSortOrder);
-  }
-
-  /**
-   * Returns a set of documents with key between the range passed as parameter. Range bounds are included.
-   * 
-   * @param iRangeFrom
-   *          Starting range
-   * @param iRangeTo
-   *          Ending range
-   * @see #getEntriesBetween(Object, Object, boolean)
-   * @return
-   */
-  public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
-    checkForRebuild();
-
-    return getEntriesBetween(iRangeFrom, iRangeTo, true);
-  }
-
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, boolean ascSortOrder) {
-    checkForRebuild();
-
-    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
-
-    getValuesMajor(fromKey, isInclusive, ascSortOrder, new IndexValuesResultListener() {
-      @Override
-      public boolean addResult(OIdentifiable value) {
-        result.add(value);
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder) {
-    checkForRebuild();
-
-    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
-
-    getValuesMinor(toKey, isInclusive, ascSortOrder, new IndexValuesResultListener() {
-      @Override
-      public boolean addResult(OIdentifiable value) {
-        result.add(value);
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
-    checkForRebuild();
-
-    final Set<ODocument> result = new ODocumentFieldsHashSet();
-
-    getEntriesMajor(fromKey, isInclusive, true, new IndexEntriesResultListener() {
-      @Override
-      public boolean addResult(ODocument entry) {
-        result.add(entry);
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
-    checkForRebuild();
-
-    final Set<ODocument> result = new ODocumentFieldsHashSet();
-
-    getEntriesMinor(toKey, isInclusive, true, new IndexEntriesResultListener() {
-      @Override
-      public boolean addResult(ODocument entry) {
-        result.add(entry);
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  /**
-   * Returns a set of records with key between the range passed as parameter.
-   * <p/>
-   * In case of {@link OCompositeKey}s partial keys can be used as values boundaries.
-   * 
-   * 
-   * @param rangeFrom
-   *          Starting range
-   * @param fromInclusive
-   *          Indicates whether start range boundary is included in result.
-   * @param rangeTo
-   *          Ending range
-   * @param toInclusive
-   *          Indicates whether end range boundary is included in result.
-   * @param ascSortOrder
-   * @return Returns a set of records with key between the range passed as parameter.
-   * @see OCompositeKey#compareTo(OCompositeKey)
-   */
-  public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, final boolean fromInclusive, Object rangeTo,
-      final boolean toInclusive, boolean ascSortOrder) {
-    checkForRebuild();
-
-    rangeFrom = getCollatingValue(rangeFrom);
-    rangeTo = getCollatingValue(rangeTo);
-
-    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
-
-    getValuesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder, new IndexValuesResultListener() {
-      @Override
-      public boolean addResult(OIdentifiable value) {
-        result.add(value);
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, final boolean iInclusive) {
-    checkForRebuild();
-
-    iRangeFrom = getCollatingValue(iRangeFrom);
-    iRangeTo = getCollatingValue(iRangeTo);
-
-    final Set<ODocument> result = new ODocumentFieldsHashSet();
-
-    getEntriesBetween(iRangeFrom, iRangeTo, iInclusive, true, new IndexEntriesResultListener() {
-      @Override
-      public boolean addResult(ODocument entry) {
-        result.add(entry);
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, boolean ascSortOrder) {
-    checkForRebuild();
-
-    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
-
-    getValues(iKeys, ascSortOrder, new IndexValuesResultListener() {
-      @Override
-      public boolean addResult(OIdentifiable value) {
-        result.add(value);
-
-        return true;
-      }
-    });
-
-    return result;
-  }
-
-  public Collection<ODocument> getEntries(final Collection<?> iKeys) {
-    checkForRebuild();
-
-    final Set<ODocument> result = new ODocumentFieldsHashSet();
-
-    getEntries(iKeys, new IndexEntriesResultListener() {
-      @Override
-      public boolean addResult(ODocument entry) {
-        result.add(entry);
-        return true;
-      }
-    });
-
-    return result;
   }
 
   public ORID getIdentity() {
@@ -733,39 +542,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       }
     } finally {
       modificationLock.releaseModificationLock();
-    }
-  }
-
-  public Iterator<Entry<Object, T>> iterator() {
-    checkForRebuild();
-
-    acquireSharedLock();
-    try {
-      return indexEngine.iterator();
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public Iterator<Entry<Object, T>> inverseIterator() {
-    checkForRebuild();
-
-    acquireSharedLock();
-    try {
-      return indexEngine.inverseIterator();
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public Iterable<Object> keys() {
-    checkForRebuild();
-
-    acquireSharedLock();
-    try {
-      return indexEngine.keys();
-    } finally {
-      releaseSharedLock();
     }
   }
 
@@ -1057,13 +833,20 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  public OIndexDefinition getDefinition() {
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    checkForRebuild();
+
     acquireSharedLock();
     try {
-      return indexDefinition;
+      return indexEngine.keyCursor();
     } finally {
       releaseSharedLock();
     }
+  }
+
+  public OIndexDefinition getDefinition() {
+    return indexDefinition;
   }
 
   public void freeze(boolean throwException) {

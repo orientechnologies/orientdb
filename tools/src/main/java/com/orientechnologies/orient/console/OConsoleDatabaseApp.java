@@ -1364,20 +1364,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\nNo database selected yet.");
   }
 
-  @ConsoleCommand(description = "Display all keys in the database dictionary")
-  public void dictionaryKeys() {
-    checkForDatabase();
-
-    Iterable<Object> keys = currentDatabase.getDictionary().keys();
-
-    int i = 0;
-    for (Object k : keys) {
-      message(String.format("\n#%d: %s", i++, k));
-    }
-
-    message("\nFound " + i + " keys:");
-  }
-
   @ConsoleCommand(description = "Loook up a record using the dictionary. If found, set it as the current record")
   public void dictionaryGet(@ConsoleParameter(name = "key", description = "The key to search") final String iKey) {
     checkForDatabase();

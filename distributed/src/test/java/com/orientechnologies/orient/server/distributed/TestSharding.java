@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import junit.framework.Assert;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -15,6 +16,7 @@ public class TestSharding extends AbstractServerClusterTest {
   protected OrientVertex[] vertices;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     init(3);
     prepare(false);

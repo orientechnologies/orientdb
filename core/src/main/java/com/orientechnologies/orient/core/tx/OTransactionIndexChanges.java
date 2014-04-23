@@ -48,17 +48,9 @@ public class OTransactionIndexChanges {
     return changes;
   }
 
-  public Collection<OTransactionIndexChangesPerKey> getChangesForKeys(final Object firstKey, final Object lastKey) {
-    return changesPerKey.subMap(firstKey, lastKey).values();
-  }
-
   public void setCleared() {
     changesPerKey.clear();
     cleared = true;
-  }
-
-  public boolean containsChangesPerKey(final Object iKey) {
-    return changesPerKey.containsKey(iKey);
   }
 
   public Object getFirstKey() {
@@ -77,4 +69,11 @@ public class OTransactionIndexChanges {
     return changesPerKey.higherKey(key);
   }
 
+  public Object getCeilingKey(Object key) {
+    return changesPerKey.ceilingKey(key);
+  }
+
+  public Object getFloorKey(Object key) {
+    return changesPerKey.floorKey(key);
+  }
 }

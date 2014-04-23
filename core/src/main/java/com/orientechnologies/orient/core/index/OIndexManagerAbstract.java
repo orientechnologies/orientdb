@@ -452,7 +452,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       getDatabase().registerListener(index.getInternal());
 
       if (index instanceof OIndexMultiValues)
-        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Collection<OIdentifiable>>) index);
+        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
       else if (index instanceof OIndexDictionary)
         return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) index);
       else if (index instanceof OIndexOneValue)
