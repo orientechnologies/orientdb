@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
@@ -39,15 +48,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -116,24 +116,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     ODatabase database = getDatabase();
     OStorage storage = database.getStorage();
 
-    if (algorithm == null)
-      if ((storage.getType().equals(OEngineLocal.NAME) || storage.getType().equals(OEngineLocalPaginated.NAME)) && useSBTree)
-        algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
-      else
-        algorithm = ODefaultIndexFactory.MVRBTREE_ALGORITHM;
-
-    final String valueContainerAlgorithm;
-    if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(iType) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(iType)
-          || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(iType) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(iType)) {
-      if ((storage.getType().equals(OEngineLocalPaginated.NAME) || storage.getType().equals(OEngineLocal.NAME))
-            && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
-        valueContainerAlgorithm = ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER;
-      } else {
-        valueContainerAlgorithm = ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER;
-      }
-    } else {
-      valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
-    }
+    algorithm = chooseTreeAlgorithm(algorithm, storage);
+    final String valueContainerAlgorithm = chooseContainerAlgorithm(iType, storage);
 
     final OIndexInternal<?> index;
     acquireExclusiveLock();
@@ -151,16 +135,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         // ASSIGN DEFAULT PROGRESS LISTENER
         iProgressListener = new OIndexRebuildOutputListener(index);
 
-      Set<String> clustersToIndex = new HashSet<String>();
-      if (clusterIdsToIndex != null) {
-        for (int clusterId : clusterIdsToIndex) {
-          final String clusterNameToIndex = database.getClusterNameById(clusterId);
-          if (clusterNameToIndex == null)
-            throw new OIndexException("Cluster with id " + clusterId + " does not exist.");
-
-          clustersToIndex.add(clusterNameToIndex);
-        }
-      }
+      final Set<String> clustersToIndex = findClustersByIds(clusterIdsToIndex, database);
 
       if (metadata != null && Boolean.FALSE.equals(metadata.field("ignoreNullValues")))
         indexDefinition.setNullValuesIgnored(false);
@@ -183,6 +158,45 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       storage.synch();
 
     return index;
+  }
+
+  private Set<String> findClustersByIds(int[] clusterIdsToIndex, ODatabase database) {
+    Set<String> clustersToIndex = new HashSet<String>();
+    if (clusterIdsToIndex != null) {
+      for (int clusterId : clusterIdsToIndex) {
+        final String clusterNameToIndex = database.getClusterNameById(clusterId);
+        if (clusterNameToIndex == null)
+          throw new OIndexException("Cluster with id " + clusterId + " does not exist.");
+
+        clustersToIndex.add(clusterNameToIndex);
+      }
+    }
+    return clustersToIndex;
+  }
+
+  private String chooseContainerAlgorithm(String iType, OStorage storage) {
+    final String valueContainerAlgorithm;
+    if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(iType) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(iType)
+        || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(iType) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(iType)) {
+      if ((storage.getType().equals(OEngineLocalPaginated.NAME) || storage.getType().equals(OEngineLocal.NAME))
+          && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
+        valueContainerAlgorithm = ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER;
+      } else {
+        valueContainerAlgorithm = ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER;
+      }
+    } else {
+      valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
+    }
+    return valueContainerAlgorithm;
+  }
+
+  private String chooseTreeAlgorithm(String algorithm, OStorage storage) {
+    if (algorithm == null)
+      if ((storage.getType().equals(OEngineLocal.NAME) || storage.getType().equals(OEngineLocalPaginated.NAME)) && useSBTree)
+        algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
+      else
+        algorithm = ODefaultIndexFactory.MVRBTREE_ALGORITHM;
+    return algorithm;
   }
 
   public OIndexManager dropIndex(final String iIndexName) {
