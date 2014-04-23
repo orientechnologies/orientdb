@@ -139,7 +139,7 @@ public class ODistributedConfiguration {
       if (value != null)
         return (Integer) value;
       else {
-        OLogManager.instance().debug(this, "offlineMsgQueueSize setting not found for cluster=%s in distributed-config.json");
+        OLogManager.instance().debug(this, "offlineMsgQueueSize setting not found in distributed-config.json");
         return 100;
       }
     }
