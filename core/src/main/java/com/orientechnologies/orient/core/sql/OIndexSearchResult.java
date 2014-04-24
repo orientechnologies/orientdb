@@ -28,11 +28,14 @@ public class OIndexSearchResult {
   final OQueryOperator                 lastOperator;
   final OSQLFilterItemField.FieldChain lastField;
   final Object                         lastValue;
+  boolean                              containsNullValues;
 
   public OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
     this.lastOperator = lastOperator;
     lastField = field;
     lastValue = value;
+
+    containsNullValues = value == null;
   }
 
   public static boolean isIndexEqualityOperator(OQueryOperator queryOperator) {
@@ -64,6 +67,8 @@ public class OIndexSearchResult {
       result.fieldValuePairs.putAll(fieldValuePairs);
       result.fieldValuePairs.put(lastField.getItemName(0), lastValue);
     }
+
+    result.containsNullValues = searchResult.containsNullValues || this.containsNullValues;
     return result;
   }
 

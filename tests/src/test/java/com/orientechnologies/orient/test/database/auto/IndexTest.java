@@ -1461,9 +1461,15 @@ public class IndexTest {
 
     Assert.assertEquals(result.get(0).field("nullField"), "val3");
 
+    final String query = "select from NullIndexKeysSupport where nullField is null";
     result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from NullIndexKeysSupport where nullField is null"));
 
     Assert.assertEquals(result.size(), 4);
+    for (ODocument document : result)
+      Assert.assertNull(document.field("nullField"));
+
+    final ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + query)).execute();
+    Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("NullIndexKeysSupportIndex"));
   }
 
   private List<OClusterPosition> getValidPositions(int clusterId) {
