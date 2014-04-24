@@ -246,6 +246,10 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     public PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
       this.indexChanges = indexChanges;
+
+      fromKey = enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
+      toKey = enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
+
       if (toInclusive)
         firstKey = indexChanges.getCeilingKey(fromKey);
       else
@@ -289,6 +293,10 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     public PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
       this.indexChanges = indexChanges;
+
+      fromKey = enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
+      toKey = enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
+
       if (toInclusive)
         firstKey = indexChanges.getCeilingKey(fromKey);
       else

@@ -122,6 +122,12 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
       if (outKey instanceof OAlwaysLessKey)
         return 1;
 
+      if (inKey instanceof OAlwaysGreaterKey)
+        return 1;
+
+      if (inKey instanceof OAlwaysLessKey)
+        return -1;
+
       final int result = comparator.compare(inKey, outKey);
       if (result != 0)
         return result;
