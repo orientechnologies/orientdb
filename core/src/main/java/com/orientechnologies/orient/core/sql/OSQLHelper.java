@@ -231,15 +231,6 @@ public class OSQLHelper {
     return iObject;
   }
 
-  public static Object getValue(final Object iObject, final ORecordInternal<?> iRecord) {
-    if (iObject == null)
-      return null;
-
-    if (iObject instanceof OSQLFilterItem)
-      return ((OSQLFilterItem) iObject).getValue(iRecord, null, null);
-
-    return iObject;
-  }
 
   public static Object getValue(final Object iObject, final ORecordInternal<?> iRecord, final OCommandContext iContext) {
     if (iObject == null)
@@ -258,7 +249,7 @@ public class OSQLHelper {
   }
 
   public static Object resolveFieldValue(final ODocument iDocument, final String iFieldName, final Object iFieldValue,
-      final OCommandParameters iArguments) {
+      final OCommandParameters iArguments, final OCommandContext iContext) {
     if (iFieldValue instanceof OSQLFilterItemField) {
       final OSQLFilterItemField f = (OSQLFilterItemField) iFieldValue;
       if (f.getRoot().equals("?"))
@@ -273,7 +264,13 @@ public class OSQLHelper {
       // EMBEDDED DOCUMENT
       ((ODocument) iFieldValue).addOwner(iDocument);
 
-    return OSQLHelper.getValue(iFieldValue, iDocument);
+      // can't use existing getValue with iContext
+      if (iFieldValue == null)
+          return null;
+      if (iFieldValue instanceof OSQLFilterItem)
+          return ((OSQLFilterItem) iFieldValue).getValue(iDocument, null, iContext);
+
+      return iFieldValue;
   }
 
   public static Set<ODocument> bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
@@ -335,7 +332,7 @@ public class OSQLHelper {
         }
       }
 
-      final ODocument doc = iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments));
+      final ODocument doc = iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments,iContext));
       if (doc != null) {
         if (changedDocuments == null)
           changedDocuments = new HashSet<ODocument>();
