@@ -210,7 +210,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   @Override
   public OIndexCursor cursor(final ValuesTransformer<V> valuesTransformer) {
-    return new OIndexCursor() {
+    return new OIndexAbstractCursor() {
       private int                                 nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, V>[] entries;
 

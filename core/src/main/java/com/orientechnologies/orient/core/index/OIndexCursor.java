@@ -19,35 +19,59 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Presentation of OrientDB index cursor for point and range queries.
- * Cursor may iterate by several elements even if you do point query (query by single key).
- * It is possible if you use not unique index.
- *
+ * Presentation of OrientDB index cursor for point and range queries. Cursor may iterate by several elements even if you do point
+ * query (query by single key). It is possible if you use not unique index.
+ * 
  * Contract of cursor is simple it iterates in some subset of index data till it reaches it's borders in such case
  * {@link #next(int)} returns <code>null</code>.
- *
- * Cursor is created as result of index query method such as {@link com.orientechnologies.orient.core.index.OIndex#iterateEntriesBetween(Object, boolean, Object, boolean, boolean)}
- * cursor instance can not be used at several threads simultaneously.
- *
+ * 
+ * Cursor is created as result of index query method such as
+ * {@link com.orientechnologies.orient.core.index.OIndex#iterateEntriesBetween(Object, boolean, Object, boolean, boolean)} cursor
+ * instance can not be used at several threads simultaneously.
+ * 
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 4/4/14
  */
 public interface OIndexCursor {
-	/**
-	 * Returns next element in subset of index data which should be iterated by given cursor.
-	 * @param prefetchSize Size of data which should be prefetched from index into heap and then used in next iteration. It allows to speed up index queries.
-	 *                      The actual size of prefetched data may be different and depends on real implementation.
-	 * @return  next element in subset of index data which should be iterated by given cursor or <code>null</code> if all data are iterated.
-	 */
+  /**
+   * Returns next element in subset of index data which should be iterated by given cursor.
+   * 
+   * @param prefetchSize
+   *          Size of data which should be prefetched from index into heap and then used in next iteration. It allows to speed up
+   *          index queries. The actual size of prefetched data may be different and depends on real implementation.
+   * @return next element in subset of index data which should be iterated by given cursor or <code>null</code> if all data are
+   *         iterated.
+   */
   Map.Entry<Object, OIdentifiable> next(int prefetchSize);
 
+  /**
+   * Accumulates and returns all values of index inside of data subset of cursor.
+   * 
+   * @return all values of index inside of data subset of cursor.
+   */
+  Set<OIdentifiable> toValues();
 
-	/**
-	 * Implementation of index cursor in case of only single entree should be returned.
-	 */
-  final class OIndexCursorSingleValue implements OIndexCursor {
+  /**
+   * Accumulates and returns all entries of index inside of data subset of cursor.
+   * 
+   * @return all entries of index inside of data subset of cursor.
+   */
+  Set<Map.Entry<Object, OIdentifiable>> toEntries();
+
+  /**
+   * Accumulates and returns all keys of index inside of data subset of cursor.
+   * 
+   * @return all keys of index inside of data subset of cursor.
+   */
+  Set<Object> toKeys();
+
+  /**
+   * Implementation of index cursor in case of only single entree should be returned.
+   */
+  final class OIndexCursorSingleValue extends OIndexAbstractCursor {
     private OIdentifiable identifiable;
     private final Object  key;
 
@@ -84,10 +108,10 @@ public interface OIndexCursor {
     }
   }
 
-	/**
-	 * Implementation of index cursor in case of collection of values which belongs to single key should be returned.
-	 */
-  final class OIndexCursorCollectionValue implements OIndexCursor {
+  /**
+   * Implementation of index cursor in case of collection of values which belongs to single key should be returned.
+   */
+  final class OIndexCursorCollectionValue extends OIndexAbstractCursor {
     private Iterator<OIdentifiable> iterator;
     private final Object            key;
 

@@ -362,7 +362,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
     final Collection<ODocument> result = getDatabase().command(cmd).execute();
 
-    return new OIndexCursor() {
+    return new OIndexAbstractCursor() {
       private final Iterator<ODocument> documentIterator = result.iterator();
 
       @Override
