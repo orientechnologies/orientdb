@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
 import java.util.Collection;
 import java.util.List;
 
-
 public class OLuceneOperatorUtil {
 
   public static boolean checkIndexExistence(final OClass iSchemaClass, final OIndexSearchResult result) {
@@ -84,6 +83,7 @@ public class OLuceneOperatorUtil {
 
       Collection left = (Collection) iCondition.getLeft();
       int i = 0;
+      Object lastValue = null;
       for (Object obj : left) {
         if (obj instanceof OSQLFilterItemField) {
           OSQLFilterItemField item = (OSQLFilterItemField) obj;

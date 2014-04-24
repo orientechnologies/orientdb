@@ -102,6 +102,7 @@ public class OLuceneNearOperator extends OQueryOperatorEqualityNotNulls {
 
     double distance = 0;
     Object spatial = iContext.getVariable("spatial");
+    Integer limit = (Integer) iContext.getVariable("fetchLimit");
     if (spatial != null) {
 
       if (spatial instanceof Number) {
@@ -115,7 +116,7 @@ public class OLuceneNearOperator extends OQueryOperatorEqualityNotNulls {
         }
       }
     }
-    Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance));
+    Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setLimit(limit));
     if (indexResult == null || indexResult instanceof OIdentifiable)
       cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else

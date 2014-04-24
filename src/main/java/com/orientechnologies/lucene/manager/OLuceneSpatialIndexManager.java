@@ -23,6 +23,7 @@ import com.orientechnologies.lucene.shape.OShapeFactory;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.spatial4j.core.context.jts.JtsSpatialContext;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.*;
@@ -137,7 +138,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
       if (SpatialOperation.Intersects.equals(strategy)) {
         try {
-          return searchIntersect(newKey, newKey.getMaxDistance());
+          return searchIntersect(newKey, newKey.getMaxDistance(), newKey.getLimit());
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -151,7 +152,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
     } else if (key instanceof OCompositeKey) {
       try {
-        return searchIntersect((OCompositeKey) key, 0);
+        return searchIntersect((OCompositeKey) key, 0, null);
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -160,7 +161,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     return null;
   }
 
-  public Object searchIntersect(OCompositeKey key, double distance) throws IOException {
+  public Object searchIntersect(OCompositeKey key, double distance, Integer limit) throws IOException {
 
     double lat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class)).doubleValue();
     double lng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class)).doubleValue();
@@ -176,7 +177,8 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     ValueSource valueSource = strategy.makeDistanceValueSource(p);
     Sort distSort = new Sort(valueSource.getSortField(false)).rewrite(searcher);
 
-    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, 1000, distSort);
+    int limitDoc = limit != null ? limit : Integer.MAX_VALUE;
+    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limitDoc, distSort);
     ScoreDoc[] scoreDocs = topDocs.scoreDocs;
 
     for (ScoreDoc s : scoreDocs) {
@@ -199,7 +201,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     IndexSearcher searcher = getSearcher();
 
     Filter filter = strategy.makeFilter(args);
-    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, 1000);
+    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, Integer.MAX_VALUE);
 
     ScoreDoc[] scoreDocs = topDocs.scoreDocs;
     for (ScoreDoc s : scoreDocs) {
@@ -248,17 +250,17 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     return null;
   }
 
-    @Override
-    public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
-        return null;
-    }
+  @Override
+  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+    return null;
+  }
 
-    @Override
-    public OIndexKeyCursor keyCursor() {
-        return null;
-    }
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    return null;
+  }
 
-    @Override
+  @Override
   public boolean hasRangeQuerySupport() {
     return false;
   }

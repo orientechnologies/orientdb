@@ -16,19 +16,44 @@
 
 package com.orientechnologies.lucene.shape;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.spatial4j.core.context.SpatialContext;
+import com.spatial4j.core.shape.Point;
 import com.spatial4j.core.shape.Shape;
 
+import java.util.Collection;
+import java.util.List;
 
 public class ORectangleShapeFactory implements OShapeFactory {
   @Override
   public Shape makeShape(OCompositeKey key, SpatialContext ctx) {
-    return null;
+
+    Point[] points = new Point[2];
+    int i = 0;
+    for (Object o : key.getKeys()) {
+      List<Number> numbers = (List<Number>) o;
+      double lat = ((Double) OType.convert(numbers.get(0), Double.class)).doubleValue();
+      double lng = ((Double) OType.convert(numbers.get(1), Double.class)).doubleValue();
+      points[i] = ctx.makePoint(lng, lat);
+      i++;
+    }
+    return ctx.makeRectangle(points[0], points[1]);
   }
 
   @Override
   public boolean canHandle(OCompositeKey key) {
-    return false;
+    boolean canHandle = key.getKeys().size() == 2;
+    for (Object o : key.getKeys()) {
+      if (!(o instanceof Collection)) {
+        canHandle = false;
+        break;
+      } else if (((Collection) o).size() != 2) {
+        canHandle = false;
+        break;
+      }
+    }
+    return canHandle;
   }
 }

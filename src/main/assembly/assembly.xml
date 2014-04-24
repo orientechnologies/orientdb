@@ -1,5 +1,5 @@
 <assembly>
-    <id>bin</id>
+    <id>dist</id>
     <formats>
         <format>jar</format>
     </formats>

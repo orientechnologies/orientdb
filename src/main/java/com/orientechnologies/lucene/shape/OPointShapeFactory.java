@@ -34,7 +34,7 @@ public class OPointShapeFactory implements OShapeFactory {
   @Override
   public boolean canHandle(OCompositeKey key) {
 
-    boolean canHandle = key.getKeys().size() >= 2;
+    boolean canHandle = key.getKeys().size() == 2;
     for (Object o : key.getKeys()) {
       if (!(o instanceof Number)) {
         canHandle = false;

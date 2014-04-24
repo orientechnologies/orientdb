@@ -63,7 +63,7 @@ public class CreateLocationDb extends SpeedTestMonoThread {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("local:" + buildDirectory + "/location");
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/location");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();

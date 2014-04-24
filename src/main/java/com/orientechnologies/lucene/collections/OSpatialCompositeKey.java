@@ -25,6 +25,7 @@ public class OSpatialCompositeKey extends OCompositeKey {
 
   private double           maxDistance;
 
+  private Integer          limit;
   private SpatialOperation operation;
 
   public OSpatialCompositeKey(final List<?> keys) {
@@ -47,5 +48,14 @@ public class OSpatialCompositeKey extends OCompositeKey {
 
   public SpatialOperation getOperation() {
     return operation;
+  }
+
+  public Integer getLimit() {
+    return limit;
+  }
+
+  public OSpatialCompositeKey setLimit(Integer limit) {
+    this.limit = limit;
+    return this;
   }
 }
