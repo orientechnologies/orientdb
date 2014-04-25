@@ -15,6 +15,20 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX;
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.UNIQUE_HASH_INDEX;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
@@ -22,14 +36,19 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.OIndexNotUnique;
+import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-
-import java.util.*;
 
 /**
  * <p>
@@ -69,6 +88,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    */
   public static <T> Collection<OChainedIndexProxy<T>> createdProxy(OIndex<T> index, OSQLFilterItemField.FieldChain longChain,
       ODatabaseComplex<?> database) {
+    if (!isAppropriateAsBase(index))
+      return Collections.emptyList();
+
     Collection<OChainedIndexProxy<T>> proxies = new ArrayList<OChainedIndexProxy<T>>();
 
     for (List<OIndex<?>> indexChain : getIndexesForChain(index, longChain, database)) {
@@ -82,14 +104,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     this.firstIndex = firstIndex;
     this.indexChain = Collections.unmodifiableList(indexChain);
     lastIndex = indexChain.get(indexChain.size() - 1);
-  }
-
-  private boolean isAllOneValue(List<OIndex<?>> indexChain) {
-    for (OIndex<?> oIndex : indexChain) {
-      if (!(oIndex.getInternal() instanceof OIndexOneValue))
-        return false;
-    }
-    return true;
   }
 
   public String getDatabaseName() {
@@ -301,12 +315,20 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     OIndex<?> bestIndex = null;
     for (OIndex<?> index : involvedIndexes) {
       bestIndex = index;
-      OIndexInternal<?> bestInternalIndex = index.getInternal();
-      if (bestInternalIndex instanceof OIndexUnique || bestInternalIndex instanceof OIndexNotUnique) {
+      if (isAppropriateAsBase(index)) {
         return index;
       }
     }
     return bestIndex;
+  }
+
+  private static boolean isAppropriateAsBase(OIndex<?> index) {
+    OIndexInternal<?> internalIndex = index.getInternal();
+
+    String type = index.getType();
+    return (internalIndex instanceof OIndexUnique || internalIndex instanceof OIndexNotUnique)
+        && !(UNIQUE_HASH_INDEX.toString().equals(type) || NOTUNIQUE_HASH_INDEX.toString().equals(type));
+
   }
 
   /**
@@ -359,14 +381,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   public Iterator<Map.Entry<Object, T>> iterator() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  public Iterator<Map.Entry<Object, T>> inverseIterator() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  public Iterator<OIdentifiable> valuesIterator() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -438,10 +452,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   public ORID getIdentity() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  public void commit(ODocument iDocument) {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

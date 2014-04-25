@@ -21,8 +21,6 @@ import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEG
  * Generic GOF command pattern implementation. Execute a command passing the optional arguments "iArgs" and returns an Object.
  * 
  * @author Luca Garulli
- * 
- * @param <T>
  */
 public interface OCommandRequest {
   public <RET> RET execute(Object... iArgs);

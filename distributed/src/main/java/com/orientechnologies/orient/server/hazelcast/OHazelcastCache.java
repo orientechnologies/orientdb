@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.orientechnologies.orient.core.cache.OCache;
@@ -26,6 +23,9 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * 2-Level cache based on the Hazelcast's distributed map
  * 
@@ -33,9 +33,9 @@ import com.orientechnologies.orient.server.OServerLifecycleListener;
  * 
  */
 public class OHazelcastCache implements OCache, OServerLifecycleListener {
-  private boolean                        enabled = true;
   private final int                      limit;
   private final String                   mapName;
+  private boolean                        enabled = true;
   private IMap<ORID, ORecordInternal<?>> map;
   private HazelcastInstance              hInstance;
   private OServer                        server;

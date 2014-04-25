@@ -21,7 +21,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.common.concur.resource.OResourcePool;
+import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -64,6 +64,11 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
     return false;
   }
 
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
+
   protected void writeProperties(final OJSONWriter json) throws IOException {
     json.beginCollection(2, true, "properties");
     for (OServerEntryConfiguration entry : server.getConfiguration().properties) {
@@ -92,8 +97,8 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
 
   protected void writeDatabases(final OJSONWriter json) throws IOException {
     json.beginCollection(1, true, "dbs");
-    Map<String, OResourcePool<String, ODatabaseDocumentTx>> dbPool = server.getDatabasePool().getPools();
-    for (Entry<String, OResourcePool<String, ODatabaseDocumentTx>> entry : dbPool.entrySet()) {
+    Map<String, OReentrantResourcePool<String, ODatabaseDocumentTx>> dbPool = server.getDatabasePool().getPools();
+    for (Entry<String, OReentrantResourcePool<String, ODatabaseDocumentTx>> entry : dbPool.entrySet()) {
       for (ODatabaseDocumentTx db : entry.getValue().getResources()) {
 
         json.beginObject(2);
@@ -106,11 +111,6 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
       }
     }
     json.endCollection(1, false);
-  }
-
-  @Override
-  public String[] getNames() {
-    return NAMES;
   }
 
   private void writeField(final OJSONWriter json, final int iLevel, final String iAttributeName, final Object iAttributeValue)
