@@ -1,3 +1,5 @@
+.DS_Store
+
 build.number
 *.class
 */target/*
@@ -23,3 +25,9 @@ out
 .idea/
 
 tests/src/test/java/com/orientechnologies/orient/test/database/auto/_*.xml
+
+server/config/default-distributed-db-config.json
+server/config/hazelcast.xml
+server/config/orientdb-client-log.properties
+server/config/orientdb-dserver-config.xml
+server/config/orientdb-server-config.xml
