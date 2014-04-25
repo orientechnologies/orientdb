@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX;
+import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.UNIQUE_HASH_INDEX;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -84,6 +87,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    */
   public static <T> Collection<OChainedIndexProxy<T>> createdProxy(OIndex<T> index, OSQLFilterItemField.FieldChain longChain,
       ODatabaseComplex<?> database) {
+    if (!isAppropriateAsBase(index))
+      return Collections.emptyList();
+
     Collection<OChainedIndexProxy<T>> proxies = new ArrayList<OChainedIndexProxy<T>>();
 
     for (List<OIndex<?>> indexChain : getIndexesForChain(index, longChain, database)) {
@@ -308,12 +314,20 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     OIndex<?> bestIndex = null;
     for (OIndex<?> index : involvedIndexes) {
       bestIndex = index;
-      OIndexInternal<?> bestInternalIndex = index.getInternal();
-      if (bestInternalIndex instanceof OIndexUnique || bestInternalIndex instanceof OIndexNotUnique) {
+      if (isAppropriateAsBase(index)) {
         return index;
       }
     }
     return bestIndex;
+  }
+
+  private static boolean isAppropriateAsBase(OIndex<?> index) {
+    OIndexInternal<?> internalIndex = index.getInternal();
+
+    String type = index.getType();
+    return (internalIndex instanceof OIndexUnique || internalIndex instanceof OIndexNotUnique)
+        && !(UNIQUE_HASH_INDEX.toString().equals(type) || NOTUNIQUE_HASH_INDEX.toString().equals(type));
+
   }
 
   /**
