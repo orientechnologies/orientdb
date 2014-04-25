@@ -33,16 +33,21 @@ public class OTransactionIndexChanges {
     PUT, REMOVE, CLEAR
   }
 
-  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<Object, OTransactionIndexChangesPerKey>(
-                                                                                ODefaultComparator.INSTANCE);
+  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey  = new TreeMap<Object, OTransactionIndexChangesPerKey>(
+                                                                                 ODefaultComparator.INSTANCE);
 
-  public boolean                                              cleared       = false;
+  public OTransactionIndexChangesPerKey                       nullKeyChanges = new OTransactionIndexChangesPerKey(null);
 
-  public OTransactionIndexChangesPerKey getChangesPerKey(final Object iKey) {
-    OTransactionIndexChangesPerKey changes = changesPerKey.get(iKey);
+  public boolean                                              cleared        = false;
+
+  public OTransactionIndexChangesPerKey getChangesPerKey(final Object key) {
+    if (key == null)
+      return nullKeyChanges;
+
+    OTransactionIndexChangesPerKey changes = changesPerKey.get(key);
     if (changes == null) {
-      changes = new OTransactionIndexChangesPerKey(iKey);
-      changesPerKey.put(iKey, changes);
+      changes = new OTransactionIndexChangesPerKey(key);
+      changesPerKey.put(key, changes);
     }
 
     return changes;
@@ -50,6 +55,8 @@ public class OTransactionIndexChanges {
 
   public void setCleared() {
     changesPerKey.clear();
+    nullKeyChanges.entries.clear();
+
     cleared = true;
   }
 

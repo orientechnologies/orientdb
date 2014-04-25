@@ -222,10 +222,6 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   public void put(K key, V value) {
-    if (keySerializer == null)
-      throw new OIndexException("keySerializer for index " + this.getName()
-          + " is null. Please rebuild the index before to use it.");
-
     acquireExclusiveLock();
     final OStorageTransaction transaction = storage.getStorageTransaction();
     try {
