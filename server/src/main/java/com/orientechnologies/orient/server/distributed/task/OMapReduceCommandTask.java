@@ -28,9 +28,9 @@ public class OMapReduceCommandTask extends OSQLCommandTask {
   public OMapReduceCommandTask() {
   }
 
-  public OMapReduceCommandTask(final String iCommand) {
-    super(iCommand);
-  }
+  // public OMapReduceCommandTask(final String iCommand) {
+  // super(iCommand);
+  // }
 
   @Override
   public RESULT_STRATEGY getResultStrategy() {
