@@ -1,5 +1,17 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -7,16 +19,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OChainedIndexProxy;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * <p>
@@ -34,16 +36,19 @@ import static org.testng.Assert.assertTrue;
  * Prefix "lpirt" in class names means "LinkedPropertyIndexReuseTest".
  * </p>
  */
+@SuppressWarnings("SuspiciousMethodCalls")
 @Test(groups = { "index" })
 public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseTest {
 
   @Parameters(value = "url")
-  public SQLSelectByLinkedPropertyIndexReuseTest(final String iURL) {
+  public SQLSelectByLinkedPropertyIndexReuseTest(@Optional final String iURL) {
     super(iURL);
   }
 
   @BeforeClass
   public void beforeClass() throws Exception {
+    super.beforeClass();
+
     if (database.isClosed()) {
       database.open("admin", "admin");
     }
@@ -65,6 +70,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     database.getLevel2Cache().clear();
 
     database.close();
+    super.afterClass();
   }
 
   @Test
@@ -315,6 +321,17 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     return oldIndexUsage == -1 ? 0 : oldIndexUsage;
   }
 
+  @Test
+  public void testHashIndexIgnored() {
+    long oldIndexUsage = indexUsages();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from lpirtStudent where transcript.id = '1'"));
+
+    assertEquals(result.size(), 1);
+
+    assertEquals(indexUsages(), oldIndexUsage);
+  }
+
   /**
    * William James and James Bell work together on the same diploma.
    */
@@ -335,10 +352,14 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
         + "beneficial because you student be able to experience the campus, meet the professors, and truly "
         + "understand the traditions of the university.");
 
+    final ODocument transcript = database.newInstance("lpirtTranscript");
+    transcript.field("id", "1");
+
     final ODocument student1 = database.newInstance("lpirtStudent");
     student1.field("name", "John Smith");
     student1.field("group", group1);
     student1.field("diploma", diploma1);
+    student1.field("transcript", transcript);
     student1.save();
 
     ODocument curator2 = database.newInstance("lpirtCurator");
@@ -414,10 +435,15 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
       diplomaClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
       diplomaClass.createIndex("diplomaThesisUnique", OClass.INDEX_TYPE.UNIQUE, "thesis");
 
+      final OClass transcriptClass = schema.createClass("lpirtTranscript");
+      transcriptClass.createProperty("id", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
+
       final OClass studentClass = schema.createClass("lpirtStudent");
       studentClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
       studentClass.createProperty("group", OType.LINK, groupClass).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
       studentClass.createProperty("diploma", OType.LINK, diplomaClass);
+      studentClass.createProperty("transcript", OType.LINK, transcriptClass).createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
+
       studentClass.createIndex("studentDiplomaAndNameIndex", OClass.INDEX_TYPE.UNIQUE, "diploma", "name");
 
       schema.save();
