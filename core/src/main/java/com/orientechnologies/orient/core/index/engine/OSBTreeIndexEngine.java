@@ -156,8 +156,8 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
 
       sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
-          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract,
-          indexDefinition != null && indexDefinition.isNullValuesIgnored());
+          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, indexDefinition != null
+              && indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }
@@ -257,7 +257,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     try {
       final Object firstKey = sbTree.firstKey();
       if (firstKey == null)
-        return new OIndexCursor() {
+        return new OIndexAbstractCursor() {
           @Override
           public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
             return null;
@@ -390,7 +390,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  private static final class OSBTreeIndexCursor<V> implements OIndexCursor {
+  private static final class OSBTreeIndexCursor<V> extends OIndexAbstractCursor {
     private final OSBTree.OSBTreeCursor<Object, V> treeCursor;
     private final ValuesTransformer<V>             valuesTransformer;
 

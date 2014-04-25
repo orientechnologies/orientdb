@@ -127,7 +127,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     Collections.sort(sortedKeys, comparator);
 
-    return new OIndexCursor() {
+    return new OIndexAbstractCursor() {
       private Iterator<?> keysIterator = sortedKeys.iterator();
 
       @Override

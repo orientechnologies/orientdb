@@ -18,11 +18,9 @@ package com.orientechnologies.orient.core.index.engine;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
@@ -129,9 +127,9 @@ public class ORemoteIndexEngine implements OIndexEngine {
   @Override
   public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
       boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OIndexCursor() {
+    return new OIndexAbstractCursor() {
       @Override
-      public Map.Entry next(int prefetchSize) {
+      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
         return null;
       }
     };
@@ -139,7 +137,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
 
   @Override
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OIndexCursor() {
+    return new OIndexAbstractCursor() {
       @Override
       public Map.Entry next(int prefetchSize) {
         return null;
@@ -149,7 +147,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
 
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
-    return new OIndexCursor() {
+    return new OIndexAbstractCursor() {
       @Override
       public Map.Entry next(int prefetchSize) {
         return null;

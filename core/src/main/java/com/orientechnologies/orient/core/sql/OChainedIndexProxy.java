@@ -502,7 +502,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return false;
   }
 
-  private final class ExternalIndexCursor implements OIndexCursor {
+  private final class ExternalIndexCursor extends OIndexAbstractCursor {
     private final OIndexCursor        internalCursor;
 
     private final List<OIdentifiable> queryResult     = new ArrayList<OIdentifiable>();

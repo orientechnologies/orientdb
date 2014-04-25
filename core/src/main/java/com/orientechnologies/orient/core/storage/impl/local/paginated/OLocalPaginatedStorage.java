@@ -1444,6 +1444,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
    */
   protected void lock() throws IOException {
     OLogManager.instance().debug(this, "Locking storage %s...", name);
+    configuration.lock();
     diskCache.lock();
   }
 
@@ -1452,6 +1453,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
    */
   protected void unlock() throws IOException {
     OLogManager.instance().debug(this, "Unlocking storage %s...", name);
+    configuration.unlock();
     diskCache.unlock();
   }
 

@@ -25,10 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
@@ -93,7 +90,7 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
 
   @Override
   public OIndexCursor cursor(final ValuesTransformer<V> valuesTransformer) {
-    return new OIndexCursor() {
+    return new OIndexAbstractCursor() {
       private Iterator<Map.Entry<Object, V>> entryIterator   = concurrentHashMap.entrySet().iterator();
 
       private Object                         currentKey;

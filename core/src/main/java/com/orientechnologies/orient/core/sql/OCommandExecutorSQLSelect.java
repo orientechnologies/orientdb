@@ -215,10 +215,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     final Object value = OSQLHelper.getValue(origValue);
-
-    if (value == null)
-      return null;
-
     return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
   }
 
@@ -1109,6 +1105,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           continue;
 
         final OIndexDefinition indexDefinition = index.getDefinition();
+
+        if (searchResult.containsNullValues && indexDefinition.isNullValuesIgnored())
+          continue;
+
         final OQueryOperator operator = searchResult.lastOperator;
 
         // we need to test that last field in query subset and field in index that has the same position

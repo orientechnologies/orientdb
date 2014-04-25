@@ -478,7 +478,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
         : OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.getValueAsInteger();
   }
 
-  private final class OMBRBTreeIndexCursor implements OIndexCursor {
+  private final class OMBRBTreeIndexCursor extends OIndexAbstractCursor {
     private final Iterator<Map.Entry<Object, V>> treeIterator;
     private final ValuesTransformer<V>           valuesTransformer;
 

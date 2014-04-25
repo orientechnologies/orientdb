@@ -151,7 +151,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     else
       Collections.sort(sortedKeys, Collections.reverseOrder(ODefaultComparator.INSTANCE));
 
-    final OIndexCursor txCursor = new OIndexCursor() {
+    final OIndexCursor txCursor = new OIndexAbstractCursor() {
       private Iterator<Object>        keysIterator   = sortedKeys.iterator();
 
       private Iterator<OIdentifiable> valuesIterator = Collections.emptyIterator();
@@ -277,7 +277,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     return new HashSet<OIdentifiable>(result);
   }
 
-  private class PureTxBetweenIndexForwardCursor implements OIndexCursor {
+  private class PureTxBetweenIndexForwardCursor extends OIndexAbstractCursor {
     private final OTransactionIndexChanges indexChanges;
     private Object                         firstKey;
     private Object                         lastKey;
@@ -290,6 +290,10 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     public PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
       this.indexChanges = indexChanges;
+
+      fromKey = enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
+      toKey = enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
+
       if (toInclusive)
         firstKey = indexChanges.getCeilingKey(fromKey);
       else
@@ -350,7 +354,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     }
   }
 
-  private class PureTxBetweenIndexBackwardCursor implements OIndexCursor {
+  private class PureTxBetweenIndexBackwardCursor extends OIndexAbstractCursor {
     private final OTransactionIndexChanges indexChanges;
     private Object                         firstKey;
     private Object                         lastKey;
@@ -363,6 +367,10 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     public PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
         OTransactionIndexChanges indexChanges) {
       this.indexChanges = indexChanges;
+
+      fromKey = enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
+      toKey = enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
+
       if (toInclusive)
         firstKey = indexChanges.getCeilingKey(fromKey);
       else
@@ -423,7 +431,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     }
   }
 
-  private class OIndexTxCursor implements OIndexCursor {
+  private class OIndexTxCursor extends OIndexAbstractCursor {
 
     private final OIndexCursor               backedCursor;
     private final boolean                    ascOrder;

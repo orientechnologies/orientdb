@@ -172,7 +172,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
       // REPLICATE IT
       // final OAbstractRemoteTask task = exec instanceof OCommandExecutorSQLResultsetAbstract ? new OMapReduceCommandTask(
       // iCommand.getText()) : new OSQLCommandTask(iCommand.getText());
-      final OAbstractRemoteTask task = new OSQLCommandTask(iCommand.getText());
+      final OAbstractRemoteTask task = new OSQLCommandTask(iCommand);
 
       final Object result = sendRequest(getName(), null, task, EXECUTION_MODE.RESPONSE);
 

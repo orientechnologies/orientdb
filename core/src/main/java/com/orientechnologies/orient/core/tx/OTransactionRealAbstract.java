@@ -238,7 +238,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
       // STORE INDEX ENTRIES
       for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values())
-        serializeIndexChangeEntry(entry, indexDoc, entries);
+        entries.add(serializeIndexChangeEntry(entry, indexDoc));
+
+      indexDoc.field("nullEntries", serializeIndexChangeEntry(indexEntry.getValue().nullKeyChanges, indexDoc));
     }
 
     indexEntries.clear();
@@ -354,8 +356,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
   }
 
-  protected void serializeIndexChangeEntry(OTransactionIndexChangesPerKey entry, final ODocument indexDoc,
-      final List<ODocument> entries) {
+  protected ODocument serializeIndexChangeEntry(OTransactionIndexChangesPerKey entry, final ODocument indexDoc) {
     // SERIALIZE KEY
 
     final String key;
@@ -378,7 +379,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
         key = ORecordSerializerSchemaAware2CSV.INSTANCE.toString(keyContainer, null, false).toString();
       } else
-        key = "*";
+        key = null;
     } catch (IOException ioe) {
       throw new OTransactionException("Error during index changes serialization. ", ioe);
     }
@@ -407,7 +408,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       }
     }
 
-    entries.add(new ODocument().addOwner(indexDoc).setAllowChainedAccess(false).field("k", OStringSerializerHelper.encode(key))
-        .field("ops", operations, OType.EMBEDDEDLIST));
+    return new ODocument().addOwner(indexDoc).setAllowChainedAccess(false)
+        .field("k", key != null ? OStringSerializerHelper.encode(key) : null).field("ops", operations, OType.EMBEDDEDLIST);
   }
 }

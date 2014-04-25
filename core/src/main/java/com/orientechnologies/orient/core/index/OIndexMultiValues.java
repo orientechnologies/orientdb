@@ -235,6 +235,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     return (OIndexMultiValues) super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
         determineValueSerializer());
   }
+
   protected OStreamSerializer determineValueSerializer() {
     if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
       return OStreamSerializerSBTreeIndexRIDContainer.INSTANCE;
@@ -301,7 +302,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     Collections.sort(sortedKeys, comparator);
 
-    return new OIndexCursor() {
+    return new OIndexAbstractCursor() {
       private Iterator<?>             keysIterator    = sortedKeys.iterator();
 
       private Iterator<OIdentifiable> currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;

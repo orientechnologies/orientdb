@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
 /**
@@ -680,49 +681,57 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
       final Collection<ODocument> entries = operationDocument.field("entries");
       final Map<Object, Object> snapshot = indexTxSnapshot.indexSnapshot;
-      for (final ODocument entry : entries) {
-        final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
-        final Object key;
-        try {
-          final ODocument keyContainer = new ODocument();
-          keyContainer.setLazyLoad(false);
+      for (final ODocument entry : entries)
+        applyIndexTxEntry(snapshot, entry);
 
-          keyContainer.fromString(serializedKey);
-
-          final Object storedKey = keyContainer.field("key");
-          if (storedKey instanceof List)
-            key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
-          else if (Boolean.TRUE.equals(keyContainer.field("binary"))) {
-            key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
-          } else
-            key = storedKey;
-        } catch (IOException ioe) {
-          throw new OTransactionException("Error during index changes deserialization. ", ioe);
-        }
-
-        final List<ODocument> operations = entry.field("ops");
-        if (operations != null) {
-          for (final ODocument op : operations) {
-            final int operation = (Integer) op.rawField("o");
-            final OIdentifiable value = op.field("v", OType.LINK);
-
-            if (operation == OPERATION.PUT.ordinal())
-              putInSnapshot(key, value, snapshot);
-            else if (operation == OPERATION.REMOVE.ordinal()) {
-              if (value == null)
-                removeFromSnapshot(key, snapshot);
-              else {
-                removeFromSnapshot(key, value, snapshot);
-              }
-
-            }
-          }
-        }
-      }
-
+      final ODocument nullIndexEntry = operationDocument.field("nullEntries");
+      applyIndexTxEntry(snapshot, nullIndexEntry);
     } finally {
       indexEngine.stopTransaction();
       releaseExclusiveLock();
+    }
+  }
+
+  private void applyIndexTxEntry(Map<Object, Object> snapshot, ODocument entry) {
+    final Object key;
+    if (entry.field("k") != null) {
+      final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+      try {
+        final ODocument keyContainer = new ODocument();
+        keyContainer.setLazyLoad(false);
+
+        keyContainer.fromString(serializedKey);
+
+        final Object storedKey = keyContainer.field("key");
+        if (storedKey instanceof List)
+          key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
+        else if (Boolean.TRUE.equals(keyContainer.field("binary"))) {
+          key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
+        } else
+          key = storedKey;
+      } catch (IOException ioe) {
+        throw new OTransactionException("Error during index changes deserialization. ", ioe);
+      }
+    } else
+      key = null;
+
+    final List<ODocument> operations = entry.field("ops");
+    if (operations != null) {
+      for (final ODocument op : operations) {
+        final int operation = (Integer) op.rawField("o");
+        final OIdentifiable value = op.field("v", OType.LINK);
+
+        if (operation == OPERATION.PUT.ordinal())
+          putInSnapshot(key, value, snapshot);
+        else if (operation == OPERATION.REMOVE.ordinal()) {
+          if (value == null)
+            removeFromSnapshot(key, snapshot);
+          else {
+            removeFromSnapshot(key, value, snapshot);
+          }
+
+        }
+      }
     }
   }
 

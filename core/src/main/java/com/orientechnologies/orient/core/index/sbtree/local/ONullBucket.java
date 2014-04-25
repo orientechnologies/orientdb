@@ -43,38 +43,38 @@ public class ONullBucket<V> extends ODurablePage {
     this.valueSerializer = valueSerializer;
 
     if (isNew)
-      setByteValue(0, (byte) 0);
+      setByteValue(NEXT_FREE_POSITION, (byte) 0);
   }
 
   public void setEntry(OSBTreeValue<V> value) throws IOException {
-    setByteValue(0, (byte) 1);
+    setByteValue(NEXT_FREE_POSITION, (byte) 1);
 
     if (value.isLink()) {
-      setByteValue(1, (byte) 0);
-      setLongValue(2, value.getLink());
+      setByteValue(NEXT_FREE_POSITION + 1, (byte) 0);
+      setLongValue(NEXT_FREE_POSITION + 2, value.getLink());
     } else {
       final int valueSize = valueSerializer.getObjectSize(value.getValue());
 
       final byte[] serializedValue = new byte[valueSize];
       valueSerializer.serializeNative(value.getValue(), serializedValue, 0);
 
-      setByteValue(1, (byte) 1);
-      setBinaryValue(2, serializedValue);
+      setByteValue(NEXT_FREE_POSITION + 1, (byte) 1);
+      setBinaryValue(NEXT_FREE_POSITION + 2, serializedValue);
     }
   }
 
   public OSBTreeValue<V> getValue() {
-    if (getByteValue(0) == 0)
+    if (getByteValue(NEXT_FREE_POSITION) == 0)
       return null;
 
-    final boolean isLink = getByteValue(1) == 0;
+    final boolean isLink = getByteValue(NEXT_FREE_POSITION + 1) == 0;
     if (isLink)
-      return new OSBTreeValue<V>(true, getLongValue(2), null);
+      return new OSBTreeValue<V>(true, getLongValue(NEXT_FREE_POSITION + 2), null);
 
-    return new OSBTreeValue<V>(false, -1, valueSerializer.deserializeFromDirectMemory(pagePointer, 2));
+    return new OSBTreeValue<V>(false, -1, valueSerializer.deserializeFromDirectMemory(pagePointer, NEXT_FREE_POSITION + 2));
   }
 
   public void removeValue() {
-    setByteValue(0, (byte) 0);
+    setByteValue(NEXT_FREE_POSITION, (byte) 0);
   }
 }
