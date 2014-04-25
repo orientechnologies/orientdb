@@ -387,7 +387,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           if (i > 0)
             writer.append(",");
 
-					indexEntry.setLazyLoad(false);
+          indexEntry.setLazyLoad(false);
           final OIndexDefinition indexDefinition = index.getDefinition();
 
           exportEntry.reset();
@@ -482,6 +482,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
               writer.writeAttribute(0, false, "min", p.getMin());
             if (p.getMax() != null)
               writer.writeAttribute(0, false, "max", p.getMax());
+            if (p.getCollate() != null)
+              writer.writeAttribute(0, false, "collate", p.getCollate().getName());
             if (((OPropertyImpl) p).getCustomInternal() != null)
               writer.writeAttribute(0, false, "customFields", ((OPropertyImpl) p).getCustomInternal());
             writer.endObject(0, false);
