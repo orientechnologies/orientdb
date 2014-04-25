@@ -21,8 +21,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * Internal specialization of generic OCommand interface.
  * 
  * @author Luca Garulli
- * 
- * @param <T>
  */
 public interface OCommandRequestText extends OCommandRequestInternal, OSerializableStream {
   public String getText();
