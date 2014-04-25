@@ -66,6 +66,15 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
           }
         }
       }
+
+      for (final OTransactionIndexEntry e : indexChanges.nullKeyChanges.entries) {
+        if (e.operation == OPERATION.REMOVE) {
+          if (e.value == null)
+            // KEY REMOVED
+            tot--;
+        } else if (e.operation == OPERATION.PUT) {
+        }
+      }
     }
 
     return tot;
