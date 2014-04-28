@@ -1595,8 +1595,9 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
           msg.append(s);
 
         // ASSURE PENDING TX IF ANY IS COMMITTED
-        OLogManager.instance().warn(this,
-            "Committing the active transaction to %s. To avoid this behavior do it outside the transaction", msg.toString());
+        OLogManager
+            .instance()
+            .warn(this, "Requested command '%s' must be executed outside active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction", msg.toString());
       }
       raw.commit();
       committed = true;

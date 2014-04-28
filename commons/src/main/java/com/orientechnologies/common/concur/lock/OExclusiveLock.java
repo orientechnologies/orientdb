@@ -37,4 +37,20 @@ public class OExclusiveLock extends OAbstractLock {
   public void unlock() {
     lock.writeLock().unlock();
   }
+
+  @Override
+  public void close() {
+    try {
+      lock.readLock().unlock();
+    } catch (Exception e) {
+      // IGNORE IT
+    }
+
+    try {
+      lock.writeLock().unlock();
+    } catch (Exception e) {
+      // IGNORE IT
+    }
+  }
+
 }
