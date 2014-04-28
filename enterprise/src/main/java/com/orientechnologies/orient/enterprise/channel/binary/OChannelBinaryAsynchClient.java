@@ -36,34 +36,37 @@ import java.io.ObjectInputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
 public class OChannelBinaryAsynchClient extends OChannelBinary {
-  protected final int                 socketTimeout;                                               // IN MS
+  protected final int                 socketTimeout;                                          // IN MS
   protected final short               srvProtocolVersion;
-  private final Condition             readCondition      = lockRead.getUnderlying().newCondition();
+  private final Condition             readCondition = lockRead.getUnderlying().newCondition();
   private final int                   maxUnreadResponses;
-  private final String                serverURL;
-  private volatile boolean            channelRead        = false;
-  private volatile boolean            waitingForResponse = false;
+  private String                      serverURL;
+  private volatile boolean            channelRead   = false;
   private byte                        currentStatus;
   private int                         currentSessionId;
   private OAsynchChannelServiceThread serviceThread;
 
-  public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
-      final int iProtocolVersion) throws IOException {
-    this(remoteHost, remotePort, iConfig, iProtocolVersion, null);
+  public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
+      final OContextConfiguration iConfig, final int iProtocolVersion) throws IOException {
+    this(remoteHost, remotePort, iDatabaseName, iConfig, iProtocolVersion, null);
   }
 
-  public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final OContextConfiguration iConfig,
-      final int protocolVersion, final ORemoteServerEventListener asynchEventListener) throws IOException {
+  public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
+      final OContextConfiguration iConfig, final int protocolVersion, final ORemoteServerEventListener asynchEventListener)
+      throws IOException {
     super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
 
     maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES.getValueAsInteger();
     serverURL = remoteHost + ":" + remotePort;
+    if (iDatabaseName != null)
+      serverURL += "/" + iDatabaseName;
     socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
     socket.setPerformancePreferences(0, 2, 1);
@@ -147,7 +150,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public void beginRequest() {
     acquireWriteLock();
-    waitingForResponse = true;
   }
 
   public void endRequest() throws IOException {
@@ -170,6 +172,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           acquireReadLock();
         else if (!lockRead.tryAcquireLock(iTimeout, TimeUnit.MILLISECONDS))
           throw new OTimeoutException("Cannot acquire read lock against channel: " + this);
+
+        if (!isConnected())
+          throw new IOException("Channel is closed");
 
         if (!channelRead) {
           channelRead = true;
@@ -253,16 +258,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     }
   }
 
-  public boolean isWaitingForResponse() {
-    return waitingForResponse;
-  }
-
   public void endResponse() {
     channelRead = false;
-    waitingForResponse = false;
 
     // WAKE UP ALL THE WAITING THREADS
-
     try {
       readCondition.signalAll();
     } catch (IllegalMonitorStateException e) {
@@ -292,7 +291,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     if (serviceThread != null) {
       final OAsynchChannelServiceThread s = serviceThread;
       serviceThread = null;
-      s.sendShutdown();
+      if (s != null)
+        // CHECK S BECAUSE IT COULD BE CONCURRENTLY RESET
+        s.sendShutdown();
     }
   }
 
@@ -312,7 +313,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
    * @return true if it's connected, otherwise false.
    */
   public boolean isConnected() {
-    if (socket != null && socket.isConnected() && !socket.isInputShutdown() && !socket.isOutputShutdown())
+    final Socket s = socket;
+    if (s != null && s.isConnected() && !s.isInputShutdown() && !s.isOutputShutdown())
       return true;
     return false;
   }
@@ -339,7 +341,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   public boolean tryLock() {
     if (getLockWrite().tryAcquireLock()) {
-      waitingForResponse = true;
       return true;
     }
     return false;

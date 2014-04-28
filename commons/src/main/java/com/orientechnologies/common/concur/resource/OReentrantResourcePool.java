@@ -108,7 +108,7 @@ public class OReentrantResourcePool<K, V> extends OResourcePool<K, V> {
   }
 
   public void remove(final V res) {
-    super.remove(res);
+    this.resources.remove(res);
 
     final List<K> activeResourcesToRemove = new ArrayList<K>();
     final Map<K, ResourceHolder<V>> activeResourcesMap = activeResources.get();

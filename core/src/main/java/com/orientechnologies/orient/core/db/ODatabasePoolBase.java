@@ -131,7 +131,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
    */
   public int getAvailableConnections(final String name, final String userName) {
     setup();
-    return dbPool.getAvailableConnections(name, userName);
+    return dbPool.getMaxConnections(name, userName);
   }
 
   /**

@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -32,6 +28,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Remote administration class of OrientDB Server instances.
@@ -77,7 +77,6 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
-    storage.createConnectionPool();
     storage.setSessionId(null, -1);
 
     try {
@@ -101,25 +100,21 @@ public class OServerAdmin {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot connect to the remote server: " + storage.getName(), e, OStorageException.class);
+      OLogManager.instance().error(this, "Cannot connect to the remote server/database '%s'", e, OStorageException.class,
+          storage.getURL());
       storage.close(true, false);
     }
     return this;
   }
 
   /**
-   * List the databases on a remote server.
+   * Returns the list of databases on the connected remote server.
    * 
-   * @param iUserName
-   *          Server's user name
-   * @param iUserPassword
-   *          Server's password for the user name used
-   * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
   @SuppressWarnings("unchecked")
   public synchronized Map<String, String> listDatabases() throws IOException {
-    storage.checkConnection();
+
     final ODocument result = new ODocument();
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_LIST);
@@ -179,7 +174,6 @@ public class OServerAdmin {
    */
   public synchronized OServerAdmin createDatabase(final String iDatabaseName, final String iDatabaseType, String iStorageMode)
       throws IOException {
-    storage.checkConnection();
 
     try {
       if (iDatabaseName == null || iDatabaseName.length() <= 0) {
@@ -227,7 +221,6 @@ public class OServerAdmin {
    *          The storage type to check between memory, local and plocal.
    */
   public synchronized boolean existsDatabase(final String storageType) throws IOException {
-    storage.checkConnection();
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_EXIST);
@@ -275,7 +268,7 @@ public class OServerAdmin {
    * @param storageType
    */
   public synchronized OServerAdmin dropDatabase(String storageType) throws IOException {
-    storage.checkConnection();
+
     boolean retry = true;
 
     while (retry)
@@ -310,23 +303,8 @@ public class OServerAdmin {
     return this;
   }
 
-  private boolean handleDBFreeze() {
-    boolean retry;
-    OLogManager.instance().warn(this,
-        "DB is frozen will wait for " + OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValue() + " ms. and then retry.");
-    retry = true;
-    try {
-      Thread.sleep(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValueAsInteger());
-    } catch (InterruptedException ie) {
-      retry = false;
-
-      Thread.currentThread().interrupt();
-    }
-    return retry;
-  }
-
   public synchronized OServerAdmin freezeDatabase(String storageType) throws IOException {
-    storage.checkConnection();
+
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_FREEZE);
 
@@ -346,7 +324,7 @@ public class OServerAdmin {
   }
 
   public synchronized OServerAdmin releaseDatabase(String storageType) throws IOException {
-    storage.checkConnection();
+
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_RELEASE);
 
@@ -366,7 +344,7 @@ public class OServerAdmin {
   }
 
   public synchronized OServerAdmin freezeCluster(int clusterId, String storageType) throws IOException {
-    storage.checkConnection();
+
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE);
 
@@ -390,7 +368,7 @@ public class OServerAdmin {
   }
 
   public synchronized OServerAdmin releaseCluster(int clusterId, String storageType) throws IOException {
-    storage.checkConnection();
+
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE);
 
@@ -439,7 +417,6 @@ public class OServerAdmin {
    */
   public synchronized OServerAdmin copyDatabase(final String iDatabaseName, final String iDatabaseUserName,
       final String iDatabaseUserPassword, final String iRemoteName, final String iRemoteEngine) throws IOException {
-    storage.checkConnection();
 
     try {
 
@@ -466,7 +443,6 @@ public class OServerAdmin {
   }
 
   public synchronized Map<String, String> getGlobalConfigurations() throws IOException {
-    storage.checkConnection();
 
     final Map<String, String> config = new HashMap<String, String>();
 
@@ -491,7 +467,6 @@ public class OServerAdmin {
   }
 
   public synchronized String getGlobalConfiguration(final OGlobalConfiguration iConfig) throws IOException {
-    storage.checkConnection();
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
@@ -514,7 +489,6 @@ public class OServerAdmin {
 
   public synchronized OServerAdmin setGlobalConfiguration(final OGlobalConfiguration iConfig, final Object iValue)
       throws IOException {
-    storage.checkConnection();
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
@@ -545,6 +519,10 @@ public class OServerAdmin {
     return storage != null ? storage.getURL() : null;
   }
 
+  public boolean isConnected() {
+    return storage != null && !storage.isClosed();
+  }
+
   protected ODocument sendRequest(final byte iRequest, final ODocument iPayLoad, final String iActivity) {
     boolean retry = true;
     while (retry)
@@ -572,7 +550,18 @@ public class OServerAdmin {
     return null;
   }
 
-  public boolean isConnected() {
-    return storage != null && !storage.isClosed();
+  private boolean handleDBFreeze() {
+    boolean retry;
+    OLogManager.instance().warn(this,
+        "DB is frozen will wait for " + OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValue() + " ms. and then retry.");
+    retry = true;
+    try {
+      Thread.sleep(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValueAsInteger());
+    } catch (InterruptedException ie) {
+      retry = false;
+
+      Thread.currentThread().interrupt();
+    }
+    return retry;
   }
 }
