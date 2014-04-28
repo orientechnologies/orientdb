@@ -202,6 +202,15 @@ public class OrientGraphFactory {
     return this;
   }
 
+  /**
+   * Returns the number of available instances in the pool.
+   */
+  public int getAvailableInstancesInPool() {
+    if (pool != null)
+      return pool.getAvailableConnections(url, user);
+    return 0;
+  }
+
   @Override
   protected void finalize() throws Throwable {
     close();

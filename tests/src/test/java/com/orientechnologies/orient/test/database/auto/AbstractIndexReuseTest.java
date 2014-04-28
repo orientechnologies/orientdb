@@ -8,28 +8,25 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
-public abstract class AbstractIndexReuseTest {
-  protected final ODatabaseDocumentTx database;
-  private JMXConnector                jmxConnector;
-  protected OProfilerMBean              profiler;
+public abstract class AbstractIndexReuseTest extends BaseTest {
+  private JMXConnector     jmxConnector;
+  protected OProfilerMBean profiler;
 
   public AbstractIndexReuseTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+    super(iURL);
   }
 
+  @Override
   @BeforeClass
-  public void setUp() throws Exception {
-    database.open("admin", "admin");
+  public void beforeClass() throws Exception {
+    super.beforeClass();
 
     profiler = getProfilerInstance();
     database.close();
@@ -37,18 +34,6 @@ public abstract class AbstractIndexReuseTest {
     if (!profiler.isRecording()) {
       profiler.startRecording();
     }
-  }
-
-  @BeforeMethod
-  public void beforeMethod() {
-    if (database.isClosed()) {
-      database.open("admin", "admin");
-    }
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
   }
 
   @AfterClass

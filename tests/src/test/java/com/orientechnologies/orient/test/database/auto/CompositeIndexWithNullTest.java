@@ -122,6 +122,9 @@ public class CompositeIndexWithNullTest extends BaseTest {
   }
 
   public void testPointQueryInMiddleTx() {
+    if (database.getURL().startsWith("remote:"))
+      return;
+
     final OSchema schema = database.getMetadata().getSchema();
     OClass clazz = schema.createClass("compositeIndexNullPointQueryInMiddleTxClass");
     clazz.createProperty("prop1", OType.INTEGER);
@@ -221,6 +224,9 @@ public class CompositeIndexWithNullTest extends BaseTest {
   }
 
   public void testRangeQueryInMiddleTx() {
+    if (database.getURL().startsWith("remote:"))
+      return;
+
     final OSchema schema = database.getMetadata().getSchema();
     OClass clazz = schema.createClass("compositeIndexNullRangeQueryInMiddleTxClass");
     clazz.createProperty("prop1", OType.INTEGER);
@@ -328,6 +334,9 @@ public class CompositeIndexWithNullTest extends BaseTest {
   }
 
   public void testPointQueryNullInTheMiddleInMiddleTx() {
+    if (database.getURL().startsWith("remote:"))
+			return;
+
     final OSchema schema = database.getMetadata().getSchema();
     OClass clazz = schema.createClass("compositeIndexNullPointQueryNullInTheMiddleInMiddleTxClass");
     clazz.createProperty("prop1", OType.INTEGER);
@@ -429,6 +438,9 @@ public class CompositeIndexWithNullTest extends BaseTest {
   }
 
   public void testRangeQueryNullInTheMiddleInMiddleTx() {
+    if (database.getURL().startsWith("remote:"))
+			return;
+
     final OSchema schema = database.getMetadata().getSchema();
     OClass clazz = schema.createClass("compositeIndexNullRangeQueryNullInTheMiddleInMiddleTxClass");
     clazz.createProperty("prop1", OType.INTEGER);

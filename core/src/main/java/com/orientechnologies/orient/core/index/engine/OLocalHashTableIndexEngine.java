@@ -38,9 +38,10 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
  * @since 15.07.13
  */
 public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
-  public static final String                     METADATA_FILE_EXTENSION = ".him";
-  public static final String                     TREE_FILE_EXTENSION     = ".hit";
-  public static final String                     BUCKET_FILE_EXTENSION   = ".hib";
+  public static final String                     METADATA_FILE_EXTENSION    = ".him";
+  public static final String                     TREE_FILE_EXTENSION        = ".hit";
+  public static final String                     BUCKET_FILE_EXTENSION      = ".hib";
+  public static final String                     NULL_BUCKET_FILE_EXTENSION = ".hnb";
 
   private final OLocalHashTable<Object, V>       hashTable;
   private final OMurmurHash3HashFunction<Object> hashFunction;
@@ -49,7 +50,8 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   public OLocalHashTableIndexEngine() {
     hashFunction = new OMurmurHash3HashFunction<Object>();
-    hashTable = new OLocalHashTable<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION, hashFunction);
+    hashTable = new OLocalHashTable<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
+        NULL_BUCKET_FILE_EXTENSION, hashFunction);
   }
 
   @Override
@@ -83,7 +85,8 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
 
     hashFunction.setValueSerializer(keySerializer);
     hashTable.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
-        indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract);
+        indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, indexDefinition != null
+            && !indexDefinition.isNullValuesIgnored());
   }
 
   @Override
@@ -106,7 +109,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
       boolean isAutomatic) {
     identity = indexRid;
     hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, (OStorageLocalAbstract) getDatabase()
-        .getStorage().getUnderlying());
+        .getStorage().getUnderlying(), indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
   }
 

@@ -53,10 +53,10 @@ public class LocalHashTableIterationTest {
       }
     };
 
-    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", hashFunction);
+    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", hashFunction);
 
     localHashTable.create("localHashTableIterationTest", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
-        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocal) databaseDocumentTx.getStorage());
+        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocal) databaseDocumentTx.getStorage(), true);
   }
 
   @AfterClass

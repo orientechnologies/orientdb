@@ -218,14 +218,10 @@ public class OSBTree<K, V> extends ODurableComponent {
 
   private void checkNullSupport(K key) {
     if (key == null && !nullPointerSupport)
-      throw new OSBTreeException("Null values are not supported.");
+      throw new OSBTreeException("Null keys are not supported.");
   }
 
   public void put(K key, V value) {
-    if (keySerializer == null)
-      throw new OIndexException("keySerializer for index " + this.getName()
-          + " is null. Please rebuild the index before to use it.");
-
     acquireExclusiveLock();
     final OStorageTransaction transaction = storage.getStorageTransaction();
     try {
@@ -350,7 +346,7 @@ public class OSBTree<K, V> extends ODurableComponent {
           if (nullBucket.getValue() != null)
             sizeDiff = -1;
 
-          nullBucket.setEntry(treeValue);
+          nullBucket.setValue(treeValue);
           logPageChanges(nullBucket, nullBucketFileId, 0, isNew);
 
           cacheEntry.markDirty();
@@ -786,6 +782,9 @@ public class OSBTree<K, V> extends ODurableComponent {
           nullCachePointer.releaseExclusiveLock();
           diskCache.release(nullCacheEntry);
         }
+
+        if (removedValue != null)
+          setSize(size() - 1);
 
         endAtomicOperation(false);
 
