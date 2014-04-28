@@ -29,7 +29,7 @@ import java.util.Map;
 
 public class OShapeFactoryImpl implements OShapeFactory {
 
-  private Map<Class<? extends Shape>, OShapeFactory> factories = new HashMap<>();
+  private Map<Class<? extends Shape>, OShapeFactory> factories = new HashMap<Class<? extends Shape>, OShapeFactory>();
 
   public OShapeFactoryImpl() {
     registerFactory(Point.class, new OPointShapeFactory());
