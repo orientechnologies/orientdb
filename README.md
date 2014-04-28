@@ -4,13 +4,13 @@
 
 ## What is Orient?
 
-**OrientDB** is an Open Source [NoSQL](http://en.wikipedia.org/wiki/NoSQL) DBMS with the features of both Document and Graph DBMSs. It's written in Java and it's amazingly fast: it can store up to 150,000 records per second on common hardware. Even for a Document based database the relationships are managed as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database) with direct connections among records. You can traverse parts of or entire trees and graphs of records in a few milliseconds. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user and roles and supports [SQL](https://github.com/orientechnologies/orientdb/wiki/SQLQuery) amongst the query languages. Thanks to the [SQL](https://github.com/orientechnologies/orientdb/wiki/SQLQuery) layer it's straightforward to use for people skilled in the Relational world.
+**OrientDB** is an Open Source [NoSQL](http://en.wikipedia.org/wiki/NoSQL) DBMS with the features of both Document and Graph DBMSs. It's written in Java and it's amazingly fast: it can store up to 150,000 records per second on common hardware. Even for a Document based database the relationships are managed as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database) with direct connections among records. You can traverse parts of or entire trees and graphs of records in a few milliseconds. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user and roles and supports [[SQL]] amongst the query languages. Thanks to the [[SQL]] layer it's straightforward to use for people skilled in the Relational world.
 
 Look also at [Presentations](https://github.com/orientechnologies/orientdb/wiki/Presentations) with video and slides introducing OrientDB.
 
 ## Is OrientDB a Relational DBMS?
 
-No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports a subset of [SQL](https://github.com/orientechnologies/orientdb/wiki/SQLQuery) as query language. In this way it's easy to start using it without having to learn too much new stuff. OrientDB is a [Document Database](http://en.wikipedia.org/wiki/Document-oriented_database) but has the best features of other DBMSs. For example relationships are handled as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database).
+No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports a subset of [[SQL]] as query language. In this way it's easy to start using it without having to learn too much new stuff. OrientDB is a [Document Database](http://en.wikipedia.org/wiki/Document-oriented_database) but has the best features of other DBMSs. For example relationships are handled as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database).
 
 ## Scalability: the database is the bottleneck of most of applications
 
