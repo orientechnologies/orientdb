@@ -103,9 +103,9 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
         return scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
       }
     } catch (ScriptException e) {
-      throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), null);
+      throw new OCommandScriptException("Error on execution of the script", request.getText() + "\n" + e.toString(), e.getColumnNumber(), null);
     } catch (NoSuchMethodException e) {
-      throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, null);
+      throw new OCommandScriptException("Error on execution of the script", request.getText() + "\n" + e.toString(), 0, null);
     } catch (OCommandScriptException e) {
       // PASS THROUGH
       throw e;
