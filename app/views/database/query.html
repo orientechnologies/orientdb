@@ -1,8 +1,11 @@
 <div class="query-container" ng-controller="QueryController">
     <div class="query-header">
-        <h5><a href="javascript:void(0)" ng-click="changeQuery()" bs-tooltip="item.query" >{{item.query}}</a></h5>
+        <h5><a href="javascript:void(0)" ng-click="changeQuery()" bs-tooltip="item.query">{{item.query}}</a></h5>
     </div>
     <div class="query-actions">
+        <a class="ng-binding" href="javascript:void(0)" ng-click="addBookmark(item)">
+            <i class="icon-star"></i>
+        </a>
         <a class="ng-binding" href="javascript:void(0)" ng-click="removeItem(item)">
             <i class="icon-trash"></i>
         </a>
@@ -32,7 +35,8 @@
         <!--</div>-->
         <div ng-hide="table" class="jsonView">
             <div class="row-fluid">
-                <div jsontext ui-codemirror="viewerOptions" ng-model="item.rawData" style="width: 100%; height: 100px;"></div>
+                <div jsontext ui-codemirror="viewerOptions" ng-model="item.rawData"
+                     style="width: 100%; height: 100px;"></div>
             </div>
         </div>
     </div>
@@ -48,7 +52,7 @@
                         <a href="javascript:void(0)" ng-click="table = true">Table</a>
                     </li>
                     <!--<li>-->
-                        <!--<a href="javascript:void(0)">Graph</a>-->
+                    <!--<a href="javascript:void(0)">Graph</a>-->
                     <!--</li>-->
                     <li ng-class="{active : !table }">
                         <a href="javascript:void(0)" ng-click="table = false">Raw</a>

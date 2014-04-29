@@ -1,10 +1,19 @@
-var dbModule = angular.module('database.controller', ['database.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window) {
+var dbModule = angular.module('database.controller', ['database.services', 'bookmarks.services']);
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks) {
 
     $scope.database = Database;
     $scope.limit = 20;
 
     $scope.countPage = 5;
+
+    if (Database.hasClass("StudioBookmarks")) {
+        Bookmarks.getAll(Database.getName());
+    } else {
+        Bookmarks.init(Database.getName()).then(function () {
+            Bookmarks.getAll(Database.getName());
+        });
+    }
+
     $scope.hideSettings = localStorageService.get("hideSettings");
     if ($scope.hideSettings == null) {
         $scope.hideSettings = false;
@@ -170,6 +179,10 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         $scope.timeline.splice(idx, 1);
         localStorageService.add("Timeline", $scope.timeline);
     }
+    $scope.addBookmark = function (item) {
+        Bookmarks.addBookmark(Database.getName(), item);
+    }
+
     $scope.$watch("limit", function (data) {
         $scope.limit = data;
     });
@@ -210,10 +223,10 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
         total: data.length, // length of data
         getData: function ($defer, params) {
             // use build-in angular filter
-            var orderedData = params.sorting() ?
-                $filter('orderBy')(data, params.orderBy()) :
-                data;
-            $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+            //            var orderedData = params.sorting() ?
+            //                $filter('orderBy')(data, params.orderBy()) :
+            //                data;
+            $defer.resolve(data.slice((params.page() - 1) * params.count(), params.page() * params.count()));
         }
     });
 

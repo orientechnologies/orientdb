@@ -340,17 +340,24 @@ Widget.directive('orientdatetime', function (Database) {
                 var form = input;
                 var n = input.getTimezoneOffset();
                 if (input) {
-                    //var form = moment(input).format(formatter.toUpperCase());
-                    var form = moment(input).add('m', n).format('YYYY-MM-DD HH:mm:ss');
+                    var form = moment(input).formatWithJDF(formatter);
+                    //var form = moment(input).add('m', n).format('YYYY-MM-DD HH:mm:ss');
                 }
                 return form;
             }
 
             function out(data) {
                 var form = data
-
+                var values = Database.getMetadata()['config']['values'];
+                var formatter = undefined;
+                values.forEach(function (val, idx, array) {
+                    if (val.name == 'dateTimeFormat') {
+                        formatter = val.value;
+                    }
+                });
                 if (data) {
-                    form = moment(data).format('DD/MM/YYYY HH:mm:ss');
+                    form = moment(data).formatWithJDF(formatter);
+                    //form = moment(data).format('DD/MM/YYYY HH:mm:ss');
                 }
                 return form;
             }

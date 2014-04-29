@@ -241,6 +241,17 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             }
             return fields;
         },
+        hasClass: function (clazz) {
+            var metadata = this.getMetadata();
+            var classes = metadata['classes'];
+            for (var entry in classes) {
+                var claq = classes[entry].name
+                if (claq == clazz) {
+                    return true;
+                }
+            }
+            return false;
+        },
         listNameOfClasses: function () {
             var metadata = this.getMetadata();
             var classes = metadata['classes'];
