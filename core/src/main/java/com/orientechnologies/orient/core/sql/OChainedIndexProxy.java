@@ -198,9 +198,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     if (isComposite(firstIndex)) {
       result = new ArrayList<OIdentifiable>();
       for (Comparable key : currentKeys) {
-        Object preparedKey = firstIndex.getDefinition().createValue(key);
-        final OIndexCursor cursor = firstIndex.iterateEntriesBetween(preparedKey, true, preparedKey, true, true);
-        result.addAll(cursorToList(cursor));
+        result.addAll(getFromCompositeIndex(key, firstIndex));
       }
     } else {
       final OIndexCursor cursor = firstIndex.iterateEntries(currentKeys, true);
