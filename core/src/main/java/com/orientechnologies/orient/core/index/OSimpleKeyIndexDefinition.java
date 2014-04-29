@@ -94,7 +94,7 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
     }
 
     setCollate((String) document.field("collate"));
-    setNullValuesIgnored(document.<Boolean> field("nullValuesIgnored"));
+    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {

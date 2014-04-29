@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
@@ -23,15 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.IndexableGraph;
-import com.tinkerpop.blueprints.KeyIndexableGraph;
-import com.tinkerpop.blueprints.MetaGraph;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
@@ -672,6 +665,41 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
     // NO INDEX: EXECUTE A QUERY
     return query().has(key, iValue).vertices();
+  }
+
+  /**
+   * Get all the Vertices in Graph filtering by field name and value. Example:<code>
+   *   Iterable<Vertex> resultset = getVertices("Person",new String[] {"name","surname"},new Object[] { "Sherlock" ,"Holmes"});
+   * </code>
+   * 
+   * @param iKey
+   *          Fields name
+   * @param iValue
+   *          Fields value
+   * @return Vertices as Iterable
+   */
+  public Iterable<Vertex> getVertices(final String label, final String[] iKey, Object[] iValue) {
+
+    final OClass clazz = getContext(true).rawGraph.getMetadata().getSchema().getClass(label);
+    Set<OIndex<?>> indexes = clazz.getInvolvedIndexes(Arrays.asList(iKey));
+    if (indexes.iterator().hasNext()) {
+      final OIndex<?> idx = indexes.iterator().next();
+      if (idx != null) {
+        List<Object> keys = Arrays.asList(convertKeys(idx, iValue));
+        OCompositeKey compositeKey = new OCompositeKey(keys);
+        Object indexValue = idx.get(compositeKey);
+        if (indexValue != null && !(indexValue instanceof Iterable<?>))
+          indexValue = Arrays.asList(indexValue);
+
+        return new OrientElementIterable<Vertex>(this, (Iterable<?>) indexValue);
+      }
+    }
+    // NO INDEX: EXECUTE A QUERY
+    GraphQuery query = query();
+    for (int i = 0; i < iKey.length; i++) {
+      query.has(iKey[i], iValue[i]);
+    }
+    return query.vertices();
   }
 
   /**
@@ -1595,8 +1623,12 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
           msg.append(s);
 
         // ASSURE PENDING TX IF ANY IS COMMITTED
-        OLogManager.instance().warn(this,
-            "Committing the active transaction to %s. To avoid this behavior do it outside the transaction", msg.toString());
+        OLogManager
+            .instance()
+            .warn(
+                this,
+                "Requested command '%s' must be executed outside active transaction: the transaction will be committed and reopen right after it. To avoid this behavior execute it outside a transaction",
+                msg.toString());
       }
       raw.commit();
       committed = true;
@@ -1618,6 +1650,21 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
         iValue = iValue.toString();
       else
         iValue = OType.convert(iValue, types[0].getDefaultJavaType());
+    }
+    return iValue;
+  }
+
+  protected Object[] convertKeys(final OIndex<?> idx, Object[] iValue) {
+    if (iValue != null) {
+
+      final OType[] types = idx.getKeyTypes();
+      if (types.length == iValue.length) {
+        Object[] newValue = new Object[types.length];
+        for (int i = 0; i < types.length; i++) {
+          newValue[i] = OType.convert(iValue[i], types[i].getDefaultJavaType());
+        }
+        iValue = newValue;
+      }
     }
     return iValue;
   }

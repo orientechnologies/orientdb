@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.common.concur.lock;
 
+import com.orientechnologies.common.concur.OTimeoutException;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.orientechnologies.common.concur.OTimeoutException;
 
 /**
  * Adaptive class to handle shared resources. It's configurable specifying if it's running in a concurrent environment and allow o
@@ -109,6 +109,15 @@ public class OAdaptiveLock extends OAbstractLock {
   public void unlock() {
     if (concurrent)
       lock.unlock();
+  }
+
+  @Override
+  public void close() {
+    try {
+      if (lock.isLocked())
+        lock.unlock();
+    } catch (Exception e) {
+    }
   }
 
   public boolean isConcurrent() {

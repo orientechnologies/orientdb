@@ -25,7 +25,7 @@ public class ONullBucketTest {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     ONullBucket<String> bucket = new ONullBucket<String>(pointer, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE, true);
 
-    bucket.setEntry(new OSBTreeValue<String>(false, -1, "test"));
+    bucket.setValue(new OSBTreeValue<String>(false, -1, "test"));
     OSBTreeValue<String> treeValue = bucket.getValue();
     Assert.assertEquals(treeValue.getValue(), "test");
 
@@ -36,7 +36,7 @@ public class ONullBucketTest {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     ONullBucket<String> bucket = new ONullBucket<String>(pointer, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE, true);
 
-    bucket.setEntry(new OSBTreeValue<String>(false, -1, "test"));
+    bucket.setValue(new OSBTreeValue<String>(false, -1, "test"));
     bucket.removeValue();
 
     OSBTreeValue<String> treeValue = bucket.getValue();
@@ -49,13 +49,13 @@ public class ONullBucketTest {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     ONullBucket<String> bucket = new ONullBucket<String>(pointer, ODurablePage.TrackMode.NONE, OStringSerializer.INSTANCE, true);
 
-    bucket.setEntry(new OSBTreeValue<String>(false, -1, "test"));
+    bucket.setValue(new OSBTreeValue<String>(false, -1, "test"));
     bucket.removeValue();
 
     OSBTreeValue<String> treeValue = bucket.getValue();
     Assert.assertNull(treeValue);
 
-    bucket.setEntry(new OSBTreeValue<String>(false, -1, "testOne"));
+    bucket.setValue(new OSBTreeValue<String>(false, -1, "testOne"));
 
     treeValue = bucket.getValue();
     Assert.assertEquals(treeValue.getValue(), "testOne");

@@ -15,9 +15,9 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+
+import java.io.IOException;
 
 /**
  * Single requester client implementation.
@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
  */
 public class OChannelBinaryAsynchClientSynch extends OChannelBinaryAsynchClient {
 
-  public OChannelBinaryAsynchClientSynch(final String remoteHost, final int remotePort, final OContextConfiguration iConfig)
+  public OChannelBinaryAsynchClientSynch(final String remoteHost, final int remotePort, final String iDatabaseName, final OContextConfiguration iConfig)
       throws IOException {
-    super(remoteHost, remotePort, iConfig, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+    super(remoteHost, remotePort,iDatabaseName, iConfig, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
   }
 }

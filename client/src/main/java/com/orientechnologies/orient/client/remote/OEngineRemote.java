@@ -26,10 +26,13 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OEngineRemote extends OEngineAbstract {
-  public static final String                       NAME           = "remote";
-  private static final Map<String, OStorageRemote> sharedStorages = new ConcurrentHashMap<String, OStorageRemote>();
+  public static final String                         NAME           = "remote";
+  protected static final Map<String, OStorageRemote> sharedStorages = new ConcurrentHashMap<String, OStorageRemote>();
+  protected final ORemoteConnectionManager           connectionManager;
 
   public OEngineRemote() {
+    connectionManager = new ORemoteConnectionManager(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger(),
+        OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.getValueAsLong());
   }
 
   public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
@@ -73,7 +76,12 @@ public class OEngineRemote extends OEngineAbstract {
   @Override
   public void shutdown() {
     super.shutdown();
+    connectionManager.close();
     sharedStorages.clear();
+  }
+
+  public ORemoteConnectionManager getConnectionManager() {
+    return connectionManager;
   }
 
   public String getName() {

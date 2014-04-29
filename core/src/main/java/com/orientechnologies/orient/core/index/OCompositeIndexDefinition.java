@@ -432,7 +432,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
           multiValueDefinitionIndex = indexDefinitions.size() - 1;
       }
 
-      setNullValuesIgnored(document.<Boolean> field("nullValuesIgnored"));
+      setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
     } catch (final ClassNotFoundException e) {
       throw new OIndexException("Error during composite index deserialization", e);
     } catch (final NoSuchMethodException e) {

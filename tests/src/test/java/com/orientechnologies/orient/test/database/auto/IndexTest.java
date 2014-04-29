@@ -1472,6 +1472,51 @@ public class IndexTest {
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("NullIndexKeysSupportIndex"));
   }
 
+  public void testNullHashIndexKeysSupport() {
+    if (database.getURL().startsWith("memory:"))
+      return;
+
+    final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+
+    final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    final OClass clazz = schema.createClass("NullHashIndexKeysSupport");
+    clazz.createProperty("nullField", OType.STRING);
+
+    ODocument metadata = new ODocument();
+    metadata.field("ignoreNullValues", false);
+
+    clazz.createIndex("NullHashIndexKeysSupportIndex", INDEX_TYPE.NOTUNIQUE.toString(), null, metadata,
+        new String[] { "nullField" });
+    for (int i = 0; i < 20; i++) {
+      if (i % 5 == 0) {
+        ODocument document = new ODocument("NullHashIndexKeysSupport");
+        document.field("nullField", (Object) null);
+        document.save();
+      } else {
+        ODocument document = new ODocument("NullHashIndexKeysSupport");
+        document.field("nullField", "val" + i);
+        document.save();
+      }
+    }
+
+    List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+        "select from NullHashIndexKeysSupport where nullField = 'val3'"));
+    Assert.assertEquals(result.size(), 1);
+
+    Assert.assertEquals(result.get(0).field("nullField"), "val3");
+
+    final String query = "select from NullHashIndexKeysSupport where nullField is null";
+    result = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select from NullHashIndexKeysSupport where nullField is null"));
+
+    Assert.assertEquals(result.size(), 4);
+    for (ODocument document : result)
+      Assert.assertNull(document.field("nullField"));
+
+    final ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + query)).execute();
+    Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("NullHashIndexKeysSupportIndex"));
+  }
+
   public void testNullIndexKeysSupportInTx() {
     if (database.getURL().startsWith("memory:"))
       return;

@@ -83,8 +83,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
       ".oef", ".oem", OWriteAheadLog.MASTER_RECORD_EXTENSION, OWriteAheadLog.WAL_SEGMENT_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
-      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
-      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION              };
+      OLocalHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.TREE_FILE_EXTENSION,
+      OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION, OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION };
   private final int                     DELETE_MAX_RETRIES;
   private final int                     DELETE_WAIT_TIME;
   private final Map<String, OCluster>   clusterMap                = new LinkedHashMap<String, OCluster>();
