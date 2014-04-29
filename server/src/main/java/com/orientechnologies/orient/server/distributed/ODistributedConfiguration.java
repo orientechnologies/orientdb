@@ -48,13 +48,9 @@ public class ODistributedConfiguration {
    */
   public boolean isReplicationActive(final String iClusterName) {
     synchronized (configuration) {
-      if (iClusterName != null) {
-        final ODocument cluster = getClusterConfiguration(iClusterName);
-        if (cluster.containsField("replication"))
-          return cluster.<Boolean> field("replication");
-      }
-
-      return configuration.<Boolean> field("replication");
+      final ODocument cluster = getClusterConfiguration(iClusterName);
+      final Collection<String> servers = cluster.field("servers");
+      return servers != null && !servers.isEmpty();
     }
   }
 

@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.collection.OSingleItemSet;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
@@ -80,6 +66,20 @@ import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -166,7 +166,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
         .getDelegate() : executor;
 
     try {
-      final OAbstractRemoteTask task = new OSQLCommandTask(iCommand);
+      final OSQLCommandTask task = new OSQLCommandTask(iCommand);
 
       Object result;
       boolean replicated = false;
@@ -180,10 +180,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
 
       if (replicated) {
         // REPLICATE IT, GET ALL THE INVOLVED NODES
+        task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
+
         nodes = dbCfg.getServers(involvedClusters);
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
       } else {
         // SHARDED, GET ONLY ONE NODE PER INVOLVED CLUSTER
+        task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.MERGE);
+
         nodes = dbCfg.getOneServerPerCluster(involvedClusters, dManager.getLocalNodeName());
 
         if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName())

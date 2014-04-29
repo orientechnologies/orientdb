@@ -266,6 +266,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       return doc;
 
     } catch (Exception e) {
+      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Error on loading distributed configuration file in: %s", e, file.getAbsolutePath());
     } finally {
       if (f != null)
         try {

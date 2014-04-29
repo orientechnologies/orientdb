@@ -1,5 +1,4 @@
 {
-    "replication": true,
     "autoDeploy": true,
     "hotAlignment": false,
     "offlineMsgQueueSize" : 0,
@@ -9,15 +8,11 @@
     "readYourWrites": true,
     "clusters": {
         "internal": {
-            "replication": false
         },
         "index": {
-            "replication": false
         },
         "*": {
-            "replication": true,
             "servers" : [ "<NEW_NODE>" ]
-            }
         }
     }
 }

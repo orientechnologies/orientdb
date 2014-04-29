@@ -73,8 +73,8 @@ public class TestSharding extends AbstractServerClusterTest {
 
             OrientVertex v = result.iterator().next();
 
-            Assert.assertEquals("Returned vertices name property is != shard_" + cluster + " on server " + server,
-                v.getProperty("name"), "shard_" + cluster);
+            Assert.assertEquals("Returned vertices name property is != shard_" + cluster + " on server " + server, "shard_"
+                + cluster, v.getProperty("name"));
           }
         } finally {
           graph.shutdown();
@@ -92,12 +92,14 @@ public class TestSharding extends AbstractServerClusterTest {
           for (OrientVertex v : result)
             count++;
 
-          Assert.assertEquals("Returned wrong vertices count on server " + server, count, 3);
+          Assert.assertEquals("Returned wrong vertices count on server " + server, 3, count);
         } finally {
           g.shutdown();
         }
       }
     } catch (Exception e) {
+      e.printStackTrace();
+
       // WAIT FOR TERMINATION
       Thread.sleep(10000);
       throw e;

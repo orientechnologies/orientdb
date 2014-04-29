@@ -41,6 +41,7 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
 
   protected String              text;
   protected Map<Object, Object> params;
+  protected RESULT_STRATEGY     resultStrategy;
 
   public OSQLCommandTask() {
   }
@@ -56,6 +57,7 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
         text.toString(), database.getName());
 
     final OCommandRequest cmd = database.command(new OCommandSQL(text));
+
     if (params != null)
       // EXECUTE WITH PARAMETERS
       return cmd.execute(params);
@@ -65,6 +67,15 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
 
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
+  }
+
+  @Override
+  public RESULT_STRATEGY getResultStrategy() {
+    return resultStrategy;
+  }
+
+  public void setResultStrategy(final RESULT_STRATEGY resultStrategy) {
+    this.resultStrategy = resultStrategy;
   }
 
   @Override

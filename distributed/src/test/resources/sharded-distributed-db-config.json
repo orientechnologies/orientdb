@@ -1,5 +1,4 @@
 {
-    "replication": true,
     "autoDeploy": true,
     "hotAlignment": false,
     "offlineMsgQueueSize" : 0,
@@ -9,25 +8,19 @@
     "readYourWrites": true,
     "clusters": {
         "internal": {
-            "replication": false
         },
         "index": {
-            "replication": false
         },
         "client_0": {
-            "replication": false,
-            "servers" : [ "europe" ]
+            "servers" : [ "europe", "usa" ]
         },
         "client_1": {
-            "replication": false,
             "servers" : [ "usa" ]
         },
         "client_2": {
-            "replication": false,
-            "servers" : [ "asia" ]
+            "servers" : [ "asia", "europe", "usa" ]
         },
         "*": {
-            "replication": true,
             "servers" : [ "<NEW_NODE>" ]
         }
     }
