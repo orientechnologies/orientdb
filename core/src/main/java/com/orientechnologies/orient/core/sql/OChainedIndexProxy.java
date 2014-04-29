@@ -164,9 +164,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return lastIndex.getDefinition();
   }
 
-  private List<OIdentifiable> applyTailIndexes(final Object result) {
+  private List<OIdentifiable> applyTailIndexes(final Object lastIndexResult) {
     final OIndex<?> beforeTheLastIndex = indexChain.get(indexChain.size() - 2);
-    Set<Comparable> currentKeys = prepareKeys(beforeTheLastIndex, result);
+    Set<Comparable> currentKeys = prepareKeys(beforeTheLastIndex, lastIndexResult);
 
     for (int j = indexChain.size() - 2; j > 0; j--) {
       final OIndex<?> currentIndex = indexChain.get(j);
@@ -190,22 +190,26 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
       currentKeys = newKeys;
     }
 
-    return applyMainIndex(currentKeys);
+    return applyFirstIndex(currentKeys);
   }
 
-  private List<OIdentifiable> applyMainIndex(Iterable<Comparable> currentKeys) {
-    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
-    for (Comparable key : currentKeys) {
-      Object preparedKey = firstIndex.getDefinition().createValue(key);
-      final OIndexCursor cursor = firstIndex.iterateEntriesBetween(preparedKey, true, preparedKey, true, true);
-      Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
-      while (entry != null) {
-        result.add(entry.getValue());
-        entry = cursor.next(-1);
+  private List<OIdentifiable> applyFirstIndex(Collection<Comparable> currentKeys) {
+    final List<OIdentifiable> result;
+    if (isComposite(firstIndex)) {
+      result = new ArrayList<OIdentifiable>();
+      for (Comparable key : currentKeys) {
+        Object preparedKey = firstIndex.getDefinition().createValue(key);
+        final OIndexCursor cursor = firstIndex.iterateEntriesBetween(preparedKey, true, preparedKey, true, true);
+        result.addAll(cursorToList(cursor));
       }
+    } else {
+      final OIndexCursor cursor = firstIndex.iterateEntries(currentKeys, true);
+
+      result = cursorToList(cursor);
     }
 
     updateStatistic(firstIndex);
+
     return result;
   }
 
@@ -239,16 +243,15 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    * @return keys converted to necessary type.
    */
   private Set<Comparable> prepareKeys(OIndex<?> index, Object keys) {
-    final Class<?> targetType = index.getKeyTypes()[0].getDefaultJavaType();
-
+    final OIndexDefinition indexDefinition = index.getDefinition();
     if (keys instanceof Collection) {
       final Set<Comparable> newKeys = new TreeSet<Comparable>();
       for (Object o : ((Collection) keys)) {
-        newKeys.add((Comparable) OType.convert(o, targetType));
+        newKeys.add((Comparable) indexDefinition.createValue(o));
       }
       return newKeys;
     } else {
-      return Collections.singleton((Comparable) OType.convert(keys, targetType));
+      return Collections.singleton((Comparable) indexDefinition.createValue(keys));
     }
   }
 

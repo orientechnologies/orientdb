@@ -317,7 +317,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   }
 
   @Test
-  public void testHashIndexIgnored() {
+  public void testHashIndexIsUsedAsBaseIndex() {
     long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from lpirtStudent where transcript.id = '1'"));
@@ -325,6 +325,17 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     assertEquals(result.size(), 1);
 
     assertEquals(indexUsages(), oldIndexUsage + 2);
+  }
+
+  @Test
+  public void testCompositeHashIndexIgnored() {
+    long oldIndexUsage = indexUsages();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from lpirtStudent where skill.name = 'math'"));
+
+    assertEquals(result.size(), 1);
+
+    assertEquals(indexUsages(), oldIndexUsage);
   }
 
   private long indexUsages() {
@@ -355,11 +366,15 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     final ODocument transcript = database.newInstance("lpirtTranscript");
     transcript.field("id", "1");
 
+    final ODocument skill = database.newInstance("lpirtSkill");
+    skill.field("name", "math");
+
     final ODocument student1 = database.newInstance("lpirtStudent");
     student1.field("name", "John Smith");
     student1.field("group", group1);
     student1.field("diploma", diploma1);
     student1.field("transcript", transcript);
+    student1.field("skill", skill);
     student1.save();
 
     ODocument curator2 = database.newInstance("lpirtCurator");
@@ -438,13 +453,18 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
       final OClass transcriptClass = schema.createClass("lpirtTranscript");
       transcriptClass.createProperty("id", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
 
+      final OClass skillClass = schema.createClass("lpirtSkill");
+      skillClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
+
       final OClass studentClass = schema.createClass("lpirtStudent");
       studentClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
       studentClass.createProperty("group", OType.LINK, groupClass).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
       studentClass.createProperty("diploma", OType.LINK, diplomaClass);
       studentClass.createProperty("transcript", OType.LINK, transcriptClass).createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
+      studentClass.createProperty("skill", OType.LINK, skillClass);
 
       studentClass.createIndex("studentDiplomaAndNameIndex", OClass.INDEX_TYPE.UNIQUE, "diploma", "name");
+      studentClass.createIndex("studentSkillAndGroupIndex", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "skill", "group");
 
       schema.save();
     }
