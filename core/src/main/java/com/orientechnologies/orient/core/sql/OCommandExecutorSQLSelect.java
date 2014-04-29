@@ -1189,7 +1189,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         final OIndexCursor cursor;
         if (ascSortOrder) {
           cursor = index.iterateEntriesMajor(key, true, true);
-          fetchValuesFromIndexCursor(cursor, false);
         } else {
           cursor = index.iterateEntriesMinor(key, true, false);
         }
