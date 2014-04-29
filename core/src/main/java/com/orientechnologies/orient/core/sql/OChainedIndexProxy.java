@@ -175,25 +175,24 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   }
 
   private List<OIdentifiable> applyTailIndexes(final Object result) {
-    final OIndex<?> previousIndex = indexChain.get(indexChain.size() - 2);
-    Set<Comparable> currentKeys = prepareKeys(previousIndex, result);
+    final OIndex<?> beforeTheLastIndex = indexChain.get(indexChain.size() - 2);
+    Set<Comparable> currentKeys = prepareKeys(beforeTheLastIndex, result);
+
     for (int j = indexChain.size() - 2; j > 0; j--) {
-      Set<Comparable> newKeys = new TreeSet<Comparable>();
-
       final OIndex<?> currentIndex = indexChain.get(j);
-      for (Comparable currentKey : currentKeys) {
-        final List<OIdentifiable> currentResult = new ArrayList<OIdentifiable>();
-        final OIndexCursor cursor = currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true);
+      final OIndex<?> nextIndex = indexChain.get(j - 1);
 
-        Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
-        while (entry != null) {
-          currentResult.add(entry.getValue());
-          entry = cursor.next(-1);
+      final Set<Comparable> newKeys;
+      if (isComposite(currentIndex)) {
+        newKeys = new TreeSet<Comparable>();
+        for (Comparable currentKey : currentKeys) {
+          final List<OIdentifiable> currentResult = getFromCompositeIndex(currentKey, currentIndex);
+          newKeys.addAll(prepareKeys(nextIndex, currentResult));
         }
-
-        final Set<Comparable> preparedKeys;
-        preparedKeys = prepareKeys(indexChain.get(j - 1), currentResult);
-        newKeys.addAll(preparedKeys);
+      } else {
+        final OIndexCursor cursor = currentIndex.iterateEntries(currentKeys, true);
+        final List<OIdentifiable> keys = cursorToList(cursor);
+        newKeys = prepareKeys(nextIndex, keys);
       }
 
       updateStatistic(currentIndex);
@@ -202,6 +201,26 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     }
 
     return applyMainIndex(currentKeys);
+  }
+
+  private boolean isComposite(OIndex<?> currentIndex) {
+    return currentIndex.getDefinition().getParamCount() > 1;
+  }
+
+  private List<OIdentifiable> getFromCompositeIndex(Comparable currentKey, OIndex<?> currentIndex) {
+    final OIndexCursor cursor = currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true);
+
+    return cursorToList(cursor);
+  }
+
+  private List<OIdentifiable> cursorToList(OIndexCursor cursor) {
+    final List<OIdentifiable> currentResult = new ArrayList<OIdentifiable>();
+    Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
+    while (entry != null) {
+      currentResult.add(entry.getValue());
+      entry = cursor.next(-1);
+    }
+    return currentResult;
   }
 
   private Set<Comparable> convertResult(Object result, Class<?> targetType) {
