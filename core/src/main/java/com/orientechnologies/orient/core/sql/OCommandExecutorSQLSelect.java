@@ -1021,62 +1021,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (compiledFilter == null) {
       if (orderedFields.size() == 0)
         return false;
-
-      // use index to order documents by provided fields
-      final List<String> fieldNames = new ArrayList<String>();
-
-      for (OPair<String, String> pair : orderedFields)
-        fieldNames.add(pair.getKey());
-
-      final Set<OIndex<?>> indexes = iSchemaClass.getInvolvedIndexes(fieldNames);
-
-      for (OIndex<?> index : indexes) {
-        if (canBeUsedByOrderBy(index)) {
-          final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
-
-          final Object key;
-          if (ascSortOrder) {
-            key = index.getFirstKey();
-          } else {
-            key = index.getLastKey();
-          }
-
-          if (key == null)
-            return false;
-
-          fullySortedByIndex = true;
-
-          if (context.isRecordingMetrics()) {
-            context.setVariable("indexIsUsedInOrderBy", true);
-            context.setVariable("fullySortedByIndex", fullySortedByIndex);
-
-            Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
-            if (idxNames == null) {
-              idxNames = new HashSet<String>();
-              context.setVariable("involvedIndexes", idxNames);
-            }
-
-            idxNames.add(index.getName());
-          }
-
-          final OIndexCursor cursor;
-          if (ascSortOrder) {
-            cursor = index.iterateEntriesMajor(key, true, true);
-            fetchValuesFromIndexCursor(cursor, false);
-          } else {
-            cursor = index.iterateEntriesMinor(key, true, false);
-          }
-          fetchValuesFromIndexCursor(cursor, false);
-
-          return true;
-        }
-      }
-
-      if (context.isRecordingMetrics()) {
-        context.setVariable("indexIsUsedInOrderBy", false);
-        context.setVariable("fullySortedByIndex", fullySortedByIndex);
-      }
-      return false;
+      else
+        return optimizeSort(iSchemaClass);
     }
 
     analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults, context);
@@ -1192,6 +1138,70 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         return true;
       }
+    }
+    return false;
+  }
+
+  /**
+   * Use index to order documents by provided fields.
+   * 
+   * @param iSchemaClass
+   *          where search for indexes for optimization.
+   * @return true if execution was optimized
+   */
+  private boolean optimizeSort(OClass iSchemaClass) {
+    final List<String> fieldNames = new ArrayList<String>();
+
+    for (OPair<String, String> pair : orderedFields)
+      fieldNames.add(pair.getKey());
+
+    final Set<OIndex<?>> indexes = iSchemaClass.getInvolvedIndexes(fieldNames);
+
+    for (OIndex<?> index : indexes) {
+      if (canBeUsedByOrderBy(index)) {
+        final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
+
+        final Object key;
+        if (ascSortOrder) {
+          key = index.getFirstKey();
+        } else {
+          key = index.getLastKey();
+        }
+
+        if (key == null)
+          return false;
+
+        fullySortedByIndex = true;
+
+        if (context.isRecordingMetrics()) {
+          context.setVariable("indexIsUsedInOrderBy", true);
+          context.setVariable("fullySortedByIndex", fullySortedByIndex);
+
+          Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
+          if (idxNames == null) {
+            idxNames = new HashSet<String>();
+            context.setVariable("involvedIndexes", idxNames);
+          }
+
+          idxNames.add(index.getName());
+        }
+
+        final OIndexCursor cursor;
+        if (ascSortOrder) {
+          cursor = index.iterateEntriesMajor(key, true, true);
+          fetchValuesFromIndexCursor(cursor, false);
+        } else {
+          cursor = index.iterateEntriesMinor(key, true, false);
+        }
+        fetchValuesFromIndexCursor(cursor, false);
+
+        return true;
+      }
+    }
+
+    if (context.isRecordingMetrics()) {
+      context.setVariable("indexIsUsedInOrderBy", false);
+      context.setVariable("fullySortedByIndex", fullySortedByIndex);
     }
     return false;
   }
