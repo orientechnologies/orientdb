@@ -193,6 +193,22 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return applyMainIndex(currentKeys);
   }
 
+  private List<OIdentifiable> applyMainIndex(Iterable<Comparable> currentKeys) {
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+    for (Comparable key : currentKeys) {
+      Object preparedKey = firstIndex.getDefinition().createValue(key);
+      final OIndexCursor cursor = firstIndex.iterateEntriesBetween(preparedKey, true, preparedKey, true, true);
+      Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
+      while (entry != null) {
+        result.add(entry.getValue());
+        entry = cursor.next(-1);
+      }
+    }
+
+    updateStatistic(firstIndex);
+    return result;
+  }
+
   private static boolean isComposite(OIndex<?> currentIndex) {
     return currentIndex.getDefinition().getParamCount() > 1;
   }
@@ -213,19 +229,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return currentResult;
   }
 
-  private Set<Comparable> convertResult(Object result, Class<?> targetType) {
-    final Set<Comparable> newKeys;
-    if (result instanceof Collection) {
-      newKeys = new TreeSet<Comparable>();
-      for (Object o : ((Collection) result)) {
-        newKeys.add((Comparable) OType.convert(o, targetType));
-      }
-      return newKeys;
-    } else {
-      return Collections.singleton((Comparable) OType.convert(result, targetType));
-    }
-  }
-
   /**
    * Make type conversion of keys for specific index.
    * 
@@ -238,23 +241,15 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   private Set<Comparable> prepareKeys(OIndex<?> index, Object keys) {
     final Class<?> targetType = index.getKeyTypes()[0].getDefaultJavaType();
 
-    return convertResult(keys, targetType);
-  }
-
-  private List<OIdentifiable> applyMainIndex(Iterable<Comparable> currentKeys) {
-    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
-    for (Comparable key : currentKeys) {
-      Object preparedKey = firstIndex.getDefinition().createValue(key);
-      final OIndexCursor cursor = firstIndex.iterateEntriesBetween(preparedKey, true, preparedKey, true, true);
-      Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
-      while (entry != null) {
-        result.add(entry.getValue());
-        entry = cursor.next(-1);
+    if (keys instanceof Collection) {
+      final Set<Comparable> newKeys = new TreeSet<Comparable>();
+      for (Object o : ((Collection) keys)) {
+        newKeys.add((Comparable) OType.convert(o, targetType));
       }
+      return newKeys;
+    } else {
+      return Collections.singleton((Comparable) OType.convert(keys, targetType));
     }
-
-    updateStatistic(firstIndex);
-    return result;
   }
 
   private static Iterable<List<OIndex<?>>> getIndexesForChain(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,

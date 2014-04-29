@@ -316,11 +316,6 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     assertEquals(indexUsages(), oldIndexUsage + 2);
   }
 
-  private long indexUsages() {
-    final long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    return oldIndexUsage == -1 ? 0 : oldIndexUsage;
-  }
-
   @Test
   public void testHashIndexIgnored() {
     long oldIndexUsage = indexUsages();
@@ -329,7 +324,12 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     assertEquals(result.size(), 1);
 
-    assertEquals(indexUsages(), oldIndexUsage);
+    assertEquals(indexUsages(), oldIndexUsage + 2);
+  }
+
+  private long indexUsages() {
+    final long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    return oldIndexUsage == -1 ? 0 : oldIndexUsage;
   }
 
   /**
