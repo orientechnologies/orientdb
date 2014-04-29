@@ -16,12 +16,14 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.collection.OSingleItemSet;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -56,7 +58,7 @@ public class ODistributedResponseManager {
   private volatile boolean                       receivedCurrentNode;
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
-      final List<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
+      final Collection<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
       final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout) {
     this.dManager = iManager;
     this.request = iRequest;
@@ -460,7 +462,7 @@ public class ODistributedResponseManager {
         msg.append(" no server in conflict");
       else {
         for (ODistributedResponse r : res) {
-          msg.append("\n- ");
+          msg.append("\n - ");
           msg.append(r.getExecutorNodeName());
           msg.append(": ");
           msg.append(r.getPayload());
@@ -468,7 +470,7 @@ public class ODistributedResponseManager {
         msg.append("\n");
       }
 
-      msg.append(". Received: ");
+      msg.append("Received: ");
       msg.append(responses);
 
       throw new ODistributedException(msg.toString());
@@ -485,7 +487,7 @@ public class ODistributedResponseManager {
         final OAbstractRemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request, r.getPayload());
 
         if (undoTask != null)
-          dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), undoTask,
+          dManager.sendRequest(request.getDatabaseName(), null, new OSingleItemSet<String>(r.getExecutorNodeName()), undoTask,
               ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
       }
     }
@@ -505,7 +507,7 @@ public class ODistributedResponseManager {
               goodResponse.getPayload());
 
           if (fixTask != null)
-            dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), fixTask,
+            dManager.sendRequest(request.getDatabaseName(), null, new OSingleItemSet<String>(r.getExecutorNodeName()), fixTask,
                 ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
         }
       }

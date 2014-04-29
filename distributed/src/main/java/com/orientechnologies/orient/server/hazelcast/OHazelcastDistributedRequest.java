@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
  * Hazelcast implementation of distributed peer.
@@ -34,7 +34,6 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   private EXECUTION_MODE      executionMode;
   private String              senderNodeName;
   private String              databaseName;
-  private String              clusterName;
   private long                senderThreadId;
   private OAbstractRemoteTask task;
 
@@ -44,19 +43,14 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   public OHazelcastDistributedRequest() {
   }
 
-  public OHazelcastDistributedRequest(final String senderNodeName, final String databaseName, final String clusterName,
-      final OAbstractRemoteTask payload, EXECUTION_MODE iExecutionMode) {
+  public OHazelcastDistributedRequest(final String senderNodeName, final String databaseName, final OAbstractRemoteTask payload,
+      EXECUTION_MODE iExecutionMode) {
     this.senderNodeName = senderNodeName;
     this.databaseName = databaseName;
-    this.clusterName = clusterName;
     this.senderThreadId = Thread.currentThread().getId();
     this.task = payload;
     this.executionMode = iExecutionMode;
     id = -1;
-  }
-
-  public void setId(final long iReqId) {
-    id = iReqId;
   }
 
   @Override
@@ -68,19 +62,13 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     return id;
   }
 
+  public void setId(final long iReqId) {
+    id = iReqId;
+  }
+
   @Override
   public String getDatabaseName() {
     return databaseName;
-  }
-
-  @Override
-  public String getClusterName() {
-    return clusterName;
-  }
-
-  @Override
-  public OAbstractRemoteTask getTask() {
-    return task;
   }
 
   @Override
@@ -90,9 +78,8 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   }
 
   @Override
-  public OHazelcastDistributedRequest setClusterName(final String clusterName) {
-    this.clusterName = clusterName;
-    return this;
+  public OAbstractRemoteTask getTask() {
+    return task;
   }
 
   @Override
@@ -126,7 +113,6 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     out.writeUTF(senderNodeName);
     out.writeLong(senderThreadId);
     out.writeUTF(databaseName);
-    out.writeUTF(clusterName != null ? clusterName : "");
     out.writeObject(task);
   }
 
@@ -136,9 +122,6 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     senderNodeName = in.readUTF();
     senderThreadId = in.readLong();
     databaseName = in.readUTF();
-    clusterName = in.readUTF();
-    if (clusterName.length() == 0)
-      clusterName = null;
     task = (OAbstractRemoteTask) in.readObject();
   }
 

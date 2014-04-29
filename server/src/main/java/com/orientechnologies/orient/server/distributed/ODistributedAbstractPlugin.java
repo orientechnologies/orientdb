@@ -58,7 +58,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   protected String                                        nodeName                    = null;
   protected Class<? extends OReplicationConflictResolver> confictResolverClass;
   protected File                                          defaultDatabaseConfigFile;
-  protected Map<String, ODistributedPartitioningStrategy> strategies                  = new HashMap<String, ODistributedPartitioningStrategy>();
 
   @SuppressWarnings("unchecked")
   @Override
@@ -83,16 +82,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         } catch (ClassNotFoundException e) {
           OLogManager.instance().error(this, "Cannot find the conflict resolver implementation '%s'", e, param.value);
         }
-      else if (param.name.startsWith("sharding.strategy.")) {
-        try {
-          strategies.put(param.name.substring("sharding.strategy.".length()),
-              (ODistributedPartitioningStrategy) Class.forName(param.value).newInstance());
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Cannot create sharding strategy instance '%s'", e, param.value);
-
-          e.printStackTrace();
-        }
-      }
     }
 
     if (serverInstance.getUser(REPLICATOR_USER) == null)
@@ -174,22 +163,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
   public String getLocalNodeId() {
     return nodeName;
-  }
-
-  public ODistributedPartitioningStrategy getReplicationStrategy(String iStrategy) {
-    if (iStrategy.startsWith("$"))
-      iStrategy = iStrategy.substring(1);
-
-    final ODistributedPartitioningStrategy strategy = strategies.get(iStrategy);
-    if (strategy == null)
-      throw new ODistributedException("Configured strategy '" + iStrategy + "' is not configured");
-
-    return strategy;
-
-  }
-
-  public ODistributedPartitioningStrategy getPartitioningStrategy(final String iStrategyName) {
-    return strategies.get(iStrategyName);
   }
 
   public boolean updateCachedDatabaseConfiguration(final String iDatabaseName, final ODocument cfg, final boolean iSaveToDisk) {

@@ -342,26 +342,32 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   /**
    * Determine clusters that are used in select operation
    * 
-   * @return set of involved clusters
+   * @return set of involved cluster names
    */
-  public Set<Integer> getInvolvedClusters() {
+  public Set<String> getInvolvedClusters() {
 
-    final Set<Integer> clusters = new HashSet<Integer>();
+    final Set<String> clusters = new HashSet<String>();
+
+    final ODatabaseRecord db = getDatabase();
+
     if (parsedTarget.getTargetRecords() != null) {
       for (OIdentifiable identifiable : parsedTarget.getTargetRecords()) {
-        clusters.add(identifiable.getIdentity().getClusterId());
+        clusters.add(db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase());
       }
     }
     if (parsedTarget.getTargetClasses() != null) {
-      final OStorage storage = getDatabase().getStorage();
       for (String clazz : parsedTarget.getTargetClasses().values()) {
-        clusters.add(storage.getClusterIdByName(clazz));
+        final OClass cls = db.getMetadata().getSchema().getClass(clazz);
+        if (cls != null)
+          for (int clId : cls.getClusterIds()) {
+            clusters.add(db.getClusterNameById(clId).toLowerCase());
+          }
       }
     }
     if (parsedTarget.getTargetClusters() != null) {
       final OStorage storage = getDatabase().getStorage();
-      for (String clazz : parsedTarget.getTargetClusters().values()) {
-        clusters.add(storage.getClusterIdByName(clazz));
+      for (String cluster : parsedTarget.getTargetClusters().keySet()) {
+        clusters.add(cluster.toLowerCase());
       }
     }
     if (parsedTarget.getTargetIndex() != null) {

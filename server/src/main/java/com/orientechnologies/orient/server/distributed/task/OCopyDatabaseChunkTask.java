@@ -102,4 +102,9 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
     chunkNum = in.readInt();
     offset = in.readLong();
   }
+
+  @Override
+  public boolean isRequiredOpenDatabase() {
+    return false;
+  }
 }

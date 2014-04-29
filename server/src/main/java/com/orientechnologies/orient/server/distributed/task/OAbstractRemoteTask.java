@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.Externalizable;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.Externalizable;
 
 /**
  * Base class for Tasks to be executed remotely.
@@ -88,6 +88,10 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   }
 
   public boolean isRequireNodeOnline() {
+    return true;
+  }
+
+  public boolean isRequiredOpenDatabase() {
     return true;
   }
 }
