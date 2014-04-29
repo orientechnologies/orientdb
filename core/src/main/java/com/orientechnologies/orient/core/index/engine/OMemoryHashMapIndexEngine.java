@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
@@ -94,7 +95,7 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
       private Iterator<Map.Entry<Object, V>> entryIterator   = concurrentHashMap.entrySet().iterator();
 
       private Object                         currentKey;
-      private Iterator<OIdentifiable>        currentIterator = Collections.emptyIterator();
+      private Iterator<OIdentifiable>        currentIterator = new OEmptyIterator<OIdentifiable>();
 
       @Override
       public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
