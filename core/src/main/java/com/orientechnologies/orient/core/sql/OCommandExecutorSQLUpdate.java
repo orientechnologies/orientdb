@@ -484,7 +484,14 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   }
 
   protected String getBlock(String fieldValue) {
+    final int startPos = parserGetCurrentPosition();
+
     if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
+      if (startPos > 0)
+        parserSetCurrentPosition(startPos - fieldValue.length());
+      else
+        parserSetCurrentPosition(parserText.length() - fieldValue.length());
+
       parserSkipWhiteSpaces();
       final StringBuilder buffer = new StringBuilder();
       parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
