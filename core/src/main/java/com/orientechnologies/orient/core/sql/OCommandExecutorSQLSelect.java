@@ -258,20 +258,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private static boolean checkIndexExistence(final OClass iSchemaClass, final OIndexSearchResult result) {
-    if (!iSchemaClass.areIndexed(result.fields()))
-      return false;
+    return iSchemaClass.areIndexed(result.fields())
+        && (!result.lastField.isLong() || checkIndexChainExistence(iSchemaClass, result));
+  }
 
-    if (result.lastField.isLong()) {
-      final int fieldCount = result.lastField.getItemCount();
-      OClass cls = iSchemaClass.getProperty(result.lastField.getItemName(0)).getLinkedClass();
+  private static boolean checkIndexChainExistence(OClass iSchemaClass, OIndexSearchResult result) {
+    final int fieldCount = result.lastField.getItemCount();
+    OClass cls = iSchemaClass.getProperty(result.lastField.getItemName(0)).getLinkedClass();
 
-      for (int i = 1; i < fieldCount; i++) {
-        if (cls == null || !cls.areIndexed(result.lastField.getItemName(i))) {
-          return false;
-        }
-
-        cls = cls.getProperty(result.lastField.getItemName(i)).getLinkedClass();
+    for (int i = 1; i < fieldCount; i++) {
+      if (cls == null || !cls.areIndexed(result.lastField.getItemName(i))) {
+        return false;
       }
+
+      cls = cls.getProperty(result.lastField.getItemName(i)).getLinkedClass();
     }
     return true;
   }
