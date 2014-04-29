@@ -164,16 +164,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return lastIndex.getDefinition();
   }
 
-  @Override
-  public OIndexCursor cursor() {
-    throw new UnsupportedOperationException("cursor");
-  }
-
-  @Override
-  public OIndexKeyCursor keyCursor() {
-    throw new UnsupportedOperationException("keyCursor");
-  }
-
   private List<OIdentifiable> applyTailIndexes(final Object result) {
     final OIndex<?> beforeTheLastIndex = indexChain.get(indexChain.size() - 2);
     Set<Comparable> currentKeys = prepareKeys(beforeTheLastIndex, result);
@@ -203,7 +193,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return applyMainIndex(currentKeys);
   }
 
-  private boolean isComposite(OIndex<?> currentIndex) {
+  private static boolean isComposite(OIndex<?> currentIndex) {
     return currentIndex.getDefinition().getParamCount() > 1;
   }
 
@@ -341,13 +331,25 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return bestIndex;
   }
 
+  /**
+   * Check if index can be used as base index.
+   * 
+   * Requirements to the base index:
+   * <ul>
+   * <li>Should be unique or not unique. Other types can not be used to get all documents with required links.</li>
+   * <li>Should not be composite hash index. As soon as hash index does not support partial match search.</li>
+   * </ul>
+   * 
+   * @param index
+   *          to check
+   * @return true if index usage is allowed as base index.
+   */
   private static boolean isAppropriateAsBase(OIndex<?> index) {
     OIndexInternal<?> internalIndex = index.getInternal();
 
     String type = index.getType();
     return (internalIndex instanceof OIndexUnique || internalIndex instanceof OIndexNotUnique)
-        && !(UNIQUE_HASH_INDEX.toString().equals(type) || NOTUNIQUE_HASH_INDEX.toString().equals(type));
-
+        && !(isComposite(index) && (UNIQUE_HASH_INDEX.toString().equals(type) || NOTUNIQUE_HASH_INDEX.toString().equals(type)));
   }
 
   /**
@@ -485,6 +487,16 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
   @Override
   public Object getLastKey() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
+  public OIndexCursor cursor() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
