@@ -46,7 +46,7 @@ public class ONullBucket<V> extends ODurablePage {
       setByteValue(NEXT_FREE_POSITION, (byte) 0);
   }
 
-  public void setEntry(OSBTreeValue<V> value) throws IOException {
+  public void setValue(OSBTreeValue<V> value) throws IOException {
     setByteValue(NEXT_FREE_POSITION, (byte) 1);
 
     if (value.isLink()) {

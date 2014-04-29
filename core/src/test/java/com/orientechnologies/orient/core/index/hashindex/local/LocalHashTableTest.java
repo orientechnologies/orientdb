@@ -46,10 +46,10 @@ public class LocalHashTableTest {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", murmurHash3HashFunction);
+    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction);
 
     localHashTable.create("localHashTableTest", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
-        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocal) databaseDocumentTx.getStorage());
+        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocal) databaseDocumentTx.getStorage(), true);
   }
 
   @AfterClass
@@ -205,5 +205,35 @@ public class LocalHashTableTest {
       if (i % 2 == 0)
         Assert.assertEquals(localHashTable.get(KEYS_COUNT + i), "" + (KEYS_COUNT + i));
     }
+  }
+
+  public void testKeyPutRemoveNullKey() {
+    for (int i = 0; i < 10; i++)
+      localHashTable.put(i, i + "");
+
+    localHashTable.put(null, "null");
+
+    for (int i = 0; i < 10; i++)
+      Assert.assertEquals(localHashTable.get(i), i + "");
+
+    Assert.assertEquals(localHashTable.get(null), "null");
+
+    for (int i = 0; i < 5; i++)
+      Assert.assertEquals(localHashTable.remove(i), i + "");
+
+    Assert.assertEquals(localHashTable.remove(null), "null");
+
+    for (int i = 0; i < 5; i++)
+      Assert.assertNull(localHashTable.remove(i));
+
+    Assert.assertNull(localHashTable.remove(null));
+
+    for (int i = 0; i < 5; i++)
+      Assert.assertNull(localHashTable.get(i));
+
+    Assert.assertNull(localHashTable.get(null));
+
+    for (int i = 5; i < 10; i++)
+      Assert.assertEquals(localHashTable.get(i), i + "");
   }
 }

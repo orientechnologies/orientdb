@@ -101,7 +101,7 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
     String collateField = document.field("collate");
     if (collateField == null)
       collateField = ODefaultCollate.NAME;
-    setNullValuesIgnored(document.<Boolean> field("nullValuesIgnored"));
+    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {

@@ -50,7 +50,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   protected volatile STATUS                           status  = STATUS.CLOSED;
   protected final OSharedResourceAdaptiveExternal     lock;
 
-  public OStorageAbstract(final String name, final String URL, final String mode, final int timeout,
+  public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout,
       final OCacheLevelTwoLocator cacheLocator) {
     if (OStringSerializerHelper.contains(name, '/'))
       this.name = name.substring(name.lastIndexOf("/") + 1);
@@ -63,7 +63,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     level2Cache = new OLevel2RecordCache(this, cacheLocator);
     level2Cache.startup();
 
-    url = URL;
+    url = iURL;
     this.mode = mode;
 
     lock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), timeout, true);
@@ -91,7 +91,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
   /**
    * Returns the configured local Level-2 cache component. Cache component is always created even if not used.
-   * 
+   *
    * @return
    */
   public OLevel2RecordCache getLevel2Cache() {

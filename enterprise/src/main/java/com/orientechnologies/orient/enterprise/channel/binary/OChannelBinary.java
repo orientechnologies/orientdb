@@ -15,18 +15,6 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -41,14 +29,25 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public abstract class OChannelBinary extends OChannel {
   private static final int MAX_LENGTH_DEBUG = 150;
-
+  protected final boolean  debug;
+  private final int        maxChunkSize;
+  private final byte[]     buffer;
   public DataInputStream   in;
   public DataOutputStream  out;
-  private final int        maxChunkSize;
-  protected final boolean  debug;
-  private final byte[]     buffer;
 
   public OChannelBinary(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     super(iSocket, iConfig);
@@ -430,7 +429,8 @@ public abstract class OChannelBinary extends OChannel {
     updateMetricFlushes();
 
     super.flush();
-    out.flush();
+    if (out != null)
+      out.flush();
   }
 
   @Override
@@ -439,14 +439,18 @@ public abstract class OChannelBinary extends OChannel {
       OLogManager.instance().info(this, "%s - Closing socket...", socket.getRemoteSocketAddress());
 
     try {
-      if (in != null)
+      if (in != null) {
         in.close();
+        // in = null;
+      }
     } catch (IOException e) {
     }
 
     try {
-      if (out != null)
+      if (out != null) {
         out.close();
+        // out = null;
+      }
     } catch (IOException e) {
     }
 

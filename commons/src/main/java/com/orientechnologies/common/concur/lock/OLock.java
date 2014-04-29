@@ -29,4 +29,6 @@ public interface OLock {
   public void unlock();
 
   public <V> V callInLock(Callable<V> iCallback) throws Exception;
+
+  public void close();
 }

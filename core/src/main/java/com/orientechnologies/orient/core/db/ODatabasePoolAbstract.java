@@ -157,7 +157,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
     }
   }
 
-  public int getAvailableConnections(final String url, final String userName) {
+  public int getMaxConnections(final String url, final String userName) {
     final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
     lock();
     try {
@@ -165,7 +165,21 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
       if (pool == null)
         return maxSize;
 
-      return pool.getAvailableConnections();
+      return pool.getMaxResources();
+    } finally {
+      unlock();
+    }
+  }
+
+  public int getAvailableConnections(final String url, final String userName) {
+    final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    lock();
+    try {
+      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
+      if (pool == null)
+        return 0;
+
+      return pool.getAvailableResources();
     } finally {
       unlock();
     }

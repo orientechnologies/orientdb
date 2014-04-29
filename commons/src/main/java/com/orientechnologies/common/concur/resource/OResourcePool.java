@@ -93,8 +93,12 @@ public class OResourcePool<K, V> {
     }
   }
 
-  public int getAvailableConnections() {
+  public int getMaxResources() {
     return sem.availablePermits();
+  }
+
+  public int getAvailableResources() {
+    return resources.size();
   }
 
   public boolean returnResource(final V res) {
@@ -113,5 +117,6 @@ public class OResourcePool<K, V> {
 
   public void remove(final V res) {
     this.resources.remove(res);
+    sem.release();
   }
 }
