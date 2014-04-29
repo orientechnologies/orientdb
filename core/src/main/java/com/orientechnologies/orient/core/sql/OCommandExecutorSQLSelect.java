@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -60,9 +73,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -1027,51 +1037,39 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (canBeUsedByOrderBy(index)) {
           final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
+          final Object key;
           if (ascSortOrder) {
-            final Object firstKey = index.getFirstKey();
-            if (firstKey == null)
-              return false;
+            key = index.getFirstKey();
+          } else {
+            key = index.getLastKey();
+          }
 
-            fullySortedByIndex = true;
+          if (key == null)
+            return false;
 
-            if (context.isRecordingMetrics()) {
-              context.setVariable("indexIsUsedInOrderBy", true);
-              context.setVariable("fullySortedByIndex", fullySortedByIndex);
+          fullySortedByIndex = true;
 
-              Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
-              if (idxNames == null) {
-                idxNames = new HashSet<String>();
-                context.setVariable("involvedIndexes", idxNames);
-              }
+          if (context.isRecordingMetrics()) {
+            context.setVariable("indexIsUsedInOrderBy", true);
+            context.setVariable("fullySortedByIndex", fullySortedByIndex);
 
-              idxNames.add(index.getName());
+            Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
+            if (idxNames == null) {
+              idxNames = new HashSet<String>();
+              context.setVariable("involvedIndexes", idxNames);
             }
 
-            final OIndexCursor cursor = index.iterateEntriesMajor(firstKey, true, true);
+            idxNames.add(index.getName());
+          }
+
+          final OIndexCursor cursor;
+          if (ascSortOrder) {
+            cursor = index.iterateEntriesMajor(key, true, true);
             fetchValuesFromIndexCursor(cursor, false);
           } else {
-            final Object lastKey = index.getLastKey();
-            if (lastKey == null)
-              return false;
-
-            fullySortedByIndex = true;
-
-            if (context.isRecordingMetrics()) {
-              context.setVariable("indexIsUsedInOrderBy", true);
-              context.setVariable("fullySortedByIndex", fullySortedByIndex);
-
-              Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
-              if (idxNames == null) {
-                idxNames = new HashSet<String>();
-                context.setVariable("involvedIndexes", idxNames);
-              }
-
-              idxNames.add(index.getName());
-            }
-
-            final OIndexCursor cursor = index.iterateEntriesMinor(lastKey, true, false);
-            fetchValuesFromIndexCursor(cursor, false);
+            cursor = index.iterateEntriesMinor(key, true, false);
           }
+          fetchValuesFromIndexCursor(cursor, false);
 
           return true;
         }
