@@ -85,42 +85,41 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author Andrey Lomakin
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OStorageLocalAbstract {
-  private static final int             ONE_KB                               = 1024;
-  private static String[]              ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda", ".odh", ".otx",
-      ".ocs", ".oef", ".oem", ".oet", OWriteAheadLog.WAL_SEGMENT_EXTENSION, OWriteAheadLog.MASTER_RECORD_EXTENSION,
+  private static final int                      ONE_KB                               = 1024;
+  private static String[]                       ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda", ".odh",
+      ".otx", ".ocs", ".oef", ".oem", ".oet", OWriteAheadLog.WAL_SEGMENT_EXTENSION, OWriteAheadLog.MASTER_RECORD_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OLocalHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
       OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
       OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
-      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION                        };
-  private final int                    DELETE_MAX_RETRIES;
-  private final int                    DELETE_WAIT_TIME;
-  private final Map<String, OCluster>  clusterMap                           = new LinkedHashMap<String, OCluster>();
-  private final OStorageVariableParser variableParser;
-  private OCluster[]                   clusters                             = new OCluster[0];
-  private String                       storagePath;
-  private int                          defaultClusterId                     = -1;
-  private OModificationLock            modificationLock                     = new OModificationLock();
+      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION                                 };
 
-  private ScheduledExecutorService     fuzzyCheckpointExecutor;
-  private ExecutorService              checkpointExecutor;
+  private final int                             DELETE_MAX_RETRIES;
+  private final int                             DELETE_WAIT_TIME;
 
-  private volatile boolean             wereDataRestoredAfterOpen            = false;
+  private final ConcurrentMap<String, OCluster> clusterMap                           = new ConcurrentHashMap<String, OCluster>();
+  private CopyOnWriteArrayList<OCluster>        clusters                             = new CopyOnWriteArrayList<OCluster>();
 
-  private boolean                      makeFullCheckPointAfterClusterCreate = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
-                                                                                .getValueAsBoolean();
+  private final OStorageVariableParser          variableParser;
+
+  private String                                storagePath;
+  private volatile int                          defaultClusterId                     = -1;
+  private OModificationLock                     modificationLock                     = new OModificationLock();
+
+  private ScheduledExecutorService              fuzzyCheckpointExecutor;
+  private ExecutorService                       checkpointExecutor;
+
+  private volatile boolean                      wereDataRestoredAfterOpen            = false;
+
+  private boolean                               makeFullCheckPointAfterClusterCreate = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
+                                                                                         .getValueAsBoolean();
 
   public OLocalPaginatedStorage(final String name, final String filePath, final String mode) throws IOException {
     super(name, filePath, mode);
@@ -178,25 +177,25 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
           try {
             if (pos == -1) {
-              clusters[i].open();
+              clusters.get(i).open();
             } else {
               if (clusterConfig.getName().equals(CLUSTER_DEFAULT_NAME))
                 defaultClusterId = pos;
 
-              clusters[pos].open();
+              clusters.get(pos).open();
             }
           } catch (FileNotFoundException e) {
             OLogManager.instance().warn(
                 this,
-                "Error on loading cluster '" + clusters[i].getName() + "' (" + i
+                "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i
                     + "): file not found. It will be excluded from current database '" + getName() + "'.");
 
-            clusterMap.remove(clusters[i].getName());
-            clusters[i] = null;
+            clusterMap.remove(clusters.get(i).getName());
+
+            setCluster(i, null);
           }
         } else {
-          clusters = Arrays.copyOf(clusters, clusters.length + 1);
-          clusters[i] = null;
+          setCluster(i, null);
         }
       }
 
@@ -207,6 +206,16 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     } finally {
       lock.releaseExclusiveLock();
     }
+  }
+
+  private void setCluster(int id, OCluster cluster) {
+    if (clusters.size() <= id) {
+      while (clusters.size() < id)
+        clusters.add(null);
+
+      clusters.add(cluster);
+    } else
+      clusters.set(id, cluster);
   }
 
   public boolean wereDataRestoredAfterOpen() {
@@ -463,9 +472,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (requestedId < 0) {
         throw new OConfigurationException("Cluster id must be positive!");
       }
-      if (requestedId < clusters.length && clusters[requestedId] != null) {
+      if (requestedId < clusters.size() && clusters.get(requestedId) != null) {
         throw new OConfigurationException("Requested cluster ID [" + requestedId + "] is occupied by cluster with name ["
-            + clusters[requestedId].getName() + "]");
+            + clusters.get(requestedId).getName() + "]");
       }
 
       return addClusterInternal(clusterName, requestedId, location, true, parameters);
@@ -484,11 +493,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     lock.acquireExclusiveLock();
     try {
 
-      if (iClusterId < 0 || iClusterId >= clusters.length)
+      if (iClusterId < 0 || iClusterId >= clusters.size())
         throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is outside the of range of configured clusters (0-"
-            + (clusters.length - 1) + ") in database '" + name + "'");
+            + (clusters.size() - 1) + ") in database '" + name + "'");
 
-      final OCluster cluster = clusters[iClusterId];
+      final OCluster cluster = clusters.get(iClusterId);
       if (cluster == null)
         return false;
 
@@ -499,7 +508,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       cluster.delete();
 
       clusterMap.remove(cluster.getName());
-      clusters[iClusterId] = null;
+      clusters.set(iClusterId, null);
 
       // UPDATE CONFIGURATION
       configuration.dropCluster(iClusterId);
@@ -525,27 +534,21 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   @Override
-  public long count(int iClusterId, boolean countTombstones) {
-    if (iClusterId == -1)
-      throw new OStorageException("Cluster Id " + iClusterId + " is invalid in database '" + name + "'");
+  public long count(int clusterId, boolean countTombstones) {
+    if (clusterId == -1)
+      throw new OStorageException("Cluster Id " + clusterId + " is invalid in database '" + name + "'");
 
     // COUNT PHYSICAL CLUSTER IF ANY
     checkOpeness();
 
-    lock.acquireSharedLock();
-    try {
+    final OCluster cluster = clusters.get(clusterId);
+    if (cluster == null)
+      return 0;
 
-      final OCluster cluster = clusters[iClusterId];
-      if (cluster == null)
-        return 0;
+    if (countTombstones)
+      return cluster.getEntries();
 
-      if (countTombstones)
-        return cluster.getEntries();
-
-      return cluster.getEntries() - cluster.getTombstonesCount();
-    } finally {
-      lock.releaseSharedLock();
-    }
+    return cluster.getEntries() - cluster.getTombstonesCount();
   }
 
   public OClusterPosition[] getClusterDataRange(final int iClusterId) {
@@ -553,17 +556,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       return new OClusterPosition[] { OClusterPosition.INVALID_POSITION, OClusterPosition.INVALID_POSITION };
 
     checkOpeness();
-
-    lock.acquireSharedLock();
     try {
-
-      return clusters[iClusterId] != null ? new OClusterPosition[] { clusters[iClusterId].getFirstPosition(),
-          clusters[iClusterId].getLastPosition() } : new OClusterPosition[0];
+      return clusters.get(iClusterId) != null ? new OClusterPosition[] { clusters.get(iClusterId).getFirstPosition(),
+          clusters.get(iClusterId).getLastPosition() } : new OClusterPosition[0];
 
     } catch (IOException ioe) {
       throw new OStorageException("Can not retrieve information about data range", ioe);
-    } finally {
-      lock.releaseSharedLock();
     }
   }
 
@@ -575,26 +573,20 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   public long count(int[] iClusterIds, boolean countTombstones) {
     checkOpeness();
 
-    lock.acquireSharedLock();
-    try {
+    long tot = 0;
 
-      long tot = 0;
+    for (int iClusterId : iClusterIds) {
+      if (iClusterId >= clusters.size())
+        throw new OConfigurationException("Cluster id " + iClusterId + " was not found in database '" + name + "'");
 
-      for (int iClusterId : iClusterIds) {
-        if (iClusterId >= clusters.length)
-          throw new OConfigurationException("Cluster id " + iClusterId + " was not found in database '" + name + "'");
-
-        if (iClusterId > -1) {
-          final OCluster c = clusters[iClusterId];
-          if (c != null)
-            tot += c.getEntries() - (countTombstones ? 0L : c.getTombstonesCount());
-        }
+      if (iClusterId > -1) {
+        final OCluster c = clusters.get(iClusterId);
+        if (c != null)
+          tot += c.getEntries() - (countTombstones ? 0L : c.getTombstonesCount());
       }
-
-      return tot;
-    } finally {
-      lock.releaseSharedLock();
     }
+
+    return tot;
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int dataSegmentId, final ORecordId rid,
@@ -966,15 +958,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   public Set<String> getClusterNames() {
     checkOpeness();
-
-    lock.acquireSharedLock();
-    try {
-
-      return clusterMap.keySet();
-
-    } finally {
-      lock.releaseSharedLock();
-    }
+    return new HashSet<String>(clusterMap.keySet());
   }
 
   public int getClusterIdByName(final String iClusterName) {
@@ -990,16 +974,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       return Integer.parseInt(iClusterName);
 
     // SEARCH IT BETWEEN PHYSICAL CLUSTERS
-    lock.acquireSharedLock();
-    try {
 
-      final OCluster segment = clusterMap.get(iClusterName.toLowerCase());
-      if (segment != null)
-        return segment.getId();
-
-    } finally {
-      lock.releaseSharedLock();
-    }
+    final OCluster segment = clusterMap.get(iClusterName.toLowerCase());
+    if (segment != null)
+      return segment.getId();
 
     return -1;
   }
@@ -1011,16 +989,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       throw new IllegalArgumentException("Cluster name is null");
 
     // SEARCH IT BETWEEN PHYSICAL CLUSTERS
-    lock.acquireSharedLock();
-    try {
-
-      final OCluster segment = clusterMap.get(iClusterName.toLowerCase());
-      if (segment != null)
-        return segment.getType();
-
-    } finally {
-      lock.releaseSharedLock();
-    }
+    final OCluster segment = clusterMap.get(iClusterName.toLowerCase());
+    if (segment != null)
+      return segment.getType();
 
     return null;
   }
@@ -1138,17 +1109,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   public String getPhysicalClusterNameById(final int iClusterId) {
     checkOpeness();
 
-    lock.acquireSharedLock();
-    try {
+    if (iClusterId >= clusters.size())
+      return null;
 
-      if (iClusterId >= clusters.length)
-        return null;
-
-      return clusters[iClusterId] != null ? clusters[iClusterId].getName() : null;
-
-    } finally {
-      lock.releaseSharedLock();
-    }
+    return clusters.get(iClusterId) != null ? clusters.get(iClusterId).getName() : null;
   }
 
   @Override
@@ -1165,39 +1129,26 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public OCluster getClusterById(int iClusterId) {
-    lock.acquireSharedLock();
-    try {
+    if (iClusterId == ORID.CLUSTER_ID_INVALID)
+      // GET THE DEFAULT CLUSTER
+      iClusterId = defaultClusterId;
 
-      if (iClusterId == ORID.CLUSTER_ID_INVALID)
-        // GET THE DEFAULT CLUSTER
-        iClusterId = defaultClusterId;
+    checkClusterSegmentIndexRange(iClusterId);
 
-      checkClusterSegmentIndexRange(iClusterId);
+    final OCluster cluster = clusters.get(iClusterId);
+    if (cluster == null)
+      throw new IllegalArgumentException("Cluster " + iClusterId + " is null");
 
-      final OCluster cluster = clusters[iClusterId];
-      if (cluster == null)
-        throw new IllegalArgumentException("Cluster " + iClusterId + " is null");
-
-      return cluster;
-    } finally {
-      lock.releaseSharedLock();
-    }
+    return cluster;
   }
 
   @Override
   public OCluster getClusterByName(final String iClusterName) {
-    lock.acquireSharedLock();
-    try {
+    final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
 
-      final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
-
-      if (cluster == null)
-        throw new IllegalArgumentException("Cluster " + iClusterName + " does not exist in database '" + name + "'");
-      return cluster;
-
-    } finally {
-      lock.releaseSharedLock();
-    }
+    if (cluster == null)
+      throw new IllegalArgumentException("Cluster " + iClusterName + " does not exist in database '" + name + "'");
+    return cluster;
   }
 
   @Override
@@ -1206,7 +1157,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public long getSize() {
-    lock.acquireSharedLock();
     try {
 
       long size = 0;
@@ -1219,8 +1169,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     } catch (IOException ioe) {
       throw new OStorageException("Can not calculate records size");
-    } finally {
-      lock.releaseSharedLock();
     }
   }
 
@@ -1237,30 +1185,16 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public int getClusters() {
-    lock.acquireSharedLock();
-    try {
-
-      return clusterMap.size();
-
-    } finally {
-      lock.releaseSharedLock();
-    }
+    return clusterMap.size();
   }
 
   public Set<OCluster> getClusterInstances() {
     final Set<OCluster> result = new HashSet<OCluster>();
 
-    lock.acquireSharedLock();
-    try {
-
-      // ADD ALL THE CLUSTERS
-      for (OCluster c : clusters)
-        if (c != null)
-          result.add(c);
-
-    } finally {
-      lock.releaseSharedLock();
-    }
+    // ADD ALL THE CLUSTERS
+    for (OCluster c : clusters)
+      if (c != null)
+        result.add(c);
 
     return result;
   }
@@ -1954,7 +1888,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         if (cluster != null)
           cluster.close(!onDelete);
 
-      clusters = new OCluster[0];
+      clusters.clear();
       clusterMap.clear();
 
       if (configuration != null)
@@ -1988,9 +1922,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   private int doAddCluster(String clusterName, String location, boolean fullCheckPoint, Object[] parameters) throws IOException {
     // FIND THE FIRST AVAILABLE CLUSTER ID
-    int clusterPos = clusters.length;
-    for (int i = 0; i < clusters.length; ++i) {
-      if (clusters[i] == null) {
+    int clusterPos = clusters.size();
+    for (int i = 0; i < clusters.size(); ++i) {
+      if (clusters.get(i) == null) {
         clusterPos = i;
         break;
       }
@@ -2131,7 +2065,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private void checkClusterSegmentIndexRange(final int iClusterId) {
-    if (iClusterId > clusters.length - 1)
+    if (iClusterId > clusters.size() - 1)
       throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in database '" + name + "'");
   }
 
@@ -2169,30 +2103,27 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       clusterMap.put(cluster.getName(), cluster);
       id = cluster.getId();
     } else {
-      id = clusters.length;
+      id = clusters.size();
     }
 
-    if (id >= clusters.length) {
-      clusters = OArrays.copyOf(clusters, id + 1);
-    }
-    clusters[id] = cluster;
+    setCluster(id, cluster);
 
     return id;
   }
 
   private void addDefaultClusters() throws IOException {
     final String storageCompression = OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString();
-    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
         OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression));
 
-    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
         OMetadataDefault.CLUSTER_INDEX_NAME, null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
         OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
 
-    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+    createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
         OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, false, 1, 1, storageCompression));
 
-    defaultClusterId = createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.length,
+    defaultClusterId = createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
         CLUSTER_DEFAULT_NAME, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
         OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
   }

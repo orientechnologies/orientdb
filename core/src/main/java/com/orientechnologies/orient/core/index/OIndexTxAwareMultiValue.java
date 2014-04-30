@@ -20,6 +20,7 @@ import java.util.*;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
@@ -154,7 +155,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
     final OIndexCursor txCursor = new OIndexAbstractCursor() {
       private Iterator<Object>        keysIterator   = sortedKeys.iterator();
 
-      private Iterator<OIdentifiable> valuesIterator = Collections.emptyIterator();
+      private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
       private Object                  key;
 
       @Override
@@ -284,7 +285,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
 
     private Object                         nextKey;
 
-    private Iterator<OIdentifiable>        valuesIterator = Collections.emptyIterator();
+    private Iterator<OIdentifiable>        valuesIterator = new OEmptyIterator<OIdentifiable>();
     private Object                         key;
 
     public PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
@@ -361,7 +362,7 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
 
     private Object                         nextKey;
 
-    private Iterator<OIdentifiable>        valuesIterator = Collections.emptyIterator();
+    private Iterator<OIdentifiable>        valuesIterator = new OEmptyIterator<OIdentifiable>();
     private Object                         key;
 
     public PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,

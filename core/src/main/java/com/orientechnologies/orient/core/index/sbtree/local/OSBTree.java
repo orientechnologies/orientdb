@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -1702,7 +1703,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     private int         itemIndex;
 
     private List<K>     keysCache    = new ArrayList<K>();
-    private Iterator<K> keysIterator = Collections.emptyIterator();
+    private Iterator<K> keysIterator = new OEmptyIterator<K>();
 
     public OSBTreeFullKeyCursor(long startPageIndex) {
       pageIndex = startPageIndex;
