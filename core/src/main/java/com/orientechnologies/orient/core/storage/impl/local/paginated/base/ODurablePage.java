@@ -27,6 +27,26 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
 
 /**
+ * Base page class for all durable data structures, that is data structures state of which can be consistently restored after system
+ * crash but results of last operations in small interval before crash may be lost.
+ * 
+ * This page has several booked memory areas with following offsets at the beginning:
+ * <ol>
+ * <li>from 0 to 7 - Magic number</li>
+ * <li>from 8 to 11 - crc32 of all page content, which is calculated by cache system just before save</li>
+ * <li>from 12 to 23 - LSN of last operation which was stored for given page</li>
+ * </ol>
+ * 
+ * Developer which will extend this class should use all page memory starting from {@link #NEXT_FREE_POSITION} offset.
+ * 
+ * To make page changes durable method {@link ODurableComponent#logPageChanges(ODurablePage, long, long, boolean)} should be called
+ * just before release of page
+ * {@link com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache#release(com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry)}
+ * back to the cache.
+ * 
+ * All data structures which use this kind of pages should be derived from
+ * {@link com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent} class.
+ * 
  * @author Andrey Lomakin
  * @since 16.08.13
  */
