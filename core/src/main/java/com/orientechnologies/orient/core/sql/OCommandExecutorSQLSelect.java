@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -61,9 +74,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.*;
-import java.util.Map.Entry;
-
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
  * If the query contains the ORDER BY clause, the results are temporary collected internally, then ordered and finally returned all
@@ -92,7 +102,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private Object                      expandTarget;
   private int                         fetchLimit           = -1;
   private OIdentifiable               lastRecord;
-  private Iterator<OIdentifiable>     subIterator;
   private String                      fetchPlan;
 
   private boolean                     fullySortedByIndex   = false;
@@ -249,20 +258,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private static boolean checkIndexExistence(final OClass iSchemaClass, final OIndexSearchResult result) {
-    if (!iSchemaClass.areIndexed(result.fields()))
-      return false;
+    return iSchemaClass.areIndexed(result.fields())
+        && (!result.lastField.isLong() || checkIndexChainExistence(iSchemaClass, result));
+  }
 
-    if (result.lastField.isLong()) {
-      final int fieldCount = result.lastField.getItemCount();
-      OClass cls = iSchemaClass.getProperty(result.lastField.getItemName(0)).getLinkedClass();
+  private static boolean checkIndexChainExistence(OClass iSchemaClass, OIndexSearchResult result) {
+    final int fieldCount = result.lastField.getItemCount();
+    OClass cls = iSchemaClass.getProperty(result.lastField.getItemName(0)).getLinkedClass();
 
-      for (int i = 1; i < fieldCount; i++) {
-        if (cls == null || !cls.areIndexed(result.lastField.getItemName(i))) {
-          return false;
-        }
-
-        cls = cls.getProperty(result.lastField.getItemName(i)).getLinkedClass();
+    for (int i = 1; i < fieldCount; i++) {
+      if (cls == null || !cls.areIndexed(result.lastField.getItemName(i))) {
+        return false;
       }
+
+      cls = cls.getProperty(result.lastField.getItemName(i)).getLinkedClass();
     }
     return true;
   }
@@ -394,6 +403,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   public Iterator<OIdentifiable> iterator(final Map<Object, Object> iArgs) {
+    final Iterator<OIdentifiable> subIterator;
     if (target == null) {
       // GET THE RESULT
       executeSearch(iArgs);
@@ -585,7 +595,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (groupByFields != null && !groupByFields.isEmpty()) {
           if (groupByFields.size() > 1) {
             // MULTI-FIELD GROUP BY
-            final ODocument doc = (ODocument) iRecord.getRecord();
+            final ODocument doc = iRecord.getRecord();
             final Object[] fields = new Object[groupByFields.size()];
             for (int i = 0; i < groupByFields.size(); ++i) {
               final String field = groupByFields.get(i);
@@ -629,8 +639,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected ORuntimeResult getProjectionGroup(final Object fieldValue) {
-    ORuntimeResult group = null;
-
     final long projectionElapsed = (Long) context.getVariable("projectionElapsed", 0l);
     final long begin = System.currentTimeMillis();
     try {
@@ -660,7 +668,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           key = fieldValue;
       }
 
-      group = groupedResult.get(key);
+      ORuntimeResult group = groupedResult.get(key);
       if (group == null) {
         group = new ORuntimeResult(fieldValue, createProjectionFromDefinition(), resultCount, context);
         groupedResult.put(key, group);
@@ -729,9 +737,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected void searchInClasses() {
     final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
 
-    if (searchForIndexes(cls)) {
-    } else
+    if (!searchForIndexes(cls)) {
       super.searchInClasses();
+    }
   }
 
   protected int parseProjections() {
@@ -754,7 +762,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       final List<String> items = OStringSerializerHelper.smartSplit(projectionString, ',');
 
-      String fieldName;
       int beginPos;
       int endPos;
       for (String projection : items) {
@@ -767,7 +774,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (words.size() > 1)
           lastRealPositionProjection = words.get(0).length();
 
-        fieldName = null;
+        String fieldName;
         endPos = projection.toUpperCase(Locale.ENGLISH).indexOf(KEYWORD_AS);
         if (endPos > -1) {
           // EXTRACT ALIAS
@@ -1020,74 +1027,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (compiledFilter == null) {
       if (orderedFields.size() == 0)
         return false;
-
-      // use index to order documents by provided fields
-      final List<String> fieldNames = new ArrayList<String>();
-
-      for (OPair<String, String> pair : orderedFields)
-        fieldNames.add(pair.getKey());
-
-      final Set<OIndex<?>> indexes = iSchemaClass.getInvolvedIndexes(fieldNames);
-
-      for (OIndex<?> index : indexes) {
-        if (canBeUsedByOrderBy(index)) {
-          final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
-
-          if (ascSortOrder) {
-            final Object firstKey = index.getFirstKey();
-            if (firstKey == null)
-              return false;
-
-            fullySortedByIndex = true;
-
-            if (context.isRecordingMetrics()) {
-              context.setVariable("indexIsUsedInOrderBy", true);
-              context.setVariable("fullySortedByIndex", fullySortedByIndex);
-
-              Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
-              if (idxNames == null) {
-                idxNames = new HashSet<String>();
-                context.setVariable("involvedIndexes", idxNames);
-              }
-
-              idxNames.add(index.getName());
-            }
-
-            final OIndexCursor cursor = index.iterateEntriesMajor(firstKey, true, true);
-            fetchValuesFromIndexCursor(cursor, false);
-          } else {
-            final Object lastKey = index.getLastKey();
-            if (lastKey == null)
-              return false;
-
-            fullySortedByIndex = true;
-
-            if (context.isRecordingMetrics()) {
-              context.setVariable("indexIsUsedInOrderBy", true);
-              context.setVariable("fullySortedByIndex", fullySortedByIndex);
-
-              Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
-              if (idxNames == null) {
-                idxNames = new HashSet<String>();
-                context.setVariable("involvedIndexes", idxNames);
-              }
-
-              idxNames.add(index.getName());
-            }
-
-            final OIndexCursor cursor = index.iterateEntriesMinor(lastKey, true, false);
-            fetchValuesFromIndexCursor(cursor, false);
-          }
-
-          return true;
-        }
-      }
-
-      if (context.isRecordingMetrics()) {
-        context.setVariable("indexIsUsedInOrderBy", false);
-        context.setVariable("fullySortedByIndex", fullySortedByIndex);
-      }
-      return false;
+      else
+        return optimizeSort(iSchemaClass);
     }
 
     analyzeQueryBranch(iSchemaClass, compiledFilter.getRootCondition(), indexSearchResults, context);
@@ -1159,11 +1100,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         OIndexCursor cursor;
         final boolean indexIsUsedInOrderBy = canBeUsedByOrderBy(index) && !(index.getInternal() instanceof OChainedIndexProxy);
         try {
-          boolean ascSortOrder;
-          if (indexIsUsedInOrderBy)
-            ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
-          else
-            ascSortOrder = true;
+          boolean ascSortOrder = !indexIsUsedInOrderBy || orderedFields.get(0).getValue().equals(KEYWORD_ASC);
 
           if (indexIsUsedInOrderBy)
             fullySortedByIndex = indexDefinition.getFields().size() >= orderedFields.size();
@@ -1207,6 +1144,69 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         return true;
       }
+    }
+    return false;
+  }
+
+  /**
+   * Use index to order documents by provided fields.
+   * 
+   * @param iSchemaClass
+   *          where search for indexes for optimization.
+   * @return true if execution was optimized
+   */
+  private boolean optimizeSort(OClass iSchemaClass) {
+    final List<String> fieldNames = new ArrayList<String>();
+
+    for (OPair<String, String> pair : orderedFields)
+      fieldNames.add(pair.getKey());
+
+    final Set<OIndex<?>> indexes = iSchemaClass.getInvolvedIndexes(fieldNames);
+
+    for (OIndex<?> index : indexes) {
+      if (canBeUsedByOrderBy(index)) {
+        final boolean ascSortOrder = orderedFields.get(0).getValue().equals(KEYWORD_ASC);
+
+        final Object key;
+        if (ascSortOrder) {
+          key = index.getFirstKey();
+        } else {
+          key = index.getLastKey();
+        }
+
+        if (key == null)
+          return false;
+
+        fullySortedByIndex = true;
+
+        if (context.isRecordingMetrics()) {
+          context.setVariable("indexIsUsedInOrderBy", true);
+          context.setVariable("fullySortedByIndex", fullySortedByIndex);
+
+          Set<String> idxNames = (Set<String>) context.getVariable("involvedIndexes");
+          if (idxNames == null) {
+            idxNames = new HashSet<String>();
+            context.setVariable("involvedIndexes", idxNames);
+          }
+
+          idxNames.add(index.getName());
+        }
+
+        final OIndexCursor cursor;
+        if (ascSortOrder) {
+          cursor = index.iterateEntriesMajor(key, true, true);
+        } else {
+          cursor = index.iterateEntriesMinor(key, true, false);
+        }
+        fetchValuesFromIndexCursor(cursor, false);
+
+        return true;
+      }
+    }
+
+    if (context.isRecordingMetrics()) {
+      context.setVariable("indexIsUsedInOrderBy", false);
+      context.setVariable("fullySortedByIndex", fullySortedByIndex);
     }
     return false;
   }
@@ -1333,8 +1333,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (expandTarget == null)
       return;
 
-    Object fieldValue;
-
     final long startExpand = System.currentTimeMillis();
     try {
 
@@ -1355,6 +1353,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         final OMultiCollectionIterator<OIdentifiable> finalResult = new OMultiCollectionIterator<OIdentifiable>();
         finalResult.setLimit(limit);
         for (OIdentifiable id : tempResult) {
+          final Object fieldValue;
           if (expandTarget instanceof OSQLFilterItem)
             fieldValue = ((OSQLFilterItem) expandTarget).getValue(id.getRecord(), null, context);
           else if (expandTarget instanceof OSQLFunctionRuntime)
@@ -1363,14 +1362,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             fieldValue = expandTarget.toString();
 
           if (fieldValue != null)
-            if (fieldValue instanceof Collection<?>) {
-              finalResult.add((Collection<OIdentifiable>) fieldValue);
+            if (fieldValue instanceof Collection<?> || fieldValue instanceof OMultiCollectionIterator
+                || fieldValue instanceof OIdentifiable) {
+              finalResult.add(fieldValue);
             } else if (fieldValue instanceof Map<?, ?>) {
               finalResult.add(((Map<?, OIdentifiable>) fieldValue).values());
-            } else if (fieldValue instanceof OMultiCollectionIterator) {
-              finalResult.add((OMultiCollectionIterator<OIdentifiable>) fieldValue);
-            } else if (fieldValue instanceof OIdentifiable)
-              finalResult.add((OIdentifiable) fieldValue);
+            }
         }
         tempResult = finalResult;
       }
@@ -1538,11 +1535,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (!f.getRoot().equals(OSQLFunctionCount.NAME))
       return false;
 
-    if (!((f.configuredParameters == null || f.configuredParameters.length == 0) || (f.configuredParameters != null
-        && f.configuredParameters.length == 1 && f.configuredParameters[0].equals("*"))))
-      return false;
+    return (f.configuredParameters == null || f.configuredParameters.length == 0)
+        || (f.configuredParameters.length == 1 && f.configuredParameters[0].equals("*"));
 
-    return true;
   }
 
   private boolean isIndexKeySizeQuery() {
@@ -1568,10 +1563,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return false;
 
     final OSQLFilterItemField field = (OSQLFilterItemField) fConfigured.configuredParameters[0];
-    if (!field.getRoot().equals("key"))
-      return false;
-
-    return true;
+    return field.getRoot().equals("key");
   }
 
   private void handleNoTarget() {
