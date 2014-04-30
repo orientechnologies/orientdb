@@ -52,8 +52,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public final class OIndexes {
 
-  private static Set<OIndexFactory> FACTORIES         = null;
-  private static ClassLoader        orientClassLoader = OIndexes.class.getClassLoader();
+  private static Set<OIndexFactory>       FACTORIES         = null;
+  private static final Set<OIndexFactory> DYNAMIC_FACTORIES = Collections.synchronizedSet(new HashSet<OIndexFactory>());
+  private static ClassLoader              orientClassLoader = OIndexes.class.getClassLoader();
 
   private OIndexes() {
   }
@@ -72,6 +73,7 @@ public final class OIndexes {
       while (ite.hasNext()) {
         factories.add(ite.next());
       }
+      factories.addAll(DYNAMIC_FACTORIES);
       FACTORIES = Collections.unmodifiableSet(factories);
     }
     return FACTORIES;
@@ -137,6 +139,26 @@ public final class OIndexes {
   public static synchronized void scanForPlugins() {
     // clear cache, will cause a rescan on next getFactories call
     FACTORIES = null;
+  }
+
+  /**
+   * Register at runtime custom factories
+   * 
+   * @param factory
+   */
+  public static void registerFactory(OIndexFactory factory) {
+    DYNAMIC_FACTORIES.add(factory);
+    scanForPlugins();
+  }
+
+  /**
+   * Unregister custom factories
+   * 
+   * @param factory
+   */
+  public static void unregisterFactory(OIndexFactory factory) {
+    DYNAMIC_FACTORIES.remove(factory);
+    scanForPlugins();
   }
 
 }
