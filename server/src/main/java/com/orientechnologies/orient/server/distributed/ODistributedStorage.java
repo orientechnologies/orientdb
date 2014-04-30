@@ -44,15 +44,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -70,6 +63,7 @@ import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -86,7 +80,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODistributedStorage implements OStorage, OFreezableStorage {
+public class ODistributedStorage implements OStorage, OFreezableStorage, OAutoshardedStorage {
   protected final OServer                                                   serverInstance;
   protected final ODistributedServerManager                                 dManager;
   protected final OStorageEmbedded                                          wrapped;
@@ -186,7 +180,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
       } else {
         // SHARDED, GET ONLY ONE NODE PER INVOLVED CLUSTER
-        task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.MERGE);
+        task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.UNION);
 
         nodes = dbCfg.getOneServerPerCluster(involvedClusters, dManager.getLocalNodeName());
 
@@ -196,6 +190,32 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
           return wrapped.command(iCommand);
 
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
+
+        if (result instanceof Map) {
+          if (executor instanceof OCommandExecutorSQLDelegate
+              && ((OCommandExecutorSQLDelegate) executor).getDelegate() instanceof OCommandExecutorSQLSelect) {
+            final OCommandExecutorSQLSelect cmd = (OCommandExecutorSQLSelect) ((OCommandExecutorSQLDelegate) executor)
+                .getDelegate();
+
+            final Map<String, Object> proj = cmd.getProjections();
+            // if (proj != null) {
+            // final List<Object> list = new ArrayList<Object>();
+            // result = list;
+            // } else {
+            if (((Map<String, Object>) result).size() == 1)
+              result = ((Map<String, Object>) result).values().iterator().next();
+            else {
+              // MIX & FILTER RESULT SET AVOIDING DUPLICATES
+              // TODO: FILTER PER CLUSTER WITH QUERY
+              final Set<Object> set = new HashSet<Object>();
+              for (Map.Entry<String, Object> entry : ((Map<String, Object>) result).entrySet()) {
+                set.addAll((Collection<?>) entry.getValue());
+              }
+              result = new ArrayList<Object>(set);
+            }
+            // }
+          }
+        }
       }
 
       if (result instanceof ONeedRetryException)
@@ -794,6 +814,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage {
   public String getClusterNameByRID(final ORecordId iRid) {
     final OCluster cluster = getClusterById(iRid.clusterId);
     return cluster != null ? cluster.getName() : "*";
+  }
+
+  @Override
+  public String getStorageId() {
+    return dManager.getLocalNodeName() + "." + getName();
   }
 
   protected void handleDistributedException(final String iMessage, final Exception e, final Object... iParams) {

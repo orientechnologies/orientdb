@@ -54,6 +54,7 @@ public class TestSharding extends AbstractServerClusterTest {
               .assertEquals("Error on assigning cluster client_" + i, clId, graph.getRawGraph().getClusterIdByName("client_" + i));
 
           vertices[i].setProperty("name", "shard_" + i);
+          vertices[i].setProperty("amount", i * 10000);
         }
       } finally {
         graph.shutdown();
@@ -88,6 +89,24 @@ public class TestSharding extends AbstractServerClusterTest {
         try {
 
           Iterable<OrientVertex> result = g.command(new OCommandSQL("select from Client")).execute();
+          int count = 0;
+          for (OrientVertex v : result)
+            count++;
+
+          Assert.assertEquals("Returned wrong vertices count on server " + server, 3, count);
+        } finally {
+          g.shutdown();
+        }
+      }
+
+      // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION
+      for (int server = 0; server < vertices.length; ++server) {
+        OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
+        OrientGraphNoTx g = f.getNoTx();
+        try {
+
+          Iterable<OrientVertex> result = g.command(new OCommandSQL("select max(amount), avg(amount), sum(amount) from Client"))
+              .execute();
           int count = 0;
           for (OrientVertex v : result)
             count++;

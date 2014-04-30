@@ -32,7 +32,7 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   private static final long serialVersionUID = 1L;
 
   public enum RESULT_STRATEGY {
-    ANY, MERGE, UNION
+    ANY, UNION
   }
 
   public enum QUORUM_TYPE {

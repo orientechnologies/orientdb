@@ -397,25 +397,6 @@ public class ODistributedResponseManager {
       // DEFAULT: RETURN BEST ANSWER
       break;
 
-    case MERGE: {
-      // MERGE THE RESULT IN A UNIQUE OBJECT OR COLLECTION
-      Object result = null;
-      for (Object response : responses.values()) {
-        final Object responsePayload = response instanceof ODistributedResponse ? ((ODistributedResponse) response).getPayload()
-            : response;
-
-        if (result == null)
-          result = responsePayload;
-        else
-          result = OMultiValue.add(result, responsePayload);
-      }
-
-      final ODistributedResponse response = (ODistributedResponse) responses.values().iterator().next();
-      response.setExecutorNodeName(responses.keySet().toString());
-      response.setPayload(result);
-      return response;
-    }
-
     case UNION: {
       // COLLECT ALL THE RESPONSE IN A MAP OF <NODE, RESULT>
       final Map<String, Object> payloads = new HashMap<String, Object>();

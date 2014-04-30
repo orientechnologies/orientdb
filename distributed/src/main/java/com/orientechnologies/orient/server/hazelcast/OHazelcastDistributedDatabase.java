@@ -130,11 +130,15 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     }
 
     final int queueSize = iNodes.size();
+    final boolean groupByResponse;
     int expectedSynchronousResponses = quorum > 0 ? Math.min(quorum, availableNodes) : 1;
-    if (iRequest.getTask().getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION)
-      expectedSynchronousResponses = availableNodes;
 
-    final boolean groupByResponse = iRequest.getTask().getResultStrategy() != OAbstractRemoteTask.RESULT_STRATEGY.MERGE;
+    if (iRequest.getTask().getResultStrategy() == OAbstractRemoteTask.RESULT_STRATEGY.UNION) {
+      expectedSynchronousResponses = availableNodes;
+      groupByResponse = false;
+    } else
+      groupByResponse = true;
+
     final boolean waitLocalNode = waitForLocalNode(cfg, iClusterNames, iNodes);
 
     // CREATE THE RESPONSE MANAGER
