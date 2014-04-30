@@ -43,8 +43,10 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -184,11 +186,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         nodes = dbCfg.getOneServerPerCluster(involvedClusters, dManager.getLocalNodeName());
 
-        if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName())
-            && !dManager.isNodeAvailable(dManager.getLocalNodeName(), getName()))
-          // LOCAL NODE NOT ONLINE, BY PASS QUEUES
+        if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName()))
+          // LOCAL NODE, AVOID TO DISTRIBUTE IT
           return wrapped.command(iCommand);
 
+        // TODO: OPTIMIZE FILTERING BY CHANGING TARGET PER CLUSTER INSTEAD OF LEAVING CLASS
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
 
         if (result instanceof Map) {
@@ -197,23 +199,71 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             final OCommandExecutorSQLSelect cmd = (OCommandExecutorSQLSelect) ((OCommandExecutorSQLDelegate) executor)
                 .getDelegate();
 
-            final Map<String, Object> proj = cmd.getProjections();
-            // if (proj != null) {
-            // final List<Object> list = new ArrayList<Object>();
-            // result = list;
-            // } else {
             if (((Map<String, Object>) result).size() == 1)
+              // USE THE COLLECTION DIRECTLY
               result = ((Map<String, Object>) result).values().iterator().next();
             else {
-              // MIX & FILTER RESULT SET AVOIDING DUPLICATES
-              // TODO: FILTER PER CLUSTER WITH QUERY
-              final Set<Object> set = new HashSet<Object>();
-              for (Map.Entry<String, Object> entry : ((Map<String, Object>) result).entrySet()) {
-                set.addAll((Collection<?>) entry.getValue());
+              if (cmd.isAnyFunctionAggregates()) {
+                final Map<String, Object> proj = cmd.getProjections();
+
+                final List<Object> list = new ArrayList<Object>();
+                final ODocument doc = new ODocument();
+                list.add(doc);
+
+                // MERGE NON AGGREGATED FIELDS
+                for (Map.Entry<String, Object> entry : ((Map<String, Object>) result).entrySet()) {
+                  final List<Object> resultSet = (List<Object>) entry.getValue();
+
+                  for (Object r : resultSet) {
+                    if (r instanceof ODocument) {
+                      final ODocument d = (ODocument) r;
+
+                      for (Map.Entry<String, Object> p : proj.entrySet()) {
+                        // WRITE THE FIELD AS IS
+                        if (!(p.getValue() instanceof OSQLFunctionRuntime))
+                          doc.field(p.getKey(), p.getValue());
+                      }
+                    }
+                  }
+                }
+
+                final List<Object> toMerge = new ArrayList<Object>();
+
+                // MERGE AGGREGATED FIELDS
+                for (Map.Entry<String, Object> p : proj.entrySet()) {
+                  if (p.getValue() instanceof OSQLFunctionRuntime) {
+                    // MERGE RESULTS
+                    final OSQLFunctionRuntime f = (OSQLFunctionRuntime) p.getValue();
+
+                    toMerge.clear();
+                    for (Map.Entry<String, Object> entry : ((Map<String, Object>) result).entrySet()) {
+                      final List<Object> resultSet = (List<Object>) entry.getValue();
+
+                      for (Object r : resultSet) {
+                        if (r instanceof ODocument) {
+                          final ODocument d = (ODocument) r;
+                          toMerge.add(d.rawField(p.getKey()));
+                        }
+                      }
+
+                    }
+
+                    // WRITE THE FINAL MERGED RESULT
+                    doc.field(p.getKey(), f.getFunction().mergeDistributedResult(toMerge));
+                  }
+                }
+
+                result = list;
+              } else {
+                // MIX & FILTER RESULT SET AVOIDING DUPLICATES
+                // TODO: ONCE OPTIMIZED (SEE ABOVE) AVOID TO FILTER HERE
+                final Set<Object> set = new HashSet<Object>();
+                for (Map.Entry<String, Object> entry : ((Map<String, Object>) result).entrySet()) {
+                  set.addAll((Collection<?>) entry.getValue());
+                }
+                result = new ArrayList<Object>(set);
               }
-              result = new ArrayList<Object>(set);
             }
-            // }
           }
         }
       }

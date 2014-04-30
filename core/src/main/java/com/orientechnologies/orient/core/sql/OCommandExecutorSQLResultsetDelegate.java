@@ -15,10 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Iterator;
 import java.util.Map;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import java.util.Set;
 
 /**
  * SQL UPDATE command.
@@ -29,6 +30,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 @SuppressWarnings("unchecked")
 public class OCommandExecutorSQLResultsetDelegate extends OCommandExecutorSQLDelegate implements OIterableRecordSource,
     Iterable<OIdentifiable> {
+
+  @Override
+  public Set<String> getInvolvedClusters() {
+    return ((OCommandExecutorSQLResultsetAbstract) delegate).getInvolvedClusters();
+  }
 
   @Override
   public Iterator<OIdentifiable> iterator() {

@@ -15,19 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -73,6 +60,9 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -359,11 +349,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final ODatabaseRecord db = getDatabase();
 
-    if (parsedTarget.getTargetRecords() != null) {
+    if (parsedTarget.getTargetQuery() != null) {
+      // SUB QUERY, PROPAGATE THE CALL
+      clusters.addAll(parsedTarget.getTargetQuery().getInvolvedClusters());
+    } else if (parsedTarget.getTargetRecords() != null) {
+      // SINGLE RECORDS: BROWSE ALL (COULD BE EXPENSIVE).
       for (OIdentifiable identifiable : parsedTarget.getTargetRecords()) {
         clusters.add(db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase());
       }
     }
+
     if (parsedTarget.getTargetClasses() != null) {
       for (String clazz : parsedTarget.getTargetClasses().values()) {
         final OClass cls = db.getMetadata().getSchema().getClass(clazz);
@@ -380,7 +375,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
     if (parsedTarget.getTargetIndex() != null) {
-      // TODO indexes??
+      // EXTRACT THE CLASS NAME -> CLUSTERS FROM THE INDEX DEFINITION
+      final OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex());
+      if (idx != null) {
+        final String clazz = idx.getDefinition().getClassName();
+
+        if (clazz != null) {
+          final OClass cls = db.getMetadata().getSchema().getClass(clazz);
+          if (cls != null)
+            for (int clId : cls.getClusterIds()) {
+              clusters.add(db.getClusterNameById(clId).toLowerCase());
+            }
+        }
+      }
     }
     return clusters;
   }
