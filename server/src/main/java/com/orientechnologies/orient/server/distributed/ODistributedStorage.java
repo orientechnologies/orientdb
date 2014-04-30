@@ -210,18 +210,28 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 final ODocument doc = new ODocument();
                 list.add(doc);
 
-                // MERGE NON AGGREGATED FIELDS
-                for (Map.Entry<String, Object> entry : ((Map<String, Object>) result).entrySet()) {
-                  final List<Object> resultSet = (List<Object>) entry.getValue();
+                boolean hasNonAggregates = false;
+                for (Map.Entry<String, Object> p : proj.entrySet()) {
+                  if (!(p.getValue() instanceof OSQLFunctionRuntime)) {
+                    hasNonAggregates = true;
+                    break;
+                  }
+                }
 
-                  for (Object r : resultSet) {
-                    if (r instanceof ODocument) {
-                      final ODocument d = (ODocument) r;
+                if (hasNonAggregates) {
+                  // MERGE NON AGGREGATED FIELDS
+                  for (Map.Entry<String, Object> entry : ((Map<String, Object>) result).entrySet()) {
+                    final List<Object> resultSet = (List<Object>) entry.getValue();
 
-                      for (Map.Entry<String, Object> p : proj.entrySet()) {
-                        // WRITE THE FIELD AS IS
-                        if (!(p.getValue() instanceof OSQLFunctionRuntime))
-                          doc.field(p.getKey(), p.getValue());
+                    for (Object r : resultSet) {
+                      if (r instanceof ODocument) {
+                        final ODocument d = (ODocument) r;
+
+                        for (Map.Entry<String, Object> p : proj.entrySet()) {
+                          // WRITE THE FIELD AS IS
+                          if (!(p.getValue() instanceof OSQLFunctionRuntime))
+                            doc.field(p.getKey(), p.getValue());
+                        }
                       }
                     }
                   }
