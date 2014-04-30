@@ -15,23 +15,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -69,6 +52,23 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -496,7 +496,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
       if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
         final ODocument cfg = (ODocument) iEvent.getValue();
-        activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+        final String nodeName = (String) cfg.field("name");
+
+        if (nodeName.equals(getLocalNodeName())) {
+          ODistributedServerLog.error(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
+              "Found a new node with the same name as current: '" + nodeName
+                  + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
+
+
+
+          throw new ODistributedException("Found a new node with the same name as current: '" + nodeName
+              + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
+        }
+
+        activeNodes.put(nodeName, (Member) iEvent.getMember());
 
         ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
             "added node configuration id=%s name=%s, now %d nodes are configured", iEvent.getMember(),
