@@ -200,7 +200,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   public <RET extends ORecord<T>> RET fromJSON(final String iSource, final String iOptions) {
     // ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions);
     ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions, false); // Add new parameter to accommodate new API,
-                                                                                     // noting change
+                                                                                     // nothing change
     return (RET) this;
   }
 
@@ -340,7 +340,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     setDirty();
     return this;
   }
-
 
   public int getSize() {
     return _size;

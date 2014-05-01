@@ -164,36 +164,25 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return lastIndex.getDefinition();
   }
 
-  @Override
-  public OIndexCursor cursor() {
-    throw new UnsupportedOperationException("cursor");
-  }
+  private List<OIdentifiable> applyTailIndexes(final Object lastIndexResult) {
+    final OIndex<?> beforeTheLastIndex = indexChain.get(indexChain.size() - 2);
+    Set<Comparable> currentKeys = prepareKeys(beforeTheLastIndex, lastIndexResult);
 
-  @Override
-  public OIndexKeyCursor keyCursor() {
-    throw new UnsupportedOperationException("keyCursor");
-  }
-
-  private List<OIdentifiable> applyTailIndexes(final Object result) {
-    final OIndex<?> previousIndex = indexChain.get(indexChain.size() - 2);
-    Set<Comparable> currentKeys = prepareKeys(previousIndex, result);
     for (int j = indexChain.size() - 2; j > 0; j--) {
-      Set<Comparable> newKeys = new TreeSet<Comparable>();
-
       final OIndex<?> currentIndex = indexChain.get(j);
-      for (Comparable currentKey : currentKeys) {
-        final List<OIdentifiable> currentResult = new ArrayList<OIdentifiable>();
-        final OIndexCursor cursor = currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true);
+      final OIndex<?> nextIndex = indexChain.get(j - 1);
 
-        Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
-        while (entry != null) {
-          currentResult.add(entry.getValue());
-          entry = cursor.next(-1);
+      final Set<Comparable> newKeys;
+      if (isComposite(currentIndex)) {
+        newKeys = new TreeSet<Comparable>();
+        for (Comparable currentKey : currentKeys) {
+          final List<OIdentifiable> currentResult = getFromCompositeIndex(currentKey, currentIndex);
+          newKeys.addAll(prepareKeys(nextIndex, currentResult));
         }
-
-        final Set<Comparable> preparedKeys;
-        preparedKeys = prepareKeys(indexChain.get(j - 1), currentResult);
-        newKeys.addAll(preparedKeys);
+      } else {
+        final OIndexCursor cursor = currentIndex.iterateEntries(currentKeys, true);
+        final List<OIdentifiable> keys = cursorToList(cursor);
+        newKeys = prepareKeys(nextIndex, keys);
       }
 
       updateStatistic(currentIndex);
@@ -201,20 +190,45 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
       currentKeys = newKeys;
     }
 
-    return applyMainIndex(currentKeys);
+    return applyFirstIndex(currentKeys);
   }
 
-  private Set<Comparable> convertResult(Object result, Class<?> targetType) {
-    final Set<Comparable> newKeys;
-    if (result instanceof Collection) {
-      newKeys = new TreeSet<Comparable>();
-      for (Object o : ((Collection) result)) {
-        newKeys.add((Comparable) OType.convert(o, targetType));
+  private List<OIdentifiable> applyFirstIndex(Collection<Comparable> currentKeys) {
+    final List<OIdentifiable> result;
+    if (isComposite(firstIndex)) {
+      result = new ArrayList<OIdentifiable>();
+      for (Comparable key : currentKeys) {
+        result.addAll(getFromCompositeIndex(key, firstIndex));
       }
-      return newKeys;
     } else {
-      return Collections.singleton((Comparable) OType.convert(result, targetType));
+      final OIndexCursor cursor = firstIndex.iterateEntries(currentKeys, true);
+
+      result = cursorToList(cursor);
     }
+
+    updateStatistic(firstIndex);
+
+    return result;
+  }
+
+  private static boolean isComposite(OIndex<?> currentIndex) {
+    return currentIndex.getDefinition().getParamCount() > 1;
+  }
+
+  private List<OIdentifiable> getFromCompositeIndex(Comparable currentKey, OIndex<?> currentIndex) {
+    final OIndexCursor cursor = currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true);
+
+    return cursorToList(cursor);
+  }
+
+  private List<OIdentifiable> cursorToList(OIndexCursor cursor) {
+    final List<OIdentifiable> currentResult = new ArrayList<OIdentifiable>();
+    Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
+    while (entry != null) {
+      currentResult.add(entry.getValue());
+      entry = cursor.next(-1);
+    }
+    return currentResult;
   }
 
   /**
@@ -227,25 +241,16 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
    * @return keys converted to necessary type.
    */
   private Set<Comparable> prepareKeys(OIndex<?> index, Object keys) {
-    final Class<?> targetType = index.getKeyTypes()[0].getDefaultJavaType();
-
-    return convertResult(keys, targetType);
-  }
-
-  private List<OIdentifiable> applyMainIndex(Iterable<Comparable> currentKeys) {
-    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
-    for (Comparable key : currentKeys) {
-      Object preparedKey = firstIndex.getDefinition().createValue(key);
-      final OIndexCursor cursor = firstIndex.iterateEntriesBetween(preparedKey, true, preparedKey, true, true);
-      Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
-      while (entry != null) {
-        result.add(entry.getValue());
-        entry = cursor.next(-1);
+    final OIndexDefinition indexDefinition = index.getDefinition();
+    if (keys instanceof Collection) {
+      final Set<Comparable> newKeys = new TreeSet<Comparable>();
+      for (Object o : ((Collection) keys)) {
+        newKeys.add((Comparable) indexDefinition.createValue(o));
       }
+      return newKeys;
+    } else {
+      return Collections.singleton((Comparable) indexDefinition.createValue(keys));
     }
-
-    updateStatistic(firstIndex);
-    return result;
   }
 
   private static Iterable<List<OIndex<?>>> getIndexesForChain(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,
@@ -322,13 +327,25 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return bestIndex;
   }
 
+  /**
+   * Check if index can be used as base index.
+   * 
+   * Requirements to the base index:
+   * <ul>
+   * <li>Should be unique or not unique. Other types can not be used to get all documents with required links.</li>
+   * <li>Should not be composite hash index. As soon as hash index does not support partial match search.</li>
+   * </ul>
+   * 
+   * @param index
+   *          to check
+   * @return true if index usage is allowed as base index.
+   */
   private static boolean isAppropriateAsBase(OIndex<?> index) {
     OIndexInternal<?> internalIndex = index.getInternal();
 
     String type = index.getType();
     return (internalIndex instanceof OIndexUnique || internalIndex instanceof OIndexNotUnique)
-        && !(UNIQUE_HASH_INDEX.toString().equals(type) || NOTUNIQUE_HASH_INDEX.toString().equals(type));
-
+        && !(isComposite(index) && (UNIQUE_HASH_INDEX.toString().equals(type) || NOTUNIQUE_HASH_INDEX.toString().equals(type)));
   }
 
   /**
@@ -466,6 +483,16 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
   @Override
   public Object getLastKey() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
+  public OIndexCursor cursor() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

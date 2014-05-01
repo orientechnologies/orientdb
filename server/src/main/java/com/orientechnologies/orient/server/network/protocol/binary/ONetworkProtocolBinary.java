@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
@@ -82,18 +94,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -1040,10 +1040,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           endResponse();
         }
       } catch (Exception e) {
-        if (connection.database != null) {
+        if (connection != null && connection.database != null) {
           if (connection.database.getTransaction().isActive())
             connection.database.rollback(true);
+
+          final OSBTreeCollectionManager collectionManager = connection.database.getSbTreeCollectionManager();
+          if (collectionManager != null)
+            collectionManager.clearChangedIds();
         }
+
         sendError(clientTxId, e);
       }
     } catch (OTransactionAbortedException e) {
@@ -1663,10 +1668,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     boolean inclusive = channel.readBoolean();
     int pageSize = 128;
 
-    if (connection.data.protocolVersion>=21)
-        pageSize = channel.readInt();
+    if (connection.data.protocolVersion >= 21)
+      pageSize = channel.readInt();
 
-      OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
+    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
 
     final OBinarySerializer<OIdentifiable> keySerializer = tree.getKeySerializer();
     OIdentifiable key = keySerializer.deserialize(keyStream, 0);
@@ -1934,8 +1939,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(channel, entry.getValue());
       }
+      collectionManager.clearChangedIds();
     }
-    collectionManager.clearChangedIds();
   }
 
   private void sendDatabaseInformation() throws IOException {

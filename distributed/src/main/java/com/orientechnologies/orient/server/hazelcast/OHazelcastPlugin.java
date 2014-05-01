@@ -15,25 +15,10 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
+import com.orientechnologies.common.collection.OSingleItemSet;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -56,7 +41,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugi
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedPartition;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
@@ -68,6 +52,23 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -326,8 +327,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public Object sendRequest(final String iDatabaseName, final String iClusterName, final OAbstractRemoteTask iTask,
-      final EXECUTION_MODE iExecutionMode) {
+  public Object sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
+      final Collection<String> iTargetNodes, final OAbstractRemoteTask iTask, final EXECUTION_MODE iExecutionMode) {
 
     if (iTask.isRequireNodeOnline())
       // WAIT THE DATABASE ON THE NODE IS ONLINE
@@ -343,35 +344,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     checkForClusterRebalance(iDatabaseName);
 
-    final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, iClusterName,
-        iTask, iExecutionMode);
-
-    final OHazelcastDistributedDatabase db = messageService.getDatabase(iDatabaseName);
-
-    final ODistributedResponse response = db.send(req);
-    if (response != null)
-      return response.getPayload();
-
-    return null;
-  }
-
-  public Object sendRequest2Node(final String iDatabaseName, final String iTargetNodeName, final OAbstractRemoteTask iTask,
-      final EXECUTION_MODE iExecutionMode) {
-    final List<String> nodeNames = new ArrayList<String>();
-    nodeNames.add(iTargetNodeName);
-
-    return sendRequest2Nodes(iDatabaseName, nodeNames, iTask, iExecutionMode);
-  }
-
-  @Override
-  public Object sendRequest2Nodes(final String iDatabaseName, final List<String> iTargetNodeNames, final OAbstractRemoteTask iTask,
-      final EXECUTION_MODE iExecutionMode) {
-    final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, null, iTask,
+    final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, iTask,
         iExecutionMode);
 
     final OHazelcastDistributedDatabase db = messageService.getDatabase(iDatabaseName);
 
-    final ODistributedResponse response = db.send2Nodes(req, iTargetNodeNames);
+    if (iTargetNodes.isEmpty()) {
+      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
+          "No nodes configured for partition '%s.%s' request: %s", iDatabaseName, iClusterNames, req);
+      throw new ODistributedException("No nodes configured for partition '" + iDatabaseName + "." + iClusterNames + "' request: "
+          + req);
+    }
+
+    final ODistributedResponse response = db.send2Nodes(req, iClusterNames, iTargetNodes);
     if (response != null)
       return response.getPayload();
 
@@ -511,7 +496,20 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
       if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
         final ODocument cfg = (ODocument) iEvent.getValue();
-        activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+        final String nodeName = (String) cfg.field("name");
+
+        if (nodeName.equals(getLocalNodeName())) {
+          ODistributedServerLog.error(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
+              "Found a new node with the same name as current: '" + nodeName
+                  + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
+
+
+
+          throw new ODistributedException("Found a new node with the same name as current: '" + nodeName
+              + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
+        }
+
+        activeNodes.put(nodeName, (Member) iEvent.getMember());
 
         ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
             "added node configuration id=%s name=%s, now %d nodes are configured", iEvent.getMember(),
@@ -649,11 +647,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public ODistributedPartition newPartition(final List<String> partition) {
-    return new OHazelcastDistributionPartition(partition);
-  }
-
-  @Override
   public OHazelcastDistributedMessageService getMessageService() {
     return messageService;
   }
@@ -766,8 +759,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
             distrDatabase.configureDatabase(false, false);
 
-            final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, new ODeployDatabaseTask(),
-                EXECUTION_MODE.RESPONSE);
+            final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+            final Collection<String> nodes = cfg.getServers();
+
+            final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, nodes,
+                new ODeployDatabaseTask(), EXECUTION_MODE.RESPONSE);
 
             // EXTRACT THE REAL RESULT
             for (Entry<String, Object> r : results.entrySet()) {
@@ -804,9 +800,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                 try {
                   out = new FileOutputStream(fileName, false);
 
+                  final OSingleItemSet<String> nodeNames = new OSingleItemSet<String>(r.getKey());
+
                   long fileSize = writeDatabaseChunk(1, chunk, out);
                   for (int chunkNum = 2; !chunk.last; chunkNum++) {
-                    final Object result = sendRequest2Node(databaseName, r.getKey(), new OCopyDatabaseChunkTask(chunk.filePath,
+                    final Object result = sendRequest(databaseName, null, nodeNames, new OCopyDatabaseChunkTask(chunk.filePath,
                         chunkNum, chunk.offset + chunk.buffer.length), EXECUTION_MODE.RESPONSE);
 
                     if (result instanceof Boolean)

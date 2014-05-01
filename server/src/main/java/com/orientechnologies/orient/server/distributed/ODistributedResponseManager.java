@@ -16,12 +16,14 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.collection.OSingleItemSet;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,6 +46,7 @@ public class ODistributedResponseManager {
   private final ODistributedRequest              request;
   private final long                             sentOn;
   private final HashMap<String, Object>          responses                   = new HashMap<String, Object>();
+  private final boolean                          groupResponsesByResult;
   private final List<List<ODistributedResponse>> responseGroups              = new ArrayList<List<ODistributedResponse>>();
   private final int                              expectedSynchronousResponses;
   private final long                             synchTimeout;
@@ -56,8 +59,8 @@ public class ODistributedResponseManager {
   private volatile boolean                       receivedCurrentNode;
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
-      final List<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
-      final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout) {
+      final Collection<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
+      final boolean iWaitForLocalNode, final long iSynchTimeout, final long iTotalTimeout, final boolean iGroupResponsesByResult) {
     this.dManager = iManager;
     this.request = iRequest;
     this.sentOn = System.currentTimeMillis();
@@ -66,11 +69,13 @@ public class ODistributedResponseManager {
     this.waitForLocalNode = iWaitForLocalNode;
     this.synchTimeout = iSynchTimeout;
     this.totalTimeout = iTotalTimeout;
+    this.groupResponsesByResult = iGroupResponsesByResult;
 
     for (String node : expectedResponses)
       responses.put(node, NO_RESPONSE);
 
-    responseGroups.add(new ArrayList<ODistributedResponse>());
+    if (groupResponsesByResult)
+      responseGroups.add(new ArrayList<ODistributedResponse>());
   }
 
   /**
@@ -119,22 +124,24 @@ public class ODistributedResponseManager {
             receivedCurrentNode, receivedResponses);
 
       // PUT THE RESPONSE IN THE RIGHT RESPONSE GROUP
-      boolean foundBucket = false;
-      for (int i = 0; i < responseGroups.size(); ++i) {
-        final List<ODistributedResponse> sameResponse = responseGroups.get(i);
-        if (sameResponse.isEmpty() || (sameResponse.get(0).getPayload() == null && response.getPayload() == null)
-            || sameResponse.get(0).getPayload().equals(response.getPayload())) {
-          sameResponse.add(response);
-          foundBucket = true;
-          break;
+      if (groupResponsesByResult) {
+        boolean foundBucket = false;
+        for (int i = 0; i < responseGroups.size(); ++i) {
+          final List<ODistributedResponse> sameResponse = responseGroups.get(i);
+          if (sameResponse.isEmpty() || (sameResponse.get(0).getPayload() == null && response.getPayload() == null)
+              || sameResponse.get(0).getPayload().equals(response.getPayload())) {
+            sameResponse.add(response);
+            foundBucket = true;
+            break;
+          }
         }
-      }
 
-      if (!foundBucket) {
-        // CREATE A NEW BUCKET
-        final ArrayList<ODistributedResponse> newBucket = new ArrayList<ODistributedResponse>();
-        responseGroups.add(newBucket);
-        newBucket.add(response);
+        if (!foundBucket) {
+          // CREATE A NEW BUCKET
+          final ArrayList<ODistributedResponse> newBucket = new ArrayList<ODistributedResponse>();
+          responseGroups.add(newBucket);
+          newBucket.add(response);
+        }
       }
 
       completed = getExpectedResponses() == receivedResponses;
@@ -172,6 +179,9 @@ public class ODistributedResponseManager {
   public boolean isMinimumQuorumReached(final boolean iCheckAvailableNodes) {
     if (quorum == 0)
       return true;
+
+    if (!groupResponsesByResult)
+      return receivedResponses >= quorum;
 
     synchronized (responseGroups) {
       for (List<ODistributedResponse> group : responseGroups)
@@ -378,33 +388,31 @@ public class ODistributedResponseManager {
   public ODistributedResponse getFinalResponse() {
     manageConflicts();
 
-    final int bestResponsesGroupIndex = getBestResponsesGroup();
-    final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
-
     if (receivedResponses == 0)
       throw new ODistributedException("No response received from any of nodes " + getExpectedNodes() + " for request " + request);
 
     // MANAGE THE RESULT BASED ON RESULT STRATEGY
     switch (request.getTask().getResultStrategy()) {
     case ANY:
-      return bestResponsesGroup.get(0);
+      // DEFAULT: RETURN BEST ANSWER
+      break;
 
-    case MERGE:
-      // return merge( m new OHazelcastDistributedResponse(firstResponse.getRequestId(), null, firstResponse.getSenderNodeName(),
-      // firstResponse.getSenderThreadId(), null));
-      return bestResponsesGroup.get(0);
-
-    case UNION:
+    case UNION: {
+      // COLLECT ALL THE RESPONSE IN A MAP OF <NODE, RESULT>
       final Map<String, Object> payloads = new HashMap<String, Object>();
       for (Map.Entry<String, Object> entry : responses.entrySet())
         if (entry.getValue() != NO_RESPONSE)
           payloads.put(entry.getKey(), ((ODistributedResponse) entry.getValue()).getPayload());
-      final ODistributedResponse response = bestResponsesGroup.get(0);
+
+      final ODistributedResponse response = (ODistributedResponse) responses.values().iterator().next();
       response.setExecutorNodeName(responses.keySet().toString());
       response.setPayload(payloads);
       return response;
     }
+    }
 
+    final int bestResponsesGroupIndex = getBestResponsesGroup();
+    final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
     return bestResponsesGroup.get(0);
   }
 
@@ -413,7 +421,7 @@ public class ODistributedResponseManager {
   }
 
   protected void manageConflicts() {
-    if (request.getTask().getQuorumType() == OAbstractRemoteTask.QUORUM_TYPE.NONE)
+    if (!groupResponsesByResult || request.getTask().getQuorumType() == OAbstractRemoteTask.QUORUM_TYPE.NONE)
       // NO QUORUM
       return;
 
@@ -460,7 +468,7 @@ public class ODistributedResponseManager {
         msg.append(" no server in conflict");
       else {
         for (ODistributedResponse r : res) {
-          msg.append("\n- ");
+          msg.append("\n - ");
           msg.append(r.getExecutorNodeName());
           msg.append(": ");
           msg.append(r.getPayload());
@@ -468,7 +476,7 @@ public class ODistributedResponseManager {
         msg.append("\n");
       }
 
-      msg.append(". Received: ");
+      msg.append("Received: ");
       msg.append(responses);
 
       throw new ODistributedException(msg.toString());
@@ -485,7 +493,7 @@ public class ODistributedResponseManager {
         final OAbstractRemoteTask undoTask = ((OAbstractReplicatedTask) task).getUndoTask(request, r.getPayload());
 
         if (undoTask != null)
-          dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), undoTask,
+          dManager.sendRequest(request.getDatabaseName(), null, new OSingleItemSet<String>(r.getExecutorNodeName()), undoTask,
               ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
       }
     }
@@ -505,7 +513,7 @@ public class ODistributedResponseManager {
               goodResponse.getPayload());
 
           if (fixTask != null)
-            dManager.sendRequest2Node(request.getDatabaseName(), r.getExecutorNodeName(), fixTask,
+            dManager.sendRequest(request.getDatabaseName(), null, new OSingleItemSet<String>(r.getExecutorNodeName()), fixTask,
                 ODistributedRequest.EXECUTION_MODE.NO_RESPONSE);
         }
       }

@@ -235,6 +235,9 @@ public abstract class OStringSerializerHelper {
   public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
       final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
       final int iMinPosSeparatorAreValid, boolean considerBags, final char... iJumpChars) {
+    if( beginIndex < 0 )
+      return beginIndex;
+
     char stringBeginChar = ' ';
     boolean encodeMode = false;
     int insideParenthesis = 0;

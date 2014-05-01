@@ -37,10 +37,6 @@ public interface ODistributedRequest {
 
   ODistributedRequest setDatabaseName(final String databaseName);
 
-  String getClusterName();
-
-  ODistributedRequest setClusterName(final String clusterName);
-
   String getSenderNodeName();
 
   ODistributedRequest setSenderNodeName(String localNodeName);

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
@@ -217,7 +218,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
       private int                                 nextEntriesIndex;
       private OHashIndexBucket.Entry<Object, V>[] entries;
 
-      private Iterator<OIdentifiable>             currentIterator = Collections.emptyIterator();
+      private Iterator<OIdentifiable>             currentIterator = new OEmptyIterator<OIdentifiable>();
       private Object                              currentKey;
 
       {

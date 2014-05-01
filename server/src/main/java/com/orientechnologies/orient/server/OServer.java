@@ -132,19 +132,19 @@ public class OServer {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT, new OProfilerHookValue() {
-            @Override
-            public Object getValue() {
-              final StringBuilder dbs = new StringBuilder();
-              for (String dbName : getAvailableStorageNames().keySet()) {
-                if (dbs.length()>0)
-                  dbs.append(',');
-                dbs.append(dbName);
+        .registerHookValue("system.databases", "List of databases configured in Server", METRIC_TYPE.TEXT,
+            new OProfilerHookValue() {
+              @Override
+              public Object getValue() {
+                final StringBuilder dbs = new StringBuilder();
+                for (String dbName : getAvailableStorageNames().keySet()) {
+                  if (dbs.length() > 0)
+                    dbs.append(',');
+                  dbs.append(dbName);
+                }
+                return dbs.toString();
               }
-              return dbs.toString();
-            }
-          }
-        );
+            });
 
     return this;
   }
@@ -342,7 +342,8 @@ public class OServer {
       else if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.pcl").exists())
         dbURL = "plocal:" + dbPath;
       else
-        throw new OConfigurationException("Database '" + name + "' is not configured on server");
+        throw new OConfigurationException("Database '" + name + "' is not configured on server (home=" + getDatabaseDirectory()
+            + ")");
     }
 
     return dbURL;
@@ -362,7 +363,7 @@ public class OServer {
     for (OStorage storage : Orient.instance().getStorages()) {
       final String storageUrl = storage.getURL();
       // TEST IT'S OF CURRENT SERVER INSTANCE BY CHECKING THE PATH
-      if (storage.exists() && !storages.containsValue(storageUrl) && storageUrl.contains( rootDirectory ))
+      if (storage.exists() && !storages.containsValue(storageUrl) && storageUrl.contains(rootDirectory))
         storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
     }
 

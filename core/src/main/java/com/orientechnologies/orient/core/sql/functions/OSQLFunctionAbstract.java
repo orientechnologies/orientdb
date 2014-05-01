@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+
+import java.util.List;
 
 /**
  * Abstract class to extend to build Custom SQL Functions. Extend it and register it with:
@@ -96,7 +96,7 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
     return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OAutoshardedStorage;
   }
 
-  protected long getDistributedStorageId() {
+  protected String getDistributedStorageId() {
     return ((OAutoshardedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()).getStorageId();
   }
 }

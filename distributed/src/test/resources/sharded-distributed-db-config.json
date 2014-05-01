@@ -1,58 +1,27 @@
 {
-    "replication": true,
     "autoDeploy": true,
     "hotAlignment": false,
     "offlineMsgQueueSize" : 0,
+    "readQuorum": 1,
+    "writeQuorum": 2,
+    "failureAvailableNodesLessQuorum": false,
+    "readYourWrites": true,
     "clusters": {
         "internal": {
-            "replication": false
         },
         "index": {
-            "replication": false
         },
         "client_0": {
-            "replication": false,
-            "partitioning": {
-                "strategy": "round-robin",
-                "default": 0,
-                "partitions": [
-                    [ "europe" ]
-                ]
-            }
+            "servers" : [ "europe", "usa" ]
         },
         "client_1": {
-            "replication": false,
-            "partitioning": {
-                "strategy": "round-robin",
-                "default": 0,
-                "partitions": [
-                    [ "usa" ]
-                ]
-            }
+            "servers" : [ "usa" ]
         },
         "client_2": {
-            "replication": false,
-            "partitioning": {
-                "strategy": "round-robin",
-                "default": 0,
-                "partitions": [
-                    [ "asia" ]
-                ]
-            }
+            "servers" : [ "asia", "europe", "usa" ]
         },
         "*": {
-            "replication": true,
-            "readQuorum": 1,
-            "writeQuorum": 2,
-            "failureAvailableNodesLessQuorum": false,
-            "readYourWrites": true,
-            "partitioning": {
-                "strategy": "round-robin",
-                "default": 0,
-                "partitions": [
-                    [ "<NEW_NODE>" ]
-                ]
-            }
+            "servers" : [ "<NEW_NODE>" ]
         }
     }
 }

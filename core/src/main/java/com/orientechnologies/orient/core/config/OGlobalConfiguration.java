@@ -186,7 +186,7 @@ public enum OGlobalConfiguration {
   // DATABASE
   DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
 
-  DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
+  DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 100),
 
   DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Default database pool maximum size", Integer.class, 0),
 

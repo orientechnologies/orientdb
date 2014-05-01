@@ -15,16 +15,15 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.util.Map;
-
 import com.orientechnologies.common.listener.OProgressListener;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Generic GOF command pattern implementation.
  * 
  * @author Luca Garulli
- * 
- * @param <T>
  */
 public interface OCommandExecutor {
 
@@ -33,10 +32,8 @@ public interface OCommandExecutor {
    * 
    * @param iRequest
    *          Command request implementation.
-   * @param iArgs
-   *          Optional variable arguments to pass to the command.
    * 
-   * @see #execute(Object...)
+   * @see #execute(Map<Object, Object>...)
    * @return
    */
   public <RET extends OCommandExecutor> RET parse(OCommandRequest iRequest);
@@ -75,4 +72,9 @@ public interface OCommandExecutor {
    * Returns true if the command doesn't change the database, otherwise false.
    */
   public boolean isIdempotent();
+
+  /**
+   * Returns the involved clusters.
+   */
+  public Set<String> getInvolvedClusters();
 }

@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
 import com.orientechnologies.common.util.OResettable;
 
 /**
- * Allow to iterate over a single object
+ * Allows to iterate over a single object
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
