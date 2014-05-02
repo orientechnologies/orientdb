@@ -51,7 +51,7 @@ public class OSQLFunctionLast extends OSQLFunctionConfigurableAbstract {
   }
 
   public boolean aggregateResults() {
-    return configuredParameters.length == 1;
+    return false;
   }
 
   @Override
