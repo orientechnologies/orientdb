@@ -125,7 +125,6 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         if ($scope.selectedContentType == 'CSV')
             conttype = 'text/csv';
 
-        console.log($scope.shallow);
         CommandApi.queryText({database: $routeParams.database, contentType: conttype, language: $scope.language, text: $scope.queryText, limit: $scope.limit, shallow: $scope.shallow, verbose: false}, function (data) {
 
             if (data.result) {
@@ -161,6 +160,8 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 localStorageService.add("Timeline", dbTime);
 
                 Spinner.stopSpinner();
+                $scope.context = $scope.items[0];
+                $scope.nContext = $scope.items[1];
             }
             Spinner.stopSpinner();
         }, function (data) {
@@ -359,11 +360,20 @@ dbModule.controller("BookmarkNewController", ['$scope', 'Bookmarks', 'DocumentAp
         });
     }
 }]);
-dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database', function ($scope, Bookmarks, DocumentApi, Database) {
+dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database','scroller', function ($scope, Bookmarks, DocumentApi, Database,scroller) {
 
     Bookmarks.getAll(Database.getName()).then(function (data) {
         $scope.bookmarks = data.result;
     })
+    $scope.run = function (r) {
+        $scope.queryText = r.query;
+        scroller.scrollTo(0, 0, 2000);
+        $scope.cm.focus();
+
+        $scope.cm.setValue($scope.queryText);
+        $scope.cm.setCursor($scope.cm.lineCount());
+    }
+
 }]);
 
 

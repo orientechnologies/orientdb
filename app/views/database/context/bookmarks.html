@@ -30,7 +30,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr ng-repeat="r in bookmarks | filter:search">
+                    <tr ng-repeat="r in bookmarks | filter:search" ng-click="run(r)">
                         <td>{{r.name}}</td>
                         <td>{{r.query}}</td>
                         <td>{{r.tags}}</td>
