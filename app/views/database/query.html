@@ -2,9 +2,12 @@
     <div class="query-header">
         <h5><a href="javascript:void(0)" ng-click="changeQuery()" bs-tooltip="item.query">{{item.query}}</a></h5>
     </div>
-    <div class="query-actions">
-        <a class="ng-binding" href="javascript:void(0)" ng-click="addBookmark(item)">
-            <i class="icon-star"></i>
+    <div class="query-actions bookmarks">
+
+        <a class="ng-binding" href="javascript:void(0)" ng-click="changeIcon()" data-placement="bottom"
+           data-title="Add bookmark"
+           bs-popover="'views/database/bookmark.html'">
+            <i ng-class="bookIcon"></i>
         </a>
         <a class="ng-binding" href="javascript:void(0)" ng-click="removeItem(item)">
             <i class="icon-trash"></i>

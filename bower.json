@@ -16,10 +16,11 @@
         "angular-local-storage": "~0.0.1",
         "bootstrap-datepicker": "1.0.2",
         "moment": "latest",
-	"moment-jdateformatparser" : "latest",
+        "moment-jdateformatparser": "latest",
         "angular-ui-bootstrap-bower": "0.10.0",
         "spin.js": "2.0.0",
-        "bootstrap-datetimepicker": "0.0.11"
+        "bootstrap-datetimepicker": "0.0.11",
+        "angular-ui-select2": "~0.0.5"
     },
     "devDependencies": {
         "angular-mocks": "~1.0.5",

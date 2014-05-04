@@ -4,6 +4,19 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.database = Database;
     $scope.limit = 20;
 
+    $scope.items = [
+        {name: "history", title: "History"},
+        {name: "bookmarks", title: "Bookmarks"}
+    ];
+    $scope.context = $scope.items[0];
+    $scope.nContext = $scope.items[1];
+    $scope.next = function () {
+        var idx = $scope.items.indexOf($scope.context);
+        var newIdx = (idx < $scope.items.length) ? idx + 1 : 0;
+        $scope.context = $scope.items[newIdx];
+        var nextIdx = (newIdx < $scope.items.length - 1) ? newIdx + 1 : 0;
+        $scope.nContext = $scope.items[nextIdx];
+    }
     $scope.countPage = 5;
 
     if (Database.hasClass("StudioBookmarks")) {
@@ -179,9 +192,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         $scope.timeline.splice(idx, 1);
         localStorageService.add("Timeline", $scope.timeline);
     }
-    $scope.addBookmark = function (item) {
-        Bookmarks.addBookmark(Database.getName(), item);
-    }
+
 
     $scope.$watch("limit", function (data) {
         $scope.limit = data;
@@ -204,6 +215,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
 
     var data = $scope.item.resultTotal;
 
+    $scope.bookIcon = 'icon-star-empty';
     $scope.viewerOptions = {
         lineWrapping: true,
         lineNumbers: true,
@@ -215,6 +227,12 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
         }
 
     };
+    $scope.changeIcon = function () {
+        $scope.bookIcon = 'icon-star';
+    }
+    $scope.cancel = function () {
+        $scope.bookIcon = 'icon-star-empty';
+    }
     $scope.tableParams = new ngTableParams({
         page: 1,            // show first page
         count: 10          // count per page
@@ -314,6 +332,38 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
     });
 
 
+}]);
+dbModule.controller("BookmarkNewController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database', function ($scope, Bookmarks, DocumentApi, Database) {
+
+
+    $scope.bookmark = DocumentApi.createNewDoc("StudioBookmarks");
+
+    $scope.bookmark.name = $scope.item.query;
+    $scope.bookmark.query = $scope.item.query;
+
+    Bookmarks.getTags(Database.getName()).then(function (data) {
+        $scope.tags = data;
+        console.log($scope.tags);
+        $scope.select2Options = {
+            'multiple': true,
+            'simple_tags': true,
+            'tags': $scope.tags  // Can be empty list.
+        };
+        $scope.viewTags = true;
+    });
+
+    $scope.viewTags = false;
+    $scope.addBookmark = function () {
+        Bookmarks.addBookmark(Database.getName(), $scope.bookmark).then(function () {
+            $scope.hide();
+        });
+    }
+}]);
+dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database', function ($scope, Bookmarks, DocumentApi, Database) {
+
+    Bookmarks.getAll(Database.getName()).then(function (data) {
+        $scope.bookmarks = data.result;
+    })
 }]);
 
 

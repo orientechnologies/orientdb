@@ -20,7 +20,8 @@ var deps = ['header.controller',
     'filters',
     'rendering',
     'schema.controller',
-    'duScroll'];
+    'duScroll',
+    'ui.select2'];
 
 
 var App = angular.module('OrientDBStudioApp', deps);

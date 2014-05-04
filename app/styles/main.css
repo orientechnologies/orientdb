@@ -295,9 +295,11 @@ div.edge form.bs-docs-example:after {
     margin-right: 10px;
     color: #333333;
 }
+
 .input-xxsmall {
     width: 30px;
 }
+
 .query-info {
     background-color: #FFFFFF;
     border-top: 1px solid #E7E9EB;
@@ -782,3 +784,36 @@ ul.arrayrid > li {
     -ms-user-select: text;
     user-select: text;
 }
+
+.bookmarks .popover {
+    left: -210px !important;
+    top: 28px !important;
+}
+
+.bookmarks .popover.bottom .arrow {
+    left: 90%;
+    margin-left: -15px;
+    top: -10px;
+}
+
+.animate-switch.animate {
+    -webkit-transition: all cubic-bezier(0.250, 0.460, 0.450, 0.940) 1s;
+    transition: all cubic-bezier(0.250, 0.460, 0.450, 0.940) 1s;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.animate-switch.ng-leave.leave-active,
+.animate-switch.enter {
+    top: -50px;
+}
+
+.animate-switch.leave,
+.animate-switch.enter.enter-active {
+    top: 0;
+}
+
