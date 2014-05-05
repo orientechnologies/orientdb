@@ -578,11 +578,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     final String dbName = currentDatabase.getName();
 
     if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
-      if (serverAdmin == null) {
-        message("\n\nCannot freeze a remote database without connecting to the server with a valid server's user");
-        return;
-      }
-
       if (storageType == null)
         storageType = "plocal";
 
@@ -605,11 +600,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     final String dbName = currentDatabase.getName();
 
     if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
-      if (serverAdmin == null) {
-        message("\n\nCannot release a remote database without connecting to the server with a valid server's user");
-        return;
-      }
-
       if (storageType == null)
         storageType = "plocal";
 
@@ -641,11 +631,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     final int clusterId = currentDatabase.getClusterIdByName(iClusterName);
 
     if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
-      if (serverAdmin == null) {
-        message("\n\nCannot freeze a remote database without connecting to the server with a valid server's user");
-        return;
-      }
-
       if (storageType == null)
         storageType = "plocal";
 
@@ -669,11 +654,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     final int clusterId = currentDatabase.getClusterIdByName(iClusterName);
 
     if (currentDatabase.getURL().startsWith(OEngineRemote.NAME)) {
-      if (serverAdmin == null) {
-        message("\n\nCannot freeze a remote database without connecting to the server with a valid server's user");
-        return;
-      }
-
       if (storageType == null)
         storageType = "plocal";
 

@@ -46,13 +46,12 @@ public class ReadWriteDiskCacheTest {
       buildDirectory = ".";
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/ReadWriteDiskCacheTest");
-		storageLocal.create(null);
+    storageLocal.create(null);
 
     fileName = "readWriteDiskCacheTest.tst";
 
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
   }
-
 
   @BeforeMethod
   public void beforeMethod() throws IOException {
