@@ -15,10 +15,36 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
-import com.hazelcast.core.*;
-import com.orientechnologies.common.collection.OSingleItemSet;
+import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.EntryListener;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
+import com.hazelcast.core.IQueue;
+import com.hazelcast.core.Member;
+import com.hazelcast.core.MemberAttributeEvent;
+import com.hazelcast.core.MembershipEvent;
+import com.hazelcast.core.MembershipListener;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -52,23 +78,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -503,8 +512,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               "Found a new node with the same name as current: '" + nodeName
                   + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
 
-
-
           throw new ODistributedException("Found a new node with the same name as current: '" + nodeName
               + "'. The node has been excluded. Change the name in its config/orientdb-dserver-config.xml file");
         }
@@ -800,12 +807,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
                 try {
                   out = new FileOutputStream(fileName, false);
 
-                  final OSingleItemSet<String> nodeNames = new OSingleItemSet<String>(r.getKey());
-
                   long fileSize = writeDatabaseChunk(1, chunk, out);
                   for (int chunkNum = 2; !chunk.last; chunkNum++) {
-                    final Object result = sendRequest(databaseName, null, nodeNames, new OCopyDatabaseChunkTask(chunk.filePath,
-                        chunkNum, chunk.offset + chunk.buffer.length), EXECUTION_MODE.RESPONSE);
+                    final Object result = sendRequest(databaseName, null, Collections.singleton(r.getKey()),
+                        new OCopyDatabaseChunkTask(chunk.filePath, chunkNum, chunk.offset + chunk.buffer.length),
+                        EXECUTION_MODE.RESPONSE);
 
                     if (result instanceof Boolean)
                       continue;
