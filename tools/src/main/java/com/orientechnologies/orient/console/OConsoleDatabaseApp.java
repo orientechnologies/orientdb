@@ -623,6 +623,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\n\nDatabase '" + dbName + "' was released successfully");
   }
 
+  @ConsoleCommand(description = "Flushes all database content to the disk")
+  public void flushDatabase(
+      @ConsoleParameter(name = "storage-type", description = "Storage type of server database", optional = true) String storageType)
+      throws IOException {
+    freezeDatabase(storageType);
+    releaseDatabase(storageType);
+  }
+
   @ConsoleCommand(description = "Freeze clusters and flush on the disk")
   public void freezeCluster(
       @ConsoleParameter(name = "cluster-name", description = "The name of the cluster to freeze") String iClusterName,

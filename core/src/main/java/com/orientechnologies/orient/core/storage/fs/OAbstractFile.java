@@ -180,12 +180,8 @@ public abstract class OAbstractFile implements OFile {
         OLogManager.instance().error(this, "Invalid filledUp size (=" + filledUpTo + "). The file could be corrupted", null,
             OStorageException.class);
 
-      if (failCheck) {
+      if (failCheck)
         wasSoftlyClosed = isSoftlyClosed();
-
-        if (wasSoftlyClosed)
-          setSoftlyClosed(false);
-      }
 
       if (version < CURRENT_VERSION) {
         setSize(fileSize, true);
@@ -763,7 +759,7 @@ public abstract class OAbstractFile implements OFile {
 
   }
 
-  protected void setDirty() {
+  protected void setDirty() throws IOException {
     acquireWriteLock();
     try {
       if (!dirty)

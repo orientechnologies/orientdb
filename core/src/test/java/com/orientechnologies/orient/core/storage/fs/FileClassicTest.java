@@ -64,6 +64,9 @@ public class FileClassicTest {
     fileClassicTwo.init(buildDirectory + File.separator + "file.tst", "rw");
     Assert.assertTrue(fileClassicTwo.open());
 
+    Assert.assertTrue(fileClassicTwo.isSoftlyClosed());
+    fileClassicTwo.writeInt(0, 14);
+
     Assert.assertFalse(fileClassicTwo.isSoftlyClosed());
     Assert.assertTrue(fileClassicTwo.wasSoftlyClosed());
 
