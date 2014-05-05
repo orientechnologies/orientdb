@@ -15,28 +15,28 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.storage.OStorage;
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OStorage;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -53,8 +53,8 @@ public class SQLInsertTest {
 
   @Test
   public void insertOperator() {
-		if (database.getURL().startsWith("local:"))
-			return;
+    if (database.getURL().startsWith("local:"))
+      return;
 
     database.open("admin", "admin");
 
@@ -278,10 +278,10 @@ public class SQLInsertTest {
 
   @Test
   public void insertCluster() {
-		if (database.getURL().startsWith("local:"))
-			return;
+    if (database.getURL().startsWith("local:"))
+      return;
 
-		database.open("admin", "admin");
+    database.open("admin", "admin");
 
     ODocument doc = database.command(
         new OCommandSQL("insert into Account cluster anotherdefault (id, title) values (10, 'NoSQL movement')")).execute();
@@ -315,6 +315,26 @@ public class SQLInsertTest {
     database.close();
   }
 
+  public void insertSelect() {
+    database.open("admin", "admin");
+
+    database.command(new OCommandSQL("CREATE CLASS UserCopy")).execute();
+    database.getMetadata().getSchema().reload();
+
+    long inserted = database.command(new OCommandSQL("INSERT INTO UserCopy FROM select from ouser where name <> 'admin' limit 2"))
+        .execute();
+    Assert.assertEquals(inserted, 2);
+
+    List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>("select from UserCopy"));
+    Assert.assertEquals(result.size(), 2);
+    for (OIdentifiable r : result) {
+      Assert.assertEquals(((ODocument) r.getRecord()).getClassName(), "UserCopy");
+      Assert.assertNotSame(((ODocument) r.getRecord()).field("name"), "admin");
+    }
+
+    database.close();
+  }
+
   private List<OClusterPosition> getValidPositions(int clusterId) {
     final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
 
@@ -328,4 +348,5 @@ public class SQLInsertTest {
     }
     return positions;
   }
+
 }

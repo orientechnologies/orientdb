@@ -173,4 +173,10 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
     OLogManager.instance().info(this, iText);
   }
+
+  @Override
+  public boolean isRequiredOpenDatabase() {
+    return false;
+  }
+
 }

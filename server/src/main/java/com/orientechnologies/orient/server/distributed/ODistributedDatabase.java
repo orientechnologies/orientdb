@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Generic Distributed Database interface.
@@ -24,9 +24,7 @@ import java.util.List;
  * 
  */
 public interface ODistributedDatabase {
-  public ODistributedResponse send(ODistributedRequest iRequest) throws InterruptedException;
-
-  public ODistributedResponse send2Nodes(ODistributedRequest iRequest, List<String> iTargetNode);
+  public ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, Collection<String> iNodes);
 
   public void setOnline();
 }

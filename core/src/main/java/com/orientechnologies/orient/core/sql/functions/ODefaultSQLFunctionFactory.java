@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.*;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
@@ -32,10 +36,6 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIf;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIfNull;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Default set of SQL function.
@@ -60,6 +60,9 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionEval.NAME, OSQLFunctionEval.class);
     register(OSQLFunctionFirst.NAME, OSQLFunctionFirst.class);
     register(OSQLFunctionFormat.NAME, new OSQLFunctionFormat());
+    register(OSQLFunctionTraversedEdge.NAME, OSQLFunctionTraversedEdge.class);
+    register(OSQLFunctionTraversedElement.NAME, OSQLFunctionTraversedElement.class);
+    register(OSQLFunctionTraversedVertex.NAME, OSQLFunctionTraversedVertex.class);
     register(OSQLFunctionIf.NAME, new OSQLFunctionIf());
     register(OSQLFunctionIfNull.NAME, new OSQLFunctionIfNull());
     register(OSQLFunctionIntersect.NAME, OSQLFunctionIntersect.class);

@@ -20,7 +20,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -94,18 +94,7 @@ public interface ODistributedServerManager {
 
   public ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
-  public ODistributedPartition newPartition(List<String> partition);
-
-  public Object sendRequest(String iDatabaseName, String iClusterName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
-
-  public Object sendRequest2Node(String iDatabaseName, String iTargetNodeName, OAbstractRemoteTask iTask,
-      EXECUTION_MODE iExecutionMode);
-
-  public Object sendRequest2Nodes(String iDatabaseName, List<String> iTargetNodeNames, OAbstractRemoteTask iTask,
-      EXECUTION_MODE iExecutionMode);
-
-  public ODistributedPartitioningStrategy getPartitioningStrategy(String partitionStrategy);
+  public Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
   public ODocument getStats();
-
 }

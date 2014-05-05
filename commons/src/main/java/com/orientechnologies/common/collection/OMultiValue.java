@@ -324,6 +324,11 @@ public class OMultiValue {
    */
   public static Object add(final Object iObject, final Object iToAdd) {
     if (iObject != null) {
+      if (!isMultiValue(iObject)) {
+        final List<Object> result = new ArrayList<Object>();
+        result.add(iObject);
+      }
+
       if (iObject instanceof Collection<?> || iObject instanceof OCollection<?>) {
         // COLLECTION - ?
         final OCollection<Object> coll;
@@ -407,9 +412,7 @@ public class OMultiValue {
           copy[copy.length - 1] = iToAdd;
         }
         return copy;
-
-      } else
-        throw new IllegalArgumentException("Object " + iObject + " is not a multi value");
+      }
     }
 
     return iObject;

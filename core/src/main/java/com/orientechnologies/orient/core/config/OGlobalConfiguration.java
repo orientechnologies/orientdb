@@ -186,11 +186,11 @@ public enum OGlobalConfiguration {
   // DATABASE
   DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
 
-  DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
+  DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 100),
 
-  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Default database pool maximum size", Integer.class, 0),
+  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Timeout for checking of free database in the pool", Integer.class, 0),
 
-  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Default database pool maximum size", Integer.class, 0),
+  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
 
   @Deprecated
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
@@ -267,7 +267,7 @@ public enum OGlobalConfiguration {
   INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT("index.notunique.useSBTreeContainerByDefault",
       "Prefer SBTree based algorithm instead MVRBTree for storing sets of RID", Boolean.class, true),
 
-	INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
+  INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
@@ -501,9 +501,8 @@ public enum OGlobalConfiguration {
 
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
       "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),
-      
+
   CLIENT_USE_SSL("client.ssl.enabled", "Use SSL for client connections", Boolean.class, false),
-      
 
   // SERVER
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,
