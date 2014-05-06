@@ -150,7 +150,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     // BROWSE ALL THE RECORDS AND COLLECTS RESULT
     final List<OIdentifiable> result = traverse.execute();
     for (OIdentifiable r : result)
-      handleResult(r, true);
+      handleResult(r);
 
     return getResult();
   }

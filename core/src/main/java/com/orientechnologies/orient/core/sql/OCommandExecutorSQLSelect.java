@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -60,9 +73,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -546,7 +556,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       context.updateMetric("documentReads", +1);
 
       if (filter(record))
-        if (!handleResult(record, true))
+        if (!handleResult(record))
           // END OF EXECUTION
           return false;
     } finally {
@@ -560,18 +570,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return true;
   }
 
-  protected boolean handleResult(final OIdentifiable iRecord, final boolean iCloneIt) {
-    lastRecord = null;
-
+  protected boolean handleResult(final OIdentifiable iRecord) {
     if ((orderedFields.isEmpty() || fullySortedByIndex) && skip > 0) {
+      lastRecord = null;
       skip--;
       return true;
     }
 
-    if (iCloneIt)
-      lastRecord = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
-    else
-      lastRecord = iRecord;
+    lastRecord = iRecord;
 
     resultCount++;
 
@@ -901,7 +907,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   protected void parseIndexSearchResult(final Collection<ODocument> entries) {
     for (final ODocument document : entries) {
-      final boolean continueResultParsing = handleResult(document, false);
+      final boolean continueResultParsing = handleResult(document);
       if (!continueResultParsing)
         break;
     }
@@ -1245,7 +1251,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
 
       if (compiledFilter == null || !evaluateRecords || evaluateRecord(record)) {
-        if (!handleResult(record, true))
+        if (!handleResult(record))
           break;
       }
 
@@ -1273,7 +1279,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       doc.field("rid", entryRecord.getValue().getIdentity());
       doc.unsetDirty();
 
-      if (!handleResult(doc, false))
+      if (!handleResult(doc))
         break;
 
       entryRecord = cursor.next(needsToFetch);
@@ -1485,10 +1491,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (res instanceof Collection<?>)
             // MULTI VALUES INDEX
             for (final OIdentifiable r : (Collection<OIdentifiable>) res)
-              handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity()), true);
+              handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity()));
           else
             // SINGLE VALUE INDEX
-            handleResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()), true);
+            handleResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()));
       }
 
     } else {
