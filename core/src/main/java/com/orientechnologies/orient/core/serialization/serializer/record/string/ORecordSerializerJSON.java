@@ -457,8 +457,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         Object collectionItem;
         for (String item : items) {
           iFieldValue = item.trim();
-          if (!(iLinkedType == OType.DATE || iLinkedType == OType.BYTE || iLinkedType == OType.INTEGER || iLinkedType == OType.LONG
-              || iLinkedType == OType.DATETIME || iLinkedType == OType.DECIMAL || iLinkedType == OType.DOUBLE || iLinkedType == OType.FLOAT))
+          if (iFieldValue.startsWith("\""))
             iFieldValueAsString = iFieldValue.length() >= 2 ? iFieldValue.substring(1, iFieldValue.length() - 1) : iFieldValue;
           else
             iFieldValueAsString = iFieldValue;
