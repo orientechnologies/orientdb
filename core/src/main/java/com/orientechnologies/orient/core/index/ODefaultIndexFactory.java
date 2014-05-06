@@ -52,6 +52,7 @@ public class ODefaultIndexFactory implements OIndexFactory {
 
   private static final Set<String> TYPES;
   private static final Set<String> ALGORITHMS;
+
   static {
     final Set<String> types = new HashSet<String>();
     types.add(OClass.INDEX_TYPE.UNIQUE.toString());
@@ -60,11 +61,24 @@ public class ODefaultIndexFactory implements OIndexFactory {
     types.add(OClass.INDEX_TYPE.DICTIONARY.toString());
     TYPES = Collections.unmodifiableSet(types);
   }
+
   static {
     final Set<String> algorithms = new HashSet<String>();
     algorithms.add(SBTREE_ALGORITHM);
     algorithms.add(MVRBTREE_ALGORITHM);
     ALGORITHMS = Collections.unmodifiableSet(algorithms);
+  }
+
+  public static boolean isMultiValueIndex(final String indexType) {
+    switch (OClass.INDEX_TYPE.valueOf(indexType)) {
+    case UNIQUE:
+    case UNIQUE_HASH_INDEX:
+    case DICTIONARY:
+    case DICTIONARY_HASH_INDEX:
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -102,18 +116,15 @@ public class ODefaultIndexFactory implements OIndexFactory {
         && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
       OLogManager
           .instance()
-          .warn(
-              this,
-              "Index was created using %s as values container. "
-                  + "This container is deprecated and is not supported any more. To avoid this message please drop and recreate indexes or perform DB export/import.",
-              valueContainerAlgorithm);
+          .warn(this, "Index was created using %s as values container. " + "This container is deprecated and is not supported any more. To avoid this message please drop and recreate indexes or perform DB export/import.", valueContainerAlgorithm
+          );
     }
 
     if (SBTREE_ALGORITHM.equals(algorithm))
-      return createSBTreeIndex(indexType, valueContainerAlgorithm,metadata);
+      return createSBTreeIndex(indexType, valueContainerAlgorithm, metadata);
 
     if (MVRBTREE_ALGORITHM.equals(algorithm) || algorithm == null)
-      return createMVRBTreeIndex(indexType, valueContainerAlgorithm,metadata);
+      return createMVRBTreeIndex(indexType, valueContainerAlgorithm, metadata);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
