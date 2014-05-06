@@ -65,50 +65,46 @@ import java.util.zip.CRC32;
  * @since 7/23/13
  */
 public class OWOWCache {
-  public static final String                                NAME_ID_MAP_EXTENSION    = ".cm";
+  public static final String                                NAME_ID_MAP_EXTENSION = ".cm";
 
-  private static final String                               NAME_ID_MAP              = "name_id_map" + NAME_ID_MAP_EXTENSION;
+  private static final String                               NAME_ID_MAP           = "name_id_map" + NAME_ID_MAP_EXTENSION;
 
-  public static final int                                   MIN_CACHE_SIZE           = 16;
+  public static final int                                   MIN_CACHE_SIZE        = 16;
 
-  public static final long                                  MAGIC_NUMBER             = 0xFACB03FEL;
+  public static final long                                  MAGIC_NUMBER          = 0xFACB03FEL;
 
-  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups              = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
+  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups           = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
   private final OBinarySerializer<String>                   stringSerializer;
   private final Map<Long, OFileClassic>                     files;
   private final boolean                                     syncOnPageFlush;
   private final int                                         pageSize;
   private final long                                        groupTTL;
   private final OWriteAheadLog                              writeAheadLog;
-  private final AtomicInteger                               cacheSize                = new AtomicInteger();
-  private final OLockManager<GroupKey, Thread>              lockManager              = new OLockManager<GroupKey, Thread>(
-                                                                                         true,
-                                                                                         OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT
-                                                                                             .getValueAsInteger());
+  private final AtomicInteger                               cacheSize             = new AtomicInteger();
+  private final OLockManager<GroupKey, Thread>              lockManager           = new OLockManager<GroupKey, Thread>(
+                                                                                      true,
+                                                                                      OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT
+                                                                                          .getValueAsInteger());
   private final OStorageLocalAbstract                       storageLocal;
-  private final Object                                      syncObject               = new Object();
-  private final ScheduledExecutorService                    commitExecutor           = Executors
-                                                                                         .newSingleThreadScheduledExecutor(new ThreadFactory() {
-                                                                                           @Override
-                                                                                           public Thread newThread(Runnable r) {
-                                                                                             Thread thread = new Thread(r);
-                                                                                             thread.setDaemon(true);
-                                                                                             thread
-                                                                                                 .setName("OrientDB Write Cache Flush Task ("
-                                                                                                     + storageLocal.getName() + ")");
-                                                                                             return thread;
-                                                                                           }
-                                                                                         });
+  private final Object                                      syncObject            = new Object();
+  private final ScheduledExecutorService                    commitExecutor        = Executors
+                                                                                      .newSingleThreadScheduledExecutor(new ThreadFactory() {
+																																												@Override
+																																												public Thread newThread(Runnable r) {
+																																													Thread thread = new Thread(r);
+																																													thread.setDaemon(true);
+																																													thread
+																																																	.setName("OrientDB Write Cache Flush Task ("
+																																																					+ storageLocal.getName() + ")");
+																																													return thread;
+																																												}
+																																											});
   private Map<String, Long>                                 nameIdMap;
   private RandomAccessFile                                  nameIdMapHolder;
-
   private volatile int                                      cacheMaxSize;
-
-  private long                                              fileCounter              = 0;
-  private GroupKey                                          lastGroupKey             = new GroupKey(0, -1);
-  private File                                              nameIdMapHolderFile;
-
-  private long                                              lastTimeWhenCacheIsEmpty = -1;
+  private long         fileCounter           = 0;
+  private GroupKey                                          lastGroupKey          = new GroupKey(0, -1);
+  private File nameIdMapHolderFile;
 
   private static final class NameFileIdEntry {
     private final String name;
@@ -155,14 +151,14 @@ public class OWOWCache {
 
     @Override
     public int compareTo(GroupKey other) {
-      if (fileId > other.fileId)
+      if (fileId>other.fileId)
         return 1;
       if (fileId < other.fileId)
         return -1;
 
-      if (groupIndex > other.groupIndex)
+      if (groupIndex>other.groupIndex)
         return 1;
-      if (groupIndex < other.groupIndex)
+      if (groupIndex<other.groupIndex)
         return -1;
 
       return 0;
@@ -203,61 +199,32 @@ public class OWOWCache {
     @Override
     public void run() {
       try {
-        if (writeGroups.isEmpty()) {
-          if (lastTimeWhenCacheIsEmpty < 0)
-            lastTimeWhenCacheIsEmpty = System.currentTimeMillis();
-          else {
-            if (System.currentTimeMillis() - lastTimeWhenCacheIsEmpty >= OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_WRITE_INACTIVITY_INTERVAL
-                .getValueAsLong()) {
-              for (OFileClassic fileClassic : files.values()) {
-                String fileName = null;
-                try {
-                  fileName = fileClassic.getName();
-
-                  if (!fileClassic.isSoftlyClosedCache()) {
-                    fileClassic.synch();
-                    fileClassic.setSoftlyClosed(true);
-
-                    OLogManager.instance()
-                        .info(this, "Write inactivity interval was reached, file '" + fileName + "' was flushed.");
-                  }
-
-                } catch (Exception e) {
-                  if (fileName != null)
-                    OLogManager.instance().error(this, "Error on synchronization of file " + fileName, e);
-                }
-              }
-            }
-          }
-
+        if (writeGroups.isEmpty())
           return;
-        }
-
-        lastTimeWhenCacheIsEmpty = -1;
 
         int writeGroupsToFlush;
         boolean useForceSync = false;
         double threshold = ((double) cacheSize.get()) / cacheMaxSize;
-        if (threshold > 0.8) {
+        if (threshold>0.8) {
           writeGroupsToFlush = (int) (0.2 * writeGroups.size());
           useForceSync = true;
-        } else if (threshold > 0.9) {
+        } else if (threshold>0.9) {
           writeGroupsToFlush = (int) (0.4 * writeGroups.size());
           useForceSync = true;
         } else
           writeGroupsToFlush = 1;
 
-        if (writeGroupsToFlush < 1)
+        if (writeGroupsToFlush<1)
           writeGroupsToFlush = 1;
 
         int flushedGroups = 0;
 
         flushedGroups = flushRing(writeGroupsToFlush, flushedGroups, false);
 
-        if (flushedGroups < writeGroupsToFlush && useForceSync)
+        if (flushedGroups<writeGroupsToFlush && useForceSync)
           flushedGroups = flushRing(writeGroupsToFlush, flushedGroups, true);
 
-        if (flushedGroups < writeGroupsToFlush && cacheSize.get() > cacheMaxSize) {
+        if (flushedGroups<writeGroupsToFlush && cacheSize.get()>cacheMaxSize) {
           if (OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean()) {
             final long oldCacheMaxSize = cacheMaxSize;
 

@@ -331,15 +331,6 @@ public class OFileClassic extends OAbstractFile {
     }
   }
 
-  public boolean isSoftlyClosedCache() {
-    acquireReadLock();
-    try {
-      return isSoftlyClosed;
-    } finally {
-      releaseReadLock();
-    }
-  }
-
   @Override
   public boolean isSoftlyClosed() throws IOException {
     acquireReadLock();
