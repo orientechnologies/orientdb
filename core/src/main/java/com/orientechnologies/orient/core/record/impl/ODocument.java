@@ -827,6 +827,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
       if (iPropertyValue instanceof ORidBag) {
         final ORidBag ridBag = (ORidBag) iPropertyValue;
+        ridBag.setOwner(null); // in order to avoid IllegalStateException when ridBag changes the owner (ODocument.merge)
         ridBag.setOwner(this);
       }
     }
