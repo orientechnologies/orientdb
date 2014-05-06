@@ -1238,6 +1238,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       lock();
 
+      diskCache.setSoftlyClosed(false);
+
       if (configuration != null)
         configuration.setSoftlyClosed(false);
 
@@ -1360,6 +1362,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     final String name = cluster.getName();
     if (OMetadataDefault.CLUSTER_INDEX_NAME.equals(name) || OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME.equals(name)) {
       throw new IllegalArgumentException("It is impossible to freeze and release index or manualindex cluster!");
+    }
+
+    try {
+      cluster.setSoftlyClosed(false);
+    } catch (IOException e) {
+      throw new OStorageException("Error on unfreeze storage '" + name + "'", e);
     }
 
     cluster.getExternalModificationLock().allowModifications();

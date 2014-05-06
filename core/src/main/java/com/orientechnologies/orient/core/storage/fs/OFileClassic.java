@@ -25,8 +25,6 @@ public class OFileClassic extends OAbstractFile {
   public final static String NAME                = "classic";
   protected ByteBuffer       internalWriteBuffer = ByteBuffer.allocate(OBinaryProtocol.SIZE_LONG);
 
-  private boolean            isSoftlyClosed;
-
   @Override
   public long allocateSpace(long size) throws IOException {
     acquireWriteLock();
@@ -47,18 +45,11 @@ public class OFileClassic extends OAbstractFile {
   public void shrink(long iSize) throws IOException {
     acquireWriteLock();
     try {
-      resetSoftlyClosed();
-
       channel.truncate(HEADER_SIZE + iSize);
       size = iSize;
     } finally {
       releaseWriteLock();
     }
-  }
-
-  private void resetSoftlyClosed() throws IOException {
-    if (isSoftlyClosed)
-      setSoftlyClosed(false);
   }
 
   @Override
@@ -254,23 +245,9 @@ public class OFileClassic extends OAbstractFile {
     acquireWriteLock();
     try {
       super.create(HEADER_SIZE);
-      isSoftlyClosed = isSoftlyClosed();
     } finally {
       releaseWriteLock();
     }
-  }
-
-  @Override
-  public boolean open() throws IOException {
-    acquireWriteLock();
-    try {
-      boolean result = super.open();
-      isSoftlyClosed = isSoftlyClosed();
-      return result;
-    } finally {
-      releaseWriteLock();
-    }
-
   }
 
   @Override
@@ -347,7 +324,6 @@ public class OFileClassic extends OAbstractFile {
     }
   }
 
-  @Override
   public void setSoftlyClosed(final boolean value) throws IOException {
     acquireWriteLock();
     try {
@@ -360,7 +336,6 @@ public class OFileClassic extends OAbstractFile {
       writeBuffer(buffer, SOFTLY_CLOSED_OFFSET);
 
       channel.force(true);
-      isSoftlyClosed = value;
     } finally {
       releaseWriteLock();
     }
@@ -396,7 +371,7 @@ public class OFileClassic extends OAbstractFile {
     return ByteBuffer.allocate(iLenght);
   }
 
-  private ByteBuffer getWriteBuffer(final int iLenght) throws IOException {
+  private ByteBuffer getWriteBuffer(final int iLenght) {
     setDirty();
     if (iLenght <= OBinaryProtocol.SIZE_LONG)
       // RECYCLE WRITE BYTE BUFFER SINCE WRITES ARE SYNCHRONIZED
@@ -416,12 +391,5 @@ public class OFileClassic extends OAbstractFile {
     } finally {
       releaseWriteLock();
     }
-  }
-
-  @Override
-  protected void setDirty() throws IOException {
-    resetSoftlyClosed();
-
-    super.setDirty();
   }
 }
