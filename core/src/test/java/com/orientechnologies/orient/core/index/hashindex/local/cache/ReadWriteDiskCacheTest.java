@@ -46,7 +46,7 @@ public class ReadWriteDiskCacheTest {
       buildDirectory = ".";
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/ReadWriteDiskCacheTest");
-		storageLocal.create(null);
+    storageLocal.create(null);
 
     fileName = "readWriteDiskCacheTest.tst";
 

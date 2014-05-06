@@ -76,6 +76,11 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL("storage.diskCache.writeCachePageFlushInterval",
       "Interval between flushing of pages from write cache in ms.", Integer.class, 100),
 
+  DISK_WRITE_CACHE_FLUSH_WRITE_INACTIVITY_INTERVAL("storage.diskCache.writeCacheFlushInactivityInterval",
+      "Interval between 2 writes to the disk cache,"
+          + " if writes are done with interval more than provided all files will be fsynced before next write,"
+          + " which allows do not do data restore after server crash (in ms).", Long.class, 60 * 1000),
+
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
 
@@ -188,9 +193,9 @@ public enum OGlobalConfiguration {
 
   DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 100),
 
-  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Default database pool maximum size", Integer.class, 0),
+  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Timeout for checking of free database in the pool", Integer.class, 0),
 
-  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Default database pool maximum size", Integer.class, 0),
+  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
 
   @Deprecated
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
@@ -267,7 +272,7 @@ public enum OGlobalConfiguration {
   INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT("index.notunique.useSBTreeContainerByDefault",
       "Prefer SBTree based algorithm instead MVRBTree for storing sets of RID", Boolean.class, true),
 
-	INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
+  INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
@@ -501,9 +506,8 @@ public enum OGlobalConfiguration {
 
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
       "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),
-      
+
   CLIENT_USE_SSL("client.ssl.enabled", "Use SSL for client connections", Boolean.class, false),
-      
 
   // SERVER
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,

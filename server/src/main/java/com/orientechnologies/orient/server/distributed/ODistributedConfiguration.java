@@ -15,16 +15,16 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.collection.OSingleItemSet;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
@@ -178,7 +178,7 @@ public class ODistributedConfiguration {
   public Collection<String> getOneServerPerCluster(Collection<String> iClusterNames, final String iLocalNode) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
-        iClusterNames = new OSingleItemSet<String>("*");
+        iClusterNames = Collections.singleton("*");
 
       final Set<String> partitions = new HashSet<String>(iClusterNames.size());
       for (String p : iClusterNames) {
@@ -220,7 +220,7 @@ public class ODistributedConfiguration {
   public Collection<String> getServers(Collection<String> iClusterNames) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
-        iClusterNames = new OSingleItemSet<String>("*");
+        iClusterNames = Collections.singleton("*");
 
       final Set<String> partitions = new HashSet<String>(iClusterNames.size());
       for (String p : iClusterNames) {

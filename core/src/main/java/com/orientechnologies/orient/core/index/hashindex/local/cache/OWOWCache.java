@@ -65,40 +65,45 @@ import java.util.zip.CRC32;
  * @since 7/23/13
  */
 public class OWOWCache {
-  public static final String NAME_ID_MAP_EXTENSION = ".cm";
+  public static final String                                NAME_ID_MAP_EXTENSION = ".cm";
 
-  private static final String NAME_ID_MAP = "name_id_map" + NAME_ID_MAP_EXTENSION;
+  private static final String                               NAME_ID_MAP           = "name_id_map" + NAME_ID_MAP_EXTENSION;
 
-  public static final int MIN_CACHE_SIZE = 16;
+  public static final int                                   MIN_CACHE_SIZE        = 16;
 
-  public static final long MAGIC_NUMBER = 0xFACB03FEL;
+  public static final long                                  MAGIC_NUMBER          = 0xFACB03FEL;
 
-  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
-  private final OBinarySerializer<String> stringSerializer;
-  private final Map<Long, OFileClassic>   files;
-  private final boolean                   syncOnPageFlush;
-  private final int                       pageSize;
-  private final long                      groupTTL;
-  private final OWriteAheadLog            writeAheadLog;
-  private final AtomicInteger                  cacheSize   = new AtomicInteger();
-  private final OLockManager<GroupKey, Thread> lockManager = new OLockManager<GroupKey, Thread>(true, OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT.getValueAsInteger()
-  );
-  private final OStorageLocalAbstract storageLocal;
-  private final Object                   syncObject     = new Object();
-  private final ScheduledExecutorService commitExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-    @Override
-    public Thread newThread(Runnable r) {
-      Thread thread = new Thread(r);
-      thread.setDaemon(true);
-      thread.setName("OrientDB Write Cache Flush Task (" + storageLocal.getName() + ")");
-      return thread;
-    }
-  });
-  private          Map<String, Long> nameIdMap;
-  private          RandomAccessFile  nameIdMapHolder;
-  private volatile int               cacheMaxSize;
-  private long     fileCounter  = 0;
-  private GroupKey lastGroupKey = new GroupKey(0, -1);
+  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups           = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
+  private final OBinarySerializer<String>                   stringSerializer;
+  private final Map<Long, OFileClassic>                     files;
+  private final boolean                                     syncOnPageFlush;
+  private final int                                         pageSize;
+  private final long                                        groupTTL;
+  private final OWriteAheadLog                              writeAheadLog;
+  private final AtomicInteger                               cacheSize             = new AtomicInteger();
+  private final OLockManager<GroupKey, Thread>              lockManager           = new OLockManager<GroupKey, Thread>(
+                                                                                      true,
+                                                                                      OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT
+                                                                                          .getValueAsInteger());
+  private final OStorageLocalAbstract                       storageLocal;
+  private final Object                                      syncObject            = new Object();
+  private final ScheduledExecutorService                    commitExecutor        = Executors
+                                                                                      .newSingleThreadScheduledExecutor(new ThreadFactory() {
+																																												@Override
+																																												public Thread newThread(Runnable r) {
+																																													Thread thread = new Thread(r);
+																																													thread.setDaemon(true);
+																																													thread
+																																																	.setName("OrientDB Write Cache Flush Task ("
+																																																					+ storageLocal.getName() + ")");
+																																													return thread;
+																																												}
+																																											});
+  private Map<String, Long>                                 nameIdMap;
+  private RandomAccessFile                                  nameIdMapHolder;
+  private volatile int                                      cacheMaxSize;
+  private long         fileCounter           = 0;
+  private GroupKey                                          lastGroupKey          = new GroupKey(0, -1);
   private File nameIdMapHolderFile;
 
   private static final class NameFileIdEntry {
@@ -148,7 +153,7 @@ public class OWOWCache {
     public int compareTo(GroupKey other) {
       if (fileId>other.fileId)
         return 1;
-      if (fileId<other.fileId)
+      if (fileId < other.fileId)
         return -1;
 
       if (groupIndex>other.groupIndex)
