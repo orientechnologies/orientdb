@@ -37,6 +37,20 @@ breadcrumb.factory('Bookmarks', function ($resource, DocumentApi, $http, $q) {
     resource.refresh = function () {
         resource.tags = null;
     }
+    resource.remove = function (database, bk) {
+        var deferred = $q.defer();
+        DocumentApi.deleteDocument(database, bk['@rid'], function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
+    }
+    resource.update = function (database, bk) {
+        var deferred = $q.defer();
+        DocumentApi.updateDocument(database, bk['@rid'], bk, function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
+    }
     resource.getTags = function (database) {
         var deferred = $q.defer();
         var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';

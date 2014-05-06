@@ -817,3 +817,89 @@ ul.arrayrid > li {
     top: 0;
 }
 
+.bookmarks-container .query-body {
+    padding: 30px 19px 14px;
+}
+
+.context-navigator {
+    position: relative;
+}
+
+.context-navigator > a {
+    position: absolute;
+    right: -1px;
+}
+
+.bookmarks-box-container {
+
+}
+
+.bookmarks-box {
+    background-color: #222326;
+    height: 100%;
+    width: 20%;
+    position: absolute;
+    top: 0px;
+    padding-top: 70px;
+    left: 0px;
+    z-index: 1000;
+    border-right: 1px solid #222326;
+    box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.5);
+    transform: translateX(-260px);
+
+}
+.show {
+    transform: translateX(0px);
+}
+.search-bookmarks {
+    padding-left: 5px;
+}
+
+.bookmarks-list {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.bookmarks-item {
+    background-color: #2E2F33 !important;
+    color: #DFE0E6 !important;
+    border-width: 0 0 2px;
+    transition: background-color 100ms ease-in-out 0s;
+
+    background-clip: padding-box;
+    border-style: none none solid;
+    cursor: pointer;
+    border-color: -moz-use-text-color -moz-use-text-color rgba(0, 0, 0, 0);
+}
+
+.bookmarks-list > li > a {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: none !important;
+    color: #ffffff;
+}
+
+.bookmarks-list > li > a:HOVER {
+    background-color: #46484E !important;
+}
+
+.bookmarks-list > li:first-child > a:HOVER {
+    border-radius: 0 0;
+}
+
+.bookmarks-list > li:last-child > a:HOVER {
+    border-radius: 0 0;
+}
+.book-badge {
+    margin-right: 2px;
+}
+.bookmarks-folder{
+    -webkit-transform: rotate(90deg);
+    -moz-transform: rotate(90deg);
+    -o-transform: rotate(90deg);
+    writing-mode: tb-rl;
+    position: absolute;
+    right: -47px;
+    top: 100px;
+}

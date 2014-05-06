@@ -4,21 +4,32 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.database = Database;
     $scope.limit = 20;
 
+    $scope.bookmarksClass = "";
     $scope.items = [
         {name: "history", title: "History"},
         {name: "bookmarks", title: "Bookmarks"}
     ];
     $scope.context = $scope.items[0];
     $scope.nContext = $scope.items[1];
-    $scope.next = function () {
+    $scope.nextPage = function () {
         var idx = $scope.items.indexOf($scope.context);
-        var newIdx = (idx < $scope.items.length) ? idx + 1 : 0;
+        var newIdx = (idx < $scope.items.length - 1) ? idx + 1 : 0;
         $scope.context = $scope.items[newIdx];
         var nextIdx = (newIdx < $scope.items.length - 1) ? newIdx + 1 : 0;
         $scope.nContext = $scope.items[nextIdx];
     }
     $scope.countPage = 5;
 
+    $scope.setBookClass = function () {
+        if ($scope.bookmarksClass == "") {
+            $scope.bookmarksClass = "show";
+        } else {
+            $scope.bookmarksClass = "";
+        }
+    }
+    $scope.$watch("bookmarksClass", function (data) {
+        console.log(data);
+    });
     if (Database.hasClass("StudioBookmarks")) {
         Bookmarks.getAll(Database.getName());
     } else {
@@ -216,7 +227,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
 
     var data = $scope.item.resultTotal;
 
-    $scope.bookIcon = 'icon-star-empty';
+    $scope.bookIcon = 'icon-star';
     $scope.viewerOptions = {
         lineWrapping: true,
         lineNumbers: true,
@@ -230,9 +241,6 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     };
     $scope.changeIcon = function () {
         $scope.bookIcon = 'icon-star';
-    }
-    $scope.cancel = function () {
-        $scope.bookIcon = 'icon-star-empty';
     }
     $scope.tableParams = new ngTableParams({
         page: 1,            // show first page
@@ -344,7 +352,6 @@ dbModule.controller("BookmarkNewController", ['$scope', 'Bookmarks', 'DocumentAp
 
     Bookmarks.getTags(Database.getName()).then(function (data) {
         $scope.tags = data;
-        console.log($scope.tags);
         $scope.select2Options = {
             'multiple': true,
             'simple_tags': true,
@@ -360,11 +367,25 @@ dbModule.controller("BookmarkNewController", ['$scope', 'Bookmarks', 'DocumentAp
         });
     }
 }]);
-dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database','scroller', function ($scope, Bookmarks, DocumentApi, Database,scroller) {
+dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database', 'scroller', function ($scope, Bookmarks, DocumentApi, Database, scroller) {
 
     Bookmarks.getAll(Database.getName()).then(function (data) {
-        $scope.bookmarks = data.result;
+        Bookmarks.getTags(Database.getName()).then(function (tgs) {
+            $scope.tags = tgs;
+            $scope.select2Options = {
+                'multiple': true,
+                'simple_tags': true,
+                'tags': $scope.tags  // Can be empty list.
+            };
+            $scope.bookmarks = data.result;
+        });
+
     })
+    $scope.click = function () {
+
+        $scope.$parent.setBookClass();
+
+    }
     $scope.run = function (r) {
         $scope.queryText = r.query;
         scroller.scrollTo(0, 0, 2000);
@@ -374,6 +395,19 @@ dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi',
         $scope.cm.setCursor($scope.cm.lineCount());
     }
 
+    $scope.remove = function (r) {
+        Bookmarks.remove(Database.getName(), r).then(function (data) {
+            var idx = $scope.bookmarks.indexOf(r);
+            $scope.bookmarks.splice(idx, 1);
+        });
+
+    }
+    $scope.update = function (r) {
+        Bookmarks.update(Database.getName(), r).then(function (data) {
+            var idx = $scope.bookmarks.indexOf(r);
+            $scope.bookmarks.splice(idx, 1, data);
+        });
+    }
 }]);
 
 
