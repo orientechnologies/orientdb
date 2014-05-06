@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.command.script;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 
 /**
  * Script utility class
@@ -29,38 +30,21 @@ public class OCommandExecutorUtility {
   private static Method java8MethodValues;
 
   /**
-   * Manage cross compiler compatibility issues.
+   * Manages cross compiler compatibility issues.
    * 
-   * @param ob
+   * @param result
+   *          Result to transform
    * @return
    */
-  public static Object transformResult(final Object ob) {
-//    if( ob == null )
-//      return ob
-//
-//    // JAVA8 NASHORN COMPATIBILITY OR RETURNING ARRAYS
-//    if (java8MethodIsArray != null || ob.getClass().getName().equals("jdk.nashorn.api.scripting.ScriptObjectMirror")) {
-//      try {
-//        if (java8MethodValues == null) {
-//          //java8MethodIsArray = ob.getClass().getMethod("isArray");
-//          java8MethodValues = ob.getClass().getMethod("values");
-//          java8MethodValues.setAccessible(true);
-//        }
-//
-//        Method m = ob.getClass().getMethod("entrySet");
-//        m.setAccessible(true);
-//        Object r = m.invoke(ob);
-//
-//        //        final Boolean isArray = (Boolean) java8MethodIsArray.invoke(ob);
-////
-////        if (isArray)
-//          return java8MethodValues.invoke(ob);
-//
-//      } catch (Exception e) {
-//        OLogManager.instance().warn(OCommandExecutorUtility.class, "Error on conversion object from Nashorn engine", e);
-//      }
-//    }
+  public static Object transformResult(final Object result) {
+    // PATCH BY MAT ABOUT NASHORN RETURNING VALUE FOR ARRAYS. TEST IF 0 IS PRESENT AS KEY. IN THIS CASE RETURNS THE VALUES NOT THE
+    // OBJECT AS MAP
+    try {
+      if (((Map) result).containsKey("0"))
+        return ((Map) result).values();
+    } catch (Exception e) {
+    }
 
-    return ob;
+    return result;
   }
 }
