@@ -24,24 +24,30 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 public class ODocumentSerializationSpeedTest extends OrientMonoThreadTest {
   private ODocument record;
 
-  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-    ODocumentSerializationSpeedTest test = new ODocumentSerializationSpeedTest();
-    test.data.go(test);
-  }
-
   public ODocumentSerializationSpeedTest() throws InstantiationException, IllegalAccessException {
     super(1000000);
 
     record = new ODocument();
   }
 
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    ODocumentSerializationSpeedTest test = new ODocumentSerializationSpeedTest();
+    test.data.go(test);
+  }
+
   @Override
   public void cycle() {
     record.reset();
     record.field("id", data.getCyclesDone());
-    record.field("name", "Luca");
-    record.field("surname", "Garulli");
-    record.field("salary", 3000f);
+    for (int i = 0; i < 15; ++i)
+      record.field("name" + i, "Luca" + i);
+    // record.field("surname", "Garulli");
+    // record.field("salary", 3000f);
+    // record.field("double", 3343434d);
+    // record.field("int", 23323);
+    // record.field("bd", new BigDecimal("12232232.232"));
+    // record.field("boolean", true);
+    // record.field("bytes", new byte[] { 32, 32, 22, 2, 32, 3, 23, 2, 32 });
     final byte[] buffer = record.toStream();
 
     record.reset();

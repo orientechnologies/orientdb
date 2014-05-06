@@ -358,7 +358,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final OHazelcastDistributedDatabase db = messageService.getDatabase(iDatabaseName);
 
-    if (iTargetNodes.isEmpty()) {
+    if (iTargetNodes == null || iTargetNodes.isEmpty()) {
       ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
           "No nodes configured for partition '%s.%s' request: %s", iDatabaseName, iClusterNames, req);
       throw new ODistributedException("No nodes configured for partition '" + iDatabaseName + "." + iClusterNames + "' request: "

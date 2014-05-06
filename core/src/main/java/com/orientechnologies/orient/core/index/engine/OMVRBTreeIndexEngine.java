@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
@@ -35,7 +34,6 @@ import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
@@ -491,7 +489,7 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
     }
 
     @Override
-    public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
       if (currentIterator.hasNext())
         return nextCollectionEntry();
 

@@ -16,10 +16,6 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -27,7 +23,12 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -36,6 +37,9 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -259,7 +263,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       if (firstKey == null)
         return new OIndexAbstractCursor() {
           @Override
-          public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+          public Map.Entry<Object, OIdentifiable> nextEntry() {
             return null;
           }
         };
@@ -403,15 +407,15 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     }
 
     @Override
-    public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
       if (valuesTransformer == null)
-        return (Map.Entry<Object, OIdentifiable>) treeCursor.next(prefetchSize);
+        return (Map.Entry<Object, OIdentifiable>) treeCursor.next(getPrefetchSize());
 
       if (currentIterator == null)
         return null;
 
       while (!currentIterator.hasNext()) {
-        Map.Entry<Object, V> entry = treeCursor.next(prefetchSize);
+        Map.Entry<Object, V> entry = treeCursor.next(getPrefetchSize());
         if (entry == null) {
           currentIterator = null;
           return null;

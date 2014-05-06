@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -34,6 +25,14 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+
+import javax.script.Bindings;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Executes Script Commands.
@@ -85,6 +84,8 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
           scriptManager.getErrorMessage(e, lib);
         }
 
+      final Object result;
+
       if (scriptEngine instanceof Invocable) {
         // INVOKE AS FUNCTION. PARAMS ARE PASSED BY POSITION
         final Invocable invocableEngine = (Invocable) scriptEngine;
@@ -95,13 +96,16 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
           for (Entry<Object, Object> arg : iArgs.entrySet())
             args[i++] = arg.getValue();
         }
-        return invocableEngine.invokeFunction(parserText, args);
+        result = invocableEngine.invokeFunction(parserText, args);
 
       } else {
         // INVOKE THE CODE SNIPPET
         final Object[] args = iArgs == null ? null : iArgs.values().toArray();
-        return scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
+        result = scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
       }
+
+      return OCommandExecutorUtility.transformResult(result);
+
     } catch (ScriptException e) {
       throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
     } catch (NoSuchMethodException e) {

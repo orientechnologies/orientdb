@@ -87,7 +87,7 @@
 //          for (Vertex vertex : vertices) {
 //            Iterator<Edge> egdeIterator = vertex.getEdges(Direction.OUT, "GEO").iterator();
 //            while (egdeIterator.hasNext()) {
-//              Edge e = egdeIterator.next();
+//              Edge e = egdeIterator.nextEntry();
 //              graph.removeEdge(e);
 //            }
 //          }

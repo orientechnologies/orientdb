@@ -15,17 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL synchronous query. When executed the caller wait for the result.
@@ -37,8 +36,8 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> implements OCommandResultListener, Iterable<T> {
+  private final OResultSet<T> result              = new OResultSet<T>();
   private ORID                nextPageRID;
-  private final List<T>       result              = new ArrayList<T>();
   private Map<Object, Object> previousQueryParams = new HashMap<Object, Object>();
 
   public OSQLSynchQuery() {
@@ -67,20 +66,20 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 
   @Override
   public void end() {
+    result.setCompleted();
   }
 
   @Override
   public List<T> run(Object... iArgs) {
-    if (!result.isEmpty()) {
-      result.clear();
-    }
+    result.clear();
 
     final Map<Object, Object> queryParams;
     queryParams = fetchQueryParams(iArgs);
     resetNextRIDIfParametersWereChanged(queryParams);
 
     final List<Object> res = (List<Object>) super.run(iArgs);
-    if (res != null && result.isEmpty()) {
+
+    if (res != result) {
       for (Object r : res)
         result.add((T) r);
     }
@@ -94,23 +93,29 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     return result;
   }
 
-  private void resetNextRIDIfParametersWereChanged(final Map<Object, Object> queryParams) {
-    if (!queryParams.equals(previousQueryParams))
-      nextPageRID = null;
-  }
-
-  private Map<Object, Object> fetchQueryParams(final Object... iArgs) {
-    if (iArgs != null && iArgs.length > 0)
-      return convertToParameters(iArgs);
-
-    Map<Object, Object> queryParams = getParameters();
-    if (queryParams == null)
-      queryParams = new HashMap<Object, Object>();
-    return queryParams;
-  }
-
   public Object getResult() {
     return result;
+  }
+
+  /**
+   * @return RID of the record that will be processed first during pagination mode.
+   */
+  public ORID getNextPageRID() {
+    return nextPageRID;
+  }
+
+  public void resetPagination() {
+    nextPageRID = null;
+  }
+
+  public Iterator<T> iterator() {
+    execute();
+    return ((Iterable<T>) getResult()).iterator();
+  }
+
+  @Override
+  public boolean isAsynchronous() {
+    return false;
   }
 
   @Override
@@ -140,25 +145,19 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
 
   }
 
-  /**
-   * @return RID of the record that will be processed first during pagination mode.
-   */
-  public ORID getNextPageRID() {
-    return nextPageRID;
+  private void resetNextRIDIfParametersWereChanged(final Map<Object, Object> queryParams) {
+    if (!queryParams.equals(previousQueryParams))
+      nextPageRID = null;
   }
 
-  public void resetPagination() {
-    nextPageRID = null;
-  }
+  private Map<Object, Object> fetchQueryParams(final Object... iArgs) {
+    if (iArgs != null && iArgs.length > 0)
+      return convertToParameters(iArgs);
 
-  public Iterator<T> iterator() {
-    execute();
-    return ((Iterable<T>) getResult()).iterator();
-  }
-
-  @Override
-  public boolean isAsynchronous() {
-    return false;
+    Map<Object, Object> queryParams = getParameters();
+    if (queryParams == null)
+      queryParams = new HashMap<Object, Object>();
+    return queryParams;
   }
 
 }

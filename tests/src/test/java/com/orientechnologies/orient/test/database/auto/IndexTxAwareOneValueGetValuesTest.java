@@ -2,7 +2,6 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.*;
 
-import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import org.testng.Assert;
@@ -378,10 +377,10 @@ public class IndexTxAwareOneValueGetValuesTest {
 
   private void cursorToSet(OIndexCursor cursor, Set<OIdentifiable> result) {
     result.clear();
-    Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
+    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
     while (entry != null) {
       result.add(entry.getValue());
-      entry = cursor.next(-1);
+      entry = cursor.nextEntry();
     }
   }
 }

@@ -16,10 +16,17 @@
 package com.orientechnologies.orient.object.db;
 
 import java.lang.reflect.Field;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-
-import com.orientechnologies.orient.core.exception.OTransactionException;
+import java.util.Set;
+import java.util.concurrent.ThreadPoolExecutor;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -32,6 +39,7 @@ import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
@@ -305,6 +313,15 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   }
 
   /**
+   * Returns true if current configuration retains objects, otherwise false
+   * 
+   * @see #setRetainObjects(boolean)
+   */
+  public boolean isRetainObjects() {
+    return retainObjects;
+  }
+
+  /**
    * Specifies if retain handled objects in memory or not. Setting it to false can improve performance on large inserts. Default is
    * enabled.
    * 
@@ -315,15 +332,6 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   public ODatabasePojoAbstract<T> setRetainObjects(final boolean iValue) {
     retainObjects = iValue;
     return this;
-  }
-
-  /**
-   * Returns true if current configuration retains objects, otherwise false
-   * 
-   * @see #setRetainObjects(boolean)
-   */
-  public boolean isRetainObjects() {
-    return retainObjects;
   }
 
   public ODocument getRecordByUserObject(final Object iPojo, final boolean iCreateIfNotAvailable) {

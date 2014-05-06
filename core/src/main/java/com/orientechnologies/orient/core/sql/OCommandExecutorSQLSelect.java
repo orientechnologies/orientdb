@@ -20,9 +20,11 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -39,7 +41,6 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -58,11 +59,14 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -81,11 +85,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public static final String          KEYWORD_GROUP        = "GROUP";
   public static final String          KEYWORD_FETCHPLAN    = "FETCHPLAN";
   private static final String         KEYWORD_AS           = " AS ";
+  private static final String         KEYWORD_PARALLEL     = "PARALLEL";
   private Map<String, String>         projectionDefinition = null;
-  private Map<String, Object>         projections          = null;                                  // THIS HAS BEEN KEPT FOR
-                                                                                                     // COMPATIBILITY; BUT IT'S USED
-                                                                                                     // THE PROJECTIONS IN
-                                                                                                     // GROUPED-RESULTS
+  // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT IT'S USED THE PROJECTIONS IN GROUPED-RESULTS
+  private Map<String, Object>         projections          = null;
   private List<OPair<String, String>> orderedFields        = new ArrayList<OPair<String, String>>();
   private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
@@ -93,9 +96,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private int                         fetchLimit           = -1;
   private OIdentifiable               lastRecord;
   private String                      fetchPlan;
+  private volatile boolean            executing;
 
   private boolean                     fullySortedByIndex   = false;
   private OStorage.LOCKING_STRATEGY   lockingStrategy      = OStorage.LOCKING_STRATEGY.DEFAULT;
+  private boolean                     parallel             = false;
 
   private final class IndexComparator implements Comparator<OIndex<?>> {
     public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
@@ -296,11 +301,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       while (!parserIsEnded()) {
         parserNextWord(true);
+        final String w = parserGetLastWord();
 
-        if (!parserIsEnded()) {
-
-          final String w = parserGetLastWord();
-
+        if (!w.isEmpty()) {
           if (w.equals(KEYWORD_WHERE)) {
             compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
                 getContext(), KEYWORD_WHERE);
@@ -326,7 +329,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
             lockingStrategy = lock.equals("RECORD") ? OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
                 : OStorage.LOCKING_STRATEGY.DEFAULT;
-          } else
+          } else if (w.equals(KEYWORD_PARALLEL))
+            parallel = parseParallel(w);
+          else
             throwParsingException("Invalid keyword '" + w + "'");
         }
       }
@@ -485,17 +490,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return;
     }
 
-    final long startFetching = System.currentTimeMillis();
-    try {
-
-      // BROWSE ALL THE RECORDS
-      while (target.hasNext())
-        if (!executeSearchRecord(target.next()))
-          break;
-
-    } finally {
-      context.setVariable("fetchingFromTargetElapsed", (System.currentTimeMillis() - startFetching));
-    }
+    fetchFromTarget(target, true);
   }
 
   @Override
@@ -510,7 +505,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return true;
   }
 
-  protected boolean executeSearchRecord(final OIdentifiable id) {
+  protected boolean executeSearchRecord(final OIdentifiable id, boolean evaluateRecords) {
     if (Thread.interrupted())
       throw new OCommandExecutionException("The select execution has been interrupted");
 
@@ -545,9 +540,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       context.updateMetric("documentReads", +1);
 
-      if (filter(record))
+      if (filter(record, evaluateRecords))
         if (!handleResult(record, true))
-          // END OF EXECUTION
+          // LIMIT REACHED
           return false;
     } finally {
       if (record != null)
@@ -560,6 +555,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return true;
   }
 
+  /**
+   * Handles the record in result.
+   * 
+   * @param iRecord
+   *          Record to handle
+   * @param iCloneIt
+   *          Clone the record
+   * @return false if limit has been reached, otherwise true
+   */
   protected boolean handleResult(final OIdentifiable iRecord, final boolean iCloneIt) {
     lastRecord = null;
 
@@ -899,14 +903,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return endPos;
   }
 
-  protected void parseIndexSearchResult(final Collection<ODocument> entries) {
-    for (final ODocument document : entries) {
-      final boolean continueResultParsing = handleResult(document, false);
-      if (!continueResultParsing)
-        break;
-    }
-  }
-
   /**
    * Parses the fetchplan keyword if found.
    */
@@ -996,6 +992,94 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return false;
+  }
+
+  private void fetchFromTarget(Iterator<? extends OIdentifiable> iTarget, final boolean evaluateRecords) {
+    final long startFetching = System.currentTimeMillis();
+    try {
+
+      if (parallel)
+        parallelExec(iTarget);
+      else
+        // BROWSE; UNMARSHALL AND FILTER ALL THE RECORDS ON CURRENT THREAD
+        while (iTarget.hasNext()) {
+          final OIdentifiable next = iTarget.next();
+          if (next == null)
+            break;
+
+          if (!executeSearchRecord(next, evaluateRecords))
+            break;
+        }
+
+    } finally {
+      context.setVariable("fetchingFromTargetElapsed", (System.currentTimeMillis() - startFetching));
+    }
+  }
+
+  private boolean parseParallel(String w) {
+    return w.equals(KEYWORD_PARALLEL);
+  }
+
+  private void parallelExec(final Iterator<? extends OIdentifiable> iTarget) {
+    final OResultSet result = (OResultSet) getResult();
+
+    // BROWSE ALL THE RECORDS ON CURRENT THREAD BUT DELEGATE UNMARSHALLING AND FILTER TO A THREAD POOL
+    final ODatabaseRecord db = getDatabase();
+
+    if (limit > -1) {
+      if (result != null)
+        result.setLimit(limit);
+    }
+
+    final int cores = Runtime.getRuntime().availableProcessors();
+    OLogManager.instance().warn(this, "Parallel query against %d threads", cores);
+
+    final ThreadPoolExecutor workers = Orient.instance().getWorkers();
+
+    executing = true;
+    final List<Future<?>> jobs = new ArrayList<Future<?>>();
+
+    // BROWSE ALL THE RECORDS AND PUT THE RECORD INTO THE QUEUE
+    while (executing && iTarget.hasNext()) {
+      final OIdentifiable next = iTarget.next();
+
+      if (next == null)
+        break;
+
+      final Runnable job = new Runnable() {
+        @Override
+        public void run() {
+          ODatabaseRecordThreadLocal.INSTANCE.set(db);
+
+          if (!executeSearchRecord(next, true))
+            executing = false;
+        }
+      };
+
+      jobs.add(workers.submit(job));
+    }
+
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance()
+          .debug(this, "Parallel query '%s' split in %d jobs, waiting for completion...", parserText, jobs.size());
+
+    int processed = 0;
+    int total = jobs.size();
+    try {
+      for (Future<?> j : jobs) {
+        j.get();
+        processed++;
+
+        if (OLogManager.instance().isDebugEnabled())
+          if (processed % (total / 10) == 0)
+            OLogManager.instance().debug(this, "Executed %d/%d", processed, total);
+      }
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on executing parallel query: %s", e, parserText);
+    }
+
+    if (OLogManager.instance().isDebugEnabled())
+      OLogManager.instance().debug(this, "Parallel query '%s' completed", parserText);
   }
 
   private int getQueryFetchLimit() {
@@ -1218,52 +1302,45 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
-  private void fetchValuesFromIndexCursor(OIndexCursor cursor, boolean evaluateRecords) {
+  private void fetchValuesFromIndexCursor(final OIndexCursor cursor, final boolean evaluateRecords) {
     int needsToFetch;
     if (fetchLimit > 0)
       needsToFetch = fetchLimit + skip;
     else
       needsToFetch = -1;
 
-    Entry<Object, OIdentifiable> entryRecord = cursor.next(needsToFetch);
-    if (needsToFetch > 0)
-      needsToFetch--;
-
-    cursorLoop: while (entryRecord != null) {
-      final OIdentifiable identifiable = entryRecord.getValue();
-      final ORecord record = identifiable.getRecord();
-
-      if (record instanceof ORecordSchemaAware<?>) {
-        final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) record;
-        final Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
-        if ((targetClasses != null) && (!targetClasses.isEmpty())) {
-          for (OClass targetClass : targetClasses.keySet()) {
-            if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
-              continue cursorLoop;
-          }
-        }
-      }
-
-      if (compiledFilter == null || !evaluateRecords || evaluateRecord(record)) {
-        if (!handleResult(record, true))
-          break;
-      }
-
-      entryRecord = cursor.next(needsToFetch);
-
-      if (needsToFetch > 0)
-        needsToFetch--;
-    }
+    cursor.setPrefetchSize(needsToFetch);
+    fetchFromTarget(cursor, evaluateRecords);
+    //
+    // Entry<Object, OIdentifiable> entryRecord = cursor.nextEntry();
+    // if (needsToFetch > 0)
+    // needsToFetch--;
+    //
+    // while (entryRecord != null) {
+    // final OIdentifiable identifiable = entryRecord.getValue();
+    // final ORecord record = identifiable.getRecord();
+    //
+    // if (!executeSearchRecord(record, evaluateRecords))
+    // // LIMIT REACHED
+    // break;
+    //
+    // entryRecord = cursor.nextEntry();
+    //
+    // if (needsToFetch > 0)
+    // needsToFetch--;
+    // }
   }
 
-  private void fetchEntriesFromIndexCursor(OIndexCursor cursor) {
+  private void fetchEntriesFromIndexCursor(final OIndexCursor cursor) {
     int needsToFetch;
     if (fetchLimit > 0)
       needsToFetch = fetchLimit + skip;
     else
       needsToFetch = -1;
 
-    Entry<Object, OIdentifiable> entryRecord = cursor.next(needsToFetch);
+    cursor.setPrefetchSize(needsToFetch);
+
+    Entry<Object, OIdentifiable> entryRecord = cursor.nextEntry();
     if (needsToFetch > 0)
       needsToFetch--;
 
@@ -1274,12 +1351,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       doc.unsetDirty();
 
       if (!handleResult(doc, false))
+        // LIMIT REACHED
         break;
 
-      entryRecord = cursor.next(needsToFetch);
-
-      if (needsToFetch > 0)
+      if (needsToFetch > 0) {
         needsToFetch--;
+        cursor.setPrefetchSize(needsToFetch);
+      }
+
+      entryRecord = cursor.nextEntry();
     }
   }
 
@@ -1482,13 +1562,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
         if (res != null)
-          if (res instanceof Collection<?>)
+          if (res instanceof Collection<?>) {
             // MULTI VALUES INDEX
             for (final OIdentifiable r : (Collection<OIdentifiable>) res)
-              handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity()), true);
-          else
+              if (!handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity()), true))
+                // LIMIT REACHED
+                break;
+          } else {
             // SINGLE VALUE INDEX
             handleResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()), true);
+          }
       }
 
     } else {

@@ -15,6 +15,20 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -28,19 +42,6 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Executes Script Commands.
@@ -111,8 +112,9 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
         iArgs);
 
     try {
-      return compiledScript.eval(binding);
+      final Object ob = compiledScript.eval(binding);
 
+      return OCommandExecutorUtility.transformResult(ob);
     } catch (ScriptException e) {
       throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
 

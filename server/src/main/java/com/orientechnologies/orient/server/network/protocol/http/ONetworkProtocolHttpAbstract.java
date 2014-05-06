@@ -56,22 +56,19 @@ import java.util.zip.GZIPInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private static final String                 COMMAND_SEPARATOR = "|";
+  protected static OHttpNetworkCommandManager sharedCmdManager;
   private static int                          requestMaxContentLength;                // MAX = 10Kb
   private static int                          socketTimeout;
-
+  private final StringBuilder                 requestContent    = new StringBuilder();
   protected OClientConnection                 connection;
   protected OChannelTextServer                channel;
   protected OUser                             account;
   protected OHttpRequest                      request;
   protected OHttpResponse                     response;
-
-  private final StringBuilder                 requestContent    = new StringBuilder();
+  protected OHttpNetworkCommandManager        cmdManager;
   private String                              responseCharSet;
   private String[]                            additionalResponseHeaders;
   private String                              listeningAddress  = "?";
-
-  protected static OHttpNetworkCommandManager sharedCmdManager;
-  protected OHttpNetworkCommandManager        cmdManager;
 
   public ONetworkProtocolHttpAbstract() {
     super(Orient.instance().getThreadGroup(), "IO-HTTP");
@@ -181,6 +178,57 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     connection.data.lastCommandExecutionTime = System.currentTimeMillis() - begin;
     connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
+  }
+
+  @Override
+  public void sendShutdown() {
+    super.sendShutdown();
+
+    try {
+      // FORCE SOCKET CLOSING
+      if (channel.socket != null)
+        channel.socket.close();
+    } catch (final Exception e) {
+    }
+  }
+
+  @Override
+  public void shutdown() {
+    try {
+      sendShutdown();
+      channel.close();
+
+    } finally {
+      OClientConnectionManager.instance().disconnect(connection.id);
+
+      if (OLogManager.instance().isDebugEnabled())
+        OLogManager.instance().debug(this, "Connection shutdowned");
+    }
+  }
+
+  @Override
+  public OChannel getChannel() {
+    return channel;
+  }
+
+  public OUser getAccount() {
+    return account;
+  }
+
+  public String getResponseCharSet() {
+    return responseCharSet;
+  }
+
+  public void setResponseCharSet(String responseCharSet) {
+    this.responseCharSet = responseCharSet;
+  }
+
+  public String[] getAdditionalResponseHeaders() {
+    return additionalResponseHeaders;
+  }
+
+  public OHttpNetworkCommandManager getCommandManager() {
+    return cmdManager;
   }
 
   protected void handleError(Throwable e) {
@@ -486,7 +534,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           request.httpVersion = words[2];
           readAllContent(request);
 
-          if (request.content != null && request.contentType != null && request.contentType.equals(OHttpUtils.CONTENT_TYPE_URLENCODED))
+          if (request.content != null && request.contentType != null
+              && request.contentType.equals(OHttpUtils.CONTENT_TYPE_URLENCODED))
             request.content = URLDecoder.decode(request.content, "UTF-8").trim();
 
           if (OLogManager.instance().isDebugEnabled())
@@ -582,40 +631,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     sendShutdown();
   }
 
-  @Override
-  public void sendShutdown() {
-    super.sendShutdown();
-
-    try {
-      // FORCE SOCKET CLOSING
-      channel.socket.close();
-    } catch (final Exception e) {
-    }
-  }
-
-  @Override
-  public void shutdown() {
-    try {
-      sendShutdown();
-      channel.close();
-
-    } finally {
-      OClientConnectionManager.instance().disconnect(connection.id);
-
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Connection shutdowned");
-    }
-  }
-
-  @Override
-  public OChannel getChannel() {
-    return channel;
-  }
-
-  public OUser getAccount() {
-    return account;
-  }
-
   private String getCommandString(final String command) {
     final int getQueryPosition = command.indexOf('?');
 
@@ -628,21 +643,5 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     else
       commandString.append(command);
     return commandString.toString();
-  }
-
-  public String getResponseCharSet() {
-    return responseCharSet;
-  }
-
-  public void setResponseCharSet(String responseCharSet) {
-    this.responseCharSet = responseCharSet;
-  }
-
-  public String[] getAdditionalResponseHeaders() {
-    return additionalResponseHeaders;
-  }
-
-  public OHttpNetworkCommandManager getCommandManager() {
-    return cmdManager;
   }
 }

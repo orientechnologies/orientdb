@@ -89,9 +89,9 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
       indexResult = index.get(key);
 
       if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
       else
-        cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -109,9 +109,9 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
           indexResult = index.get(keyOne);
 
           if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
           else
-            cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
+            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
         } else
           return null;
       }

@@ -15,11 +15,21 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
+import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -27,9 +37,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * EQUALS operator.
@@ -41,12 +48,6 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
   public OQueryOperatorEquals() {
     super("=", 5, false);
-  }
-
-  @Override
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
-    return equals(iLeft, iRight);
   }
 
   public static boolean equals(final Object iLeft, final Object iRight) {
@@ -124,9 +125,9 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       indexResult = index.get(key);
 
       if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
       else
-        cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -148,9 +149,9 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
           indexResult = index.get(keyOne);
 
           if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
           else
-            cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
+            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
         } else
           return null;
       }
@@ -186,5 +187,11 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   @Override
   public ORID getEndRidRange(final Object iLeft, final Object iRight) {
     return getBeginRidRange(iLeft, iRight);
+  }
+
+  @Override
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
+    return equals(iLeft, iRight);
   }
 }

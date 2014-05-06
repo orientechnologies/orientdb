@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
@@ -61,12 +54,102 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
   public static final char FIELD_VALUE_SEPARATOR = ':';
   private final boolean    preferSBTreeRIDSet    = OGlobalConfiguration.PREFER_SBTREE_SET.getValueAsBoolean();
 
-  protected abstract ORecordSchemaAware<?> newObject(final String iClassName);
+  /**
+   * Serialize the link.
+   * 
+   * @param buffer
+   * @param iParentRecord
+   * @param iLinked
+   *          Can be an instance of ORID or a Record<?>
+   * @return
+   */
+  private static OIdentifiable linkToStream(final StringBuilder buffer, final ORecordSchemaAware<?> iParentRecord, Object iLinked) {
+    if (iLinked == null)
+      // NULL REFERENCE
+      return null;
+
+    OIdentifiable resultRid = null;
+    ORID rid;
+
+    if (iLinked instanceof ORID) {
+      // JUST THE REFERENCE
+      rid = (ORID) iLinked;
+
+      if (rid.isValid() && rid.isNew()) {
+        // SAVE AT THE FLY AND STORE THE NEW RID
+        final ORecord<?> record = rid.getRecord();
+
+        final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+        if (database.getTransaction().isActive()) {
+          // USE THE DEFAULT CLUSTER
+          database.save((ORecordInternal<?>) record);
+
+        } else
+          database.save((ORecordInternal<?>) record);
+
+        if (record != null)
+          rid = record.getIdentity();
+        resultRid = rid;
+      }
+    } else {
+      if (iLinked instanceof String)
+        iLinked = new ORecordId((String) iLinked);
+      else if (!(iLinked instanceof ORecordInternal<?>)) {
+        // NOT RECORD: TRY TO EXTRACT THE DOCUMENT IF ANY
+        final String boundDocumentField = OObjectSerializerHelperManager.getInstance().getDocumentBoundField(iLinked.getClass());
+        if (boundDocumentField != null)
+          iLinked = OObjectSerializerHelperManager.getInstance().getFieldValue(iLinked, boundDocumentField);
+      }
+
+      if (!(iLinked instanceof OIdentifiable))
+        throw new IllegalArgumentException("Invalid object received. Expected a OIdentifiable but received type="
+            + iLinked.getClass().getName() + " and value=" + iLinked);
+
+      // RECORD
+      ORecordInternal<?> iLinkedRecord = ((OIdentifiable) iLinked).getRecord();
+      rid = iLinkedRecord.getIdentity();
+
+      if ((rid.isNew() && !rid.isTemporary()) || iLinkedRecord.isDirty()) {
+        final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+        if (iLinkedRecord instanceof ODocument) {
+          final OClass schemaClass = ((ODocument) iLinkedRecord).getSchemaClass();
+          database.save(iLinkedRecord, schemaClass != null ? database.getClusterNameById(schemaClass.getDefaultClusterId()) : null);
+        } else
+          // STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
+          database.save(iLinkedRecord);
+
+        final ODatabaseComplex<?> dbOwner = database.getDatabaseOwner();
+        dbOwner.registerUserObjectAfterLinkSave(iLinkedRecord);
+
+        resultRid = iLinkedRecord;
+      }
+
+      final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+      if (iParentRecord != null && database instanceof ODatabaseRecord) {
+        final ODatabaseRecord db = database;
+        if (!db.isRetainRecords())
+          // REPLACE CURRENT RECORD WITH ITS ID: THIS SAVES A LOT OF MEMORY
+          resultRid = iLinkedRecord.getIdentity();
+      }
+    }
+
+    if (rid.isValid())
+      rid.toString(buffer);
+
+    return resultRid;
+  }
 
   public Object fieldFromStream(final ORecordInternal<?> iSourceRecord, final OType iType, OClass iLinkedClass, OType iLinkedType,
       final String iName, final String iValue) {
@@ -241,16 +324,6 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       ((ORecordElement) map).setInternalStatus(STATUS.LOADED);
 
     return map;
-  }
-
-  protected boolean isConvertToLinkedMap(Map<?, ?> map, final OType linkedType) {
-    boolean convert = (linkedType == OType.LINK && !(map instanceof ORecordLazyMap));
-    if (convert) {
-      for (Object value : map.values())
-        if (!(value instanceof OIdentifiable))
-          return false;
-    }
-    return convert;
   }
 
   public void fieldToStream(final ODocument iRecord, final StringBuilder iOutput, OUserObject2RecordHandler iObjHandler,
@@ -757,88 +830,15 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     return iOutput;
   }
 
-  /**
-   * Serialize the link.
-   * 
-   * @param buffer
-   * @param iParentRecord
-   * @param iLinked
-   *          Can be an instance of ORID or a Record<?>
-   * @return
-   */
-  private static OIdentifiable linkToStream(final StringBuilder buffer, final ORecordSchemaAware<?> iParentRecord, Object iLinked) {
-    if (iLinked == null)
-      // NULL REFERENCE
-      return null;
+  protected abstract ORecordSchemaAware<?> newObject(final String iClassName);
 
-    OIdentifiable resultRid = null;
-    ORID rid;
-
-    if (iLinked instanceof ORID) {
-      // JUST THE REFERENCE
-      rid = (ORID) iLinked;
-
-      if (rid.isValid() && rid.isNew()) {
-        // SAVE AT THE FLY AND STORE THE NEW RID
-        final ORecord<?> record = rid.getRecord();
-
-        final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-        if (database.getTransaction().isActive()) {
-          // USE THE DEFAULT CLUSTER
-          database.save((ORecordInternal<?>) record);
-
-        } else
-          database.save((ORecordInternal<?>) record);
-
-        if (record != null)
-          rid = record.getIdentity();
-        resultRid = rid;
-      }
-    } else {
-      if (iLinked instanceof String)
-        iLinked = new ORecordId((String) iLinked);
-      else if (!(iLinked instanceof ORecordInternal<?>)) {
-        // NOT RECORD: TRY TO EXTRACT THE DOCUMENT IF ANY
-        final String boundDocumentField = OObjectSerializerHelperManager.getInstance().getDocumentBoundField(iLinked.getClass());
-        if (boundDocumentField != null)
-          iLinked = OObjectSerializerHelperManager.getInstance().getFieldValue(iLinked, boundDocumentField);
-      }
-
-      if (!(iLinked instanceof OIdentifiable))
-        throw new IllegalArgumentException("Invalid object received. Expected a OIdentifiable but received type="
-            + iLinked.getClass().getName() + " and value=" + iLinked);
-
-      // RECORD
-      ORecordInternal<?> iLinkedRecord = ((OIdentifiable) iLinked).getRecord();
-      rid = iLinkedRecord.getIdentity();
-
-      if ((rid.isNew() && !rid.isTemporary()) || iLinkedRecord.isDirty()) {
-        final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-        if (iLinkedRecord instanceof ODocument) {
-          final OClass schemaClass = ((ODocument) iLinkedRecord).getSchemaClass();
-          database.save(iLinkedRecord, schemaClass != null ? database.getClusterNameById(schemaClass.getDefaultClusterId()) : null);
-        } else
-          // STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
-          database.save(iLinkedRecord);
-
-        final ODatabaseComplex<?> dbOwner = database.getDatabaseOwner();
-        dbOwner.registerUserObjectAfterLinkSave(iLinkedRecord);
-
-        resultRid = iLinkedRecord;
-      }
-
-      final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-      if (iParentRecord != null && database instanceof ODatabaseRecord) {
-        final ODatabaseRecord db = database;
-        if (!db.isRetainRecords())
-          // REPLACE CURRENT RECORD WITH ITS ID: THIS SAVES A LOT OF MEMORY
-          resultRid = iLinkedRecord.getIdentity();
-      }
+  protected boolean isConvertToLinkedMap(Map<?, ?> map, final OType linkedType) {
+    boolean convert = (linkedType == OType.LINK && !(map instanceof ORecordLazyMap));
+    if (convert) {
+      for (Object value : map.values())
+        if (!(value instanceof OIdentifiable))
+          return false;
     }
-
-    if (rid.isValid())
-      rid.toString(buffer);
-
-    return resultRid;
+    return convert;
   }
 }

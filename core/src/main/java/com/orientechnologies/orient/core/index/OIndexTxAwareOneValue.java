@@ -164,7 +164,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
       private Iterator<Object> keysIterator = sortedKeys.iterator();
 
       @Override
-      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
         if (keysIterator == null)
           return null;
 
@@ -264,7 +264,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     }
 
     @Override
-    public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
       if (nextKey == null)
         return null;
 
@@ -311,7 +311,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     }
 
     @Override
-    public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
       if (nextKey == null)
         return null;
 
@@ -349,10 +349,10 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
     }
 
     @Override
-    public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
       if (firstTime) {
-        nextTxEntry = txBetweenIndexCursor.next(prefetchSize);
-        nextBackedEntry = backedCursor.next(prefetchSize);
+        nextTxEntry = txBetweenIndexCursor.nextEntry();
+        nextBackedEntry = backedCursor.nextEntry();
         firstTime = false;
       }
 
@@ -360,21 +360,21 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
       while (result == null && (nextTxEntry != null || nextBackedEntry != null)) {
         if (nextTxEntry == null && nextBackedEntry != null) {
-          result = nextBackedEntry(prefetchSize);
+          result = nextBackedEntry(getPrefetchSize());
         } else if (nextBackedEntry == null && nextTxEntry != null) {
-          result = nextTxEntry(prefetchSize);
+          result = nextTxEntry(getPrefetchSize());
         } else if (nextTxEntry != null && nextBackedEntry != null) {
           if (ascOrder) {
             if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.getKey(), nextTxEntry.getKey()) <= 0) {
-              result = nextBackedEntry(prefetchSize);
+              result = nextBackedEntry(getPrefetchSize());
             } else {
-              result = nextTxEntry(prefetchSize);
+              result = nextTxEntry(getPrefetchSize());
             }
           } else {
             if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.getKey(), nextTxEntry.getKey()) >= 0) {
-              result = nextBackedEntry(prefetchSize);
+              result = nextBackedEntry(getPrefetchSize());
             } else {
-              result = nextTxEntry(prefetchSize);
+              result = nextTxEntry(getPrefetchSize());
             }
           }
         }
@@ -385,14 +385,14 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
 
     private Map.Entry<Object, OIdentifiable> nextTxEntry(int prefetchSize) {
       Map.Entry<Object, OIdentifiable> result = nextTxEntry;
-      nextTxEntry = txBetweenIndexCursor.next(prefetchSize);
+      nextTxEntry = txBetweenIndexCursor.nextEntry();
       return result;
     }
 
     private Map.Entry<Object, OIdentifiable> nextBackedEntry(int prefetchSize) {
       Map.Entry<Object, OIdentifiable> result;
       result = calculateTxIndexEntry(nextBackedEntry.getKey(), nextBackedEntry.getValue(), indexChanges);
-      nextBackedEntry = backedCursor.next(prefetchSize);
+      nextBackedEntry = backedCursor.nextEntry();
       return result;
     }
   }
