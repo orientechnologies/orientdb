@@ -45,13 +45,13 @@ public class ODistributedConfiguration {
     boolean modified = false;
 
     for (String c : getClusterNames()) {
-      if (getServers(c) == null) {
+      if (getOriginalServers(c) == null) {
         final ODocument clusterConfig = getClusterConfiguration(c);
 
         // if (clusterConfig.removeField("replication") != null)
         // modified = true;
 
-        final ODocument partitioning = clusterConfig.field("partitioning");
+        final ODocument partitioning = (ODocument) clusterConfig.removeField("partitioning");
         if (partitioning != null) {
           final Collection partitions = partitioning.field("partitions");
           if (partitions != null) {
@@ -64,7 +64,6 @@ public class ODistributedConfiguration {
             }
             clusterConfig.field("servers", servers, OType.EMBEDDEDLIST);
           }
-          clusterConfig.removeField("partitioning");
           modified = true;
         }
       }
@@ -275,17 +274,7 @@ public class ODistributedConfiguration {
    * Returns the server list for the default (*) cluster excluding any tags like <NEW_NODES>.
    */
   public Collection<String> getServers() {
-    synchronized (configuration) {
-      final ODocument partition = getClusterConfiguration(null);
-      if (partition == null)
-        return null;
-
-      final List<String> serverList = partition.field("servers");
-      if (serverList != null)
-        serverList.remove(NEW_NODE_TAG);
-
-      return serverList;
-    }
+    return getServers((String) null);
   }
 
   /**
@@ -300,9 +289,12 @@ public class ODistributedConfiguration {
       if (partition == null)
         return null;
 
-      final List<String> serverList = partition.field("servers");
-      if (serverList != null)
+      List<String> serverList = partition.field("servers");
+      if (serverList != null) {
+        // COPY AND REMOVE ANY NEW_NODE_TAG
+        serverList = new ArrayList<String>(serverList);
         serverList.remove(NEW_NODE_TAG);
+      }
 
       return serverList;
     }
