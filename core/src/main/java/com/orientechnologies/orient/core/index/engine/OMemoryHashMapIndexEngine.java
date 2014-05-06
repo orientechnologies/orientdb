@@ -98,7 +98,7 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
       private Iterator<OIdentifiable>        currentIterator = new OEmptyIterator<OIdentifiable>();
 
       @Override
-      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
         if (currentIterator == null)
           return null;
 

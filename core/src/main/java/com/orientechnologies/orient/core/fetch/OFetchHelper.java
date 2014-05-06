@@ -567,7 +567,7 @@ public class OFetchHelper {
     final Integer fieldDepthLevel = parsedRecords.get(fieldValue.getIdentity());
     if (!fieldValue.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
       removeParsedFromMap(parsedRecords, fieldValue);
-      final ODocument linked = (ODocument) fieldValue;
+      final ODocument linked = (ODocument) fieldValue.getRecord();
       iContext.onBeforeDocument(iRootRecord, linked, fieldName, iUserObject);
       Object userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked, iContext);
       processRecord(linked, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,

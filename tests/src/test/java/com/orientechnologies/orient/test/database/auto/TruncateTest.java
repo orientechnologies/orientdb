@@ -90,10 +90,10 @@ public class TruncateTest {
     Assert.assertEquals(index.getSize(), 6);
 
     OIndexCursor cursor = index.cursor();
-    Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
+    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
     while (entry != null) {
       Assert.assertTrue(set.contains((Integer) entry.getKey()));
-      entry = cursor.next(-1);
+      entry = cursor.nextEntry();
     }
 
     schema.dropClass("test_class");

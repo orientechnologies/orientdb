@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.graph.migration;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -83,14 +81,14 @@ public class OGraphMigration {
                 new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null);
 
         OIndexCursor cursor = index.cursor();
-        Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
+        Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
 
         while (entry != null) {
           final String keyTemp = entry.getKey().toString();
           final OIdentifiable identifiable = entry.getValue();
           recordKeyValueIndex.put(new OCompositeKey(identifiable.getIdentity(), keyTemp), identifiable.getIdentity());
 
-          entry = cursor.next(-1);
+          entry = cursor.nextEntry();
         }
 
         metadata = new ODocument();

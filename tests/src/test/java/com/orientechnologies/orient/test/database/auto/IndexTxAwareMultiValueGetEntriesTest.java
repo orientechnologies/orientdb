@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
@@ -429,10 +428,10 @@ public class IndexTxAwareMultiValueGetEntriesTest {
 
   private void cursorToSet(OIndexCursor cursor, Set<OIdentifiable> result) {
     result.clear();
-    Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
+    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
     while (entry != null) {
       result.add(entry.getValue());
-      entry = cursor.next(-1);
+      entry = cursor.nextEntry();
     }
   }
 }

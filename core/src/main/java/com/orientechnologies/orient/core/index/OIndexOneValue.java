@@ -25,14 +25,12 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -131,7 +129,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
       private Iterator<?> keysIterator = sortedKeys.iterator();
 
       @Override
-      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
         OIdentifiable result = null;
         Object key = null;
         while (keysIterator.hasNext() && result == null) {

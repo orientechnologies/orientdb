@@ -233,7 +233,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
       }
 
       @Override
-      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
         if (currentIterator == null)
           return null;
 

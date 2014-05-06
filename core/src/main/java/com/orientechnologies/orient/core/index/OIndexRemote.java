@@ -28,8 +28,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * Proxied abstract index.
@@ -366,7 +364,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       private final Iterator<ODocument> documentIterator = result.iterator();
 
       @Override
-      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
         if (!documentIterator.hasNext())
           return null;
 

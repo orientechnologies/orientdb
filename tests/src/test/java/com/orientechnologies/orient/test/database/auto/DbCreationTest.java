@@ -247,7 +247,7 @@ public class DbCreationTest {
   }
 
   public void testZipCompression() {
-    if (!database.getURL().startsWith("plocal:"))
+    if (database == null || !database.getURL().startsWith("plocal:"))
       return;
 
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("gzip");

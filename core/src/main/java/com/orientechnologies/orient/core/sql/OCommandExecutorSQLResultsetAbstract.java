@@ -15,16 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -54,6 +44,16 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -288,24 +288,28 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return skip;
   }
 
-  protected boolean filter(final ORecordInternal<?> iRecord) {
+  protected boolean filter(final ORecord<?> iRecord, final boolean iEvaluateRecords) {
     context.setVariable("current", iRecord);
 
-    if (iRecord instanceof ORecordSchemaAware<?>) {
-      // CHECK THE TARGET CLASS
-      final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
-      Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
-      // check only classes that specified in query will go to result set
-      if ((targetClasses != null) && (!targetClasses.isEmpty())) {
-        for (OClass targetClass : targetClasses.keySet()) {
-          if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
-            return false;
+    if (iEvaluateRecords)
+      if (iRecord instanceof ORecordSchemaAware<?>) {
+        // CHECK THE TARGET CLASS
+        final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
+        Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
+        // check only classes that specified in query will go to result set
+        if ((targetClasses != null) && (!targetClasses.isEmpty())) {
+          for (OClass targetClass : targetClasses.keySet()) {
+            if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
+              return false;
+          }
+          context.updateMetric("documentAnalyzedCompatibleClass", +1);
         }
-        context.updateMetric("documentAnalyzedCompatibleClass", +1);
       }
-    }
 
-    return evaluateRecord(iRecord);
+    if (iEvaluateRecords)
+      return evaluateRecord(iRecord);
+
+    return true;
   }
 
   protected boolean evaluateRecord(final ORecord<?> iRecord) {

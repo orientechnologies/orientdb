@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Iterator;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -129,7 +128,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
       boolean ascSortOrder, ValuesTransformer transformer) {
     return new OIndexAbstractCursor() {
       @Override
-      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
         return null;
       }
     };
@@ -139,7 +138,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
   public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return new OIndexAbstractCursor() {
       @Override
-      public Map.Entry next(int prefetchSize) {
+      public Map.Entry nextEntry() {
         return null;
       }
     };
@@ -149,7 +148,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
     return new OIndexAbstractCursor() {
       @Override
-      public Map.Entry next(int prefetchSize) {
+      public Map.Entry nextEntry() {
         return null;
       }
     };

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -50,7 +51,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   private String                         indexName      = null;
   private List<Map<String, Object>>      newRecords;
   private OSQLAsynchQuery<OIdentifiable> subQuery       = null;
-  private long                           saved          = 0;
+  private AtomicLong                     saved          = new AtomicLong(0);
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLInsert parse(final OCommandRequest iRequest) {
@@ -173,7 +174,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
         return doc;
       } else if (subQuery != null) {
         subQuery.execute();
-        return saved;
+        return saved.longValue();
       }
     }
     return null;
@@ -199,7 +200,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       ((ODocument) rec).setClassName(className);
 
     rec.setDirty();
-    saveRecord(rec);
+    synchronized (this) {
+      saveRecord(rec);
+    }
 
     return true;
   }
@@ -214,7 +217,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       rec.save(clusterName);
     else
       rec.save();
-    saved++;
+    saved.incrementAndGet();
   }
 
   protected void parseValues() {

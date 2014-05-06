@@ -25,7 +25,15 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
+import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -40,6 +48,83 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
   public OQueryOperatorContainsValue() {
     super("CONTAINSVALUE", 5, false);
+  }
+
+  @Override
+  public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
+    if (!(iRight instanceof OSQLFilterCondition) && !(iLeft instanceof OSQLFilterCondition))
+      return OIndexReuseType.INDEX_METHOD;
+
+    return OIndexReuseType.NO_INDEX;
+  }
+
+  @Override
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
+    final OIndexInternal<?> internalIndex = index.getInternal();
+    OIndexCursor cursor;
+    if (!internalIndex.canBeUsedInEqualityOperators())
+      return null;
+
+    if (indexDefinition.getParamCount() == 1) {
+      if (!((indexDefinition instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) indexDefinition)
+          .getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
+        return null;
+
+      final Object key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
+
+      if (key == null)
+        return null;
+
+      final Object indexResult = index.get(key);
+      if (indexResult == null || indexResult instanceof OIdentifiable)
+        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+      else
+        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+    } else {
+      // in case of composite keys several items can be returned in case of we perform search
+      // using part of composite key stored in index.
+      final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
+
+      if (!((compositeIndexDefinition.getMultiValueDefinition() instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) compositeIndexDefinition
+          .getMultiValueDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
+        return null;
+
+      final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
+
+      if (keyOne == null)
+        return null;
+
+      if (internalIndex.hasRangeQuerySupport()) {
+        final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
+
+        cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+      } else {
+        if (indexDefinition.getParamCount() == keyParams.size()) {
+          final Object indexResult = index.get(keyOne);
+          if (indexResult == null || indexResult instanceof OIdentifiable)
+            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+          else
+            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
+        } else
+          return null;
+      }
+
+    }
+
+    updateProfiler(iContext, index, keyParams, indexDefinition);
+    return cursor;
+  }
+
+  @Override
+  public ORID getBeginRidRange(Object iLeft, Object iRight) {
+    return null;
+  }
+
+  @Override
+  public ORID getEndRidRange(Object iLeft, Object iRight) {
+    return null;
   }
 
   @Override
@@ -94,82 +179,5 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       }
     }
     return o;
-  }
-
-  @Override
-  public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-    if (!(iRight instanceof OSQLFilterCondition) && !(iLeft instanceof OSQLFilterCondition))
-      return OIndexReuseType.INDEX_METHOD;
-
-    return OIndexReuseType.NO_INDEX;
-  }
-
-  @Override
-  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
-    final OIndexDefinition indexDefinition = index.getDefinition();
-
-    final OIndexInternal<?> internalIndex = index.getInternal();
-    OIndexCursor cursor;
-    if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
-
-    if (indexDefinition.getParamCount() == 1) {
-      if (!((indexDefinition instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) indexDefinition)
-          .getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
-        return null;
-
-      final Object key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
-
-      if (key == null)
-        return null;
-
-      final Object indexResult = index.get(key);
-      if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, key);
-      else
-        cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
-    } else {
-      // in case of composite keys several items can be returned in case of we perform search
-      // using part of composite key stored in index.
-      final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
-
-      if (!((compositeIndexDefinition.getMultiValueDefinition() instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) compositeIndexDefinition
-          .getMultiValueDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
-        return null;
-
-      final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
-
-      if (keyOne == null)
-        return null;
-
-      if (internalIndex.hasRangeQuerySupport()) {
-        final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
-
-        cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
-      } else {
-        if (indexDefinition.getParamCount() == keyParams.size()) {
-          final Object indexResult = index.get(keyOne);
-          if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
-          else
-            cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
-        } else
-          return null;
-      }
-
-    }
-
-    updateProfiler(iContext, index, keyParams, indexDefinition);
-    return cursor;
-  }
-
-  @Override
-  public ORID getBeginRidRange(Object iLeft, Object iRight) {
-    return null;
-  }
-
-  @Override
-  public ORID getEndRidRange(Object iLeft, Object iRight) {
-    return null;
   }
 }
