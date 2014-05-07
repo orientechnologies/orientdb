@@ -39,11 +39,12 @@ public class OCommandExecutorUtility {
   public static Object transformResult(final Object result) {
     // PATCH BY MAT ABOUT NASHORN RETURNING VALUE FOR ARRAYS. TEST IF 0 IS PRESENT AS KEY. IN THIS CASE RETURNS THE VALUES NOT THE
     // OBJECT AS MAP
-    try {
-      if (((Map) result).containsKey("0"))
-        return ((Map) result).values();
-    } catch (Exception e) {
-    }
+    if (result instanceof Map)
+      try {
+        if (((Map) result).containsKey("0"))
+          return ((Map) result).values();
+      } catch (Exception e) {
+      }
 
     return result;
   }
