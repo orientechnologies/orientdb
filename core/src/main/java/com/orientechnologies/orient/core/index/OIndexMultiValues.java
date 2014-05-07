@@ -309,7 +309,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       private Object                  currentKey;
 
       @Override
-      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
         if (currentIterator == null)
           return null;
 

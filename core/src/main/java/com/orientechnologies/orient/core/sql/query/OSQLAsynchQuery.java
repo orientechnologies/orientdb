@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+
+import java.util.Map;
 
 /**
  * SQL asynchronous query. When executed the caller does not wait the the execution, rather the listener will be called for each
@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
  */
 public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements OCommandRequestAsynch {
   private static final long serialVersionUID = 1L;
-  protected int             resultCount      = 0;
 
   /**
    * Empty constructor for unmarshalling.

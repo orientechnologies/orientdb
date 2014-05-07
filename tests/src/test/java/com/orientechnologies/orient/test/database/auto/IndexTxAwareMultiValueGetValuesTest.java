@@ -416,10 +416,10 @@ public class IndexTxAwareMultiValueGetValuesTest {
 
   private void cursorToSet(OIndexCursor cursor, Set<OIdentifiable> result) {
     result.clear();
-    Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
+    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
     while (entry != null) {
       result.add(entry.getValue());
-      entry = cursor.next(-1);
+      entry = cursor.nextEntry();
     }
   }
 

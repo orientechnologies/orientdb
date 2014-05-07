@@ -360,7 +360,6 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * @param iCommand
    *          Command request to execute.
    * @return The same Command request received as parameter.
-   * @see com.orientechnologies.orient.client.remote.OStorageRemote
    */
   public <RET extends OCommandRequest> RET command(OCommandRequest iCommand);
 

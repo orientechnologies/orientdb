@@ -11,15 +11,16 @@ import java.util.Set;
  * @since 4/24/14
  */
 public abstract class OIndexAbstractCursor implements OIndexCursor {
+  protected int prefetchSize = -1;
 
   @Override
   public Set<OIdentifiable> toValues() {
-    HashSet<OIdentifiable> result = new HashSet<OIdentifiable>();
-    Map.Entry<Object, OIdentifiable> entry = next(-1);
+    final HashSet<OIdentifiable> result = new HashSet<OIdentifiable>();
+    Map.Entry<Object, OIdentifiable> entry = nextEntry();
 
     while (entry != null) {
       result.add(entry.getValue());
-      entry = next(-1);
+      entry = nextEntry();
     }
 
     return result;
@@ -27,13 +28,13 @@ public abstract class OIndexAbstractCursor implements OIndexCursor {
 
   @Override
   public Set<Map.Entry<Object, OIdentifiable>> toEntries() {
-    HashSet<Map.Entry<Object, OIdentifiable>> result = new HashSet<Map.Entry<Object, OIdentifiable>>();
+    final HashSet<Map.Entry<Object, OIdentifiable>> result = new HashSet<Map.Entry<Object, OIdentifiable>>();
 
-    Map.Entry<Object, OIdentifiable> entry = next(-1);
+    Map.Entry<Object, OIdentifiable> entry = nextEntry();
 
     while (entry != null) {
       result.add(entry);
-      entry = next(-1);
+      entry = nextEntry();
     }
 
     return result;
@@ -41,15 +42,39 @@ public abstract class OIndexAbstractCursor implements OIndexCursor {
 
   @Override
   public Set<Object> toKeys() {
-    HashSet<Object> result = new HashSet<Object>();
+    final HashSet<Object> result = new HashSet<Object>();
 
-    Map.Entry<Object, OIdentifiable> entry = next(-1);
+    Map.Entry<Object, OIdentifiable> entry = nextEntry();
 
     while (entry != null) {
       result.add(entry.getKey());
-      entry = next(-1);
+      entry = nextEntry();
     }
 
     return result;
+  }
+
+  @Override
+  public boolean hasNext() {
+    return true;
+  }
+
+  @Override
+  public OIdentifiable next() {
+    final Map.Entry<Object, OIdentifiable> entry = nextEntry();
+    return entry != null ? entry.getValue() : null;
+  }
+
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException("remove");
+  }
+
+  public int getPrefetchSize() {
+    return prefetchSize;
+  }
+
+  public void setPrefetchSize(final int prefetchSize) {
+    this.prefetchSize = prefetchSize;
   }
 }

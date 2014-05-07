@@ -223,10 +223,10 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
   private List<OIdentifiable> cursorToList(OIndexCursor cursor) {
     final List<OIdentifiable> currentResult = new ArrayList<OIdentifiable>();
-    Map.Entry<Object, OIdentifiable> entry = cursor.next(-1);
+    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
     while (entry != null) {
       currentResult.add(entry.getValue());
-      entry = cursor.next(-1);
+      entry = cursor.nextEntry();
     }
     return currentResult;
   }
@@ -541,12 +541,12 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     }
 
     @Override
-    public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
       if (currentIterator == null)
         return null;
 
       while (!currentIterator.hasNext()) {
-        final Map.Entry<Object, OIdentifiable> entry = internalCursor.next(prefetchSize);
+        final Map.Entry<Object, OIdentifiable> entry = internalCursor.nextEntry();
 
         if (entry == null) {
           currentIterator = null;

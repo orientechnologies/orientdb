@@ -236,7 +236,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
           cachedDatabaseConfiguration.put(iDatabaseName, cfg);
         }
       }
-      return new ODistributedConfiguration(cfg);
+
+      final ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
+      if (dCfg.upgrade())
+        // UPGRADED, SAVE IT AGAIN
+        updateCachedDatabaseConfiguration(iDatabaseName, dCfg.serialize(), true);
+      return dCfg;
     }
   }
 

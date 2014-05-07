@@ -26,7 +26,7 @@ import java.util.Set;
  * query (query by single key). It is possible if you use not unique index.
  * 
  * Contract of cursor is simple it iterates in some subset of index data till it reaches it's borders in such case
- * {@link #next(int)} returns <code>null</code>.
+ * {@link #nextEntry()} returns <code>null</code>.
  * 
  * Cursor is created as result of index query method such as
  * {@link com.orientechnologies.orient.core.index.OIndex#iterateEntriesBetween(Object, boolean, Object, boolean, boolean)} cursor
@@ -35,17 +35,14 @@ import java.util.Set;
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 4/4/14
  */
-public interface OIndexCursor {
+public interface OIndexCursor extends Iterator<OIdentifiable> {
   /**
-   * Returns next element in subset of index data which should be iterated by given cursor.
+   * Returns nextEntry element in subset of index data which should be iterated by given cursor.
    * 
-   * @param prefetchSize
-   *          Size of data which should be prefetched from index into heap and then used in next iteration. It allows to speed up
-   *          index queries. The actual size of prefetched data may be different and depends on real implementation.
-   * @return next element in subset of index data which should be iterated by given cursor or <code>null</code> if all data are
+   * @return nextEntry element in subset of index data which should be iterated by given cursor or <code>null</code> if all data are
    *         iterated.
    */
-  Map.Entry<Object, OIdentifiable> next(int prefetchSize);
+  Map.Entry<Object, OIdentifiable> nextEntry();
 
   /**
    * Accumulates and returns all values of index inside of data subset of cursor.
@@ -69,85 +66,10 @@ public interface OIndexCursor {
   Set<Object> toKeys();
 
   /**
-   * Implementation of index cursor in case of only single entree should be returned.
+   * Set number of records to fetch for the next call to next() or nextEntry().
+   * 
+   * @param prefetchSize
+   *          Number of records to prefetch. -1 = no prefetch
    */
-  final class OIndexCursorSingleValue extends OIndexAbstractCursor {
-    private OIdentifiable identifiable;
-    private final Object  key;
-
-    public OIndexCursorSingleValue(OIdentifiable identifiable, Object key) {
-      this.identifiable = identifiable;
-      this.key = key;
-    }
-
-    @Override
-    public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
-      if (identifiable == null)
-        return null;
-
-      final OIdentifiable value = identifiable;
-      identifiable = null;
-
-      return new Map.Entry<Object, OIdentifiable>() {
-
-        @Override
-        public Object getKey() {
-          return key;
-        }
-
-        @Override
-        public OIdentifiable getValue() {
-          return value;
-        }
-
-        @Override
-        public OIdentifiable setValue(OIdentifiable value) {
-          throw new UnsupportedOperationException("setValue");
-        }
-      };
-    }
-  }
-
-  /**
-   * Implementation of index cursor in case of collection of values which belongs to single key should be returned.
-   */
-  final class OIndexCursorCollectionValue extends OIndexAbstractCursor {
-    private Iterator<OIdentifiable> iterator;
-    private final Object            key;
-
-    public OIndexCursorCollectionValue(Iterator<OIdentifiable> iterator, Object key) {
-      this.iterator = iterator;
-      this.key = key;
-    }
-
-    @Override
-    public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
-      if (iterator == null)
-        return null;
-
-      if (!iterator.hasNext()) {
-        iterator = null;
-        return null;
-      }
-
-      final OIdentifiable value = iterator.next();
-      return new Map.Entry<Object, OIdentifiable>() {
-        @Override
-        public Object getKey() {
-          return key;
-        }
-
-        @Override
-        public OIdentifiable getValue() {
-          return value;
-        }
-
-        @Override
-        public OIdentifiable setValue(OIdentifiable value) {
-          throw new UnsupportedOperationException("setValue");
-        }
-      };
-    }
-  }
-
+  public void setPrefetchSize(int prefetchSize);
 }

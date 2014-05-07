@@ -15,18 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
@@ -83,6 +71,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -94,6 +83,18 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
+
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -1079,7 +1080,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       final OAbstractCommandResultListener listener;
 
       if (asynch) {
-        listener = new OAsyncCommandResultListener(this, clientTxId);
+        listener = new OAsyncCommandResultListener(this, clientTxId, command.getResultListener());
         command.setResultListener(listener);
       } else
         listener = new OSyncCommandResultListener();
@@ -1122,6 +1123,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           channel.writeByte((byte) 'r');
           listener.result(result);
           writeIdentifiable((OIdentifiable) result);
+        } else if (result instanceof ODocumentWrapper) {
+          // RECORD
+          channel.writeByte((byte) 'r');
+          final ODocument doc = ((ODocumentWrapper) result).getDocument();
+          listener.result(doc);
+          writeIdentifiable(doc);
         } else if (OMultiValue.isMultiValue(result)) {
           channel.writeByte((byte) 'l');
           channel.writeInt(OMultiValue.getSize(result));

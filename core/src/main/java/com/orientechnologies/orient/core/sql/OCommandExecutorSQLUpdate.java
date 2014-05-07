@@ -311,21 +311,29 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         // GET THE TYPE IF ANY
         if (record.getSchemaClass() != null) {
           OProperty prop = record.getSchemaClass().getProperty(entry.getKey());
-          if (prop != null && prop.getType() == OType.LINKSET)
+            if (prop != null && prop.getType() == OType.LINKSET)
             // SET TYPE
             coll = new HashSet<Object>();
+            if (prop != null && prop.getType() == OType.LINKBAG)
+            {
+                // there is no ridbag value already but property type is defined as LINKBAG
+                bag = new ORidBag();
+                bag.setOwner(record);
+                record.field(entry.getKey(),bag);
+            }
         }
-
-        if (coll == null)
+         if (coll == null && bag==null)
           // IN ALL OTHER CASES USE A LIST
           coll = new ArrayList<Object>();
-
-        // containField's condition above does NOT check subdocument's fields so
-        Collection<Object> currColl = record.field(entry.getKey());
-        if (currColl == null)
-          record.field(entry.getKey(), coll);
-        else
-          coll = currColl;
+         if (coll!=null)
+         {
+            // containField's condition above does NOT check subdocument's fields so
+            Collection<Object> currColl = record.field(entry.getKey());
+            if (currColl == null)
+              record.field(entry.getKey(), coll);
+            else
+              coll = currColl;
+         }
 
       } else {
         fieldValue = record.field(entry.getKey());
@@ -560,7 +568,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
           parserGoBack();
           value = EMPTY_VALUE;
         } else {
-          fieldValue = getBlock(parserRequiredWord(false, "Value expected"));
+          fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n"));
           value = getFieldValueCountingParameters(fieldValue);
         }
       else

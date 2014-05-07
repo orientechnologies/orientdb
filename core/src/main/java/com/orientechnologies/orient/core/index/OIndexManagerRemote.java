@@ -36,7 +36,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-                                final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata, String engine) {
+      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata, String engine) {
 
     String createIndexDDL;
     if (iIndexDefinition != null)
@@ -71,7 +71,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
   @Override
   public OIndex<?> createIndex(String iName, String iType, OIndexDefinition iIndexDefinition, int[] iClusterIdsToIndex,
-                                OProgressListener iProgressListener, ODocument metadata) {
+      OProgressListener iProgressListener, ODocument metadata) {
     return createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener, metadata, null);
   }
 
@@ -110,8 +110,12 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     return false;
   }
 
+  @Override
+  public void removeClassPropertyIndex(OIndex<?> idx) {
+  }
+
   protected OIndex<?> getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, Set<String> clustersToIndex,
-                                              OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
+      OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
     if (isMultiValueIndex)
       return new OIndexRemoteMultiValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
 
@@ -128,14 +132,15 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       if (idxs != null) {
         for (ODocument d : idxs) {
           try {
-            OIndexInternal<?> newIndex = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE),
-                                                               d.<String> field(OIndexInternal.ALGORITHM), d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM),
-                                                               (ODocument) d.field(OIndexInternal.METADATA));
-            OIndexInternal.IndexMetadata newIndexMetadata = newIndex.loadMetadata(d);
+            final boolean isMultiValue = ODefaultIndexFactory.isMultiValueIndex((String) d.field(OIndexInternal.CONFIG_TYPE));
 
-            addIndexInternal(getRemoteIndexInstance(newIndex instanceof OIndexMultiValues, newIndexMetadata.getType(),
-                                                     newIndexMetadata.getName(), newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(),
-                                                     (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID, OType.LINK), d));
+            final OIndexInternal.IndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataInternal(d,
+                (String) d.field(OIndexInternal.CONFIG_TYPE), d.<String> field(OIndexInternal.ALGORITHM),
+                d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+
+            addIndexInternal(getRemoteIndexInstance(isMultiValue, newIndexMetadata.getType(), newIndexMetadata.getName(),
+                newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(),
+                (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID, OType.LINK), d));
           } catch (Exception e) {
             OLogManager.instance().error(this, "Error on loading of index by configuration: %s", e, d);
           }
@@ -144,9 +149,5 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     } finally {
       releaseExclusiveLock();
     }
-  }
-
-  @Override
-  public void removeClassPropertyIndex(OIndex<?> idx) {
   }
 }

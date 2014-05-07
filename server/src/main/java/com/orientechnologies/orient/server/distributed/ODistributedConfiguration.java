@@ -15,16 +15,17 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
@@ -38,6 +39,36 @@ public class ODistributedConfiguration {
 
   public ODistributedConfiguration(final ODocument iConfiguration) {
     configuration = iConfiguration;
+  }
+
+  public boolean upgrade() {
+    boolean modified = false;
+
+    for (String c : getClusterNames()) {
+      if (getOriginalServers(c) == null) {
+        final ODocument clusterConfig = getClusterConfiguration(c);
+
+        // if (clusterConfig.removeField("replication") != null)
+        // modified = true;
+
+        final ODocument partitioning = (ODocument) clusterConfig.removeField("partitioning");
+        if (partitioning != null) {
+          final Collection partitions = partitioning.field("partitions");
+          if (partitions != null) {
+            OLogManager.instance().warn(this, "Migrating distributed configuration to the new format for cluster '%s'...", c);
+            final List<String> servers = new ArrayList<String>();
+            for (Object p : partitions) {
+              for (String node : (Collection<String>) p) {
+                servers.add(node);
+              }
+            }
+            clusterConfig.field("servers", servers, OType.EMBEDDEDLIST);
+          }
+          modified = true;
+        }
+      }
+    }
+    return modified;
   }
 
   /**
@@ -243,17 +274,7 @@ public class ODistributedConfiguration {
    * Returns the server list for the default (*) cluster excluding any tags like <NEW_NODES>.
    */
   public Collection<String> getServers() {
-    synchronized (configuration) {
-      final ODocument partition = getClusterConfiguration(null);
-      if (partition == null)
-        return null;
-
-      final List<String> serverList = partition.field("servers");
-      if (serverList != null)
-        serverList.remove(NEW_NODE_TAG);
-
-      return serverList;
-    }
+    return getServers((String) null);
   }
 
   /**
@@ -268,9 +289,12 @@ public class ODistributedConfiguration {
       if (partition == null)
         return null;
 
-      final List<String> serverList = partition.field("servers");
-      if (serverList != null)
+      List<String> serverList = partition.field("servers");
+      if (serverList != null) {
+        // COPY AND REMOVE ANY NEW_NODE_TAG
+        serverList = new ArrayList<String>(serverList);
         serverList.remove(NEW_NODE_TAG);
+      }
 
       return serverList;
     }

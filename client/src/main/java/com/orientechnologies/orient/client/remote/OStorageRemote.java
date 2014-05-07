@@ -914,112 +914,114 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-    OChannelBinaryAsynchClient network = null;
-    do {
+    try {
+      OChannelBinaryAsynchClient network = null;
+      do {
 
-      OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = true;
-      try {
-        final boolean asynch = iCommand instanceof OCommandRequestAsynch && ((OCommandRequestAsynch) iCommand).isAsynchronous();
-
+        OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = true;
         try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_COMMAND);
+          final boolean asynch = iCommand instanceof OCommandRequestAsynch && ((OCommandRequestAsynch) iCommand).isAsynchronous();
 
-          network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
-          network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(iCommand));
+          try {
+            network = beginRequest(OChannelBinaryProtocol.REQUEST_COMMAND);
 
-        } finally {
-          endRequest(network);
-        }
+            network.writeByte((byte) (asynch ? 'a' : 's')); // ASYNC / SYNC
+            network.writeBytes(OStreamSerializerAnyStreamable.INSTANCE.toStream(iCommand));
 
-        try {
-          beginResponse(network);
+          } finally {
+            endRequest(network);
+          }
 
-          boolean addNextRecord = true;
-          if (asynch) {
-            byte status;
+          try {
+            beginResponse(network);
 
-            // ASYNCH: READ ONE RECORD AT TIME
-            while ((status = network.readByte()) > 0) {
-              final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
-              if (record == null)
-                continue;
-
-              switch (status) {
-              case 1:
-                // PUT AS PART OF THE RESULT SET. INVOKE THE LISTENER
-                if (addNextRecord) {
-                  addNextRecord = iCommand.getResultListener().result(record);
-                  database.getLevel1Cache().updateRecord(record);
-                }
-                break;
-
-              case 2:
-                // PUT IN THE CLIENT LOCAL CACHE
-                database.getLevel1Cache().updateRecord(record);
-              }
-            }
-          } else {
-            final byte type = network.readByte();
-            switch (type) {
-            case 'n':
-              result = null;
-              break;
-
-            case 'r':
-              result = OChannelBinaryProtocol.readIdentifiable(network);
-              if (result instanceof ORecord<?>)
-                database.getLevel1Cache().updateRecord((ORecordInternal<?>) result);
-              break;
-
-            case 'l':
-              final int tot = network.readInt();
-              final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>(tot);
-              for (int i = 0; i < tot; ++i) {
-                final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
-                if (resultItem instanceof ORecord<?>)
-                  database.getLevel1Cache().updateRecord((ORecordInternal<?>) resultItem);
-                list.add(resultItem);
-              }
-              result = list;
-              break;
-
-            case 'a':
-              final String value = new String(network.readBytes());
-              result = ORecordSerializerStringAbstract.fieldTypeFromStream(null, ORecordSerializerStringAbstract.getType(value),
-                  value);
-              break;
-
-            default:
-              OLogManager.instance().warn(this, "Received unexpected result from query: %d", type);
-            }
-
-            if (network.getSrvProtocolVersion() >= 17) {
-              // LOAD THE FETCHED RECORDS IN CACHE
+            boolean addNextRecord = true;
+            if (asynch) {
               byte status;
+
+              // ASYNCH: READ ONE RECORD AT TIME
               while ((status = network.readByte()) > 0) {
                 final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
-                if (record != null && status == 2)
+                if (record == null)
+                  continue;
+
+                switch (status) {
+                case 1:
+                  // PUT AS PART OF THE RESULT SET. INVOKE THE LISTENER
+                  if (addNextRecord) {
+                    addNextRecord = iCommand.getResultListener().result(record);
+                    database.getLevel1Cache().updateRecord(record);
+                  }
+                  break;
+
+                case 2:
                   // PUT IN THE CLIENT LOCAL CACHE
                   database.getLevel1Cache().updateRecord(record);
+                }
+              }
+            } else {
+              final byte type = network.readByte();
+              switch (type) {
+              case 'n':
+                result = null;
+                break;
+
+              case 'r':
+                result = OChannelBinaryProtocol.readIdentifiable(network);
+                if (result instanceof ORecord<?>)
+                  database.getLevel1Cache().updateRecord((ORecordInternal<?>) result);
+                break;
+
+              case 'l':
+                final int tot = network.readInt();
+                final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>(tot);
+                for (int i = 0; i < tot; ++i) {
+                  final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
+                  if (resultItem instanceof ORecord<?>)
+                    database.getLevel1Cache().updateRecord((ORecordInternal<?>) resultItem);
+                  list.add(resultItem);
+                }
+                result = list;
+                break;
+
+              case 'a':
+                final String value = new String(network.readBytes());
+                result = ORecordSerializerStringAbstract.fieldTypeFromStream(null, ORecordSerializerStringAbstract.getType(value),
+                    value);
+                break;
+
+              default:
+                OLogManager.instance().warn(this, "Received unexpected result from query: %d", type);
+              }
+
+              if (network.getSrvProtocolVersion() >= 17) {
+                // LOAD THE FETCHED RECORDS IN CACHE
+                byte status;
+                while ((status = network.readByte()) > 0) {
+                  final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+                  if (record != null && status == 2)
+                    // PUT IN THE CLIENT LOCAL CACHE
+                    database.getLevel1Cache().updateRecord(record);
+                }
               }
             }
+            break;
+          } finally {
+            endResponse(network);
           }
-          break;
-        } finally {
-          endResponse(network);
-        }
-      } catch (OModificationOperationProhibitedException mope) {
-        handleDBFreeze();
-      } catch (Exception e) {
-        handleException(network, "Error on executing command: " + iCommand, e);
+        } catch (OModificationOperationProhibitedException mope) {
+          handleDBFreeze();
+        } catch (Exception e) {
+          handleException(network, "Error on executing command: " + iCommand, e);
 
-      } finally {
-        OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = false;
-        if (iCommand.getResultListener() != null) {
-          iCommand.getResultListener().end();
+        } finally {
+          OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting = false;
         }
-      }
-    } while (true);
+      } while (true);
+    } finally {
+      if (iCommand.getResultListener() != null)
+        iCommand.getResultListener().end();
+    }
 
     return result;
   }

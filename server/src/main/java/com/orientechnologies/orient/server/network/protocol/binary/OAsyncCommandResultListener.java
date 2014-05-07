@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.network.protocol.binary;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -20,10 +21,13 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
   private final ONetworkProtocolBinary protocol;
   private final AtomicBoolean          empty = new AtomicBoolean(true);
   private final int                    txId;
+  private final OCommandResultListener resultListener;
 
-  public OAsyncCommandResultListener(final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId) {
+  public OAsyncCommandResultListener(final ONetworkProtocolBinary iNetworkProtocolBinary, final int txId,
+      OCommandResultListener resultListener) {
     this.protocol = iNetworkProtocolBinary;
     this.txId = txId;
+    this.resultListener = resultListener;
   }
 
   @Override
@@ -57,6 +61,12 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
     }
 
     return true;
+  }
+
+  @Override
+  public void end() {
+    super.end();
+    resultListener.end();
   }
 
   public boolean isEmpty() {
