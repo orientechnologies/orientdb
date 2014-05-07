@@ -81,8 +81,6 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
 
   public abstract ODiskCache getDiskCache();
 
-  public abstract boolean wasClusterSoftlyClosed(String clusterIndexName);
-
   public abstract boolean check(boolean b, OCommandOutputListener dbCheckTest);
 
   public OStorageTransaction getStorageTransaction() {
@@ -107,7 +105,8 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
 
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
-        OZIPCompressionUtil.compressDirectory(new File( getStoragePath() ).getAbsolutePath(), bo, new String[] { ".wal" }, iOutput, compressionLevel);
+        OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" }, iOutput,
+            compressionLevel);
       } finally {
         if (bufferSize > 0) {
           bo.flush();
