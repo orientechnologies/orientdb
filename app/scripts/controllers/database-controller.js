@@ -27,10 +27,8 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
             $scope.bookmarksClass = "";
         }
     }
-    $scope.$watch("bookmarksClass", function (data) {
-        console.log(data);
-    });
-    if (Database.hasClass("StudioBookmarks")) {
+
+    if (Database.hasClass(Bookmarks.CLAZZ)) {
         Bookmarks.getAll(Database.getName());
     } else {
         Bookmarks.init(Database.getName()).then(function () {
@@ -75,6 +73,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
 
     }
+    $scope.tm = $scope.timeline;
     Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Query");
 
     $scope.language = 'sql';
@@ -298,6 +297,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
 
     }
 
+
 }]);
 dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localStorageService', function ($scope, $routeParams, localStorageService) {
 
@@ -318,7 +318,6 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
     });
     $scope.$watch("hideSettings", function (data) {
         $scope.$parent.hideSettings = data;
-        console.log(data);
         localStorageService.add("hideSettings", data);
         if ($scope.hide) {
             $scope.hide();
@@ -342,10 +341,10 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
 
 
 }]);
-dbModule.controller("BookmarkNewController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database', function ($scope, Bookmarks, DocumentApi, Database) {
+dbModule.controller("BookmarkNewController", ['$scope', '$rootScope', 'Bookmarks', 'DocumentApi', 'Database', function ($scope, $rootScope, Bookmarks, DocumentApi, Database) {
 
 
-    $scope.bookmark = DocumentApi.createNewDoc("StudioBookmarks");
+    $scope.bookmark = DocumentApi.createNewDoc(Bookmarks.CLAZZ);
 
     $scope.bookmark.name = $scope.item.query;
     $scope.bookmark.query = $scope.item.query;
@@ -363,24 +362,47 @@ dbModule.controller("BookmarkNewController", ['$scope', 'Bookmarks', 'DocumentAp
     $scope.viewTags = false;
     $scope.addBookmark = function () {
         Bookmarks.addBookmark(Database.getName(), $scope.bookmark).then(function () {
+            $rootScope.$broadcast('bookmarks:changed');
+            $scope.hide();
+        });
+    }
+}]);
+dbModule.controller("BookmarkEditController", ['$scope', '$rootScope', 'Bookmarks', 'DocumentApi', 'Database', function ($scope, $rootScope, Bookmarks, DocumentApi, Database) {
+
+    $scope.bookmark = $scope.r;
+
+
+    Bookmarks.getTags(Database.getName()).then(function (data) {
+        $scope.tags = data;
+        $scope.select2Options = {
+            'multiple': true,
+            'simple_tags': true,
+            'tags': $scope.tags  // Can be empty list.
+        };
+        $scope.viewTags = true;
+    });
+
+    $scope.viewTags = false;
+    $scope.addBookmark = function () {
+        Bookmarks.update(Database.getName(), $scope.bookmark).then(function () {
+            $rootScope.$broadcast('bookmarks:changed');
             $scope.hide();
         });
     }
 }]);
 dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database', 'scroller', function ($scope, Bookmarks, DocumentApi, Database, scroller) {
 
-    Bookmarks.getAll(Database.getName()).then(function (data) {
-        Bookmarks.getTags(Database.getName()).then(function (tgs) {
-            $scope.tags = tgs;
-            $scope.select2Options = {
-                'multiple': true,
-                'simple_tags': true,
-                'tags': $scope.tags  // Can be empty list.
-            };
+
+    $scope.$on("bookmarks:changed", function (event) {
+        Bookmarks.getAll(Database.getName()).then(function (data) {
             $scope.bookmarks = data.result;
         });
+    });
 
-    })
+    Bookmarks.getAll(Database.getName()).then(function (data) {
+        $scope.bookmarks = data.result;
+    });
+
     $scope.click = function () {
 
         $scope.$parent.setBookClass();
@@ -393,6 +415,7 @@ dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi',
 
         $scope.cm.setValue($scope.queryText);
         $scope.cm.setCursor($scope.cm.lineCount());
+        $scope.$parent.setBookClass();
     }
 
     $scope.remove = function (r) {

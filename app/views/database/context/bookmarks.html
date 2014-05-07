@@ -1,5 +1,6 @@
 <div ng-controller="BookmarkController" class="bookmarks-container">
-    <a class="bookmarks-folder" href="javascript:void(0)" ng-click="click()" >Bookmarks</a>
+    <span class="bookmarks-folder label label-warning" ng-click="click()">Bookmarks</span>
+
     <div class="row-fluid">
         <form class="form-search search-bookmarks">
             <input type="text" class="input-large search-query" ng-model="search"
@@ -10,15 +11,27 @@
 
         <ul class="nav nav-tabs nav-stacked bookmarks-list">
             <li class="bookmarks-item" ng-repeat="r in bookmarks | filter:search">
+                <div class="bookmarks-actions">
+                    <a href="javascript:void(0)" data-placement="right"
+                       bs-popover="'views/database/bookmarkEdit.html'"
+                       data-title="Edit bookmark">
+                        <i class="icon-edit icon-white"></i>
+                    </a>
+                    <a class="" ng-click="remove(r)" href="javascript:void(0)">
+                        <i class="icon-remove icon-white"></i>
+                    </a>
+                </div>
                 <a href="javascript:void(0)" ng-click="run(r)" data-placement="right"
                    bs-tooltip="r.query">
                     {{r.name}}
                     <br>
+
                     <div class="pull-right">
-                        <span ng-repeat="b in r.tags" class="badge book-badge">{{b}}</span>
+                        <span ng-repeat="b in r.tags" ng-click=" search = b " class="badge book-badge">{{b}}</span>
                     </div>
 
                 </a>
+
 
             </li>
         </ul>
