@@ -53,7 +53,7 @@ public class OStorageConfiguration implements OSerializableStream {
   public static final String                DEFAULT_CHARSET               = "UTF-8";
   private String                            charset                       = DEFAULT_CHARSET;
   public static final int                   CURRENT_VERSION               = 7;
-  public static final int                   CURRENT_BINARY_FORMAT_VERSION = 10;
+  public static final int                   CURRENT_BINARY_FORMAT_VERSION = 11;
   public int                                version                       = -1;
   public String                             name;
   public String                             schemaRecordId;

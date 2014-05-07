@@ -17,6 +17,7 @@
 package com.orientechnologies.common.concur.lock;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -25,13 +26,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * This lock is intended to be used inside of storage to request lock on any data modifications. Writes can be prohibited from one
  * thread, but then allowed from other thread.
  * 
- * IMPORTANT ! Prohibit/allow changes methods are not reentrant.
  * 
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 15.06.12
  */
 public class OModificationLock {
-  private volatile boolean                    veto           = false;
+  private final AtomicInteger                 vetos          = new AtomicInteger();
   private volatile boolean                    throwException = false;
 
   private final ConcurrentLinkedQueue<Thread> waiters        = new ConcurrentLinkedQueue<Thread>();
@@ -43,7 +43,7 @@ public class OModificationLock {
    */
   public void requestModificationLock() {
     lock.readLock().lock();
-    if (!veto)
+    if (vetos.get() == 0)
       return;
 
     if (throwException) {
@@ -55,7 +55,7 @@ public class OModificationLock {
     Thread thread = Thread.currentThread();
     waiters.add(thread);
 
-    while (veto) {
+    while (vetos.get() > 0) {
       LockSupport.park(this);
       if (Thread.interrupted())
         wasInterrupted = true;
@@ -94,7 +94,7 @@ public class OModificationLock {
     lock.writeLock().lock();
     try {
       this.throwException = throwException;
-      veto = true;
+      vetos.incrementAndGet();
     } finally {
       lock.writeLock().unlock();
     }
@@ -105,7 +105,10 @@ public class OModificationLock {
    * will be allowed to continue their execution.
    */
   public void allowModifications() {
-    veto = false;
+    final int currentVetos = vetos.decrementAndGet();
+    if (currentVetos < 0)
+      throw new IllegalStateException("Bad state of modification lock. "
+          + "Modifications were prohibited less times than they will be allowed.");
 
     for (Thread thread : waiters)
       LockSupport.unpark(thread);
