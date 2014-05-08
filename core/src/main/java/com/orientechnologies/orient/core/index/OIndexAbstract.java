@@ -15,21 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -58,8 +43,19 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Handles indexing when records change.
@@ -117,6 +113,64 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  public static IndexMetadata loadMetadataInternal(final ODocument config, final String type, final String algorithm,
+      final String valueContainerAlgorithm) {
+    String indexName = config.field(OIndexInternal.CONFIG_NAME);
+
+    final ODocument indexDefinitionDoc = config.field(OIndexInternal.INDEX_DEFINITION);
+    OIndexDefinition loadedIndexDefinition = null;
+    if (indexDefinitionDoc != null) {
+      try {
+        final String indexDefClassName = config.field(OIndexInternal.INDEX_DEFINITION_CLASS);
+        final Class<?> indexDefClass = Class.forName(indexDefClassName);
+        loadedIndexDefinition = (OIndexDefinition) indexDefClass.getDeclaredConstructor().newInstance();
+        loadedIndexDefinition.fromStream(indexDefinitionDoc);
+
+      } catch (final ClassNotFoundException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final NoSuchMethodException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final InvocationTargetException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final InstantiationException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      } catch (final IllegalAccessException e) {
+        throw new OIndexException("Error during deserialization of index definition", e);
+      }
+    } else {
+      // @COMPATIBILITY 1.0rc6 new index model was implemented
+      final Boolean isAutomatic = config.field(OIndexInternal.CONFIG_AUTOMATIC);
+      if (Boolean.TRUE.equals(isAutomatic)) {
+        final int pos = indexName.lastIndexOf('.');
+        if (pos < 0)
+          throw new OIndexException("Can not convert from old index model to new one. "
+              + "Invalid index name. Dot (.) separator should be present.");
+        final String className = indexName.substring(0, pos);
+        final String propertyName = indexName.substring(pos + 1);
+
+        final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
+        if (keyTypeStr == null)
+          throw new OIndexException("Can not convert from old index model to new one. " + "Index key type is absent.");
+        final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
+        loadedIndexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType);
+
+        config.removeField(OIndexInternal.CONFIG_AUTOMATIC);
+        config.removeField(OIndexInternal.CONFIG_KEYTYPE);
+      } else if (config.field(OIndexInternal.CONFIG_KEYTYPE) != null) {
+        final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
+        final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
+
+        loadedIndexDefinition = new OSimpleKeyIndexDefinition(keyType);
+
+        config.removeField(OIndexInternal.CONFIG_KEYTYPE);
+      }
+    }
+
+    final Set<String> clusters = new HashSet<String>((Collection<String>) config.field(CONFIG_CLUSTERS, OType.EMBEDDEDSET));
+
+    return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
   }
 
   public void flush() {
@@ -224,64 +278,9 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  protected abstract OStreamSerializer determineValueSerializer();
-
   @Override
-  public IndexMetadata loadMetadata(ODocument config) {
-    String indexName = config.field(OIndexInternal.CONFIG_NAME);
-
-    final ODocument indexDefinitionDoc = config.field(OIndexInternal.INDEX_DEFINITION);
-    OIndexDefinition loadedIndexDefinition = null;
-    if (indexDefinitionDoc != null) {
-      try {
-        final String indexDefClassName = config.field(OIndexInternal.INDEX_DEFINITION_CLASS);
-        final Class<?> indexDefClass = Class.forName(indexDefClassName);
-        loadedIndexDefinition = (OIndexDefinition) indexDefClass.getDeclaredConstructor().newInstance();
-        loadedIndexDefinition.fromStream(indexDefinitionDoc);
-
-      } catch (final ClassNotFoundException e) {
-        throw new OIndexException("Error during deserialization of index definition", e);
-      } catch (final NoSuchMethodException e) {
-        throw new OIndexException("Error during deserialization of index definition", e);
-      } catch (final InvocationTargetException e) {
-        throw new OIndexException("Error during deserialization of index definition", e);
-      } catch (final InstantiationException e) {
-        throw new OIndexException("Error during deserialization of index definition", e);
-      } catch (final IllegalAccessException e) {
-        throw new OIndexException("Error during deserialization of index definition", e);
-      }
-    } else {
-      // @COMPATIBILITY 1.0rc6 new index model was implemented
-      final Boolean isAutomatic = config.field(OIndexInternal.CONFIG_AUTOMATIC);
-      if (Boolean.TRUE.equals(isAutomatic)) {
-        final int pos = indexName.lastIndexOf('.');
-        if (pos < 0)
-          throw new OIndexException("Can not convert from old index model to new one. "
-              + "Invalid index name. Dot (.) separator should be present.");
-        final String className = indexName.substring(0, pos);
-        final String propertyName = indexName.substring(pos + 1);
-
-        final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
-        if (keyTypeStr == null)
-          throw new OIndexException("Can not convert from old index model to new one. " + "Index key type is absent.");
-        final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
-        loadedIndexDefinition = new OPropertyIndexDefinition(className, propertyName, keyType);
-
-        config.removeField(OIndexInternal.CONFIG_AUTOMATIC);
-        config.removeField(OIndexInternal.CONFIG_KEYTYPE);
-      } else if (config.field(OIndexInternal.CONFIG_KEYTYPE) != null) {
-        final String keyTypeStr = config.field(OIndexInternal.CONFIG_KEYTYPE);
-        final OType keyType = OType.valueOf(keyTypeStr.toUpperCase(Locale.ENGLISH));
-
-        loadedIndexDefinition = new OSimpleKeyIndexDefinition(keyType);
-
-        config.removeField(OIndexInternal.CONFIG_KEYTYPE);
-      }
-    }
-
-    final Set<String> clusters = new HashSet<String>((Collection<String>) config.field(CONFIG_CLUSTERS, OType.EMBEDDEDSET));
-
-    return new IndexMetadata(indexName, loadedIndexDefinition, clusters, type, algorithm, valueContainerAlgorithm);
+  public IndexMetadata loadMetadata(final ODocument config) {
+    return loadMetadataInternal(config, type, algorithm, valueContainerAlgorithm);
   }
 
   public boolean contains(Object key) {
@@ -446,15 +445,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
 
     return documentIndexed;
-  }
-
-  protected void populateIndex(ODocument doc, Object fieldValue) {
-    if (fieldValue instanceof Collection) {
-      for (final Object fieldValueItem : (Collection<?>) fieldValue) {
-        put(fieldValueItem, doc);
-      }
-    } else
-      put(fieldValue, doc);
   }
 
   public boolean remove(final Object key, final OIdentifiable value) {
@@ -692,49 +682,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  private void applyIndexTxEntry(Map<Object, Object> snapshot, ODocument entry) {
-    final Object key;
-    if (entry.field("k") != null) {
-      final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
-      try {
-        final ODocument keyContainer = new ODocument();
-        keyContainer.setLazyLoad(false);
-
-        keyContainer.fromString(serializedKey);
-
-        final Object storedKey = keyContainer.field("key");
-        if (storedKey instanceof List)
-          key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
-        else if (Boolean.TRUE.equals(keyContainer.field("binary"))) {
-          key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
-        } else
-          key = storedKey;
-      } catch (IOException ioe) {
-        throw new OTransactionException("Error during index changes deserialization. ", ioe);
-      }
-    } else
-      key = null;
-
-    final List<ODocument> operations = entry.field("ops");
-    if (operations != null) {
-      for (final ODocument op : operations) {
-        final int operation = (Integer) op.rawField("o");
-        final OIdentifiable value = op.field("v", OType.LINK);
-
-        if (operation == OPERATION.PUT.ordinal())
-          putInSnapshot(key, value, snapshot);
-        else if (operation == OPERATION.REMOVE.ordinal()) {
-          if (value == null)
-            removeFromSnapshot(key, snapshot);
-          else {
-            removeFromSnapshot(key, value, snapshot);
-          }
-
-        }
-      }
-    }
-  }
-
   @Override
   public void commit() {
     acquireExclusiveLock();
@@ -919,6 +866,17 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return rebuilding;
   }
 
+  protected abstract OStreamSerializer determineValueSerializer();
+
+  protected void populateIndex(ODocument doc, Object fieldValue) {
+    if (fieldValue instanceof Collection) {
+      for (final Object fieldValueItem : (Collection<?>) fieldValue) {
+        put(fieldValueItem, doc);
+      }
+    } else
+      put(fieldValue, doc);
+  }
+
   protected Object getCollatingValue(final Object key) {
     if (key != null && getDefinition() != null)
       return getDefinition().getCollate().transform(key);
@@ -955,6 +913,49 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected void checkForRebuild() {
     if (rebuilding && !Thread.currentThread().equals(rebuildThread)) {
       throw new OIndexException("Index " + name + " is rebuilding now and can not be used.");
+    }
+  }
+
+  private void applyIndexTxEntry(Map<Object, Object> snapshot, ODocument entry) {
+    final Object key;
+    if (entry.field("k") != null) {
+      final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+      try {
+        final ODocument keyContainer = new ODocument();
+        keyContainer.setLazyLoad(false);
+
+        keyContainer.fromString(serializedKey);
+
+        final Object storedKey = keyContainer.field("key");
+        if (storedKey instanceof List)
+          key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
+        else if (Boolean.TRUE.equals(keyContainer.field("binary"))) {
+          key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
+        } else
+          key = storedKey;
+      } catch (IOException ioe) {
+        throw new OTransactionException("Error during index changes deserialization. ", ioe);
+      }
+    } else
+      key = null;
+
+    final List<ODocument> operations = entry.field("ops");
+    if (operations != null) {
+      for (final ODocument op : operations) {
+        final int operation = (Integer) op.rawField("o");
+        final OIdentifiable value = op.field("v", OType.LINK);
+
+        if (operation == OPERATION.PUT.ordinal())
+          putInSnapshot(key, value, snapshot);
+        else if (operation == OPERATION.REMOVE.ordinal()) {
+          if (value == null)
+            removeFromSnapshot(key, snapshot);
+          else {
+            removeFromSnapshot(key, value, snapshot);
+          }
+
+        }
+      }
     }
   }
 }

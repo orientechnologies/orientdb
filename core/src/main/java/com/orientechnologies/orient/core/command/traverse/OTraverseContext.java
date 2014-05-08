@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.command.traverse;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
@@ -23,11 +28,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 
 public class OTraverseContext extends OBasicCommandContext {
   private Set<ORID> history = new HashSet<ORID>();
@@ -95,11 +95,11 @@ public class OTraverseContext extends OBasicCommandContext {
   }
 
   public String getPath() {
-    return currentProcess.getPath().toString();
+    return currentProcess == null ? "" : currentProcess.getPath().toString();
   }
 
   public int getDepth() {
-    return currentProcess.getPath().getDepth();
+    return currentProcess == null ? 0 : currentProcess.getPath().getDepth();
   }
 
   public void setStrategy(OTraverse.STRATEGY strategy) {

@@ -55,13 +55,13 @@ import java.util.Set;
  * 
  */
 public class OSQLHelper {
-  public static final String                  NAME              = "sql";
+  public static final String NAME              = "sql";
 
-  public static final String                  VALUE_NOT_PARSED  = "_NOT_PARSED_";
-  public static final String                  NOT_NULL          = "_NOT_NULL_";
-  public static final String                  DEFINED           = "_DEFINED_";
+  public static final String VALUE_NOT_PARSED  = "_NOT_PARSED_";
+  public static final String NOT_NULL          = "_NOT_NULL_";
+  public static final String DEFINED           = "_DEFINED_";
 
-  private static ClassLoader                  orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
+  private static ClassLoader orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
 
   /**
    * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and NULL.
@@ -231,7 +231,6 @@ public class OSQLHelper {
     return iObject;
   }
 
-
   public static Object getValue(final Object iObject, final ORecordInternal<?> iRecord, final OCommandContext iContext) {
     if (iObject == null)
       return null;
@@ -264,13 +263,13 @@ public class OSQLHelper {
       // EMBEDDED DOCUMENT
       ((ODocument) iFieldValue).addOwner(iDocument);
 
-      // can't use existing getValue with iContext
-      if (iFieldValue == null)
-          return null;
-      if (iFieldValue instanceof OSQLFilterItem)
-          return ((OSQLFilterItem) iFieldValue).getValue(iDocument, null, iContext);
+    // can't use existing getValue with iContext
+    if (iFieldValue == null)
+      return null;
+    if (iFieldValue instanceof OSQLFilterItem)
+      return ((OSQLFilterItem) iFieldValue).getValue(iDocument, null, iContext);
 
-      return iFieldValue;
+    return iFieldValue;
   }
 
   public static Set<ODocument> bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
@@ -296,9 +295,15 @@ public class OSQLHelper {
             final OProperty prop = iDocument.getSchemaClass().getProperty(fieldName);
             if (prop != null) {
               if (prop.getType() == OType.LINK) {
-                if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getSize(fieldValue) == 1)
-                  // GET THE FIRST ITEM AS UNIQUE LINK
-                  fieldValue = OMultiValue.getFirstValue(fieldValue);
+                if (OMultiValue.isMultiValue(fieldValue)) {
+                  final int size = OMultiValue.getSize(fieldValue);
+                  if (size == 1)
+                    // GET THE FIRST ITEM AS UNIQUE LINK
+                    fieldValue = OMultiValue.getFirstValue(fieldValue);
+                  else if (size == 0)
+                    // NO ITEMS, SET IT AS NULL
+                    fieldValue = null;
+                }
               }
             }
           }
@@ -332,7 +337,7 @@ public class OSQLHelper {
         }
       }
 
-      final ODocument doc = iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments,iContext));
+      final ODocument doc = iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments, iContext));
       if (doc != null) {
         if (changedDocuments == null)
           changedDocuments = new HashSet<ODocument>();

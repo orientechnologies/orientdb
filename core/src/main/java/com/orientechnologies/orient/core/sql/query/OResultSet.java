@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,12 +35,12 @@ import java.util.NoSuchElementException;
  * @param <T>
  * @see OSQLAsynchQuery
  */
-public class OResultSet<T> implements List<T> {
-  protected final List<T>    underlying;
-  protected volatile boolean completed         = false;
-  protected Object           waitForNextItem   = new Object();
-  protected Object           waitForCompletion = new Object();
-  protected int              limit             = -1;
+public class OResultSet<T> implements List<T>, Externalizable {
+  protected List<T>                    underlying;
+  protected transient volatile boolean completed         = false;
+  protected transient Object           waitForNextItem   = new Object();
+  protected transient Object           waitForCompletion = new Object();
+  protected transient int              limit             = -1;
 
   public OResultSet() {
     underlying = Collections.synchronizedList(new ArrayList<T>());
@@ -230,6 +234,16 @@ public class OResultSet<T> implements List<T> {
 
   public void setLimit(final int limit) {
     this.limit = limit;
+  }
+
+  @Override
+  public void writeExternal(ObjectOutput out) throws IOException {
+    out.writeObject(underlying);
+  }
+
+  @Override
+  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    underlying = (List<T>) in.readObject();
   }
 
   protected void waitForCompletion() {

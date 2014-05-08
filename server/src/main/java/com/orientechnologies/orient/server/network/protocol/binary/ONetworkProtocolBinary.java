@@ -71,6 +71,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -1122,6 +1123,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           channel.writeByte((byte) 'r');
           listener.result(result);
           writeIdentifiable((OIdentifiable) result);
+        } else if (result instanceof ODocumentWrapper) {
+          // RECORD
+          channel.writeByte((byte) 'r');
+          final ODocument doc = ((ODocumentWrapper) result).getDocument();
+          listener.result(doc);
+          writeIdentifiable(doc);
         } else if (OMultiValue.isMultiValue(result)) {
           channel.writeByte((byte) 'l');
           channel.writeInt(OMultiValue.getSize(result));
