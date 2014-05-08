@@ -15,9 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -25,7 +24,9 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.atomic.AtomicLong;
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
 public class ConcurrentQueriesTest {
@@ -90,6 +91,10 @@ public class ConcurrentQueriesTest {
       new ODatabaseDocumentTx(url).create().close();
 
     db = new ODatabaseDocumentTx(url).open("admin", "admin");
+
+    if (db.getMetadata().getSchema().existsClass("Concurrent"))
+      db.getMetadata().getSchema().dropClass("Concurrent");
+
     db.getMetadata().getSchema().createClass("Concurrent");
 
     for (int i = 0; i < 1000; ++i) {
