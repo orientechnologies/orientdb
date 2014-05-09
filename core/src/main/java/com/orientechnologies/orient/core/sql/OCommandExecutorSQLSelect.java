@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -62,11 +67,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -327,8 +327,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           else if (w.equals(KEYWORD_LOCK)) {
             final String lock = parseLock();
 
-            lockingStrategy = lock.equals("RECORD") ? OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
-                : OStorage.LOCKING_STRATEGY.DEFAULT;
+            if (lock.equalsIgnoreCase("DEFAULT"))
+              lockingStrategy = OStorage.LOCKING_STRATEGY.DEFAULT;
+            else if (lock.equals("NONE"))
+              lockingStrategy = OStorage.LOCKING_STRATEGY.NONE;
+            else if (lock.equals("RECORD"))
+              lockingStrategy = OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
           } else if (w.equals(KEYWORD_PARALLEL))
             parallel = parseParallel(w);
           else
@@ -471,7 +475,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @Override
   public String getSyntax() {
-    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] TIMEOUT <TimeoutInMs>";
+    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] [TIMEOUT <TimeoutInMs>] [LOCK none|record]";
   }
 
   public String getFetchPlan() {

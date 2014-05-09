@@ -118,7 +118,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     parserNextWord(true);
     final String lockStrategy = parserGetLastWord();
 
-    if (!lockStrategy.equalsIgnoreCase("NONE") && !lockStrategy.equalsIgnoreCase("RECORD"))
+    if (!lockStrategy.equalsIgnoreCase("DEFAULT") && !lockStrategy.equalsIgnoreCase("NONE") && !lockStrategy.equalsIgnoreCase("RECORD"))
       throwParsingException("Invalid " + KEYWORD_LOCK + " value set to '" + lockStrategy
           + "' but it should be NONE (default) or RECORD. Example: " + KEYWORD_LOCK + " RECORD");
 
