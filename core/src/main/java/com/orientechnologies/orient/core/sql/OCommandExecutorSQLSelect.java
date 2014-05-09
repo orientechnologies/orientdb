@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -66,6 +61,11 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -172,9 +172,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       return null;
     } else if (indexReuseType.equals(OIndexReuseType.INDEX_METHOD)) {
-      OIndexSearchResult result = createIndexedProperty(iCondition, iCondition.getLeft());
+      OIndexSearchResult result = createIndexedProperty(iCondition, iCondition.getLeft(), iContext);
       if (result == null)
-        result = createIndexedProperty(iCondition, iCondition.getRight());
+        result = createIndexedProperty(iCondition, iCondition.getRight(), iContext);
 
       if (result == null)
         return null;
@@ -197,9 +197,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    *          Condition item
    * @param iItem
    *          Value to search
+   * @param iContext
    * @return true if the property was indexed and found, otherwise false
    */
-  private static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem) {
+  private static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem, final OCommandContext iContext) {
     if (iItem == null || !(iItem instanceof OSQLFilterItemField))
       return null;
 
@@ -220,7 +221,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final Object value = OSQLHelper.getValue(origValue);
     return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
   }
-
+  
   private static Object getIndexKey(final OIndexDefinition indexDefinition, Object value, OCommandContext context) {
     if (indexDefinition instanceof OCompositeIndexDefinition || indexDefinition.getParamCount() > 1) {
       if (value instanceof List) {
@@ -780,14 +781,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         final List<String> words = OStringSerializerHelper.smartSplit(projection, ' ');
         if (words.size() > 1)
-          lastRealPositionProjection = words.get(0).length();
+          lastRealPositionProjection += words.get(0).length();
 
         String fieldName;
         endPos = projection.toUpperCase(Locale.ENGLISH).indexOf(KEYWORD_AS);
         if (endPos > -1) {
           // EXTRACT ALIAS
           fieldName = projection.substring(endPos + KEYWORD_AS.length()).trim();
-          lastRealPositionProjection = endPos + KEYWORD_AS.length() + fieldName.length() + 1;
+          lastRealPositionProjection += endPos + KEYWORD_AS.length() + fieldName.length() + 1;
           projection = projection.substring(0, endPos).trim();
 
           if (projectionDefinition.containsKey(fieldName))
