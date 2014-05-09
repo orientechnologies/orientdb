@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -545,7 +544,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       context.updateMetric("documentReads", +1);
 
       if (filter(record, evaluateRecords))
-        if (!handleResult(record, true))
+        if (!handleResult(record))
           // LIMIT REACHED
           return false;
     } finally {
@@ -564,22 +563,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * 
    * @param iRecord
    *          Record to handle
-   * @param iCloneIt
-   *          Clone the record
    * @return false if limit has been reached, otherwise true
    */
-  protected boolean handleResult(final OIdentifiable iRecord, final boolean iCloneIt) {
-    lastRecord = null;
-
+  protected boolean handleResult(final OIdentifiable iRecord) {
     if ((orderedFields.isEmpty() || fullySortedByIndex) && skip > 0) {
+      lastRecord = null;
       skip--;
       return true;
     }
 
-    if (iCloneIt)
-      lastRecord = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
-    else
-      lastRecord = iRecord;
+    lastRecord = iRecord;
 
     resultCount++;
 
@@ -1354,7 +1347,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       doc.field("rid", entryRecord.getValue().getIdentity());
       doc.unsetDirty();
 
-      if (!handleResult(doc, false))
+      if (!handleResult(doc))
         // LIMIT REACHED
         break;
 
@@ -1569,12 +1562,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (res instanceof Collection<?>) {
             // MULTI VALUES INDEX
             for (final OIdentifiable r : (Collection<OIdentifiable>) res)
-              if (!handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity()), true))
+              if (!handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity())))
                 // LIMIT REACHED
                 break;
           } else {
             // SINGLE VALUE INDEX
-            handleResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()), true);
+            handleResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()));
           }
       }
 

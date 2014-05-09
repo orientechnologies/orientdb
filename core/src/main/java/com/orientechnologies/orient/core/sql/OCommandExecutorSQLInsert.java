@@ -191,7 +191,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
   @Override
   public boolean result(final Object iRecord) {
-    final ORecord<?> rec = ((OIdentifiable) iRecord).getRecord();
+    final ORecord<?> rec = ((OIdentifiable) iRecord).getRecord().copy();
 
     // RESET THE IDENTITY TO AVOID UPDATE
     rec.getIdentity().reset();
