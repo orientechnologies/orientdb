@@ -201,21 +201,15 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
         return user;
     }
 
-    acquireExclusiveLock();
-    try {
+    final List<ODocument> result = getDatabase().<OCommandRequest> command(
+        new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
+        .execute();
 
-      final List<ODocument> result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-          .execute();
+    if (result != null && !result.isEmpty())
+      return cacheUser(new OUser(result.get(0)));
 
-      if (result != null && !result.isEmpty())
-        return cacheUser(new OUser(result.get(0)));
+    return null;
 
-      return null;
-
-    } finally {
-      releaseExclusiveLock();
-    }
   }
 
   public OUser createUser(final String iUserName, final String iUserPassword, final String... iRoles) {
