@@ -168,36 +168,29 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   }
 
   public OUser authenticate(final String iUserName, final String iUserPassword) {
-    acquireExclusiveLock();
-    try {
+    final String dbName = getDatabase().getName();
 
-      final String dbName = getDatabase().getName();
+    final OUser user = getUser(iUserName);
+    if (user == null)
+      throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
 
-      final OUser user = getUser(iUserName);
-      if (user == null)
-        throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
+    if (user.getAccountStatus() != STATUSES.ACTIVE)
+      throw new OSecurityAccessException(dbName, "User '" + iUserName + "' is not active");
 
-      if (user.getAccountStatus() != STATUSES.ACTIVE)
-        throw new OSecurityAccessException(dbName, "User '" + iUserName + "' is not active");
-
-      if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
-        // CHECK USER & PASSWORD
-        if (!user.checkPassword(iUserPassword)) {
-          // WAIT A BIT TO AVOID BRUTE FORCE
-          try {
-            Thread.sleep(200);
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-          }
-          throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
+    if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
+      // CHECK USER & PASSWORD
+      if (!user.checkPassword(iUserPassword)) {
+        // WAIT A BIT TO AVOID BRUTE FORCE
+        try {
+          Thread.sleep(200);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
         }
+        throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
       }
-
-      return user;
-
-    } finally {
-      releaseExclusiveLock();
     }
+
+    return user;
   }
 
   public OUser getUser(final String iUserName) {
