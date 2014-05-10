@@ -275,6 +275,22 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     }
   }
 
+    /**
+     * Parses the returning keyword if found.
+     */
+    protected String parseReturn() throws OCommandSQLParsingException {
+        parserNextWord(true);
+        final String returning = parserGetLastWord();
+
+        if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
+            throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
+                    + "' but it should be COUNT (default), BEFORE. Example: " + KEYWORD_RETURN + " BEFORE");
+
+        return returning;
+    }
+
+
+
   @Override
   public void end() {
   }

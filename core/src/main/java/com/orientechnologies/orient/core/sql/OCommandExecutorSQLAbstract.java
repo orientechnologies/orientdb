@@ -125,17 +125,5 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     return lockStrategy;
   }
 
-  /**
-   * Parses the returning keyword if found.
-   */
-  protected String parseReturn() throws OCommandSQLParsingException {
-    parserNextWord(true);
-    final String returning = parserGetLastWord();
 
-    if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE") && !returning.equalsIgnoreCase("AFTER"))
-      throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
-          + "' but it should be COUNT (default), BEFORE or AFTER. Example: " + KEYWORD_RETURN + " BEFORE");
-
-    return returning;
-  }
 }
