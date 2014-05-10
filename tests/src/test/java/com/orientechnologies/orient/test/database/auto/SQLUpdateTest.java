@@ -259,6 +259,44 @@ public class SQLUpdateTest {
 
   }
 
+    public void updateWithReturn() {
+        ODocument doc = new ODocument("Data");
+        doc.field("name", "Pawel");
+        doc.field("city", "Wroclaw");
+        doc.field("really_big_field", "BIIIIIIIIIIIIIIIGGGGGGG!!!");
+        doc.save();
+        // check AFTER
+        String sqlString = "UPDATE "+doc.getIdentity().toString()+" SET gender='male' RETURN AFTER";
+        List<ODocument> result1 = database.command(new OCommandSQL(sqlString)).execute();
+        Assert.assertEquals(result1.size(),1);
+        Assert.assertEquals(result1.get(0).getIdentity(), doc.getIdentity());
+        Assert.assertEquals((String) result1.get(0).field("gender"), "male");
+        final ODocument lastOne = result1.get(0).copy();
+        // check record attributes and BEFORE
+        sqlString = "UPDATE "+doc.getIdentity().toString()+" SET Age=1 RETURN BEFORE @this";
+        result1 = database.command(new OCommandSQL(sqlString)).execute();
+        Assert.assertEquals(result1.size(),1);
+        Assert.assertEquals(lastOne.getVersion(), result1.get(0).getVersion());
+        Assert.assertFalse(result1.get(0).containsField("Age"));
+        // check INCREMENT, AFTER + $current + field
+        sqlString = "UPDATE "+doc.getIdentity().toString()+" INCREMENT Age = 100 RETURN AFTER $current.Age";
+        result1 = database.command(new OCommandSQL(sqlString)).execute();
+        Assert.assertEquals(result1.size(),1);
+        Assert.assertTrue(result1.get(0).containsField("result"));
+        Assert.assertEquals(result1.get(0).field("result"), 101);
+        Assert.assertTrue(result1.get(0).containsField("rid"));
+        Assert.assertTrue(result1.get(0).containsField("version"));
+        // check exclude   + WHERE + LIMIT
+        sqlString = "UPDATE "+doc.getIdentity().toString()+" INCREMENT Age = 100 RETURN AFTER $current.Exclude('really_big_field') WHERE Age=101 LIMIT 1";
+        result1 = database.command(new OCommandSQL(sqlString)).execute();
+        Assert.assertEquals(result1.size(),1);
+        Assert.assertTrue(result1.get(0).containsField("Age"));
+        Assert.assertEquals(result1.get(0).field("Age"), 201);
+        Assert.assertFalse(result1.get(0).containsField("really_big_field"));
+
+    }
+
+
   @Test
   public void updateWithNamedParameters() {
     ODocument doc = new ODocument("Data");
