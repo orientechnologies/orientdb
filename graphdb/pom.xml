@@ -117,7 +117,12 @@
             <artifactId>gremlin-groovy</artifactId>
             <version>${blueprints.version}</version>
         </dependency>
-
+		 <!-- gexf4j -->
+	    <dependency>
+		    <groupId>it.uniroma1.dis.wsngroup.gexf4j</groupId>
+		    <artifactId>gexf4j</artifactId>
+		    <version>0.4.4-BETA</version>
+		</dependency>
 
     </dependencies>
     <build>
