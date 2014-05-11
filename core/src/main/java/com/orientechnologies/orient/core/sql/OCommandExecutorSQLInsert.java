@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -46,12 +47,17 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     OCommandResultListener {
   public static final String             KEYWORD_INSERT = "INSERT";
   private static final String            KEYWORD_VALUES = "VALUES";
-  private String                         className      = null;
+  protected static final String          KEYWORD_RETURN = "RETURN";
+
+    private String                         className      = null;
   private String                         clusterName    = null;
   private String                         indexName      = null;
   private List<Map<String, Object>>      newRecords;
   private OSQLAsynchQuery<OIdentifiable> subQuery       = null;
   private AtomicLong                     saved          = new AtomicLong(0);
+  private Object                         returnExpression = null;
+  private List<ODocument>                queryResult = null;
+
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLInsert parse(final OCommandRequest iRequest) {
@@ -102,22 +108,38 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       parserGoBack();
 
     newRecords = new ArrayList<Map<String, Object>>();
+    Boolean sourceClauseProcessed = false;
     if (parserGetCurrentChar() == '(') {
       parseValues();
+      parserNextWord(true, " \r\n");
+        sourceClauseProcessed = true;
     } else {
       parserNextWord(true, " ,\r\n");
 
       if (parserGetLastWord().equals(KEYWORD_CONTENT)) {
         newRecords = null;
         parseContent();
-      } else if (parserGetLastWord().equals(KEYWORD_FROM)) {
-        newRecords = null;
-        subQuery = new OSQLAsynchQuery<OIdentifiable>(parserText.substring(parserGetCurrentPosition()), this);
-
+          sourceClauseProcessed = true;
       } else if (parserGetLastWord().equals(KEYWORD_SET)) {
         final LinkedHashMap<String, Object> fields = new LinkedHashMap<String, Object>();
         newRecords.add(fields);
         parseSetFields(fields);
+          sourceClauseProcessed = true;
+      }
+    }
+    if (sourceClauseProcessed)
+        parserNextWord(true, " \r\n");
+    // it has to be processed before KEYWORD_FROM in order to not be taken as part of SELECT
+    if (parserGetLastWord().equals(KEYWORD_RETURN)) {
+          parseReturn(!sourceClauseProcessed);
+          parserNextWord(true, " \r\n");
+    }
+
+    if (!sourceClauseProcessed)
+    {
+      if (parserGetLastWord().equals(KEYWORD_FROM)) {
+          newRecords = null;
+          subQuery = new OSQLAsynchQuery<OIdentifiable>(parserText.substring(parserGetCurrentPosition()), this);
       }
     }
 
@@ -149,7 +171,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       }
 
       // RETURN LAST ENTRY
-      return new ODocument(result);
+      return prepareReturnItem(new ODocument(result));
     } else {
 
       // CREATE NEW DOCUMENTS
@@ -164,29 +186,61 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
         }
 
         if (docs.size() == 1)
-          return docs.get(0);
+          return prepareReturnItem(docs.get(0));
         else
-          return docs;
+          return prepareReturnResult(docs);
       } else if (content != null) {
         final ODocument doc = className != null ? new ODocument(className) : new ODocument();
         doc.merge(content, true, false);
         saveRecord(doc);
-        return doc;
+        return prepareReturnItem(doc);
       } else if (subQuery != null) {
         subQuery.execute();
+        if (queryResult!=null)
+           return prepareReturnResult(queryResult);
+
         return saved.longValue();
       }
     }
     return null;
   }
 
-  public boolean isReplicated() {
+      protected Object prepareReturnResult(List<ODocument> res)
+      {
+          if (returnExpression==null)
+                return res;// No transformation
+          final ArrayList<Object> ret = new ArrayList<Object>();
+          for (ODocument resItem : (List<ODocument>)res)
+                ret.add(prepareReturnItem(resItem));
+          return ret;
+      }
+
+    protected Object prepareReturnItem(ODocument item)
+    {
+        if (returnExpression==null)
+            return item;// No transformation
+
+        this.getContext().setVariable("current",item);
+        final Object res = OSQLHelper.getValue(returnExpression, item, this.getContext());
+        if (res instanceof OIdentifiable)
+            return  res;
+        else
+        {// wrapping doc
+            final ODocument wrappingDoc =  new ODocument("result",res);
+            wrappingDoc.field("rid",item.getIdentity());// passing record id.In many cases usable on client side
+            wrappingDoc.field("version",item.getVersion());// passing record version
+            return wrappingDoc;
+        }
+    }
+
+
+    public boolean isReplicated() {
     return indexName != null;
   }
 
   @Override
   public String getSyntax() {
-    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]|CONTENT {<JSON>}";
+    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]|CONTENT {<JSON>} [RETURN <expression>] [FROM select-query]";
   }
 
   @Override
@@ -202,6 +256,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     rec.setDirty();
     synchronized (this) {
       saveRecord(rec);
+      if (queryResult!=null)
+          queryResult.add(((ODocument) rec));
     }
 
     return true;
@@ -300,4 +356,22 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     }
     return (OIdentifiable) parsedRid;
   }
+
+    /**
+     * Parses the returning keyword if found.
+     */
+    protected void parseReturn(Boolean subQueryExpected) throws OCommandSQLParsingException {
+        parserNextWord(false," ");
+        String returning = parserGetLastWord().trim();
+        if (returning.startsWith("$") || returning.startsWith("@"))
+        {
+            if (subQueryExpected)
+                queryResult = new ArrayList<ODocument>();
+            returnExpression = (returning.length()>0) ? OSQLHelper.parseValue(this, returning,this.getContext()) : null;
+        }
+        else
+            throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
+
+    }
+
 }
