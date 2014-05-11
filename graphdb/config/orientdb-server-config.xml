@@ -78,6 +78,8 @@
                     </command>
                     <command pattern="GET|gephi/*"
                              implementation="com.orientechnologies.orient.graph.server.command.OServerCommandGetGephi"/>
+                    <command pattern="GET|gexf/*"
+                             implementation="com.orientechnologies.orient.graph.server.command.OServerCommandGetGexf"/>
                 </commands>
             </listener>
         </listeners>
