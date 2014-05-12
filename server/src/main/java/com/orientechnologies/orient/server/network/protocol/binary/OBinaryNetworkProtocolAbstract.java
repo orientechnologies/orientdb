@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
@@ -63,16 +64,56 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
  * 
  */
 public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
+  protected final Level          logClientExceptions;
+  protected final boolean        logClientFullStackTrace;
   protected OChannelBinaryServer channel;
   protected int                  requestType;
   protected int                  clientTxId;
-  protected final Level          logClientExceptions;
-  protected final boolean        logClientFullStackTrace;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
     super(Orient.instance().getThreadGroup(), iThreadName);
     logClientExceptions = Level.parse(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL.getValueAsString());
     logClientFullStackTrace = OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE.getValueAsBoolean();
+  }
+
+  @Override
+  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig,
+      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
+    server = iServer;
+    channel = new OChannelBinaryServer(iSocket, iConfig);
+  }
+
+  @Override
+  public void shutdown() {
+    channel.close();
+  }
+
+  @Override
+  public OChannel getChannel() {
+    return channel;
+  }
+
+  /**
+   * Write a OIdentifiable instance using this format:<br/>
+   * - 2 bytes: class id [-2=no record, -3=rid, -1=no class id, > -1 = valid] <br/>
+   * - 1 byte: record type [d,b,f] <br/>
+   * - 2 bytes: cluster id <br/>
+   * - 8 bytes: position in cluster <br/>
+   * - 4 bytes: record version <br/>
+   * - x bytes: record content <br/>
+   * 
+   * @param o
+   * @throws IOException
+   */
+  public void writeIdentifiable(final OIdentifiable o) throws IOException {
+    if (o == null)
+      channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
+    else if (o instanceof ORecordId) {
+      channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
+      channel.writeRID((ORID) o);
+    } else {
+      writeRecord((ORecordInternal<?>) o.getRecord());
+    }
   }
 
   /**
@@ -97,13 +138,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
    * @throws IOException
    */
   protected void onAfterRequest() throws IOException {
-  }
-
-  @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig,
-      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
-    server = iServer;
-    channel = new OChannelBinaryServer(iSocket, iConfig);
   }
 
   @Override
@@ -147,16 +181,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
       OSerializationThreadLocal.INSTANCE.get().clear();
     }
-  }
-
-  @Override
-  public void shutdown() {
-    channel.close();
-  }
-
-  @Override
-  public OChannel getChannel() {
-    return channel;
   }
 
   protected void sendOk(final int iClientTxId) throws IOException {
@@ -204,56 +228,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
         shutdown();
     } finally {
       channel.releaseWriteLock();
-    }
-  }
-
-  /**
-   * Write a OIdentifiable instance using this format:<br/>
-   * - 2 bytes: class id [-2=no record, -3=rid, -1=no class id, > -1 = valid] <br/>
-   * - 1 byte: record type [d,b,f] <br/>
-   * - 2 bytes: cluster id <br/>
-   * - 8 bytes: position in cluster <br/>
-   * - 4 bytes: record version <br/>
-   * - x bytes: record content <br/>
-   * 
-   * @param o
-   * @throws IOException
-   */
-  public void writeIdentifiable(final OIdentifiable o) throws IOException {
-    if (o == null)
-      channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
-    else if (o instanceof ORecordId) {
-      channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
-      channel.writeRID((ORID) o);
-    } else {
-      writeRecord((ORecordInternal<?>) o.getRecord());
-    }
-  }
-
-  private void writeRecord(final ORecordInternal<?> iRecord) throws IOException {
-    channel.writeShort((short) 0);
-    channel.writeByte(iRecord.getRecordType());
-    channel.writeRID(iRecord.getIdentity());
-    channel.writeVersion(iRecord.getRecordVersion());
-    try {
-      final byte[] stream = iRecord.toStream();
-
-      // TRIM TAILING SPACES (DUE TO OVERSIZE)
-      int realLength = stream.length;
-      for (int i = stream.length - 1; i > -1; --i) {
-        if (stream[i] == 32)
-          --realLength;
-        else
-          break;
-      }
-
-      channel.writeBytes(stream, realLength);
-    } catch (Exception e) {
-      channel.writeBytes(null);
-      final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
-      OLogManager.instance().error(this, message, e);
-
-      throw new OSerializationException(message, e);
     }
   }
 
@@ -312,6 +286,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
   protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
     try {
+      // TRY TO SEE IF THE RECORD EXISTS
+      final ORecord<?> record = rid.getRecord();
+      if (record == null)
+        return 0;
+
       iDatabase.delete(rid, version);
       return 1;
     } catch (Exception e) {
@@ -380,6 +359,33 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     try {
       channel.flush();
     } catch (IOException e1) {
+    }
+  }
+
+  private void writeRecord(final ORecordInternal<?> iRecord) throws IOException {
+    channel.writeShort((short) 0);
+    channel.writeByte(iRecord.getRecordType());
+    channel.writeRID(iRecord.getIdentity());
+    channel.writeVersion(iRecord.getRecordVersion());
+    try {
+      final byte[] stream = iRecord.toStream();
+
+      // TRIM TAILING SPACES (DUE TO OVERSIZE)
+      int realLength = stream.length;
+      for (int i = stream.length - 1; i > -1; --i) {
+        if (stream[i] == 32)
+          --realLength;
+        else
+          break;
+      }
+
+      channel.writeBytes(stream, realLength);
+    } catch (Exception e) {
+      channel.writeBytes(null);
+      final String message = "Error on unmarshalling record " + iRecord.getIdentity().toString() + " (" + e + ")";
+      OLogManager.instance().error(this, message, e);
+
+      throw new OSerializationException(message, e);
     }
   }
 }
