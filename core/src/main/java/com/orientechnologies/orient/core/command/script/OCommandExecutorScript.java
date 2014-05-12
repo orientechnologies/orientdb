@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -42,6 +28,19 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Executes Script Commands.
@@ -91,6 +90,10 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
     if (compiledScript == null) {
       ScriptEngine scriptEngine = scriptManager.getEngine(language);
+
+      if (!(scriptEngine instanceof Compilable))
+        throw new OCommandExecutionException("Language '" + language + "' does not support compilation");
+
       // COMPILE FUNCTION LIBRARY
       String lib = scriptManager.getLibrary(db, language);
       if (lib == null)
