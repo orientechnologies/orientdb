@@ -53,6 +53,15 @@ public class OPaginatedStorageDirtyFlag {
     }
   }
 
+  public boolean exits() {
+    readWriteLock.readLock().lock();
+    try {
+      return new File(dirtyFilePath).exists();
+    } finally {
+      readWriteLock.readLock().unlock();
+    }
+  }
+
   public void open() throws IOException {
     readWriteLock.writeLock().lock();
     try {

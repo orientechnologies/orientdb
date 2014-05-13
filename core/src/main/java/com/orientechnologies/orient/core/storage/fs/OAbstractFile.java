@@ -306,9 +306,15 @@ public abstract class OAbstractFile implements OFile {
       close();
       if (osFile != null) {
         boolean deleted = osFile.delete();
+        int retryCount = 0;
+
         while (!deleted) {
           OMemoryWatchDog.freeMemoryForResourceCleanup(100);
           deleted = !osFile.exists() || osFile.delete();
+          retryCount++;
+
+          if (retryCount > 10)
+            throw new IOException("Can not delete file. Retry limit exceeded.");
         }
       }
     } finally {
