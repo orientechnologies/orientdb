@@ -244,6 +244,7 @@ public class OResultSet<T> implements List<T>, Externalizable {
   @Override
   public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
     underlying = (List<T>) in.readObject();
+    completed = true;
   }
 
   protected void waitForCompletion() {
