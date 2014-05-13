@@ -15,6 +15,10 @@ notification.factory('Notification', function () {
             } else {
                 this.notifications.push(notification);
             }
+        },
+        clear: function () {
+            this.notifications.splice(0, this.notifications.length);
+            this.errors.splice(0, this.errors.length);
         }
 
     }

@@ -1,5 +1,5 @@
 var dbModule = angular.module('database.controller', ['database.services', 'bookmarks.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks) {
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification) {
 
     $scope.database = Database;
     $scope.limit = 20;
@@ -9,6 +9,12 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         {name: "history", title: "History"},
         {name: "bookmarks", title: "Bookmarks"}
     ];
+
+    $scope.item = {};
+    $scope.queries = [];
+    $scope.$watch("queryText", function (val) {
+        $scope.item.query = val;
+    });
     $scope.context = $scope.items[0];
     $scope.nContext = $scope.items[1];
     $scope.nextPage = function () {
@@ -120,7 +126,11 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     };
 
     $scope.query = function () {
-        Spinner.start();
+        Spinner.start(function () {
+            CommandApi.interrupt(Database.getName(), $scope.queryText).then(function () {
+                Spinner.stop();
+            });
+        });
 
         $scope.queryText = $scope.queryText.trim();
         $scope.queryText = $scope.queryText.replace(/\n/g, " ");
@@ -172,6 +182,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 Spinner.stopSpinner();
                 $scope.context = $scope.items[0];
                 $scope.nContext = $scope.items[1];
+                Notification.clear();
             }
             Spinner.stopSpinner();
         }, function (data) {
@@ -220,12 +231,24 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         localStorageService.add("keepLimit", data);
     });
 
+//    $scope.loadMore = function () {
+//        var len = $scope.queries.length;
+//        var lenTime = $scope.timeline.length;
+//        if (len < lenTime)
+//            $scope.queries.push($scope.timeline[len]);
+//    };
+//    $scope.loadMore();
+//    $scope.loadMore();
+
 }]);
 dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller', '$ojson', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller, $ojson) {
 
 
     var data = $scope.item.resultTotal;
 
+    if ($scope.item.rawData instanceof Object) {
+        $scope.item.rawData = JSON.stringify($scope.item.rawData);
+    }
     $scope.bookIcon = 'icon-star';
     $scope.viewerOptions = {
         lineWrapping: true,
@@ -369,7 +392,7 @@ dbModule.controller("BookmarkNewController", ['$scope', '$rootScope', 'Bookmarks
 }]);
 dbModule.controller("BookmarkEditController", ['$scope', '$rootScope', 'Bookmarks', 'DocumentApi', 'Database', function ($scope, $rootScope, Bookmarks, DocumentApi, Database) {
 
-    $scope.bookmark = $scope.r;
+    $scope.bookmark = $scope.bk;
 
 
     Bookmarks.getTags(Database.getName()).then(function (data) {
@@ -393,20 +416,36 @@ dbModule.controller("BookmarkEditController", ['$scope', '$rootScope', 'Bookmark
 dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database', 'scroller', function ($scope, Bookmarks, DocumentApi, Database, scroller) {
 
 
+    $(document).bind("keypress", function (e) {
+        if ($scope.$parent.bookmarksClass == "show") {
+            $scope.$apply(function () {
+                $scope.closeIfReturn(e);
+            });
+        }
+    });
+    $scope.closeIfReturn = function (e) {
+        if (e.keyCode == '27') {
+            $scope.click();
+        }
+    }
     $scope.$on("bookmarks:changed", function (event) {
         Bookmarks.getAll(Database.getName()).then(function (data) {
-            $scope.bookmarks = data.result;
+            $scope.bks = data.result;
+
         });
     });
 
     Bookmarks.getAll(Database.getName()).then(function (data) {
-        $scope.bookmarks = data.result;
+        $scope.bks = data.result
     });
 
     $scope.click = function () {
 
         $scope.$parent.setBookClass();
 
+    }
+    $scope.hover = function (bk) {
+        $scope.selected = bk;
     }
     $scope.run = function (r) {
         $scope.queryText = r.query;
@@ -420,15 +459,15 @@ dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi',
 
     $scope.remove = function (r) {
         Bookmarks.remove(Database.getName(), r).then(function (data) {
-            var idx = $scope.bookmarks.indexOf(r);
-            $scope.bookmarks.splice(idx, 1);
+            var idx = $scope.bks.indexOf(r);
+            $scope.bks.splice(idx, 1);
         });
 
     }
     $scope.update = function (r) {
         Bookmarks.update(Database.getName(), r).then(function (data) {
-            var idx = $scope.bookmarks.indexOf(r);
-            $scope.bookmarks.splice(idx, 1, data);
+            var idx = $scope.bks.indexOf(r);
+            $scope.bks.splice(idx, 1, data);
         });
     }
 }]);

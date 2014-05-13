@@ -37,14 +37,28 @@ spinner.factory('Spinner', function () {
 //        spinner.spin(target);
 //        spinner.stop();
 //    })
-    spinner.start = function () {
+
+    spinner.start = function (cb) {
         var target = document.getElementById('spinner');
-        spinner.spin(target);
-        $("#spinner-container").addClass('spinner-start')
+
+        //spinner.spin(target);
+        $("#spinner-circle").removeClass("circle-stop")
+        $("#spinner-circle").addClass("circle-start")
+
+        if (cb) {
+            $("#interrupter").click(cb);
+        } else {
+            $("#interrupter").addClass("invisible");
+        }
+        //$("#spinner-container").addClass('spinner-start')
     }
     spinner.stopSpinner = function () {
-        spinner.stop();
-        $("#spinner-container").removeClass('spinner-start');
+        //spinner.stop();
+        $("#spinner-circle").removeClass("circle-start")
+        $("#spinner-circle").addClass("circle-stop")
+        $("#interrupter").unbind("click");
+        $("#interrupter").removeClass("invisible");
+        //$("#spinner-container").removeClass('spinner-start');
 
     }
     spinner.startSpinnerPopup = function () {

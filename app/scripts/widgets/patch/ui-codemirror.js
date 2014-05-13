@@ -77,10 +77,13 @@ angular.module('ui.codemirror', [])
                         // CodeMirror expects a string, so make sure it gets one.
                         // This does not change the model.
                         ngModel.$formatters.push(function (value) {
+
                             if (angular.isUndefined(value) || value === null) {
                                 return '';
+                            } else if (angular.isObject(value)) {
+                                return JSON.stringify(value);
                             }
-                            else if (angular.isObject(value) || angular.isArray(value)) {
+                            else if (angular.isArray(value)) {
                                 throw new Error('ui-codemirror cannot use an object or an array as a model');
                             }
                             return value;

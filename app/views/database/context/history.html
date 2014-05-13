@@ -11,6 +11,10 @@
         </form>
     </div>
 </div>
-<div class="row-fluid" ng-animate="'animate'" ng-repeat="item in timeline | filter:search">
-    <div ng-include="'views/database/query.html'"></div>
+
+<div id="fixed" when-scrolled="loadMore()">
+    <div class="row-fluid" ng-animate="'animate'" ng-repeat="item in timeline | filter:search">
+        <div ng-include="'views/database/query.html'"></div>
+    </div>
 </div>
+

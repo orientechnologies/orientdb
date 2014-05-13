@@ -24,11 +24,13 @@
     <link rel="stylesheet" href="components/bootstrap-datepicker/css/datepicker.css"/>
     <link rel="stylesheet" href="components/ng-table/ng-table.css"/>
     <link rel="stylesheet" href="components/select2/select2.css">
+    <link rel="stylesheet" href="components/animate.css/animate.css">
 
 
     <!--<link rel="stylesheet" href="components/ng-grid/ng-grid.min.css"/>-->
     <link rel="stylesheet" href="components/bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"/>
     <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/animation.css">
 
     <!-- endbuild -->
 </head>
@@ -51,7 +53,16 @@
     <div id="spinner">
     </div>
 </div>
-
+<div id="spinner-circle" class="circle-stop">
+    <div class="circle-container">
+        <div class="circle"></div>
+        <div class="circle1"></div>
+        <div class="circle-interrupt">
+            <a id="interrupter" class="" href="javascript:void(0)" bs-tooltip="'Interrupt request'"><i
+                    class="icon-circle-interrupt"></i></a>
+        </div>
+    </div>
+</div>
 <div class="container-fluid container-notification">
     <div class="row-fluid">
         <div ng-controller="NotificationController">
@@ -61,11 +72,6 @@
 </div>
 <!-- Add your site or application content here -->
 <div class="container-fluid container-studio">
-    <!--<div class="row-fluid">
-        <div ng-controller="BreadcrumbController">
-            <div ng-include src="'views/breadcrumb.html'"></div>
-        </div>
-    </div>-->
 
     <div class="row-fluid" ng-view>
 
@@ -79,10 +85,12 @@
 <!-- build:js scripts/scripts.js -->
 
 <script src="components/jquery/jquery.js"></script>
-<script src="components/angularjs-bower/angular.js"></script>
-<script src="components/angularjs-bower/angular-resource.js"></script>
-<script src="components/angularjs-bower/angular-cookies.js"></script>
-<script src="components/angularjs-bower/angular-sanitize.js"></script>
+<script src="components/angular/angular.js"></script>
+<script src="components/angular-cookies/angular-cookies.min.js"></script>
+<script src="components/angular-sanitize/angular-sanitize.js"></script>
+<script src="components/angular-resource/angular-resource.js"></script>
+<script src="components/angular-animate/angular-animate.js"></script>
+<script src="components/angular-route/angular-route.js"></script>
 <script src="components/spin.js/spin.js"></script>
 <script src="components/js-base64/base64.js"></script>
 <script src="components/moment/moment.js"></script>

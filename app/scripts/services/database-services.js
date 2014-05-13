@@ -30,7 +30,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
         header: ["@rid", "@version", "@class"],
 
-        exclude: ["@type", "@fieldTypes", "$then", "$resolved"],
+        exclude: ["@type", "@fieldTypes", "$then", "$resolved","$promise"],
 
         listTypes: ['BINARY', 'BYTE', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'],
 
@@ -496,7 +496,7 @@ database.factory('DatabaseApi', function ($http, $resource) {
     }
     return resource;
 });
-database.factory('CommandApi', function ($http, $resource, Notification, Spinner) {
+database.factory('CommandApi', function ($http, $resource, Notification, Spinner, $q) {
 
     var resource = $resource(API + 'command/:database');
 
@@ -579,6 +579,14 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
             callback(data);
         });
 
+    }
+    resource.interrupt = function (database, command) {
+        var deferred = $q.defer();
+        var text = API + 'dbconnection/' + database;
+        $http.post(text, command).success(function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
     }
     return resource;
 })

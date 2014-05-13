@@ -1,7 +1,7 @@
 var Widget = angular.module('rendering', []);
 
 
-Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, DocumentApi) {
+Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, DocumentApi, $timeout) {
 
 
     var compileForm = function (response, scope, element, attrs) {
@@ -69,19 +69,21 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
             }
         }
         formScope.changeType = function (name, type) {
-            formScope.$apply(function () {
-                var idx = formScope.headers.indexOf(name);
-                formScope.headers.splice(idx, 1);
 
-                var types = formScope.doc['@fieldTypes'];
-                if (types) {
-                    types = types + ',' + name + '=' + Database.getMappingFor(type);
-                } else {
-                    types = name + '=' + Database.getMappingFor(type);
-                }
-                formScope.doc['@fieldTypes'] = types
-                formScope.headers.push(name);
-            });
+            var idx = formScope.headers.indexOf(name);
+            formScope.headers.splice(idx, 1);
+
+            var types = formScope.doc['@fieldTypes'];
+            if (types) {
+                types = types + ',' + name + '=' + Database.getMappingFor(type);
+            } else {
+                types = name + '=' + Database.getMappingFor(type);
+            }
+
+            formScope.doc['@fieldTypes'] = types;
+            formScope.fieldTypes[name] = formScope.getTemplate(name);
+            formScope.headers.push(name);
+
 
         }
         formScope.$watch('formID.$valid', function (validity) {
@@ -141,7 +143,6 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
             var type = Database.findTypeFromFieldTipes(scope.doc, name);
             if (!type) {
                 type = guessType(scope.doc[name])
-                //console.log(type);
 
             }
             property = new Object;
@@ -554,3 +555,14 @@ Widget.directive('select', [
             }
         };
     }]);
+Widget.directive('whenScrolled', function () {
+    return function (scope, elm, attr) {
+        var raw = elm[0];
+
+        elm.bind('scroll', function () {
+            if (raw.scrollTop + raw.offsetHeight >= raw.scrollHeight) {
+                scope.$apply(attr.whenScrolled);
+            }
+        });
+    };
+});

@@ -1,0 +1,24 @@
+
+.history-item.ng-enter {
+    -webkit-animation: fadeInDown 0.4s;
+    -moz-animation: fadeInDown 0.4s;
+    -ms-animation: fadeInDown 0.4s;
+    animation: fadeInDown 0.4s;
+}
+
+.history-item.ng-leave {
+    -webkit-animation: fadeOutUp 0.4s;
+    -moz-animation: fadeOutUp 0.4s;
+    -ms-animation: fadeOutUp 0.4s;
+    animation: fadeOutUp 0.4s;
+}
+
+
+
+.alert-item.ng-enter {
+    -webkit-animation: fadeInDown 0.4s;
+    -moz-animation: fadeInDown 0.4s;
+    -ms-animation: fadeInDown 0.4s;
+    animation: fadeInDown 0.4s;
+}
+

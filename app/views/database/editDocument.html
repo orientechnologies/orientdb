@@ -24,11 +24,19 @@
                                     <tr ng-repeat="out in filterArray(doc[i])">
 
                                         <td>
-                                            <div class="tag-rid">
+                                            <span class="label badge-edge">
                                                 <a href="javascript:void(0)" ng-click="follow(out)">{{out}}</a>
-                                                <a href="javascript:void(0)"><i class="icon-remove"
-                                                                                ng-click="deleteLink(i,out)"></i></a>
-                                            </div>
+                                                <a href="javascript:void(0)" data-placement="right"
+                                                   bs-tooltip="'Remove'"><i
+                                                        class="icon-remove"
+                                                        ng-click="deleteLink(i,out)"></i></a>
+                                            </span>
+
+                                            <!--<div class="tag-rid">-->
+                                                <!--<a href="javascript:void(0)" ng-click="follow(out)">{{out}}</a>-->
+                                                <!--<a href="javascript:void(0)"><i class="icon-remove"-->
+                                                                                <!--ng-click="deleteLink(i,out)"></i></a>-->
+                                            <!--</div>-->
                                         </td>
                                     </tr>
                                     </tbody>

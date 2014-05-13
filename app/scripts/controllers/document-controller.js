@@ -288,7 +288,6 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
             if (type == 'INTEGER') {
                 $scope.doc[name] = 0;
             }
-            console.log(type);
             if (Database.getMappingFor(type)) {
                 if (types) {
                     types = types + ',' + name + '=' + Database.getMappingFor(type);

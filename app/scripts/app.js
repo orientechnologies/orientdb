@@ -21,7 +21,9 @@ var deps = ['header.controller',
     'rendering',
     'schema.controller',
     'duScroll',
-    'ui.select2'];
+    'ui.select2',
+    'ngRoute',
+    'ngAnimate'  ];
 
 
 var App = angular.module('OrientDBStudioApp', deps);

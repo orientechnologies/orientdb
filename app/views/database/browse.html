@@ -1,5 +1,4 @@
-
-<div class="bookmarks-box"  ng-class="bookmarksClass">
+<div class="bookmarks-box" ng-class="bookmarksClass">
 
     <div class="row-fluid">
 
@@ -12,9 +11,7 @@
 </div>
 <div class="row-fluid browse-container">
     <div class="query-container master-query">
-        <!--<div class="query-header">-->
-        <!--<h5>Query Builder</h5>-->
-        <!--</div>-->
+
         <div class="query-actions" ng-show="hideSettings">
 
             <div class="btn-toolbar pull-right">
@@ -38,6 +35,14 @@
             </div>
         </div>
         <div class="query-body">
+            <div class="query-bookmark bookmarks">
+                <a class="" href="javascript:void(0)" data-placement="bottom"
+                   data-title="Add bookmark"
+                   bs-popover="'views/database/bookmark.html'">
+                    <i class="icon-star"></i>
+                </a>
+            </div>
+
             <form ng-submit="query()" class="form-inline">
                 <div ui-codemirror="editorOptions" ng-model="queryText"></div>
             </form>
@@ -80,11 +85,25 @@
     <!--class="icon-forward icon-white"></i></a>-->
 
     <!--</div>-->
-    <div class="animate-switch-container"
-         ng-switch on="context.name" ng-animate="'animate-switch'">
-        <div class="animate-switch" ng-switch-when="history" ng-include="'views/database/context/history.html'">
-
+    <div class="row-fluid" ng-show="timeline.length >1">
+        <div class="span6">
+            <form class="form-search search-history">
+                <div class="input-append">
+                    <input type="text" class="input-xxlarge search-query" ng-model="search.query"
+                           placeholder="Search history">
+                    <button type="submit" class="btn" ng-click="clear()">
+                        <i class="icon-trash"></i>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+
+    <div id="fixed" when-scrolled="loadMore()">
+        <div class="row-fluid history-item" ng-repeat="item in timeline | filter:search">
+            <div ng-include="'views/database/query.html'"></div>
+        </div>
+    </div>
+
 
 </div>
