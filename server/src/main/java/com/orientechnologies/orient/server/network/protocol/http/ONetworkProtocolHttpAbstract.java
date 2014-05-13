@@ -215,6 +215,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     return account;
   }
 
+  public String getSessionID() {
+    return request.sessionId;
+  }
+
   public String getResponseCharSet() {
     return responseCharSet;
   }

@@ -120,6 +120,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
     sharedCmdManager.registerCommand(new OServerCommandOptions());
     sharedCmdManager.registerCommand(new OServerCommandFunction());
     sharedCmdManager.registerCommand(new OServerCommandAction());
+    sharedCmdManager.registerCommand(new OServerCommandDbConnection());
 
     for (Object cmd : iStatelessCommands)
       sharedCmdManager.registerCommand((OServerCommand) cmd);
