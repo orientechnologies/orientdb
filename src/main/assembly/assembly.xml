@@ -13,12 +13,8 @@
                 <include>org.apache.lucene:*</include>
                 <include>com.spatial4j:*</include>
             </includes>
-            <unpackOptions>
-                <excludes>
-                    <exclude>**/plugin.json</exclude>
-                </excludes>
-            </unpackOptions>
+
         </dependencySet>
     </dependencySets>
-   
+
 </assembly>

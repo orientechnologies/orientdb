@@ -21,37 +21,38 @@ import java.util.List;
 
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEqualityNotNulls;
+import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
 
-public class OLuceneTextOperator extends OQueryOperatorEqualityNotNulls {
+public class OLuceneTextOperator extends OQueryTargetOperator {
 
   public OLuceneTextOperator() {
-    super("LUCENE", 5, false, 1, true);
+    super("LUCENE", 5, false);
   }
 
-  @Override
-  protected boolean evaluateExpression(OIdentifiable iRecord, OSQLFilterCondition iCondition, Object iLeft, Object iRight,
-      OCommandContext iContext) {
-    return true;
-  }
+  // @Override
+  // protected boolean evaluateExpression(OIdentifiable iRecord, OSQLFilterCondition iCondition, Object iLeft, Object iRight,
+  // OCommandContext iContext) {
+  // return false;
+  // }
 
   @Override
   public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     OIndexCursor cursor;
     Object indexResult = index.get(new OCompositeKey(keyParams));
     if (indexResult == null || indexResult instanceof OIdentifiable)
-      cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
+      cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else
-      cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(),
+      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(),
           new OSpatialCompositeKey(keyParams));
     return cursor;
   }
@@ -75,5 +76,17 @@ public class OLuceneTextOperator extends OQueryOperatorEqualityNotNulls {
   public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
       List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
     return OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition, iIndexSearchResults, context);
+  }
+
+  @Override
+  public Collection<OIdentifiable> filterRecords(ODatabaseComplex<?> iRecord, List<String> iTargetClasses,
+      OSQLFilterCondition iCondition, Object iLeft, Object iRight) {
+    return null;
+  }
+
+  @Override
+  public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
+      Object iRight, OCommandContext iContext) {
+    return super.evaluateRecord(iRecord, iCurrentResult, iCondition, iLeft, iRight, iContext);
   }
 }

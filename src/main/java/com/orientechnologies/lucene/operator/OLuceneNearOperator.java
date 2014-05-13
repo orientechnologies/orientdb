@@ -22,11 +22,10 @@ import java.util.Map;
 
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,29 +34,30 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEqualityNotNulls;
+import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.shape.Point;
 
-public class OLuceneNearOperator extends OQueryOperatorEqualityNotNulls {
+public class OLuceneNearOperator extends OQueryTargetOperator {
 
   public OLuceneNearOperator() {
-    super("NEAR", 5, false, 1, true);
+    super("NEAR", 5, false);
   }
 
-  @Override
-  protected boolean evaluateExpression(OIdentifiable iRecord, OSQLFilterCondition iCondition, Object iLeft, Object iRight,
-      OCommandContext iContext) {
-
-    SpatialContext ctx = SpatialContext.GEO;
-    Object[] points = parseParams(iRecord, iCondition);
-    Point p = ctx.makePoint((Double) points[3], (Double) points[2]);
-
-    double docDistDEG = ctx.getDistCalc().distance(p, (Double) points[1], (Double) points[0]);
-    double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
-    iContext.setVariable("$distance", docDistInKM);
-    return true;
-  }
+  // @Override
+  // protected boolean evaluateExpression(OIdentifiable iRecord, OSQLFilterCondition iCondition, Object iLeft, Object iRight,
+  // OCommandContext iContext) {
+  //
+  // SpatialContext ctx = SpatialContext.GEO;
+  // Object[] points = parseParams(iRecord, iCondition);
+  // Point p = ctx.makePoint((Double) points[3], (Double) points[2]);
+  //
+  // double docDistDEG = ctx.getDistCalc().distance(p, (Double) points[1], (Double) points[0]);
+  // double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
+  // iContext.setVariable("$distance", docDistInKM);
+  // return true;
+  // }
 
   private Object[] parseParams(OIdentifiable iRecord, OSQLFilterCondition iCondition) {
 
@@ -109,10 +109,10 @@ public class OLuceneNearOperator extends OQueryOperatorEqualityNotNulls {
     }
     Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setLimit(limit));
     if (indexResult == null || indexResult instanceof OIdentifiable)
-      cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
+      cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else
-      cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(),
-          new OSpatialCompositeKey(keyParams));
+      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OSpatialCompositeKey(
+          keyParams));
     return cursor;
   }
 
@@ -142,4 +142,9 @@ public class OLuceneNearOperator extends OQueryOperatorEqualityNotNulls {
     return OLuceneOperatorUtil.buildOIndexSearchResult(iSchemaClass, iCondition, iIndexSearchResults, context);
   }
 
+  @Override
+  public Collection<OIdentifiable> filterRecords(ODatabaseComplex<?> iRecord, List<String> iTargetClasses,
+      OSQLFilterCondition iCondition, Object iLeft, Object iRight) {
+    return null;
+  }
 }

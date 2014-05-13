@@ -20,9 +20,7 @@ import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OIndexSearchResult;
@@ -36,10 +34,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-
 public class OLuceneWithinOperator extends OQueryOperatorEqualityNotNulls {
 
-  protected OLuceneWithinOperator() {
+  public OLuceneWithinOperator() {
     super("WITHIN", 5, false, 1, true);
   }
 
@@ -62,14 +59,12 @@ public class OLuceneWithinOperator extends OQueryOperatorEqualityNotNulls {
     OIndexCursor cursor;
     Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setOperation(SpatialOperation.IsWithin));
     if (indexResult == null || indexResult instanceof OIdentifiable)
-      cursor = new OIndexCursor.OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
+      cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else
-      cursor = new OIndexCursor.OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(),
-          new OSpatialCompositeKey(keyParams));
+      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OSpatialCompositeKey(
+          keyParams));
     return cursor;
   }
-
-
 
   @Override
   public ORID getBeginRidRange(Object iLeft, Object iRight) {

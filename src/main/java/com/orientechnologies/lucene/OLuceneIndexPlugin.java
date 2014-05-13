@@ -16,24 +16,39 @@
 
 package com.orientechnologies.lucene;
 
+import com.orientechnologies.common.util.OClassLoaderHelper;
+import com.orientechnologies.lucene.operator.OLuceneNearOperator;
+import com.orientechnologies.lucene.operator.OLuceneTextOperator;
+import com.orientechnologies.lucene.operator.OLuceneWithinOperator;
+import com.orientechnologies.orient.core.index.OIndexes;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-public class OEnterpriseLuceneIndex extends OServerPluginAbstract {
+import javax.imageio.spi.ServiceRegistry;
+import java.util.Iterator;
 
-  public OEnterpriseLuceneIndex() {
+public class OLuceneIndexPlugin extends OServerPluginAbstract {
+
+  public OLuceneIndexPlugin() {
   }
 
   @Override
   public String getName() {
-    return "enterprise-lucene";
+    return "lucene-index";
   }
 
   @Override
   public void startup() {
     super.startup();
     // Orient.instance().addDbLifecycleListener(new OLuceneClassIndexManager());
+
+    OIndexes.registerFactory(new OLuceneIndexFactory());
+    OSQLEngine.registerOperator(new OLuceneTextOperator());
+    OSQLEngine.registerOperator(new OLuceneWithinOperator());
+    OSQLEngine.registerOperator(new OLuceneNearOperator());
   }
 
   @Override

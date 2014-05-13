@@ -19,7 +19,7 @@
                 <parameter value="yyyy-MM-dd HH:mm:ss" name="profile.default.mail.date.format"/>
             </parameters>
         </handler>
-        <!--<handler class="com.orientechnologies.lucene.OEnterpriseLuceneIndex">-->
+        <!--<handler class="com.orientechnologies.lucene.OLuceneIndexPlugin">-->
 
         <!--</handler>-->
 

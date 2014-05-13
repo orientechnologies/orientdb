@@ -1,10 +1,8 @@
 {
-	"name" : "enterprise-lucene",
+	"name" : "lucene-index",
 	"version" : "1.7",
-	"javaClass": "com.orientechnologies.lucene.OEnterpriseLuceneIndex",
+	"javaClass": "com.orientechnologies.lucene.OLuceneIndexPlugin",
 	"parameters" : {},
-	"description" : "This is the Enterprise Agent, part of the commercial OrientDB Enterprise suite",
-	"web" : "http://www.orientechnologies.com/enterprise.htm",
-	"copyrights" : "Orient Technologies LTD",
-	"license" : "Commercial"
+	"description" : "This is the Lucene Index integration",
+	"copyrights" : "Orient Technologies LTD"
 }
