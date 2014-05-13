@@ -282,9 +282,13 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     if (!idOrVersionField) {
       if (value == null) {
-        final Object docValue = getDocFieldValue(self, fieldName);
-        if (docValue != null) {
-          value = lazyLoadField(self, fieldName, docValue, value);
+        if (loadedFields.containsKey(fieldName) && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) == 0) {
+          return null;
+        } else {
+          final Object docValue = getDocFieldValue(self, fieldName);
+          if (docValue != null) {
+            value = lazyLoadField(self, fieldName, docValue, value);
+          }
         }
       } else {
         if (((value instanceof Collection<?> || value instanceof Map<?, ?>) && !(value instanceof OObjectLazyMultivalueElement))
