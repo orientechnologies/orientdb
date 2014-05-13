@@ -35,7 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-public class OServerCommandDbConnection extends OServerCommandAuthenticatedDbAbstract {
+public class OServerCommandKillDbConnection extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "POST|dbconnection/*" };
 
   @Override
