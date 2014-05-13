@@ -15,6 +15,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,12 +33,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 /**
  * Asynchronous response manager
@@ -177,6 +177,12 @@ public class ODistributedResponseManager {
   }
 
   public boolean isMinimumQuorumReached(final boolean iCheckAvailableNodes) {
+    if (isWaitForLocalNode() && !isReceivedCurrentNode()) {
+      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), dManager.getLocalNodeName(), DIRECTION.IN,
+          "no response received from local node about request %s", request);
+      return false;
+    }
+
     if (quorum == 0)
       return true;
 

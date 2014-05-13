@@ -393,10 +393,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           iRequest);
     }
 
-    if (currentResponseMgr.isWaitForLocalNode() && !currentResponseMgr.isReceivedCurrentNode())
-      ODistributedServerLog.warn(this, getLocalNodeName(), manager.getLocalNodeName(), DIRECTION.IN,
-          "no response received from local node about request %s", iRequest);
-
     return currentResponseMgr.getFinalResponse();
   }
 
