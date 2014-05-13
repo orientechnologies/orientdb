@@ -16,22 +16,6 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javassist.util.proxy.MethodHandler;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -67,6 +51,21 @@ import com.orientechnologies.orient.object.serialization.OObjectCustomSerializer
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerMap;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerSet;
 import com.orientechnologies.orient.object.serialization.OObjectLazyCustomSerializer;
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
@@ -74,10 +73,10 @@ import com.orientechnologies.orient.object.serialization.OObjectLazyCustomSerial
  */
 public class OObjectProxyMethodHandler implements MethodHandler {
 
-  protected ODocument                         doc;
-  protected ProxyObject                       parentObject;
   protected final Map<String, ORecordVersion> loadedFields;
   protected final Set<ORID>                   orphans = new HashSet<ORID>();
+  protected ODocument                         doc;
+  protected ProxyObject                       parentObject;
 
   public OObjectProxyMethodHandler(ODocument iDocument) {
     doc = iDocument;
@@ -225,16 +224,23 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       ((OObjectProxyMethodHandler) parentObject.getHandler()).setDirty();
   }
 
-  public void updateLoadedFieldMap(Object proxiedObject) {
+  public void updateLoadedFieldMap(final Object proxiedObject, final boolean iReload) {
     final Set<String> fields = new HashSet<String>(loadedFields.keySet());
-    for (String key : fields) {
+    for (String fieldName : fields) {
       try {
-        Object value = getValue(proxiedObject, key, false, null);
-        if (value instanceof OObjectLazyMultivalueElement) {
-          if (((OObjectLazyMultivalueElement<?>) value).getUnderlying() != doc.field(key))
-            loadedFields.remove(key);
+        if (iReload) {
+          // FORCE POJO FIELD VALUE TO NULL
+          final Field f = OObjectEntitySerializer.getField(fieldName, proxiedObject.getClass());
+          OObjectEntitySerializer.setFieldValue(f, proxiedObject, null);
         } else {
-          loadedFields.put(key, doc.getRecordVersion().copy());
+          final Object value = getValue(proxiedObject, fieldName, false, null);
+
+          if (value instanceof OObjectLazyMultivalueElement) {
+            if (((OObjectLazyMultivalueElement<?>) value).getUnderlying() != doc.field(fieldName))
+              loadedFields.remove(fieldName);
+          } else {
+            loadedFields.put(fieldName, doc.getRecordVersion().copy());
+          }
         }
       } catch (IllegalArgumentException e) {
         throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
@@ -246,6 +252,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
       }
     }
+
+    if (iReload)
+      // RESET LOADED FIELDS
+      loadedFields.clear();
   }
 
   protected Object manageGetMethod(final Object self, final Method m, final Method proceed, final Object[] args)
