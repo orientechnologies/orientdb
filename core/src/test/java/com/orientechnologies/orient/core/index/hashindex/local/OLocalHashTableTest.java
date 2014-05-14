@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -22,7 +23,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  * @since 19.02.13
  */
 @Test
-public class LocalHashTableTest {
+public class OLocalHashTableTest {
   private static final int                 KEYS_COUNT = 1600000;
 
   private ODatabaseDocumentTx              databaseDocumentTx;
@@ -31,6 +32,7 @@ public class LocalHashTableTest {
 
   @BeforeClass
   public void beforeClass() {
+    OGlobalConfiguration.DISK_CACHE_SIZE.setValue(24 * 1024);
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = ".";
@@ -99,6 +101,7 @@ public class LocalHashTableTest {
       Assert.assertEquals(localHashTable.get(key), "" + key);
   }
 
+  @Test(enabled = false)
   public void testKeyPutRandomGaussian() {
     Set<Integer> keys = new HashSet<Integer>();
     MersenneTwisterFast random = new MersenneTwisterFast();
@@ -139,6 +142,7 @@ public class LocalHashTableTest {
     }
   }
 
+  @Test(enabled = false)
   public void testKeyDeleteRandomGaussian() {
     HashSet<Integer> keys = new HashSet<Integer>();
 

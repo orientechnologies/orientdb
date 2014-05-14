@@ -41,36 +41,28 @@ import java.util.Iterator;
  * @since 12.03.13
  */
 public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
-  private static final double            MERGE_THRESHOLD        = 0.2;
+  private static final double            MERGE_THRESHOLD     = 0.2;
 
-  private static final long              HASH_CODE_MIN_VALUE    = 0;
-  private static final long              HASH_CODE_MAX_VALUE    = 0xFFFFFFFFFFFFFFFFL;
+  private static final long              HASH_CODE_MIN_VALUE = 0;
+  private static final long              HASH_CODE_MAX_VALUE = 0xFFFFFFFFFFFFFFFFL;
 
   private long[][]                       hashTree;
   private OHashTreeNodeMetadata[]        nodesMetadata;
-
-  private int                            hashTreeSize;
-
-  private long                           size;
-
-  private int                            hashTreeTombstone      = -1;
-  private long                           bucketTombstonePointer = -1;
 
   private final String                   metadataConfigurationFileExtension;
   private final String                   treeStateFileExtension;
   private final String                   bucketFileExtension;
 
-  public static final int                HASH_CODE_SIZE         = 64;
-  public static final int                MAX_LEVEL_DEPTH        = 8;
-  public static final int                MAX_LEVEL_SIZE         = 1 << MAX_LEVEL_DEPTH;
+  public static final int                HASH_CODE_SIZE      = 64;
+  public static final int                MAX_LEVEL_DEPTH     = 8;
+  public static final int                MAX_LEVEL_SIZE      = 1 << MAX_LEVEL_DEPTH;
 
-  public static final int                LEVEL_MASK             = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
+  public static final int                LEVEL_MASK          = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
   private OStorageLocalAbstract          storage;
 
   private String                         name;
 
-  private OHashIndexBufferStore          metadataStore;
   private OHashIndexTreeStateStore       treeStateStore;
 
   private ODiskCache                     diskCache;
@@ -80,14 +72,15 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   private OBinarySerializer<V>           valueSerializer;
   private OType[]                        keyTypes;
 
-  private OHashIndexFileLevelMetadata[]  filesMetadata          = new OHashIndexFileLevelMetadata[HASH_CODE_SIZE];
-  private final long[]                   fileLevelIds           = new long[HASH_CODE_SIZE];
-
   private final KeyHashCodeComparator<K> comparator;
 
   private boolean                        nullKeyIsSupported;
-  private long                           nullBucketFileId       = -1;
+  private long                           nullBucketFileId    = -1;
   private final String                   nullBucketFileExtension;
+
+  private long                           fileStateId;
+
+  private OCacheEntry                    hashStateEntry;
 
   public OLocalHashTable(String metadataConfigurationFileExtension, String treeStateFileExtension, String bucketFileExtension,
       String nullBucketFileExtension, OHashFunction<K> keyHashFunction) {
@@ -108,7 +101,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     final OStorageFileConfiguration treeStateConfiguration = new OStorageFileConfiguration(null,
         OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + treeStateFileExtension, OFileClassic.NAME, "0", "50%");
 
-    metadataStore = new OHashIndexBufferStore(storage, metadataConfiguration);
     treeStateStore = new OHashIndexTreeStateStore(storage, treeStateConfiguration);
   }
 
@@ -125,21 +117,30 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         throw new IllegalStateException("Disk cache was not initialized on storage level");
 
       this.name = name;
-      this.keySerializer = keySerializer;
-      this.valueSerializer = valueSerializer;
 
       initStores(metadataConfigurationFileExtension, treeStateFileExtension);
 
-      metadataStore.create(-1);
       treeStateStore.create(-1);
 
-      metadataStore.setRecordsCount(size);
+      fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
+      hashStateEntry = diskCache.allocateNewPage(fileStateId);
+      diskCache.pinPage(hashStateEntry);
 
-      treeStateStore.setHashTreeSize(hashTreeSize);
-      treeStateStore.setHashTreeTombstone(hashTreeTombstone);
-      treeStateStore.setBucketTombstonePointer(bucketTombstonePointer);
+      final OCachePointer cachePointer = hashStateEntry.getCachePointer();
+      cachePointer.acquireExclusiveLock();
+      try {
+        OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(cachePointer.getDataPointer(),
+            ODurablePage.TrackMode.NONE, true);
 
-      filesMetadata[0] = createFileMetadata(0);
+        createFileMetadata(0, page);
+        hashStateEntry.markDirty();
+      } finally {
+        cachePointer.releaseExclusiveLock();
+        diskCache.release(hashStateEntry);
+      }
+
+      setKeySerializer(keySerializer);
+      setValueSerializer(valueSerializer);
 
       initHashTreeState();
 
@@ -150,7 +151,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     } finally {
       releaseExclusiveLock();
     }
-
   }
 
   public OBinarySerializer<K> getKeySerializer() {
@@ -158,22 +158,65 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   public void setKeySerializer(OBinarySerializer<K> keySerializer) {
-    this.keySerializer = keySerializer;
+    acquireExclusiveLock();
+    try {
+      this.keySerializer = keySerializer;
+      diskCache.loadPinnedPage(hashStateEntry);
+      OCachePointer cachePointer = hashStateEntry.getCachePointer();
+      cachePointer.acquireExclusiveLock();
+      try {
+        OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(cachePointer.getDataPointer(),
+            ODurablePage.TrackMode.NONE, false);
+        metadataPage.setKeySerializerId(keySerializer.getId());
+        hashStateEntry.markDirty();
+      } finally {
+        cachePointer.releaseExclusiveLock();
+        diskCache.release(hashStateEntry);
+      }
+    } catch (IOException e) {
+      throw new OIndexException("Can not set serializer for index keys", e);
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
   public OBinarySerializer<V> getValueSerializer() {
-    return valueSerializer;
+    acquireSharedLock();
+    try {
+      return valueSerializer;
+    } finally {
+      releaseSharedLock();
+    }
   }
 
   public void setValueSerializer(OBinarySerializer<V> valueSerializer) {
-    this.valueSerializer = valueSerializer;
+    acquireExclusiveLock();
+    try {
+      this.valueSerializer = valueSerializer;
+      diskCache.loadPinnedPage(hashStateEntry);
+      OCachePointer cachePointer = hashStateEntry.getCachePointer();
+      cachePointer.acquireExclusiveLock();
+      try {
+        OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(cachePointer.getDataPointer(),
+            ODurablePage.TrackMode.NONE, false);
+        metadataPage.setValueSerializerId(valueSerializer.getId());
+        hashStateEntry.markDirty();
+      } finally {
+        cachePointer.releaseExclusiveLock();
+        diskCache.release(hashStateEntry);
+      }
+    } catch (IOException e) {
+      throw new OIndexException("Can not set serializer for index values", e);
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 
-  private OHashIndexFileLevelMetadata createFileMetadata(int i) throws IOException {
-    String fileName = name + i + bucketFileExtension;
-    fileLevelIds[i] = diskCache.openFile(fileName);
+  private void createFileMetadata(int fileLevel, OHashIndexFileLevelMetadataPage page) throws IOException {
+    final String fileName = name + fileLevel + bucketFileExtension;
+    final long fileId = diskCache.openFile(fileName);
 
-    return new OHashIndexFileLevelMetadata(fileName, 0, -1);
+    page.setFileMetadata(fileLevel, fileId, 0, -1);
   }
 
   public V get(K key) {
@@ -255,6 +298,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     try {
       checkNullSupport(key);
 
+      int sizeDiff = 0;
       if (key != null) {
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
@@ -279,7 +323,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
             return null;
 
           removed = bucket.deleteEntry(positionIndex).value;
-          size--;
+          sizeDiff--;
 
           mergeBucketsAfterDeletion(nodePath, bucket);
           cacheEntry.markDirty();
@@ -298,6 +342,8 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
             mergeNodeToParent(node, nodePath);
         }
 
+        changeSize(sizeDiff);
+
         return removed;
       } else {
         if (diskCache.getFilledUpTo(nullBucketFileId) == 0)
@@ -313,12 +359,14 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           removed = nullBucket.getValue();
           if (removed != null) {
             nullBucket.removeValue();
-            size--;
+            sizeDiff--;
           }
         } finally {
           cachePointer.releaseExclusiveLock();
           diskCache.release(cacheEntry);
         }
+
+        changeSize(sizeDiff);
 
         return removed;
       }
@@ -329,17 +377,48 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     }
   }
 
+  private void changeSize(int sizeDiff) throws IOException {
+    if (sizeDiff != 0) {
+      diskCache.loadPinnedPage(hashStateEntry);
+
+      OCachePointer stateCachePointer = hashStateEntry.getCachePointer();
+      stateCachePointer.acquireExclusiveLock();
+      try {
+        OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(stateCachePointer.getDataPointer(),
+            ODurablePage.TrackMode.NONE, false);
+        page.setRecordsCount(page.getRecordsCount() + sizeDiff);
+        hashStateEntry.markDirty();
+      } finally {
+        stateCachePointer.releaseExclusiveLock();
+        diskCache.release(hashStateEntry);
+      }
+  }
+  }
+
   public void clear() {
     acquireExclusiveLock();
     try {
-      for (int i = 0; i < filesMetadata.length; i++) {
-        if (filesMetadata[i] != null)
-          diskCache.truncateFile(fileLevelIds[i]);
-      }
+      diskCache.loadPinnedPage(hashStateEntry);
+      OCachePointer stateCachePointer = hashStateEntry.getCachePointer();
+      stateCachePointer.acquireExclusiveLock();
+      try {
+        OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(stateCachePointer.getDataPointer(),
+            ODurablePage.TrackMode.NONE, false);
 
-      bucketTombstonePointer = -1;
+        for (int i = 0; i < HASH_CODE_SIZE; i++) {
+          if (!page.isRemoved(i)) {
+            diskCache.truncateFile(page.getFileId(i));
+            page.setBucketsCount(i, 0);
+            page.setTombstoneIndex(i, -1);
+          }
+        }
 
-      metadataStore.truncate();
+        hashStateEntry.markDirty();
+      } finally {
+        stateCachePointer.releaseExclusiveLock();
+        diskCache.release(hashStateEntry);
+ }
+
       treeStateStore.truncate();
 
       if (nullKeyIsSupported)
@@ -418,16 +497,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   private void saveState() throws IOException {
-    treeStateStore.setHashTreeSize(hashTreeSize);
-    treeStateStore.setBucketTombstonePointer(bucketTombstonePointer);
-    treeStateStore.setHashTreeTombstone(hashTreeTombstone);
     treeStateStore.storeTreeState(hashTree, nodesMetadata);
-
-    metadataStore.setRecordsCount(size);
-    metadataStore.setKeySerializerId(keySerializer.getId());
-    metadataStore.setValueSerializerId(valueSerializer.getId());
-
-    metadataStore.storeMetadata(filesMetadata);
   }
 
   public void load(String name, OType[] keyTypes, OStorageLocalAbstract storageLocal, boolean nullKeyIsSupported) {
@@ -442,39 +512,40 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       this.name = name;
       initStores(metadataConfigurationFileExtension, treeStateFileExtension);
 
-      metadataStore.open();
-      treeStateStore.open();
+      fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
+      hashStateEntry = diskCache.load(fileStateId, 0, true);
 
-      size = metadataStore.getRecordsCount();
+      diskCache.pinPage(hashStateEntry);
+      final OCachePointer cachePointer = hashStateEntry.getCachePointer();
+      try {
+        OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(cachePointer.getDataPointer(),
+            ODurablePage.TrackMode.NONE, false);
+        treeStateStore.open();
 
-      hashTreeSize = (int) treeStateStore.getHashTreeSize();
-      hashTreeTombstone = (int) treeStateStore.getHashTreeTombstone();
-      bucketTombstonePointer = treeStateStore.getBucketTombstonePointer();
+        final int arraySize;
+        final int hashTreeSize = page.getHashTreeSize();
 
-      final int arraySize;
-      int bitsCount = Integer.bitCount(hashTreeSize);
-      if (bitsCount == 1)
-        arraySize = hashTreeSize;
-      else
-        arraySize = Integer.highestOneBit(hashTreeSize) << 1;
+        int bitsCount = Integer.bitCount(hashTreeSize);
+        if (bitsCount == 1)
+          arraySize = hashTreeSize;
+        else
+          arraySize = Integer.highestOneBit(hashTreeSize) << 1;
 
-      OHashIndexTreeStateStore.TreeState treeState = treeStateStore.loadTreeState(arraySize);
+        OHashIndexTreeStateStore.TreeState treeState = treeStateStore.loadTreeState(arraySize);
 
-      hashTree = treeState.getHashTree();
-      nodesMetadata = treeState.getHashTreeNodeMetadata();
+        hashTree = treeState.getHashTree();
+        nodesMetadata = treeState.getHashTreeNodeMetadata();
 
-      size = metadataStore.getRecordsCount();
-      keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance().getObjectSerializer(
-          metadataStore.getKeySerializerId());
-      valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance().getObjectSerializer(
-          metadataStore.getValuerSerializerId());
+        keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance()
+            .getObjectSerializer(page.getKeySerializerId());
+        valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance().getObjectSerializer(
+            page.getValueSerializerId());
 
-      filesMetadata = metadataStore.loadMetadata();
-      for (int i = 0; i < filesMetadata.length; i++) {
-        OHashIndexFileLevelMetadata fileLevelMetadata = filesMetadata[i];
-        if (fileLevelMetadata != null)
-          fileLevelIds[i] = diskCache.openFile(fileLevelMetadata.getFileName());
-
+        for (int i = 0; i < HASH_CODE_SIZE; i++)
+          if (!page.isRemoved(i))
+            diskCache.openFile(page.getFileId(i));
+      } finally {
+        diskCache.release(hashStateEntry);
       }
 
       if (nullKeyIsSupported)
@@ -494,20 +565,24 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       final ODiskCache diskCache = storage.getDiskCache();
       initStores(metadataConfigurationFileExtension, treeStateFileExtension);
 
-      metadataStore.open();
       treeStateStore.open();
 
-      filesMetadata = metadataStore.loadMetadata();
-
-      for (int i = 0; i < filesMetadata.length; i++) {
-        OHashIndexFileLevelMetadata fileLevelMetadata = filesMetadata[i];
-        if (fileLevelMetadata != null) {
-          fileLevelIds[i] = diskCache.openFile(fileLevelMetadata.getFileName());
-          diskCache.deleteFile(fileLevelIds[i]);
+      fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
+      hashStateEntry = diskCache.load(fileStateId, 0, true);
+      try {
+        OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry.getCachePointer()
+            .getDataPointer(), ODurablePage.TrackMode.NONE, false);
+        for (int i = 0; i < HASH_CODE_SIZE; i++) {
+          if (!metadataPage.isRemoved(i)) {
+            diskCache.openFile(metadataPage.getFileId(i));
+            diskCache.deleteFile(metadataPage.getFileId(i));
+          }
         }
+      } finally {
+        diskCache.release(hashStateEntry);
       }
 
-      metadataStore.delete();
+      diskCache.deleteFile(fileStateId);
       treeStateStore.delete();
 
       final long nullBucketId = diskCache.openFile(name + nullBucketFileExtension);
@@ -981,7 +1056,16 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   public long size() {
     acquireSharedLock();
     try {
-      return size;
+      diskCache.loadPinnedPage(hashStateEntry);
+      try {
+        OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry.getCachePointer()
+            .getDataPointer(), ODurablePage.TrackMode.NONE, false);
+        return metadataPage.getRecordsCount();
+      } finally {
+        diskCache.release(hashStateEntry);
+      }
+    } catch (IOException e) {
+      throw new OIndexException("Error during index size request.", e);
     } finally {
       releaseSharedLock();
     }
@@ -992,13 +1076,21 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     try {
       flush();
 
-      metadataStore.close();
       treeStateStore.close();
+      diskCache.loadPinnedPage(hashStateEntry);
+      try {
+        for (int i = 0; i < HASH_CODE_SIZE; i++) {
+          OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry.getCachePointer()
+              .getDataPointer(), ODurablePage.TrackMode.NONE, false);
+          if (!metadataPage.isRemoved(i)) {
+            diskCache.closeFile(metadataPage.getFileId(i));
+          }
+        }
+      } finally {
+        diskCache.release(hashStateEntry);
+      }
 
-      for (int i = 0; i < filesMetadata.length; i++)
-        if (filesMetadata[i] != null)
-          diskCache.closeFile(fileLevelIds[i]);
-
+      diskCache.closeFile(fileStateId);
     } catch (IOException e) {
       throw new OIndexException("Error during hash table close", e);
     } finally {
@@ -1009,13 +1101,21 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   public void delete() {
     acquireExclusiveLock();
     try {
-      for (int i = 0; i < filesMetadata.length; i++) {
-        if (filesMetadata[i] != null)
-          diskCache.deleteFile(fileLevelIds[i]);
+      diskCache.loadPinnedPage(hashStateEntry);
+      try {
+        for (int i = 0; i < HASH_CODE_SIZE; i++) {
+          OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry.getCachePointer()
+              .getDataPointer(), ODurablePage.TrackMode.NONE, false);
+          if (!metadataPage.isRemoved(i)) {
+            diskCache.deleteFile(metadataPage.getFileId(i));
+          }
+        }
+      } finally {
+        diskCache.release(hashStateEntry);
       }
 
-      metadataStore.delete();
       treeStateStore.delete();
+      diskCache.deleteFile(fileStateId);
 
       if (nullKeyIsSupported)
         diskCache.deleteFile(nullBucketFileId);
@@ -1027,7 +1127,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     }
   }
 
-  private void mergeNodeToParent(long[] node, BucketPath nodePath) {
+  private void mergeNodeToParent(long[] node, BucketPath nodePath) throws IOException {
     final int startIndex = findParentNodeStartIndex(nodePath);
     final int localNodeDepth = nodePath.nodeLocalDepth;
     final int hashMapSize = 1 << localNodeDepth;
@@ -1122,66 +1222,78 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
     buddyPagePointer.acquireExclusiveLock();
     try {
-      buddyBucket = new OHashIndexBucket<K, V>(buddyPagePointer.getDataPointer(), keySerializer, valueSerializer, keyTypes);
+      diskCache.loadPinnedPage(hashStateEntry);
+      OCachePointer hashStatePointer = hashStateEntry.getCachePointer();
 
-      if (buddyBucket.getDepth() != bucketDepth)
-        return;
-
-      if (bucket.mergedSize(buddyBucket) >= OHashIndexBucket.MAX_BUCKET_SIZE_BYTES)
-        return;
-
-      filesMetadata[buddyLevel].setBucketsCount(filesMetadata[buddyLevel].getBucketsCount() - 2);
-
-      int newBuddyLevel = buddyLevel - 1;
-      long newBuddyIndex = buddyBucket.getSplitHistory(newBuddyLevel);
-
-      filesMetadata[buddyLevel].setBucketsCount(filesMetadata[buddyLevel].getBucketsCount() + 1);
-
-      final OCacheEntry newBuddyCacheEntry = loadPageEntry(newBuddyIndex, newBuddyLevel);
-      final OCachePointer newBuddyPagePointer = newBuddyCacheEntry.getCachePointer();
-
-      newBuddyPagePointer.acquireExclusiveLock();
+      hashStatePointer.acquireExclusiveLock();
       try {
-        final OHashIndexBucket<K, V> newBuddyBucket = new OHashIndexBucket<K, V>(bucketDepth - 1,
-            newBuddyPagePointer.getDataPointer(), keySerializer, valueSerializer, keyTypes);
+        buddyBucket = new OHashIndexBucket<K, V>(buddyPagePointer.getDataPointer(), keySerializer, valueSerializer, keyTypes);
 
-        for (OHashIndexBucket.Entry<K, V> entry : buddyBucket)
-          newBuddyBucket.appendEntry(entry.hashCode, entry.key, entry.value);
+        if (buddyBucket.getDepth() != bucketDepth)
+          return;
 
-        for (OHashIndexBucket.Entry<K, V> entry : bucket)
-          newBuddyBucket.addEntry(entry.hashCode, entry.key, entry.value);
+        if (bucket.mergedSize(buddyBucket) >= OHashIndexBucket.MAX_BUCKET_SIZE_BYTES)
+          return;
+
+        OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStatePointer.getDataPointer(),
+            ODurablePage.TrackMode.NONE, false);
+        hashStateEntry.markDirty();
+
+        metadataPage.setBucketsCount(buddyLevel, metadataPage.getBucketsCount(buddyLevel) - 2);
+
+        int newBuddyLevel = buddyLevel - 1;
+        long newBuddyIndex = buddyBucket.getSplitHistory(newBuddyLevel);
+
+        metadataPage.setBucketsCount(buddyLevel, metadataPage.getBucketsCount(buddyLevel) + 1);
+
+        final OCacheEntry newBuddyCacheEntry = loadPageEntry(newBuddyIndex, newBuddyLevel);
+        final OCachePointer newBuddyPagePointer = newBuddyCacheEntry.getCachePointer();
+
+        newBuddyPagePointer.acquireExclusiveLock();
+        try {
+          final OHashIndexBucket<K, V> newBuddyBucket = new OHashIndexBucket<K, V>(bucketDepth - 1,
+              newBuddyPagePointer.getDataPointer(), keySerializer, valueSerializer, keyTypes);
+
+          for (OHashIndexBucket.Entry<K, V> entry : buddyBucket)
+            newBuddyBucket.appendEntry(entry.hashCode, entry.key, entry.value);
+
+          for (OHashIndexBucket.Entry<K, V> entry : bucket)
+            newBuddyBucket.addEntry(entry.hashCode, entry.key, entry.value);
+        } finally {
+          newBuddyCacheEntry.markDirty();
+          newBuddyPagePointer.releaseExclusiveLock();
+
+          diskCache.release(newBuddyCacheEntry);
+  }
+
+        final long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
+        final long bucketIndex = getPageIndex(bucketPointer);
+
+        final long newBuddyPointer = createBucketPointer(buddyIndex, buddyLevel);
+
+        for (int i = firstStartIndex; i < secondEndIndex; i++)
+          updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newBuddyPointer);
+
+        if (metadataPage.getBucketsCount(buddyLevel) > 0) {
+          final long newTombstoneIndex;
+          if (bucketIndex < buddyIndex) {
+            bucket.setNextRemovedBucketPair(metadataPage.getTombstoneIndex(buddyLevel));
+
+            newTombstoneIndex = bucketIndex;
+          } else {
+            buddyBucket.setNextRemovedBucketPair(metadataPage.getTombstoneIndex(buddyLevel));
+            buddyCacheEntry.markDirty();
+
+            newTombstoneIndex = buddyIndex;
+          }
+
+          metadataPage.setTombstoneIndex(buddyLevel, newTombstoneIndex);
+        } else
+          metadataPage.setTombstoneIndex(buddyLevel, -1);
       } finally {
-        newBuddyCacheEntry.markDirty();
-        newBuddyPagePointer.releaseExclusiveLock();
-
-        diskCache.release(newBuddyCacheEntry);
+        hashStatePointer.releaseExclusiveLock();
+        diskCache.release(hashStateEntry);
       }
-
-      final long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
-      final long bucketIndex = getPageIndex(bucketPointer);
-
-      final long newBuddyPointer = createBucketPointer(buddyIndex, buddyLevel);
-
-      for (int i = firstStartIndex; i < secondEndIndex; i++)
-        updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newBuddyPointer);
-
-      final OHashIndexFileLevelMetadata oldBuddyFileMetadata = filesMetadata[buddyLevel];
-      if (oldBuddyFileMetadata.getBucketsCount() > 0) {
-        final long newTombstoneIndex;
-        if (bucketIndex < buddyIndex) {
-          bucket.setNextRemovedBucketPair(oldBuddyFileMetadata.getTombstoneIndex());
-
-          newTombstoneIndex = bucketIndex;
-        } else {
-          buddyBucket.setNextRemovedBucketPair(oldBuddyFileMetadata.getTombstoneIndex());
-          buddyCacheEntry.markDirty();
-
-          newTombstoneIndex = buddyIndex;
-        }
-
-        oldBuddyFileMetadata.setTombstoneIndex(newTombstoneIndex);
-      } else
-        oldBuddyFileMetadata.setTombstoneIndex(-1);
     } finally {
       buddyPagePointer.releaseExclusiveLock();
       diskCache.release(buddyCacheEntry);
@@ -1193,12 +1305,20 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     try {
       saveState();
 
-      metadataStore.synch();
-      treeStateStore.synch();
+      diskCache.loadPinnedPage(hashStateEntry);
+      try {
+        for (int i = 0; i < HASH_CODE_SIZE; i++) {
+          OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry.getCachePointer()
+              .getDataPointer(), ODurablePage.TrackMode.NONE, false);
+          if (!metadataPage.isRemoved(i))
+            diskCache.flushFile(metadataPage.getFileId(i));
+        }
+      } finally {
+        diskCache.release(hashStateEntry);
+      }
 
-      for (int i = 0; i < filesMetadata.length; i++)
-        if (filesMetadata[i] != null)
-          diskCache.flushFile(fileLevelIds[i]);
+      diskCache.flushFile(fileStateId);
+    treeStateStore.synch();
 
       if (nullKeyIsSupported)
         diskCache.flushFile(nullBucketFileId);
@@ -1209,52 +1329,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     }
   }
 
-  public boolean wasSoftlyClosed() {
-    acquireSharedLock();
-    try {
-      if (!metadataStore.wasSoftlyClosedAtPreviousTime())
-        return false;
-
-      if (!treeStateStore.wasSoftlyClosedAtPreviousTime())
-        return false;
-
-      for (int i = 0; i < filesMetadata.length; i++) {
-        if (filesMetadata[i] != null && !diskCache.wasSoftlyClosed(fileLevelIds[i]))
-          return false;
-      }
-
-      if (nullKeyIsSupported && !diskCache.wasSoftlyClosed(nullBucketFileId))
-        return false;
-
-      return true;
-    } catch (IOException ioe) {
-      throw new OIndexException("Error during integrity check", ioe);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public void setSoftlyClosed(boolean softlyClosed) {
-    acquireSharedLock();
-    try {
-      metadataStore.setSoftlyClosed(softlyClosed);
-      treeStateStore.setSoftlyClosed(softlyClosed);
-
-      for (int i = 0; i < filesMetadata.length; i++) {
-        if (filesMetadata[i] != null)
-          diskCache.setSoftlyClosed(fileLevelIds[i], softlyClosed);
-      }
-
-      if (nullKeyIsSupported)
-        diskCache.setSoftlyClosed(nullBucketFileId, softlyClosed);
-    } catch (IOException ioe) {
-      throw new OIndexException("Error during integrity check", ioe);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   private void doPut(K key, V value) throws IOException {
+    int sizeDiff = 0;
+
     if (key == null) {
       boolean isNew;
       OCacheEntry cacheEntry;
@@ -1272,17 +1349,19 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         ONullBucket<V> nullBucket = new ONullBucket<V>(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE, valueSerializer,
             isNew);
         if (nullBucket.getValue() != null)
-          size--;
+          sizeDiff--;
 
-        nullBucket.setValue(value);
-        size++;
-        cacheEntry.markDirty();
+     nullBucket.setValue(value);
+        sizeDiff++;
+ cacheEntry.markDirty();
       } finally {
         cachePointer.releaseExclusiveLock();
         diskCache.release(cacheEntry);
       }
+
+      changeSize(sizeDiff);
     } else {
-      final long hashCode = keyHashFunction.hashCode(key);
+     final long hashCode = keyHashFunction.hashCode(key);
 
       final BucketPath bucketPath = getBucket(hashCode);
       long[] node = hashTree[bucketPath.nodeIndex];
@@ -1305,26 +1384,31 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
         if (index > -1) {
           final int updateResult = bucket.updateEntry(index, value);
-          if (updateResult == 0)
+          if (updateResult == 0) {
+            changeSize(sizeDiff);
             return;
+          }
 
           if (updateResult == 1) {
             cacheEntry.markDirty();
+            changeSize(sizeDiff);
             return;
           }
 
           assert updateResult == -1;
 
           bucket.deleteEntry(index);
-          size--;
+          sizeDiff--;
         }
 
-        if (bucket.addEntry(hashCode, key, value)) {
+    if (bucket.addEntry(hashCode, key, value)) {
           cacheEntry.markDirty();
 
-          size++;
+          sizeDiff++;
+
+          changeSize(sizeDiff);
           return;
-        }
+       }
 
         final BucketSplitResult splitResult = splitBucket(bucket, fileLevel, pageIndex);
 
@@ -1386,6 +1470,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         diskCache.release(cacheEntry);
       }
 
+      changeSize(sizeDiff);
       doPut(key, value);
     }
 
@@ -1465,7 +1550,8 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     return ((parentBucketPath.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize) * pointersSize + MAX_LEVEL_SIZE / 2;
   }
 
-  private void addNewLevelNode(BucketPath bucketPath, long[] node, long newBucketPointer, long updatedBucketPointer) {
+  private void addNewLevelNode(BucketPath bucketPath, long[] node, long newBucketPointer, long updatedBucketPointer)
+      throws IOException {
     final long[] newNode = new long[MAX_LEVEL_SIZE];
 
     final int newNodeDepth;
@@ -1566,40 +1652,59 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newBucketPointer);
   }
 
-  private int addNewNode(long[] newNode, int nodeLocalDepth) {
-    if (hashTreeTombstone >= 0) {
-      long[] tombstone = hashTree[hashTreeTombstone];
+  private int addNewNode(long[] newNode, int nodeLocalDepth) throws IOException {
+    diskCache.loadPinnedPage(hashStateEntry);
+    final OCachePointer hashStatePointer = hashStateEntry.getCachePointer();
 
-      hashTree[hashTreeTombstone] = newNode;
-      nodesMetadata[hashTreeTombstone] = new OHashTreeNodeMetadata((byte) 0, (byte) 0, (byte) nodeLocalDepth);
+    hashStatePointer.acquireExclusiveLock();
+    try {
+      OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStatePointer.getDataPointer(),
+          ODurablePage.TrackMode.NONE, false);
 
-      final int nodeIndex = hashTreeTombstone;
-      if (tombstone != null)
-        hashTreeTombstone = (int) tombstone[0];
-      else
-        hashTreeTombstone = -1;
+      int hashTreeTombstone = metadataPage.getHashTreeTombstone();
+      if (hashTreeTombstone >= 0) {
+        long[] tombstone = hashTree[hashTreeTombstone];
 
-      return nodeIndex;
+        hashTree[hashTreeTombstone] = newNode;
+        nodesMetadata[hashTreeTombstone] = new OHashTreeNodeMetadata((byte) 0, (byte) 0, (byte) nodeLocalDepth);
+
+        final int nodeIndex = hashTreeTombstone;
+        if (tombstone != null)
+          hashTreeTombstone = (int) tombstone[0];
+        else
+          hashTreeTombstone = -1;
+
+        metadataPage.setHashTreeTombstone(hashTreeTombstone);
+
+        hashStateEntry.markDirty();
+
+        return nodeIndex;
+      }
+
+      int hashTreeSize = metadataPage.getHashTreeSize();
+      if (hashTreeSize >= hashTree.length) {
+        long[][] newHashTree = new long[hashTree.length << 1][];
+        System.arraycopy(hashTree, 0, newHashTree, 0, hashTree.length);
+        hashTree = newHashTree;
+
+        OHashTreeNodeMetadata[] newNodeMetadata = new OHashTreeNodeMetadata[nodesMetadata.length << 1];
+        System.arraycopy(nodesMetadata, 0, newNodeMetadata, 0, nodesMetadata.length);
+        nodesMetadata = newNodeMetadata;
+      }
+
+      hashTree[hashTreeSize] = newNode;
+      nodesMetadata[hashTreeSize] = new OHashTreeNodeMetadata((byte) 0, (byte) 0, (byte) nodeLocalDepth);
+
+      hashTreeSize++;
+
+      metadataPage.setHashTreeSize(hashTreeSize);
+      hashStateEntry.markDirty();
+
+      return hashTreeSize - 1;
+    } finally {
+      hashStatePointer.releaseExclusiveLock();
+      diskCache.release(hashStateEntry);
     }
-
-    if (hashTreeSize >= hashTree.length) {
-      long[][] newHashTree = new long[hashTree.length << 1][];
-      System.arraycopy(hashTree, 0, newHashTree, 0, hashTree.length);
-      hashTree = newHashTree;
-      newHashTree = null;
-
-      OHashTreeNodeMetadata[] newNodeMetadata = new OHashTreeNodeMetadata[nodesMetadata.length << 1];
-      System.arraycopy(nodesMetadata, 0, newNodeMetadata, 0, nodesMetadata.length);
-      nodesMetadata = newNodeMetadata;
-      newNodeMetadata = null;
-    }
-
-    hashTree[hashTreeSize] = newNode;
-    nodesMetadata[hashTreeSize] = new OHashTreeNodeMetadata((byte) 0, (byte) 0, (byte) nodeLocalDepth);
-
-    hashTreeSize++;
-
-    return hashTreeSize - 1;
   }
 
   private boolean checkAllMapsContainSameBucket(long[] newNode, int hashMapSize) {
@@ -1700,24 +1805,47 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     return new NodeSplitResult(newNode, allLeftItemsAreEqual, allRightItemsAreEqual);
   }
 
-  private void deleteNode(int nodeIndex) {
-    if (nodeIndex == hashTreeSize - 1) {
-      hashTree[nodeIndex] = null;
+  private void deleteNode(int nodeIndex) throws IOException {
+    diskCache.loadPinnedPage(hashStateEntry);
+    final OCachePointer cachePointer = hashStateEntry.getCachePointer();
+    cachePointer.acquireExclusiveLock();
+
+    try {
+      OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(cachePointer.getDataPointer(),
+          ODurablePage.TrackMode.NONE, false);
+
+      int hashTreeSize = metadataPage.getHashTreeSize();
+
+      if (nodeIndex == hashTreeSize - 1) {
+        hashTree[nodeIndex] = null;
+        nodesMetadata[nodeIndex] = null;
+
+        hashTreeSize--;
+
+        metadataPage.setHashTreeSize(hashTreeSize);
+        hashStateEntry.markDirty();
+
+        return;
+      }
+
+      int hashTreeTombstone = metadataPage.getHashTreeTombstone();
+      if (hashTreeTombstone > -1) {
+        final long[] tombstone = new long[] { hashTreeTombstone };
+        hashTree[nodeIndex] = tombstone;
+        hashTreeTombstone = nodeIndex;
+      } else {
+        hashTree[nodeIndex] = null;
+        hashTreeTombstone = nodeIndex;
+      }
+
+      metadataPage.setHashTreeTombstone(hashTreeTombstone);
+      hashStateEntry.markDirty();
+
       nodesMetadata[nodeIndex] = null;
-      hashTreeSize--;
-      return;
+    } finally {
+      cachePointer.releaseExclusiveLock();
+      diskCache.release(hashStateEntry);
     }
-
-    if (hashTreeTombstone > -1) {
-      final long[] tombstone = new long[] { hashTreeTombstone };
-      hashTree[nodeIndex] = tombstone;
-      hashTreeTombstone = nodeIndex;
-    } else {
-      hashTree[nodeIndex] = null;
-      hashTreeTombstone = nodeIndex;
-    }
-
-    nodesMetadata[nodeIndex] = null;
   }
 
   private void splitBucketContent(OHashIndexBucket<K, V> bucket, OHashIndexBucket<K, V> updatedBucket,
@@ -1742,76 +1870,85 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     int bucketDepth = bucket.getDepth();
     int newBucketDepth = bucketDepth + 1;
 
-    int newFileLevel = newBucketDepth - MAX_LEVEL_DEPTH;
-    OHashIndexFileLevelMetadata newFileMetadata = filesMetadata[newFileLevel];
-    if (newFileMetadata == null) {
-      newFileMetadata = createFileMetadata(newFileLevel);
-      filesMetadata[newFileLevel] = newFileMetadata;
-    }
+    final int newFileLevel = newBucketDepth - MAX_LEVEL_DEPTH;
+    diskCache.loadPinnedPage(hashStateEntry);
 
-    final long tombstoneIndex = newFileMetadata.getTombstoneIndex();
-
-    final long updatedBucketIndex;
-
-    if (tombstoneIndex >= 0) {
-      final OCacheEntry tombstoneCacheEntry = loadPageEntry(tombstoneIndex, newFileLevel);
-      final OCachePointer tombstonePagePointer = tombstoneCacheEntry.getCachePointer();
-      try {
-        final OHashIndexBucket<K, V> tombstone = new OHashIndexBucket<K, V>(tombstonePagePointer.getDataPointer(), keySerializer,
-            valueSerializer, keyTypes);
-        newFileMetadata.setTombstoneIndex(tombstone.getNextRemovedBucketPair());
-
-        updatedBucketIndex = tombstoneIndex;
-      } finally {
-        diskCache.release(tombstoneCacheEntry);
-      }
-    } else
-      updatedBucketIndex = diskCache.getFilledUpTo(fileLevelIds[newFileLevel]);
-
-    final long newBucketIndex = updatedBucketIndex + 1;
-
-    final OCacheEntry updateBucketCacheEntry = loadPageEntry(updatedBucketIndex, newFileLevel);
-    final OCachePointer updatedBucketDataPointer = updateBucketCacheEntry.getCachePointer();
-    updatedBucketDataPointer.acquireExclusiveLock();
+    final OCachePointer stateCachePointer = hashStateEntry.getCachePointer();
+    stateCachePointer.acquireExclusiveLock();
     try {
+      OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(stateCachePointer.getDataPointer(),
+          ODurablePage.TrackMode.NONE, false);
+      hashStateEntry.markDirty();
 
-      final OCacheEntry newBucketCacheEntry = loadPageEntry(newBucketIndex, newFileLevel);
-      final OCachePointer newBucketDataPointer = newBucketCacheEntry.getCachePointer();
+      if (metadataPage.isRemoved(newFileLevel))
+        createFileMetadata(newFileLevel, metadataPage);
 
-      newBucketDataPointer.acquireExclusiveLock();
+      final long tombstoneIndex = metadataPage.getTombstoneIndex(newFileLevel);
+
+      final long updatedBucketIndex;
+
+      if (tombstoneIndex >= 0) {
+        final OCacheEntry tombstoneCacheEntry = loadPageEntry(tombstoneIndex, newFileLevel);
+        final OCachePointer tombstonePagePointer = tombstoneCacheEntry.getCachePointer();
+        try {
+          final OHashIndexBucket<K, V> tombstone = new OHashIndexBucket<K, V>(tombstonePagePointer.getDataPointer(), keySerializer,
+              valueSerializer, keyTypes);
+          metadataPage.setTombstoneIndex(newFileLevel, tombstone.getNextRemovedBucketPair());
+
+          updatedBucketIndex = tombstoneIndex;
+        } finally {
+          diskCache.release(tombstoneCacheEntry);
+        }
+      } else
+        updatedBucketIndex = diskCache.getFilledUpTo(metadataPage.getFileId(newFileLevel));
+
+      final long newBucketIndex = updatedBucketIndex + 1;
+
+      final OCacheEntry updateBucketCacheEntry = loadPageEntry(updatedBucketIndex, newFileLevel);
+      final OCachePointer updatedBucketDataPointer = updateBucketCacheEntry.getCachePointer();
+      updatedBucketDataPointer.acquireExclusiveLock();
       try {
-        final OHashIndexBucket<K, V> updatedBucket = new OHashIndexBucket<K, V>(newBucketDepth,
-            updatedBucketDataPointer.getDataPointer(), keySerializer, valueSerializer, keyTypes);
-        final OHashIndexBucket<K, V> newBucket = new OHashIndexBucket<K, V>(newBucketDepth, newBucketDataPointer.getDataPointer(),
-            keySerializer, valueSerializer, keyTypes);
 
-        splitBucketContent(bucket, updatedBucket, newBucket, newBucketDepth);
+        final OCacheEntry newBucketCacheEntry = loadPageEntry(newBucketIndex, newFileLevel);
+        final OCachePointer newBucketDataPointer = newBucketCacheEntry.getCachePointer();
 
-        assert bucket.getDepth() == bucketDepth;
+        newBucketDataPointer.acquireExclusiveLock();
+        try {
+          final OHashIndexBucket<K, V> updatedBucket = new OHashIndexBucket<K, V>(newBucketDepth,
+              updatedBucketDataPointer.getDataPointer(), keySerializer, valueSerializer, keyTypes);
+          final OHashIndexBucket<K, V> newBucket = new OHashIndexBucket<K, V>(newBucketDepth,
+              newBucketDataPointer.getDataPointer(), keySerializer, valueSerializer, keyTypes);
 
-        final OHashIndexFileLevelMetadata bufferMetadata = filesMetadata[fileLevel];
-        bufferMetadata.setBucketsCount(bufferMetadata.getBucketsCount() - 1);
+          splitBucketContent(bucket, updatedBucket, newBucket, newBucketDepth);
 
-        assert bufferMetadata.getBucketsCount() >= 0;
+          assert bucket.getDepth() == bucketDepth;
 
-        updatedBucket.setSplitHistory(fileLevel, pageIndex);
-        newBucket.setSplitHistory(fileLevel, pageIndex);
+          metadataPage.setBucketsCount(fileLevel, metadataPage.getBucketsCount(fileLevel) - 1);
 
-        newFileMetadata.setBucketsCount(newFileMetadata.getBucketsCount() + 2);
+          assert metadataPage.getBucketsCount(fileLevel) >= 0;
 
-        final long updatedBucketPointer = createBucketPointer(updatedBucketIndex, newFileLevel);
-        final long newBucketPointer = createBucketPointer(newBucketIndex, newFileLevel);
+          updatedBucket.setSplitHistory(fileLevel, pageIndex);
+          newBucket.setSplitHistory(fileLevel, pageIndex);
 
-        return new BucketSplitResult(updatedBucketPointer, newBucketPointer, newBucketDepth);
+          metadataPage.setBucketsCount(newFileLevel, metadataPage.getBucketsCount(newFileLevel) + 2);
+
+          final long updatedBucketPointer = createBucketPointer(updatedBucketIndex, newFileLevel);
+          final long newBucketPointer = createBucketPointer(newBucketIndex, newFileLevel);
+
+          return new BucketSplitResult(updatedBucketPointer, newBucketPointer, newBucketDepth);
+        } finally {
+          newBucketDataPointer.releaseExclusiveLock();
+          newBucketCacheEntry.markDirty();
+          diskCache.release(newBucketCacheEntry);
+        }
       } finally {
-        newBucketDataPointer.releaseExclusiveLock();
-        newBucketCacheEntry.markDirty();
-        diskCache.release(newBucketCacheEntry);
+        updatedBucketDataPointer.releaseExclusiveLock();
+        updateBucketCacheEntry.markDirty();
+        diskCache.release(updateBucketCacheEntry);
       }
     } finally {
-      updatedBucketDataPointer.releaseExclusiveLock();
-      updateBucketCacheEntry.markDirty();
-      diskCache.release(updateBucketCacheEntry);
+      stateCachePointer.releaseExclusiveLock();
+      diskCache.release(hashStateEntry);
     }
   }
 
@@ -1876,10 +2013,21 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     nodesMetadata = new OHashTreeNodeMetadata[1];
     nodesMetadata[0] = new OHashTreeNodeMetadata((byte) 0, (byte) 0, (byte) MAX_LEVEL_DEPTH);
 
-    filesMetadata[0].setBucketsCount(MAX_LEVEL_SIZE);
+    diskCache.loadPinnedPage(hashStateEntry);
+    OCachePointer hashStatePointer = hashStateEntry.getCachePointer();
+    hashStatePointer.acquireExclusiveLock();
+    try {
+      OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStatePointer.getDataPointer(),
+          ODurablePage.TrackMode.NONE, false);
+      metadataPage.setBucketsCount(0, MAX_LEVEL_SIZE);
+      metadataPage.setRecordsCount(0);
+      metadataPage.setHashTreeSize(1);
 
-    size = 0;
-    hashTreeSize = 1;
+      hashStateEntry.markDirty();
+    } finally {
+      hashStatePointer.releaseExclusiveLock();
+      diskCache.release(hashStateEntry);
+    }
   }
 
   private long createBucketPointer(long pageIndex, int fileLevel) {
@@ -1895,7 +2043,16 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   }
 
   private OCacheEntry loadPageEntry(long pageIndex, int fileLevel) throws IOException {
-    return diskCache.load(fileLevelIds[fileLevel], pageIndex, false);
+    final long fileId;
+    diskCache.loadPinnedPage(hashStateEntry);
+    try {
+      OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry.getCachePointer()
+          .getDataPointer(), ODurablePage.TrackMode.NONE, false);
+      fileId = metadataPage.getFileId(fileLevel);
+    } finally {
+      diskCache.release(hashStateEntry);
+    }
+    return diskCache.load(fileId, pageIndex, false);
   }
 
   private BucketPath getBucket(final long hashCode) {
