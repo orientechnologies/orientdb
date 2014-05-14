@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.OImmutableRecordId;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -39,10 +40,15 @@ import java.util.TimeZone;
  * Versions:<li>
  * <ul>
  * 3 = introduced file directory in physical segments and data-segment id in clusters
+ * 4 = ??
+ * 5 = ??
+ * 6 = ??
+ * 7 = ??
+ * 8 = introduced cluster selection strategy as string
  * </ul>
  * </li>
  * 
- * @author Luca
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 @SuppressWarnings("serial")
@@ -52,7 +58,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public static final String                DEFAULT_CHARSET               = "UTF-8";
   private String                            charset                       = DEFAULT_CHARSET;
-  public static final int                   CURRENT_VERSION               = 7;
+  public static final int                   CURRENT_VERSION               = 8;
   public static final int                   CURRENT_BINARY_FORMAT_VERSION = 11;
   public int                                version                       = -1;
   public String                             name;
@@ -73,6 +79,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private TimeZone                          timeZone                      = TimeZone.getDefault();
   private transient Locale                  localeInstance;
   private transient DecimalFormatSymbols    unusualSymbols;
+  private String                            clusterSelection;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
@@ -264,6 +271,12 @@ public class OStorageConfiguration implements OSerializableStream {
     else
       binaryFormatVersion = 8;
 
+    if (version >= 8)
+      clusterSelection = read(values[index++]);
+    else
+      // DEFAULT = ROUND-ROBIN
+      clusterSelection = ORoundRobinClusterSelectionStrategy.NAME;
+
     return this;
   }
 
@@ -352,6 +365,7 @@ public class OStorageConfiguration implements OSerializableStream {
       entryToStream(buffer, e);
 
     write(buffer, binaryFormatVersion);
+    write(buffer, clusterSelection);
 
     // PLAIN: ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
     buffer.append("|");
@@ -439,6 +453,14 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public String getDateTimeFormat() {
     return dateTimeFormat;
+  }
+
+  public String getClusterSelection() {
+    return clusterSelection;
+  }
+
+  public void setClusterSelection(String clusterSelection) {
+    this.clusterSelection = clusterSelection;
   }
 
   private int phySegmentFromStream(final String[] values, int index, final OStorageSegmentConfiguration iSegment) {

@@ -32,24 +32,38 @@ import java.util.Map;
  */
 public class OConfigurableStatefulFactory<K, V> {
   protected final Map<K, Class<? extends V>> registry = new LinkedHashMap<K, Class<? extends V>>();
-  protected V                                defaultClass;
+  protected Class<? extends V>               defaultClass;
 
   public Class<? extends V> get(final K iKey) {
     return registry.get(iKey);
   }
 
-  public V newInstance(final K iKey) throws IllegalAccessException {
-    final Class<? extends V> instance = registry.get(iKey);
-    if (instance != null) {
+  public V newInstance(final K iKey) {
+    if (iKey == null && defaultClass == null)
+      throw new IllegalArgumentException("Cannot create implementation for type null");
+
+    final Class<? extends V> cls = registry.get(iKey);
+    if (cls != null) {
       try {
-        return instance.newInstance();
+        return cls.newInstance();
       } catch (Exception e) {
-        throw new OException(String.format("Error on creating new instance of class '%s' registered in factory with key '%s'",
-            instance, iKey), e);
+        throw new OException(String.format("Error on creating new instance of class '%s' registered in factory with key '%s'", cls,
+            iKey), e);
       }
     }
 
-    return defaultClass;
+    return newInstanceOfDefaultClass();
+  }
+
+  public V newInstanceOfDefaultClass() {
+    if (defaultClass != null) {
+      try {
+        return defaultClass.newInstance();
+      } catch (Exception e) {
+        throw new OException(String.format("Error on creating new instance of default class '%s'", defaultClass), e);
+      }
+    }
+    return null;
   }
 
   public OConfigurableStatefulFactory<K, V> register(final K iKey, final Class<? extends V> iValue) {
@@ -67,11 +81,11 @@ public class OConfigurableStatefulFactory<K, V> {
     return this;
   }
 
-  public V getDefaultClass() {
+  public Class<? extends V> getDefaultClass() {
     return defaultClass;
   }
 
-  public <C extends V> OConfigurableStatefulFactory<K, V> setDefaultClass(final C defaultClass) {
+  public <C extends Class<? extends V>> OConfigurableStatefulFactory<K, V> setDefaultClass(final C defaultClass) {
     this.defaultClass = defaultClass;
     return this;
   }

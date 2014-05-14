@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -88,6 +89,8 @@ public interface OClass extends Comparable<OClass> {
 
   public Class<?> getJavaClass();
 
+  int getClusterForNewInstance();
+
   public int getDefaultClusterId();
 
   public abstract void setDefaultClusterId(int iDefaultClusterId);
@@ -95,6 +98,12 @@ public interface OClass extends Comparable<OClass> {
   public int[] getClusterIds();
 
   public OClass addClusterId(int iId);
+
+  public OClusterSelectionStrategy getClusterSelection();
+
+  public void setClusterSelection(OClusterSelectionStrategy clusterSelection);
+
+  public void setClusterSelection(String iStrategyName);
 
   public OClass addCluster(String iClusterName);
 

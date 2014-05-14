@@ -1158,6 +1158,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nDefault cluster......: " + currentDatabase.getClusterNameById(cls.getDefaultClusterId()) + " (id="
         + cls.getDefaultClusterId() + ")");
     message("\nSupported cluster ids: " + Arrays.toString(cls.getClusterIds()));
+    message("\nCluster selection....: " + cls.getClusterSelection().getName());
 
     if (!cls.getBaseClasses().isEmpty()) {
       message("Base classes.........: ");

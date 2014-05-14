@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -58,13 +59,14 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
-  public static final int      CURRENT_VERSION_NUMBER = 4;
-  private static final long    serialVersionUID       = 1L;
-  private static final String  DROP_INDEX_QUERY       = "drop index ";
-  private final boolean        clustersCanNotBeSharedAmongClasses;
-  private Map<String, OClass>  classes                = new HashMap<String, OClass>();
-  private Map<Integer, OClass> clustersToClasses      = new HashMap<Integer, OClass>();
-  private ReadWriteLock        rwLock                 = new ReentrantReadWriteLock();
+  public static final int          CURRENT_VERSION_NUMBER  = 4;
+  private static final long        serialVersionUID        = 1L;
+  private static final String      DROP_INDEX_QUERY        = "drop index ";
+  private final boolean            clustersCanNotBeSharedAmongClasses;
+  private Map<String, OClass>      classes                 = new HashMap<String, OClass>();
+  private Map<Integer, OClass>     clustersToClasses       = new HashMap<Integer, OClass>();
+  private ReadWriteLock            rwLock                  = new ReentrantReadWriteLock();
+  private OClusterSelectionFactory clusterSelectionFactory = new OClusterSelectionFactory();
 
   public OSchemaShared(boolean clustersCanNotBeSharedAmongClasses) {
     super(new ODocument());
@@ -90,6 +92,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     }
 
     return null;
+  }
+
+  public OClusterSelectionFactory getClusterSelectionFactory() {
+    return clusterSelectionFactory;
   }
 
   public int countClasses() {

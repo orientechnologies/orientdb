@@ -447,6 +447,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         writer.writeAttribute(0, false, "name", cls.getName());
         writer.writeAttribute(0, false, "default-cluster-id", cls.getDefaultClusterId());
         writer.writeAttribute(0, false, "cluster-ids", cls.getClusterIds());
+        writer.writeAttribute(0, false, "cluster-selection", cls.getClusterSelection().getName());
         if (((OClassImpl) cls).getOverSizeInternal() > 1)
           writer.writeAttribute(0, false, "oversize", ((OClassImpl) cls).getOverSizeInternal());
         if (cls.isStrictMode())

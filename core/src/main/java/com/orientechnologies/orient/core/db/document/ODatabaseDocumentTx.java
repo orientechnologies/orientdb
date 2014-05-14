@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -304,9 +303,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
         if (doc.getClassName() != null)
           checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
 
-        if (doc.getSchemaClass() != null && doc.getIdentity().getClusterId() < 0) {
+        final OClass schemaClass = doc.getSchemaClass();
+
+        if (schemaClass != null && doc.getIdentity().getClusterId() < 0) {
           // CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
-          String clusterName = getClusterNameById(doc.getSchemaClass().getDefaultClusterId());
+          final String clusterName = getClusterNameById(doc.getSchemaClass().getClusterForNewInstance());
 
           return (RET) super.save(doc, clusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
         }
@@ -401,18 +402,20 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
       if (doc.getClassName() != null)
         checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
 
-      if (iClusterName == null && doc.getSchemaClass() != null)
+      final OClass schemaClass = doc.getSchemaClass();
+
+      if (iClusterName == null && schemaClass != null)
         // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-        iClusterName = getClusterNameById(doc.getSchemaClass().getDefaultClusterId());
+        iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance());
 
       int id = getClusterIdByName(iClusterName);
       if (id == -1)
         throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured");
 
       final int[] clusterIds;
-      if (doc.getSchemaClass() != null) {
+      if (schemaClass != null) {
         // CHECK IF THE CLUSTER IS PART OF THE CONFIGURED CLUSTERS
-        clusterIds = doc.getSchemaClass().getClusterIds();
+        clusterIds = schemaClass.getClusterIds();
         int i = 0;
         for (; i < clusterIds.length; ++i)
           if (clusterIds[i] == id)

@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
@@ -53,13 +60,6 @@ import com.orientechnologies.orient.core.serialization.serializer.object.OObject
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
@@ -125,7 +125,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
         if (iLinkedRecord instanceof ODocument) {
           final OClass schemaClass = ((ODocument) iLinkedRecord).getSchemaClass();
-          database.save(iLinkedRecord, schemaClass != null ? database.getClusterNameById(schemaClass.getDefaultClusterId()) : null);
+          database.save(iLinkedRecord, schemaClass != null ? database.getClusterNameById(schemaClass.getClusterForNewInstance())
+              : null);
         } else
           // STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
           database.save(iLinkedRecord);

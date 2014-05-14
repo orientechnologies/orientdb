@@ -63,6 +63,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
     json.writeAttribute("strictmode", cls.isStrictMode());
     json.writeAttribute("clusters", cls.getClusterIds());
     json.writeAttribute("defaultCluster", cls.getDefaultClusterId());
+    json.writeAttribute("clusterSelection", cls.getClusterSelection().getName());
     if (cls instanceof OClassImpl) {
       final Map<String, String> custom = ((OClassImpl) cls).getCustomInternal();
       if (custom != null && !custom.isEmpty()) {

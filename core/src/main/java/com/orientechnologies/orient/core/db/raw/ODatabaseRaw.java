@@ -592,6 +592,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
     case CUSTOM:
       return storage.getConfiguration().properties;
+
+    case CLUSTERSELECTION:
+      return storage.getConfiguration().getClusterSelection();
     }
 
     return null;
@@ -660,6 +663,11 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
         final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
         setCustomInternal(words.get(0).trim(), words.get(1).trim());
       }
+      break;
+
+    case CLUSTERSELECTION:
+      storage.getConfiguration().setClusterSelection(stringValue);
+      storage.getConfiguration().update();
       break;
 
     default:

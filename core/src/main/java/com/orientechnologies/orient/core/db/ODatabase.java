@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -30,6 +24,12 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.util.OBackupable;
+
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br/>
@@ -56,7 +56,7 @@ public interface ODatabase extends OBackupable, Closeable {
   }
 
   public static enum ATTRIBUTES {
-    TYPE, STATUS, DEFAULTCLUSTERID, DATEFORMAT, DATETIMEFORMAT, TIMEZONE, LOCALECOUNTRY, LOCALELANGUAGE, CHARSET, CUSTOM
+    TYPE, STATUS, DEFAULTCLUSTERID, DATEFORMAT, DATETIMEFORMAT, TIMEZONE, LOCALECOUNTRY, LOCALELANGUAGE, CHARSET, CUSTOM, CLUSTERSELECTION
   }
 
   /**

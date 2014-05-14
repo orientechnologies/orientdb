@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
@@ -50,6 +43,13 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServerAbstract {
   private static final String[] NAMES = { "POST|database/*" };
@@ -254,6 +254,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     json.writeAttribute(3, true, "alias", cls.getShortName());
     json.writeAttribute(3, true, "clusters", cls.getClusterIds());
     json.writeAttribute(3, true, "defaultCluster", cls.getDefaultClusterId());
+    json.writeAttribute(3, true, "clusterSelection", cls.getClusterSelection().getName());
     try {
       json.writeAttribute(3, false, "records", db.countClass(cls.getName()));
     } catch (OSecurityAccessException e) {

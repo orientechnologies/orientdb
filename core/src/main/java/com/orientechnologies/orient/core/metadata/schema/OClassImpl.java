@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
@@ -70,6 +71,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   protected boolean                      strictMode              = false;                                 // @SINCE v1.0rc8
   protected boolean                      abstractClass           = false;                                 // @SINCE v1.2.0
   protected Map<String, String>          customFields;
+  protected OClusterSelectionStrategy    clusterSelection;                                                // @SINCE 1.7
 
   /**
    * Constructor used in unmarshalling.
@@ -81,16 +83,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
    * Constructor used in unmarshalling.
    */
   protected OClassImpl(final OSchemaShared iOwner) {
-    document = new ODocument();
-    owner = iOwner;
-  }
-
-  /**
-   * Constructor used in unmarshalling.
-   */
-  protected OClassImpl(final OSchemaShared iOwner, final ODocument iDocument) {
-    document = iDocument;
-    owner = iOwner;
+    this(iOwner, new ODocument());
   }
 
   protected OClassImpl(final OSchemaShared iOwner, final String iName, final int[] iClusterIds) {
@@ -105,6 +98,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       setPolymorphicClusterIds(new int[0]);
     else
       setPolymorphicClusterIds(iClusterIds);
+
+    clusterSelection = owner.getClusterSelectionFactory().newInstanceOfDefaultClass();
+  }
+
+  /**
+   * Constructor used in unmarshalling.
+   */
+  protected OClassImpl(final OSchemaShared iOwner, final ODocument iDocument) {
+    document = iDocument;
+    owner = iOwner;
   }
 
   public static int[] readableClusters(final ODatabaseRecord iDatabase, final int[] iClusterIds) {
@@ -135,6 +138,22 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return readableClusterIds;
   }
 
+  @Override
+  public OClusterSelectionStrategy getClusterSelection() {
+    return clusterSelection;
+  }
+
+  @Override
+  public void setClusterSelection(OClusterSelectionStrategy clusterSelection) {
+    this.clusterSelection = clusterSelection;
+  }
+
+  @Override
+  public void setClusterSelection(final String clusterSelection) {
+    this.clusterSelection = owner.getClusterSelectionFactory().newInstance(clusterSelection);
+  }
+
+  @Override
   public <T> T newInstance() throws InstantiationException, IllegalAccessException {
     if (javaClass == null)
       throw new IllegalArgumentException("Cannot create an instance of class '" + name + "' since no Java class was specified");
@@ -464,6 +483,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
 
     customFields = document.field("customFields", OType.EMBEDDEDMAP);
+    clusterSelection = owner.getClusterSelectionFactory().getStrategy((String) document.field("clusterSelection"));
   }
 
   @Override
@@ -476,6 +496,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       document.field("shortName", shortName);
       document.field("defaultClusterId", defaultClusterId);
       document.field("clusterIds", clusterIds);
+      document.field("clusterSelection", clusterSelection.getName());
       document.field("overSize", overSize);
       document.field("strictMode", strictMode);
       document.field("abstract", abstractClass);
@@ -498,6 +519,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public Class<?> getJavaClass() {
     return javaClass;
+  }
+
+  @Override
+  public int getClusterForNewInstance() {
+    return clusterSelection.getCluster(this);
   }
 
   public int getDefaultClusterId() {
