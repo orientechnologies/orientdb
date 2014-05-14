@@ -293,6 +293,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       recordFormat = DEF_RECORD_FORMAT;
 
       if (!(getStorage() instanceof OStorageProxy)) {
+        if (metadata.getIndexManager().autoRecreateIndexesAfterCrash())
+          metadata.getIndexManager().recreateIndexes();
+
         user = getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
         if (user != null) {
           final Set<ORole> roles = user.getRoles();
@@ -321,8 +324,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         // @COMPATIBILITY 1.0RC9
         metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
-      if (metadata.getIndexManager().autoRecreateIndexesAfterCrash())
-        metadata.getIndexManager().recreateIndexes();
     } catch (OException e) {
       close();
       throw e;

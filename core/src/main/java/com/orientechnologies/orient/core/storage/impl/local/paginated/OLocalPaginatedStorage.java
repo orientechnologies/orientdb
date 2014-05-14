@@ -167,9 +167,14 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       initWal();
 
-      if (configuration.binaryFormatVersion >= 11)
-        dirtyFlag.open();
-      else
+      if (configuration.binaryFormatVersion >= 11) {
+        if (dirtyFlag.exits())
+          dirtyFlag.open();
+        else {
+          dirtyFlag.create();
+          dirtyFlag.makeDirty();
+        }
+      } else
         dirtyFlag.create();
 
       status = STATUS.OPEN;

@@ -15,6 +15,21 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.URLDecoder;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -38,21 +53,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.URLDecoder;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.IllegalFormatException;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.GZIPInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private static final String                 COMMAND_SEPARATOR = "|";
@@ -213,6 +213,10 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
   public OUser getAccount() {
     return account;
+  }
+
+  public String getSessionID() {
+    return request.sessionId;
   }
 
   public String getResponseCharSet() {
@@ -523,7 +527,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           channel.read();
 
           request.httpMethod = words[0].toUpperCase();
-          request.url = words[1].trim();
+          request.url = URLDecoder.decode(words[1].trim(), "UTF-8");
 
           final int parametersPos = request.url.indexOf('?');
           if (parametersPos > -1) {

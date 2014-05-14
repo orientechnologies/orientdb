@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+
 /**
  * SQL UPDATE command.
  * 
@@ -71,7 +72,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private Map<String, Number>                incrementEntries  = new LinkedHashMap<String, Number>();
   private ODocument                          merge             = null;
   private String                             lockStrategy      = "NONE";
-  private String                             returning         = "COUNT";
+  private Object                             returnExpression = null;
+  private SQLUpdateReturnModeEnum            returnMode          = SQLUpdateReturnModeEnum.COUNT;
   private List<ORecord<?>>                   allUpdatedRecords;
   private OQuery<?>                          query;
   private OSQLFilter                         compiledFilter;
@@ -138,7 +140,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       else if (word.equals(KEYWORD_UPSERT))
         upsertMode = true;
       else if (word.equals(KEYWORD_RETURN))
-        returning = parseReturn();
+        returnMode = parseReturn();
       else if (word.equals(KEYWORD_RETRY))
         parseRetry();
       else
@@ -198,8 +200,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     query.setUseCache(false);
     query.setContext(context);
 
-    if (!returning.equalsIgnoreCase("COUNT"))
-      allUpdatedRecords = new ArrayList<ORecord<?>>();
+    allUpdatedRecords = new ArrayList<ORecord<?>>();
 
     if (lockStrategy.equals("RECORD"))
       query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
@@ -234,12 +235,36 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       lockStrategy = suspendedLockStrategy;
     }
 
-    if (returning.equalsIgnoreCase("COUNT"))
+    if (returnMode== SQLUpdateReturnModeEnum.COUNT)
       // RETURNS ONLY THE COUNT
       return recordCount;
     else
-      // RETURNS ALL THE DELETED RECORDS
-      return allUpdatedRecords;
+      if (returnExpression ==null)
+      {
+          return allUpdatedRecords;
+      }
+      else
+      {
+          List<Object> result = new ArrayList<Object>();
+          Object itemResult = null;
+          ODocument wrappingDoc = null;
+          for (ORecord o : allUpdatedRecords)
+          {
+            this.getContext().setVariable("current",o);
+            itemResult = OSQLHelper.getValue(returnExpression, (ODocument) ((OIdentifiable) o).getRecord(), this.getContext());
+            // WRAP WITH ODOCUMENT IF NEEDED
+            if (itemResult instanceof OIdentifiable)
+                    result.add(itemResult);
+            else
+            {
+               wrappingDoc =  new ODocument("result",itemResult);
+               wrappingDoc.field("rid",o.getIdentity());// passing record id.In many cases usable on client side
+               wrappingDoc.field("version",o.getVersion());// passing record version
+               result.add(wrappingDoc);
+            }
+          }
+          return result;
+      }
   }
 
   /**
@@ -259,10 +284,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
     parameters.reset();
 
-    if (returning.equalsIgnoreCase("BEFORE"))
+
+    if (returnMode == SQLUpdateReturnModeEnum.BEFORE)
       allUpdatedRecords.add(record.copy());
-    else if (returning.equalsIgnoreCase("AFTER"))
+    else
       allUpdatedRecords.add(record);
+
 
     if (content != null) {
       // REPLACE ALL THE CONTENT
@@ -602,4 +629,44 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     if (incrementEntries.size() == 0)
       throwSyntaxErrorException("Entries to increment <field> = <value> are missed. Example: salary = -100");
   }
+
+    /**
+     * Parses the returning keyword if found.
+     */
+    protected SQLUpdateReturnModeEnum parseReturn() throws OCommandSQLParsingException {
+        parserNextWord(false," ");
+        String returning = parserGetLastWord().trim();
+        String optionalExp = "";
+
+        if (returning.equalsIgnoreCase("COUNT"))
+        {
+            returnMode = SQLUpdateReturnModeEnum.COUNT;
+            returnExpression = null;
+        }else
+        if (returning.equalsIgnoreCase("BEFORE") || returning.equalsIgnoreCase("AFTER"))
+        {
+            returnMode = (returning.equalsIgnoreCase("BEFORE"))? SQLUpdateReturnModeEnum.BEFORE : SQLUpdateReturnModeEnum.AFTER;
+            parserNextWord(false," ");
+            returning = parserGetLastWord().trim();
+            if (returning.equalsIgnoreCase(KEYWORD_WHERE) || returning.equalsIgnoreCase(KEYWORD_TIMEOUT) || returning.equalsIgnoreCase(KEYWORD_LIMIT)
+                    || returning.equalsIgnoreCase(KEYWORD_UPSERT) || returning.equalsIgnoreCase(KEYWORD_LOCK) || returning.length()==0)
+            {
+                returnExpression = null;
+                parserGoBack();
+            }
+            else
+            {
+                if (returning.startsWith("$") || returning.startsWith("@"))
+                    returnExpression = (returning.length()>0) ? OSQLHelper.parseValue(this, returning,this.getContext()) : null;
+                else
+                    throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
+
+            }
+        }else
+            throwSyntaxErrorException(" COUNT | BEFORE | AFTER keywords expected");
+
+
+        return returnMode;
+    }
+
 }

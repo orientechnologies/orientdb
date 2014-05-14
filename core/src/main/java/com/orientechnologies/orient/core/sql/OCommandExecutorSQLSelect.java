@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -173,9 +172,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       return null;
     } else if (indexReuseType.equals(OIndexReuseType.INDEX_METHOD)) {
-      OIndexSearchResult result = createIndexedProperty(iCondition, iCondition.getLeft());
+      OIndexSearchResult result = createIndexedProperty(iCondition, iCondition.getLeft(), iContext);
       if (result == null)
-        result = createIndexedProperty(iCondition, iCondition.getRight());
+        result = createIndexedProperty(iCondition, iCondition.getRight(), iContext);
 
       if (result == null)
         return null;
@@ -198,9 +197,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    *          Condition item
    * @param iItem
    *          Value to search
+   * @param iContext
    * @return true if the property was indexed and found, otherwise false
    */
-  private static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem) {
+  private static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem, final OCommandContext iContext) {
     if (iItem == null || !(iItem instanceof OSQLFilterItemField))
       return null;
 
@@ -221,7 +221,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final Object value = OSQLHelper.getValue(origValue);
     return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
   }
-
+  
   private static Object getIndexKey(final OIndexDefinition indexDefinition, Object value, OCommandContext context) {
     if (indexDefinition instanceof OCompositeIndexDefinition || indexDefinition.getParamCount() > 1) {
       if (value instanceof List) {
@@ -327,8 +327,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           else if (w.equals(KEYWORD_LOCK)) {
             final String lock = parseLock();
 
-            lockingStrategy = lock.equals("RECORD") ? OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
-                : OStorage.LOCKING_STRATEGY.DEFAULT;
+            if (lock.equalsIgnoreCase("DEFAULT"))
+              lockingStrategy = OStorage.LOCKING_STRATEGY.DEFAULT;
+            else if (lock.equals("NONE"))
+              lockingStrategy = OStorage.LOCKING_STRATEGY.NONE;
+            else if (lock.equals("RECORD"))
+              lockingStrategy = OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
           } else if (w.equals(KEYWORD_PARALLEL))
             parallel = parseParallel(w);
           else
@@ -471,7 +475,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @Override
   public String getSyntax() {
-    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] TIMEOUT <TimeoutInMs>";
+    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] [TIMEOUT <TimeoutInMs>] [LOCK none|record]";
   }
 
   public String getFetchPlan() {
@@ -541,7 +545,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       context.updateMetric("documentReads", +1);
 
       if (filter(record, evaluateRecords))
-        if (!handleResult(record, true))
+        if (!handleResult(record))
           // LIMIT REACHED
           return false;
     } finally {
@@ -560,22 +564,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * 
    * @param iRecord
    *          Record to handle
-   * @param iCloneIt
-   *          Clone the record
    * @return false if limit has been reached, otherwise true
    */
-  protected boolean handleResult(final OIdentifiable iRecord, final boolean iCloneIt) {
-    lastRecord = null;
-
+  protected boolean handleResult(final OIdentifiable iRecord) {
     if ((orderedFields.isEmpty() || fullySortedByIndex) && skip > 0) {
+      lastRecord = null;
       skip--;
       return true;
     }
 
-    if (iCloneIt)
-      lastRecord = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
-    else
-      lastRecord = iRecord;
+    lastRecord = iRecord;
 
     resultCount++;
 
@@ -783,14 +781,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         final List<String> words = OStringSerializerHelper.smartSplit(projection, ' ');
         if (words.size() > 1)
-          lastRealPositionProjection = words.get(0).length();
+          lastRealPositionProjection += words.get(0).length();
 
         String fieldName;
         endPos = projection.toUpperCase(Locale.ENGLISH).indexOf(KEYWORD_AS);
         if (endPos > -1) {
           // EXTRACT ALIAS
           fieldName = projection.substring(endPos + KEYWORD_AS.length()).trim();
-          lastRealPositionProjection = endPos + KEYWORD_AS.length() + fieldName.length() + 1;
+          lastRealPositionProjection += endPos + KEYWORD_AS.length() + fieldName.length() + 1;
           projection = projection.substring(0, endPos).trim();
 
           if (projectionDefinition.containsKey(fieldName))
@@ -1350,7 +1348,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       doc.field("rid", entryRecord.getValue().getIdentity());
       doc.unsetDirty();
 
-      if (!handleResult(doc, false))
+      if (!handleResult(doc))
         // LIMIT REACHED
         break;
 
@@ -1565,12 +1563,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (res instanceof Collection<?>) {
             // MULTI VALUES INDEX
             for (final OIdentifiable r : (Collection<OIdentifiable>) res)
-              if (!handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity()), true))
+              if (!handleResult(createIndexEntryAsDocument(keyValue, r.getIdentity())))
                 // LIMIT REACHED
                 break;
           } else {
             // SINGLE VALUE INDEX
-            handleResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()), true);
+            handleResult(createIndexEntryAsDocument(keyValue, ((OIdentifiable) res).getIdentity()));
           }
       }
 

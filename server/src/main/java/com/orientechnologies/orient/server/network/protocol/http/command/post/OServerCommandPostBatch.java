@@ -184,13 +184,13 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
       if (tx)
         db.commit();
 
+      iResponse.writeResult(lastResult);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
+
     } finally {
       if (db != null)
         db.close();
     }
-
-    iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, lastResult, null,
-        true);
     return false;
   }
 

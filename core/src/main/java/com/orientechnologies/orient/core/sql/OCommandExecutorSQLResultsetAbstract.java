@@ -178,15 +178,15 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return null;
   }
 
-  protected boolean handleResult(final OIdentifiable iRecord, boolean iCloneIt) {
+  protected boolean handleResult(final OIdentifiable iRecord) {
     if (iRecord != null) {
       resultCount++;
 
-      OIdentifiable recordCopy = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
+      OIdentifiable identifiable = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord) : iRecord.getIdentity();
 
       // CALL THE LISTENER NOW
-      if (recordCopy != null && request.getResultListener() != null) {
-        final boolean result = request.getResultListener().result(recordCopy);
+      if (identifiable != null && request.getResultListener() != null) {
+        final boolean result = request.getResultListener().result(identifiable);
         if (!result)
           return false;
       }

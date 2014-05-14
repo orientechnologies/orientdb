@@ -323,18 +323,18 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       final Collection<String> iNodes) {
     boolean waitLocalNode = false;
     if (iNodes.contains(manager.getLocalNodeName()))
-      if (iClusterNames == null)
+      if (iClusterNames == null) {
         // DEFAULT CLUSTER (*)
         if (cfg.isReadYourWrites(null))
           waitLocalNode = true;
-        else
-          // BROWSE FOR ALL CLUSTER TO GET THE FIRST 'waitLocalNode'
-          for (String clName : iClusterNames) {
-            if (cfg.isReadYourWrites(clName)) {
-              waitLocalNode = true;
-              break;
-            }
+      } else
+        // BROWSE FOR ALL CLUSTER TO GET THE FIRST 'waitLocalNode'
+        for (String clName : iClusterNames) {
+          if (cfg.isReadYourWrites(clName)) {
+            waitLocalNode = true;
+            break;
           }
+        }
     return waitLocalNode;
   }
 
@@ -392,10 +392,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           System.currentTimeMillis() - beginTime, currentResponseMgr.getExpectedNodes(), currentResponseMgr.getRespondingNodes(),
           iRequest);
     }
-
-    if (currentResponseMgr.isWaitForLocalNode() && !currentResponseMgr.isReceivedCurrentNode())
-      ODistributedServerLog.warn(this, getLocalNodeName(), manager.getLocalNodeName(), DIRECTION.IN,
-          "no response received from local node about request %s", iRequest);
 
     return currentResponseMgr.getFinalResponse();
   }
