@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local;
 
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.Iterator;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.log.OLogManager;
@@ -29,13 +25,16 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.index.sbtree.local.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.fs.OFileFactory;
+import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.Iterator;
 
 /**
  * @author Andrey Lomakin
@@ -104,10 +103,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
   private void initStores(String metadataConfigurationFileExtension, String treeStateFileExtension) throws IOException {
     final OStorageFileConfiguration metadataConfiguration = new OStorageFileConfiguration(null,
-        OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + metadataConfigurationFileExtension, OFileFactory.CLASSIC, "0", "50%");
+        OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + metadataConfigurationFileExtension, OFileClassic.NAME, "0", "50%");
 
     final OStorageFileConfiguration treeStateConfiguration = new OStorageFileConfiguration(null,
-        OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + treeStateFileExtension, OFileFactory.CLASSIC, "0", "50%");
+        OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + treeStateFileExtension, OFileClassic.NAME, "0", "50%");
 
     metadataStore = new OHashIndexBufferStore(storage, metadataConfiguration);
     treeStateStore = new OHashIndexTreeStateStore(storage, treeStateConfiguration);
