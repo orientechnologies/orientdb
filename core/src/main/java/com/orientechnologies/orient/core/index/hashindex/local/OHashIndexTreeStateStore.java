@@ -29,30 +29,6 @@ public class OHashIndexTreeStateStore extends OSingleFileSegment {
     super(iStorage, iConfig, iType);
   }
 
-  public void setHashTreeSize(long hashTreeSize) throws IOException {
-    file.writeHeaderLong(0, hashTreeSize);
-  }
-
-  public long getHashTreeSize() throws IOException {
-    return file.readHeaderLong(0);
-  }
-
-  public void setHashTreeTombstone(long hashTreeTombstone) throws IOException {
-    file.writeHeaderLong(OLongSerializer.LONG_SIZE, hashTreeTombstone);
-  }
-
-  public long getHashTreeTombstone() throws IOException {
-    return file.readHeaderLong(OLongSerializer.LONG_SIZE);
-  }
-
-  public void setBucketTombstonePointer(long bucketTombstonePointer) throws IOException {
-    file.writeHeaderLong(2 * OLongSerializer.LONG_SIZE, bucketTombstonePointer);
-  }
-
-  public long getBucketTombstonePointer() throws IOException {
-    return file.readHeaderLong(2 * OLongSerializer.LONG_SIZE);
-  }
-
   public void storeTreeState(long[][] hashTree, OHashTreeNodeMetadata[] nodesMetadata) throws IOException {
     truncate();
 

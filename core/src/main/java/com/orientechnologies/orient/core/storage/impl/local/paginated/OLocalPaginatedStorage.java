@@ -1895,8 +1895,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       if (onDelete)
         dirtyFlag.delete();
-      else
+      else {
         dirtyFlag.clearDirty();
+        dirtyFlag.close();
+      }
 
       Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;

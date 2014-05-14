@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -38,7 +39,7 @@ public class LocalHashTableIterationTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("local:" + buildDirectory + "/localHashTableIterationTest");
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableIterationTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -56,7 +57,7 @@ public class LocalHashTableIterationTest {
     localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", hashFunction);
 
     localHashTable.create("localHashTableIterationTest", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
-        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocal) databaseDocumentTx.getStorage(), true);
+        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocalAbstract) databaseDocumentTx.getStorage(), true);
   }
 
   @AfterClass

@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 import java.io.File;
@@ -73,6 +72,20 @@ public class OPaginatedStorageDirtyFlag {
 
       dirtyFileData.seek(0);
       dirtyFlag = dirtyFileData.readBoolean();
+    } finally {
+      readWriteLock.writeLock().unlock();
+    }
+  }
+
+  public void close() throws IOException {
+    readWriteLock.writeLock().lock();
+    try {
+      if (dirtyFile == null)
+        return;
+
+      if (dirtyFile.exists())
+        dirtyFileData.close();
+
     } finally {
       readWriteLock.writeLock().unlock();
     }
