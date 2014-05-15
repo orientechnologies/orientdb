@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX;
-import static com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE.UNIQUE_HASH_INDEX;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +30,6 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -42,8 +38,6 @@ import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -73,37 +67,189 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   private final List<OIndex<?>> indexChain;
   private final OIndex<?>       lastIndex;
 
+  private OChainedIndexProxy(List<OIndex<?>> indexChain) {
+    this.firstIndex = (OIndex<T>) indexChain.get(0);
+    this.indexChain = Collections.unmodifiableList(indexChain);
+    lastIndex = indexChain.get(indexChain.size() - 1);
+  }
+
   /**
    * Create proxies that support maximum number of different operations. In case when several different indexes which support
    * different operations (e.g. indexes of {@code UNIQUE} and {@code FULLTEXT} types) are possible, the creates the only one index
    * of each type.
    * 
-   * @param index
-   *          - the index which proxies created for
    * @param longChain
    *          - property chain from the query, which should be evaluated
-   * @param database
-   *          - current database instance
    * @return proxies needed to process query.
    */
-  public static <T> Collection<OChainedIndexProxy<T>> createdProxy(OIndex<T> index, OSQLFilterItemField.FieldChain longChain,
-      ODatabaseComplex<?> database) {
-    if (!isAppropriateAsBase(index))
-      return Collections.emptyList();
+  public static <T> Collection<OChainedIndexProxy<T>> createProxies(OClass iSchemaClass, OSQLFilterItemField.FieldChain longChain) {
+    List<OChainedIndexProxy<T>> proxies = new ArrayList<OChainedIndexProxy<T>>();
 
-    Collection<OChainedIndexProxy<T>> proxies = new ArrayList<OChainedIndexProxy<T>>();
-
-    for (List<OIndex<?>> indexChain : getIndexesForChain(index, longChain, database)) {
-      proxies.add(new OChainedIndexProxy<T>(index, indexChain));
+    for (List<OIndex<?>> indexChain : getIndexesForChain(iSchemaClass, longChain)) {
+      proxies.add(new OChainedIndexProxy<T>(indexChain));
     }
 
     return proxies;
   }
 
-  private OChainedIndexProxy(OIndex<T> firstIndex, List<OIndex<?>> indexChain) {
-    this.firstIndex = firstIndex;
-    this.indexChain = Collections.unmodifiableList(indexChain);
-    lastIndex = indexChain.get(indexChain.size() - 1);
+  private static boolean isComposite(OIndex<?> currentIndex) {
+    return currentIndex.getDefinition().getParamCount() > 1;
+  }
+
+  private static Iterable<List<OIndex<?>>> getIndexesForChain(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
+    List<OIndex<?>> baseIndexes = prepareBaseIndexes(iSchemaClass, fieldChain);
+
+    if (baseIndexes == null)
+      return Collections.emptyList();
+
+    Collection<OIndex<?>> lastIndexes = prepareLastIndexVariants(iSchemaClass, fieldChain);
+
+    Collection<List<OIndex<?>>> result = new ArrayList<List<OIndex<?>>>();
+    for (OIndex<?> lastIndex : lastIndexes) {
+      final List<OIndex<?>> indexes = new ArrayList<OIndex<?>>(fieldChain.getItemCount());
+      indexes.addAll(baseIndexes);
+      indexes.add(lastIndex);
+
+      result.add(indexes);
+    }
+
+    return result;
+  }
+
+  private static Collection<OIndex<?>> prepareLastIndexVariants(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
+    OClass oClass = iSchemaClass;
+    for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
+      oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
+    }
+
+    final Set<OIndex<?>> involvedIndexes = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
+      public int compare(OIndex<?> o1, OIndex<?> o2) {
+        return o1.getDefinition().getParamCount() - o2.getDefinition().getParamCount();
+      }
+    });
+
+    involvedIndexes.addAll(oClass.getInvolvedIndexes(fieldChain.getItemName(fieldChain.getItemCount() - 1)));
+    final Collection<Class<? extends OIndex>> indexTypes = new HashSet<Class<? extends OIndex>>(3);
+    final Collection<OIndex<?>> result = new ArrayList<OIndex<?>>();
+
+    for (OIndex<?> involvedIndex : involvedIndexes) {
+      if (!indexTypes.contains(involvedIndex.getInternal().getClass())) {
+        result.add(involvedIndex);
+        indexTypes.add(involvedIndex.getInternal().getClass());
+      }
+    }
+
+    return result;
+  }
+
+  private static List<OIndex<?>> prepareBaseIndexes(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
+    List<OIndex<?>> result = new ArrayList<OIndex<?>>(fieldChain.getItemCount() - 1);
+
+    OClass oClass = iSchemaClass;
+    for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
+      final Set<OIndex<?>> involvedIndexes = oClass.getInvolvedIndexes(fieldChain.getItemName(i));
+      final OIndex<?> bestIndex = findBestIndex(involvedIndexes);
+
+      if (bestIndex == null)
+        return null;
+
+      result.add(bestIndex);
+      oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
+    }
+    return result;
+  }
+
+  /**
+   * Finds the index that fits better as a base index in chain.
+   * 
+   * Requirements to the base index:
+   * <ul>
+   * <li>Should be unique or not unique. Other types can not be used to get all documents with required links.</li>
+   * <li>Should not be composite hash index. As soon as hash index does not support partial match search.</li>
+   * <li>Composite index that ignores null values should not be used.</li>
+   * <li>Hash index is better than tree based indexes.</li>
+   * <li>Non composite indexes is better that composite.</li>
+   * </ul>
+   * 
+   * @param indexes
+   *          where search
+   * @return the index that fits better as a base index in chain
+   */
+  protected static OIndex<?> findBestIndex(Iterable<OIndex<?>> indexes) {
+    OIndex<?> bestIndex = null;
+    for (OIndex<?> index : indexes) {
+      if (priorityOfUsage(index) > priorityOfUsage(bestIndex))
+        bestIndex = index;
+    }
+    return bestIndex;
+  }
+
+  private static int priorityOfUsage(OIndex<?> index) {
+    if (index == null)
+      return -1;
+
+    final OClass.INDEX_TYPE indexType = OClass.INDEX_TYPE.valueOf(index.getType());
+    final boolean isComposite = isComposite(index);
+    final boolean supportNullValues = supportNullValues(index);
+
+    int priority = 1;
+
+    if (isComposite) {
+      if (!supportNullValues)
+        return -1;
+    } else {
+      priority += 10;
+    }
+
+    switch (indexType) {
+    case UNIQUE_HASH_INDEX:
+    case NOTUNIQUE_HASH_INDEX:
+      if (isComposite)
+        return -1;
+      else
+        priority += 10;
+      break;
+    case UNIQUE:
+    case NOTUNIQUE:
+      priority += 5;
+      break;
+    case PROXY:
+    case FULLTEXT:
+    case DICTIONARY:
+    case FULLTEXT_HASH_INDEX:
+    case DICTIONARY_HASH_INDEX:
+    case SPATIAL:
+      return -1;
+    }
+
+    return priority;
+  }
+
+  /**
+   * Check if index can be used as base index.
+   * 
+   * Requirements to the base index:
+   * <ul>
+   * <li>Should be unique or not unique. Other types can not be used to get all documents with required links.</li>
+   * <li>Should not be composite hash index. As soon as hash index does not support partial match search.</li>
+   * <li>Composite index that ignores null values should not be used.</li>
+   * </ul>
+   * 
+   * @param index
+   *          to check
+   * @return true if index usage is allowed as base index.
+   */
+  public static boolean isAppropriateAsBase(OIndex<?> index) {
+    return priorityOfUsage(index) > 0;
+  }
+
+  private static boolean supportNullValues(OIndex<?> index) {
+    final ODocument metadata = index.getMetadata();
+    if (metadata == null)
+      return false;
+
+    final Boolean ignoreNullValues = metadata.field("ignoreNullValues");
+    return Boolean.FALSE.equals(ignoreNullValues);
   }
 
   public String getDatabaseName() {
@@ -211,10 +357,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     return result;
   }
 
-  private static boolean isComposite(OIndex<?> currentIndex) {
-    return currentIndex.getDefinition().getParamCount() > 1;
-  }
-
   private List<OIdentifiable> getFromCompositeIndex(Comparable currentKey, OIndex<?> currentIndex) {
     final OIndexCursor cursor = currentIndex.iterateEntriesBetween(currentKey, true, currentKey, true, true);
 
@@ -251,101 +393,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     } else {
       return Collections.singleton((Comparable) indexDefinition.createValue(keys));
     }
-  }
-
-  private static Iterable<List<OIndex<?>>> getIndexesForChain(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,
-      ODatabaseComplex<?> database) {
-    List<OIndex<?>> baseIndexes = prepareBaseIndexes(index, fieldChain, database);
-
-    Collection<OIndex<?>> lastIndexes = prepareLastIndexVariants(index, fieldChain, database);
-
-    Collection<List<OIndex<?>>> result = new ArrayList<List<OIndex<?>>>();
-    for (OIndex<?> lastIndex : lastIndexes) {
-      final List<OIndex<?>> indexes = new ArrayList<OIndex<?>>(fieldChain.getItemCount());
-      indexes.addAll(baseIndexes);
-      indexes.add(lastIndex);
-
-      result.add(indexes);
-    }
-
-    return result;
-  }
-
-  private static Collection<OIndex<?>> prepareLastIndexVariants(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,
-      ODatabaseComplex<?> database) {
-    OClass oClass = database.getMetadata().getSchema().getClass(index.getDefinition().getClassName());
-    for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
-      oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
-    }
-
-    final Set<OIndex<?>> involvedIndexes = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
-      public int compare(OIndex<?> o1, OIndex<?> o2) {
-        return o1.getDefinition().getParamCount() - o2.getDefinition().getParamCount();
-      }
-    });
-
-    involvedIndexes.addAll(oClass.getInvolvedIndexes(fieldChain.getItemName(fieldChain.getItemCount() - 1)));
-    final Collection<Class<? extends OIndex>> indexTypes = new HashSet<Class<? extends OIndex>>(3);
-    final Collection<OIndex<?>> result = new ArrayList<OIndex<?>>();
-
-    for (OIndex<?> involvedIndex : involvedIndexes) {
-      if (!indexTypes.contains(involvedIndex.getInternal().getClass())) {
-        result.add(involvedIndex);
-        indexTypes.add(involvedIndex.getInternal().getClass());
-      }
-    }
-
-    return result;
-  }
-
-  private static List<OIndex<?>> prepareBaseIndexes(OIndex<?> index, OSQLFilterItemField.FieldChain fieldChain,
-      ODatabaseComplex<?> database) {
-    List<OIndex<?>> result = new ArrayList<OIndex<?>>(fieldChain.getItemCount() - 1);
-
-    result.add(index);
-
-    OClass oClass = database.getMetadata().getSchema().getClass(index.getDefinition().getClassName());
-    oClass = oClass.getProperty(fieldChain.getItemName(0)).getLinkedClass();
-    for (int i = 1; i < fieldChain.getItemCount() - 1; i++) {
-      final Set<OIndex<?>> involvedIndexes = oClass.getInvolvedIndexes(fieldChain.getItemName(i));
-      final OIndex<?> bestIndex = findBestIndex(involvedIndexes);
-
-      result.add(bestIndex);
-      oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
-    }
-    return result;
-  }
-
-  private static OIndex<?> findBestIndex(Iterable<OIndex<?>> involvedIndexes) {
-    OIndex<?> bestIndex = null;
-    for (OIndex<?> index : involvedIndexes) {
-      bestIndex = index;
-      if (isAppropriateAsBase(index)) {
-        return index;
-      }
-    }
-    return bestIndex;
-  }
-
-  /**
-   * Check if index can be used as base index.
-   * 
-   * Requirements to the base index:
-   * <ul>
-   * <li>Should be unique or not unique. Other types can not be used to get all documents with required links.</li>
-   * <li>Should not be composite hash index. As soon as hash index does not support partial match search.</li>
-   * </ul>
-   * 
-   * @param index
-   *          to check
-   * @return true if index usage is allowed as base index.
-   */
-  private static boolean isAppropriateAsBase(OIndex<?> index) {
-    OIndexInternal<?> internalIndex = index.getInternal();
-
-    String type = index.getType();
-    return (internalIndex instanceof OIndexUnique || internalIndex instanceof OIndexNotUnique)
-        && !(isComposite(index) && (UNIQUE_HASH_INDEX.toString().equals(type) || NOTUNIQUE_HASH_INDEX.toString().equals(type)));
   }
 
   /**

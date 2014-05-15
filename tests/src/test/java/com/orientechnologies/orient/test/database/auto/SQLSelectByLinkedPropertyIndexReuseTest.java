@@ -463,8 +463,11 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
       studentClass.createProperty("transcript", OType.LINK, transcriptClass).createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
       studentClass.createProperty("skill", OType.LINK, skillClass);
 
-      studentClass.createIndex("studentDiplomaAndNameIndex", OClass.INDEX_TYPE.UNIQUE, "diploma", "name");
-      studentClass.createIndex("studentSkillAndGroupIndex", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "skill", "group");
+      final ODocument metadata = new ODocument().field("ignoreNullValues", false);
+      studentClass.createIndex("studentDiplomaAndNameIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null, metadata.copy(),
+          new String[] { "diploma", "name" });
+      studentClass.createIndex("studentSkillAndGroupIndex", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString(), null,
+          metadata.copy(), new String[] { "skill", "group" });
 
       schema.save();
     }
