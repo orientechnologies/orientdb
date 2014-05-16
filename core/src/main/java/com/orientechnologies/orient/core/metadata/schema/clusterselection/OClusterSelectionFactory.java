@@ -28,6 +28,7 @@ public class OClusterSelectionFactory extends OConfigurableStatefulFactory<Strin
 
     register(ODefaultClusterSelectionStrategy.NAME, ODefaultClusterSelectionStrategy.class);
     register(ORoundRobinClusterSelectionStrategy.NAME, ORoundRobinClusterSelectionStrategy.class);
+    register(OBalancedClusterSelectionStrategy.NAME, OBalancedClusterSelectionStrategy.class);
   }
 
   public OClusterSelectionStrategy getStrategy(final String iStrategy) {
