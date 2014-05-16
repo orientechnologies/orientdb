@@ -144,12 +144,21 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  public void setClusterSelection(OClusterSelectionStrategy clusterSelection) {
+  public OClass setClusterSelection(OClusterSelectionStrategy clusterSelection) {
     this.clusterSelection = clusterSelection;
+    return this;
   }
 
   @Override
-  public void setClusterSelection(final String clusterSelection) {
+  public OClass setClusterSelection(final String iValue) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    final String cmd = String.format("alter class %s clusterselection %s", name, iValue);
+    final Integer clusterId = getDatabase().command(new OCommandSQL(cmd)).execute();
+    addClusterIdInternal(clusterId);
+    return this;
+  }
+
+  public void setClusterSelectionInternal(final String clusterSelection) {
     this.clusterSelection = owner.getClusterSelectionFactory().newInstance(clusterSelection);
   }
 
@@ -914,6 +923,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return isStrictMode();
     case ABSTRACT:
       return isAbstract();
+    case CLUSTERSELECTION:
+      return getClusterSelection();
     case CUSTOM:
       return getCustomInternal();
     }
@@ -987,6 +998,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       removeClusterIdInternal(clId);
       break;
     }
+    case CLUSTERSELECTION:
+      setClusterSelectionInternal(stringValue);
+      break;
+
     case CUSTOM:
       if (isNull || stringValue.equalsIgnoreCase("clear"))
         clearCustomInternal();
@@ -1043,6 +1058,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       if (clId == NOT_EXISTENT_CLUSTER_ID)
         throw new IllegalArgumentException("Cluster id '" + stringValue + "' cannot be removed");
       removeClusterId(clId);
+      break;
+    case CLUSTERSELECTION:
+      setClusterSelection(stringValue);
       break;
     case CUSTOM:
       if (isNull || stringValue.equalsIgnoreCase("clear"))
