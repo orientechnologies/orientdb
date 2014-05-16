@@ -417,8 +417,12 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   public OUser repair() {
     acquireExclusiveLock();
     try {
-
+      if (cachedUsers != null)
+        cachedUsers.clear();
       getDatabase().getMetadata().getIndexManager().dropIndex("OUser.name");
+
+      if (cachedRoles != null)
+        cachedRoles.clear();
       getDatabase().getMetadata().getIndexManager().dropIndex("ORole.name");
 
       return createMetadata();
