@@ -555,7 +555,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       context.updateMetric("documentReads", +1);
 
-      if (filter(record, evaluateRecords))
+      context.setVariable("current", record);
+      assignLetClauses(record);
+
+      if (!evaluateRecords || filter(record))
         if (!handleResult(record))
           // LIMIT REACHED
           return false;
