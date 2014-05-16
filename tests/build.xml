@@ -62,6 +62,8 @@
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
             <jvmarg value="-Xmx2G"/>
             <jvmarg value="-XX:+HeapDumpOnOutOfMemoryError"/>
+            <!-- debug mode -->
+            <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>-->
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">

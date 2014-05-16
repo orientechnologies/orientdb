@@ -33,7 +33,8 @@ public abstract class AbstractSelectTest {
     }), args);
 
     Assert.assertTrue(endWasCalled.get());
-    Assert.assertTrue(ODocumentHelper.compareCollections(db, synchResult, db, asynchResult, null));
+    Assert.assertTrue(ODocumentHelper.compareCollections(db, synchResult, db, asynchResult, null),
+        "Synch: " + synchResult.toString() + ", but asynch: " + asynchResult.toString());
 
     return synchResult;
   }

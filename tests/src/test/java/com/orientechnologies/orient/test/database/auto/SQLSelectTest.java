@@ -1341,10 +1341,10 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void subQueryLetAndIndexedWhere() {
-    List<ODocument> result = executeQuery("select $now from OUser where name = 'admin' let $now = sysdate()", database);
+    List<ODocument> result = executeQuery("select $now from OUser where name = 'admin' let $now = eval('42')", database);
 
     Assert.assertEquals(result.size(), 1);
-    Assert.assertNotNull(result.get(0).field("$now"));
+    Assert.assertNotNull(result.get(0).field("$now"), result.get(0).toString());
   }
 
   @Test
