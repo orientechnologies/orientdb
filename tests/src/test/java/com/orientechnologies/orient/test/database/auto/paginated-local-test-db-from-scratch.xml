@@ -1,4 +1,4 @@
-<suite name="Test Suite Example" verbose="2" parallel="false">
+<suite name="Paginated Local Test Suite" verbose="2" parallel="false">
 
     <parameter name="path" value="@PATH@"/>
     <parameter name="url" value="@URL@"/>

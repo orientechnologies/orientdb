@@ -1,5 +1,5 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
-<suite name="Test Suite Example" verbose="2" parallel="false">
+<suite name="Memory Test Suite" verbose="2" parallel="false">
 
     <parameter name="path" value="-"/>
     <parameter name="url" value="memory:demo"/>
