@@ -17,9 +17,7 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
   private final static int RECORDS_COUNT_OFFSET       = NEXT_FREE_POSITION;
   private final static int KEY_SERIALIZER_ID_OFFSET   = RECORDS_COUNT_OFFSET + OLongSerializer.LONG_SIZE;
   private final static int VALUE_SERIALIZER_ID_OFFSET = KEY_SERIALIZER_ID_OFFSET + OByteSerializer.BYTE_SIZE;
-  private final static int HASH_TREE_SIZE_OFFSET      = VALUE_SERIALIZER_ID_OFFSET + OByteSerializer.BYTE_SIZE;
-  private final static int HASH_TREE_TOMBSTONE_OFFSET = HASH_TREE_SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
-  private final static int METADATA_ARRAY_OFFSET      = HASH_TREE_TOMBSTONE_OFFSET + OIntegerSerializer.INT_SIZE;
+  private final static int METADATA_ARRAY_OFFSET      = VALUE_SERIALIZER_ID_OFFSET + OByteSerializer.BYTE_SIZE;
 
   private final static int ITEM_SIZE                  = OByteSerializer.BYTE_SIZE + 3 * OLongSerializer.LONG_SIZE;
 
@@ -34,8 +32,6 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
       setRecordsCount(0);
       setKeySerializerId((byte) -1);
       setValueSerializerId((byte) -1);
-      setHashTreeSize(0);
-      setHashTreeTombstone(-1);
     }
   }
 
@@ -61,22 +57,6 @@ public class OHashIndexFileLevelMetadataPage extends ODurablePage {
 
   public byte getValueSerializerId() throws IOException {
     return getByteValue(VALUE_SERIALIZER_ID_OFFSET);
-  }
-
-  public void setHashTreeSize(int hashTreeSize) throws IOException {
-    setIntValue(HASH_TREE_SIZE_OFFSET, hashTreeSize);
-  }
-
-  public int getHashTreeSize() throws IOException {
-    return getIntValue(HASH_TREE_SIZE_OFFSET);
-  }
-
-  public void setHashTreeTombstone(int hashTreeTombstone) throws IOException {
-    setIntValue(HASH_TREE_TOMBSTONE_OFFSET, hashTreeTombstone);
-  }
-
-  public int getHashTreeTombstone() throws IOException {
-    return getIntValue(HASH_TREE_TOMBSTONE_OFFSET);
   }
 
   public void setFileMetadata(int index, long fileId, long bucketsCount, long tombstoneIndex) throws IOException {

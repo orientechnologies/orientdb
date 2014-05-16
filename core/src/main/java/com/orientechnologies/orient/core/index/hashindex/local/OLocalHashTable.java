@@ -17,19 +17,16 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.io.IOException;
@@ -46,9 +43,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   private static final long              HASH_CODE_MIN_VALUE = 0;
   private static final long              HASH_CODE_MAX_VALUE = 0xFFFFFFFFFFFFFFFFL;
 
-  private long[][]                       hashTree;
-  private OHashTreeNodeMetadata[]        nodesMetadata;
-
   private final String                   metadataConfigurationFileExtension;
   private final String                   treeStateFileExtension;
   private final String                   bucketFileExtension;
@@ -62,8 +56,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   private OStorageLocalAbstract          storage;
 
   private String                         name;
-
-  private OHashIndexTreeStateStore       treeStateStore;
 
   private ODiskCache                     diskCache;
   private final OHashFunction<K>         keyHashFunction;
@@ -82,6 +74,8 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
   private OCacheEntry                    hashStateEntry;
 
+  private OHashTableDirectory            directory;
+
   public OLocalHashTable(String metadataConfigurationFileExtension, String treeStateFileExtension, String bucketFileExtension,
       String nullBucketFileExtension, OHashFunction<K> keyHashFunction) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
@@ -92,16 +86,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     this.nullBucketFileExtension = nullBucketFileExtension;
 
     this.comparator = new KeyHashCodeComparator<K>(this.keyHashFunction);
-  }
-
-  private void initStores(String metadataConfigurationFileExtension, String treeStateFileExtension) throws IOException {
-    final OStorageFileConfiguration metadataConfiguration = new OStorageFileConfiguration(null,
-        OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + metadataConfigurationFileExtension, OFileClassic.NAME, "0", "50%");
-
-    final OStorageFileConfiguration treeStateConfiguration = new OStorageFileConfiguration(null,
-        OStorageVariableParser.DB_PATH_VARIABLE + '/' + name + treeStateFileExtension, OFileClassic.NAME, "0", "50%");
-
-    treeStateStore = new OHashIndexTreeStateStore(storage, treeStateConfiguration);
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
@@ -118,9 +102,8 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
       this.name = name;
 
-      initStores(metadataConfigurationFileExtension, treeStateFileExtension);
-
-      treeStateStore.create(-1);
+      this.directory = new OHashTableDirectory(treeStateFileExtension, name, diskCache);
+      directory.create();
 
       fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
       hashStateEntry = diskCache.allocateNewPage(fileStateId);
@@ -246,7 +229,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         final long hashCode = keyHashFunction.hashCode(key);
 
         BucketPath bucketPath = getBucket(hashCode);
-        final long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+        final long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
         if (bucketPointer == 0)
           return null;
 
@@ -284,8 +267,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
       doPut(key, value);
-    } catch (OIndexMaximumLimitReachedException e) {
-      OLogManager.instance().warn(this, "Key " + key + " is too large to fit in index and will be skipped", e);
     } catch (IOException e) {
       throw new OIndexException("Error during index update", e);
     } finally {
@@ -305,7 +286,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         final long hashCode = keyHashFunction.hashCode(key);
 
         final BucketPath nodePath = getBucket(hashCode);
-        final long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
+        final long bucketPointer = directory.getNodePointer(nodePath.nodeIndex, nodePath.itemIndex + nodePath.hashMapOffset);
 
         final long pageIndex = getPageIndex(bucketPointer);
         final int fileLevel = getFileLevel(bucketPointer);
@@ -336,10 +317,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         if (nodePath.parent != null) {
           final int hashMapSize = 1 << nodePath.nodeLocalDepth;
 
-          final long[] node = hashTree[nodePath.nodeIndex];
-          final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(node, hashMapSize);
+          final boolean allMapsContainSameBucket = checkAllMapsContainSameBucket(directory.getNode(nodePath.nodeIndex), hashMapSize);
           if (allMapsContainSameBucket)
-            mergeNodeToParent(node, nodePath);
+            mergeNodeToParent(nodePath);
         }
 
         changeSize(sizeDiff);
@@ -392,7 +372,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         stateCachePointer.releaseExclusiveLock();
         diskCache.release(hashStateEntry);
       }
-  }
+    }
   }
 
   public void clear() {
@@ -417,9 +397,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       } finally {
         stateCachePointer.releaseExclusiveLock();
         diskCache.release(hashStateEntry);
- }
-
-      treeStateStore.truncate();
+      }
 
       if (nullKeyIsSupported)
         diskCache.truncateFile(nullBucketFileId);
@@ -443,7 +421,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
-      long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+      long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
 
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
@@ -461,7 +439,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
           diskCache.release(cacheEntry);
 
-          final long nextPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+          final long nextPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
 
           fileLevel = getFileLevel(nextPointer);
           pageIndex = getPageIndex(nextPointer);
@@ -496,10 +474,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     }
   }
 
-  private void saveState() throws IOException {
-    treeStateStore.storeTreeState(hashTree, nodesMetadata);
-  }
-
   public void load(String name, OType[] keyTypes, OStorageLocalAbstract storageLocal, boolean nullKeyIsSupported) {
     acquireExclusiveLock();
     try {
@@ -510,32 +484,18 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       diskCache = storage.getDiskCache();
 
       this.name = name;
-      initStores(metadataConfigurationFileExtension, treeStateFileExtension);
 
       fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
       hashStateEntry = diskCache.load(fileStateId, 0, true);
+
+      directory = new OHashTableDirectory(treeStateFileExtension, name, diskCache);
+      directory.open();
 
       diskCache.pinPage(hashStateEntry);
       final OCachePointer cachePointer = hashStateEntry.getCachePointer();
       try {
         OHashIndexFileLevelMetadataPage page = new OHashIndexFileLevelMetadataPage(cachePointer.getDataPointer(),
             ODurablePage.TrackMode.NONE, false);
-        treeStateStore.open();
-
-        final int arraySize;
-        final int hashTreeSize = page.getHashTreeSize();
-
-        int bitsCount = Integer.bitCount(hashTreeSize);
-        if (bitsCount == 1)
-          arraySize = hashTreeSize;
-        else
-          arraySize = Integer.highestOneBit(hashTreeSize) << 1;
-
-        OHashIndexTreeStateStore.TreeState treeState = treeStateStore.loadTreeState(arraySize);
-
-        hashTree = treeState.getHashTree();
-        nodesMetadata = treeState.getHashTreeNodeMetadata();
-
         keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance()
             .getObjectSerializer(page.getKeySerializerId());
         valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance().getObjectSerializer(
@@ -563,9 +523,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       storage = storageLocal;
 
       final ODiskCache diskCache = storage.getDiskCache();
-      initStores(metadataConfigurationFileExtension, treeStateFileExtension);
-
-      treeStateStore.open();
 
       fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
       hashStateEntry = diskCache.load(fileStateId, 0, true);
@@ -583,7 +540,8 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       }
 
       diskCache.deleteFile(fileStateId);
-      treeStateStore.delete();
+      directory = new OHashTableDirectory(treeStateFileExtension, name, diskCache);
+      directory.deleteWithoutOpen();
 
       final long nullBucketId = diskCache.openFile(name + nullBucketFileExtension);
       diskCache.deleteFile(nullBucketId);
@@ -604,19 +562,20 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     return entries;
   }
 
-  private BucketPath nextBucketToFind(final BucketPath bucketPath, int bucketDepth) {
+  private BucketPath nextBucketToFind(final BucketPath bucketPath, int bucketDepth) throws IOException {
     int offset = bucketPath.nodeGlobalDepth - bucketDepth;
 
     BucketPath currentNode = bucketPath;
-    int nodeLocalDepth = nodesMetadata[bucketPath.nodeIndex].getNodeLocalDepth();
-    assert nodesMetadata[bucketPath.nodeIndex].getNodeLocalDepth() == bucketPath.nodeLocalDepth;
+    int nodeLocalDepth = directory.getNodeLocalDepth(bucketPath.nodeIndex);
+
+    assert directory.getNodeLocalDepth(bucketPath.nodeIndex) == bucketPath.nodeLocalDepth;
 
     while (offset > 0) {
       offset -= nodeLocalDepth;
       if (offset > 0) {
         currentNode = bucketPath.parent;
         nodeLocalDepth = currentNode.nodeLocalDepth;
-        assert nodesMetadata[currentNode.nodeIndex].getNodeLocalDepth() == currentNode.nodeLocalDepth;
+        assert directory.getNodeLocalDepth(currentNode.nodeIndex) == currentNode.nodeLocalDepth;
       }
     }
 
@@ -641,9 +600,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     return nextNonEmptyNode(bucketPathToFind);
   }
 
-  private BucketPath nextNonEmptyNode(BucketPath bucketPath) {
+  private BucketPath nextNonEmptyNode(BucketPath bucketPath) throws IOException {
     nextBucketLoop: while (bucketPath != null) {
-      final long[] node = hashTree[bucketPath.nodeIndex];
+      final long[] node = directory.getNode(bucketPath.nodeIndex);
       final int startIndex = bucketPath.itemIndex + bucketPath.hashMapOffset;
       final int endIndex = MAX_LEVEL_SIZE;
 
@@ -666,7 +625,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           final BucketPath parent = new BucketPath(bucketPath.parent, 0, i, bucketPath.nodeIndex, bucketPath.nodeLocalDepth,
               bucketPath.nodeGlobalDepth);
 
-          final int childLocalDepth = nodesMetadata[childNodeIndex].getNodeLocalDepth();
+          final int childLocalDepth = directory.getNodeLocalDepth(childNodeIndex);
           bucketPath = new BucketPath(parent, childItemOffset, 0, childNodeIndex, childLocalDepth, bucketPath.nodeGlobalDepth
               + childLocalDepth);
 
@@ -680,12 +639,14 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     return null;
   }
 
-  private BucketPath nextLevelUp(BucketPath bucketPath) {
+  private BucketPath nextLevelUp(BucketPath bucketPath) throws IOException {
     if (bucketPath.parent == null)
       return null;
 
     final int nodeLocalDepth = bucketPath.nodeLocalDepth;
-    assert nodesMetadata[bucketPath.nodeIndex].getNodeLocalDepth() == bucketPath.nodeLocalDepth;
+
+    assert directory.getNodeLocalDepth(bucketPath.nodeIndex) == bucketPath.nodeLocalDepth;
+
     final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
 
     final BucketPath parent = bucketPath.parent;
@@ -711,7 +672,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
 
-      long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+      long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
 
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
@@ -728,7 +689,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
             return new OHashIndexBucket.Entry[0];
 
           diskCache.release(cacheEntry);
-          final long nextPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+          final long nextPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
 
           fileLevel = getFileLevel(nextPointer);
           pageIndex = getPageIndex(nextPointer);
@@ -763,7 +724,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     acquireSharedLock();
     try {
       BucketPath bucketPath = getBucket(HASH_CODE_MIN_VALUE);
-      long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex];
+      long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex);
 
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
@@ -781,7 +742,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
             return null;
 
           diskCache.release(cacheEntry);
-          final long nextPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+          final long nextPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
 
           fileLevel = getFileLevel(nextPointer);
           pageIndex = getPageIndex(nextPointer);
@@ -808,7 +769,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     acquireSharedLock();
     try {
       BucketPath bucketPath = getBucket(HASH_CODE_MAX_VALUE);
-      long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+      long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
 
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
@@ -826,7 +787,8 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
             return null;
 
           diskCache.release(cacheEntry);
-          final long prevPointer = hashTree[prevBucketPath.nodeIndex][prevBucketPath.itemIndex + prevBucketPath.hashMapOffset];
+          final long prevPointer = directory.getNodePointer(prevBucketPath.nodeIndex, prevBucketPath.itemIndex
+              + prevBucketPath.hashMapOffset);
 
           fileLevel = getFileLevel(prevPointer);
           pageIndex = getPageIndex(prevPointer);
@@ -858,7 +820,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
 
-      long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+      long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
 
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
@@ -875,7 +837,8 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
           diskCache.release(cacheEntry);
 
-          final long prevPointer = hashTree[prevBucketPath.nodeIndex][prevBucketPath.itemIndex + prevBucketPath.hashMapOffset];
+          final long prevPointer = directory.getNodePointer(prevBucketPath.nodeIndex, prevBucketPath.itemIndex
+              + prevBucketPath.hashMapOffset);
 
           fileLevel = getFileLevel(prevPointer);
           pageIndex = getPageIndex(prevPointer);
@@ -914,7 +877,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
 
-      long bucketPointer = hashTree[bucketPath.nodeIndex][bucketPath.itemIndex + bucketPath.hashMapOffset];
+      long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
 
       int fileLevel = getFileLevel(bucketPointer);
       long pageIndex = getPageIndex(bucketPointer);
@@ -931,7 +894,8 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
           diskCache.release(cacheEntry);
 
-          final long prevPointer = hashTree[prevBucketPath.nodeIndex][prevBucketPath.itemIndex + prevBucketPath.hashMapOffset];
+          final long prevPointer = directory.getNodePointer(prevBucketPath.nodeIndex, prevBucketPath.itemIndex
+              + prevBucketPath.hashMapOffset);
 
           fileLevel = getFileLevel(prevPointer);
           pageIndex = getPageIndex(prevPointer);
@@ -962,7 +926,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     }
   }
 
-  private BucketPath prevBucketToFind(final BucketPath bucketPath, int bucketDepth) {
+  private BucketPath prevBucketToFind(final BucketPath bucketPath, int bucketDepth) throws IOException {
     int offset = bucketPath.nodeGlobalDepth - bucketDepth;
 
     BucketPath currentBucket = bucketPath;
@@ -995,9 +959,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     return prevNonEmptyNode(bucketPathToFind);
   }
 
-  private BucketPath prevNonEmptyNode(BucketPath nodePath) {
+  private BucketPath prevNonEmptyNode(BucketPath nodePath) throws IOException {
     prevBucketLoop: while (nodePath != null) {
-      final long[] node = hashTree[nodePath.nodeIndex];
+      final long[] node = directory.getNode(nodePath.nodeIndex);
       final int startIndex = 0;
       final int endIndex = nodePath.itemIndex + nodePath.hashMapOffset;
 
@@ -1015,7 +979,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         if (position < 0) {
           final int childNodeIndex = (int) ((position & Long.MAX_VALUE) >> 8);
           final int childItemOffset = (int) position & 0xFF;
-          final int nodeLocalDepth = nodesMetadata[childNodeIndex].getNodeLocalDepth();
+          final int nodeLocalDepth = directory.getNodeLocalDepth(childNodeIndex);
           final int endChildIndex = (1 << nodeLocalDepth) - 1;
 
           final BucketPath parent = new BucketPath(nodePath.parent, 0, i, nodePath.nodeIndex, nodePath.nodeLocalDepth,
@@ -1076,8 +1040,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     try {
       flush();
 
-      treeStateStore.close();
+      directory.close();
       diskCache.loadPinnedPage(hashStateEntry);
+
       try {
         for (int i = 0; i < HASH_CODE_SIZE; i++) {
           OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry.getCachePointer()
@@ -1114,7 +1079,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         diskCache.release(hashStateEntry);
       }
 
-      treeStateStore.delete();
+      directory.delete();
       diskCache.deleteFile(fileStateId);
 
       if (nullKeyIsSupported)
@@ -1127,27 +1092,26 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     }
   }
 
-  private void mergeNodeToParent(long[] node, BucketPath nodePath) throws IOException {
+  private void mergeNodeToParent(BucketPath nodePath) throws IOException {
     final int startIndex = findParentNodeStartIndex(nodePath);
     final int localNodeDepth = nodePath.nodeLocalDepth;
     final int hashMapSize = 1 << localNodeDepth;
 
-    final long[] parentNode = hashTree[nodePath.parent.nodeIndex];
-    for (int i = 0, k = startIndex; i < node.length; i += hashMapSize, k++) {
-      parentNode[k] = node[i];
+    final int parentIndex = nodePath.parent.nodeIndex;
+    for (int i = 0, k = startIndex; i < MAX_LEVEL_SIZE; i += hashMapSize, k++) {
+      directory.setNodePointer(parentIndex, k, directory.getNodePointer(nodePath.nodeIndex, i));
     }
 
-    deleteNode(nodePath.nodeIndex);
+    directory.deleteNode(nodePath.nodeIndex);
 
-    final OHashTreeNodeMetadata metadata = nodesMetadata[nodePath.parent.nodeIndex];
     if (nodePath.parent.itemIndex < MAX_LEVEL_SIZE / 2) {
-      final int maxChildDepth = metadata.getMaxLeftChildDepth();
+      final int maxChildDepth = directory.getMaxLeftChildDepth(parentIndex);
       if (maxChildDepth == localNodeDepth)
-        metadata.setMaxLeftChildDepth(getMaxLevelDepth(parentNode, 0, parentNode.length / 2));
+        directory.setMaxLeftChildDepth(parentIndex, (byte) getMaxLevelDepth(parentIndex, 0, MAX_LEVEL_SIZE / 2));
     } else {
-      final int maxChildDepth = metadata.getMaxRightChildDepth();
+      final int maxChildDepth = directory.getMaxRightChildDepth(parentIndex);
       if (maxChildDepth == localNodeDepth)
-        metadata.setMaxRightChildDepth(getMaxLevelDepth(parentNode, parentNode.length / 2, parentNode.length));
+        directory.setMaxRightChildDepth(parentIndex, (byte) getMaxLevelDepth(parentIndex, MAX_LEVEL_SIZE / 2, MAX_LEVEL_SIZE));
     }
   }
 
@@ -1186,15 +1150,14 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     long buddyIndex;
     long buddyPointer;
 
-    final long[] node = hashTree[currentNode.nodeIndex];
     if ((currentNode.itemIndex >>> (nodeLocalDepth - diff - 1) & 1) == 1) {
-      buddyPointer = node[firstStartIndex + currentNode.hashMapOffset];
+      buddyPointer = directory.getNodePointer(currentNode.nodeIndex, firstStartIndex + currentNode.hashMapOffset);
 
       while (buddyPointer < 0) {
         final int nodeIndex = (int) ((buddyPointer & Long.MAX_VALUE) >> 8);
         final int itemOffset = (int) buddyPointer & 0xFF;
 
-        buddyPointer = hashTree[nodeIndex][itemOffset];
+        buddyPointer = directory.getNodePointer(nodeIndex, itemOffset);
       }
 
       assert buddyPointer > 0;
@@ -1202,13 +1165,13 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       buddyLevel = getFileLevel(buddyPointer);
       buddyIndex = getPageIndex(buddyPointer);
     } else {
-      buddyPointer = node[secondStartIndex + currentNode.hashMapOffset];
+      buddyPointer = directory.getNodePointer(currentNode.nodeIndex, secondStartIndex + currentNode.hashMapOffset);
 
       while (buddyPointer < 0) {
         final int nodeIndex = (int) ((buddyPointer & Long.MAX_VALUE) >> 8);
         final int itemOffset = (int) buddyPointer & 0xFF;
 
-        buddyPointer = hashTree[nodeIndex][itemOffset];
+        buddyPointer = directory.getNodePointer(nodeIndex, itemOffset);
       }
 
       assert buddyPointer > 0;
@@ -1264,9 +1227,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           newBuddyPagePointer.releaseExclusiveLock();
 
           diskCache.release(newBuddyCacheEntry);
-  }
+        }
 
-        final long bucketPointer = hashTree[nodePath.nodeIndex][nodePath.itemIndex + nodePath.hashMapOffset];
+        final long bucketPointer = directory.getNodePointer(nodePath.nodeIndex, nodePath.itemIndex + nodePath.hashMapOffset);
         final long bucketIndex = getPageIndex(bucketPointer);
 
         final long newBuddyPointer = createBucketPointer(buddyIndex, buddyLevel);
@@ -1303,8 +1266,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
   public void flush() {
     acquireExclusiveLock();
     try {
-      saveState();
-
       diskCache.loadPinnedPage(hashStateEntry);
       try {
         for (int i = 0; i < HASH_CODE_SIZE; i++) {
@@ -1318,7 +1279,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       }
 
       diskCache.flushFile(fileStateId);
-    treeStateStore.synch();
+      directory.flush();
 
       if (nullKeyIsSupported)
         diskCache.flushFile(nullBucketFileId);
@@ -1351,9 +1312,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         if (nullBucket.getValue() != null)
           sizeDiff--;
 
-     nullBucket.setValue(value);
+        nullBucket.setValue(value);
         sizeDiff++;
- cacheEntry.markDirty();
+        cacheEntry.markDirty();
       } finally {
         cachePointer.releaseExclusiveLock();
         diskCache.release(cacheEntry);
@@ -1361,12 +1322,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
       changeSize(sizeDiff);
     } else {
-     final long hashCode = keyHashFunction.hashCode(key);
+      final long hashCode = keyHashFunction.hashCode(key);
 
       final BucketPath bucketPath = getBucket(hashCode);
-      long[] node = hashTree[bucketPath.nodeIndex];
-
-      final long bucketPointer = node[bucketPath.itemIndex + bucketPath.hashMapOffset];
+      final long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
       if (bucketPointer == 0)
         throw new IllegalStateException("In this version of hash table buckets are added through split only.");
 
@@ -1401,14 +1360,14 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           sizeDiff--;
         }
 
-    if (bucket.addEntry(hashCode, key, value)) {
+        if (bucket.addEntry(hashCode, key, value)) {
           cacheEntry.markDirty();
 
           sizeDiff++;
 
           changeSize(sizeDiff);
           return;
-       }
+        }
 
         final BucketSplitResult splitResult = splitBucket(bucket, fileLevel, pageIndex);
 
@@ -1420,7 +1379,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           updateNodeAfterBucketSplit(bucketPath, bucketDepth, newBucketPointer, updatedBucketPointer);
         } else {
           if (bucketPath.nodeLocalDepth < MAX_LEVEL_DEPTH) {
-            final NodeSplitResult nodeSplitResult = splitNode(bucketPath, node);
+            final NodeSplitResult nodeSplitResult = splitNode(bucketPath);
 
             assert !(nodeSplitResult.allLeftHashMapsEqual && nodeSplitResult.allRightHashMapsEqual);
 
@@ -1433,7 +1392,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
             int newNodeIndex = -1;
             if (!nodeSplitResult.allRightHashMapsEqual || bucketPath.itemIndex >= MAX_LEVEL_SIZE / 2)
-              newNodeIndex = addNewNode(newNode, nodeLocalDepth);
+              newNodeIndex = directory.addNewNode((byte) 0, (byte) 0, (byte) nodeLocalDepth, newNode);
 
             final int updatedItemIndex = bucketPath.itemIndex << 1;
             final int updatedOffset = bucketPath.hashMapOffset << 1;
@@ -1454,15 +1413,13 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
               updateNodeAfterBucketSplit(newBucketPath, bucketDepth, newBucketPointer, updatedBucketPointer);
             }
 
-            final long[] updatedNode = hashTree[bucketPath.nodeIndex];
-            updateNodesAfterSplit(bucketPath, updatedNode, newNode, nodeLocalDepth, hashMapSize, allLeftHashMapsEqual,
+            updateNodesAfterSplit(bucketPath, bucketPath.nodeIndex, newNode, nodeLocalDepth, hashMapSize, allLeftHashMapsEqual,
                 allRightHashMapsEqual, newNodeIndex);
 
             if (allLeftHashMapsEqual)
-              deleteNode(bucketPath.nodeIndex);
-
+              directory.deleteNode(bucketPath.nodeIndex);
           } else {
-            addNewLevelNode(bucketPath, node, newBucketPointer, updatedBucketPointer);
+            addNewLevelNode(bucketPath, bucketPath.nodeIndex, newBucketPointer, updatedBucketPointer);
           }
         }
       } finally {
@@ -1481,51 +1438,51 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       throw new OIndexException("Null keys are not supported.");
   }
 
-  private void updateNodesAfterSplit(BucketPath bucketPath, long[] node, long[] newNode, int nodeLocalDepth, int hashMapSize,
-      boolean allLeftHashMapEquals, boolean allRightHashMapsEquals, int newNodeIndex) {
+  private void updateNodesAfterSplit(BucketPath bucketPath, int nodeIndex, long[] newNode, int nodeLocalDepth, int hashMapSize,
+      boolean allLeftHashMapEquals, boolean allRightHashMapsEquals, int newNodeIndex) throws IOException {
 
     final int startIndex = findParentNodeStartIndex(bucketPath);
 
-    final long[] parentNode = hashTree[bucketPath.parent.nodeIndex];
-    assert assertParentNodeStartIndex(bucketPath, parentNode, startIndex);
+    final int parentNodeIndex = bucketPath.parent.nodeIndex;
+    assert assertParentNodeStartIndex(bucketPath, directory.getNode(parentNodeIndex), startIndex);
 
     final int pointersSize = 1 << (MAX_LEVEL_DEPTH - nodeLocalDepth);
     if (allLeftHashMapEquals) {
       for (int i = 0; i < pointersSize; i++) {
-        final long position = node[i * hashMapSize];
-        parentNode[startIndex + i] = position;
+        final long position = directory.getNodePointer(nodeIndex, i * hashMapSize);
+        directory.setNodePointer(parentNodeIndex, startIndex + i, position);
       }
     } else {
       for (int i = 0; i < pointersSize; i++)
-        parentNode[startIndex + i] = (bucketPath.nodeIndex << 8) | (i * hashMapSize) | Long.MIN_VALUE;
+        directory.setNodePointer(parentNodeIndex, startIndex + i, (bucketPath.nodeIndex << 8) | (i * hashMapSize) | Long.MIN_VALUE);
     }
 
     if (allRightHashMapsEquals) {
       for (int i = 0; i < pointersSize; i++) {
         final long position = newNode[i * hashMapSize];
-        parentNode[startIndex + pointersSize + i] = position;
+        directory.setNodePointer(parentNodeIndex, startIndex + pointersSize + i, position);
       }
     } else {
       for (int i = 0; i < pointersSize; i++)
-        parentNode[startIndex + pointersSize + i] = (newNodeIndex << 8) | (i * hashMapSize) | Long.MIN_VALUE;
+        directory.setNodePointer(parentNodeIndex, startIndex + pointersSize + i, (newNodeIndex << 8) | (i * hashMapSize)
+            | Long.MIN_VALUE);
     }
 
     updateMaxChildDepth(bucketPath.parent, bucketPath.nodeLocalDepth + 1);
   }
 
-  private void updateMaxChildDepth(BucketPath parentPath, int childDepth) {
+  private void updateMaxChildDepth(BucketPath parentPath, int childDepth) throws IOException {
     if (parentPath == null)
       return;
 
-    final OHashTreeNodeMetadata metadata = nodesMetadata[parentPath.nodeIndex];
     if (parentPath.itemIndex < MAX_LEVEL_SIZE / 2) {
-      final int maxChildDepth = metadata.getMaxLeftChildDepth();
+      final int maxChildDepth = directory.getMaxLeftChildDepth(parentPath.nodeIndex);
       if (childDepth > maxChildDepth)
-        metadata.setMaxLeftChildDepth(childDepth);
+        directory.setMaxLeftChildDepth(parentPath.nodeIndex, (byte) childDepth);
     } else {
-      final int maxChildDepth = metadata.getMaxRightChildDepth();
+      final int maxChildDepth = directory.getMaxRightChildDepth(parentPath.nodeIndex);
       if (childDepth + 1 > maxChildDepth)
-        metadata.setMaxRightChildDepth(childDepth);
+        directory.setMaxRightChildDepth(parentPath.nodeIndex, (byte) childDepth);
     }
   }
 
@@ -1550,17 +1507,17 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     return ((parentBucketPath.itemIndex - MAX_LEVEL_SIZE / 2) / pointersSize) * pointersSize + MAX_LEVEL_SIZE / 2;
   }
 
-  private void addNewLevelNode(BucketPath bucketPath, long[] node, long newBucketPointer, long updatedBucketPointer)
+  private void addNewLevelNode(BucketPath bucketPath, int nodeIndex, long newBucketPointer, long updatedBucketPointer)
       throws IOException {
-    final long[] newNode = new long[MAX_LEVEL_SIZE];
-
     final int newNodeDepth;
     final int newNodeStartIndex;
     final int mapInterval;
 
-    if (bucketPath.itemIndex < node.length / 2) {
-      final int maxDepth = nodesMetadata[bucketPath.nodeIndex].getMaxLeftChildDepth();
-      assert getMaxLevelDepth(node, 0, node.length / 2) == maxDepth;
+    if (bucketPath.itemIndex < MAX_LEVEL_SIZE / 2) {
+      final int maxDepth = directory.getMaxLeftChildDepth(bucketPath.nodeIndex);
+
+      assert getMaxLevelDepth(bucketPath.nodeIndex, 0, MAX_LEVEL_SIZE / 2) == maxDepth;
+
       if (maxDepth > 0)
         newNodeDepth = maxDepth;
       else
@@ -1569,46 +1526,47 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       mapInterval = 1 << (MAX_LEVEL_DEPTH - newNodeDepth);
       newNodeStartIndex = (bucketPath.itemIndex / mapInterval) * mapInterval;
     } else {
-      final int maxDepth = nodesMetadata[bucketPath.nodeIndex].getMaxRightChildDepth();
-      assert getMaxLevelDepth(node, node.length / 2, node.length) == maxDepth;
+      final int maxDepth = directory.getMaxRightChildDepth(bucketPath.nodeIndex);
+      assert getMaxLevelDepth(bucketPath.nodeIndex, MAX_LEVEL_SIZE / 2, MAX_LEVEL_SIZE) == maxDepth;
       if (maxDepth > 0)
         newNodeDepth = maxDepth;
       else
         newNodeDepth = 1;
 
       mapInterval = 1 << (MAX_LEVEL_DEPTH - newNodeDepth);
-      newNodeStartIndex = ((bucketPath.itemIndex - node.length / 2) / mapInterval) * mapInterval + node.length / 2;
+      newNodeStartIndex = ((bucketPath.itemIndex - MAX_LEVEL_SIZE) / mapInterval) * mapInterval + MAX_LEVEL_SIZE / 2;
     }
 
-    final int newNodeIndex = addNewNode(newNode, newNodeDepth);
+    final int newNodeIndex = directory.addNewNode((byte) 0, (byte) 0, (byte) newNodeDepth, new long[MAX_LEVEL_SIZE]);
+
     final int mapSize = 1 << newNodeDepth;
     for (int i = 0; i < mapInterval; i++) {
       final int nodeOffset = i + newNodeStartIndex;
-      final long bucketPointer = node[nodeOffset];
+      final long bucketPointer = directory.getNodePointer(nodeIndex, nodeOffset);
 
       if (nodeOffset != bucketPath.itemIndex) {
         for (int n = i << newNodeDepth; n < (i + 1) << newNodeDepth; n++)
-          newNode[n] = bucketPointer;
+          directory.setNodePointer(newNodeIndex, n, bucketPointer);
       } else {
         for (int n = i << newNodeDepth; n < (2 * i + 1) << (newNodeDepth - 1); n++)
-          newNode[n] = updatedBucketPointer;
+          directory.setNodePointer(newNodeIndex, n, updatedBucketPointer);
 
         for (int n = (2 * i + 1) << (newNodeDepth - 1); n < (i + 1) << newNodeDepth; n++)
-          newNode[n] = newBucketPointer;
+          directory.setNodePointer(newNodeIndex, n, newBucketPointer);
       }
 
-      node[nodeOffset] = (newNodeIndex << 8) | (i * mapSize) | Long.MIN_VALUE;
+      directory.setNodePointer(nodeIndex, nodeOffset, (newNodeIndex << 8) | (i * mapSize) | Long.MIN_VALUE);
     }
 
     updateMaxChildDepth(bucketPath, newNodeDepth);
   }
 
-  private int getMaxLevelDepth(long node[], int start, int end) {
+  private int getMaxLevelDepth(int nodeIndex, int start, int end) throws IOException {
     int currentIndex = -1;
     int maxDepth = 0;
 
     for (int i = start; i < end; i++) {
-      final long nodePosition = node[i];
+      final long nodePosition = directory.getNodePointer(nodeIndex, i);
       if (nodePosition >= 0)
         continue;
 
@@ -1617,14 +1575,17 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
         continue;
 
       currentIndex = index;
-      if (maxDepth < nodesMetadata[index].getNodeLocalDepth())
-        maxDepth = nodesMetadata[index].getNodeLocalDepth();
+
+      final int nodeLocalDepth = directory.getNodeLocalDepth(index);
+      if (maxDepth < nodeLocalDepth)
+        maxDepth = nodeLocalDepth;
     }
 
     return maxDepth;
   }
 
-  private void updateNodeAfterBucketSplit(BucketPath bucketPath, int bucketDepth, long newBucketPointer, long updatedBucketPointer) {
+  private void updateNodeAfterBucketSplit(BucketPath bucketPath, int bucketDepth, long newBucketPointer, long updatedBucketPointer)
+      throws IOException {
     int offset = bucketPath.nodeGlobalDepth - (bucketDepth - 1);
     BucketPath currentNode = bucketPath;
     int nodeLocalDepth = bucketPath.nodeLocalDepth;
@@ -1650,61 +1611,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
     for (int i = secondStartIndex; i < secondEndIndex; i++)
       updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newBucketPointer);
-  }
-
-  private int addNewNode(long[] newNode, int nodeLocalDepth) throws IOException {
-    diskCache.loadPinnedPage(hashStateEntry);
-    final OCachePointer hashStatePointer = hashStateEntry.getCachePointer();
-
-    hashStatePointer.acquireExclusiveLock();
-    try {
-      OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStatePointer.getDataPointer(),
-          ODurablePage.TrackMode.NONE, false);
-
-      int hashTreeTombstone = metadataPage.getHashTreeTombstone();
-      if (hashTreeTombstone >= 0) {
-        long[] tombstone = hashTree[hashTreeTombstone];
-
-        hashTree[hashTreeTombstone] = newNode;
-        nodesMetadata[hashTreeTombstone] = new OHashTreeNodeMetadata((byte) 0, (byte) 0, (byte) nodeLocalDepth);
-
-        final int nodeIndex = hashTreeTombstone;
-        if (tombstone != null)
-          hashTreeTombstone = (int) tombstone[0];
-        else
-          hashTreeTombstone = -1;
-
-        metadataPage.setHashTreeTombstone(hashTreeTombstone);
-
-        hashStateEntry.markDirty();
-
-        return nodeIndex;
-      }
-
-      int hashTreeSize = metadataPage.getHashTreeSize();
-      if (hashTreeSize >= hashTree.length) {
-        long[][] newHashTree = new long[hashTree.length << 1][];
-        System.arraycopy(hashTree, 0, newHashTree, 0, hashTree.length);
-        hashTree = newHashTree;
-
-        OHashTreeNodeMetadata[] newNodeMetadata = new OHashTreeNodeMetadata[nodesMetadata.length << 1];
-        System.arraycopy(nodesMetadata, 0, newNodeMetadata, 0, nodesMetadata.length);
-        nodesMetadata = newNodeMetadata;
-      }
-
-      hashTree[hashTreeSize] = newNode;
-      nodesMetadata[hashTreeSize] = new OHashTreeNodeMetadata((byte) 0, (byte) 0, (byte) nodeLocalDepth);
-
-      hashTreeSize++;
-
-      metadataPage.setHashTreeSize(hashTreeSize);
-      hashStateEntry.markDirty();
-
-      return hashTreeSize - 1;
-    } finally {
-      hashStatePointer.releaseExclusiveLock();
-      diskCache.release(hashStateEntry);
-    }
   }
 
   private boolean checkAllMapsContainSameBucket(long[] newNode, int hashMapSize) {
@@ -1746,7 +1652,7 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     return true;
   }
 
-  private NodeSplitResult splitNode(BucketPath bucketPath, long[] node) {
+  private NodeSplitResult splitNode(BucketPath bucketPath) throws IOException {
     final long[] newNode = new long[MAX_LEVEL_SIZE];
     final int hashMapSize = 1 << (bucketPath.nodeLocalDepth + 1);
 
@@ -1756,6 +1662,8 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
     int mapCounter = 0;
     long firstPosition = -1;
+
+    long[] node = directory.getNode(bucketPath.nodeIndex);
 
     for (int i = MAX_LEVEL_SIZE / 2; i < MAX_LEVEL_SIZE; i++) {
       final long position = node[i];
@@ -1799,53 +1707,10 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
 
     allLeftItemsAreEqual = hashMapItemsAreEqual;
 
-    nodesMetadata[bucketPath.nodeIndex].incrementLocalNodeDepth();
-    hashTree[bucketPath.nodeIndex] = updatedNode;
+    directory.setNode(bucketPath.nodeIndex, updatedNode);
+    directory.setNodeLocalDepth(bucketPath.nodeIndex, (byte) (directory.getNodeLocalDepth(bucketPath.nodeIndex) + 1));
 
     return new NodeSplitResult(newNode, allLeftItemsAreEqual, allRightItemsAreEqual);
-  }
-
-  private void deleteNode(int nodeIndex) throws IOException {
-    diskCache.loadPinnedPage(hashStateEntry);
-    final OCachePointer cachePointer = hashStateEntry.getCachePointer();
-    cachePointer.acquireExclusiveLock();
-
-    try {
-      OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(cachePointer.getDataPointer(),
-          ODurablePage.TrackMode.NONE, false);
-
-      int hashTreeSize = metadataPage.getHashTreeSize();
-
-      if (nodeIndex == hashTreeSize - 1) {
-        hashTree[nodeIndex] = null;
-        nodesMetadata[nodeIndex] = null;
-
-        hashTreeSize--;
-
-        metadataPage.setHashTreeSize(hashTreeSize);
-        hashStateEntry.markDirty();
-
-        return;
-      }
-
-      int hashTreeTombstone = metadataPage.getHashTreeTombstone();
-      if (hashTreeTombstone > -1) {
-        final long[] tombstone = new long[] { hashTreeTombstone };
-        hashTree[nodeIndex] = tombstone;
-        hashTreeTombstone = nodeIndex;
-      } else {
-        hashTree[nodeIndex] = null;
-        hashTreeTombstone = nodeIndex;
-      }
-
-      metadataPage.setHashTreeTombstone(hashTreeTombstone);
-      hashStateEntry.markDirty();
-
-      nodesMetadata[nodeIndex] = null;
-    } finally {
-      cachePointer.releaseExclusiveLock();
-      diskCache.release(hashStateEntry);
-    }
   }
 
   private void splitBucketContent(OHashIndexBucket<K, V> bucket, OHashIndexBucket<K, V> updatedBucket,
@@ -1908,7 +1773,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       final OCachePointer updatedBucketDataPointer = updateBucketCacheEntry.getCachePointer();
       updatedBucketDataPointer.acquireExclusiveLock();
       try {
-
         final OCacheEntry newBucketCacheEntry = loadPageEntry(newBucketIndex, newFileLevel);
         final OCachePointer newBucketDataPointer = newBucketCacheEntry.getCachePointer();
 
@@ -1970,16 +1834,14 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     return true;
   }
 
-  private void updateBucket(int nodeIndex, int itemIndex, int offset, long newBucketPointer) {
-    final long node[] = hashTree[nodeIndex];
-
-    final long position = node[itemIndex + offset];
+  private void updateBucket(int nodeIndex, int itemIndex, int offset, long newBucketPointer) throws IOException {
+    final long position = directory.getNodePointer(nodeIndex, itemIndex + offset);
     if (position >= 0)
-      node[itemIndex + offset] = newBucketPointer;
+      directory.setNodePointer(nodeIndex, itemIndex + offset, newBucketPointer);
     else {
       final int childNodeIndex = (int) ((position & Long.MAX_VALUE) >>> 8);
       final int childOffset = (int) (position & 0xFF);
-      final int childNodeDepth = nodesMetadata[childNodeIndex].getNodeLocalDepth();
+      final int childNodeDepth = directory.getNodeLocalDepth(childNodeIndex);
       final int interval = 1 << childNodeDepth;
       for (int i = 0; i < interval; i++) {
         updateBucket(childNodeIndex, i, childOffset, newBucketPointer);
@@ -1995,10 +1857,9 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
       try {
         final OHashIndexBucket<K, V> emptyBucket = new OHashIndexBucket<K, V>(MAX_LEVEL_DEPTH, pagePointer.getDataPointer(),
             keySerializer, valueSerializer, keyTypes);
+        cacheEntry.markDirty();
       } finally {
         pagePointer.releaseExclusiveLock();
-        cacheEntry.markDirty();
-
         diskCache.release(cacheEntry);
       }
     }
@@ -2007,11 +1868,8 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     for (int i = 0; i < MAX_LEVEL_SIZE; i++)
       rootTree[i] = createBucketPointer(i, 0);
 
-    hashTree = new long[1][];
-    hashTree[0] = rootTree;
-
-    nodesMetadata = new OHashTreeNodeMetadata[1];
-    nodesMetadata[0] = new OHashTreeNodeMetadata((byte) 0, (byte) 0, (byte) MAX_LEVEL_DEPTH);
+    directory.clear();
+    directory.addNewNode((byte) 0, (byte) 0, (byte) MAX_LEVEL_DEPTH, rootTree);
 
     diskCache.loadPinnedPage(hashStateEntry);
     OCachePointer hashStatePointer = hashStateEntry.getCachePointer();
@@ -2021,7 +1879,6 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
           ODurablePage.TrackMode.NONE, false);
       metadataPage.setBucketsCount(0, MAX_LEVEL_SIZE);
       metadataPage.setRecordsCount(0);
-      metadataPage.setHashTreeSize(1);
 
       hashStateEntry.markDirty();
     } finally {
@@ -2055,8 +1912,8 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     return diskCache.load(fileId, pageIndex, false);
   }
 
-  private BucketPath getBucket(final long hashCode) {
-    int localNodeDepth = nodesMetadata[0].getNodeLocalDepth();
+  private BucketPath getBucket(final long hashCode) throws IOException {
+    int localNodeDepth = directory.getNodeLocalDepth(0);
     int nodeDepth = localNodeDepth;
     BucketPath parentNode = null;
     int nodeIndex = 0;
@@ -2065,14 +1922,14 @@ public class OLocalHashTable<K, V> extends OSharedResourceAdaptive {
     int index = (int) ((hashCode >>> (HASH_CODE_SIZE - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));
     BucketPath currentNode = new BucketPath(parentNode, 0, index, 0, localNodeDepth, nodeDepth);
     do {
-      final long position = hashTree[nodeIndex][index + offset];
+      final long position = directory.getNodePointer(nodeIndex, index + offset);
       if (position >= 0)
         return currentNode;
 
       nodeIndex = (int) ((position & Long.MAX_VALUE) >>> 8);
       offset = (int) (position & 0xFF);
 
-      localNodeDepth = nodesMetadata[nodeIndex].getNodeLocalDepth();
+      localNodeDepth = directory.getNodeLocalDepth(nodeIndex);
       nodeDepth += localNodeDepth;
 
       index = (int) ((hashCode >>> (HASH_CODE_SIZE - nodeDepth)) & (LEVEL_MASK >>> (MAX_LEVEL_DEPTH - localNodeDepth)));

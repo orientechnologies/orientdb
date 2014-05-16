@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -33,11 +34,12 @@ public class OLocalHashTableTest {
   @BeforeClass
   public void beforeClass() {
     OGlobalConfiguration.DISK_CACHE_SIZE.setValue(24 * 1024);
+
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("local:" + buildDirectory + "/localHashTableTest");
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -51,7 +53,7 @@ public class OLocalHashTableTest {
     localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction);
 
     localHashTable.create("localHashTableTest", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
-        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocal) databaseDocumentTx.getStorage(), true);
+        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocalAbstract) databaseDocumentTx.getStorage(), true);
   }
 
   @AfterClass
@@ -101,7 +103,6 @@ public class OLocalHashTableTest {
       Assert.assertEquals(localHashTable.get(key), "" + key);
   }
 
-  @Test(enabled = false)
   public void testKeyPutRandomGaussian() {
     Set<Integer> keys = new HashSet<Integer>();
     MersenneTwisterFast random = new MersenneTwisterFast();
@@ -109,8 +110,6 @@ public class OLocalHashTableTest {
 
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (key < 0)
-        continue;
 
       localHashTable.put(key, key + "");
       keys.add(key);
@@ -122,10 +121,15 @@ public class OLocalHashTableTest {
   }
 
   public void testKeyDeleteRandomUniform() {
-    HashSet<Integer> keys = new HashSet<Integer>();
-    for (int i = 0; i < KEYS_COUNT; i++) {
-      localHashTable.put(i, i + "");
-      keys.add(i);
+    final Set<Integer> keys = new HashSet<Integer>();
+    final MersenneTwisterFast random = new MersenneTwisterFast();
+
+    while (keys.size() < KEYS_COUNT) {
+      int key = random.nextInt();
+
+      localHashTable.put(key, key + "");
+      keys.add(key);
+      Assert.assertEquals(localHashTable.get(key), key + "");
     }
 
     for (int key : keys) {
@@ -142,15 +146,12 @@ public class OLocalHashTableTest {
     }
   }
 
-  @Test(enabled = false)
   public void testKeyDeleteRandomGaussian() {
     HashSet<Integer> keys = new HashSet<Integer>();
 
     MersenneTwisterFast random = new MersenneTwisterFast();
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (key < 0)
-        continue;
 
       localHashTable.put(key, key + "");
       keys.add(key);

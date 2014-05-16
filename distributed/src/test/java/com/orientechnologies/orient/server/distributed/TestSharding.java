@@ -6,14 +6,15 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import junit.framework.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
-public class
-  TestSharding extends AbstractServerClusterTest {
+public class TestSharding extends AbstractServerClusterTest {
 
   protected OrientVertex[] vertices;
 
   @Test
+  @Ignore
   public void test() throws Exception {
     init(3);
     prepare(false);
