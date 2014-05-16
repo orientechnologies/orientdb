@@ -793,6 +793,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             }
             jsonReader.readNext(OJSONReader.END_OBJECT);
           } else if (value.equals("\"cluster-selection\"")) {
+            // @SINCE 1.7
             cls.setClusterSelection(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
           }
         }

@@ -37,16 +37,16 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * Versions:<li>
+ * Versions:
  * <ul>
- * 3 = introduced file directory in physical segments and data-segment id in clusters
- * 4 = ??
- * 5 = ??
- * 6 = ??
- * 7 = ??
- * 8 = introduced cluster selection strategy as string
+ * <li>3 = introduced file directory in physical segments and data-segment id in clusters</li>
+ * <li>4 = ??</li>
+ * <li>5 = ??</li>
+ * <li>6 = ??</li>
+ * <li>7 = ??</li>
+ * <li>8 = introduced cluster selection strategy as string</li>
+ * <li>9 = introduced minimumclusters as string</li>
  * </ul>
- * </li>
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
@@ -58,7 +58,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public static final String                DEFAULT_CHARSET               = "UTF-8";
   private String                            charset                       = DEFAULT_CHARSET;
-  public static final int                   CURRENT_VERSION               = 8;
+  public static final int                   CURRENT_VERSION               = 9;
   public static final int                   CURRENT_BINARY_FORMAT_VERSION = 11;
   public int                                version                       = -1;
   public String                             name;
@@ -80,6 +80,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private transient Locale                  localeInstance;
   private transient DecimalFormatSymbols    unusualSymbols;
   private String                            clusterSelection;
+  private int                               minimumClusters               = 1;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
@@ -277,6 +278,12 @@ public class OStorageConfiguration implements OSerializableStream {
       // DEFAULT = ROUND-ROBIN
       clusterSelection = ORoundRobinClusterSelectionStrategy.NAME;
 
+    if (version >= 9)
+      minimumClusters = Integer.parseInt(read(values[index++]));
+    else
+      // DEFAULT = 1
+      minimumClusters = 1;
+
     return this;
   }
 
@@ -366,6 +373,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
     write(buffer, binaryFormatVersion);
     write(buffer, clusterSelection);
+    write(buffer, minimumClusters);
 
     // PLAIN: ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
     buffer.append("|");
@@ -459,8 +467,16 @@ public class OStorageConfiguration implements OSerializableStream {
     return clusterSelection;
   }
 
-  public void setClusterSelection(String clusterSelection) {
+  public void setClusterSelection(final String clusterSelection) {
     this.clusterSelection = clusterSelection;
+  }
+
+  public int getMinimumClusters() {
+    return minimumClusters;
+  }
+
+  public void setMinimumClusters(final int minimumClusters) {
+    this.minimumClusters = minimumClusters;
   }
 
   private int phySegmentFromStream(final String[] values, int index, final OStorageSegmentConfiguration iSegment) {

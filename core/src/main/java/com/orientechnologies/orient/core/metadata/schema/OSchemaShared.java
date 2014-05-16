@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
@@ -50,6 +41,15 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -282,10 +282,18 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       checkClustersAreAbsent(iClusterIds);
 
       final int[] clusterIds;
-      if (iClusterIds == null || iClusterIds.length == 0)
-        // CREATE A NEW CLUSTER
-        clusterIds = new int[] { database.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClassName, null, null) };
-      else
+      if (iClusterIds == null || iClusterIds.length == 0) {
+        // CREATE A NEW CLUSTER(S)
+        final int minimumClusters = database.getStorage().getConfiguration().getMinimumClusters();
+
+        clusterIds = new int[minimumClusters];
+        if (minimumClusters <= 1)
+          clusterIds[0] = database.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClassName, null, null);
+        else
+          for (int i = 0; i < minimumClusters; ++i) {
+            clusterIds[i] = database.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClassName + "_" + i, null, null);
+          }
+      } else
         clusterIds = iClusterIds;
 
       database.checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);

@@ -65,13 +65,12 @@ import java.util.concurrent.Callable;
  */
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements ODatabase {
+  private final Map<String, Object> properties = new HashMap<String, Object>();
   protected String                  url;
   protected OStorage                storage;
   protected STATUS                  status;
   protected OIntent                 currentIntent;
-
   private ODatabaseRecord           databaseOwner;
-  private final Map<String, Object> properties = new HashMap<String, Object>();
 
   public ODatabaseRaw(final String iURL) {
     super(Collections.newSetFromMap(new IdentityHashMap<ODatabaseListener, Boolean>(64)), new ONoLock());
@@ -595,6 +594,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
     case CLUSTERSELECTION:
       return storage.getConfiguration().getClusterSelection();
+
+    case MINIMUMCLUSTERS:
+      return storage.getConfiguration().getMinimumClusters();
     }
 
     return null;
@@ -667,6 +669,19 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
     case CLUSTERSELECTION:
       storage.getConfiguration().setClusterSelection(stringValue);
+      storage.getConfiguration().update();
+      break;
+
+    case MINIMUMCLUSTERS:
+      if (iValue != null) {
+        if (iValue instanceof Number)
+          storage.getConfiguration().setMinimumClusters(((Number) iValue).intValue());
+        else
+          storage.getConfiguration().setMinimumClusters(Integer.parseInt(stringValue));
+      } else
+        // DEFAULT = 1
+        storage.getConfiguration().setMinimumClusters(1);
+
       storage.getConfiguration().update();
       break;
 
@@ -770,10 +785,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       }
   }
 
-  protected boolean isClusterBoundedToClass(final int iClusterId) {
-    return false;
-  }
-
   public long getSize() {
     return storage.getSize();
   }
@@ -796,16 +807,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     final OFreezableStorage storage = getFreezableStorage();
     if (storage != null) {
       storage.release();
-    }
-  }
-
-  private OFreezableStorage getFreezableStorage() {
-    OStorage s = getStorage();
-    if (s instanceof OFreezableStorage)
-      return (OFreezableStorage) s;
-    else {
-      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation.");
-      return null;
     }
   }
 
@@ -834,6 +835,20 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       paginatedStorage.freeze(throwException, iClusterId);
     } else {
       OLogManager.instance().error(this, "Only local paginated storage supports cluster freeze.");
+    }
+  }
+
+  protected boolean isClusterBoundedToClass(final int iClusterId) {
+    return false;
+  }
+
+  private OFreezableStorage getFreezableStorage() {
+    OStorage s = getStorage();
+    if (s instanceof OFreezableStorage)
+      return (OFreezableStorage) s;
+    else {
+      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation.");
+      return null;
     }
   }
 }

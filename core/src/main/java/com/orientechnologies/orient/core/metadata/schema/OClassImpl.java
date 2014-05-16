@@ -153,8 +153,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public OClass setClusterSelection(final String iValue) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
     final String cmd = String.format("alter class %s clusterselection %s", name, iValue);
-    final Integer clusterId = getDatabase().command(new OCommandSQL(cmd)).execute();
-    addClusterIdInternal(clusterId);
+    getDatabase().command(new OCommandSQL(cmd)).execute();
+    setClusterSelectionInternal(iValue);
     return this;
   }
 
