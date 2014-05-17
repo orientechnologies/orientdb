@@ -447,7 +447,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         writer.writeAttribute(0, false, "name", cls.getName());
         writer.writeAttribute(0, false, "default-cluster-id", cls.getDefaultClusterId());
         writer.writeAttribute(0, false, "cluster-ids", cls.getClusterIds());
-        writer.writeAttribute(0, false, "cluster-selection", cls.getClusterSelection().getName()); // @SINCE 1.7
         if (((OClassImpl) cls).getOverSizeInternal() > 1)
           writer.writeAttribute(0, false, "oversize", ((OClassImpl) cls).getOverSizeInternal());
         if (cls.isStrictMode())
@@ -458,6 +457,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           writer.writeAttribute(0, false, "short-name", cls.getShortName());
         if (cls.isAbstract())
           writer.writeAttribute(0, false, "abstract", cls.isAbstract());
+        writer.writeAttribute(0, false, "cluster-selection", cls.getClusterSelection().getName()); // @SINCE 1.7
 
         if (!cls.properties().isEmpty()) {
           writer.beginCollection(4, true, "properties");
