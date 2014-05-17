@@ -193,6 +193,16 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     return user;
   }
 
+  @Override
+  public OSecurity uncacheUsersAndRoles() {
+    if (cachedRoles != null)
+      cachedRoles.clear();
+
+    if (cachedUsers != null)
+      cachedUsers.clear();
+    return this;
+  }
+
   public OUser getUser(final String iUserName) {
 
     if (cachedUsers != null) {

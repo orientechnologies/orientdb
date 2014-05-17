@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -110,9 +111,15 @@ public class OUser extends ODocumentWrapper {
    * @exception OSecurityAccessException
    */
   public ORole allow(final String iResource, final int iOperation) {
-    if (roles == null || roles.isEmpty())
-      throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
-          + "' has no role defined");
+    if (roles == null || roles.isEmpty()) {
+      if (document.field("roles") != null && !((Collection<OIdentifiable>) document.field("roles")).isEmpty()) {
+        final ODocument doc = document;
+        document = null;
+        fromStream(doc);
+      } else
+        throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
+            + "' has no role defined");
+    }
 
     final ORole role = checkIfAllowed(iResource, iOperation);
 
