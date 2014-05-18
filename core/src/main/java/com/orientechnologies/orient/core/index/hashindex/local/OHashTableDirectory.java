@@ -2,9 +2,12 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
@@ -17,25 +20,33 @@ import java.util.List;
  * @since 5/14/14
  */
 public class OHashTableDirectory extends ODurableComponent {
-  public static final int   ITEM_SIZE         = OLongSerializer.LONG_SIZE;
+  public static final int              ITEM_SIZE         = OLongSerializer.LONG_SIZE;
 
-  public static final int   LEVEL_SIZE        = OLocalHashTable.MAX_LEVEL_SIZE;
+  public static final int              LEVEL_SIZE        = OLocalHashTable.MAX_LEVEL_SIZE;
 
-  public static final int   BINARY_LEVEL_SIZE = LEVEL_SIZE * ITEM_SIZE + 3 * OByteSerializer.BYTE_SIZE;
+  public static final int              BINARY_LEVEL_SIZE = LEVEL_SIZE * ITEM_SIZE + 3 * OByteSerializer.BYTE_SIZE;
 
-  private final String      defaultExtension;
-  private final String      name;
-  private final ODiskCache  diskCache;
+  private final String                 defaultExtension;
+  private final String                 name;
+  private final ODiskCache             diskCache;
 
-  private long              fileId;
+  private long                         fileId;
 
-  private OCacheEntry       firstEntry;
-  private List<OCacheEntry> entries;
+  private OCacheEntry                  firstEntry;
+  private List<OCacheEntry>            entries;
 
-  public OHashTableDirectory(String defaultExtension, String name, ODiskCache diskCache) {
+  private final boolean                durableInNonTxMode;
+  private final OStorageLocalAbstract  storage;
+
+  private final ODurablePage.TrackMode txTrackMode       = ODurablePage.TrackMode.valueOf(OGlobalConfiguration.INDEX_TX_MODE
+                                                             .getValueAsString().toUpperCase());
+
+  public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OStorageLocalAbstract storage) {
     this.defaultExtension = defaultExtension;
     this.name = name;
-    this.diskCache = diskCache;
+    this.diskCache = storage.getDiskCache();
+    this.durableInNonTxMode = durableInNonTxMode;
+    this.storage = storage;
   }
 
   public void create() throws IOException {
@@ -50,26 +61,37 @@ public class OHashTableDirectory extends ODurableComponent {
   }
 
   private void init() throws IOException {
-    firstEntry = diskCache.load(fileId, 0, true);
-
-    diskCache.pinPage(firstEntry);
-
-    final OCachePointer cachePointer = firstEntry.getCachePointer();
-    cachePointer.acquireExclusiveLock();
+    startAtomicOperation();
     try {
-      ODirectoryFirstPage firstPage = new ODirectoryFirstPage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE,
-          firstEntry);
+      firstEntry = diskCache.load(fileId, 0, true);
 
-      firstPage.setTreeSize(0);
-      firstPage.setTombstone(-1);
+      diskCache.pinPage(firstEntry);
 
-      firstEntry.markDirty();
-    } finally {
-      cachePointer.releaseExclusiveLock();
-      diskCache.release(firstEntry);
+      final OCachePointer cachePointer = firstEntry.getCachePointer();
+      cachePointer.acquireExclusiveLock();
+      try {
+        ODirectoryFirstPage firstPage = new ODirectoryFirstPage(cachePointer.getDataPointer(), getTrackMode(), firstEntry);
+
+        firstPage.setTreeSize(0);
+        firstPage.setTombstone(-1);
+
+        firstEntry.markDirty();
+        logPageChanges(firstPage, firstEntry.getFileId(), firstEntry.getPageIndex(), true);
+      } finally {
+        cachePointer.releaseExclusiveLock();
+        diskCache.release(firstEntry);
+      }
+
+      entries = new ArrayList<OCacheEntry>();
+
+      endAtomicOperation(false);
+    } catch (IOException e) {
+      endAtomicOperation(true);
+      throw e;
+    } catch (RuntimeException e) {
+      endAtomicOperation(true);
+      throw e;
     }
-
-    entries = new ArrayList<OCacheEntry>();
   }
 
   public void open() throws IOException {
@@ -126,15 +148,16 @@ public class OHashTableDirectory extends ODurableComponent {
 
   public int addNewNode(byte maxLeftChildDepth, byte maxRightChildDepth, byte nodeLocalDepth, long[] newNode) throws IOException {
     int nodeIndex;
+
     acquireExclusiveLock();
+    startAtomicOperation();
     try {
       diskCache.loadPinnedPage(firstEntry);
 
       final OCachePointer firstPagePointer = firstEntry.getCachePointer();
       firstPagePointer.acquireExclusiveLock();
       try {
-        ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstPagePointer.getDataPointer(), ODurablePage.TrackMode.NONE,
-            firstEntry);
+        ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstPagePointer.getDataPointer(), getTrackMode(), firstEntry);
 
         final int tombstone = firstPage.getTombstone();
 
@@ -162,12 +185,14 @@ public class OHashTableDirectory extends ODurableComponent {
           final int pageIndex = (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) / ODirectoryPage.NODES_PER_PAGE;
           final int localLevel = (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) % ODirectoryPage.NODES_PER_PAGE;
 
+          boolean newPage = false;
           while (entries.size() <= pageIndex) {
             OCacheEntry cacheEntry = diskCache.load(fileId, entries.size() + 1, true);
             diskCache.pinPage(cacheEntry);
             diskCache.release(cacheEntry);
 
             entries.add(cacheEntry);
+            newPage = true;
           }
 
           OCacheEntry cacheEntry = entries.get(pageIndex);
@@ -191,6 +216,7 @@ public class OHashTableDirectory extends ODurableComponent {
               page.setPointer(localLevel, i, newNode[i]);
 
             cacheEntry.markDirty();
+            logPageChanges(page, cacheEntry.getFileId(), firstEntry.getPageIndex(), newPage);
           } finally {
             cachePointer.releaseExclusiveLock();
             diskCache.release(cacheEntry);
@@ -198,11 +224,21 @@ public class OHashTableDirectory extends ODurableComponent {
         }
 
         firstEntry.markDirty();
+
+        logPageChanges(firstPage, firstEntry.getFileId(), firstEntry.getPageIndex(), false);
       } finally {
         firstPagePointer.releaseExclusiveLock();
         diskCache.release(firstEntry);
       }
 
+      endAtomicOperation(false);
+
+    } catch (IOException e) {
+      endAtomicOperation(true);
+      throw e;
+    } catch (RuntimeException e) {
+      endAtomicOperation(true);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -212,6 +248,7 @@ public class OHashTableDirectory extends ODurableComponent {
 
   public void deleteNode(int nodeIndex) throws IOException {
     acquireExclusiveLock();
+    startAtomicOperation();
     try {
       diskCache.loadPinnedPage(firstEntry);
 
@@ -239,6 +276,7 @@ public class OHashTableDirectory extends ODurableComponent {
             firstPage.setTombstone(nodeIndex);
 
             cacheEntry.markDirty();
+            logPageChanges(page, cacheEntry.getFileId(), cacheEntry.getPageIndex(), false);
           } finally {
             cachePointer.releaseExclusiveLock();
             diskCache.release(cacheEntry);
@@ -246,10 +284,19 @@ public class OHashTableDirectory extends ODurableComponent {
         }
 
         firstEntry.markDirty();
+        logPageChanges(firstPage, firstEntry.getFileId(), firstEntry.getPageIndex(), false);
       } finally {
         firstPagePointer.releaseExclusiveLock();
         diskCache.release(firstEntry);
       }
+
+      endAtomicOperation(false);
+    } catch (IOException e) {
+      endAtomicOperation(true);
+      throw e;
+    } catch (RuntimeException e) {
+      endAtomicOperation(true);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -271,13 +318,27 @@ public class OHashTableDirectory extends ODurableComponent {
 
   public void setMaxLeftChildDepth(int nodeIndex, byte maxLeftChildDepth) throws IOException {
     acquireExclusiveLock();
+    startAtomicOperation();
     try {
       final ODirectoryPage page = loadPage(nodeIndex, false);
       try {
         page.setMaxLeftChildDepth(getLocalNodeIndex(nodeIndex), maxLeftChildDepth);
+
+        OCacheEntry cacheEntry = page.getEntry();
+        cacheEntry.markDirty();
+
+        logPageChanges(page, cacheEntry.getFileId(), cacheEntry.getPageIndex(), false);
       } finally {
         releasePage(page, false);
       }
+
+      endAtomicOperation(false);
+    } catch (IOException e) {
+      endAtomicOperation(true);
+      throw e;
+    } catch (RuntimeException e) {
+      endAtomicOperation(true);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -299,13 +360,27 @@ public class OHashTableDirectory extends ODurableComponent {
 
   public void setMaxRightChildDepth(int nodeIndex, byte maxRightChildDepth) throws IOException {
     acquireExclusiveLock();
+    startAtomicOperation();
     try {
       final ODirectoryPage page = loadPage(nodeIndex, false);
       try {
         page.setMaxRightChildDepth(getLocalNodeIndex(nodeIndex), (byte) maxRightChildDepth);
+
+        OCacheEntry cacheEntry = page.getEntry();
+        cacheEntry.markDirty();
+
+        logPageChanges(page, cacheEntry.getFileId(), cacheEntry.getPageIndex(), false);
       } finally {
         releasePage(page, false);
       }
+
+      endAtomicOperation(false);
+    } catch (IOException e) {
+      endAtomicOperation(true);
+      throw e;
+    } catch (RuntimeException e) {
+      endAtomicOperation(true);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -327,13 +402,27 @@ public class OHashTableDirectory extends ODurableComponent {
 
   public void setNodeLocalDepth(int nodeIndex, byte localNodeDepth) throws IOException {
     acquireExclusiveLock();
+    startAtomicOperation();
     try {
       final ODirectoryPage page = loadPage(nodeIndex, true);
       try {
         page.setNodeLocalDepth(getLocalNodeIndex(nodeIndex), localNodeDepth);
+
+        OCacheEntry cacheEntry = page.getEntry();
+        cacheEntry.markDirty();
+
+        logPageChanges(page, cacheEntry.getFileId(), cacheEntry.getPageIndex(), false);
       } finally {
         releasePage(page, true);
       }
+
+      endAtomicOperation(false);
+    } catch (IOException e) {
+      endAtomicOperation(true);
+      throw e;
+    } catch (RuntimeException e) {
+      endAtomicOperation(true);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -361,15 +450,29 @@ public class OHashTableDirectory extends ODurableComponent {
 
   public void setNode(int nodeIndex, long[] node) throws IOException {
     acquireExclusiveLock();
+    startAtomicOperation();
     try {
       final ODirectoryPage page = loadPage(nodeIndex, true);
       try {
         final int localNodeIndex = getLocalNodeIndex(nodeIndex);
         for (int i = 0; i < LEVEL_SIZE; i++)
           page.setPointer(localNodeIndex, i, node[i]);
+
+        OCacheEntry cacheEntry = page.getEntry();
+        cacheEntry.markDirty();
+
+        logPageChanges(page, cacheEntry.getFileId(), cacheEntry.getPageIndex(), false);
       } finally {
         releasePage(page, true);
       }
+
+      endAtomicOperation(false);
+    } catch (IOException e) {
+      endAtomicOperation(true);
+      throw e;
+    } catch (RuntimeException e) {
+      endAtomicOperation(true);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -391,13 +494,27 @@ public class OHashTableDirectory extends ODurableComponent {
 
   public void setNodePointer(int nodeIndex, int index, long pointer) throws IOException {
     acquireExclusiveLock();
+    startAtomicOperation();
     try {
       final ODirectoryPage page = loadPage(nodeIndex, true);
       try {
         page.setPointer(getLocalNodeIndex(nodeIndex), index, pointer);
+
+        OCacheEntry cacheEntry = page.getEntry();
+        cacheEntry.markDirty();
+
+        logPageChanges(page, cacheEntry.getFileId(), cacheEntry.getPageIndex(), false);
       } finally {
         releasePage(page, true);
       }
+
+      endAtomicOperation(false);
+    } catch (IOException e) {
+      endAtomicOperation(true);
+      throw e;
+    } catch (RuntimeException e) {
+      endAtomicOperation(true);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -430,7 +547,7 @@ public class OHashTableDirectory extends ODurableComponent {
       if (exclusiveLock)
         cachePointer.acquireExclusiveLock();
 
-      return new ODirectoryFirstPage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE, firstEntry);
+      return new ODirectoryFirstPage(cachePointer.getDataPointer(), getTrackMode(), firstEntry);
     }
 
     final int pageIndex = (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) / ODirectoryPage.NODES_PER_PAGE;
@@ -441,7 +558,7 @@ public class OHashTableDirectory extends ODurableComponent {
     if (exclusiveLock)
       cachePointer.acquireExclusiveLock();
 
-    return new ODirectoryPage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE, cacheEntry);
+    return new ODirectoryPage(cachePointer.getDataPointer(), getTrackMode(), cacheEntry);
   }
 
   private void releasePage(ODirectoryPage page, boolean exclusiveLock) {
@@ -460,4 +577,33 @@ public class OHashTableDirectory extends ODurableComponent {
     return (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) % ODirectoryPage.NODES_PER_PAGE;
   }
 
+  @Override
+  protected ODurablePage.TrackMode getTrackMode() {
+    final OStorageTransaction transaction = storage.getStorageTransaction();
+
+    if (transaction == null && !durableInNonTxMode)
+      return ODurablePage.TrackMode.NONE;
+
+    final ODurablePage.TrackMode trackMode = super.getTrackMode();
+    if (!trackMode.equals(ODurablePage.TrackMode.NONE))
+      return txTrackMode;
+
+    return trackMode;
+  }
+
+  @Override
+  protected void endAtomicOperation(boolean rollback) throws IOException {
+    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
+      return;
+
+    super.endAtomicOperation(rollback);
+  }
+
+  @Override
+  protected void startAtomicOperation() throws IOException {
+    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
+      return;
+
+    super.startAtomicOperation();
+  }
 }

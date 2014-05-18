@@ -17,7 +17,6 @@ import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
  * @author Andrey Lomakin
@@ -25,7 +24,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  */
 @Test
 public class OLocalHashTableTest {
-  private static final int                 KEYS_COUNT = 1600000;
+  private static final int                 KEYS_COUNT = 500000;
 
   private ODatabaseDocumentTx              databaseDocumentTx;
 
@@ -33,8 +32,6 @@ public class OLocalHashTableTest {
 
   @BeforeClass
   public void beforeClass() {
-    OGlobalConfiguration.DISK_CACHE_SIZE.setValue(24 * 1024);
-
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null)
       buildDirectory = ".";
@@ -50,7 +47,7 @@ public class OLocalHashTableTest {
     OMurmurHash3HashFunction<Integer> murmurHash3HashFunction = new OMurmurHash3HashFunction<Integer>();
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
-    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction);
+    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", murmurHash3HashFunction, false);
 
     localHashTable.create("localHashTableTest", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
         .<String> getObjectSerializer(OType.STRING), null, (OStorageLocalAbstract) databaseDocumentTx.getStorage(), true);
