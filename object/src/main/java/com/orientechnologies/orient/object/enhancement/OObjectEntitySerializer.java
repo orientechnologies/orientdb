@@ -68,6 +68,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -572,8 +573,12 @@ public class OObjectEntitySerializer {
         OClass oSuperClass;
         OClass currentOClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(iClassName);
         if (!ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().existsClass(currentClass.getSimpleName())) {
-          oSuperClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema()
-              .createClass(currentClass.getSimpleName());
+          OSchema schema = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema();
+          if (Modifier.isAbstract(currentClass.getModifiers())) {
+            oSuperClass = schema.createAbstractClass(currentClass.getSimpleName());
+          } else {
+            oSuperClass = schema.createClass(currentClass.getSimpleName());
+          }
           reloadSchema = true;
         } else {
           oSuperClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(currentClass.getSimpleName());

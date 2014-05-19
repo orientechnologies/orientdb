@@ -246,6 +246,10 @@ public class CRUDObjectInheritanceTestSchemaFull {
     OClass abstractClass = database.getMetadata().getSchema().getClass(InheritanceTestAbstractClass.class);
     OClass baseClass = database.getMetadata().getSchema().getClass(InheritanceTestBaseClass.class);
     OClass testClass = database.getMetadata().getSchema().getClass(InheritanceTestClass.class);
+    Assert.assertTrue(abstractClass.isAbstract());
+    Assert.assertEquals(abstractClass.getDefaultClusterId(), -1);
+    Assert.assertEquals(abstractClass.getClusterIds().length, 1);
+    Assert.assertEquals(abstractClass.getClusterIds()[0], -1);
     Assert.assertEquals(baseClass.getSuperClass(), abstractClass);
     Assert.assertEquals(baseClass.getSuperClass().getName(), abstractClass.getName());
     Assert.assertEquals(testClass.getSuperClass(), baseClass);
