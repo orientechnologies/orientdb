@@ -15,22 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
@@ -62,16 +46,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -85,6 +60,22 @@ import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -625,12 +616,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               }
 
             }
-          } else {
+          } else if (result instanceof Throwable) {
+            // EXCEPTION: LOG IT AND ADD AS NESTED EXCEPTION
             if (ODistributedServerLog.isDebugEnabled())
               ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-                  "distributed transaction error");
+                  "distributed transaction error: %s", result, result.toString());
 
-            throw new OTransactionException("Error on committing distributed transaction");
+            throw new OTransactionException("Error on committing distributed transaction", (Throwable) result);
+          } else {
+            // UNKNOWN RESPONSE TYPE
+            if (ODistributedServerLog.isDebugEnabled())
+              ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                  "distributed transaction error, received unknown response type: %s", result);
+
+            throw new OTransactionException("Error on committing distributed transaction, received unknown response type " + result);
           }
 
         }
