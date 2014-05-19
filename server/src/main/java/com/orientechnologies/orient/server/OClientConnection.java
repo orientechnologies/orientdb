@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
 
 public class OClientConnection {
   public final int                         id;
@@ -50,9 +50,11 @@ public class OClientConnection {
 
   @Override
   public String toString() {
-    return "OClientConnection [id=" + id + ", source="
-        + (protocol != null && protocol.getChannel() != null ? protocol.getChannel().socket.getRemoteSocketAddress() : "?")
-        + ", since=" + since + "]";
+    return "OClientConnection [id="
+        + id
+        + ", source="
+        + (protocol != null && protocol.getChannel() != null && protocol.getChannel().socket != null ? protocol.getChannel().socket
+            .getRemoteSocketAddress() : "?") + ", since=" + since + "]";
   }
 
   /**
