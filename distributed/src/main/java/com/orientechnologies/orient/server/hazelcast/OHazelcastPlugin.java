@@ -469,6 +469,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
    */
   @Override
   public void memberRemoved(final MembershipEvent iEvent) {
+    updateLastClusterChange();
     ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "node removed id=%s name=%s", iEvent.getMember(),
         getNodeName(iEvent.getMember()));
 

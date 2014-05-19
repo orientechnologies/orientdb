@@ -468,11 +468,12 @@ public class ODistributedResponseManager {
       undoRequest();
 
       final StringBuilder msg = new StringBuilder();
-      msg.append("Quorum " + getQuorum() + " not reached for request=" + request + ". Servers in timeout/conflict are:");
+      msg.append("Quorum " + getQuorum() + " not reached for request=" + request + ".");
       final List<ODistributedResponse> res = getConflictResponses();
       if (res.isEmpty())
-        msg.append(" no server in conflict");
+        msg.append(" No server in conflict. ");
       else {
+        msg.append(" Servers in timeout/conflict are:");
         for (ODistributedResponse r : res) {
           msg.append("\n - ");
           msg.append(r.getExecutorNodeName());
