@@ -165,13 +165,13 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public void setClusterSelection(final OClusterSelectionStrategy clusterSelection) {
-    delegate.setClusterSelection(clusterSelection);
+  public OClass setClusterSelection(final OClusterSelectionStrategy clusterSelection) {
+    return delegate.setClusterSelection(clusterSelection);
   }
 
   @Override
-  public void setClusterSelection(final String iStrategyName) {
-    delegate.setClusterSelection(iStrategyName);
+  public OClass setClusterSelection(final String iStrategyName) {
+    return delegate.setClusterSelection(iStrategyName);
   }
 
   @Override

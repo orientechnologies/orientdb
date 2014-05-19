@@ -83,6 +83,11 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
     return delegate.authenticate(iUsername, iUserPassword);
   }
 
+  @Override
+  public OSecurity uncacheUsersAndRoles() {
+    return delegate.uncacheUsersAndRoles();
+  }
+
   public OUser getUser(final String iUserName) {
     return delegate.getUser(iUserName);
   }

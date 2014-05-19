@@ -315,7 +315,9 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
               "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() }, new Object[] { "name",
               "charSet", "value", db.getStorage().getConfiguration().getCharset() }, new Object[] { "name", "timezone", "value",
               db.getStorage().getConfiguration().getTimeZone().getID() }, new Object[] { "name", "definitionVersion", "value",
-              db.getStorage().getConfiguration().version });
+              db.getStorage().getConfiguration().version }, new Object[] { "name", "clusterSelection", "value",
+              db.getStorage().getConfiguration().getClusterSelection() }, new Object[] { "name", "minimumClusters", "value",
+              db.getStorage().getConfiguration().getMinimumClusters() });
       json.endCollection();
 
       json.beginCollection("properties");

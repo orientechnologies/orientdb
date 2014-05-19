@@ -56,9 +56,9 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
+  public static final int VERSION = 8;
   protected OJSONWriter   writer;
   protected long          recordExported;
-  public static final int VERSION = 8;
 
   public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -239,6 +239,15 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     }
   }
 
+  protected int getMaxClusterId() {
+    int totalCluster = -1;
+    for (String clusterName : database.getClusterNames()) {
+      if (database.getClusterIdByName(clusterName) > totalCluster)
+        totalCluster = database.getClusterIdByName(clusterName);
+    }
+    return totalCluster;
+  }
+
   private void exportClusters() throws IOException {
     listener.onMessage("\nExporting clusters...");
 
@@ -277,15 +286,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("OK (" + exportedClusters + " clusters)");
 
     writer.endCollection(1, true);
-  }
-
-  protected int getMaxClusterId() {
-    int totalCluster = -1;
-    for (String clusterName : database.getClusterNames()) {
-      if (database.getClusterIdByName(clusterName) > totalCluster)
-        totalCluster = database.getClusterIdByName(clusterName);
-    }
-    return totalCluster;
   }
 
   private void exportInfo() throws IOException {
@@ -447,7 +447,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         writer.writeAttribute(0, false, "name", cls.getName());
         writer.writeAttribute(0, false, "default-cluster-id", cls.getDefaultClusterId());
         writer.writeAttribute(0, false, "cluster-ids", cls.getClusterIds());
-        writer.writeAttribute(0, false, "cluster-selection", cls.getClusterSelection().getName());
         if (((OClassImpl) cls).getOverSizeInternal() > 1)
           writer.writeAttribute(0, false, "oversize", ((OClassImpl) cls).getOverSizeInternal());
         if (cls.isStrictMode())
@@ -458,6 +457,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           writer.writeAttribute(0, false, "short-name", cls.getShortName());
         if (cls.isAbstract())
           writer.writeAttribute(0, false, "abstract", cls.isAbstract());
+        writer.writeAttribute(0, false, "cluster-selection", cls.getClusterSelection().getName()); // @SINCE 1.7
 
         if (!cls.properties().isEmpty()) {
           writer.beginCollection(4, true, "properties");

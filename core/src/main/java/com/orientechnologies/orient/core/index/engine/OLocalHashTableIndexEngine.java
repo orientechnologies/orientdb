@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.index.engine;
 import java.util.*;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -52,7 +53,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   public OLocalHashTableIndexEngine() {
     hashFunction = new OMurmurHash3HashFunction<Object>();
     hashTable = new OLocalHashTable<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
-        NULL_BUCKET_FILE_EXTENSION, hashFunction);
+        NULL_BUCKET_FILE_EXTENSION, hashFunction, OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
   }
 
   @Override

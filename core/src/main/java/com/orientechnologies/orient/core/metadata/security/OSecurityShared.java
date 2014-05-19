@@ -193,6 +193,16 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
     return user;
   }
 
+  @Override
+  public OSecurity uncacheUsersAndRoles() {
+    if (cachedRoles != null)
+      cachedRoles.clear();
+
+    if (cachedUsers != null)
+      cachedUsers.clear();
+    return this;
+  }
+
   public OUser getUser(final String iUserName) {
 
     if (cachedUsers != null) {
@@ -417,8 +427,12 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   public OUser repair() {
     acquireExclusiveLock();
     try {
-
+      if (cachedUsers != null)
+        cachedUsers.clear();
       getDatabase().getMetadata().getIndexManager().dropIndex("OUser.name");
+
+      if (cachedRoles != null)
+        cachedRoles.clear();
       getDatabase().getMetadata().getIndexManager().dropIndex("ORole.name");
 
       return createMetadata();
