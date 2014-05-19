@@ -171,7 +171,7 @@ public class OObjectEntitySerializer {
   }
 
   /**
-   * Method that detaches all fields contained in the document to the given object.
+   * Method that detaches all fields contained in the document to the g(e non fare al solitiven object.
    * 
    * @param <T>
    * @param o
@@ -384,12 +384,7 @@ public class OObjectEntitySerializer {
         for (Field f : currentClass.getDeclaredFields()) {
           final String fieldName = f.getName();
           final int fieldModifier = f.getModifiers();
-
-          List<String> allClassFields = allFields.get(currentClass);
-          if (allClassFields == null)
-            allClassFields = new ArrayList<String>();
-          allClassFields.add(fieldName);
-          allFields.put(currentClass, allClassFields);
+          boolean transientField = false;
 
           if (Modifier.isStatic(fieldModifier) || Modifier.isFinal(fieldModifier) || Modifier.isNative(fieldModifier)
               || Modifier.isTransient(fieldModifier)) {
@@ -398,6 +393,7 @@ public class OObjectEntitySerializer {
               classTransientFields = new ArrayList<String>();
             classTransientFields.add(fieldName);
             transientFields.put(currentClass, classTransientFields);
+            transientField = true;
           }
 
           if (fieldName.equals("this$0")) {
@@ -406,6 +402,7 @@ public class OObjectEntitySerializer {
               classTransientFields = new ArrayList<String>();
             classTransientFields.add(fieldName);
             transientFields.put(currentClass, classTransientFields);
+            transientField = true;
           }
 
           if (OObjectSerializerHelper.jpaTransientClass != null) {
@@ -417,7 +414,16 @@ public class OObjectEntitySerializer {
                 classTransientFields = new ArrayList<String>();
               classTransientFields.add(fieldName);
               transientFields.put(currentClass, classTransientFields);
+              transientField = true;
             }
+          }
+
+          if (!transientField) {
+            List<String> allClassFields = allFields.get(currentClass);
+            if (allClassFields == null)
+              allClassFields = new ArrayList<String>();
+            allClassFields.add(fieldName);
+            allFields.put(currentClass, allClassFields);
           }
 
           if (OObjectSerializerHelper.jpaOneToOneClass != null) {
