@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 import java.io.IOException;
 import java.util.List;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -52,33 +51,7 @@ public abstract class OServerCommandAbstract implements OServerCommand {
     if (parts.size() < iArgumentCount)
       throw new OHttpRequestException(iSyntax);
 
-    final String[] array = new String[parts.size()];
-    return decodeParts(parts.toArray(array));
-  }
-
-  /**
-   * urldecode each request part return the same array instance
-   * 
-   * @param parts
-   * @return
-   */
-  private String[] decodeParts(final String[] parts) {
-    try {
-      if (parts == null)
-        return null;
-      for (int i = 0; i < parts.length; i++) {
-        String part = parts[i];
-        if (part == null)
-          continue;
-
-        // NEEDS DECODING
-        part = java.net.URLDecoder.decode(part, "UTF-8");
-        parts[i] = part;
-      }
-      return parts;
-    } catch (Exception ex) {
-      throw new OException(ex);
-    }
+    return parts.toArray(new String[parts.size()]);
   }
 
   public OServer getServer() {
