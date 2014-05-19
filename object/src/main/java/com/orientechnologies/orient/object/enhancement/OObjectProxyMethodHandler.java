@@ -16,6 +16,22 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javassist.util.proxy.MethodHandler;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -51,21 +67,6 @@ import com.orientechnologies.orient.object.serialization.OObjectCustomSerializer
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerMap;
 import com.orientechnologies.orient.object.serialization.OObjectCustomSerializerSet;
 import com.orientechnologies.orient.object.serialization.OObjectLazyCustomSerializer;
-import javassist.util.proxy.MethodHandler;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Luca Molino (molino.luca--at--gmail.com)
@@ -131,7 +132,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     final Class<?> selfClass = self.getClass();
 
     for (String fieldName : doc.fieldNames()) {
-      Object value = getValue(self, fieldName, false, null);
+      Object value = getValue(self, fieldName, false, null, true);
       if (value instanceof OObjectLazyMultivalueElement) {
         ((OObjectLazyMultivalueElement<?>) value).detach(nonProxiedInstance);
         if (nonProxiedInstance)
@@ -159,7 +160,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     for (String fieldName : doc.fieldNames()) {
       final Field field = OObjectEntitySerializer.getField(fieldName, selfClass);
       if (field != null) {
-        Object value = getValue(self, fieldName, false, null);
+        Object value = getValue(self, fieldName, false, null, true);
         if (value instanceof OObjectLazyMultivalueElement) {
           ((OObjectLazyMultivalueElement<?>) value).detachAll(nonProxiedInstance);
           if (nonProxiedInstance)
@@ -287,12 +288,18 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     return value;
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
   protected Object getValue(final Object self, final String fieldName, final boolean idOrVersionField, Object value)
       throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    return getValue(self, fieldName, idOrVersionField, value, false);
+  }
+
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  protected Object getValue(final Object self, final String fieldName, final boolean idOrVersionField, Object value,
+      final boolean iIgnoreLoadedFields) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     if (!idOrVersionField) {
       if (value == null) {
-        if (loadedFields.containsKey(fieldName) && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) == 0) {
+        if (!iIgnoreLoadedFields && loadedFields.containsKey(fieldName)
+            && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) == 0) {
           return null;
         } else {
           final Object docValue = getDocFieldValue(self, fieldName);
