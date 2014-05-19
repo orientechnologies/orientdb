@@ -16,7 +16,9 @@
 
 package com.orientechnologies.lucene;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OClassLoaderHelper;
+import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
 import com.orientechnologies.lucene.operator.OLuceneNearOperator;
 import com.orientechnologies.lucene.operator.OLuceneTextOperator;
 import com.orientechnologies.lucene.operator.OLuceneWithinOperator;
@@ -26,6 +28,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import org.apache.lucene.LucenePackage;
 
 import javax.imageio.spi.ServiceRegistry;
 import java.util.Iterator;
@@ -49,6 +52,8 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract {
     OSQLEngine.registerOperator(new OLuceneTextOperator());
     OSQLEngine.registerOperator(new OLuceneWithinOperator());
     OSQLEngine.registerOperator(new OLuceneNearOperator());
+    OLogManager.instance().info(this, "Lucene index plugin installed and active. Lucene version: %s",
+        OLuceneIndexManagerAbstract.LUCENE_VERSION);
   }
 
   @Override

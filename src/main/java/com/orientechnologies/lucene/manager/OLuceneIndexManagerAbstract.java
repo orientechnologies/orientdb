@@ -28,7 +28,9 @@ import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.sun.jna.platform.FileUtils;
+import org.apache.lucene.LucenePackage;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -60,11 +62,12 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstrac
 
 public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
 
-  public static final String               RID            = "RID";
-  public static final String               KEY            = "KEY";
-  public static final Version              LUCENE_VERSION = Version.LUCENE_47;
+  public static final String               RID              = "RID";
+  public static final String               KEY              = "KEY";
+  public static final Version              LUCENE_VERSION   = Version.LUCENE_47;
 
-  protected IndexWriter                    indexWriter    = null;
+  public static final String               OLUCENE_BASE_DIR = "luceneIndexes";
+  protected IndexWriter                    indexWriter      = null;
   protected SearcherManager                manager;
   protected OIndexDefinition               index;
   protected TrackingIndexWriter            mgrWriter;
@@ -118,7 +121,8 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   private void reOpen(ODocument metadata) throws IOException {
     ODatabaseRecord database = getDatabase();
     final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
-    Directory dir = NIOFSDirectory.open(new File(storageLocalAbstract.getStoragePath() + File.separator + indexName));
+    Directory dir = NIOFSDirectory.open(new File(storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR
+        + File.separator + indexName));
     indexWriter = createIndexWriter(dir, metadata);
     mgrWriter = new TrackingIndexWriter(indexWriter);
     manager = new SearcherManager(indexWriter, true, null);
@@ -281,7 +285,8 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition,OStreamSerializer valueSerializer, boolean isAutomatic) {
+  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
+      boolean isAutomatic) {
 
   }
 
@@ -319,6 +324,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         try {
           Class classAnalyzer = Class.forName(analyzerString);
           Constructor constructor = classAnalyzer.getConstructor(Version.class);
+          KeywordAnalyzer analyzer1 = new KeywordAnalyzer();
           analyzer = (Analyzer) constructor.newInstance(getVersion(metadata));
         } catch (ClassNotFoundException e) {
           throw new OIndexException("Analyzer: " + analyzerString + " not found", e);
