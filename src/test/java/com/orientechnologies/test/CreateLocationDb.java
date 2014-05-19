@@ -76,7 +76,7 @@ public class CreateLocationDb extends SpeedTestMonoThread {
     oClass.createProperty("longitude", OType.DOUBLE);
     oClass.createProperty("name", OType.STRING);
     oClass.createIndex("City.latitude_longitude", "SPATIAL", null, null, "LUCENE", new String[] { "latitude", "longitude" });
-
+    oClass.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
     ZipFile zipFile = new ZipFile("files/location.csv.zip");
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
 

@@ -324,7 +324,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         try {
           Class classAnalyzer = Class.forName(analyzerString);
           Constructor constructor = classAnalyzer.getConstructor(Version.class);
-          KeywordAnalyzer analyzer1 = new KeywordAnalyzer();
+
           analyzer = (Analyzer) constructor.newInstance(getVersion(metadata));
         } catch (ClassNotFoundException e) {
           throw new OIndexException("Analyzer: " + analyzerString + " not found", e);
