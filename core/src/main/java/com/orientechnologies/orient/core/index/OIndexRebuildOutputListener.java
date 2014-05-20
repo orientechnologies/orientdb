@@ -41,10 +41,11 @@ public class OIndexRebuildOutputListener implements OProgressListener {
     lastDump = startTime;
 
     rebuild = (Boolean) iRebuild;
-    if (rebuild)
-      OLogManager.instance().info(this, "- Rebuilding index %s.%s...", idx.getDatabaseName(), idx.getName());
-    else
-      OLogManager.instance().debug(this, "- Building index %s.%s...", idx.getDatabaseName(), idx.getName());
+    if (iTotal > 0)
+      if (rebuild)
+        OLogManager.instance().info(this, "- Rebuilding index %s.%s (estimated %d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
+      else
+        OLogManager.instance().debug(this, "- Building index %s.%s (estimated %d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
   }
 
   @Override
@@ -66,11 +67,13 @@ public class OIndexRebuildOutputListener implements OProgressListener {
 
   @Override
   public void onCompletition(final Object iTask, final boolean iSucceed) {
-    if (rebuild)
-      OLogManager.instance().info(this, "--> OK, indexed %,d items in %,d ms", idx.getSize(),
-          (System.currentTimeMillis() - startTime));
-    else
-      OLogManager.instance().debug(this, "--> OK, indexed %,d items in %,d ms", idx.getSize(),
-          (System.currentTimeMillis() - startTime));
+    final long idxSize = idx.getSize();
+
+    if (idxSize > 0)
+      if (rebuild)
+        OLogManager.instance().info(this, "--> OK, indexed %,d items in %,d ms", idxSize, (System.currentTimeMillis() - startTime));
+      else
+        OLogManager.instance()
+            .debug(this, "--> OK, indexed %,d items in %,d ms", idxSize, (System.currentTimeMillis() - startTime));
   }
 }
