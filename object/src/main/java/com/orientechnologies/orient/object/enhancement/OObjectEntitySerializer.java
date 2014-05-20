@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -54,6 +53,7 @@ import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -365,16 +365,25 @@ public class OObjectEntitySerializer {
     if (Proxy.class.isAssignableFrom(iClass) || iClass.isEnum() || OReflectionHelper.isJavaType(iClass)
         || iClass.isAnonymousClass() || classes.contains(iClass))
       return;
+
+    if (!ODatabaseRecordThreadLocal.INSTANCE.isDefined() || ODatabaseRecordThreadLocal.INSTANCE.get().isClosed())
+      return;
+
     boolean reloadSchema = false;
     boolean automaticSchemaGeneration = false;
 
-    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()
-        && !ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().existsClass(iClass.getSimpleName())) {
-      ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().createClass(iClass.getSimpleName());
+    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final OSchema oSchema = db.getMetadata().getSchema();
+
+    if (!oSchema.existsClass(iClass.getSimpleName())) {
+      if (Modifier.isAbstract(iClass.getModifiers()))
+        oSchema.createAbstractClass(iClass.getSimpleName());
+      else
+        oSchema.createClass(iClass.getSimpleName());
+
       reloadSchema = true;
-      if (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof OObjectDatabaseTx)
-        automaticSchemaGeneration = ((OObjectDatabaseTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner())
-            .isAutomaticSchemaGeneration();
+      if (db.getDatabaseOwner() instanceof OObjectDatabaseTx)
+        automaticSchemaGeneration = ((OObjectDatabaseTx) db.getDatabaseOwner()).isAutomaticSchemaGeneration();
     }
 
     for (Class<?> currentClass = iClass; currentClass != Object.class;) {
@@ -557,8 +566,7 @@ public class OObjectEntitySerializer {
       }
 
       if (automaticSchemaGeneration && !currentClass.equals(Object.class) && !currentClass.equals(ODocument.class)) {
-        ((OSchemaProxyObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner().getMetadata().getSchema())
-            .generateSchema(currentClass, ODatabaseRecordThreadLocal.INSTANCE.get());
+        ((OSchemaProxyObject) db.getDatabaseOwner().getMetadata().getSchema()).generateSchema(currentClass, db);
       }
       String iClassName = currentClass.getSimpleName();
       currentClass = currentClass.getSuperclass();
@@ -568,12 +576,11 @@ public class OObjectEntitySerializer {
         // ODOCUMENT FIELDS
         currentClass = Object.class;
 
-      if (ODatabaseRecordThreadLocal.INSTANCE.get() != null && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()
-          && !currentClass.equals(Object.class)) {
+      if (!currentClass.equals(Object.class)) {
         OClass oSuperClass;
-        OClass currentOClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(iClassName);
-        if (!ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().existsClass(currentClass.getSimpleName())) {
-          OSchema schema = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema();
+        OClass currentOClass = oSchema.getClass(iClassName);
+        if (!oSchema.existsClass(currentClass.getSimpleName())) {
+          OSchema schema = oSchema;
           if (Modifier.isAbstract(currentClass.getModifiers())) {
             oSuperClass = schema.createAbstractClass(currentClass.getSimpleName());
           } else {
@@ -581,7 +588,7 @@ public class OObjectEntitySerializer {
           }
           reloadSchema = true;
         } else {
-          oSuperClass = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(currentClass.getSimpleName());
+          oSuperClass = oSchema.getClass(currentClass.getSimpleName());
           reloadSchema = true;
         }
 
@@ -592,9 +599,9 @@ public class OObjectEntitySerializer {
 
       }
     }
-    if (ODatabaseRecordThreadLocal.INSTANCE.get() != null && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed() && reloadSchema) {
-      ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().save();
-      ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().reload();
+    if (reloadSchema) {
+      oSchema.save();
+      oSchema.reload();
     }
   }
 
