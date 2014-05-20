@@ -622,6 +622,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
                   "distributed transaction error: %s", result, result.toString());
 
+            if (result instanceof OTransactionException || result instanceof ONeedRetryException)
+              throw (RuntimeException) result;
+
             throw new OTransactionException("Error on committing distributed transaction", (Throwable) result);
           } else {
             // UNKNOWN RESPONSE TYPE

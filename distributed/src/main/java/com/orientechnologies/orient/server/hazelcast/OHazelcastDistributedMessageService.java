@@ -52,7 +52,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   public static final String                                           NODE_QUEUE_PREFIX           = "orientdb.node.";
   public static final String                                           NODE_QUEUE_REQUEST_POSTFIX  = ".request";
   public static final String                                           NODE_QUEUE_RESPONSE_POSTFIX = ".response";
-  public static final String                                           NODE_QUEUE_UNDO_POSTFIX     = ".undo";
   protected final OHazelcastPlugin                                     manager;
   protected final IQueue<ODistributedResponse>                         nodeResponseQueue;
   protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
@@ -354,7 +353,28 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       if (!iUnqueuePendingMessages) {
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
             "found %d previous messages in queue %s, clearing them...", queueSize, iQueueName);
-        iQueue.clear();
+        while (!iQueue.isEmpty()) {
+          try {
+            final Object msg = iQueue.poll();
+
+            if (msg != null) {
+              if (msg instanceof ODistributedRequest) {
+                ODistributedRequest req = (ODistributedRequest) iQueue.take();
+                ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+                    "- discarding request %s task %s...", req, req.getTask());
+
+              } else if (msg instanceof ODistributedResponse) {
+
+                ODistributedResponse resp = (ODistributedResponse) iQueue.take();
+                ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+                    "- discarding response to request %d task %s...", resp.getRequestId(), resp.getPayload());
+              } else
+                ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "- discarding message %s...",
+                    msg);
+            }
+          } catch (InterruptedException e) {
+          }
+        }
       } else {
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
             "found %d previous messages in queue %s, aligning the database...", queueSize, iQueueName);

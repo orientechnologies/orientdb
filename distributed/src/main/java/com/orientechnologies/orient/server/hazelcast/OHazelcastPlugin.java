@@ -176,12 +176,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final String memberName = getNodeName(m);
         if (memberName != null)
           activeNodes.put(memberName, m);
+        else if (!m.equals(hazelcastInstance.getCluster().getLocalMember()))
+          ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "Cannot find configuration for member: %s", m);
       }
 
       messageService = new OHazelcastDistributedMessageService(this);
 
       // PUBLISH LOCAL NODE CFG
-      getConfigurationMap().put(CONFIG_NODE_PREFIX + getLocalNodeId(), getLocalNodeConfiguration());
+      configurationMap.put(CONFIG_NODE_PREFIX + getLocalNodeId(), getLocalNodeConfiguration());
 
       installNewDatabases(true);
 
@@ -479,9 +481,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (nodeName != null) {
       activeNodes.remove(nodeName);
 
-      for (String dbName : messageService.getDatabases()) {
-        messageService.getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
-      }
+      // REMOVE NODE IN DB CFG
+      final Set<String> dbs = messageService.getDatabases();
+      if (dbs != null)
+        for (String dbName : dbs)
+          messageService.getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
+
+      // REMOVE THE SERVER'S RESPONSE QUEUE
+      messageService.removeQueue(OHazelcastDistributedMessageService.getResponseQueueName(nodeName));
     }
 
     OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
