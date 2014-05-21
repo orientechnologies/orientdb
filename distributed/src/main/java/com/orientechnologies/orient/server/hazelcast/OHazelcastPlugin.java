@@ -770,7 +770,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
             final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
-            // GET ALL THE NODE BUT LOCAL ONE
+            // GET ALL THE
             final Collection<String> nodes = cfg.getServers();
             nodes.remove( getLocalNodeName() );
 
