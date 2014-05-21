@@ -24,7 +24,7 @@
         "bootstrap-datetimepicker": "0.0.11",
         "angular-ui-select2": "~0.0.5",
         "stringjs": "1.5.1",
-        "ng-table": "0.3.2",
+        "ng-table": "0.3.1",
         "animate.css": "3.1.1"
     },
     "devDependencies": {

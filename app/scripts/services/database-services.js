@@ -685,3 +685,13 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
     }
     return resource;
 });
+
+database.factory('AlterApi', function ($http, $resource, Notification) {
+
+
+    var resource = $resource('function/:database');
+
+    var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
+
+    return resource
+});

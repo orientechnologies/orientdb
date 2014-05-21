@@ -199,6 +199,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.resultExecute = '';
         if ($scope.functionToExecute['language'] != undefined && $scope.functionToExecute['name'] != undefined && $scope.functionToExecute['name'] != '') {
             if ($scope.isNewFunction == true) {
+
                 DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                         $scope.getListFunction();
                         $scope.isNewFunction = false;

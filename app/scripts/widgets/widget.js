@@ -277,7 +277,7 @@ Widget.directive('chartjs', function () {
         link: function (scope, element, attr) {
 
             var data = scope.$eval(attr.chartjs);
-            new Chart(element.get(0).getContext("2d")).Pie(data, {segmentShowStroke: false});
+            //new Chart(element.get(0).getContext("2d")).Pie(data, {segmentShowStroke: false});
 
         }
     };

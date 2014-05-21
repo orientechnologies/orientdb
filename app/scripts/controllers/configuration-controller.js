@@ -177,6 +177,15 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
 
     $scope.values = Database.getMetadata()['config']['values'];
 
+    $scope.dirty = [];
+
+
+    $scope.setDirty = function (val) {
+        if ($scope.dirty.indexOf(val) == -1)
+            $scope.dirty.push(val);
+    }
+    $scope.save = function () {
+    }
 
 }]);
 configModule.controller("AllocationController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {

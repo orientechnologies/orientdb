@@ -14,7 +14,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     $scope.numberOfPage = new Array(Math.ceil($scope.listClassesTotal.length / $scope.countPage));
     $scope.listClasses = $scope.listClassesTotal.slice(0, $scope.countPage);
 
-    $scope.headers = ['name', 'superClass', 'alias', 'abstract', 'clusters', 'defaultCluster', 'records'];
+    $scope.headers = ['name', 'superClass', 'alias', 'abstract', 'clusters', 'defaultCluster','clusterSelection', 'records'];
     $scope.refreshPage = function () {
         $scope.database.refreshMetadata($routeParams.database);
         $route.reload();

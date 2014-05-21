@@ -81,6 +81,7 @@ angular.module('ui.codemirror', [])
                             if (angular.isUndefined(value) || value === null) {
                                 return '';
                             } else if (angular.isObject(value)) {
+                                console.log(value);
                                 return JSON.stringify(value);
                             }
                             else if (angular.isArray(value)) {

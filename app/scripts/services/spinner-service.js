@@ -45,7 +45,10 @@ spinner.factory('Spinner', function () {
         $("#spinner-circle").removeClass("circle-stop")
         $("#spinner-circle").addClass("circle-start")
 
+
         if (cb) {
+            $("#interrupter-container").removeClass("circle-interrupt-stop");
+            $("#interrupter-container").addClass("circle-interrupt");
             $("#interrupter").click(cb);
         } else {
             $("#interrupter").addClass("invisible");
@@ -58,6 +61,8 @@ spinner.factory('Spinner', function () {
         $("#spinner-circle").addClass("circle-stop")
         $("#interrupter").unbind("click");
         $("#interrupter").removeClass("invisible");
+        $("#interrupter-container").removeClass("circle-interrupt");
+        $("#interrupter-container").addClass("circle-interrupt-stop")
         //$("#spinner-container").removeClass('spinner-start');
 
     }

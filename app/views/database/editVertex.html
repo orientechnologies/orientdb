@@ -19,7 +19,7 @@
                             <div class="accordion-inner accordion-scroll">
                                 <table class="edge-table">
                                     <tbody>
-                                    <tr ng-repeat="out in filterArray(doc[i])">
+                                    <tr ng-repeat="out in filterArray(doc[i]) track by $index">
                                         <td>
                                             <span class="label badge-edge">
 
@@ -76,7 +76,7 @@
                             <div class="accordion-inner accordion-scroll">
                                 <table>
                                     <tbody>
-                                    <tr ng-repeat="out in filterArray(doc[i])">
+                                    <tr ng-repeat="out in filterArray(doc[i]) track by $index">
 
                                         <td>
                                              <span class="label badge-edge">
