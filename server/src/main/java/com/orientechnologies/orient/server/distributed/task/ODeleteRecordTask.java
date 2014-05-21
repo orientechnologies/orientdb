@@ -56,15 +56,17 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
         database.getName(), rid.toString(), version.toString());
 
     final ORecordInternal<?> record = database.load(rid);
-    if (delayed)
-      if (record.getRecordVersion().equals(version))
-        // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
-        ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
+    if (record != null) {
+      if (delayed)
+        if (record.getRecordVersion().equals(version))
+          // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
+          ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
+        else
+          throw new OConcurrentModificationException(rid, record.getRecordVersion(), version, ORecordOperation.DELETED);
       else
-        throw new OConcurrentModificationException(rid, record.getRecordVersion(), version, ORecordOperation.DELETED);
-    else
-      // DELETE IT RIGHT NOW
-      record.delete();
+        // DELETE IT RIGHT NOW
+        record.delete();
+    }
 
     return true;
   }

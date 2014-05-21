@@ -409,7 +409,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         }
       };
 
-      recreateIndexesThread = new Thread(recreateIndexesTask);
+      recreateIndexesThread = new Thread(recreateIndexesTask, "OrientDB rebuild indexes");
       recreateIndexesThread.start();
     } finally {
       releaseExclusiveLock();

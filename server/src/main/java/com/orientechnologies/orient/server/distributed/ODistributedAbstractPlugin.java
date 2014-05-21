@@ -122,7 +122,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   @Override
   public void onOpen(final ODatabase iDatabase) {
     final String dbDirectory = serverInstance.getDatabaseDirectory();
-    if (!iDatabase.getURL().substring(iDatabase.getURL().indexOf(":") + 1).startsWith(dbDirectory))
+
+    final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
+
+    if (!dbUrl.substring(dbUrl.indexOf(":") + 1).startsWith(dbDirectory))
       // NOT OWN DB, SKIPT IT
       return;
 

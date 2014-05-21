@@ -39,9 +39,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -56,21 +54,19 @@ import java.util.concurrent.locks.Lock;
  */
 public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
-  public static final String                          NODE_QUEUE_PREFIX          = "orientdb.node.";
-  public static final String                          NODE_QUEUE_REQUEST_POSTFIX = ".request";
-  public static final String                          NODE_QUEUE_UNDO_POSTFIX    = ".undo";
-  protected final static Map<String, IQueue<?>>       queues                     = new HashMap<String, IQueue<?>>();
-  private static final String                         NODE_LOCK_PREFIX           = "orientdb.reqlock.";
+  public static final String                          NODE_QUEUE_PREFIX       = "orientdb.node.";
+  public static final String                          NODE_QUEUE_UNDO_POSTFIX = ".undo";
+  private static final String                         NODE_LOCK_PREFIX        = "orientdb.reqlock.";
   protected final OHazelcastPlugin                    manager;
   protected final OHazelcastDistributedMessageService msgService;
   protected final String                              databaseName;
   protected final Lock                                requestLock;
   protected volatile ODatabaseDocumentTx              database;
-  protected volatile boolean                          restoringMessages          = false;
-  protected AtomicBoolean                             status                     = new AtomicBoolean(false);
-  protected Object                                    waitForOnline              = new Object();
+  protected volatile boolean                          restoringMessages       = false;
+  protected AtomicBoolean                             status                  = new AtomicBoolean(false);
+  protected Object                                    waitForOnline           = new Object();
   protected Thread                                    listenerThread;
-  protected AtomicLong                                waitForMessageId           = new AtomicLong(-1);
+  protected AtomicLong                                waitForMessageId        = new AtomicLong(-1);
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -156,12 +152,13 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     try {
       requestLock.lock();
       try {
+        // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
+        // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
+
         iRequest.setId(msgService.getMessageIdCounter().getAndIncrement());
 
         msgService.registerRequest(iRequest.getId(), currentResponseMgr);
 
-        // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
-        // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
         for (IQueue<ODistributedRequest> queue : reqQueues) {
           if (queue != null)
             queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
@@ -564,6 +561,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     try {
       // GET DATABASE CFG
       final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+      if (cfg.isHotAlignment())
+        // DON'T REMOVE THE NODE BECAUSE HOT-ALIGNMENT IS ON
+        return;
 
       final List<String> foundPartition = cfg.removeNodeInServerList(iNode, iForce);
       if (foundPartition != null) {

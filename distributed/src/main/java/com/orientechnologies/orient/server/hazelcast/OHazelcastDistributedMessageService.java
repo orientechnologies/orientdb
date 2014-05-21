@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
@@ -30,15 +39,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
  * each others.
@@ -52,7 +52,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   public static final String                                           NODE_QUEUE_PREFIX           = "orientdb.node.";
   public static final String                                           NODE_QUEUE_REQUEST_POSTFIX  = ".request";
   public static final String                                           NODE_QUEUE_RESPONSE_POSTFIX = ".response";
-  public static final String                                           NODE_QUEUE_UNDO_POSTFIX     = ".undo";
   protected final OHazelcastPlugin                                     manager;
   protected final IQueue<ODistributedResponse>                         nodeResponseQueue;
   protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
@@ -380,6 +379,8 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   protected void removeQueue(final String iQueueName) {
     final IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
     if (queue != null) {
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+          "removing queue '%s' containing %d messages", iQueueName, queue.size());
       queue.clear();
     }
   }

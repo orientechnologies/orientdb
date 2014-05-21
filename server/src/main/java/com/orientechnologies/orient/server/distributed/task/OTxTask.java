@@ -93,12 +93,12 @@ public class OTxTask extends OAbstractReplicatedTask {
       return results;
 
     } catch (ONeedRetryException e) {
-      return Boolean.FALSE;
+      return e;
     } catch (OTransactionException e) {
-      return Boolean.FALSE;
+      return e;
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on distributed transaction commit", e);
-      return Boolean.FALSE;
+      return e;
     }
   }
 

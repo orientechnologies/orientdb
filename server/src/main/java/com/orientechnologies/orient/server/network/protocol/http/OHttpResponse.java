@@ -311,13 +311,14 @@ public class OHttpResponse {
 
           if (entry instanceof OIdentifiable) {
             ORecord<?> rec = ((OIdentifiable) entry).getRecord();
-            try {
-              objectJson = rec.getRecord().toJSON(format);
+            if (rec != null)
+              try {
+                objectJson = rec.toJSON(format);
 
-              buffer.append(objectJson);
-            } catch (Exception e) {
-              OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
-            }
+                buffer.append(objectJson);
+              } catch (Exception e) {
+                OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+              }
           } else if (OMultiValue.isMultiValue(entry))
             formatMultiValue(OMultiValue.getMultiValueIterator(entry), buffer, format);
           else
