@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.List;
-
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OSoftThread;
@@ -26,6 +22,10 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.IOException;
+import java.net.Socket;
 
 public abstract class ONetworkProtocol extends OSoftThread {
   private static final int MAX_RETRIES = 20;
@@ -35,8 +35,8 @@ public abstract class ONetworkProtocol extends OSoftThread {
     super(group, name);
   }
 
-  public abstract void config(OServer iServer, Socket iSocket, OContextConfiguration iConfiguration, List<?> statelessCommands,
-      List<?> statefulCommands) throws IOException;
+  public abstract void config(OServerNetworkListener iListener, OServer iServer, Socket iSocket,
+      OContextConfiguration iConfiguration) throws IOException;
 
   public abstract String getType();
 

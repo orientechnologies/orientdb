@@ -1,19 +1,19 @@
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
-
 public class OHttpNetworkCommandManager {
 
-  private static final String               URL_PART_PATTERN    = "([a-zA-Z0-9%:\\\\+]*)";
-  private static final String               REST_PARAM_PATTERN  = "\\{[a-zA-Z0-9%:]*\\}";
+  private static final String               URL_PART_PATTERN   = "([a-zA-Z0-9%:\\\\+]*)";
+  private static final String               REST_PARAM_PATTERN = "\\{[a-zA-Z0-9%:]*\\}";
 
   private final Map<String, OServerCommand> exactCommands      = new HashMap<String, OServerCommand>();
   private final Map<String, OServerCommand> wildcardCommands   = new HashMap<String, OServerCommand>();
@@ -74,17 +74,6 @@ public class OHttpNetworkCommandManager {
     iServerCommandInstance.configure(server);
   }
 
-  private boolean matches(String urlPattern, String requestUrl) {
-    String matcherUrl = urlPattern.replaceAll(REST_PARAM_PATTERN, URL_PART_PATTERN);
-
-    if (!matcherUrl.substring(0, matcherUrl.indexOf('|') + 1).equals(requestUrl.substring(0, requestUrl.indexOf('|') + 1))) {
-      return false;
-    }
-    matcherUrl = matcherUrl.substring(matcherUrl.indexOf('|') + 1);
-    requestUrl = requestUrl.substring(requestUrl.indexOf('|') + 1);
-    return requestUrl.matches(matcherUrl);
-  }
-
   public Map<String, String> extractUrlTokens(String requestUrl) {
     Map<String, String> result = new HashMap<String, String>();
     String urlPattern = findUrlPattern(requestUrl);
@@ -125,5 +114,16 @@ public class OHttpNetworkCommandManager {
     } else {
       return parent.findUrlPattern(requestUrl);
     }
+  }
+
+  private boolean matches(String urlPattern, String requestUrl) {
+    String matcherUrl = urlPattern.replaceAll(REST_PARAM_PATTERN, URL_PART_PATTERN);
+
+    if (!matcherUrl.substring(0, matcherUrl.indexOf('|') + 1).equals(requestUrl.substring(0, requestUrl.indexOf('|') + 1))) {
+      return false;
+    }
+    matcherUrl = matcherUrl.substring(matcherUrl.indexOf('|') + 1);
+    requestUrl = requestUrl.substring(requestUrl.indexOf('|') + 1);
+    return requestUrl.matches(matcherUrl);
   }
 }

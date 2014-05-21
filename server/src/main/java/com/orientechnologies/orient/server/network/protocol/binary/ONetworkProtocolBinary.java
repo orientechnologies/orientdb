@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
@@ -80,21 +92,10 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -111,12 +112,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig,
-      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
+  public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     // CREATE THE CLIENT CONNECTION
     connection = OClientConnectionManager.instance().connect(this);
 
-    super.config(iServer, iSocket, iConfig, iStatelessCommands, iStatefulCommands);
+    super.config(iListener, iServer, iSocket, iConfig);
 
     // SEND PROTOCOL VERSION
     channel.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);

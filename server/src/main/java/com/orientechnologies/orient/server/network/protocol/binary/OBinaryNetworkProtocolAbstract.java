@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.List;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -55,7 +49,13 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.logging.Level;
 
 /**
  * Abstract base class for binary network implementations.
@@ -77,8 +77,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig,
-      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
+  public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
   }

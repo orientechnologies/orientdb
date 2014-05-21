@@ -26,7 +26,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.InputMismatchException;
-import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
@@ -50,33 +49,57 @@ import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
+import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandAction;
+import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandFunction;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteIndex;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteProperty;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.*;
+import com.orientechnologies.orient.server.network.protocol.http.command.options.OServerCommandOptions;
+import com.orientechnologies.orient.server.network.protocol.http.command.patch.OServerCommandPatchDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostBatch;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostImportRecords;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostProperty;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostStudio;
+import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPostConnection;
+import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
-  private static final String                 COMMAND_SEPARATOR = "|";
-  protected static OHttpNetworkCommandManager sharedCmdManager;
-  private static int                          requestMaxContentLength;                // MAX = 10Kb
-  private static int                          socketTimeout;
-  private final StringBuilder                 requestContent    = new StringBuilder();
-  protected OClientConnection                 connection;
-  protected OChannelTextServer                channel;
-  protected OUser                             account;
-  protected OHttpRequest                      request;
-  protected OHttpResponse                     response;
-  protected OHttpNetworkCommandManager        cmdManager;
-  private String                              responseCharSet;
-  private String[]                            additionalResponseHeaders;
-  private String                              listeningAddress  = "?";
+  private static final String          COMMAND_SEPARATOR = "|";
+  private static int                   requestMaxContentLength;                // MAX = 10Kb
+  private static int                   socketTimeout;
+  private final StringBuilder          requestContent    = new StringBuilder();
+  protected OClientConnection          connection;
+  protected OChannelTextServer         channel;
+  protected OUser                      account;
+  protected OHttpRequest               request;
+  protected OHttpResponse              response;
+  protected OHttpNetworkCommandManager cmdManager;
+  private String                       responseCharSet;
+  private String[]                     additionalResponseHeaders;
+  private String                       listeningAddress  = "?";
 
   public ONetworkProtocolHttpAbstract() {
     super(Orient.instance().getThreadGroup(), "IO-HTTP");
   }
 
   @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfiguration,
-      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
+  public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
+      final OContextConfiguration iConfiguration) throws IOException {
+    registerStatelessCommands(iListener);
+
     final String addHeaders = iConfiguration.getValueAsString("network.http.additionalResponseHeaders", null);
     if (addHeaders != null)
       additionalResponseHeaders = addHeaders.split(";");
@@ -635,6 +658,58 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     sendShutdown();
   }
 
+  protected void registerStatelessCommands(final OServerNetworkListener iListener) {
+    cmdManager = new OHttpNetworkCommandManager(server, null);
+
+    cmdManager.registerCommand(new OServerCommandGetConnect());
+    cmdManager.registerCommand(new OServerCommandGetDisconnect());
+    cmdManager.registerCommand(new OServerCommandGetClass());
+    cmdManager.registerCommand(new OServerCommandGetCluster());
+    cmdManager.registerCommand(new OServerCommandGetDatabase());
+    cmdManager.registerCommand(new OServerCommandGetDictionary());
+    cmdManager.registerCommand(new OServerCommandGetDocument());
+    cmdManager.registerCommand(new OServerCommandGetDocumentByClass());
+    cmdManager.registerCommand(new OServerCommandGetQuery());
+    cmdManager.registerCommand(new OServerCommandGetServer());
+    cmdManager.registerCommand(new OServerCommandGetConnections());
+    cmdManager.registerCommand(new OServerCommandGetStorageAllocation());
+    cmdManager.registerCommand(new OServerCommandGetFileDownload());
+    cmdManager.registerCommand(new OServerCommandGetIndex());
+    cmdManager.registerCommand(new OServerCommandGetListDatabases());
+    cmdManager.registerCommand(new OServerCommandGetExportDatabase());
+    cmdManager.registerCommand(new OServerCommandPatchDocument());
+    cmdManager.registerCommand(new OServerCommandPostBatch());
+    cmdManager.registerCommand(new OServerCommandPostClass());
+    cmdManager.registerCommand(new OServerCommandPostCommand());
+    cmdManager.registerCommand(new OServerCommandPostDatabase());
+    cmdManager.registerCommand(new OServerCommandPostDocument());
+    cmdManager.registerCommand(new OServerCommandPostImportRecords());
+    cmdManager.registerCommand(new OServerCommandPostProperty());
+    cmdManager.registerCommand(new OServerCommandPostConnection());
+    cmdManager.registerCommand(new OServerCommandPostStudio());
+    cmdManager.registerCommand(new OServerCommandPutDocument());
+    cmdManager.registerCommand(new OServerCommandPutIndex());
+    cmdManager.registerCommand(new OServerCommandDeleteClass());
+    cmdManager.registerCommand(new OServerCommandDeleteDatabase());
+    cmdManager.registerCommand(new OServerCommandDeleteDocument());
+    cmdManager.registerCommand(new OServerCommandDeleteProperty());
+    cmdManager.registerCommand(new OServerCommandDeleteIndex());
+    cmdManager.registerCommand(new OServerCommandOptions());
+    cmdManager.registerCommand(new OServerCommandFunction());
+    cmdManager.registerCommand(new OServerCommandAction());
+    cmdManager.registerCommand(new OServerCommandKillDbConnection());
+
+    for (OServerCommandConfiguration c : iListener.getStatefulCommands())
+      try {
+        cmdManager.registerCommand(OServerNetworkListener.createCommand(server, c));
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on creating stateful command '%s'", e, c.implementation);
+      }
+
+    for (OServerCommand c : iListener.getStatelessCommands())
+      cmdManager.registerCommand(c);
+  }
+
   private String getCommandString(final String command) {
     final int getQueryPosition = command.indexOf('?');
 
@@ -648,4 +723,5 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       commandString.append(command);
     return commandString.toString();
   }
+
 }
