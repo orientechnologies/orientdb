@@ -168,7 +168,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       OServer.registerServerInstance(getLocalNodeName(), serverInstance);
 
-      final IMap<String, Object> configurationMap = getConfigurationMap();
+      final IMap<String, Object> configurationMap = (IMap<String, Object>) getConfigurationMap();
       configurationMap.addEntryListener(this, true);
 
       // REGISTER CURRENT NODES
@@ -686,12 +686,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return availableNodes;
   }
 
-  protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
-    return Hazelcast.newHazelcastInstance(new FileSystemXmlConfig(hazelcastConfigFile));
+  @Override
+  public Map<String, Object> getConfigurationMap() {
+    return getHazelcastInstance().getMap("orientdb");
   }
 
-  protected IMap<String, Object> getConfigurationMap() {
-    return getHazelcastInstance().getMap("orientdb");
+  protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
+    return Hazelcast.newHazelcastInstance(new FileSystemXmlConfig(hazelcastConfigFile));
   }
 
   /**
@@ -772,7 +773,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
             // GET ALL THE
             final Collection<String> nodes = cfg.getServers();
-            nodes.remove( getLocalNodeName() );
+            nodes.remove(getLocalNodeName());
 
             ODistributedServerLog.warn(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT,
                 "requesting deploy of database '%s' on local server...", databaseName);

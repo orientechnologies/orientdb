@@ -21,6 +21,7 @@ import com.orientechnologies.orient.server.distributed.conflict.OReplicationConf
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -40,6 +41,8 @@ public interface ODistributedServerManager {
   };
 
   public boolean isEnabled();
+
+  public Map<String, Object> getConfigurationMap();
 
   public long getLastClusterChangeOn();
 
