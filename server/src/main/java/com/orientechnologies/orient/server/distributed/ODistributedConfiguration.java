@@ -343,10 +343,16 @@ public class ODistributedConfiguration {
       if (iClusterName == null)
         iClusterName = "*";
 
-      ODocument cfg = clusters.field(iClusterName);
-      if (cfg == null && !iClusterName.equals("*"))
-        // GET DEFAULT CLUSTER
+      final ODocument cfg;
+      if (!clusters.containsField(iClusterName))
+        // NO CLUSTER IN CFG: GET THE DEFAULT ONE
         cfg = clusters.field("*");
+      else
+        // GET THE CLUSTER CFG
+        cfg = clusters.field(iClusterName);
+
+      if( cfg == null )
+        return new ODocument();
 
       return cfg;
     }

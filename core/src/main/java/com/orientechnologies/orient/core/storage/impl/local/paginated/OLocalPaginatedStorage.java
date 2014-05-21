@@ -23,7 +23,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -81,11 +80,18 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Andrey Lomakin
@@ -1739,7 +1745,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private void restoreFromBegging() throws IOException {
-    OLogManager.instance().info(this, "Date restore procedure is started.");
+    OLogManager.instance().info(this, "Data restore procedure is started.");
     OLogSequenceNumber lsn = writeAheadLog.begin();
 
     restoreFrom(lsn);
