@@ -482,13 +482,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       activeNodes.remove(nodeName);
 
       // REMOVE NODE IN DB CFG
-      final Set<String> dbs = messageService.getDatabases();
-      if (dbs != null)
-        for (String dbName : dbs)
-          messageService.getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
+      if (messageService != null) {
+        final Set<String> dbs = messageService.getDatabases();
+        if (dbs != null)
+          for (String dbName : dbs)
+            messageService.getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
 
-      // REMOVE THE SERVER'S RESPONSE QUEUE
-      messageService.removeQueue(OHazelcastDistributedMessageService.getResponseQueueName(nodeName));
+        // REMOVE THE SERVER'S RESPONSE QUEUE
+        messageService.removeQueue(OHazelcastDistributedMessageService.getResponseQueueName(nodeName));
+      }
     }
 
     OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
@@ -746,7 +748,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
               if (iStartup && hotAlignment != null && !hotAlignment) {
                 // DROP THE DATABASE ON CURRENT NODE
                 ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-                    "dropping local database %s in %s and get a fresh copy from a remote node...", databaseName, dbPath);
+                    "dropping local database '%s' in '%s' and get a fresh copy from a remote node...", databaseName, dbPath);
 
                 Orient.instance().unregisterStorageByName(databaseName);
 
@@ -767,10 +769,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             distrDatabase.configureDatabase(false, false);
 
             final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+
+            // GET ALL THE NODE BUT LOCAL ONE
             final Collection<String> nodes = cfg.getServers();
+            nodes.remove( getLocalNodeName() );
+
+            ODistributedServerLog.warn(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT,
+                "requesting deploy of database '%s' on local server...", databaseName);
 
             final Map<String, Object> results = (Map<String, Object>) sendRequest(databaseName, null, nodes,
                 new ODeployDatabaseTask(), EXECUTION_MODE.RESPONSE);
+
+            ODistributedServerLog.warn(this, getLocalNodeName(), nodes.toString(), DIRECTION.OUT, "deploy returned: %s", results);
 
             // EXTRACT THE REAL RESULT
             for (Entry<String, Object> r : results.entrySet()) {
@@ -815,7 +825,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
                     if (result instanceof Boolean)
                       continue;
-                    else {
+                    else if (value instanceof Exception) {
+                      ODistributedServerLog.error(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
+                          "error on installing database %s in %s (chunk #%d)", (Exception) value, databaseName, dbPath, chunkNum);
+                    } else if (value instanceof ODistributedDatabaseChunk) {
                       chunk = (ODistributedDatabaseChunk) result;
                       fileSize += writeDatabaseChunk(chunkNum, chunk, out);
                     }

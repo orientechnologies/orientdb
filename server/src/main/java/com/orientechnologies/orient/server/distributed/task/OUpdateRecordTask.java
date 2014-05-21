@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -66,7 +67,12 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     if (loadedRecord == null)
       throw new ORecordNotFoundException("Record " + rid + " was not found on update");
 
-    loadedRecord.fill(rid, version, content, true);
+    if (loadedRecord instanceof ODocument) {
+      // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
+      final ODocument newDocument = new ODocument().fromStream(content);
+      ((ODocument) loadedRecord).merge(newDocument, false, false);
+    } else
+      loadedRecord.fill(rid, version, content, true);
 
     loadedRecord = database.save(loadedRecord);
 

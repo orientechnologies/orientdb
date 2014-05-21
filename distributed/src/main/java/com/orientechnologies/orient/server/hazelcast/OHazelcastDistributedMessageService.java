@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
@@ -29,15 +38,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -353,28 +353,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       if (!iUnqueuePendingMessages) {
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
             "found %d previous messages in queue %s, clearing them...", queueSize, iQueueName);
-        while (!iQueue.isEmpty()) {
-          try {
-            final Object msg = iQueue.poll();
-
-            if (msg != null) {
-              if (msg instanceof ODistributedRequest) {
-                ODistributedRequest req = (ODistributedRequest) iQueue.take();
-                ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-                    "- discarding request %s task %s...", req, req.getTask());
-
-              } else if (msg instanceof ODistributedResponse) {
-
-                ODistributedResponse resp = (ODistributedResponse) iQueue.take();
-                ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-                    "- discarding response to request %d task %s...", resp.getRequestId(), resp.getPayload());
-              } else
-                ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "- discarding message %s...",
-                    msg);
-            }
-          } catch (InterruptedException e) {
-          }
-        }
+        iQueue.clear();
       } else {
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
             "found %d previous messages in queue %s, aligning the database...", queueSize, iQueueName);
@@ -400,6 +379,8 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   protected void removeQueue(final String iQueueName) {
     final IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
     if (queue != null) {
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+          "removing queue '%s' containing %d messages", iQueueName, queue.size());
       queue.clear();
     }
   }
