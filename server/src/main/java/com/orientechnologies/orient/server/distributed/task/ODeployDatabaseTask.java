@@ -104,6 +104,10 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
                 "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
 
+            if (chunk.last)
+              // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+              iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+
             return chunk;
 
           } finally {
