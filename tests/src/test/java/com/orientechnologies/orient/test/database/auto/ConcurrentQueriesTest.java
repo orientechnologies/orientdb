@@ -51,7 +51,6 @@ public class ConcurrentQueriesTest {
 
     @Override
     public Void call() {
-    try {
         for (int i = 0; i < CYCLES; i++) {
           ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
           try {
@@ -63,19 +62,17 @@ public class ConcurrentQueriesTest {
                 totalRetries.addAndGet(retry);
                 break;
               } catch (ONeedRetryException e) {
-                //System.out.println("Retry " + retry + "/" + MAX_RETRIES + "...");
+              try {
                 Thread.sleep(retry * 10);
+              } catch (InterruptedException e1) {
+                throw new RuntimeException(e1);
+              }
               }
             }
           } finally {
             db.close();
           }
         }
-
-      } catch (Throwable e) {
-        e.printStackTrace();
-        Assert.assertTrue(false);
-      }
       return null;
     }
   }
