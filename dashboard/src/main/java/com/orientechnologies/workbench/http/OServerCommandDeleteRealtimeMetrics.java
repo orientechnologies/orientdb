@@ -75,7 +75,7 @@ public class OServerCommandDeleteRealtimeMetrics extends OServerCommandAuthentic
       server.getRealtime().reset(metricName);
 
     if (result != null)
-      iResponse.writeResult(result, "indent:6");
+      iResponse.writeResult(result, "indent:6", null);
   }
 
   @Override

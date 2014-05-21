@@ -32,6 +32,16 @@ angular.module('MonitorApp')
                 modalEl.modal('show');
             });
         }
+        $scope.addCluster = function () {
+
+            var modalScope = $scope.$new(true)
+            modalScope.refresh = $scope.refresh;
+            var modalPromise = $modal({template: 'views/cluster/newCluster.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
+
+            $q.when(modalPromise).then(function (modalEl) {
+                modalEl.modal('show');
+            });
+        }
         $scope.refreshConfig = function () {
             Settings.get(function (data) {
                 if (data.result.length > 0) {
@@ -68,6 +78,16 @@ angular.module('MonitorApp')
             modalScope.refresh = $scope.refresh;
             modalScope.serverID = rid;
             var modalPromise = $modal({template: 'views/settings/editModal.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
+
+            $q.when(modalPromise).then(function (modalEl) {
+                modalEl.modal('show');
+            });
+        }
+        $scope.editCluster = function (cluster) {
+
+            var modalScope = $scope.$new(true);
+            modalScope.cluster = cluster;
+            var modalPromise = $modal({template: 'views/cluster/editCluster.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
 
             $q.when(modalPromise).then(function (modalEl) {
                 modalEl.modal('show');

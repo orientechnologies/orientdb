@@ -51,7 +51,7 @@ public class OServerCommandAuthenticateSingleDatabase extends OServerCommandAuth
     result.field("user", user);
     result.field("host", host);
     result.field("port", port);
-    iResponse.writeResult(result, "");
+    iResponse.writeResult(result, null, null);
 
     return false;
   }

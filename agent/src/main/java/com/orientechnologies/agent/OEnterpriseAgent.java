@@ -30,6 +30,7 @@ import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValu
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.ee.common.OWorkbenchPasswordGet;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -38,13 +39,20 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import sun.misc.ClassLoaderUtil;
+
+import java.io.File;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 public class OEnterpriseAgent extends OServerPluginAbstract {
   private OServer             server;
   private String              license;
   private String              version;
   private boolean             enabled                    = false;
-  private static final String ORIENDB_ENTERPRISE_VERSION = "1.7-rc2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
+  private static final String ORIENDB_ENTERPRISE_VERSION = "1.7-SNAPSHOT"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH
+                                                                           // THIS
 
   public OEnterpriseAgent() {
   }
@@ -171,4 +179,5 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     }
     return true;
   }
+
 }

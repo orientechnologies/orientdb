@@ -29,7 +29,7 @@ monitor.factory('Monitor', function ($http, $resource) {
             });
     }
     resource.getServers = function (callback) {
-        var query = 'select * from Server'
+        var query = 'select * from Server fetchPlan *:1'
         $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
             callback(data);
         });
@@ -332,5 +332,21 @@ monitor.factory('Users', function ($http, $resource) {
                 callback(data.result[0]);
         });
     }
+    return resource;
+});
+
+monitor.factory('Cluster', function ($http, $resource, $q) {
+    var resource = $resource(API + 'database/:database');
+
+    resource.saveCluster = function (cluster) {
+        var deferred = $q.defer();
+        var url = API + 'cluster/monitor';
+        $http.post(url, cluster).success(function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
+    }
+
+
     return resource;
 });

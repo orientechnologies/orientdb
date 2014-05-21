@@ -31,56 +31,56 @@ import com.orientechnologies.workbench.OWorkbenchPlugin;
 import com.orientechnologies.workbench.OWorkbenchPurgeMetricLogHelper;
 
 public class OServerCommandDeleteServer extends OServerCommandAuthenticatedDbAbstract {
-	private static final String[]	NAMES	= { "DELETE|monitoredServer/*" };
+  private static final String[] NAMES = { "DELETE|monitoredServer/*" };
 
-	private OWorkbenchPlugin				monitor;
+  private OWorkbenchPlugin      monitor;
 
-	public OServerCommandDeleteServer() {
-	}
+  public OServerCommandDeleteServer() {
+  }
 
-	public OServerCommandDeleteServer(final OServerCommandConfiguration iConfiguration) {
-	}
+  public OServerCommandDeleteServer(final OServerCommandConfiguration iConfiguration) {
+  }
 
-	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-		if (monitor == null)
-			monitor = OServerMain.server().getPluginByClass(OWorkbenchPlugin.class);
+  @Override
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    if (monitor == null)
+      monitor = OServerMain.server().getPluginByClass(OWorkbenchPlugin.class);
 
-		final String[] parts = checkSyntax(iRequest.url, 3, "Syntax error: monitoredServer/database/<name>");
+    final String[] parts = checkSyntax(iRequest.url, 3, "Syntax error: monitoredServer/database/<name>");
 
-		iRequest.data.commandInfo = "Reset metrics";
+    iRequest.data.commandInfo = "Reset metrics";
 
-		try {
+    try {
 
-			final String serverName = parts[2];
-			final OMonitoredServer server = monitor.getMonitoredServer(serverName);
-			if (server == null)
-				throw new IllegalArgumentException("Invalid server '" + serverName + "'");
+      final String serverName = parts[2];
+      final OMonitoredServer server = monitor.getMonitoredServer(serverName);
+      if (server == null)
+        throw new IllegalArgumentException("Invalid server '" + serverName + "'");
 
-			ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-			OWorkbenchPurgeMetricLogHelper.purgeLogsNow(server.getConfiguration(), db);
-			OWorkbenchPurgeMetricLogHelper.purgeMetricNow(server.getConfiguration(), db);
-			OWorkbenchPurgeMetricLogHelper.purgeConfigNow(server.getConfiguration(), db);
-			iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
-			server.getConfiguration().delete();
-		} catch (Exception e) {
-			iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
-		}
-		return false;
-	}
+      ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+      OWorkbenchPurgeMetricLogHelper.purgeLogsNow(server.getConfiguration(), db);
+      OWorkbenchPurgeMetricLogHelper.purgeMetricNow(server.getConfiguration(), db);
+      OWorkbenchPurgeMetricLogHelper.purgeConfigNow(server.getConfiguration(), db);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+      server.getConfiguration().delete();
+    } catch (Exception e) {
+      iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
+    }
+    return false;
+  }
 
-	protected void clearRealtimeMetrics(OHttpResponse iResponse, final String iMetricKind, final String[] metricNames,
-			final OMonitoredServer server, final Map<String, Object> result) throws MalformedURLException, IOException,
-			InterruptedException {
-		for (String metricName : metricNames)
-			server.getRealtime().reset(metricName);
+  protected void clearRealtimeMetrics(OHttpResponse iResponse, final String iMetricKind, final String[] metricNames,
+      final OMonitoredServer server, final Map<String, Object> result) throws MalformedURLException, IOException,
+      InterruptedException {
+    for (String metricName : metricNames)
+      server.getRealtime().reset(metricName);
 
-		if (result != null)
-			iResponse.writeResult(result, "indent:6");
-	}
+    if (result != null)
+      iResponse.writeResult(result, "indent:6", null);
+  }
 
-	@Override
-	public String[] getNames() {
-		return NAMES;
-	}
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
 }

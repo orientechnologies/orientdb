@@ -19,8 +19,10 @@
     "server.health.status": "Status",
     "server.health.name": "Server",
     "server.health.lastcheck": "Last Heartbeat",
-    "server.agentVersion" : "Agent Version",
+    "server.health.cluster": "Cluster",
+    "server.agentVersion": "Agent Version",
     "servers.new": "Add Server",
+    "servers.cluster": "Join Cluster",
     "logs.title": "Latest Notifications",
     "logs.date": "When",
     "logs.server": "Server",
@@ -89,6 +91,14 @@
     "metric.range": "Range",
     "metric.polling": "Polling",
     "metric.chart": "Metric Chart",
-    "metric.chartType": "Chart Type"
+    "metric.chartType": "Chart Type",
+    "settings.cluster.name": "Group name",
+    "settings.cluster.password": "Group password",
+    "settings.cluster.port": "Port",
+    "settings.cluster.multicast.enabled": "Multicast Enabled",
+    "settings.cluster.multicast.group": "Multicast Group",
+    "settings.cluster.multicast.port": "Multicast Port",
+    "settings.server.cluster.title": "New Cluster",
+    "settings.server.cluster.title.edit": "Edit Cluster"
 
 }

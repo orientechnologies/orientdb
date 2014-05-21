@@ -143,7 +143,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
           }
       }
     }
-    iResponse.writeResult(result, "indent:6");
+    iResponse.writeResult(result, "indent:6", null);
   }
 
   protected void sendSnapshotMetrics(OHttpRequest iRequest, OHttpResponse iResponse, final String iMetricKind,

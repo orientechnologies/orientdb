@@ -55,7 +55,9 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
         iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
         iResponse.writeLine("Date: " + new Date());
         iResponse.writeLine(null);
-        database.backup(iResponse.getOutputStream(), null, null, null);
+
+         // TODO
+        database.backup(iResponse.getOutputStream(), null, null, null,0,0);
 
         try {
           iResponse.flush();

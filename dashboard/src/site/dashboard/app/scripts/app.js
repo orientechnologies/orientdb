@@ -1,6 +1,29 @@
 'use strict';
 
-var app = angular.module('MonitorApp', ['ngI18n', , 'messages.controller', 'workbench-logs.controller', 'workbench-events.controller', 'login.services', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives', 'ui.codemirror', 'ngGrid', 'bootstrap.tabset', 'message.services','spinner.controller','spinner.services']);
+var app = angular.module('MonitorApp',
+    ['ngI18n',
+     'messages.controller',
+     'workbench-logs.controller',
+     'workbench-events.controller',
+     'login.services',
+     'monitor.services',
+     'ui-nvd3',
+     'ngMoment',
+     'OFilter',
+     'ui.select2',
+     '$strap.directives',
+     'monitor.directive',
+     'orientdb.directives',
+     'ui.codemirror',
+     'ngGrid',
+     'bootstrap.tabset',
+     'message.services',
+     'spinner.controller',
+     'spinner.services',
+     'ngRoute',
+     'ngAnimate'
+     ]
+);
 app.config(function ($routeProvider) {
     $routeProvider
         .when('/', {

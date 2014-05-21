@@ -16,6 +16,7 @@
 
 package com.orientechnologies.workbench;
 
+import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -27,6 +28,10 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.hazelcast.config.Config;
+import com.hazelcast.config.FileSystemXmlConfig;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
@@ -59,20 +64,7 @@ import com.orientechnologies.workbench.event.OEventMetricFunctionExecutor;
 import com.orientechnologies.workbench.event.OEventMetricHttpExecutor;
 import com.orientechnologies.workbench.event.OEventMetricMailExecutor;
 import com.orientechnologies.workbench.hooks.OEventHook;
-import com.orientechnologies.workbench.http.OServerCommandAuthenticateSingleDatabase;
-import com.orientechnologies.workbench.http.OServerCommandDeleteRealtimeMetrics;
-import com.orientechnologies.workbench.http.OServerCommandDeleteServer;
-import com.orientechnologies.workbench.http.OServerCommandGetConnectionsCommand;
-import com.orientechnologies.workbench.http.OServerCommandGetExplainCommand;
-import com.orientechnologies.workbench.http.OServerCommandGetLoggedUserInfo;
-import com.orientechnologies.workbench.http.OServerCommandGetMonitoredServers;
-import com.orientechnologies.workbench.http.OServerCommandGetRealtimeMetrics;
-import com.orientechnologies.workbench.http.OServerCommandGetServerConfiguration;
-import com.orientechnologies.workbench.http.OServerCommandGetServerLog;
-import com.orientechnologies.workbench.http.OServerCommandMessageExecute;
-import com.orientechnologies.workbench.http.OServerCommandNotifyChangedMetric;
-import com.orientechnologies.workbench.http.OServerCommandPurgeMetric;
-import com.orientechnologies.workbench.http.OServerCommandQueryPassThrough;
+import com.orientechnologies.workbench.http.*;
 
 public class OWorkbenchPlugin extends OServerPluginAbstract {
 
@@ -83,6 +75,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   public static final String                        VERSION                           = OConstants.ORIENT_VERSION;
   static final String                               SYSTEM_CONFIG                     = "system.config";
 
+  public static final String                        CLASS_CLUSTER                     = "Cluster";
   public static final String                        CLASS_SERVER                      = "Server";
   public static final String                        CLASS_LOG                         = "Log";
   public static final String                        CLASS_EVENT                       = "Event";
@@ -127,9 +120,10 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   Map<String, OPair<String, METRIC_TYPE>>           dictionary;
   private Set<OServerConfigurationListener>         listeners                         = new HashSet<OServerConfigurationListener>();
   private ConcurrentHashMap<String, Boolean>        metricsEnabled                    = new ConcurrentHashMap<String, Boolean>();
-  public   String                                    version;
+  public String                                     version;
   private OWorkbenchUpdateTask                      updater;
   private OWorkbenchMessageTask                     messageTask;
+  private HazelcastInstance                         hazelcastInstance;
 
   @Override
   public void config(OServer iServer, OServerParameterConfiguration[] iParams) {
@@ -166,6 +160,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     registerCommands();
     Orient.instance().getTimer().schedule(new OWorkbenchTask(this), updateTimer, updateTimer);
     Orient.instance().getTimer().schedule(new OWorkbenchPurgeTask(this), purgeTimer, purgeTimer);
+    Orient.instance().getTimer().schedule(new OWorkbenchHazelcastTask(this), updateTimer, updateTimer);
     messageTask = new OWorkbenchMessageTask(this);
     Orient.instance().getTimer().schedule(messageTask, 600000, 600000);
     updater = new OWorkbenchUpdateTask(this);
@@ -219,6 +214,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     listener.registerStatelessCommand(new OServerCommandDeleteServer());
     listener.registerStatelessCommand(new OServerCommandNotifyChangedMetric());
     listener.registerStatelessCommand(new OServerCommandMessageExecute());
+    listener.registerStatelessCommand(new OServerCommandClusterManager());
   }
 
   private void unregisterCommands() {
@@ -240,6 +236,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     listener.unregisterStatelessCommand(OServerCommandDeleteServer.class);
     listener.unregisterStatelessCommand(OServerCommandNotifyChangedMetric.class);
     listener.unregisterStatelessCommand(OServerCommandMessageExecute.class);
+    listener.unregisterStatelessCommand(OServerCommandClusterManager.class);
   }
 
   public OMonitoredServer getMonitoredServer(final String iServer) {
@@ -333,6 +330,12 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     server.createProperty("url", OType.STRING);
     server.createProperty("user", OType.STRING);
     server.createProperty("password", OType.STRING);
+
+    final OClass cluster = schema.createClass(CLASS_CLUSTER);
+    cluster.createProperty("name", OType.STRING);
+    cluster.createProperty("password", OType.STRING);
+    cluster.createProperty("port", OType.INTEGER);
+    cluster.createProperty("portIncrement", OType.BOOLEAN);
 
     final OClass snapshot = schema.createClass(CLASS_SNAPSHOT);
     snapshot.createProperty("server", OType.LINK, server);
