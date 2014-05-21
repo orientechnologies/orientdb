@@ -15,6 +15,16 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -48,16 +58,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -402,7 +402,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         // OBJECT
         boolean shouldReload = new ORecordId(OStringSerializerHelper.getStringContent(getFieldValue("@rid", fields))).isTemporary();
         final ORecordInternal<?> recordInternal = fromString(iFieldValue, new ODocument(), null, iOptions, shouldReload);
-        if ((iType == null || !iType.isLink()) && recordInternal instanceof ODocument)
+        if (shouldBeDeserializedAsEmbedded(recordInternal, iType))
           ((ODocument) recordInternal).addOwner(iRecord);
         return recordInternal;
       } else {
@@ -469,7 +469,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             collectionItem = getValue(iRecord, null, iFieldValue, iFieldValueAsString, iLinkedType, null, iFieldTypes, iNoMap,
                 iOptions);
 
-          if ((iType == null || !iType.isLink()) && collectionItem instanceof ODocument && iRecord instanceof ODocument)
+          //TODO redundant in some cases, owner is already added by getValue in some cases
+          if (shouldBeDeserializedAsEmbedded(collectionItem, iType))
             ((ODocument) collectionItem).addOwner(iRecord);
 
           if (collectionItem instanceof String && ((String) collectionItem).length() == 0)
@@ -629,6 +630,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       }
 
     return iFieldValueAsString;
+  }
+
+  private boolean shouldBeDeserializedAsEmbedded(Object record, OType iType) {
+    return record instanceof ODocument && !((ODocument) record).getIdentity().isTemporary()
+        && !((ODocument) record).getIdentity().isPersistent() && (iType == null || !iType.isLink());
   }
 
   private String decodeJSON(String iFieldValueAsString) {
