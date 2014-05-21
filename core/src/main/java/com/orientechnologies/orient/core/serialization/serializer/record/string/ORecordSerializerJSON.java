@@ -15,16 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -59,6 +49,16 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
@@ -66,10 +66,15 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   public static final ORecordSerializerJSON INSTANCE              = new ORecordSerializerJSON();
   public static final String                ATTRIBUTE_FIELD_TYPES = "@fieldTypes";
   public static final char[]                PARAMETER_SEPARATOR   = new char[] { ':', ',' };
+  public static final int                   INITIAL_SIZE          = 5000;
   private static final Long                 MAX_INT               = (long) Integer.MAX_VALUE;
   private static final Long                 MIN_INT               = (long) Integer.MIN_VALUE;
   private static final Double               MAX_FLOAT             = (double) Float.MAX_VALUE;
   private static final Double               MIN_FLOAT             = (double) Float.MIN_VALUE;
+
+  private interface CollectionItemVisitor {
+    void visitItem(Object item);
+  }
 
   public class FormatSettings {
     public boolean includeVer;
@@ -327,7 +332,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType) {
     try {
-      final StringWriter buffer = new StringWriter();
+      final StringWriter buffer = new StringWriter(INITIAL_SIZE);
       final OJSONWriter json = new OJSONWriter(buffer, iFormat);
       final FormatSettings settings = new FormatSettings(iFormat);
 
@@ -411,7 +416,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             else if (OStringSerializerHelper.contains(iFieldValue, '.')) {
               // DECIMAL FORMAT: DETERMINE IF DOUBLE OR FLOAT
               final Double v = new Double(OStringSerializerHelper.getStringContent(iFieldValue));
-              
+
               if (canBeTrunkedToFloat(v))
                 return v.floatValue();
               else
@@ -530,19 +535,20 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   private boolean canBeTrunkedToInt(Long v) {
-    return (v > 0)?v.compareTo(MAX_INT) <= 0:v.compareTo(MIN_INT) >= 0;
+    return (v > 0) ? v.compareTo(MAX_INT) <= 0 : v.compareTo(MIN_INT) >= 0;
   }
 
   private boolean canBeTrunkedToFloat(Double v) {
-    //TODO not really correct check. Small numbers with high precision will be trunked while they shouldn't be
+    // TODO not really correct check. Small numbers with high precision will be trunked while they shouldn't be
 
-    return (v > 0)? v.compareTo(MAX_FLOAT) <= 0: v.compareTo(MIN_FLOAT) >= 0;
+    return (v > 0) ? v.compareTo(MAX_FLOAT) <= 0 : v.compareTo(MIN_FLOAT) >= 0;
   }
 
   /**
    * OBJECT OR MAP. CHECK THE TYPE ATTRIBUTE TO KNOW IT.
    */
-  private Object getValueAsObjectOrMap(ODocument iRecord, String iFieldValue, OType iType, OType iLinkedType, Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions) {
+  private Object getValueAsObjectOrMap(ODocument iRecord, String iFieldValue, OType iType, OType iLinkedType,
+      Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions) {
     final String[] fields = OStringParser.getWords(iFieldValue.substring(1, iFieldValue.length() - 1), ":,", true);
 
     if (fields == null || fields.length == 0)
@@ -558,10 +564,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     }
   }
 
-  private Object getValueAsMap(ODocument iRecord, String iFieldValue, OType iLinkedType, Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions, String[] fields) {
+  private Object getValueAsMap(ODocument iRecord, String iFieldValue, OType iLinkedType, Map<String, Character> iFieldTypes,
+      boolean iNoMap, String iOptions, String[] fields) {
     if (fields.length % 2 == 1)
-      throw new OSerializationException("Bad JSON format on map. Expected pairs of field:value but received '"
-          + iFieldValue + "'");
+      throw new OSerializationException("Bad JSON format on map. Expected pairs of field:value but received '" + iFieldValue + "'");
 
     final Map<String, Object> embeddedMap = new LinkedHashMap<String, Object>();
 
@@ -586,7 +592,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return recordInternal;
   }
 
-  private Object getValueAsCollection(ODocument iRecord, String iFieldValue, OType iType, OType iLinkedType, Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions) {
+  private Object getValueAsCollection(ODocument iRecord, String iFieldValue, OType iType, OType iLinkedType,
+      Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions) {
     // remove square brackets
     iFieldValue = iFieldValue.substring(1, iFieldValue.length() - 1);
 
@@ -602,17 +609,22 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
       return bag;
     } else if (iType == OType.LINKSET) {
-      return getValueAsLinkedCollection(new OMVRBTreeRIDSet(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes, iNoMap, iOptions);
+      return getValueAsLinkedCollection(new OMVRBTreeRIDSet(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes,
+          iNoMap, iOptions);
     } else if (iType == OType.LINKLIST) {
-      return getValueAsLinkedCollection(new ORecordLazyList(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes, iNoMap, iOptions);
+      return getValueAsLinkedCollection(new ORecordLazyList(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes,
+          iNoMap, iOptions);
     } else if (iType == OType.EMBEDDEDSET) {
-      return getValueAsEmbeddedCollection(new OTrackedSet<Object>(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes, iNoMap, iOptions);
+      return getValueAsEmbeddedCollection(new OTrackedSet<Object>(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes,
+          iNoMap, iOptions);
     } else {
-      return getValueAsEmbeddedCollection(new OTrackedList<Object>(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes, iNoMap, iOptions);
+      return getValueAsEmbeddedCollection(new OTrackedList<Object>(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes,
+          iNoMap, iOptions);
     }
   }
 
-  private Object getValueAsLinkedCollection(final Collection<OIdentifiable> collection, ODocument iRecord, String iFieldValue, OType iType, OType iLinkedType, Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions) {
+  private Object getValueAsLinkedCollection(final Collection<OIdentifiable> collection, ODocument iRecord, String iFieldValue,
+      OType iType, OType iLinkedType, Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions) {
 
     parseCollection(iRecord, iFieldValue, iType, iLinkedType, iFieldTypes, iNoMap, iOptions, new CollectionItemVisitor() {
       @Override
@@ -624,7 +636,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return collection;
   }
 
-  private Object getValueAsEmbeddedCollection(final Collection<Object> collection, ODocument iRecord, String iFieldValue, OType iType, OType iLinkedType, Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions) {
+  private Object getValueAsEmbeddedCollection(final Collection<Object> collection, ODocument iRecord, String iFieldValue,
+      OType iType, OType iLinkedType, Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions) {
 
     parseCollection(iRecord, iFieldValue, iType, iLinkedType, iFieldTypes, iNoMap, iOptions, new CollectionItemVisitor() {
       @Override
@@ -637,16 +650,15 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   private void parseCollection(ODocument iRecord, String iFieldValue, OType iType, OType iLinkedType,
-                               Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions,
-                               CollectionItemVisitor visitor) {
+      Map<String, Character> iFieldTypes, boolean iNoMap, String iOptions, CollectionItemVisitor visitor) {
     if (!iFieldValue.isEmpty()) {
       for (String item : OStringSerializerHelper.smartSplit(iFieldValue, ',')) {
         final String itemValue = item.trim();
 
-        final Object collectionItem = getValue(iRecord, null, itemValue, OStringSerializerHelper.getStringContent(itemValue), iLinkedType, null, iFieldTypes, iNoMap,
-            iOptions);
+        final Object collectionItem = getValue(iRecord, null, itemValue, OStringSerializerHelper.getStringContent(itemValue),
+            iLinkedType, null, iFieldTypes, iNoMap, iOptions);
 
-        //TODO redundant in some cases, owner is already added by getValue in some cases
+        // TODO redundant in some cases, owner is already added by getValue in some cases
         if (shouldBeDeserializedAsEmbedded(collectionItem, iType))
           ((ODocument) collectionItem).addOwner(iRecord);
 
@@ -656,10 +668,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         visitor.visitItem(collectionItem);
       }
     }
-  }
-  
-  private interface CollectionItemVisitor {
-    void visitItem(Object item);
   }
 
   private boolean shouldBeDeserializedAsEmbedded(Object record, OType iType) {
