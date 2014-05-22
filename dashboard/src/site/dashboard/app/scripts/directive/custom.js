@@ -237,20 +237,20 @@ Widget.directive('servergraph', function () {
             mousedown_link = null,
             mousedown_node = null,
             mouseup_node = null;
-        var nodes = [
-            {id: 0, reflexive: false},
-            {id: 1, reflexive: true },
-            {id: 2, reflexive: false}
-        ];
-        var lastNodeId = 2;
-        var links = [
-            {source: nodes[0], target: nodes[1], left: false, right: true },
-            {source: nodes[1], target: nodes[2], left: false, right: true }
-        ];
+
+        var nodes = [];
+        model.forEach(function (val, idx, arr) {
+            nodes.push({ id: idx, reflexive: idx == 0, server: val});
+        });
+//        var nodes = [
+//            {id: 0, reflexive: false},
+//            {id: 1, reflexive: true },
+//            {id: 2, reflexive: false}
+//        ];
+
 
         var force = d3.layout.force()
             .nodes(nodes)
-            .links(links)
             .size([width, height])
             .linkDistance(150)
             .charge(-500)
@@ -274,7 +274,7 @@ Widget.directive('servergraph', function () {
         var g = circle.enter().append('svg:g');
         g.append('svg:circle')
             .attr('class', 'node')
-            .attr('r', 12)
+            .attr('r', 20)
             .style('fill', function (d) {
                 return (d === selected_node) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.id);
             })
@@ -290,7 +290,7 @@ Widget.directive('servergraph', function () {
             .attr('y', 4)
             .attr('class', 'id')
             .text(function (d) {
-                return d.id;
+                return d.server.name;
             });
         // remove old nodes
         function tick() {
