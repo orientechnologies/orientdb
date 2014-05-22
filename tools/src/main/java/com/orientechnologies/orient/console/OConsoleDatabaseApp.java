@@ -1595,7 +1595,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     out.println(new StringBuilder("Exporting current database to: ").append(iText).append(" in GZipped JSON format ..."));
     final List<String> items = OStringSerializerHelper.smartSplit(iText, ' ');
-    final String fileName = items.size() <= 0 || items.get(1).charAt(0) == '-' ? null : items.get(1);
+    final String fileName = items.size() <= 1 || items.get(1).charAt(0) == '-' ? null : items.get(1);
     final String options = fileName != null ? iText.substring(items.get(0).length() + items.get(1).length() + 1).trim() : iText;
 
     try {
