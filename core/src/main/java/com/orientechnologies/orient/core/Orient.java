@@ -211,8 +211,8 @@ public class Orient extends OListenerManger<OOrientListener> {
       profiler.shutdown();
 
       if (memoryWatchDog != null) {
-        // SHUTDOWN IT AND WAIT FOR COMPLETITION
-        memoryWatchDog.interrupt();
+        // SHUTDOWN IT AND WAIT FOR COMPETITION
+        memoryWatchDog.sendShutdown();
         try {
           memoryWatchDog.join();
         } catch (InterruptedException e) {
