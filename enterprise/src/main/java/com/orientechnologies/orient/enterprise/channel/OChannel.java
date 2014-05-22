@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.orient.enterprise.channel;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -31,13 +25,19 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.util.concurrent.atomic.AtomicLong;
+
 public abstract class OChannel extends OListenerManger<OChannelListener> {
   private static final OProfilerMBean PROFILER                     = Orient.instance().getProfiler();
   private static final AtomicLong     metricGlobalTransmittedBytes = new AtomicLong();
   private static final AtomicLong     metricGlobalReceivedBytes    = new AtomicLong();
   private static final AtomicLong     metricGlobalFlushes          = new AtomicLong();
-  protected final OAdaptiveLock       lockRead                     = new OAdaptiveLock();
-  protected final OAdaptiveLock       lockWrite                    = new OAdaptiveLock();
+  private final OAdaptiveLock         lockRead                     = new OAdaptiveLock();
+  private final OAdaptiveLock         lockWrite                    = new OAdaptiveLock();
   public volatile Socket              socket;
   public InputStream                  inStream;
   public OutputStream                 outStream;
@@ -96,6 +96,14 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   public void flush() throws IOException {
     if (outStream != null)
       outStream.flush();
+  }
+
+  public OAdaptiveLock getLockRead() {
+    return lockRead;
+  }
+
+  public OAdaptiveLock getLockWrite() {
+    return lockWrite;
   }
 
   public synchronized void close() {

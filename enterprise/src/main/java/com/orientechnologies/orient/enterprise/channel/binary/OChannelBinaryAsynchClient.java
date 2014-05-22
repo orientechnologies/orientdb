@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.enterprise.channel.binary;
 
 import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -43,9 +42,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
 public class OChannelBinaryAsynchClient extends OChannelBinary {
-  protected final int                 socketTimeout;                                          // IN MS
+  protected final int                 socketTimeout;                                               // IN MS
   protected final short               srvProtocolVersion;
-  private final Condition             readCondition = lockRead.getUnderlying().newCondition();
+  private final Condition             readCondition = getLockRead().getUnderlying().newCondition();
   private final int                   maxUnreadResponses;
   private String                      serverURL;
   private volatile boolean            channelRead   = false;
@@ -170,7 +169,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       do {
         if (iTimeout <= 0)
           acquireReadLock();
-        else if (!lockRead.tryAcquireLock(iTimeout, TimeUnit.MILLISECONDS))
+        else if (!getLockRead().tryAcquireLock(iTimeout, TimeUnit.MILLISECONDS))
           throw new OTimeoutException("Cannot acquire read lock against channel: " + this);
 
         if (!isConnected())
@@ -279,7 +278,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   @Override
   public void close() {
-    if (lockRead.tryAcquireLock())
+    if (getLockRead().tryAcquireLock())
       try {
         readCondition.signalAll();
       } finally {
@@ -325,14 +324,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
    */
   public short getSrvProtocolVersion() {
     return srvProtocolVersion;
-  }
-
-  public OAdaptiveLock getLockRead() {
-    return lockRead;
-  }
-
-  public OAdaptiveLock getLockWrite() {
-    return lockWrite;
   }
 
   public String getServerURL() {

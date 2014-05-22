@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -54,7 +53,6 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.logging.Level;
 
 /**
@@ -77,9 +75,15 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   @Override
-  public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
+  public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
+      final OContextConfiguration iConfig) throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
+  }
+
+  @Override
+  public int getVersion() {
+    return OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
   }
 
   @Override
@@ -115,6 +119,10 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
   }
 
+  public String getType() {
+    return "binary";
+  }
+
   /**
    * Executes the request.
    * 
@@ -122,6 +130,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
    * @throws IOException
    */
   protected abstract boolean executeRequest() throws IOException;
+
+  protected abstract void sendError(final int iClientTxId, final Throwable t) throws IOException;
 
   /**
    * Executed before the request.
@@ -185,49 +195,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected void sendOk(final int iClientTxId) throws IOException {
     channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
     channel.writeInt(iClientTxId);
-  }
-
-  protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
-    channel.acquireWriteLock();
-    try {
-
-      channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
-      channel.writeInt(iClientTxId);
-
-      Throwable current;
-      if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
-        // BYPASS THE DB POOL EXCEPTION TO PROPAGATE THE RIGHT SECURITY ONE
-        current = t.getCause();
-      else
-        current = t;
-
-      while (current != null) {
-        // MORE DETAILS ARE COMING AS EXCEPTION
-        channel.writeByte((byte) 1);
-
-        channel.writeString(current.getClass().getName());
-        channel.writeString(current != null ? current.getMessage() : null);
-
-        current = current.getCause();
-      }
-      channel.writeByte((byte) 0);
-
-      channel.flush();
-
-      if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
-        if (logClientFullStackTrace)
-          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t,
-              channel.socket.getRemoteSocketAddress(), t.toString());
-        else
-          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null,
-              channel.socket.getRemoteSocketAddress(), t.toString());
-      }
-    } catch (Exception e) {
-      if (e instanceof SocketException)
-        shutdown();
-    } finally {
-      channel.releaseWriteLock();
-    }
   }
 
   protected void checkStorageExistence(final String iDatabaseName) {

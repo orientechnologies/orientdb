@@ -127,4 +127,8 @@ public class OAdaptiveLock extends OAbstractLock {
   public ReentrantLock getUnderlying() {
     return lock;
   }
+
+  public boolean isHeldByCurrentThread() {
+    return lock.isHeldByCurrentThread();
+  }
 }
