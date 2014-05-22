@@ -109,10 +109,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       init(storage.getAtomicOperationsManager(), storage.getWALInstance());
       this.directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
-      fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
 
       startAtomicOperation();
       try {
+        fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
+        logFileCreation(name + metadataConfigurationFileExtension, fileStateId);
+
         directory.create();
 
         hashStateEntry = diskCache.allocateNewPage(fileStateId);
@@ -138,8 +140,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
         initHashTreeState();
 
-        if (nullKeyIsSupported)
+        if (nullKeyIsSupported) {
           nullBucketFileId = diskCache.openFile(name + nullBucketFileExtension);
+          logFileCreation(name + nullBucketFileExtension, nullBucketFileId);
+        }
 
         endAtomicOperation(false);
       } catch (IOException e) {
@@ -185,6 +189,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       return;
 
     super.startAtomicOperation();
+  }
+
+  @Override
+  protected void logFileCreation(String fileName, long fileId) throws IOException {
+    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
+      return;
+
+    super.logFileCreation(fileName, fileId);
   }
 
   @Override
@@ -294,6 +306,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   private void createFileMetadata(int fileLevel, OHashIndexFileLevelMetadataPage page) throws IOException {
     final String fileName = name + fileLevel + bucketFileExtension;
     final long fileId = diskCache.openFile(fileName);
+
+    logFileCreation(fileName, fileId);
 
     page.setFileMetadata(fileLevel, fileId, 0, -1);
   }
@@ -405,8 +419,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           final OHashIndexBucket<K, V> bucket = new OHashIndexBucket<K, V>(dataPointer.getDataPointer(), keySerializer,
               valueSerializer, keyTypes, getTrackMode());
           final int positionIndex = bucket.getIndex(hashCode, key);
-          if (positionIndex < 0)
+          if (positionIndex < 0) {
+            endAtomicOperation(false);
             return null;
+          }
 
           removed = bucket.deleteEntry(positionIndex).value;
           sizeDiff--;
@@ -436,16 +452,21 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           return null;
 
         V removed = null;
+
         OCacheEntry cacheEntry = diskCache.load(nullBucketFileId, 0, false);
         OCachePointer cachePointer = cacheEntry.getCachePointer();
         cachePointer.acquireExclusiveLock();
         try {
-          final ONullBucket<V> nullBucket = new ONullBucket<V>(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE,
-              valueSerializer, false);
+          final ONullBucket<V> nullBucket = new ONullBucket<V>(cachePointer.getDataPointer(), getTrackMode(), valueSerializer,
+              false);
+
           removed = nullBucket.getValue();
           if (removed != null) {
             nullBucket.removeValue();
             sizeDiff--;
+            cacheEntry.markDirty();
+
+            logPageChanges(nullBucket, cacheEntry.getFileId(), cacheEntry.getPageIndex(), false);
           }
         } finally {
           cachePointer.releaseExclusiveLock();
@@ -1443,14 +1464,15 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       OCachePointer cachePointer = cacheEntry.getCachePointer();
       cachePointer.acquireExclusiveLock();
       try {
-        ONullBucket<V> nullBucket = new ONullBucket<V>(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE, valueSerializer,
-            isNew);
+        ONullBucket<V> nullBucket = new ONullBucket<V>(cachePointer.getDataPointer(), getTrackMode(), valueSerializer, isNew);
         if (nullBucket.getValue() != null)
           sizeDiff--;
 
         nullBucket.setValue(value);
         sizeDiff++;
         cacheEntry.markDirty();
+
+        logPageChanges(nullBucket, cacheEntry.getFileId(), cacheEntry.getPageIndex(), isNew);
       } finally {
         cachePointer.releaseExclusiveLock();
         diskCache.release(cacheEntry);

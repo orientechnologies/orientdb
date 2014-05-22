@@ -89,22 +89,22 @@ public class OWOWCache {
   private final Object                                      syncObject            = new Object();
   private final ScheduledExecutorService                    commitExecutor        = Executors
                                                                                       .newSingleThreadScheduledExecutor(new ThreadFactory() {
-																																												@Override
-																																												public Thread newThread(Runnable r) {
-																																													Thread thread = new Thread(r);
-																																													thread.setDaemon(true);
-																																													thread
-																																																	.setName("OrientDB Write Cache Flush Task ("
-																																																					+ storageLocal.getName() + ")");
-																																													return thread;
-																																												}
-																																											});
+                                                                                        @Override
+                                                                                        public Thread newThread(Runnable r) {
+                                                                                          Thread thread = new Thread(r);
+                                                                                          thread.setDaemon(true);
+                                                                                          thread
+                                                                                              .setName("OrientDB Write Cache Flush Task ("
+                                                                                                  + storageLocal.getName() + ")");
+                                                                                          return thread;
+                                                                                        }
+                                                                                      });
   private Map<String, Long>                                 nameIdMap;
   private RandomAccessFile                                  nameIdMapHolder;
   private volatile int                                      cacheMaxSize;
-  private long         fileCounter           = 0;
+  private long                                              fileCounter           = 0;
   private GroupKey                                          lastGroupKey          = new GroupKey(0, -1);
-  private File nameIdMapHolderFile;
+  private File                                              nameIdMapHolderFile;
 
   private static final class NameFileIdEntry {
     private final String name;
@@ -151,14 +151,14 @@ public class OWOWCache {
 
     @Override
     public int compareTo(GroupKey other) {
-      if (fileId>other.fileId)
+      if (fileId > other.fileId)
         return 1;
       if (fileId < other.fileId)
         return -1;
 
-      if (groupIndex>other.groupIndex)
+      if (groupIndex > other.groupIndex)
         return 1;
-      if (groupIndex<other.groupIndex)
+      if (groupIndex < other.groupIndex)
         return -1;
 
       return 0;
@@ -205,26 +205,26 @@ public class OWOWCache {
         int writeGroupsToFlush;
         boolean useForceSync = false;
         double threshold = ((double) cacheSize.get()) / cacheMaxSize;
-        if (threshold>0.8) {
+        if (threshold > 0.8) {
           writeGroupsToFlush = (int) (0.2 * writeGroups.size());
           useForceSync = true;
-        } else if (threshold>0.9) {
+        } else if (threshold > 0.9) {
           writeGroupsToFlush = (int) (0.4 * writeGroups.size());
           useForceSync = true;
         } else
           writeGroupsToFlush = 1;
 
-        if (writeGroupsToFlush<1)
+        if (writeGroupsToFlush < 1)
           writeGroupsToFlush = 1;
 
         int flushedGroups = 0;
 
         flushedGroups = flushRing(writeGroupsToFlush, flushedGroups, false);
 
-        if (flushedGroups<writeGroupsToFlush && useForceSync)
+        if (flushedGroups < writeGroupsToFlush && useForceSync)
           flushedGroups = flushRing(writeGroupsToFlush, flushedGroups, true);
 
-        if (flushedGroups<writeGroupsToFlush && cacheSize.get()>cacheMaxSize) {
+        if (flushedGroups < writeGroupsToFlush && cacheSize.get() > cacheMaxSize) {
           if (OGlobalConfiguration.SERVER_CACHE_INCREASE_ON_DEMAND.getValueAsBoolean()) {
             final long oldCacheMaxSize = cacheMaxSize;
 
@@ -473,6 +473,35 @@ public class OWOWCache {
       openFile(fileClassic);
 
       return fileId;
+    }
+  }
+
+  public void openFile(String fileName, long fileId) throws IOException {
+    synchronized (syncObject) {
+      initNameIdMapping();
+
+      OFileClassic fileClassic;
+
+      Long existingFileId = nameIdMap.get(fileName);
+
+      if (existingFileId != null) {
+        if (existingFileId == fileId)
+          fileClassic = files.get(fileId);
+        else
+          throw new OStorageException("File with given name already exists but has different id " + existingFileId
+              + " vs. proposed " + fileId);
+      } else {
+        if (fileCounter < fileId)
+          fileCounter = fileId;
+
+        fileClassic = createFile(fileName);
+
+        files.put(fileId, fileClassic);
+        nameIdMap.put(fileName, fileId);
+        writeNameIdEntry(new NameFileIdEntry(fileName, fileId), true);
+      }
+
+      openFile(fileClassic);
     }
   }
 
@@ -901,8 +930,11 @@ public class OWOWCache {
     if (fileClassic.exists()) {
       if (!fileClassic.isOpen())
         fileClassic.open();
-    } else
+    } else {
       fileClassic.create(-1);
+      fileClassic.synch();
+    }
+
   }
 
   private void initNameIdMapping() throws IOException {

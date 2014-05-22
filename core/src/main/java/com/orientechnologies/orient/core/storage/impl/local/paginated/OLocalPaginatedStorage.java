@@ -1798,6 +1798,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               diskCache.release(cacheEntry);
             }
 
+          } else if (operationUnitRecord instanceof OFileCreatedCreatedWALRecord) {
+
+            final OFileCreatedCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedCreatedWALRecord) operationUnitRecord;
+            diskCache.openFile(fileCreatedCreatedRecord.getFileName(), fileCreatedCreatedRecord.getFileId());
+
           } else if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
             final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
 

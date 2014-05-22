@@ -22,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,6 +44,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
@@ -75,29 +77,33 @@ public class OWriteAheadLog {
   private boolean                     closed;
 
   private final class LogSegment implements Comparable<LogSegment> {
-    private final RandomAccessFile                rndFile;
-    private final File                            file;
-    private final long                            order;
-    private final int                             maxPagesCacheSize;
-    private final ConcurrentLinkedQueue<OWALPage> pagesCache     = new ConcurrentLinkedQueue<OWALPage>();
-    private final ScheduledExecutorService        commitExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-                                                                   @Override
-                                                                   public Thread newThread(Runnable r) {
-                                                                     Thread thread = new Thread(r);
-                                                                     thread.setDaemon(true);
-                                                                     thread.setName("OrientDB WAL Flush Task (" + storage.getName()
-                                                                         + ")");
-                                                                     return thread;
-                                                                   }
-                                                                 });
-    private long                                  filledUpTo;
-    private boolean                               closed;
-    private OWALPage                              currentPage;
-    private long                                  nextPositionToFlush;
-    private OLogSequenceNumber                    last           = null;
-    private OLogSequenceNumber                    pendingLSNToFlush;
+    private final RandomAccessFile                           rndFile;
+    private final File                                       file;
+    private final long                                       order;
+    private final int                                        maxPagesCacheSize;
+    private final ConcurrentLinkedQueue<OWALPage>            pagesCache     = new ConcurrentLinkedQueue<OWALPage>();
+    private final ScheduledExecutorService                   commitExecutor = Executors
+                                                                                .newSingleThreadScheduledExecutor(new ThreadFactory() {
+                                                                                  @Override
+                                                                                  public Thread newThread(Runnable r) {
+                                                                                    Thread thread = new Thread(r);
+                                                                                    thread.setDaemon(true);
+                                                                                    thread.setName("OrientDB WAL Flush Task ("
+                                                                                        + storage.getName() + ")");
+                                                                                    return thread;
+                                                                                  }
+                                                                                });
+    private long                                             filledUpTo;
+    private boolean                                          closed;
+    private OWALPage                                         currentPage;
+    private long                                             nextPositionToFlush;
+    private OLogSequenceNumber                               last           = null;
+    private OLogSequenceNumber                               pendingLSNToFlush;
 
-    private volatile boolean                      flushNewData   = true;
+    private volatile boolean                                 flushNewData   = true;
+
+    private WeakReference<OPair<OLogSequenceNumber, byte[]>> lastReadRecord = new WeakReference<OPair<OLogSequenceNumber, byte[]>>(
+                                                                                null);
 
     private final class FlushTask implements Runnable {
       private FlushTask() {
@@ -363,11 +369,16 @@ public class OWriteAheadLog {
     }
 
     public byte[] readRecord(OLogSequenceNumber lsn) throws IOException {
+      final OPair<OLogSequenceNumber, byte[]> lastRecord = lastReadRecord.get();
+      if (lastRecord != null && lastRecord.getKey().equals(lsn))
+        return lastRecord.getValue();
+
       assert lsn.getSegment() == order;
       if (lsn.getPosition() >= filledUpTo)
         return null;
 
-      flush();
+      if (!pagesCache.isEmpty())
+        flush();
 
       long pageIndex = lsn.getPosition() / OWALPage.PAGE_SIZE;
 
@@ -417,6 +428,7 @@ public class OWriteAheadLog {
         }
       }
 
+      lastReadRecord = new WeakReference<OPair<OLogSequenceNumber, byte[]>>(new OPair<OLogSequenceNumber, byte[]>(lsn, record));
       return record;
     }
 
@@ -458,6 +470,8 @@ public class OWriteAheadLog {
 
     public void close(boolean flush) throws IOException {
       if (!closed) {
+        lastReadRecord.clear();
+
         stopFlush(flush);
 
         rndFile.close();

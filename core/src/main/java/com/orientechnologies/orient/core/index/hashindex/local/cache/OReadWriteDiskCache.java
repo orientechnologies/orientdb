@@ -128,6 +128,22 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
+  public void openFile(String fileName, long fileId) throws IOException {
+    synchronized (syncObject) {
+      long existingFileId = writeCache.isOpen(fileName);
+
+      if (fileId == existingFileId)
+        return;
+      else if (existingFileId >= 0)
+        throw new OStorageException("File with given name already exists but has different id " + existingFileId + " vs. proposed "
+            + fileId);
+
+      writeCache.openFile(fileName, fileId);
+      filePages.put(fileId, new HashSet<Long>());
+    }
+  }
+
+  @Override
   public boolean exists(final String fileName) {
     synchronized (syncObject) {
       return writeCache.exists(fileName);

@@ -109,6 +109,16 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     }
   }
 
+  protected void logFileCreation(String fileName, long fileId) throws IOException {
+    if (writeAheadLog != null) {
+      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+      assert atomicOperation != null;
+
+      final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
+      writeAheadLog.log(new OFileCreatedCreatedWALRecord(unitId, fileName, fileId));
+    }
+  }
+
   protected void lockTillAtomicOperationCompletes() {
     atomicOperationsManager.lockTillOperationComplete(this);
   }

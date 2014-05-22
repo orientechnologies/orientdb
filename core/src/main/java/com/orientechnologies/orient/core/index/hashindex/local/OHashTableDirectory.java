@@ -47,14 +47,21 @@ public class OHashTableDirectory extends ODurableComponent {
     this.diskCache = storage.getDiskCache();
     this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
+
+    init(storage.getAtomicOperationsManager(), storage.getWALInstance());
   }
 
   public void create() throws IOException {
+    startAtomicOperation();
     acquireExclusiveLock();
     try {
       fileId = diskCache.openFile(name + defaultExtension);
-
+      logFileCreation(name + defaultExtension, fileId);
       init();
+      endAtomicOperation(false);
+    } catch (RuntimeException e) {
+      endAtomicOperation(true);
+      throw e;
     } finally {
       releaseExclusiveLock();
     }
@@ -605,5 +612,13 @@ public class OHashTableDirectory extends ODurableComponent {
       return;
 
     super.startAtomicOperation();
+  }
+
+  @Override
+  protected void logFileCreation(String fileName, long fileId) throws IOException {
+    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
+      return;
+
+    super.logFileCreation(fileName, fileId);
   }
 }
