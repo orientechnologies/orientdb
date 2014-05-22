@@ -2,27 +2,27 @@
 
 var app = angular.module('MonitorApp',
     ['ngI18n',
-     'messages.controller',
-     'workbench-logs.controller',
-     'workbench-events.controller',
-     'login.services',
-     'monitor.services',
-     'ui-nvd3',
-     'ngMoment',
-     'OFilter',
-     'ui.select2',
-     '$strap.directives',
-     'monitor.directive',
-     'orientdb.directives',
-     'ui.codemirror',
-     'ngGrid',
-     'bootstrap.tabset',
-     'message.services',
-     'spinner.controller',
-     'spinner.services',
-     'ngRoute',
-     'ngAnimate'
-     ]
+        'messages.controller',
+        'workbench-logs.controller',
+        'workbench-events.controller',
+        'login.services',
+        'monitor.services',
+        'ui-nvd3',
+        'ngMoment',
+        'OFilter',
+        'ui.select2',
+        '$strap.directives',
+        'monitor.directive',
+        'orientdb.directives',
+        'ui.codemirror',
+        'ngGrid',
+        'bootstrap.tabset',
+        'message.services',
+        'spinner.controller',
+        'spinner.services',
+        'ngRoute',
+        'ngAnimate'
+    ]
 );
 app.config(function ($routeProvider) {
     $routeProvider
@@ -50,7 +50,10 @@ app.config(function ($routeProvider) {
             templateUrl: 'views/main.html',
             controller: 'ServerMonitorController'
         })
-
+        .when('/dashboard/cluster/:cluster', {
+            templateUrl: 'views/server/cluster.html',
+            controller: 'ClusterMainController'
+        })
         .when('/server/:rid', {
             templateUrl: 'views/server/main.html',
             controller: 'ServerMonitorController'

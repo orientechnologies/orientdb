@@ -222,6 +222,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     });
 
                     $scope.metricsData = tmpArr
+
                     $scope.loading = false;
                 }
                 var databases = undefined;
@@ -230,6 +231,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
 
                 }
                 var compress = $scope.compress || 'none';
+
                 if (metrics.server) {
                     if (!metrics.server.name) {
                         Monitor.getServer(metrics.server, function (data) {
@@ -334,8 +336,6 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
 });
 
 app.controller('ConfigChartController', function ($scope, $location, $routeParams) {
-
-
 
 
 });

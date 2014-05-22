@@ -16,7 +16,6 @@
 
 package com.orientechnologies.workbench;
 
-import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -28,9 +27,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.FileSystemXmlConfig;
-import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -116,6 +112,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   private String                                    dbPassword                        = "OrientDB_KILLS_Neo4J!";
   private ODatabaseDocumentTx                       db;
   Map<String, OMonitoredServer>                     servers                           = new HashMap<String, OMonitoredServer>();
+  private Map<String, OMonitoredCluster>            clusters                          = new HashMap<String, OMonitoredCluster>();
   Map<Integer, Map<Integer, Set<OMonitoredServer>>> keyMap;
   Map<String, OPair<String, METRIC_TYPE>>           dictionary;
   private Set<OServerConfigurationListener>         listeners                         = new HashSet<OServerConfigurationListener>();
@@ -123,7 +120,6 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   public String                                     version;
   private OWorkbenchUpdateTask                      updater;
   private OWorkbenchMessageTask                     messageTask;
-  private HazelcastInstance                         hazelcastInstance;
 
   @Override
   public void config(OServer iServer, OServerParameterConfiguration[] iParams) {
@@ -214,7 +210,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     listener.registerStatelessCommand(new OServerCommandDeleteServer());
     listener.registerStatelessCommand(new OServerCommandNotifyChangedMetric());
     listener.registerStatelessCommand(new OServerCommandMessageExecute());
-    listener.registerStatelessCommand(new OServerCommandClusterManager());
+    listener.registerStatelessCommand(new OServerCommandDistributedManager());
   }
 
   private void unregisterCommands() {
@@ -236,7 +232,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     listener.unregisterStatelessCommand(OServerCommandDeleteServer.class);
     listener.unregisterStatelessCommand(OServerCommandNotifyChangedMetric.class);
     listener.unregisterStatelessCommand(OServerCommandMessageExecute.class);
-    listener.unregisterStatelessCommand(OServerCommandClusterManager.class);
+    listener.unregisterStatelessCommand(OServerCommandDistributedManager.class);
   }
 
   public OMonitoredServer getMonitoredServer(final String iServer) {
@@ -546,5 +542,21 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 
   public void setDb(ODatabaseDocumentTx db) {
     this.db = db;
+  }
+
+  public void addCluster(OMonitoredCluster cluster) {
+    clusters.put(cluster.getName(), cluster);
+  }
+
+  public boolean hasCluster(String name) {
+    return clusters.get(name) != null;
+  }
+
+  public Map<String, OMonitoredCluster> getClusters() {
+    return clusters;
+  }
+
+  public Collection<OMonitoredCluster> getClustersList() {
+    return clusters.values();
   }
 }

@@ -24,15 +24,19 @@
                                                                data-toggle="tab">{{
             'dashboard.metrics' | i18n }}</a></li>
 
-        <li ng-class="{ active : 'metrics' == mailsettings }"><a href="javascript:void(0)"
-                                                                 ng-click="currentTab = 'mailsettings'"
-                                                                 data-toggle="tab">{{
+        <li ng-class="{ active : 'mailsettings' == currentTab }"><a href="javascript:void(0)"
+                                                                    ng-click="currentTab = 'mailsettings'"
+                                                                    data-toggle="tab">{{
             'dashboard.mailsettings' | i18n }}</a></li>
 
-        <li ng-class="{ active : 'metrics' == globalsettings }"><a href="javascript:void(0)"
-                                                                   ng-click="currentTab = 'globalsettings'"
-                                                                   data-toggle="tab">{{
+        <li ng-class="{ active : 'globalsettings' == currentTab }"><a href="javascript:void(0)"
+                                                                      ng-click="currentTab = 'globalsettings'"
+                                                                      data-toggle="tab">{{
             'dashboard.globalsettings' | i18n }}</a></li>
+        <li ng-class="{ active : 'distributed' == currentTab }"><a href="javascript:void(0)"
+                                                                   ng-click="currentTab = 'distributed'"
+                                                                   data-toggle="tab">{{
+            'dashboard.distributedsettings' | i18n }}</a></li>
 
 
     </ul>
@@ -363,5 +367,8 @@
 
 </div>
 
+<div class="row-fluid" ng-show="currentTab == 'distributed'">
+    <ng-include src="'views/server/distributed/distributed.html'"></ng-include>
+</div>
 
 </div>

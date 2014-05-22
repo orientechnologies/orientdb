@@ -105,7 +105,7 @@
     <users>
         <user resources="database.passthrough"
               password="ACEFCE2B0D41ABC9365CA3D98275A96012EC5D65314D375D8460D45A3E47D5B4" name="replicator"/>
-        <user resources="*" password="gino" name="root"/>
+        <user resources="*" password="gianni" name="root"/>
         <user resources="connect,server.listDatabases,server.dblist" password="guest" name="guest"/>
     </users>
     <properties>

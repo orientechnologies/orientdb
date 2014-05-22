@@ -31,4 +31,25 @@ module.controller('ClusterEditController', function ($scope, Cluster) {
     }
 
 });
+module.controller('ClusterMainController', function ($scope, $i18n, Cluster) {
+
+
+    Cluster.getAll().then(function (data) {
+        $scope.clusters = data;
+        if ($scope.clusters.length > 0) {
+            $scope.cluster = $scope.clusters[0];
+        }
+    });
+
+
+    $scope.$watch("cluster", function (data) {
+
+        if (data) {
+            Cluster.getServers(data).then(function (servers) {
+                $scope.servers = servers;
+            });
+        }
+    });
+
+});
 

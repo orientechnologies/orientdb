@@ -26,85 +26,49 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="newModal.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/settings/newModal.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="0" selection-start="0" selection-end="707" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="315">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="newCluster.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/cluster/newCluster.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="3" column="46" selection-start="215" selection-end="215" vertical-scroll-proportion="-1.875" vertical-offset="0" max-vertical-offset="315">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="editCluster.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/cluster/editCluster.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="3" column="51" selection-start="221" selection-end="221" vertical-scroll-proportion="-1.875" vertical-offset="0" max-vertical-offset="315">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="baseEditModal.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/settings/baseEditModal.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="765">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="baseEditCluster.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/cluster/baseEditCluster.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="15" column="57" selection-start="594" selection-end="594" vertical-scroll-proportion="-9.375" vertical-offset="0" max-vertical-offset="930">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="monitor-service.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="340" column="17" selection-start="11674" selection-end="11674" vertical-scroll-proportion="-11.846154" vertical-offset="4792" max-vertical-offset="5355">
+            <state line="361" column="32" selection-start="12433" selection-end="12433" vertical-scroll-proportion="-10.115385" vertical-offset="5152" max-vertical-offset="5805">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="dashboard.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
+      <file leaf-file-name="app.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="7" column="63" selection-start="338" selection-end="357" vertical-scroll-proportion="-4.375" vertical-offset="0" max-vertical-offset="2025">
+            <state line="53" column="46" selection-start="1580" selection-end="1580" vertical-scroll-proportion="0.0" vertical-offset="735" max-vertical-offset="2025">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="cluster.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/cluster.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="30" column="38" selection-start="1125" selection-end="1125" vertical-scroll-proportion="-18.75" vertical-offset="0" max-vertical-offset="555">
               <folding>
-                <marker date="1400681271000" expanded="true" signature="40:277" placeholder="..." />
-                <marker date="1400681271000" expanded="true" signature="109:143" placeholder="..." />
+                <element signature="n#style#0;n#a#0;n#h3#0;n#div#0;n#div#0;n#!!top" expanded="true" />
+                <element signature="n#style#0;n#div#1;n#div#0;n#!!top" expanded="true" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="en.json" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
+      <file leaf-file-name="custom.js" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/scripts/directive/custom.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="24" column="28" selection-start="1140" selection-end="1140" vertical-scroll-proportion="0.66790354" vertical-offset="0" max-vertical-offset="1635">
+            <state line="228" column="24" selection-start="7484" selection-end="7484" vertical-scroll-proportion="0.23205343" vertical-offset="3281" max-vertical-offset="4920">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="cluster.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/cluster.js">
+      <file leaf-file-name="graph.css" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/styles/graph.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="17" column="20" selection-start="555" selection-end="555" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="600">
+            <state line="0" column="0" selection-start="0" selection-end="817" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="960">
               <folding />
             </state>
           </provider>
@@ -113,11 +77,49 @@
       <file leaf-file-name="index.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/index.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="129" column="40" selection-start="6217" selection-end="6217" vertical-scroll-proportion="-15.0" vertical-offset="1575" max-vertical-offset="2385">
+            <state line="27" column="49" selection-start="1333" selection-end="1333" vertical-scroll-proportion="-16.875" vertical-offset="0" max-vertical-offset="2400">
               <folding>
-                <marker date="1400669004000" expanded="true" signature="1706:1943" placeholder="..." />
-                <marker date="1400669004000" expanded="true" signature="1775:1809" placeholder="..." />
+                <marker date="1400772507000" expanded="true" signature="1758:1995" placeholder="..." />
+                <marker date="1400772507000" expanded="true" signature="1827:1861" placeholder="..." />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="general.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="11" column="50" selection-start="400" selection-end="418" vertical-scroll-proportion="-6.875" vertical-offset="0" max-vertical-offset="1080">
+              <folding>
+                <element signature="n#style#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="en.json" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="88" column="35" selection-start="3721" selection-end="3721" vertical-scroll-proportion="-19.333334" vertical-offset="856" max-vertical-offset="1725">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="query.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/query.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="51" column="63" selection-start="2421" selection-end="2421" vertical-scroll-proportion="-18.458334" vertical-offset="322" max-vertical-offset="900">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="cluster.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/cluster.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="49" column="0" selection-start="1322" selection-end="1322" vertical-scroll-proportion="0.0" vertical-offset="268" max-vertical-offset="915">
+              <folding />
             </state>
           </provider>
         </entry>
@@ -134,27 +136,35 @@
       <list>
         <option value="$PROJECT_DIR$/app/views/server/asciidoc/stylesheets/asciidoc.css" />
         <option value="$PROJECT_DIR$/bower.json" />
-        <option value="$PROJECT_DIR$/app/scripts/app.js" />
         <option value="$PROJECT_DIR$/app/scripts/service/spinner-service.js" />
         <option value="$PROJECT_DIR$/app/styles/main.css" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/header.js" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/metrics.js" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/settings.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/spinner-controller.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/messages-controller.js" />
         <option value="$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/query.js" />
-        <option value="$PROJECT_DIR$/app/index.html" />
         <option value="$PROJECT_DIR$/app/views/cluster/newCluster.html" />
         <option value="$PROJECT_DIR$/app/views/cluster/baseEditCluster.html" />
         <option value="$PROJECT_DIR$/app/views/server/dashboard.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/monitor.js" />
-        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/cluster.js" />
         <option value="$PROJECT_DIR$/app/views/cluster/editCluster.html" />
+        <option value="$PROJECT_DIR$/app/views/server/settings.html" />
+        <option value="$PROJECT_DIR$/app/views/server/distributed/distributed.html" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/settings.js" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/metrics.js" />
+        <option value="$PROJECT_DIR$/app/views/server/metric/singleMetric.html" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/nav.js" />
+        <option value="$PROJECT_DIR$/app/scripts/app.js" />
+        <option value="$PROJECT_DIR$/app/views/server/query.html" />
+        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
         <option value="$PROJECT_DIR$/app/i18n/en.json" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/cluster.js" />
+        <option value="$PROJECT_DIR$/app/index.html" />
+        <option value="$PROJECT_DIR$/app/views/server/cluster.html" />
+        <option value="$PROJECT_DIR$/app/styles/graph.css" />
+        <option value="$PROJECT_DIR$/app/scripts/directive/custom.js" />
       </list>
     </option>
   </component>
@@ -236,7 +246,7 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="views" />
+              <option name="myItemId" value="styles" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -254,11 +264,29 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="views" />
+              <option name="myItemId" value="scripts" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="studioee" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dashboard" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="cluster" />
+              <option name="myItemId" value="app" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scripts" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="directive" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -400,24 +428,43 @@
     <frame x="4" y="22" width="1276" height="769" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3296" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.34915772" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3296" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.34915772" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24944155" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.212749" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.212749" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="true" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
     </layout>
+    <layout-to-restore>
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.34915772" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="true" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3296" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24944155" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.212749" sideWeight="0.6496" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+    </layout-to-restore>
   </component>
   <component name="Vcs.Log.UiProperties">
     <option name="RECENTLY_FILTERED_USERS">
@@ -532,19 +579,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/login.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="18" column="47" selection-start="583" selection-end="583" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="0" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="53" selection-start="1056" selection-end="1059" vertical-scroll-proportion="0.0" vertical-offset="360" max-vertical-offset="5190">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="5" selection-start="49" selection-end="49" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="0">
+        <state line="18" column="47" selection-start="583" selection-end="583" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="0">
           <folding />
         </state>
       </provider>
@@ -577,33 +612,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/query.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="50" column="34" selection-start="2142" selection-end="2142" vertical-scroll-proportion="0.0" vertical-offset="750" max-vertical-offset="1560">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="337" column="35" selection-start="13269" selection-end="13269" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="5430">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="129" column="40" selection-start="6217" selection-end="6217" vertical-scroll-proportion="-15.0" vertical-offset="1575" max-vertical-offset="2385">
-          <folding>
-            <marker date="1400669004000" expanded="true" signature="1706:1943" placeholder="..." />
-            <marker date="1400669004000" expanded="true" signature="1775:1809" placeholder="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="38" selection-start="199" selection-end="199" vertical-scroll-proportion="0.0" vertical-offset="1121" max-vertical-offset="1710">
           <folding />
         </state>
       </provider>
@@ -615,16 +626,23 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
+    <entry file="file://$PROJECT_DIR$/app/views/cluster/baseEditCluster.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="25" column="33" selection-start="653" selection-end="792" vertical-scroll-proportion="-14.423077" vertical-offset="0" max-vertical-offset="3270">
+        <state line="15" column="57" selection-start="594" selection-end="594" vertical-scroll-proportion="-9.375" vertical-offset="0" max-vertical-offset="930">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/cluster/baseEditCluster.html">
+    <entry file="file://$PROJECT_DIR$/app/views/cluster/newCluster.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="15" column="57" selection-start="594" selection-end="594" vertical-scroll-proportion="-9.375" vertical-offset="0" max-vertical-offset="930">
+        <state line="3" column="46" selection-start="215" selection-end="215" vertical-scroll-proportion="-1.875" vertical-offset="0" max-vertical-offset="315">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/cluster/editCluster.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="7" column="80" selection-start="322" selection-end="390" vertical-scroll-proportion="-4.375" vertical-offset="0" max-vertical-offset="315">
           <folding />
         </state>
       </provider>
@@ -638,52 +656,161 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="7" column="63" selection-start="338" selection-end="357" vertical-scroll-proportion="-4.375" vertical-offset="0" max-vertical-offset="2025">
+        <state line="27" column="91" selection-start="1115" selection-end="1118" vertical-scroll-proportion="21.36" vertical-offset="1473" max-vertical-offset="2025">
           <folding>
-            <marker date="1400681271000" expanded="true" signature="40:277" placeholder="..." />
-            <marker date="1400681271000" expanded="true" signature="109:143" placeholder="..." />
+            <marker date="1400681271000" expanded="true" signature="-1:-1" placeholder="..." />
+            <marker date="1400681271000" expanded="true" signature="-1:-1" placeholder="..." />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/distributed/distributed.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="2" column="0" selection-start="68" selection-end="68" vertical-scroll-proportion="-1.25" vertical-offset="0" max-vertical-offset="135">
+          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/monitor.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="89" column="68" selection-start="3351" selection-end="3351" vertical-scroll-proportion="-16.884615" vertical-offset="896" max-vertical-offset="1800">
+        <state line="89" column="68" selection-start="3351" selection-end="3351" vertical-scroll-proportion="0.74533105" vertical-offset="896" max-vertical-offset="1800">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/cluster/newCluster.html">
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="46" selection-start="215" selection-end="215" vertical-scroll-proportion="-1.875" vertical-offset="0" max-vertical-offset="315">
+        <state line="6" column="38" selection-start="199" selection-end="199" vertical-scroll-proportion="-1.2665535" vertical-offset="836" max-vertical-offset="1710">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+    <entry file="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="340" column="17" selection-start="11674" selection-end="11674" vertical-scroll-proportion="-11.846154" vertical-offset="4792" max-vertical-offset="5355">
+        <state line="5" column="23" selection-start="110" selection-end="111" vertical-scroll-proportion="92.07692" vertical-offset="2469" max-vertical-offset="3360">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/cluster.js">
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="17" column="20" selection-start="555" selection-end="555" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="600">
+        <state line="225" column="43" selection-start="8977" selection-end="8977" vertical-scroll-proportion="-9.807693" vertical-offset="3120" max-vertical-offset="5190">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/cluster/editCluster.html">
+    <entry file="file://$PROJECT_DIR$/app/views/server/metric/singleMetric.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="51" selection-start="221" selection-end="221" vertical-scroll-proportion="-1.875" vertical-offset="0" max-vertical-offset="315">
+        <state line="32" column="38" selection-start="1651" selection-end="1690" vertical-scroll-proportion="-15.958333" vertical-offset="97" max-vertical-offset="705">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="54" column="39" selection-start="1792" selection-end="1792" vertical-scroll-proportion="-5.4615383" vertical-offset="668" max-vertical-offset="3375">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="62" selection-start="44" selection-end="62" vertical-scroll-proportion="49.041668" vertical-offset="1177" max-vertical-offset="5700">
+          <folding>
+            <element signature="n#style#0;n#div#1;n#li#0;n#ul#0;n#div#0;n#div#5;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#1;n#li#1;n#ul#0;n#div#0;n#div#5;n#div#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="14" column="106" selection-start="660" selection-end="660" vertical-scroll-proportion="0.30560273" vertical-offset="30" max-vertical-offset="1110">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="53" column="46" selection-start="1580" selection-end="1580" vertical-scroll-proportion="0.0" vertical-offset="735" max-vertical-offset="2025">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/query.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="49" column="27" selection-start="2049" selection-end="2064" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1560">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="28" selection-start="1140" selection-end="1140" vertical-scroll-proportion="0.66790354" vertical-offset="0" max-vertical-offset="1635">
+        <state line="88" column="35" selection-start="3721" selection-end="3721" vertical-scroll-proportion="-19.333334" vertical-offset="856" max-vertical-offset="1725">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="361" column="32" selection-start="12433" selection-end="12433" vertical-scroll-proportion="-10.115385" vertical-offset="5152" max-vertical-offset="5805">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/query.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="51" column="63" selection-start="2421" selection-end="2421" vertical-scroll-proportion="-18.458334" vertical-offset="322" max-vertical-offset="900">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="11" column="50" selection-start="400" selection-end="418" vertical-scroll-proportion="-6.875" vertical-offset="0" max-vertical-offset="1080">
+          <folding>
+            <element signature="n#style#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/cluster.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="49" column="0" selection-start="1322" selection-end="1322" vertical-scroll-proportion="0.0" vertical-offset="268" max-vertical-offset="915">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="27" column="49" selection-start="1333" selection-end="1333" vertical-scroll-proportion="-16.875" vertical-offset="0" max-vertical-offset="2400">
+          <folding>
+            <marker date="1400772507000" expanded="true" signature="1758:1995" placeholder="..." />
+            <marker date="1400772507000" expanded="true" signature="1827:1861" placeholder="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/cluster.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="30" column="38" selection-start="1125" selection-end="1125" vertical-scroll-proportion="-18.75" vertical-offset="0" max-vertical-offset="555">
+          <folding>
+            <element signature="n#style#0;n#a#0;n#h3#0;n#div#0;n#div#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#div#1;n#div#0;n#!!top" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/styles/graph.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="817" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="960">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/directive/custom.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="228" column="24" selection-start="7484" selection-end="7484" vertical-scroll-proportion="0.23205343" vertical-offset="3281" max-vertical-offset="4920">
           <folding />
         </state>
       </provider>

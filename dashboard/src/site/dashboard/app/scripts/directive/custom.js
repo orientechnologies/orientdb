@@ -199,23 +199,123 @@ Widget.directive('rickarea', function () {
     };
 });
 
-Widget.directive('numbersonly', function(){
+Widget.directive('numbersonly', function () {
     return {
         require: 'ngModel',
-        link: function(scope, element, attrs, modelCtrl) {
+        link: function (scope, element, attrs, modelCtrl) {
             modelCtrl.$parsers.push(function (inputValue) {
                 // this next if is necessary for when using ng-required on your input.
                 // In such cases, when a letter is typed first, this parser will be called
                 // again, and the 2nd time, the value will be undefined
                 if (inputValue == undefined) return ''
                 var transformedInput = inputValue.replace(/[^0-9]/g, '');
-                if (transformedInput!=inputValue) {
+                if (transformedInput != inputValue) {
                     modelCtrl.$setViewValue(transformedInput);
                     modelCtrl.$render();
                 }
 
                 return transformedInput;
             });
+        }
+    };
+});
+
+
+Widget.directive('servergraph', function () {
+
+    var drawGrap = function (scope, element, attrs, model) {
+
+        var width = 960,
+            height = 400,
+            colors = d3.scale.category10();
+        var svg = d3.select(element[0]).append('svg').attr('width', width)
+            .attr('height', height);
+        ;
+
+        var selected_node = null,
+            selected_link = null,
+            mousedown_link = null,
+            mousedown_node = null,
+            mouseup_node = null;
+        var nodes = [
+            {id: 0, reflexive: false},
+            {id: 1, reflexive: true },
+            {id: 2, reflexive: false}
+        ];
+        var lastNodeId = 2;
+        var links = [
+            {source: nodes[0], target: nodes[1], left: false, right: true },
+            {source: nodes[1], target: nodes[2], left: false, right: true }
+        ];
+
+        var force = d3.layout.force()
+            .nodes(nodes)
+            .links(links)
+            .size([width, height])
+            .linkDistance(150)
+            .charge(-500)
+            .on('tick', tick)
+
+
+        var circle = svg.append('svg:g').selectAll('g');
+
+        circle = circle.data(nodes, function (d) {
+            return d.id;
+        });
+
+        circle.selectAll('circle')
+            .style('fill', function (d) {
+                return (d === selected_node) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.id);
+            })
+            .classed('reflexive', function (d) {
+                return d.reflexive;
+            });
+
+        var g = circle.enter().append('svg:g');
+        g.append('svg:circle')
+            .attr('class', 'node')
+            .attr('r', 12)
+            .style('fill', function (d) {
+                return (d === selected_node) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.id);
+            })
+            .style('stroke', function (d) {
+                return d3.rgb(colors(d.id)).darker().toString();
+            })
+            .classed('reflexive', function (d) {
+                return d.reflexive;
+            });
+
+        g.append('svg:text')
+            .attr('x', 0)
+            .attr('y', 4)
+            .attr('class', 'id')
+            .text(function (d) {
+                return d.id;
+            });
+        // remove old nodes
+        function tick() {
+
+            circle.attr('transform', function (d) {
+                return 'translate(' + d.x + ',' + d.y + ')';
+            });
+        }
+
+        circle.exit().remove();
+        force.start();
+    }
+    return {
+        require: 'ngModel',
+        link: function (scope, element, attrs, modelCtrl) {
+
+            scope.$watch(function () {
+                return modelCtrl.$modelValue;
+            }, function (modelValue) {
+                if (modelValue) {
+                    drawGrap(scope, element, attrs, modelValue);
+                }
+
+            })
+
         }
     };
 });

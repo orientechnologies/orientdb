@@ -236,7 +236,10 @@ monitor.factory('MetricConfig', function ($http, $resource) {
     resource.getAll = function (callback, plan) {
 
         plan = plan || "";
-        var query = 'select * from MetricConfig fetchPlan' + plan
+        var query = 'select * from MetricConfig';
+        if (plan != "") {
+            query += " fetchPlan" + plan
+        }
         $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
             callback(data);
         });
@@ -305,6 +308,7 @@ monitor.factory('Settings', function ($http, $resource) {
         var conf = {};
         conf['@class'] = 'UserConfiguration';
         conf['metrics'] = new Array;
+        conf.grid = 1;
         return conf;
     }
     resource.put = function (config, callback) {
@@ -340,13 +344,39 @@ monitor.factory('Cluster', function ($http, $resource, $q) {
 
     resource.saveCluster = function (cluster) {
         var deferred = $q.defer();
-        var url = API + 'cluster/monitor';
+        var url = API + 'distributed/monitor';
         $http.post(url, cluster).success(function (data) {
             deferred.resolve(data);
         });
         return deferred.promise;
     }
 
+    resource.getServers = function (cluster) {
+        var deferred = $q.defer();
+        var cId = cluster['@rid'];
+        var query = 'select * from Server where cluster = {{cluster}}';
+        query = S(query).template({cluster: cId}).s;
+        $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
+            deferred.resolve(data.result);
+        });
+        return deferred.promise;
+    }
+    resource.getAll = function () {
+        var deferred = $q.defer();
 
+        var query = 'select * from Cluster';
+        $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
+            deferred.resolve(data.result);
+        });
+        return deferred.promise;
+    }
+    resource.getDistributedInfo = function (type) {
+        var deferred = $q.defer();
+        var url = API + 'distributed/monitor/' + type;
+        $http.get(url).success(function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
+    }
     return resource;
 });

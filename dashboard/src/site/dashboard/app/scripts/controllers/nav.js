@@ -12,6 +12,7 @@ angular.module('MonitorApp')
             {name: 'dashboard', i18n: 'dashboard', link: '#/dashboard/', icon: 'icon-dashboard' },
             {name: 'settings', i18n: 'dashboard.settings', link: '#/dashboard/settings/', icon: 'icon-gear' },
             {name: 'general', i18n: 'dashboard.general', link: '#/dashboard/general/', icon: 'icon-cogs' },
+            {name: 'cluster', i18n: 'dashboard.cluster', link: '#/dashboard/cluster/', icon: 'icon-sitemap' },
             {name: 'query', i18n: 'dashboard.query', link: '#/dashboard/query', icon: 'icon-rocket' },
             {name: 'metrics', i18n: 'dashboard.metrics', link: '#/dashboard/metrics/' + $scope.rid, icon: 'icon-bar-chart' },
             {name: 'logjava', i18n: 'dashboard.javalog', link: '#/dashboard/logjava/', icon: 'icon-bug' },

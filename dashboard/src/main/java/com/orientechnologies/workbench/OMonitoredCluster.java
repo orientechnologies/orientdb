@@ -2,7 +2,6 @@ package com.orientechnologies.workbench;
 
 import com.hazelcast.config.*;
 import com.hazelcast.core.*;
-import com.orientechnologies.ee.common.OWorkbenchPasswordGet;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -10,8 +9,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 /**
  * Created by enricorisa on 21/05/14.
@@ -26,14 +23,12 @@ public class OMonitoredCluster {
     this.handler = iHandler;
     this.clusterConfig = cluster;
     createHazelcastFromConfig();
-    registerExecutorPwd();
+    retrievePwd();
     registerMemberChangeListener();
   }
 
-  private void registerExecutorPwd() {
-    final Map<Member, Future<String>> pwds = hazelcast.getExecutorService("default").submitToMembers(new OWorkbenchPasswordGet(),
-        getMembers());
-    getMemberInfo(pwds);
+  private void retrievePwd() {
+    getMemberInfo();
   }
 
   private void createHazelcastFromConfig() {
@@ -56,30 +51,32 @@ public class OMonitoredCluster {
       join.getAwsConfig().setEnabled(false);
       join.getMulticastConfig().setEnabled((Boolean) multicast.get("enabled")).setMulticastGroup((String) multicast.get("group"))
           .setMulticastPort((Integer) multicast.get("port"));
-      //hazelcast = Hazelcast.newHazelcastInstance(new FileSystemXmlConfig("config/hazelcast.xml"));
-       hazelcast = Hazelcast.newHazelcastInstance(cfg);
+      hazelcast = Hazelcast.newHazelcastInstance(cfg);
     } catch (Exception e) {
       e.printStackTrace();
     }
   }
 
-  private void getMemberInfo(Map<Member, Future<String>> members) {
+  private void getMemberInfo() {
 
     // update policy
-    for (Member member : members.keySet()) {
+    for (Member member : getMembers()) {
+
+      IMap<String,Object> maps = getConfigurationMap();
       ODocument doc = (ODocument) getConfigValue("node." + member.getUuid());
       if (doc != null) {
-        String iPropertyValue = null;
-        try {
-          iPropertyValue = members.get(member).get();
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        } catch (ExecutionException e) {
-          e.printStackTrace();
-        }
+        String nodeName = (String) doc.field("name");
+        String iPropertyValue = getAndRemovePwd(nodeName);
         registerNewServer(doc, iPropertyValue);
       }
     }
+  }
+
+  private String getAndRemovePwd(String nodeName) {
+    String name = "ee." + nodeName;
+    String iPropertyValue = (String) getConfigValue(name);
+    //removeConfigValue(name);
+    return iPropertyValue;
   }
 
   private void registerNewServer(ODocument doc, String iPropertyValue) {
@@ -112,7 +109,11 @@ public class OMonitoredCluster {
   }
 
   public Object getConfigValue(String name) {
-    return hazelcast.getMap("orientdb").get(name);
+    return getConfigurationMap().get(name);
+  }
+
+  public void removeConfigValue(String name) {
+    getConfigurationMap().remove(name);
   }
 
   public IMap<String, Object> getConfigurationMap() {
@@ -133,18 +134,9 @@ public class OMonitoredCluster {
 
               ODocument doc = (ODocument) stringObjectEntryEvent.getValue();
               if (doc != null) {
-                Future<String> pwd = hazelcast.getExecutorService("default").submitToMember(new OWorkbenchPasswordGet(),
-                    membershipEvent.getMember());
-                try {
-                  String pwdString = pwd.get();
-                  registerNewServer(doc, pwdString);
-
-                } catch (InterruptedException e) {
-                  e.printStackTrace();
-                } catch (ExecutionException e) {
-                  e.printStackTrace();
-                }
-
+                String nodeName = (String) doc.field("name");
+                String pwdString = getAndRemovePwd(nodeName);
+                registerNewServer(doc, pwdString);
               }
 
             }
@@ -177,6 +169,16 @@ public class OMonitoredCluster {
       public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
       }
     });
+
   }
 
+  public String getName() {
+    return clusterConfig.field("name");
+  }
+
+  public ODocument getClusterConfig() {
+
+    IMap map = getConfigurationMap();
+    return null;
+  }
 }

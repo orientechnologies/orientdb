@@ -1,17 +1,8 @@
 package com.orientechnologies.workbench;
 
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.GroupConfig;
-import com.hazelcast.config.JoinConfig;
-import com.hazelcast.config.NetworkConfig;
-import com.hazelcast.core.*;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.ee.common.OWorkbenchPasswordGet;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
@@ -22,9 +13,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  */
 public class OWorkbenchHazelcastTask extends TimerTask {
 
-  private final OWorkbenchPlugin         handler;
-
-  private Map<String, OMonitoredCluster> clusters = new HashMap<String, OMonitoredCluster>();
+  private final OWorkbenchPlugin handler;
 
   public OWorkbenchHazelcastTask(final OWorkbenchPlugin iHandler) {
     this.handler = iHandler;
@@ -38,10 +27,10 @@ public class OWorkbenchHazelcastTask extends TimerTask {
     final List<ODocument> response = this.handler.getDb().query(osqlQuery);
     for (ODocument cluster : response) {
       String clusterName = cluster.field("name");
-      if (clusters.get(clusterName) == null) {
+      if (!handler.hasCluster(clusterName)) {
         try {
           OMonitoredCluster monitoredCluster = new OMonitoredCluster(handler, cluster);
-          clusters.put(clusterName, monitoredCluster);
+          handler.addCluster(monitoredCluster);
         } catch (Exception e) {
 
         }

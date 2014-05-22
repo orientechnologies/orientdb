@@ -211,3 +211,10 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
         );
     }
 });
+
+module.controller('DistributedSettingsController', function ($scope, $location, Cluster) {
+
+    Cluster.getDistributedInfo("configuration").then(function (data) {
+        console.log(data);
+    })
+});

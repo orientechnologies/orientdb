@@ -17,12 +17,10 @@
  */
 package com.orientechnologies.agent;
 
+import java.util.Map;
+
 import com.orientechnologies.agent.OL.OLicenseException;
-import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
-import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
-import com.orientechnologies.agent.http.command.OServerCommandGetLog;
-import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
-import com.orientechnologies.agent.http.command.OServerCommandPostBackupDatabase;
+import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -30,21 +28,16 @@ import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValu
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
-import com.orientechnologies.ee.common.OWorkbenchPasswordGet;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-import sun.misc.ClassLoaderUtil;
-
-import java.io.File;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
 
 public class OEnterpriseAgent extends OServerPluginAbstract {
   private OServer             server;
@@ -79,6 +72,11 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
       enabled = true;
       installProfiler();
       installCommands();
+
+      ODistributedServerManager manager = OServerMain.server().getDistributedManager();
+      Map<String, Object> map = manager.getConfigurationMap();
+      map.put("ee." + manager.getLocalNodeName(), OServerMain.server().getConfiguration().getUser("root").password);
+
     }
   }
 
