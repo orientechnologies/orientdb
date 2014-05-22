@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -36,6 +37,13 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
+import com.orientechnologies.orient.server.distributed.task.OFixTxTask;
+import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask;
+import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
+import com.orientechnologies.orient.server.distributed.task.OTxTask;
+import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -54,19 +62,19 @@ import java.util.concurrent.locks.Lock;
  */
 public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
-  public static final String                          NODE_QUEUE_PREFIX       = "orientdb.node.";
-  public static final String                          NODE_QUEUE_UNDO_POSTFIX = ".undo";
-  private static final String                         NODE_LOCK_PREFIX        = "orientdb.reqlock.";
+  public static final String                          NODE_QUEUE_PREFIX          = "orientdb.node.";
+  public static final String                          NODE_QUEUE_PENDING_POSTFIX = ".pending";
+  private static final String                         NODE_LOCK_PREFIX           = "orientdb.reqlock.";
   protected final OHazelcastPlugin                    manager;
   protected final OHazelcastDistributedMessageService msgService;
   protected final String                              databaseName;
   protected final Lock                                requestLock;
   protected volatile ODatabaseDocumentTx              database;
-  protected volatile boolean                          restoringMessages       = false;
-  protected AtomicBoolean                             status                  = new AtomicBoolean(false);
-  protected Object                                    waitForOnline           = new Object();
+  protected volatile boolean                          restoringMessages          = false;
+  protected AtomicBoolean                             status                     = new AtomicBoolean(false);
+  protected Object                                    waitForOnline              = new Object();
   protected Thread                                    listenerThread;
-  protected AtomicLong                                waitForMessageId        = new AtomicLong(-1);
+  protected AtomicLong                                waitForMessageId           = new AtomicLong(-1);
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -200,7 +208,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           queueName);
 
     // UNDO PREVIOUS MESSAGE IF ANY
-    final IMap<Object, Object> undoMap = restoreMessagesBeforeFailure(iRestoreMessages);
+    final IMap<String, Object> lastPendingMessagesMap = restoreMessagesBeforeFailure(iRestoreMessages);
 
     restoringMessages = msgService.checkForPendingMessages(requestQueue, queueName, iUnqueuePendingMessages);
 
@@ -211,6 +219,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         while (!Thread.interrupted()) {
           if (restoringMessages && requestQueue.isEmpty()) {
             // END OF RESTORING MESSAGES, SET IT ONLINE
+            ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+                "executed all pending tasks in queue, set restoringMessages=false and database '%s' as online...", databaseName);
+
             restoringMessages = false;
             setOnline();
           }
@@ -220,16 +231,21 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           try {
             message = readRequest(requestQueue);
 
-            // SAVE THE MESSAGE IN THE UNDO MAP IN CASE OF FAILURE
-            undoMap.put(databaseName, message);
+            // DECIDE TO USE THE HZ MAP ONLY IF THE COMMAND IS NOT IDEMPOTENT (ALL BUT READ-RECORD/SQL SELECT/SQL TRAVERSE
+            final boolean saveAsPending = !message.getTask().isIdempotent();
+
+            if (saveAsPending)
+              // SAVE THE MESSAGE IN TO THE UNDO MAP IN CASE OF FAILURE
+              lastPendingMessagesMap.put(databaseName, message);
 
             if (message != null) {
               senderNode = message.getSenderNodeName();
               onMessage(message);
             }
 
-            // OK: REMOVE THE UNDO BUFFER
-            undoMap.remove(databaseName);
+            if (saveAsPending)
+              // OK: REMOVE THE UNDO BUFFER
+              lastPendingMessagesMap.remove(databaseName);
 
           } catch (InterruptedException e) {
             // EXIT CURRENT THREAD
@@ -507,15 +523,11 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   /**
    * Composes the undo queue name based on node name.
    */
-  protected String getUndoMapName(final String iDatabaseName) {
+  protected String getPendingRequestMapName() {
     final StringBuilder buffer = new StringBuilder();
     buffer.append(NODE_QUEUE_PREFIX);
     buffer.append(manager.getLocalNodeName());
-    if (iDatabaseName != null) {
-      buffer.append('.');
-      buffer.append(iDatabaseName);
-    }
-    buffer.append(NODE_QUEUE_UNDO_POSTFIX);
+    buffer.append(NODE_QUEUE_PENDING_POSTFIX);
     return buffer.toString();
   }
 
@@ -523,23 +535,47 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return manager.getLocalNodeName();
   }
 
-  protected IMap<Object, Object> restoreMessagesBeforeFailure(final boolean iRestoreMessages) {
-    final IMap<Object, Object> undoMap = manager.getHazelcastInstance().getMap(getUndoMapName(databaseName));
-    final ODistributedRequest undoRequest = (ODistributedRequest) undoMap.remove(databaseName);
-    if (undoRequest != null && iRestoreMessages) {
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
-          "restore last replication message before the crash for database %s: %s", databaseName, undoRequest);
+  protected IMap<String, Object> restoreMessagesBeforeFailure(final boolean iRestoreMessages) {
+    final IMap<String, Object> lastPendingRequestMap = manager.getHazelcastInstance().getMap(getPendingRequestMapName());
+    if (iRestoreMessages) {
+      // RESTORE LAST UNDO MESSAGE
+      final ODistributedRequest lastPendingRequest = (ODistributedRequest) lastPendingRequestMap.remove(databaseName);
+      if (lastPendingRequest != null) {
+        // RESTORE LAST REQUEST
+        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "restore last replication message before the crash for database '%s': %s...", databaseName, lastPendingRequest);
 
-      try {
-        initDatabaseInstance();
-        onMessage(undoRequest);
-      } catch (Throwable t) {
-        ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "error on executing restored message for database %s", t, databaseName);
+        try {
+          initDatabaseInstance();
+
+          final boolean executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest,
+              lastPendingRequest.getTask());
+
+          if (executeLastPendingRequest)
+            onMessage(lastPendingRequest);
+
+        } catch (Throwable t) {
+          ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "error on executing restored message for database %s", t, databaseName);
+        }
       }
-
     }
-    return undoMap;
+
+    return lastPendingRequestMap;
+  }
+
+  /**
+   * Checks if last pending operation must be re-executed or not. In some circustamces the exception
+   * OHotAlignmentNotPossibleExeption is raised because it's not possible to recover the database state.
+   * 
+   * @throws OHotAlignmentNotPossibleExeption
+   */
+  protected void hotAlignmentError(final ODistributedRequest iLastPendingRequest, final String iMessage, final Object... iParams)
+      throws OHotAlignmentNotPossibleExeption {
+    final String msg = String.format(iMessage, iParams);
+
+    ODistributedServerLog.warn(this, getLocalNodeName(), iLastPendingRequest.getSenderNodeName(), DIRECTION.IN, "- " + msg);
+    throw new OHotAlignmentNotPossibleExeption(msg);
   }
 
   protected void checkLocalNodeInConfiguration() {
@@ -577,5 +613,54 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "unable to remove node '%s' in distributed configuration, db=%s", e, iNode, databaseName);
     }
+  }
+
+  protected boolean checkIfOperationHasBeenExecuted(final ODistributedRequest lastPendingRequest, final OAbstractRemoteTask task) {
+    boolean executeLastPendingRequest = false;
+
+    // ASK FOR RECORD
+    if (task instanceof ODeleteRecordTask) {
+      // EXECUTE ONLY IF THE RECORD HASN'T BEEN DELETED YET
+      executeLastPendingRequest = ((ODeleteRecordTask) task).getRid().getRecord() != null;
+    } else if (task instanceof OUpdateRecordTask) {
+      final ORecord<?> rec = ((OUpdateRecordTask) task).getRid().getRecord();
+      if (rec == null)
+        ODistributedServerLog.warn(this, getLocalNodeName(), lastPendingRequest.getSenderNodeName(), DIRECTION.IN,
+            "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());
+      else
+        // EXECUTE ONLY IF VERSIONS DIFFER
+        executeLastPendingRequest = !rec.getRecordVersion().equals(((OUpdateRecordTask) task).getVersion());
+    } else if (task instanceof OCreateRecordTask) {
+      // EXECUTE ONLY IF THE RECORD HASN'T BEEN CREATED YET
+      executeLastPendingRequest = ((OCreateRecordTask) task).getRid().getRecord() == null;
+    } else if (task instanceof OSQLCommandTask) {
+      if (!task.isIdempotent()) {
+        hotAlignmentError(lastPendingRequest, "Not able to assure last command has been completed before last crash. Command='%s'",
+            ((OSQLCommandTask) task).getPayload());
+      }
+    } else if (task instanceof OResurrectRecordTask) {
+      if (((OResurrectRecordTask) task).getRid().getRecord() == null)
+        // ALREADY DELETED: CANNOT RESTORE IT
+        hotAlignmentError(lastPendingRequest, "Not able to resurrect deleted record '%s'", ((OResurrectRecordTask) task).getRid());
+    } else if (task instanceof OTxTask) {
+      // CHECK EACH TX ITEM IF HAS BEEN COMMITTED
+      for (OAbstractRemoteTask t : ((OTxTask) task).getTasks()) {
+        executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest, t);
+        if (executeLastPendingRequest)
+          // REPEAT THE ENTIRE TX
+          return true;
+      }
+    } else if (task instanceof OFixTxTask) {
+      // CHECK EACH FIX-TX ITEM IF HAS BEEN COMMITTED
+      for (OAbstractRemoteTask t : ((OFixTxTask) task).getTasks()) {
+        executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest, t);
+        if (executeLastPendingRequest)
+          // REPEAT THE ENTIRE TX
+          return true;
+      }
+    } else
+      hotAlignmentError(lastPendingRequest, "Not able to assure last operation has been completed before last crash. Task='%s'",
+          task);
+    return executeLastPendingRequest;
   }
 }

@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.Externalizable;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.Externalizable;
 
 /**
  * Base class for Tasks to be executed remotely.
@@ -29,7 +29,9 @@ import java.io.Externalizable;
  * 
  */
 public abstract class OAbstractRemoteTask implements Externalizable {
-  private static final long serialVersionUID = 1L;
+  private static final long   serialVersionUID = 1L;
+  protected transient boolean inheritedDatabase;
+  protected transient String  nodeSource;
 
   public enum RESULT_STRATEGY {
     ANY, UNION
@@ -38,9 +40,6 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   public enum QUORUM_TYPE {
     NONE, READ, WRITE, ALL
   }
-
-  protected transient boolean inheritedDatabase;
-  protected transient String  nodeSource;
 
   /**
    * Constructor used from unmarshalling.
@@ -93,5 +92,9 @@ public abstract class OAbstractRemoteTask implements Externalizable {
 
   public boolean isRequiredOpenDatabase() {
     return true;
+  }
+
+  public boolean isIdempotent() {
+    return false;
   }
 }

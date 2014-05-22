@@ -574,6 +574,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null, false,
                   LOCKING_STRATEGY.DEFAULT);
 
+              if (previousContent.getResult() == null)
+                // DELETED
+                throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
+
               task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
                   record.toStream(), record.getRecordVersion());
               break;
