@@ -34,6 +34,60 @@ import java.util.Comparator;
 import java.util.Iterator;
 
 /**
+ * Implementation of hash index which is based on <a href="http://en.wikipedia.org/wiki/Extendible_hashing">extendible hashing
+ * algorithm</a>. The directory for extindible hashing is implemented in
+ * {@link com.orientechnologies.orient.core.index.hashindex.local.OHashTableDirectory} class. Directory is not implemented according
+ * to classic algorithm because of its big memory consumption in case of non-uniform data distribution instead it is implemented
+ * according too "Multilevel Extendible Hashing Sven Helmer, Thomas Neumann, Guido Moerkotte April 17, 2002". Which has much less
+ * memory consumption in case of nonuniform data distribution.
+ * 
+ * Index itself uses so called "muiltilevel  schema" when first level contains 256 buckets, when bucket is split it is put at the
+ * end of other file which represents second level. So if data which are put has distribution close to uniform (this index was
+ * designed to be use as rid index for DHT storage) buckets split will be preformed in append only manner to speed up index write
+ * speed.
+ * 
+ * So hash index bucket itself has following structure:
+ * <ol>
+ * <li>Bucket depth - 1 byte.</li>
+ * <li>Bucket's size - amount of entities (key, value) in one bucket, 4 bytes</li>
+ * <li>Page indexes of parents of this bucket, page indexes of buckets split of which created current bucket - 64*8 bytes.</li>
+ * <li>Offsets of entities stored in this bucket relatively to it's beginning. It is array of int values of undefined size.</li>
+ * <li>Entities itself</li>
+ * </ol>
+ * 
+ * So if 1-st and 2-nd fields are clear. We should discuss the last ones.
+ * 
+ * 
+ * Entities in bucket are sorted by key's hash code so each entity has following storage format in bucket: key's hash code (8
+ * bytes), key, value. Because entities are stored in sorted order it means that every time when we insert new entity old ones
+ * should be moved.
+ * 
+ * There are 2 reasons why it is bad:
+ * <ol>
+ * <li>It will generate write ahead log of enormous size.</li>
+ * <li>The more amount of memory is affected in operation the less speed we will have. In worst case 60 kb of memory should be
+ * moved.</li>
+ * </ol>
+ * 
+ * To avoid disadvantages listed above entries ara appended to the end of bucket, but their offsets are stored at the beginning of
+ * bucket. Offsets are stored in sorted order (ordered by hash code of entity's key) so we need to move only small amount of memory
+ * to store entities in sorted order.
+ * 
+ * About indexes of parents of current bucket. When item is removed from bucket we check space which is needed to store all entities
+ * of this bucket, it's buddy bucket (bucket which was also created from parent bucket during split) and if space of single bucket
+ * is enough to save all entities from both buckets we remove these buckets and put all content in parent bucket. That is why we
+ * need indexes of parents of current bucket.
+ * 
+ * Also hash index has special file of one page long which contains information about state of each level of buckets in index. This
+ * information is stored as array index of which equals to file level. All array item has following structure:
+ * <ol>
+ * <li>Is level removed (in case all buckets are empty or level was not created yet) - 1 byte</li>
+ * <li>File's level id - 8 bytes</li>
+ * <li>Amount of buckets in given level - 8 bytes.</li>
+ * <li>Index of page of first removed bucket (not splitted but removed) - 8 bytes</li>
+ * </ol>
+ * 
+ * 
  * @author Andrey Lomakin
  * @since 12.03.13
  */
