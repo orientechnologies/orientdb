@@ -121,8 +121,8 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   private void reOpen(ODocument metadata) throws IOException {
     ODatabaseRecord database = getDatabase();
     final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
-    Directory dir = NIOFSDirectory.open(new File(storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR
-        + File.separator + indexName));
+    String pathname = getIndexPath(storageLocalAbstract);
+    Directory dir = NIOFSDirectory.open(new File(pathname));
     indexWriter = createIndexWriter(dir, metadata);
     mgrWriter = new TrackingIndexWriter(indexWriter);
     manager = new SearcherManager(indexWriter, true, null);
@@ -131,6 +131,10 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     }
     nrt = new ControlledRealTimeReopenThread(mgrWriter, manager, 60.00, 0.1);
     nrt.start();
+  }
+
+  private String getIndexPath(OStorageLocalAbstract storageLocalAbstract) {
+    return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
   }
 
   protected IndexSearcher getSearcher() throws IOException {
@@ -184,12 +188,15 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     try {
       if (indexWriter != null) {
         indexWriter.deleteAll();
+
+        nrt.interrupt();
+        nrt.close();
+
         indexWriter.close();
-        indexWriter.getDirectory().close();
       }
       ODatabaseRecord database = getDatabase();
       final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
-      File f = new File(storageLocalAbstract.getStoragePath() + File.separator + indexName);
+      File f = new File(getIndexPath(storageLocalAbstract));
 
       OLuceneIndexUtils.deleteFolder(f);
 
@@ -259,7 +266,9 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   @Override
   public void close() {
     try {
+      nrt.interrupt();
       nrt.close();
+      indexWriter.commit();
       indexWriter.close();
     } catch (IOException e) {
       e.printStackTrace();
@@ -329,7 +338,15 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         } catch (ClassNotFoundException e) {
           throw new OIndexException("Analyzer: " + analyzerString + " not found", e);
         } catch (NoSuchMethodException e) {
-          e.printStackTrace();
+          Class classAnalyzer = null;
+          try {
+            classAnalyzer = Class.forName(analyzerString);
+            analyzer = (Analyzer) classAnalyzer.newInstance();
+
+          } catch (Throwable e1) {
+            throw new OIndexException("Couldn't instantiate analyzer:  public constructor  not found", e1);
+          }
+
         } catch (InvocationTargetException e) {
           e.printStackTrace();
         } catch (InstantiationException e) {
