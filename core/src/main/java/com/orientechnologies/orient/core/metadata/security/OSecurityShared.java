@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.resource.OCloseable;
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -51,7 +50,7 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSecurityShared extends OSharedResourceAdaptive implements OSecurity, OCloseable {
+public class OSecurityShared implements OSecurity, OCloseable {
   public static final String                             RESTRICTED_CLASSNAME   = "ORestricted";
   public static final String                             IDENTITY_CLASSNAME     = "OIdentity";
   public static final String                             ALLOW_ALL_FIELD        = "_allow";
@@ -65,8 +64,6 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   protected final ConcurrentLinkedHashMap<String, ORole> cachedRoles;
 
   public OSecurityShared() {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.STORAGE_LOCK_TIMEOUT
-        .getValueAsInteger(), true);
     final int maxCachedUsers = OGlobalConfiguration.SECURITY_MAX_CACHED_USERS.getValueAsInteger();
     if (maxCachedUsers > 0)
       cachedUsers = new ConcurrentLinkedHashMap.Builder<String, OUser>().maximumWeightedCapacity(maxCachedUsers).build();
@@ -204,120 +201,88 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   }
 
   public OUser getUser(final String iUserName) {
-
-    if (cachedUsers != null) {
-      final OUser user = cachedUsers.get(iUserName);
-      if (user != null)
-        return user;
-    }
-
-    final List<ODocument> result = getDatabase().<OCommandRequest> command(
-        new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-        .execute();
-
-    if (result != null && !result.isEmpty())
-      return cacheUser(new OUser(result.get(0)));
-
-    return null;
-
+    return getUser(iUserName, true);
   }
 
   public OUser createUser(final String iUserName, final String iUserPassword, final String... iRoles) {
-    acquireExclusiveLock();
-    try {
+    final OUser user = new OUser(iUserName, iUserPassword);
 
-      final OUser user = new OUser(iUserName, iUserPassword);
+    if (iRoles != null)
+      for (String r : iRoles) {
+        user.addRole(r);
+      }
 
-      if (iRoles != null)
-        for (String r : iRoles) {
-          user.addRole(r);
-        }
+    cacheUser(user);
 
-      cacheUser(user);
-
-      return user.save();
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    return user.save();
   }
 
   public OUser createUser(final String iUserName, final String iUserPassword, final ORole... iRoles) {
-    acquireExclusiveLock();
-    try {
+    final OUser user = new OUser(iUserName, iUserPassword);
 
-      final OUser user = new OUser(iUserName, iUserPassword);
+    if (iRoles != null)
+      for (ORole r : iRoles) {
+        user.addRole(r);
+      }
 
-      if (iRoles != null)
-        for (ORole r : iRoles) {
-          user.addRole(r);
-        }
+    cacheUser(user);
 
-      cacheUser(user);
-
-      return user.save();
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    return user.save();
   }
 
   public boolean dropUser(final String iUserName) {
-    acquireExclusiveLock();
-    try {
+    uncacheUser(iUserName);
 
-      uncacheUser(iUserName);
+    final Number removed = getDatabase().<OCommandRequest> command(
+        new OCommandSQL("delete from OUser where name = '" + iUserName + "'")).execute();
 
-      final Number removed = getDatabase().<OCommandRequest> command(
-          new OCommandSQL("delete from OUser where name = '" + iUserName + "'")).execute();
-
-      return removed != null && removed.intValue() > 0;
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    return removed != null && removed.intValue() > 0;
   }
 
   public ORole getRole(final OIdentifiable iRole) {
-    acquireExclusiveLock();
-    try {
+    final ODocument doc = iRole.getRecord();
+    if ("ORole".equals(doc.getClassName()))
+      return new ORole(doc);
 
-      final ODocument doc = iRole.getRecord();
-      if ("ORole".equals(doc.getClassName()))
-        return new ORole(doc);
-
-      return null;
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    return null;
   }
 
   public ORole getRole(final String iRoleName) {
+    return getRole(iRoleName, true);
+  }
 
+  public ORole getRole(final String iRoleName, final boolean iAllowRepair) {
     if (cachedRoles != null) {
       final ORole role = cachedRoles.get(iRoleName);
       if (role != null)
         return role;
     }
 
-    acquireExclusiveLock();
-    try {
+    List<ODocument> result;
 
-      final List<ODocument> result = getDatabase().<OCommandRequest> command(
+    try {
+      result = getDatabase().<OCommandRequest> command(
           new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1")).execute();
 
-      if (result != null && !result.isEmpty())
-        return cacheRole(new ORole(result.get(0)));
-
-      return null;
-
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "Failed to get role : " + iRoleName + " " + ex.getMessage());
-      return null;
-    } finally {
-      releaseExclusiveLock();
+      if (iRoleName.equalsIgnoreCase("admin") && result.isEmpty()) {
+        if (iAllowRepair)
+          repair();
+        result = getDatabase().<OCommandRequest> command(
+            new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1")).execute();
+      }
+    } catch (Exception e) {
+      if (iAllowRepair)
+        repair();
+      result = getDatabase().<OCommandRequest> command(
+          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1").setFetchPlan("roles:1"))
+          .execute();
     }
+
+    if (result != null && !result.isEmpty())
+      return cacheRole(new ORole(result.get(0)));
+
+    return null;
+
   }
 
   public ORole createRole(final String iRoleName, final ORole.ALLOW_MODES iAllowMode) {
@@ -325,98 +290,69 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   }
 
   public ORole createRole(final String iRoleName, final ORole iParent, final ORole.ALLOW_MODES iAllowMode) {
-    acquireExclusiveLock();
-    try {
-
-      final ORole role = new ORole(iRoleName, iParent, iAllowMode);
-      cacheRole(role);
-      return role.save();
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    final ORole role = new ORole(iRoleName, iParent, iAllowMode);
+    cacheRole(role);
+    return role.save();
   }
 
   public boolean dropRole(final String iRoleName) {
-    acquireExclusiveLock();
-    try {
-      uncacheRole(iRoleName);
+    uncacheRole(iRoleName);
 
-      final Number removed = getDatabase().<OCommandRequest> command(
-          new OCommandSQL("delete from ORole where name = '" + iRoleName + "'")).execute();
+    final Number removed = getDatabase().<OCommandRequest> command(
+        new OCommandSQL("delete from ORole where name = '" + iRoleName + "'")).execute();
 
-      return removed != null && removed.intValue() > 0;
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    return removed != null && removed.intValue() > 0;
   }
 
   public List<ODocument> getAllUsers() {
-    acquireExclusiveLock();
     try {
-
       return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
-
-    } finally {
-      releaseExclusiveLock();
+    } catch (Exception e) {
+      repair();
+      return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
     }
   }
 
   public List<ODocument> getAllRoles() {
-    acquireExclusiveLock();
-    try {
-
-      return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from ORole")).execute();
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from ORole")).execute();
   }
 
   public OUser create() {
-    acquireExclusiveLock();
-    try {
+    if (!getDatabase().getMetadata().getSchema().getClasses().isEmpty())
+      return null;
 
-      if (!getDatabase().getMetadata().getSchema().getClasses().isEmpty())
-        return null;
+    final OUser adminUser = createMetadata();
 
-      final OUser adminUser = createMetadata();
+    final ORole readerRole = createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
+    readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+    readerRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+    readerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
+    readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
+    readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
+    readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
+    readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
+    readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+    readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
+    readerRole.addRule(ODatabaseSecurityResources.FUNCTION + ".*", ORole.PERMISSION_READ);
+    readerRole.save();
+    createUser("reader", "reader", new String[] { readerRole.getName() });
 
-      final ORole readerRole = createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
-      readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-      readerRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
-      readerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-      readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-      readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-      readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
-      readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
-      readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-      readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
-      readerRole.addRule(ODatabaseSecurityResources.FUNCTION + ".*", ORole.PERMISSION_READ);
-      readerRole.save();
-      createUser("reader", "reader", new String[] { readerRole.getName() });
+    final ORole writerRole = createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
+    writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+    writerRole
+        .addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
+    writerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
+    writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
+    writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
+    writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
+    writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
+    writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
+    writerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
+    readerRole.addRule(ODatabaseSecurityResources.FUNCTION + ".*", ORole.PERMISSION_READ);
+    writerRole.save();
+    createUser("writer", "writer", new String[] { writerRole.getName() });
 
-      final ORole writerRole = createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
-      writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-      writerRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE
-          + ORole.PERMISSION_UPDATE);
-      writerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-      writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-      writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-      writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
-      writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
-      writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
-      writerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
-      readerRole.addRule(ODatabaseSecurityResources.FUNCTION + ".*", ORole.PERMISSION_READ);
-      writerRole.save();
-      createUser("writer", "writer", new String[] { writerRole.getName() });
-
-      return adminUser;
-
-    } finally {
-      releaseExclusiveLock();
-    }
+    return adminUser;
   }
 
   /**
@@ -425,7 +361,8 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
    * @return
    */
   public OUser repair() {
-    acquireExclusiveLock();
+    OLogManager.instance().warn(this, "Repairing security structures...");
+
     try {
       if (cachedUsers != null)
         cachedUsers.clear();
@@ -438,7 +375,7 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       return createMetadata();
 
     } finally {
-      releaseExclusiveLock();
+      OLogManager.instance().warn(this, "Repair completed");
     }
   }
 
@@ -491,13 +428,13 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
       userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
 
     // CREATE ROLES AND USERS
-    ORole adminRole = getRole(ORole.ADMIN);
+    ORole adminRole = getRole(ORole.ADMIN, false);
     if (adminRole == null) {
       adminRole = createRole(ORole.ADMIN, ORole.ALLOW_MODES.ALLOW_ALL_BUT);
       adminRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL).save();
     }
 
-    OUser adminUser = getUser(OUser.ADMIN);
+    OUser adminUser = getUser(OUser.ADMIN, false);
     if (adminUser == null)
       adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
 
@@ -563,6 +500,42 @@ public class OSecurityShared extends OSharedResourceAdaptive implements OSecurit
   @Override
   public OSecurity getUnderlying() {
     return this;
+  }
+
+  protected OUser getUser(final String iUserName, final boolean iAllowRepair) {
+
+    if (cachedUsers != null) {
+      final OUser user = cachedUsers.get(iUserName);
+      if (user != null)
+        return user;
+    }
+
+    List<ODocument> result;
+    try {
+      result = getDatabase().<OCommandRequest> command(
+          new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
+          .execute();
+
+      if (iUserName.equalsIgnoreCase("admin") && result.isEmpty()) {
+        if (iAllowRepair)
+          repair();
+        result = getDatabase().<OCommandRequest> command(
+            new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
+            .execute();
+      }
+    } catch (Exception e) {
+      if (iAllowRepair)
+        repair();
+      result = getDatabase().<OCommandRequest> command(
+          new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
+          .execute();
+    }
+
+    if (result != null && !result.isEmpty())
+      return cacheUser(new OUser(result.get(0)));
+
+    return null;
+
   }
 
   protected OUser cacheUser(final OUser user) {

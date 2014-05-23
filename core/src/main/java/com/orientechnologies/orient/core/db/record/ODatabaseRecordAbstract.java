@@ -302,6 +302,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           user = null;
         }
 
+        installHooks();
+
         user = metadata.getSecurity().authenticate(iUserName, iUserPassword);
         if (user != null) {
           final Set<ORole> roles = user.getRoles();
@@ -318,7 +320,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
             }
           }
         }
-        installHooks();
       } else
         // REMOTE CREATE DUMMY USER
         user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
