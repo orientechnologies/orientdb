@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -36,11 +22,27 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = "sql-select")
 public class SQLFunctionsTest {
@@ -336,7 +338,8 @@ public class SQLFunctionsTest {
       }
 
       @Override
-      public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams, OCommandContext iContext) {
+      public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+          OCommandContext iContext) {
         if (iParams[0] == null || iParams[1] == null)
           // CHECK BOTH EXPECTED PARAMETERS
           return null;
@@ -376,6 +379,20 @@ public class SQLFunctionsTest {
       Assert.assertNotNull(d.field("value"));
       Assert.assertTrue(d.field("value") instanceof Long);
       Assert.assertEquals(moreThanInteger, d.field("value"));
+    }
+  }
+
+  @Test
+  public void testHashMethod() throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select name, name.hash() as n256, name.hash('sha-512') as n512 from OUser")).execute();
+
+    Assert.assertFalse(result.isEmpty());
+    for (ODocument d : result) {
+      final String name = d.field("name");
+
+      Assert.assertEquals(OSecurityManager.digest2String(name, "SHA-256"), d.field("n256"));
+      Assert.assertEquals(OSecurityManager.digest2String(name, "SHA-512"), d.field("n512"));
     }
   }
 
