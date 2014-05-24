@@ -1459,6 +1459,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
+  public OCluster getClusterByName(final String iClusterName) {
+    throw new UnsupportedOperationException("getClusterByName()");
+  }
+
+  @Override
   public String getURL() {
     return OEngineRemote.NAME + ":" + url;
   }

@@ -55,8 +55,6 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     PROFILER_DELETE_RECORD = "db." + name + ".deleteRecord";
   }
 
-  public abstract OCluster getClusterByName(final String iClusterName);
-
   protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock,
       boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy);
 

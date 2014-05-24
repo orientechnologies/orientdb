@@ -284,4 +284,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public long getLastOperationId();
 
   public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback);
+
+  public OCluster getClusterByName(String clusterName);
 }

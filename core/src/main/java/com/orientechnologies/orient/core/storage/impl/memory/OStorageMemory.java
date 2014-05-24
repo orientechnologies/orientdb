@@ -15,19 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.memory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -55,12 +42,24 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Memory implementation of storage. This storage works only in memory and has the following features:
@@ -84,6 +83,7 @@ public class OStorageMemory extends OStorageEmbedded {
     configuration = new OStorageConfiguration(this);
   }
 
+  @Override
   public void create(final Map<String, Object> iOptions) {
     addUser();
 
@@ -124,6 +124,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
+  @Override
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
     addUser();
 
@@ -145,6 +146,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
+  @Override
   public void close(final boolean iForce, boolean onDelete) {
     if (!checkForClose(iForce))
       return;
@@ -182,6 +184,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
+  @Override
   public void delete() {
     close(true, false);
   }
@@ -198,9 +201,11 @@ public class OStorageMemory extends OStorageEmbedded {
     throw new UnsupportedOperationException("restore");
   }
 
+  @Override
   public void reload() {
   }
 
+  @Override
   public int addCluster(final String iClusterType, String iClusterName, final String iLocation, final String iDataSegmentName,
       boolean forceListBased, final Object... iParameters) {
     iClusterName = iClusterName.toLowerCase();
@@ -288,6 +293,7 @@ public class OStorageMemory extends OStorageEmbedded {
     return false;
   }
 
+  @Override
   public int addDataSegment(final String iDataSegmentName) {
     lock.acquireExclusiveLock();
     try {
@@ -316,10 +322,12 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
+  @Override
   public int addDataSegment(final String iSegmentName, final String iLocation) {
     return addDataSegment(iSegmentName);
   }
 
+  @Override
   public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
       final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
       ORecordCallback<OClusterPosition> iCallback) {
@@ -608,6 +616,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
+  @Override
   public OCluster getClusterByName(final String iClusterName) {
     lock.acquireSharedLock();
     try {
@@ -619,6 +628,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
+  @Override
   public int getClusterIdByName(String iClusterName) {
     iClusterName = iClusterName.toLowerCase();
 
@@ -635,10 +645,12 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
+  @Override
   public String getClusterTypeByName(final String iClusterName) {
     return OClusterMemory.TYPE;
   }
 
+  @Override
   public String getPhysicalClusterNameById(final int iClusterId) {
     lock.acquireSharedLock();
     try {
@@ -654,6 +666,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
+  @Override
   public Set<String> getClusterNames() {
     lock.acquireSharedLock();
     try {
@@ -665,6 +678,7 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
+  @Override
   public void commit(final OTransaction iTx, Runnable callback) {
     lock.acquireExclusiveLock();
     try {
@@ -694,9 +708,11 @@ public class OStorageMemory extends OStorageEmbedded {
     }
   }
 
+  @Override
   public void rollback(final OTransaction iTx) {
   }
 
+  @Override
   public void synch() {
   }
 

@@ -282,6 +282,11 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
+  public OCluster getClusterByName(String clusterName) {
+    return delegate.getClusterByName(clusterName);
+  }
+
+  @Override
   public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
       throws IOException {
     pushSession();

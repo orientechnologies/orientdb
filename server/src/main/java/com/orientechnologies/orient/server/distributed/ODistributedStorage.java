@@ -386,6 +386,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     }
   }
 
+  @Override
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRecordId, final byte[] iContent,
       final ORecordVersion iVersion, final byte iRecordType, final int iMode, final ORecordCallback<ORecordVersion> iCallback) {
     if (deletedRecords.get(iRecordId) != null)
@@ -432,6 +433,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     }
   }
 
+  @Override
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRecordId, final ORecordVersion iVersion, final int iMode,
       final ORecordCallback<Boolean> iCallback) {
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
@@ -494,55 +496,72 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return wrapped.cleanOutRecord(recordId, recordVersion, iMode, callback);
   }
 
+  @Override
   public boolean existsResource(final String iName) {
     return wrapped.existsResource(iName);
   }
 
+  public OCluster getClusterByName(final String iName){
+    return wrapped.getClusterByName(iName);
+  }
+
+  @Override
   @SuppressWarnings("unchecked")
   public <T> T removeResource(final String iName) {
     return (T) wrapped.removeResource(iName);
   }
 
+  @Override
   public <T> T getResource(final String iName, final Callable<T> iCallback) {
     return (T) wrapped.getResource(iName, iCallback);
   }
 
+  @Override
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
     wrapped.open(iUserName, iUserPassword, iProperties);
   }
 
+  @Override
   public void create(final Map<String, Object> iProperties) {
     wrapped.create(iProperties);
   }
 
+  @Override
   public boolean exists() {
     return wrapped.exists();
   }
 
+  @Override
   public void reload() {
     wrapped.reload();
   }
 
+  @Override
   public void delete() {
     wrapped.delete();
   }
 
+  @Override
   public void close() {
     wrapped.close();
   }
 
+  @Override
   public void close(final boolean iForce, boolean onDelete) {
     wrapped.close(iForce, false);
   }
 
+  @Override
   public boolean isClosed() {
     return wrapped.isClosed();
   }
 
+  @Override
   public OLevel2RecordCache getLevel2Cache() {
     return wrapped.getLevel2Cache();
   }
 
+  @Override
   public void commit(final OTransaction iTx, final Runnable callback) {
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
@@ -646,35 +665,43 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     }
   }
 
+  @Override
   public void rollback(final OTransaction iTx) {
     wrapped.rollback(iTx);
   }
 
+  @Override
   public OStorageConfiguration getConfiguration() {
     return wrapped.getConfiguration();
   }
 
+  @Override
   public int getClusters() {
     return wrapped.getClusters();
   }
 
+  @Override
   public Set<String> getClusterNames() {
     return wrapped.getClusterNames();
   }
 
+  @Override
   public OCluster getClusterById(int iId) {
     return wrapped.getClusterById(iId);
   }
 
+  @Override
   public Collection<? extends OCluster> getClusterInstances() {
     return wrapped.getClusterInstances();
   }
 
+  @Override
   public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
       final String iDataSegmentName, boolean forceListBased, final Object... iParameters) {
     return wrapped.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, false, iParameters);
   }
 
+  @Override
   public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
       boolean forceListBased, Object... iParameters) {
     return wrapped.addCluster(iClusterType, iClusterName, iRequestedId, iLocation, iDataSegmentName, forceListBased, iParameters);
@@ -684,18 +711,22 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return wrapped.dropCluster(iClusterName, iTruncate);
   }
 
+  @Override
   public boolean dropCluster(final int iId, final boolean iTruncate) {
     return wrapped.dropCluster(iId, iTruncate);
   }
 
+  @Override
   public int addDataSegment(final String iDataSegmentName) {
     return wrapped.addDataSegment(iDataSegmentName);
   }
 
+  @Override
   public int addDataSegment(final String iSegmentName, final String iDirectory) {
     return wrapped.addDataSegment(iSegmentName, iDirectory);
   }
 
+  @Override
   public long count(final int iClusterId) {
     return wrapped.count(iClusterId);
   }
@@ -714,70 +745,87 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return wrapped.count(iClusterIds, countTombstones);
   }
 
+  @Override
   public long getSize() {
     return wrapped.getSize();
   }
 
+  @Override
   public long countRecords() {
     return wrapped.countRecords();
   }
 
+  @Override
   public int getDefaultClusterId() {
     return wrapped.getDefaultClusterId();
   }
 
+  @Override
   public void setDefaultClusterId(final int defaultClusterId) {
     wrapped.setDefaultClusterId(defaultClusterId);
   }
 
+  @Override
   public int getClusterIdByName(String iClusterName) {
     return wrapped.getClusterIdByName(iClusterName);
   }
 
+  @Override
   public String getClusterTypeByName(final String iClusterName) {
     return wrapped.getClusterTypeByName(iClusterName);
   }
 
+  @Override
   public String getPhysicalClusterNameById(final int iClusterId) {
     return wrapped.getPhysicalClusterNameById(iClusterId);
   }
 
+  @Override
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
     return wrapped.checkForRecordValidity(ppos);
   }
 
+  @Override
   public String getName() {
     return wrapped.getName();
   }
 
+  @Override
   public String getURL() {
     return wrapped.getURL();
   }
 
+  @Override
   public long getVersion() {
     return wrapped.getVersion();
   }
 
+  @Override
   public void synch() {
     wrapped.synch();
   }
 
+  @Override
   public int getUsers() {
     return wrapped.getUsers();
   }
 
+  @Override
   public int addUser() {
     return wrapped.addUser();
   }
 
+  @Override
   public int removeUser() {
     return wrapped.removeUser();
   }
 
+  @Override
   public OClusterPosition[] getClusterDataRange(final int currentClusterId) {
     return wrapped.getClusterDataRange(currentClusterId);
   }
 
+  @Override
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return wrapped.callInLock(iCallable, iExclusiveLock);
   }
