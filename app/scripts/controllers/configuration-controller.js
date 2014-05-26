@@ -196,7 +196,7 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
     }
     $scope.save = function () {
         $scope.dirty.forEach(function (val) {
-            AlterApi.changeProperty(Database.getName(), val).then(function (data) {
+            DatabaseAlterApi.changeProperty(Database.getName(), val).then(function (data) {
                 Notification.push({content: "Configuration Saved."});
             });
         });
