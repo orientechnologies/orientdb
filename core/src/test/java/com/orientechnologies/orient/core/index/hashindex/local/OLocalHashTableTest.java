@@ -1,9 +1,10 @@
 package com.orientechnologies.orient.core.index.hashindex.local;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.util.MersenneTwisterFast;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -12,11 +13,9 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.util.MersenneTwisterFast;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin
@@ -24,7 +23,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
  */
 @Test
 public class OLocalHashTableTest {
-  private static final int                 KEYS_COUNT = 500000;
+  private static final int                   KEYS_COUNT = 500000;
 
   protected ODatabaseDocumentTx              databaseDocumentTx;
 
@@ -119,7 +118,9 @@ public class OLocalHashTableTest {
 
   public void testKeyDeleteRandomUniform() throws IOException {
     final Set<Integer> keys = new HashSet<Integer>();
-    final MersenneTwisterFast random = new MersenneTwisterFast();
+    long ms = System.currentTimeMillis();
+    System.out.println("testKeyDeleteRandomUniform : " + ms);
+    final MersenneTwisterFast random = new MersenneTwisterFast(ms);
 
     while (keys.size() < KEYS_COUNT) {
       int key = random.nextInt();
