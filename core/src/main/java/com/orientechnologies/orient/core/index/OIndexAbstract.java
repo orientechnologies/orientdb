@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -44,18 +56,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 /**
  * Handles indexing when records change.
@@ -447,8 +447,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return documentIndexed;
   }
 
-  public boolean remove(final Object key, final OIdentifiable value) {
+  public boolean remove(Object key, final OIdentifiable value) {
     checkForRebuild();
+
+    key = getCollatingValue(key);
 
     modificationLock.requestModificationLock();
     try {
@@ -459,8 +461,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
   }
 
-  public boolean remove(final Object key) {
+  public boolean remove(Object key) {
     checkForRebuild();
+
+    key = getCollatingValue(key);
 
     modificationLock.requestModificationLock();
 
@@ -890,6 +894,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected abstract void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot);
 
   protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
     snapshot.put(key, RemovedValue.INSTANCE);
   }
 
