@@ -30,7 +30,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
         header: ["@rid", "@version", "@class"],
 
-        exclude: ["@type", "@fieldTypes", "$then", "$resolved","$promise"],
+        exclude: ["@type", "@fieldTypes", "$then", "$resolved", "$promise"],
 
         listTypes: ['BINARY', 'BYTE', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'],
 
@@ -494,6 +494,7 @@ database.factory('DatabaseApi', function ($http, $resource) {
                 callback();
             });
     }
+
     return resource;
 });
 database.factory('CommandApi', function ($http, $resource, Notification, Spinner, $q) {
@@ -686,12 +687,45 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
     return resource;
 });
 
-database.factory('AlterApi', function ($http, $resource, Notification) {
+database.factory('DatabaseAlterApi', function ($http, $resource, $q) {
 
 
     var resource = $resource('function/:database');
 
-    var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';
 
+    resource.changeProperty = function (database, props) {
+
+        var deferred = $q.defer();
+        var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
+        var query = "alter database {{name}} {{value}}"
+        var queryText = S(query).template(props).s;
+        $http.post(text, queryText).success(function (data) {
+            deferred.resolve(data)
+        }).error(function (data) {
+                deferred.reject(data);
+            });
+        return deferred.promise;
+    }
+    return resource
+});
+database.factory('ClassAlterApi', function ($http, $resource, $q) {
+
+
+    var resource = $resource('function/:database');
+
+
+    resource.changeProperty = function (database, props) {
+
+        var deferred = $q.defer();
+        var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
+        var query = "alter class {{clazz}} {{name}} {{value}}"
+        var queryText = S(query).template(props).s;
+        $http.post(text, queryText).success(function (data) {
+            deferred.resolve(data)
+        }).error(function (data) {
+                deferred.reject(data);
+            });
+        return deferred.promise;
+    }
     return resource
 });

@@ -172,19 +172,34 @@ configModule.controller("StructureController", ['$scope', '$routeParams', '$loca
 
 
 }]);
-configModule.controller("DbConfigController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {
+configModule.controller("DbConfigController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', 'DatabaseAlterApi', 'Notification', function ($scope, $routeParams, $location, DatabaseApi, Database, DatabaseAlterApi, Notification) {
 
 
     $scope.values = Database.getMetadata()['config']['values'];
 
+    $scope.canChange = ["clusterSelection", "minimumClusters"];
+    $scope.changeTemplate = { clusterSelection: "views/database/config/clusterSelection.html"}
     $scope.dirty = [];
+    $scope.clusterStrategies = ['round-robin', "default", "balanced"];
 
+    $scope.isDisabledVal = function (val) {
+        return $scope.canChange.indexOf(val.name) == -1
+    }
 
     $scope.setDirty = function (val) {
         if ($scope.dirty.indexOf(val) == -1)
             $scope.dirty.push(val);
     }
+    $scope.getRender = function (val) {
+        var tpl = $scope.changeTemplate[val.name];
+        return tpl ? tpl : "views/database/config/default.html";
+    }
     $scope.save = function () {
+        $scope.dirty.forEach(function (val) {
+            AlterApi.changeProperty(Database.getName(), val).then(function (data) {
+                Notification.push({content: "Configuration Saved."});
+            });
+        });
     }
 
 }]);

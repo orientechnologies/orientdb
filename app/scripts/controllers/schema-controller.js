@@ -1,11 +1,12 @@
 var schemaModule = angular.module('schema.controller', ['database.services']);
-schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window, Spinner) {
+schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'ClassAlterApi', '$modal', '$q', '$route', '$window', 'Spinner', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, ClassAlterApi, $modal, $q, $route, $window, Spinner, Notification) {
 
     //for pagination
     $scope.countPage = 10;
     $scope.countPageOptions = [10, 20, 50, 100];
     $scope.currentPage = 1;
 
+    $scope.clusterStrategies = ['round-robin', "default", "balanced"];
     $scope.database = Database;
     $scope.database.refreshMetadata($routeParams.database);
     $scope.database = Database;
@@ -14,7 +15,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     $scope.numberOfPage = new Array(Math.ceil($scope.listClassesTotal.length / $scope.countPage));
     $scope.listClasses = $scope.listClassesTotal.slice(0, $scope.countPage);
 
-    $scope.headers = ['name', 'superClass', 'alias', 'abstract', 'clusters', 'defaultCluster','clusterSelection', 'records'];
+    $scope.headers = ['name', 'superClass', 'alias', 'abstract', 'clusters', 'defaultCluster', 'clusterSelection', 'records'];
     $scope.refreshPage = function () {
         $scope.database.refreshMetadata($routeParams.database);
         $route.reload();
@@ -95,7 +96,15 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
             Spinner.stopSpinner();
         });
     }
-}]);
+    $scope.setClusterStrategy = function (clazz) {
+        ClassAlterApi.changeProperty($routeParams.database, { clazz: clazz.name, name: "clusterSelection", value: clazz.clusterSelection}).then(function (data) {
+            var noti = S("Cluster selection strategy for the class {{name}} has been changed to {{clusterSelection}}").template(clazz).s;
+            Notification.push({content: noti});
+        });
+    };
+}
+])
+;
 schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', 'DatabaseApi', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window, DatabaseApi, Spinner) {
     Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Class");
     var clazz = $routeParams.clazz;
