@@ -57,4 +57,9 @@ public class OSQLMethodRemove extends OAbstractSQLMethod {
 
     return ioResult;
   }
+
+  @Override
+  public String getSyntax() {
+    return "remove(<item>*)";
+  }
 }
