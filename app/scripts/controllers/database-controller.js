@@ -126,26 +126,29 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     };
 
     $scope.query = function () {
+
+        var queryBuffer = "" + $scope.queryText;
+        queryBuffer = queryBuffer.trim();
+        queryBuffer = queryBuffer.replace(/\n/g, " ");
         Spinner.start(function () {
-            CommandApi.interrupt(Database.getName(), $scope.queryText).then(function () {
+            CommandApi.interrupt(Database.getName(), queryBuffer).then(function () {
                 Spinner.stop();
             });
         });
 
-        $scope.queryText = $scope.queryText.trim();
-        $scope.queryText = $scope.queryText.replace(/\n/g, " ");
-        if ($scope.queryText.startsWith('g.')) {
+
+        if (queryBuffer.startsWith('g.')) {
             $scope.language = 'gremlin';
         }
-        if ($scope.queryText.startsWith('#')) {
-            $location.path('/database/' + $routeParams.database + '/browse/edit/' + $scope.queryText.replace('#', ''));
+        if (queryBuffer.startsWith('#')) {
+            $location.path('/database/' + $routeParams.database + '/browse/edit/' + queryBuffer.replace('#', ''));
         }
 
         var conttype;
         if ($scope.selectedContentType == 'CSV')
             conttype = 'text/csv';
 
-        CommandApi.queryText({database: $routeParams.database, contentType: conttype, language: $scope.language, text: $scope.queryText, limit: $scope.limit, shallow: $scope.shallow, verbose: false}, function (data) {
+        CommandApi.queryText({database: $routeParams.database, contentType: conttype, language: $scope.language, text: queryBuffer, limit: $scope.limit, shallow: $scope.shallow, verbose: false}, function (data) {
 
             if (data.result) {
 

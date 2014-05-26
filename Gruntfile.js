@@ -280,6 +280,7 @@ module.exports = function (grunt) {
                       '../plugin.json',
                       // 'components/**/*',
                       'img/{,*/}*.{gif,webp,png,jpg}',
+                      'styles/{,*/}*.{png}',
                       'font/*',
                       'data/**/*'
                   ]
