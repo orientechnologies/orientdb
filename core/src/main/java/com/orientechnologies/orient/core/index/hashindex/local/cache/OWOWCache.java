@@ -726,11 +726,11 @@ public class OWOWCache {
         }
       }
 
-      writeNameIdEntry(new NameFileIdEntry(oldFileName, -1), false);
-      writeNameIdEntry(new NameFileIdEntry(newFileName, fileId), true);
-
       nameIdMap.remove(oldFileName);
       nameIdMap.put(newFileName, fileId);
+
+      writeNameIdEntry(new NameFileIdEntry(oldFileName, -1), false);
+      writeNameIdEntry(new NameFileIdEntry(newFileName, fileId), true);
     }
   }
 

@@ -211,7 +211,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
                 "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i
                     + "): file not found. It will be excluded from current database '" + getName() + "'.");
 
-            clusterMap.remove(clusters.get(i).getName());
+            clusterMap.remove(clusters.get(i).getName().toLowerCase());
 
             setCluster(i, null);
           }
@@ -537,7 +537,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       cluster.delete();
 
       dirtyFlag.makeDirty();
-      clusterMap.remove(cluster.getName());
+      clusterMap.remove(cluster.getName().toLowerCase());
       clusters.set(iClusterId, null);
 
       // UPDATE CONFIGURATION
@@ -995,35 +995,35 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return new HashSet<String>(clusterMap.keySet());
   }
 
-  public int getClusterIdByName(final String iClusterName) {
+  public int getClusterIdByName(final String сlusterName) {
     checkOpeness();
 
-    if (iClusterName == null)
+    if (сlusterName == null)
       throw new IllegalArgumentException("Cluster name is null");
 
-    if (iClusterName.length() == 0)
+    if (сlusterName.length() == 0)
       throw new IllegalArgumentException("Cluster name is empty");
 
-    if (Character.isDigit(iClusterName.charAt(0)))
-      return Integer.parseInt(iClusterName);
+    if (Character.isDigit(сlusterName.charAt(0)))
+      return Integer.parseInt(сlusterName);
 
     // SEARCH IT BETWEEN PHYSICAL CLUSTERS
 
-    final OCluster segment = clusterMap.get(iClusterName.toLowerCase());
+    final OCluster segment = clusterMap.get(сlusterName.toLowerCase());
     if (segment != null)
       return segment.getId();
 
     return -1;
   }
 
-  public String getClusterTypeByName(final String iClusterName) {
+  public String getClusterTypeByName(final String сlusterName) {
     checkOpeness();
 
-    if (iClusterName == null)
+    if (сlusterName == null)
       throw new IllegalArgumentException("Cluster name is null");
 
     // SEARCH IT BETWEEN PHYSICAL CLUSTERS
-    final OCluster segment = clusterMap.get(iClusterName.toLowerCase());
+    final OCluster segment = clusterMap.get(сlusterName.toLowerCase());
     if (segment != null)
       return segment.getType();
 
@@ -1185,11 +1185,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   @Override
-  public OCluster getClusterByName(final String iClusterName) {
-    final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
+  public OCluster getClusterByName(final String сlusterName) {
+    final OCluster cluster = clusterMap.get(сlusterName.toLowerCase());
 
     if (cluster == null)
-      throw new IllegalArgumentException("Cluster " + iClusterName + " does not exist in database '" + name + "'");
+      throw new IllegalArgumentException("Cluster " + сlusterName + " does not exist in database '" + name + "'");
     return cluster;
   }
 
@@ -1245,8 +1245,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
    * Method that completes the cluster rename operation. <strong>IT WILL NOT RENAME A CLUSTER, IT JUST CHANGES THE NAME IN THE
    * INTERNAL MAPPING</strong>
    */
-  public void renameCluster(final String iOldName, final String iNewName) {
-    clusterMap.put(iNewName.toLowerCase(), clusterMap.remove(iOldName.toLowerCase()));
+  public void renameCluster(final String oldName, final String newName) {
+    clusterMap.put(newName.toLowerCase(), clusterMap.remove(oldName.toLowerCase()));
   }
 
   @Override
@@ -2074,16 +2074,16 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in database '" + name + "'");
   }
 
-  private int createClusterFromConfig(final OStorageClusterConfiguration iConfig) throws IOException {
-    OCluster cluster = clusterMap.get(iConfig.getName().toLowerCase());
+  private int createClusterFromConfig(final OStorageClusterConfiguration сonfig) throws IOException {
+    OCluster cluster = clusterMap.get(сonfig.getName().toLowerCase());
 
     if (cluster != null) {
-      cluster.configure(this, iConfig);
+      cluster.configure(this, сonfig);
       return -1;
     }
 
     cluster = OPaginatedClusterFactory.INSTANCE.createCluster(configuration.version);
-    cluster.configure(this, iConfig);
+    cluster.configure(this, сonfig);
 
     return registerCluster(cluster);
   }
@@ -2101,11 +2101,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     if (cluster != null) {
       // CHECK FOR DUPLICATION OF NAMES
-      if (clusterMap.containsKey(cluster.getName()))
+      if (clusterMap.containsKey(cluster.getName().toLowerCase()))
         throw new OConfigurationException("Cannot add segment '" + cluster.getName()
             + "' because it is already registered in database '" + name + "'");
       // CREATE AND ADD THE NEW REF SEGMENT
-      clusterMap.put(cluster.getName(), cluster);
+      clusterMap.put(cluster.getName().toLowerCase(), cluster);
       id = cluster.getId();
     } else {
       id = clusters.size();

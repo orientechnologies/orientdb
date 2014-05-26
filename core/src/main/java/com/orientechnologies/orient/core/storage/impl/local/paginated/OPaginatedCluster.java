@@ -334,7 +334,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   private void setNameInternal(String newName) throws IOException {
-    diskCache.renameFile(fileId, this.name, newName);
+    diskCache.renameFile(fileId, this.name + DEF_EXTENSION, newName + DEF_EXTENSION);
     clusterPositionMap.rename(newName);
 
     config.name = newName;

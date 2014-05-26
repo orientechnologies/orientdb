@@ -123,7 +123,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public void rename(String newName) throws IOException {
     acquireExclusiveLock();
     try {
-      diskCache.renameFile(fileId, this.name, newName);
+      diskCache.renameFile(fileId, this.name + DEF_EXTENSION, newName + DEF_EXTENSION);
       name = newName;
     } finally {
       releaseExclusiveLock();
@@ -191,8 +191,8 @@ public class OClusterPositionMap extends ODurableComponent {
       long pageIndex = position / OClusterPositionMapBucket.MAX_ENTRIES;
       int index = (int) (position % OClusterPositionMapBucket.MAX_ENTRIES);
 
-			if(pageIndex >= diskCache.getFilledUpTo(fileId))
-				return null;
+      if (pageIndex >= diskCache.getFilledUpTo(fileId))
+        return null;
 
       final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
       final OCachePointer cachePointer = cacheEntry.getCachePointer();

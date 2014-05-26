@@ -819,7 +819,11 @@ public abstract class OAbstractFile implements OFile {
   public boolean renameTo(final File newFile) {
     acquireWriteLock();
     try {
-      return osFile.renameTo(newFile);
+      final boolean renamed = osFile.renameTo(newFile);
+      if (renamed)
+        osFile = newFile;
+
+      return renamed;
     } finally {
       releaseWriteLock();
     }
