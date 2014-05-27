@@ -95,7 +95,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   public Object get(Object key) {
     Query q = null;
     try {
-      q = OLuceneIndexType.createFullQuery(index, key, indexWriter.getAnalyzer(), getVersion(metadata));
+      q = OLuceneIndexType.createFullQuery(index, key, mgrWriter.getIndexWriter().getAnalyzer(), getVersion(metadata));
       return getResults(q);
     } catch (ParseException e) {
       throw new OIndexException("Error parsing lucene query ", e);

@@ -24,13 +24,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.orientechnologies.lucene.exception.OLuceneIndexException;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
 import com.orientechnologies.orient.core.index.OIndexException;
-import com.sun.jna.platform.FileUtils;
-import org.apache.lucene.LucenePackage;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -41,7 +37,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.util.Version;
 
@@ -67,8 +62,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public static final Version              LUCENE_VERSION   = Version.LUCENE_47;
 
   public static final String               OLUCENE_BASE_DIR = "luceneIndexes";
-  protected IndexWriter                    indexWriter      = null;
-  protected SearcherManager                manager;
+  protected SearcherManager                searcherManager;
   protected OIndexDefinition               index;
   protected TrackingIndexWriter            mgrWriter;
   protected String                         indexName;
@@ -123,13 +117,14 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
     String pathname = getIndexPath(storageLocalAbstract);
     Directory dir = NIOFSDirectory.open(new File(pathname));
-    indexWriter = createIndexWriter(dir, metadata);
+    IndexWriter indexWriter = createIndexWriter(dir, metadata);
     mgrWriter = new TrackingIndexWriter(indexWriter);
-    manager = new SearcherManager(indexWriter, true, null);
+    searcherManager = new SearcherManager(indexWriter, true, null);
     if (nrt != null) {
       nrt.close();
     }
-    nrt = new ControlledRealTimeReopenThread(mgrWriter, manager, 60.00, 0.1);
+    nrt = new ControlledRealTimeReopenThread(mgrWriter, searcherManager, 60.00, 0.1);
+    nrt.setDaemon(true);
     nrt.start();
   }
 
@@ -143,7 +138,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    return manager.acquire();
+    return searcherManager.acquire();
   }
 
   private ODatabaseRecord getDatabase() {
@@ -171,14 +166,13 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   public boolean remove(Object key, OIdentifiable value) {
-
     deleteDocument(OLuceneIndexType.createQueryId(value));
     return true;
   }
 
   public void commit() {
     try {
-      indexWriter.commit();
+      mgrWriter.getIndexWriter().commit();
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -186,13 +180,8 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public void delete() {
     try {
-      if (indexWriter != null) {
-        indexWriter.deleteAll();
-
-        nrt.interrupt();
-        nrt.close();
-
-        indexWriter.close();
+      if (mgrWriter.getIndexWriter() != null) {
+        closeIndex();
       }
       ODatabaseRecord database = getDatabase();
       final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
@@ -218,7 +207,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public void clear() {
     try {
-      indexWriter.deleteAll();
+      mgrWriter.getIndexWriter().deleteAll();
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -257,7 +246,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   @Override
   public void flush() {
     try {
-      indexWriter.commit();
+      mgrWriter.getIndexWriter().commit();
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -266,19 +255,24 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   @Override
   public void close() {
     try {
-      nrt.interrupt();
-      nrt.close();
-      indexWriter.commit();
-      indexWriter.close();
+      closeIndex();
     } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
+  protected void closeIndex() throws IOException {
+    nrt.interrupt();
+    nrt.close();
+    searcherManager.close();
+    mgrWriter.getIndexWriter().commit();
+    mgrWriter.getIndexWriter().close();
+  }
+
   @Override
   public void unload() {
     try {
-      indexWriter.commit();
+      mgrWriter.getIndexWriter().commit();
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -286,7 +280,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public void rollback() {
     try {
-      indexWriter.rollback();
+      mgrWriter.getIndexWriter().rollback();
       reOpen(metadata);
     } catch (IOException e) {
       e.printStackTrace();
@@ -331,6 +325,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
       String analyzerString = metadata.field("analyzer");
       if (analyzerString != null) {
         try {
+
           Class classAnalyzer = Class.forName(analyzerString);
           Constructor constructor = classAnalyzer.getConstructor(Version.class);
 
@@ -367,4 +362,5 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     }
     return version;
   }
+
 }

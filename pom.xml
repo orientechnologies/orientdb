@@ -111,10 +111,11 @@
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-tests</artifactId>
+            <artifactId>orientdb-graphdb</artifactId>
             <version>${orientdb.version}</version>
             <scope>compile</scope>
         </dependency>
+
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>

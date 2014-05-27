@@ -16,6 +16,7 @@
 
 package com.orientechnologies.lucene.index;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -30,7 +31,6 @@ import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
 
 public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneIndex {
 
@@ -57,18 +57,8 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
       acquireExclusiveLock();
       try {
         checkForKeyType(key);
-        Set<OIdentifiable> values = null;
-        if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-          values = new OIndexRIDContainer(getName());
-        } else {
-          values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
-          ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
-        }
-        if (!iSingleValue.getIdentity().isValid())
-          ((ORecord<?>) iSingleValue).save();
-
-        values.add(iSingleValue.getIdentity());
-
+        Set<OIdentifiable> values = new HashSet<OIdentifiable>();
+        values.add(iSingleValue);
         indexEngine.put(key, values);
         return this;
 
