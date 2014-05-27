@@ -10,7 +10,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
@@ -207,72 +207,6 @@ public class ByteArrayKeyTest {
 
     Assert.assertTrue(index.contains(key3));
     Assert.assertTrue(index.contains(key4));
-  }
-
-  @Test(dependsOnMethods = { "testAutomaticUsage", "testRemoveKeyValue" })
-  public void testGetValues() {
-    byte[] key1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 };
-    byte[] key2 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2 };
-
-    OIndex<?> autoIndex = database.getMetadata().getIndexManager().getIndex("byteArrayKeyIndex");
-    Assert.assertEquals(autoIndex.getValues(Arrays.asList(key1, key2), true).size(), 2);
-
-    byte[] key3 = new byte[] { 0, 1, 2, 3 };
-    byte[] key4 = new byte[] { 4, 5, 6, 7 };
-
-    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex-notunique");
-
-    Assert.assertEquals(index.getValues(Arrays.asList(key3, key4), true).size(), 3);
-  }
-
-  @Test(dependsOnMethods = { "testAutomaticUsage", "testRemoveKeyValue" })
-  public void testGetEntries() {
-    byte[] key1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 };
-    byte[] key2 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 2 };
-
-    OIndex<?> autoIndex = database.getMetadata().getIndexManager().getIndex("byteArrayKeyIndex");
-    Assert.assertEquals(autoIndex.getEntries(Arrays.asList(key1, key2)).size(), 2);
-
-    byte[] key3 = new byte[] { 0, 1, 2, 3 };
-    byte[] key4 = new byte[] { 4, 5, 6, 7 };
-
-    OIndex<?> index = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex-notunique");
-
-    Assert.assertEquals(index.getEntries(Arrays.asList(key3, key4)).size(), 3);
-  }
-
-  @Test
-  public void testBetween() {
-    byte[] key1 = new byte[] { 0, 1 };
-    byte[] key2 = new byte[] { 0, 2 };
-    byte[] key3 = new byte[] { 0, 3 };
-    byte[] key4 = new byte[] { 0, 4 };
-
-    final ODocument doc1 = new ODocument().field("k", "key1");
-    final ODocument doc2 = new ODocument().field("k", "key2");
-    final ODocument doc3 = new ODocument().field("k", "key3");
-    final ODocument doc4 = new ODocument().field("k", "key4");
-
-    doc1.save();
-    doc2.save();
-    doc3.save();
-    doc4.save();
-
-    OIndex<?> notUniqueIndex = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex-notunique");
-    OIndex<?> uniqueIndex = database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex");
-
-    notUniqueIndex.put(key1, doc1);
-    notUniqueIndex.put(key2, doc2);
-    notUniqueIndex.put(key3, doc3);
-    notUniqueIndex.put(key4, doc4);
-
-    uniqueIndex.put(key1, doc1);
-    uniqueIndex.put(key2, doc2);
-    uniqueIndex.put(key3, doc3);
-    uniqueIndex.put(key4, doc4);
-
-    Assert.assertEquals(uniqueIndex.getValuesBetween(key1, key3, true).size(), 3);
-    Assert.assertEquals(notUniqueIndex.getValuesBetween(key1, key2, true).size(), 2);
   }
 
   public void testTransactionalUsageWorks() {

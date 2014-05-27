@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.compression.impl;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 
 import java.io.BufferedOutputStream;
@@ -82,7 +83,7 @@ public class OZIPCompressionUtil {
   private static void extractFile(final ZipInputStream in, final File outdir, final String name,
       final OCommandOutputListener iListener) throws IOException {
     if (iListener != null)
-      iListener.onMessage("- Uncompressing file " + name + "...");
+      iListener.onMessage("\n- Uncompressing file " + name + "...");
 
     final BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(new File(outdir, name)));
     try {
@@ -138,12 +139,18 @@ public class OZIPCompressionUtil {
           } finally {
             in.close();
           }
+        } catch (IOException e) {
+          if (iOutput != null)
+            iOutput.onMessage("error: " + e);
+
+          OLogManager.instance().error(OZIPCompression.class, "Cannot compress file: %s", e, folderName);
+          throw e;
         } finally {
           zos.closeEntry();
         }
 
         if (iOutput != null) {
-          final long ratio = 100 - (ze.getCompressedSize() * 100 / ze.getSize());
+          final long ratio = ze.getSize() > 0 ? 100 - (ze.getCompressedSize() * 100 / ze.getSize()) : 0;
 
           iOutput.onMessage("ok size=" + OFileUtils.getSizeAsString(ze.getSize()) + " compressedSize=" + ze.getCompressedSize()
               + " ratio=" + ratio + "%% elapsed=" + OIOUtils.getTimeAsString(System.currentTimeMillis() - begin) + "");

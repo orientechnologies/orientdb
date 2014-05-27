@@ -45,11 +45,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     databaseOwner = (ODatabaseComplex<?>) this;
   }
 
-  @Override
-  public void finalize() {
-    // close();
-  }
-
   public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
     underlying.open(iUserName, iUserPassword);
     Orient.instance().getDatabaseFactory().register(databaseOwner);
@@ -71,7 +66,8 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     underlying.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
@@ -327,11 +323,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.getSize();
   }
 
-  protected void checkOpeness() {
-    if (isClosed())
-      throw new ODatabaseException("Database '" + getURL() + "' is closed");
-  }
-
   public void freeze(boolean throwException) {
     underlying.freeze(throwException);
   }
@@ -357,5 +348,10 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   @Override
   public void releaseCluster(int iClusterId) {
     underlying.releaseCluster(iClusterId);
+  }
+
+  protected void checkOpeness() {
+    if (isClosed())
+      throw new ODatabaseException("Database '" + getURL() + "' is closed");
   }
 }

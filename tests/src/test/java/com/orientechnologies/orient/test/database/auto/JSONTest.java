@@ -16,8 +16,11 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -41,10 +44,10 @@ import java.util.Map;
 public class JSONTest {
   private String url;
 
-//  public static final void  main(String[] args) throws Exception {
-//    JSONTest test = new JSONTest("memory:test");
-//    test.testList();
-//  }
+  // public static void main(String[] args) throws Exception {
+  // JSONTest test = new JSONTest("memory:test");
+  // test.testEmbeddedList();
+  // }
 
   @Parameters(value = "url")
   public JSONTest(final String iURL) {
@@ -709,4 +712,18 @@ public class JSONTest {
     Assert.assertEquals(list.get(0), "string");
     Assert.assertEquals(list.get(1), 42);
   }
+
+    @Test
+    public void testEmbeddedRIDBagDeserialisationWhenFieldTypeIsProvided() throws Exception {
+        ODocument documentSource = new ODocument();
+        documentSource.fromJSON("{FirstName:\"Student A 0\",in_EHasGoodStudents:[#57:0],@fieldTypes:\"in_EHasGoodStudents=g\"}");
+
+        ORidBag bag = documentSource.field("in_EHasGoodStudents");
+        Assert.assertEquals(bag.size(),1);
+        OIdentifiable rid = bag.rawIterator().next();
+        Assert.assertTrue(rid.getIdentity().getClusterId()==57);
+        Assert.assertTrue(rid.getIdentity().getClusterPosition().intValue()==0);
+
+    }
+
 }

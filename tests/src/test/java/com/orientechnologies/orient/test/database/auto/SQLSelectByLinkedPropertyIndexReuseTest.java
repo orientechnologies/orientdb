@@ -1,5 +1,17 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -7,16 +19,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OChainedIndexProxy;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 /**
  * <p>
@@ -34,16 +36,19 @@ import static org.testng.Assert.assertTrue;
  * Prefix "lpirt" in class names means "LinkedPropertyIndexReuseTest".
  * </p>
  */
+@SuppressWarnings("SuspiciousMethodCalls")
 @Test(groups = { "index" })
 public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseTest {
 
   @Parameters(value = "url")
-  public SQLSelectByLinkedPropertyIndexReuseTest(final String iURL) {
+  public SQLSelectByLinkedPropertyIndexReuseTest(@Optional final String iURL) {
     super(iURL);
   }
 
   @BeforeClass
   public void beforeClass() throws Exception {
+    super.beforeClass();
+
     if (database.isClosed()) {
       database.open("admin", "admin");
     }
@@ -65,15 +70,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     database.getLevel2Cache().clear();
 
     database.close();
+    super.afterClass();
   }
 
   @Test
   public void testNotUniqueUniqueNotUniqueEqualsUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtStudent where group.curator.name = 'Someone'"));
@@ -86,16 +89,14 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   @Test
   public void testNotUniqueUniqueUniqueEqualsUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtStudent where group.curator.salary = 600"));
-    assertEquals(result.size(), 2);
+    assertEquals(result.size(), 3);
     assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "Roger Connor"), 1);
+    assertEquals(containsDocumentWithFieldValue(result, "name", "William James"), 1);
 
     assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
   }
@@ -103,15 +104,12 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   @Test
   public void testNotUniqueUniqueNotUniqueEqualsLimitUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtStudent where group.curator.name = 'Someone else' limit 1"));
     assertEquals(result.size(), 1);
-    assertTrue(Arrays.asList("Jane Smith", "James Bell", "Roger Connor").contains(result.get(0).field("name")));
+    assertTrue(Arrays.asList("Jane Smith", "James Bell", "Roger Connor", "William James").contains(result.get(0).field("name")));
 
     assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
   }
@@ -119,69 +117,60 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   @Test
   public void testNotUniqueUniqueUniqueMinorUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtStudent where group.curator.salary < 1000"));
-    assertEquals(result.size(), 3);
+    assertEquals(result.size(), 4);
     assertEquals(containsDocumentWithFieldValue(result, "name", "Jane Smith"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "Roger Connor"), 1);
+    assertEquals(containsDocumentWithFieldValue(result, "name", "William James"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 5);
   }
 
   @Test
   public void testNotUniqueUniqueUniqueMinorLimitUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtStudent where group.curator.salary < 1000 limit 2"));
     assertEquals(result.size(), 2);
 
-    final List<String> expectedNames = Arrays.asList("Jane Smith", "James Bell", "Roger Connor");
+    final List<String> expectedNames = Arrays.asList("Jane Smith", "James Bell", "Roger Connor", "William James");
+
     for (ODocument aResult : result) {
       assertTrue(expectedNames.contains(aResult.field("name")));
     }
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 5);
   }
 
   @Test
   public void testUniqueNotUniqueMinorEqualsUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from lpirtStudent where diploma.GPA <= 4"));
-    assertEquals(result.size(), 2);
+    assertEquals(result.size(), 3);
     assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
+    assertEquals(containsDocumentWithFieldValue(result, "name", "William James"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
   }
 
   @Test
   public void testUniqueNotUniqueMinorEqualsLimitUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database
         .query(new OSQLSynchQuery<ODocument>("select from lpirtStudent where diploma.GPA <= 4 limit 1"));
     assertEquals(result.size(), 1);
-    assertTrue(Arrays.asList("John Smith", "James Bell").contains(result.get(0).field("name")));
+    assertTrue(Arrays.asList("John Smith", "James Bell", "William James").contains(result.get(0).field("name")));
 
     assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
   }
@@ -189,10 +178,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   @Test
   public void testNotUniqueUniqueUniqueMajorUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtStudent where group.curator.salary > 1000"));
@@ -205,15 +191,12 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   @Test
   public void testNotUniqueUniqueUniqueMajorLimitUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtStudent where group.curator.salary > 550 limit 1"));
     assertEquals(result.size(), 1);
-    final List<String> expectedNames = Arrays.asList("John Smith", "James Bell", "Roger Connor");
+    final List<String> expectedNames = Arrays.asList("John Smith", "James Bell", "Roger Connor", "William James");
     for (ODocument aResult : result) {
       assertTrue(expectedNames.contains(aResult.field("name")));
     }
@@ -224,10 +207,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   @Test
   public void testUniqueUniqueBetweenUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtGroup where curator.salary between 500 and 1000"));
@@ -235,16 +215,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-2"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-3"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
   }
 
   @Test
   public void testUniqueUniqueBetweenLimitUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtGroup where curator.salary between 500 and 1000 limit 1"));
@@ -261,10 +238,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   @Test
   public void testUniqueUniqueInUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtGroup where curator.salary in [500, 600]"));
@@ -272,16 +246,13 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-2"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "PZ-08-3"), 1);
 
-    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
+    assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 3);
   }
 
   @Test
   public void testUniqueUniqueInLimitUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtGroup where curator.salary in [500, 600] limit 1"));
@@ -298,16 +269,14 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   @Test
   public void testUniqueFulltextContainsTextUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtStudent where diploma.thesis CONTAINSTEXT 'student'"));
-    assertEquals(result.size(), 2);
+    assertEquals(result.size(), 3);
     assertEquals(containsDocumentWithFieldValue(result, "name", "John Smith"), 1);
     assertEquals(containsDocumentWithFieldValue(result, "name", "James Bell"), 1);
+    assertEquals(containsDocumentWithFieldValue(result, "name", "William James"), 1);
 
     assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
   }
@@ -315,15 +284,12 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
   @Test
   public void testUniqueFulltextContainsTextLimitUsing() throws Exception {
 
-    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage == -1) {
-      oldIndexUsage = 0;
-    }
+    long oldIndexUsage = indexUsages();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select from lpirtStudent where diploma.thesis CONTAINSTEXT 'student' limit 1"));
     assertEquals(result.size(), 1);
-    final List<String> expectedNames = Arrays.asList("John Smith", "James Bell");
+    final List<String> expectedNames = Arrays.asList("John Smith", "James Bell", "William James");
     for (ODocument aResult : result) {
       assertTrue(expectedNames.contains(aResult.field("name")));
     }
@@ -331,6 +297,55 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
   }
 
+  /**
+   * When some unique composite index in the chain is queried by partial result, the final result become not unique.
+   */
+  @Test
+  public void testUniquePartialSearch() {
+    long oldIndexUsage = indexUsages();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
+        "select from lpirtStudent where diploma.name = 'diploma3'"));
+
+    assertEquals(result.size(), 2);
+    final List<String> expectedNames = Arrays.asList("William James", "James Bell");
+    for (ODocument aResult : result) {
+      assertTrue(expectedNames.contains(aResult.field("name")));
+    }
+
+    assertEquals(indexUsages(), oldIndexUsage + 2);
+  }
+
+  @Test
+  public void testHashIndexIsUsedAsBaseIndex() {
+    long oldIndexUsage = indexUsages();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from lpirtStudent where transcript.id = '1'"));
+
+    assertEquals(result.size(), 1);
+
+    assertEquals(indexUsages(), oldIndexUsage + 2);
+  }
+
+  @Test
+  public void testCompositeHashIndexIgnored() {
+    long oldIndexUsage = indexUsages();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from lpirtStudent where skill.name = 'math'"));
+
+    assertEquals(result.size(), 1);
+
+    assertEquals(indexUsages(), oldIndexUsage);
+  }
+
+  private long indexUsages() {
+    final long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    return oldIndexUsage == -1 ? 0 : oldIndexUsage;
+  }
+
+  /**
+   * William James and James Bell work together on the same diploma.
+   */
   private void fillDataSet() {
     ODocument curator1 = database.newInstance("lpirtCurator");
     curator1.field("name", "Someone");
@@ -343,14 +358,23 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     final ODocument diploma1 = database.newInstance("lpirtDiploma");
     diploma1.field("GPA", 3.);
+    diploma1.field("name", "diploma1");
     diploma1.field("thesis", "Researching and visiting universities before making a final decision is very "
         + "beneficial because you student be able to experience the campus, meet the professors, and truly "
         + "understand the traditions of the university.");
+
+    final ODocument transcript = database.newInstance("lpirtTranscript");
+    transcript.field("id", "1");
+
+    final ODocument skill = database.newInstance("lpirtSkill");
+    skill.field("name", "math");
 
     final ODocument student1 = database.newInstance("lpirtStudent");
     student1.field("name", "John Smith");
     student1.field("group", group1);
     student1.field("diploma", diploma1);
+    student1.field("transcript", transcript);
+    student1.field("skill", skill);
     student1.save();
 
     ODocument curator2 = database.newInstance("lpirtCurator");
@@ -364,6 +388,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     final ODocument diploma2 = database.newInstance("lpirtDiploma");
     diploma2.field("GPA", 5.);
+    diploma2.field("name", "diploma2");
     diploma2.field("thesis", "While both Northerners and Southerners believed they fought against tyranny and "
         + "oppression, Northerners focused on the oppression of slaves while Southerners defended their own "
         + "right to self-government.");
@@ -385,6 +410,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
 
     final ODocument diploma3 = database.newInstance("lpirtDiploma");
     diploma3.field("GPA", 4.);
+    diploma3.field("name", "diploma3");
     diploma3.field("thesis", "College student shouldn't have to take a required core curriculum, and many core "
         + "courses are graded too stiffly.");
 
@@ -398,6 +424,12 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     student4.field("name", "Roger Connor");
     student4.field("group", group3);
     student4.save();
+
+    final ODocument student5 = database.newInstance("lpirtStudent");
+    student5.field("name", "William James");
+    student5.field("group", group3);
+    student5.field("diploma", diploma3);
+    student5.save();
   }
 
   private void createSchemaForTest() {
@@ -415,13 +447,27 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
       final OClass diplomaClass = schema.createClass("lpirtDiploma");
       diplomaClass.createProperty("GPA", OType.DOUBLE).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
       diplomaClass.createProperty("thesis", OType.STRING).createIndex(OClass.INDEX_TYPE.FULLTEXT);
+      diplomaClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
       diplomaClass.createIndex("diplomaThesisUnique", OClass.INDEX_TYPE.UNIQUE, "thesis");
+
+      final OClass transcriptClass = schema.createClass("lpirtTranscript");
+      transcriptClass.createProperty("id", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
+
+      final OClass skillClass = schema.createClass("lpirtSkill");
+      skillClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
 
       final OClass studentClass = schema.createClass("lpirtStudent");
       studentClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
       studentClass.createProperty("group", OType.LINK, groupClass).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
       studentClass.createProperty("diploma", OType.LINK, diplomaClass);
-      studentClass.createIndex("studentDiplomaAndNameIndex", OClass.INDEX_TYPE.UNIQUE, "diploma", "name");
+      studentClass.createProperty("transcript", OType.LINK, transcriptClass).createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
+      studentClass.createProperty("skill", OType.LINK, skillClass);
+
+      final ODocument metadata = new ODocument().field("ignoreNullValues", false);
+      studentClass.createIndex("studentDiplomaAndNameIndex", OClass.INDEX_TYPE.UNIQUE.toString(), null, metadata.copy(),
+          new String[] { "diploma", "name" });
+      studentClass.createIndex("studentSkillAndGroupIndex", OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString(), null,
+          metadata.copy(), new String[] { "skill", "group" });
 
       schema.save();
     }

@@ -15,12 +15,18 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
+import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexInternal;
@@ -32,10 +38,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * EQUALS operator.
  * 
@@ -46,12 +48,6 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
   public OQueryOperatorEquals() {
     super("=", 5, false);
-  }
-
-  @Override
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
-    return equals(iLeft, iRight);
   }
 
   public static boolean equals(final Object iLeft, final Object iRight) {
@@ -107,15 +103,13 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
+    OIndexCursor cursor;
     if (!internalIndex.canBeUsedInEqualityOperators())
       return null;
-
-    final Object result;
 
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
@@ -130,7 +124,10 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       final Object indexResult;
       indexResult = index.get(key);
 
-      result = convertIndexResult(indexResult);
+      if (indexResult == null || indexResult instanceof OIdentifiable)
+        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+      else
+        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -145,37 +142,23 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
       if (internalIndex.hasRangeQuerySupport()) {
-        if (resultListener != null) {
-          index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
-          result = resultListener.getResult();
-        } else
-          result = index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+        cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult;
           indexResult = index.get(keyOne);
 
-          result = convertIndexResult(indexResult);
+          if (indexResult == null || indexResult instanceof OIdentifiable)
+            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+          else
+            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
         } else
           return null;
       }
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return result;
-  }
-
-  private Object convertIndexResult(Object indexResult) {
-    Object result;
-    if (indexResult instanceof Collection)
-      result = (Collection<?>) indexResult;
-    else if (indexResult == null)
-      result = Collections.emptyList();
-    else if (indexResult instanceof OIdentifiable)
-      result = Collections.singletonList((OIdentifiable) indexResult);
-    else
-      result = indexResult;
-    return result;
+    return cursor;
   }
 
   @Override
@@ -204,5 +187,11 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   @Override
   public ORID getEndRidRange(final Object iLeft, final Object iRight) {
     return getBeginRidRange(iLeft, iRight);
+  }
+
+  @Override
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
+    return equals(iLeft, iRight);
   }
 }

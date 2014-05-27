@@ -20,6 +20,10 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
 /**
+ * The factory that defines a set of components that current database should use to be compatible to current version of storage. So
+ * if you open a database create with old version of OrientDB it defines a components that should be used to provide backward
+ * compatibility with that version of database.
+ * 
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 2/14/14
  */

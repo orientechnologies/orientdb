@@ -27,9 +27,9 @@ import java.util.Set;
 
 /**
  * Interface to handle indexes. Implementations works at local or remote level.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ *
  */
 public interface OIndexManager {
   public OIndexManager load();
@@ -47,7 +47,7 @@ public interface OIndexManager {
   public OIndex<?> getIndex(final ORID iRID);
 
   public OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata);
+                                final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata);
 
   public OIndex<?> createIndex(final String iName, final String iType, OIndexDefinition iIndexDefinition,
                                 final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata, String algorithm);
@@ -69,9 +69,9 @@ public interface OIndexManager {
    * <p/>
    * All indexes sorted by their count of parameters in ascending order. If there are indexes for the given set of fields in super
    * class they will be taken into account.
-   * 
-   * 
-   * 
+   *
+   *
+   *
    * @param className
    *          name of class which is indexed.
    * @param fields
@@ -85,9 +85,9 @@ public interface OIndexManager {
    * <p/>
    * All indexes sorted by their count of parameters in ascending order. If there are indexes for the given set of fields in super
    * class they will be taken into account.
-   * 
-   * 
-   * 
+   *
+   *
+   *
    * @param className
    *          name of class which is indexed.
    * @param fields
@@ -99,7 +99,7 @@ public interface OIndexManager {
   /**
    * Indicates whether given fields are contained as first key fields in class indexes. Order of fields does not matter. If there
    * are indexes for the given set of fields in super class they will be taken into account.
-   * 
+   *
    * @param className
    *          name of class which contain {@code fields}.
    * @param fields
@@ -131,4 +131,6 @@ public interface OIndexManager {
   public void removeClusterFromIndex(String clusterName, String indexName);
 
   public <RET extends ODocumentWrapper> RET save();
+
+  void removeClassPropertyIndex(OIndex<?> idx);
 }

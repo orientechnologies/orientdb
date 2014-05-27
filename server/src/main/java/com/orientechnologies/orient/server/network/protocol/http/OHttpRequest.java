@@ -15,16 +15,16 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
+
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
 /**
  * Maintains information about current HTTP request.
@@ -97,5 +97,9 @@ public class OHttpRequest {
     if (data.caller != null)
       return data.caller;
     return ((InetSocketAddress) executor.channel.socket.getRemoteSocketAddress()).getAddress().getHostAddress();
+  }
+
+  public String getUrl() {
+    return url;
   }
 }

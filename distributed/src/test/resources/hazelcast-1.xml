@@ -24,6 +24,7 @@
 			</multicast>
 			<tcp-ip enabled="true">
 				<member>127.0.0.1:2434</member>
+                <member>127.0.0.1:2436</member>
 				<interface>127.0.0.1</interface>
 			</tcp-ip>
 		</join>

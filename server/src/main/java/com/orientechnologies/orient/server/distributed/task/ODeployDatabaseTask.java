@@ -67,55 +67,58 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
           }
 
           iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+
+          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
+              databaseName);
+
+          final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
+          if (f.exists())
+            f.delete();
+          else
+            f.getParentFile().mkdirs();
+          f.createNewFile();
+
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+              "creating backup of database '%s' in directory: %s...", databaseName, f.getAbsolutePath());
+
+          final AtomicLong lastOperationId = new AtomicLong(-1);
+
+          FileOutputStream fileOutputStream = new FileOutputStream(f);
           try {
+            database.backup(fileOutputStream, null, new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                lastOperationId.set(database.getStorage().getLastOperationId());
+                return null;
+              }
+            }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
 
-            ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "deploying database %s...", databaseName);
-
-            final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
-            if (f.exists())
-              f.delete();
-            else
-              f.getParentFile().mkdirs();
-            f.createNewFile();
+            final long fileSize = f.length();
 
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "creating backup of database '%s' in directory: %s...", databaseName, f.getAbsolutePath());
+                "sending the compressed database '%s' over the NETWORK to node '%s', size=%s, lastOperationId=%d...", databaseName,
+                getNodeSource(), OFileUtils.getSizeAsString(fileSize), lastOperationId.get());
 
-            final AtomicLong lastOperationId = new AtomicLong(-1);
+            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), f, 0, CHUNK_MAX_SIZE);
 
-            FileOutputStream fileOutputStream = new FileOutputStream(f);
-            try {
-              database.backup(fileOutputStream, null, new Callable<Object>() {
-                @Override
-                public Object call() throws Exception {
-                  lastOperationId.set(database.getStorage().getLastOperationId());
-                  return null;
-                }
-              }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+                "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
 
-              final long fileSize = f.length();
+            if (chunk.last)
+              // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+              iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
 
-              ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                  "sending the compressed database '%s' over the NETWORK to node '%s', size=%s, lastOperationId=%d...",
-                  databaseName, getNodeSource(), OFileUtils.getSizeAsString(fileSize), lastOperationId.get());
-
-              final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), f, 0, CHUNK_MAX_SIZE);
-
-              ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-                  "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
-
-              return chunk;
-
-            } finally {
-              fileOutputStream.close();
-            }
+            return chunk;
 
           } finally {
-            iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+            fileOutputStream.close();
           }
+
         } finally {
           lock.unlock();
+
+          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+              "deploy database task completed");
         }
 
       } else
@@ -173,4 +176,10 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
     OLogManager.instance().info(this, iText);
   }
+
+  @Override
+  public boolean isRequiredOpenDatabase() {
+    return false;
+  }
+
 }

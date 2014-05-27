@@ -15,17 +15,19 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
  * Contains the user settings about security and permissions. Each user has one or more roles associated. Roles contains the
@@ -36,17 +38,15 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  * @see ORole
  */
 public class OUser extends ODocumentWrapper {
-  private static final long  serialVersionUID = 1L;
-
   public static final String ADMIN            = "admin";
   public static final String CLASS_NAME       = "OUser";
+  private static final long  serialVersionUID = 1L;
+  // AVOID THE INVOCATION OF SETTER
+  protected Set<ORole>       roles            = new HashSet<ORole>();
 
   public enum STATUSES {
     SUSPENDED, ACTIVE
   }
-
-  // AVOID THE INVOCATION OF SETTER
-  protected Set<ORole> roles = new HashSet<ORole>();
 
   /**
    * Constructor used in unmarshalling.
@@ -72,6 +72,10 @@ public class OUser extends ODocumentWrapper {
    */
   public OUser(final ODocument iSource) {
     fromStream(iSource);
+  }
+
+  public static final String encryptPassword(final String iPassword) {
+    return OSecurityManager.instance().digest2String(iPassword, true);
   }
 
   @Override
@@ -107,9 +111,15 @@ public class OUser extends ODocumentWrapper {
    * @exception OSecurityAccessException
    */
   public ORole allow(final String iResource, final int iOperation) {
-    if (roles == null || roles.isEmpty())
-      throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
-          + "' has no role defined");
+    if (roles == null || roles.isEmpty()) {
+      if (document.field("roles") != null && !((Collection<OIdentifiable>) document.field("roles")).isEmpty()) {
+        final ODocument doc = document;
+        document = null;
+        fromStream(doc);
+      } else
+        throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
+            + "' has no role defined");
+    }
 
     final ORole role = checkIfAllowed(iResource, iOperation);
 
@@ -182,10 +192,6 @@ public class OUser extends ODocumentWrapper {
     return this;
   }
 
-  public static final String encryptPassword(final String iPassword) {
-    return OSecurityManager.instance().digest2String(iPassword, true);
-  }
-
   public STATUSES getAccountStatus() {
     final String status = (String) document.field("status");
     if (status == null)
@@ -217,6 +223,34 @@ public class OUser extends ODocumentWrapper {
     }
     document.field("roles", persistentRoles);
     return this;
+  }
+
+  public boolean removeRole(final String iRoleName) {
+    for (Iterator<ORole> it = roles.iterator(); it.hasNext();)
+      if (it.next().getName().equals(iRoleName)) {
+        it.remove();
+        return true;
+      }
+    return false;
+  }
+
+  public boolean hasRole(final String iRoleName, final boolean iIncludeInherited) {
+    for (Iterator<ORole> it = roles.iterator(); it.hasNext();) {
+      final ORole role = it.next();
+      if (role.getName().equals(iRoleName))
+        return true;
+
+      if (iIncludeInherited) {
+        ORole r = role.getParentRole();
+        while (r != null) {
+          if (r.getName().equals(iRoleName))
+            return true;
+          r = role.getParentRole();
+        }
+      }
+    }
+
+    return false;
   }
 
   @Override

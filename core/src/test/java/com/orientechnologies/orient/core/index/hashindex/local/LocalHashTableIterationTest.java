@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -18,7 +19,6 @@ import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 /**
  * @author Andrey Lomakin
@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
  */
 @Test
 public class LocalHashTableIterationTest {
-  private static final int                 KEYS_COUNT = 1600000;
+  private static final int                 KEYS_COUNT = 500000;
 
   private ODatabaseDocumentTx              databaseDocumentTx;
 
@@ -38,7 +38,7 @@ public class LocalHashTableIterationTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("local:" + buildDirectory + "/localHashTableIterationTest");
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableIterationTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -53,10 +53,10 @@ public class LocalHashTableIterationTest {
       }
     };
 
-    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", hashFunction);
+    localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", hashFunction, false);
 
     localHashTable.create("localHashTableIterationTest", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
-        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocal) databaseDocumentTx.getStorage());
+        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocalAbstract) databaseDocumentTx.getStorage(), true);
   }
 
   @AfterClass

@@ -153,15 +153,38 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
    */
   public <DB extends ODatabaseRecord> DB setValidationEnabled(boolean iEnabled);
 
+  /**
+   * @return strategy that is used to assign data segment id for new records in current database.
+   */
   public ODataSegmentStrategy getDataSegmentStrategy();
 
+  /**
+   * Sets the {@link ODataSegmentStrategy} which will be used for records in this database.
+   * 
+   * @param dataSegmentStrategy
+   *          instance to set
+   */
   public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy);
 
+  /**
+   * Internal. Gets an instance of sb-tree collection manager for current database.
+   */
   public OSBTreeCollectionManager getSbTreeCollectionManager();
 
+  /**
+   * Internal. Returns the factory that defines a set of components that current database should use to be compatible to current
+   * version of storage. So if you open a database create with old version of OrientDB it defines a components that should be used
+   * to provide backward compatibility with that version of database.
+   */
   public OCurrentStorageComponentsFactory getStorageVersions();
 
+  /**
+   * @return the factory of binary serializers.
+   */
   public OBinarySerializerFactory getSerializerFactory();
 
+  /**
+   * @return serializer which is used for document serialization.
+   */
   public ORecordSerializer getSerializer();
 }

@@ -15,9 +15,20 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.monitor.LocalQueueStats;
+import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -28,15 +39,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponseManag
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
  * each others.
@@ -46,11 +48,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class OHazelcastDistributedMessageService implements ODistributedMessageService {
 
-  public static final int                                              MAX_MESSAGES                = 20;
+  public static final int                                              STATS_MAX_MESSAGES          = 20;
   public static final String                                           NODE_QUEUE_PREFIX           = "orientdb.node.";
   public static final String                                           NODE_QUEUE_REQUEST_POSTFIX  = ".request";
   public static final String                                           NODE_QUEUE_RESPONSE_POSTFIX = ".response";
-  public static final String                                           NODE_QUEUE_UNDO_POSTFIX     = ".undo";
   protected final OHazelcastPlugin                                     manager;
   protected final IQueue<ODistributedResponse>                         nodeResponseQueue;
   protected final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
@@ -110,11 +111,19 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
             // EXIT CURRENT THREAD
             Thread.interrupted();
             break;
+          } catch (DistributedObjectDestroyedException e) {
+            Thread.interrupted();
+            break;
+          } catch (HazelcastInstanceNotActiveException e) {
+            Thread.interrupted();
+            break;
           } catch (Throwable e) {
             ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
                 "error on reading distributed response", e, message != null ? message.getPayload() : "-");
           }
         }
+
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "end of reading responses");
       }
     });
 
@@ -157,6 +166,114 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     return new OHazelcastDistributedRequest();
   }
 
+  public void shutdown() {
+    if (responseThread != null) {
+      responseThread.interrupt();
+      responseThread = null;
+    }
+
+    for (Entry<String, OHazelcastDistributedDatabase> m : databases.entrySet())
+      m.getValue().shutdown();
+
+    asynchMessageManager.cancel();
+    responsesByRequestIds.clear();
+
+    if (nodeResponseQueue != null) {
+      nodeResponseQueue.clear();
+      nodeResponseQueue.destroy();
+    }
+  }
+
+  public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {
+    responsesByRequestIds.put(id, currentResponseMgr);
+  }
+
+  @Override
+  public List<String> getManagedQueueNames() {
+    List<String> queueNames = new ArrayList<String>();
+    for (String q : manager.getHazelcastInstance().getConfig().getQueueConfigs().keySet()) {
+      if (q.startsWith(NODE_QUEUE_PREFIX))
+        queueNames.add(q);
+    }
+    return queueNames;
+  }
+
+  @Override
+  public long getLastMessageId() {
+    return getMessageIdCounter().get();
+  }
+
+  public IAtomicLong getMessageIdCounter() {
+    return manager.getHazelcastInstance().getAtomicLong("orientdb.requestId");
+  }
+
+  @Override
+  public ODocument getQueueStats(final String iQueueName) {
+    final IQueue<Object> queue = manager.getHazelcastInstance().getQueue(iQueueName);
+    if (queue == null)
+      throw new IllegalArgumentException("Queue '" + iQueueName + "' not found");
+
+    final ODocument doc = new ODocument();
+
+    doc.field("name", queue.getName());
+    doc.field("partitionKey", queue.getPartitionKey());
+    doc.field("serviceName", queue.getServiceName());
+
+    doc.field("size", queue.size());
+    // doc.field("nextElement", queue.peek());
+
+    final LocalQueueStats stats = queue.getLocalQueueStats();
+    doc.field("minAge", stats.getMinAge());
+    doc.field("maxAge", stats.getMaxAge());
+    doc.field("avgAge", stats.getAvgAge());
+
+    doc.field("backupItemCount", stats.getBackupItemCount());
+    doc.field("emptyPollOperationCount", stats.getEmptyPollOperationCount());
+    doc.field("offerOperationCount", stats.getOfferOperationCount());
+    doc.field("eventOperationCount", stats.getEventOperationCount());
+    doc.field("otherOperationsCount", stats.getOtherOperationsCount());
+    doc.field("pollOperationCount", stats.getPollOperationCount());
+    doc.field("emptyPollOperationCount", stats.getEmptyPollOperationCount());
+    doc.field("ownedItemCount", stats.getOwnedItemCount());
+    doc.field("rejectedOfferOperationCount", stats.getRejectedOfferOperationCount());
+
+    List<Object> nextMessages = new ArrayList<Object>(STATS_MAX_MESSAGES);
+    for (Iterator<Object> it = queue.iterator(); it.hasNext();) {
+      Object next = it.next();
+      if (next != null)
+        nextMessages.add(next.toString());
+
+      if (nextMessages.size() >= STATS_MAX_MESSAGES)
+        break;
+    }
+
+    doc.field("nextMessages", nextMessages);
+
+    return doc;
+  }
+
+  public long getAverageResponseTime() {
+    long total = 0;
+    int involved = 0;
+    for (long metric : responseTimeMetrics) {
+      if (metric > -1) {
+        total += metric;
+        involved++;
+      }
+    }
+    return total > 0 ? total / involved : 0;
+  }
+
+  public OHazelcastDistributedDatabase registerDatabase(final String iDatabaseName) {
+    final OHazelcastDistributedDatabase db = new OHazelcastDistributedDatabase(manager, this, iDatabaseName);
+    databases.put(iDatabaseName, db);
+    return db;
+  }
+
+  public Set<String> getDatabases() {
+    return databases.keySet();
+  }
+
   /**
    * Not synchronized, it's called when a message arrives
    * 
@@ -192,24 +309,6 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     }
 
     return -1;
-  }
-
-  public void shutdown() {
-    if (responseThread != null) {
-      responseThread.interrupt();
-      responseThread = null;
-    }
-
-    for (Entry<String, OHazelcastDistributedDatabase> m : databases.entrySet())
-      m.getValue().shutdown();
-
-    asynchMessageManager.cancel();
-    responsesByRequestIds.clear();
-
-    if (nodeResponseQueue != null) {
-      nodeResponseQueue.clear();
-      nodeResponseQueue.destroy();
-    }
   }
 
   protected String getLocalNodeNameAndThread() {
@@ -268,109 +367,22 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   }
 
   /**
-   * Return the queue. If not exists create and register it.
+   * Returns the queue. If not exists create and register it.
    */
-  @SuppressWarnings("unchecked")
   protected <T> IQueue<T> getQueue(final String iQueueName) {
     return manager.getHazelcastInstance().getQueue(iQueueName);
   }
 
   /**
-   * Remove the queue.
+   * Removes the queue. Hazelcast doesn't allow to remove the queue, so now we just clear it.
    */
   protected void removeQueue(final String iQueueName) {
-    IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
-    queue.clear();
-  }
-
-  public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {
-    responsesByRequestIds.put(id, currentResponseMgr);
-  }
-
-  @Override
-  public List<String> getManagedQueueNames() {
-    List<String> queueNames = new ArrayList<String>();
-    for (String q : manager.getHazelcastInstance().getConfig().getQueueConfigs().keySet()) {
-      if (q.startsWith(NODE_QUEUE_PREFIX))
-        queueNames.add(q);
+    final IQueue<?> queue = manager.getHazelcastInstance().getQueue(iQueueName);
+    if (queue != null) {
+      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+          "removing queue '%s' containing %d messages", iQueueName, queue.size());
+      queue.clear();
     }
-    return queueNames;
-  }
-
-  @Override
-  public long getLastMessageId() {
-    return getMessageIdCounter().get();
-  }
-
-  public IAtomicLong getMessageIdCounter() {
-    return manager.getHazelcastInstance().getAtomicLong("orientdb.requestId");
-  }
-
-  @Override
-  public ODocument getQueueStats(final String iQueueName) {
-    final IQueue<Object> queue = manager.getHazelcastInstance().getQueue(iQueueName);
-    if (queue == null)
-      throw new IllegalArgumentException("Queue '" + iQueueName + "' not found");
-
-    final ODocument doc = new ODocument();
-
-    doc.field("name", queue.getName());
-    doc.field("partitionKey", queue.getPartitionKey());
-    doc.field("serviceName", queue.getServiceName());
-
-    doc.field("size", queue.size());
-    // doc.field("nextElement", queue.peek());
-
-    final LocalQueueStats stats = queue.getLocalQueueStats();
-    doc.field("minAge", stats.getMinAge());
-    doc.field("maxAge", stats.getMaxAge());
-    doc.field("avgAge", stats.getAvgAge());
-
-    doc.field("backupItemCount", stats.getBackupItemCount());
-    doc.field("emptyPollOperationCount", stats.getEmptyPollOperationCount());
-    doc.field("offerOperationCount", stats.getOfferOperationCount());
-    doc.field("eventOperationCount", stats.getEventOperationCount());
-    doc.field("otherOperationsCount", stats.getOtherOperationsCount());
-    doc.field("pollOperationCount", stats.getPollOperationCount());
-    doc.field("emptyPollOperationCount", stats.getEmptyPollOperationCount());
-    doc.field("ownedItemCount", stats.getOwnedItemCount());
-    doc.field("rejectedOfferOperationCount", stats.getRejectedOfferOperationCount());
-
-    List<Object> nextMessages = new ArrayList<Object>(MAX_MESSAGES);
-    for (Iterator<Object> it = queue.iterator(); it.hasNext();) {
-      Object next = it.next();
-      if (next != null)
-        nextMessages.add(next.toString());
-
-      if (nextMessages.size() >= MAX_MESSAGES)
-        break;
-    }
-
-    doc.field("nextMessages", nextMessages);
-
-    return doc;
-  }
-
-  public long getAverageResponseTime() {
-    long total = 0;
-    int involved = 0;
-    for (long metric : responseTimeMetrics) {
-      if (metric > -1) {
-        total += metric;
-        involved++;
-      }
-    }
-    return total > 0 ? total / involved : 0;
-  }
-
-  public OHazelcastDistributedDatabase registerDatabase(final String iDatabaseName) {
-    final OHazelcastDistributedDatabase db = new OHazelcastDistributedDatabase(manager, this, iDatabaseName);
-    databases.put(iDatabaseName, db);
-    return db;
-  }
-
-  public Set<String> getDatabases() {
-    return databases.keySet();
   }
 
   protected void collectMetric(final long iTime) {

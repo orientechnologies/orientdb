@@ -43,7 +43,7 @@ public interface OTreeInternal<K, V> {
     public boolean addResult(Map.Entry<K, V> entry) {
       entries.add(entry);
 
-      return limit < entries.size();
+      return limit > entries.size();
     }
 
     public List<Map.Entry<K, V>> getResult() {

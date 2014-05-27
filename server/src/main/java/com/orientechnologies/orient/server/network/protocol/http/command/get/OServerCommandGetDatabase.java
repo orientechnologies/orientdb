@@ -15,16 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
@@ -51,8 +41,89 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 public class OServerCommandGetDatabase extends OServerCommandGetConnect {
   private static final String[] NAMES = { "GET|database/*" };
+
+  public static void exportClass(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {
+    json.beginObject();
+    json.writeAttribute("name", cls.getName());
+    json.writeAttribute("superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
+    json.writeAttribute("alias", cls.getShortName());
+    json.writeAttribute("abstract", cls.isAbstract());
+    json.writeAttribute("strictmode", cls.isStrictMode());
+    json.writeAttribute("clusters", cls.getClusterIds());
+    json.writeAttribute("defaultCluster", cls.getDefaultClusterId());
+    json.writeAttribute("clusterSelection", cls.getClusterSelection().getName());
+    if (cls instanceof OClassImpl) {
+      final Map<String, String> custom = ((OClassImpl) cls).getCustomInternal();
+      if (custom != null && !custom.isEmpty()) {
+        json.writeAttribute("custom", custom);
+      }
+    }
+
+    try {
+      json.writeAttribute("records", db.countClass(cls.getName()));
+    } catch (OSecurityAccessException e) {
+      json.writeAttribute("records", "? (Unauthorized)");
+    }
+
+    if (cls.properties() != null && cls.properties().size() > 0) {
+      json.beginCollection("properties");
+      for (final OProperty prop : cls.properties()) {
+        json.beginObject();
+        json.writeAttribute("name", prop.getName());
+        if (prop.getLinkedClass() != null)
+          json.writeAttribute("linkedClass", prop.getLinkedClass().getName());
+        if (prop.getLinkedType() != null)
+          json.writeAttribute("linkedType", prop.getLinkedType().toString());
+        json.writeAttribute("type", prop.getType().toString());
+        json.writeAttribute("mandatory", prop.isMandatory());
+        json.writeAttribute("readonly", prop.isReadonly());
+        json.writeAttribute("notNull", prop.isNotNull());
+        json.writeAttribute("min", prop.getMin());
+        json.writeAttribute("max", prop.getMax());
+        json.writeAttribute("collate", prop.getCollate() != null ? prop.getCollate().getName() : "default");
+
+        if (prop instanceof OPropertyImpl) {
+          final Map<String, String> custom = ((OPropertyImpl) prop).getCustomInternal();
+          if (custom != null && !custom.isEmpty()) {
+            json.writeAttribute("custom", custom);
+          }
+        }
+
+        json.endObject();
+      }
+      json.endCollection();
+    }
+
+    final Set<OIndex<?>> indexes = cls.getIndexes();
+    if (!indexes.isEmpty()) {
+      json.beginCollection("indexes");
+      for (final OIndex<?> index : indexes) {
+        json.beginObject();
+        json.writeAttribute("name", index.getName());
+        json.writeAttribute("type", index.getType());
+
+        final OIndexDefinition indexDefinition = index.getDefinition();
+        if (indexDefinition != null && !indexDefinition.getFields().isEmpty())
+          json.writeAttribute("fields", indexDefinition.getFields());
+        json.endObject();
+      }
+      json.endCollection();
+    }
+
+    json.endObject();
+  }
 
   @Override
   public void configure(final OServer server) {
@@ -68,6 +139,11 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
     exec(iRequest, iResponse, urlParts);
     return false;
+  }
+
+  @Override
+  public String[] getNames() {
+    return NAMES;
   }
 
   protected void exec(final OHttpRequest iRequest, final OHttpResponse iResponse, final String[] urlParts)
@@ -221,7 +297,8 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         try {
           json.writeAttribute("name", index.getName());
           json.writeAttribute("configuration", index.getConfiguration());
-          json.writeAttribute("size", index.getSize());
+          // Exclude index size because it's too costly
+          // json.writeAttribute("size", index.getSize());
         } catch (Exception e) {
           OLogManager.instance().error(this, "Cannot serialize index configuration", e);
         }
@@ -238,7 +315,9 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
               "localeLanguage", "value", db.getStorage().getConfiguration().getLocaleLanguage() }, new Object[] { "name",
               "charSet", "value", db.getStorage().getConfiguration().getCharset() }, new Object[] { "name", "timezone", "value",
               db.getStorage().getConfiguration().getTimeZone().getID() }, new Object[] { "name", "definitionVersion", "value",
-              db.getStorage().getConfiguration().version });
+              db.getStorage().getConfiguration().version }, new Object[] { "name", "clusterSelection", "value",
+              db.getStorage().getConfiguration().getClusterSelection() }, new Object[] { "name", "minimumClusters", "value",
+              db.getStorage().getConfiguration().getMinimumClusters() });
       json.endCollection();
 
       json.beginCollection("properties");
@@ -262,80 +341,5 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       if (db != null)
         db.close();
     }
-  }
-
-  public static void exportClass(final ODatabaseDocumentTx db, final OJSONWriter json, final OClass cls) throws IOException {
-    json.beginObject();
-    json.writeAttribute("name", cls.getName());
-    json.writeAttribute("superClass", cls.getSuperClass() != null ? cls.getSuperClass().getName() : "");
-    json.writeAttribute("alias", cls.getShortName());
-    json.writeAttribute("abstract", cls.isAbstract());
-    json.writeAttribute("strictmode", cls.isStrictMode());
-    json.writeAttribute("clusters", cls.getClusterIds());
-    json.writeAttribute("defaultCluster", cls.getDefaultClusterId());
-    if (cls instanceof OClassImpl) {
-      final Map<String, String> custom = ((OClassImpl) cls).getCustomInternal();
-      if (custom != null && !custom.isEmpty()) {
-        json.writeAttribute("custom", custom);
-      }
-    }
-
-    try {
-      json.writeAttribute("records", db.countClass(cls.getName()));
-    } catch (OSecurityAccessException e) {
-      json.writeAttribute("records", "? (Unauthorized)");
-    }
-
-    if (cls.properties() != null && cls.properties().size() > 0) {
-      json.beginCollection("properties");
-      for (final OProperty prop : cls.properties()) {
-        json.beginObject();
-        json.writeAttribute("name", prop.getName());
-        if (prop.getLinkedClass() != null)
-          json.writeAttribute("linkedClass", prop.getLinkedClass().getName());
-        if (prop.getLinkedType() != null)
-          json.writeAttribute("linkedType", prop.getLinkedType().toString());
-        json.writeAttribute("type", prop.getType().toString());
-        json.writeAttribute("mandatory", prop.isMandatory());
-        json.writeAttribute("readonly", prop.isReadonly());
-        json.writeAttribute("notNull", prop.isNotNull());
-        json.writeAttribute("min", prop.getMin());
-        json.writeAttribute("max", prop.getMax());
-        json.writeAttribute("collate", prop.getCollate() != null ? prop.getCollate().getName() : "default");
-
-        if (prop instanceof OPropertyImpl) {
-          final Map<String, String> custom = ((OPropertyImpl) prop).getCustomInternal();
-          if (custom != null && !custom.isEmpty()) {
-            json.writeAttribute("custom", custom);
-          }
-        }
-
-        json.endObject();
-      }
-      json.endCollection();
-    }
-
-    final Set<OIndex<?>> indexes = cls.getIndexes();
-    if (!indexes.isEmpty()) {
-      json.beginCollection("indexes");
-      for (final OIndex<?> index : indexes) {
-        json.beginObject();
-        json.writeAttribute("name", index.getName());
-        json.writeAttribute("type", index.getType());
-
-        final OIndexDefinition indexDefinition = index.getDefinition();
-        if (indexDefinition != null && !indexDefinition.getFields().isEmpty())
-          json.writeAttribute("fields", indexDefinition.getFields());
-        json.endObject();
-      }
-      json.endCollection();
-    }
-
-    json.endObject();
-  }
-
-  @Override
-  public String[] getNames() {
-    return NAMES;
   }
 }

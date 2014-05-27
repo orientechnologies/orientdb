@@ -48,7 +48,7 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
 
   public Collection<OIdentifiable> get(final Object iKey) {
     final OCommandRequest cmd = formatCommand(QUERY_GET, name);
-    return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKey);
+    return new HashSet<OIdentifiable>((Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKey));
   }
 
   public Iterator<Entry<Object, Collection<OIdentifiable>>> iterator() {

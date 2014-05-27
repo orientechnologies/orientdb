@@ -15,28 +15,30 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.storage.OStorage;
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OStorage;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -53,8 +55,8 @@ public class SQLInsertTest {
 
   @Test
   public void insertOperator() {
-		if (database.getURL().startsWith("local:"))
-			return;
+    if (database.getURL().startsWith("local:"))
+      return;
 
     database.open("admin", "admin");
 
@@ -278,10 +280,10 @@ public class SQLInsertTest {
 
   @Test
   public void insertCluster() {
-		if (database.getURL().startsWith("local:"))
-			return;
+    if (database.getURL().startsWith("local:"))
+      return;
 
-		database.open("admin", "admin");
+    database.open("admin", "admin");
 
     ODocument doc = database.command(
         new OCommandSQL("insert into Account cluster anotherdefault (id, title) values (10, 'NoSQL movement')")).execute();
@@ -315,6 +317,26 @@ public class SQLInsertTest {
     database.close();
   }
 
+  public void insertSelect() {
+    database.open("admin", "admin");
+
+    database.command(new OCommandSQL("CREATE CLASS UserCopy")).execute();
+    database.getMetadata().getSchema().reload();
+
+    long inserted = database.command(new OCommandSQL("INSERT INTO UserCopy FROM select from ouser where name <> 'admin' limit 2"))
+        .execute();
+    Assert.assertEquals(inserted, 2);
+
+    List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>("select from UserCopy"));
+    Assert.assertEquals(result.size(), 2);
+    for (OIdentifiable r : result) {
+      Assert.assertEquals(((ODocument) r.getRecord()).getClassName(), "UserCopy");
+      Assert.assertNotSame(((ODocument) r.getRecord()).field("name"), "admin");
+    }
+
+    database.close();
+  }
+
   private List<OClusterPosition> getValidPositions(int clusterId) {
     final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
 
@@ -328,4 +350,78 @@ public class SQLInsertTest {
     }
     return positions;
   }
+
+
+    public void insertWithReturn() {
+
+        try{
+        database.open("admin", "admin");
+
+        if (!database.getMetadata().getSchema().existsClass("actor2"))
+        {
+            database.command(new OCommandSQL("CREATE CLASS Actor2")).execute();
+            database.getMetadata().getSchema().reload();
+        }
+
+        // RETURN with $current.
+        ODocument doc = database.command(
+            new OCommandSQL("INSERT INTO Actor2 SET FirstName=\"FFFF\" RETURN $current")).execute();
+        Assert.assertTrue(doc != null);
+        Assert.assertEquals(doc.getClassName(), "Actor2");
+
+       // RETURN with @rid
+       Object res1 = database.command(
+                new OCommandSQL("INSERT INTO Actor2 SET FirstName=\"Butch 1\" RETURN @rid")).execute();
+       Assert.assertTrue(res1 instanceof ORecordId);
+       Assert.assertTrue(((OIdentifiable) res1).getIdentity().isValid());
+
+        // Create many records and return @rid
+        Object res2 = database.command(
+                new OCommandSQL("INSERT INTO Actor2(FirstName,LastName) VALUES ('Jay','Miner'),('Frank','Hermier'),('Emily','Saut')  RETURN @rid")).execute();
+        Assert.assertTrue(res2 instanceof List<?>);
+        Assert.assertTrue(((List) res2).get(0) instanceof ORecordId);
+
+
+        // Create many records by INSERT INTO ...FROM and return wrapped field
+        ORID another = ((OIdentifiable) res1).getIdentity();
+        final String sql = "INSERT INTO Actor2 RETURN $current.FirstName  FROM SELECT * FROM ["+ doc.getIdentity().toString()+","+another.toString() +"]";
+        ArrayList res3 = database.command(
+                new OCommandSQL(sql)).execute();
+        Assert.assertEquals(res3.size(),2);
+        Assert.assertTrue(((List) res3).get(0) instanceof ODocument);
+        final ODocument res3doc = (ODocument)res3.get(0);
+        Assert.assertTrue(res3doc.containsField("result"));
+        Assert.assertTrue("FFFF".equalsIgnoreCase((String) res3doc.field("result")) || "Butch 1".equalsIgnoreCase((String) res3doc.field("result")));
+        Assert.assertTrue(res3doc.containsField("rid"));
+        Assert.assertTrue(res3doc.containsField("version"));
+
+        // create record using content keyword and update it in sql batch passing recordID between commands
+        final String sql2 = "let var1=INSERT INTO Actor2 CONTENT {Name:\"content\"} RETURN $current.@rid\n" +
+                "let var2=UPDATE $var1 SET Bingo=1 RETURN AFTER @rid\n" +
+                "return $var2\n" +
+                "end";
+        List<?> res_sql2 = database.command(
+                new OCommandScript("sql",sql2)).execute();
+        Assert.assertEquals(res_sql2.size(), 1);
+        Assert.assertTrue(((List) res_sql2).get(0) instanceof ORecordId);
+
+        // create record using content keyword and update it in sql batch passing recordID between commands
+        final String sql3 = "let var1=INSERT INTO Actor2 CONTENT {Name:\"Bingo owner\"} RETURN @this\n" +
+                "let var2=UPDATE $var1 SET Bingo=1 RETURN AFTER\n" +
+                "return $var2\n" +
+                "end";
+        List<?> res_sql3 = database.command(
+                new OCommandScript("sql",sql3)).execute();
+        Assert.assertEquals(res_sql3.size(),1);
+        Assert.assertTrue(((List) res_sql3).get(0) instanceof ODocument);
+        final ODocument sql3doc =  (ODocument)(((List) res_sql3).get(0));
+        Assert.assertEquals(sql3doc.field("Bingo"),1);
+        Assert.assertEquals(sql3doc.field("Name"),"Bingo owner");
+
+        }finally{
+            database.close();
+        }
+    }
+
+
 }

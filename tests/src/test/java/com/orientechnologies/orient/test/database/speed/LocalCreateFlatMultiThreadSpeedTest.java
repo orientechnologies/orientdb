@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.speed;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
@@ -30,27 +31,14 @@ public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
   protected ODatabaseFlat database;
   private long            foundObjects;
 
-  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-    LocalCreateFlatMultiThreadSpeedTest test = new LocalCreateFlatMultiThreadSpeedTest();
-    test.data.go(test);
-  }
-
-  public LocalCreateFlatMultiThreadSpeedTest() {
-    super(1000000, 20, CreateObjectsThread.class);
-  }
-
-  @Override
-  public void init() {
-    database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
-    foundObjects = database.countClusterElements("flat");
-
-    System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
-  }
-
   @Test(enabled = false)
   public static class CreateObjectsThread extends OrientThreadTest {
     protected ODatabaseFlat database;
     protected ORecordFlat   record;
+
+    public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
+      super(parent, threadId);
+    }
 
     @Override
     public void init() {
@@ -74,6 +62,23 @@ public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
       database.close();
       super.deinit();
     }
+  }
+
+  public LocalCreateFlatMultiThreadSpeedTest() {
+    super(1000000, 20, CreateObjectsThread.class);
+  }
+
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    LocalCreateFlatMultiThreadSpeedTest test = new LocalCreateFlatMultiThreadSpeedTest();
+    test.data.go(test);
+  }
+
+  @Override
+  public void init() {
+    database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
+    foundObjects = database.countClusterElements("flat");
+
+    System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
   }
 
   @Override

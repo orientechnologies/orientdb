@@ -15,45 +15,13 @@
  */
 package com.orientechnologies.orient.server.hazelcast.sharding.strategy;
 
-import com.orientechnologies.orient.server.distributed.ODistributedPartition;
-import com.orientechnologies.orient.server.distributed.ODistributedPartitioningStrategy;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
- * Interface that represents the replication strategy.
+ * Deprecated, not used anymore.
  * 
- * @author luca
+ * @deprecated
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORoundRobinPartitioninStrategy implements ODistributedPartitioningStrategy {
-  protected ConcurrentHashMap<String, AtomicLong> lastPartition = new ConcurrentHashMap<String, AtomicLong>();
-
-  @Override
-  public ODistributedPartition getPartition(final ODistributedServerManager iManager, final String iDatabaseName,
-      final String iClusterName) {
-
-    final List<List<String>> partitions = iManager.getDatabaseConfiguration(iDatabaseName).getPartitions(iClusterName);
-
-    final List<String> partition;
-    if (partitions.size() > 1) {
-      // APPLY ROUND ROBIN
-      AtomicLong lastPos = lastPartition.get(iDatabaseName);
-      if (lastPos == null) {
-        lastPos = new AtomicLong(-1l);
-        lastPartition.putIfAbsent(iDatabaseName, lastPos);
-      }
-
-      final long newPos = lastPos.incrementAndGet();
-
-      partition = partitions.get((int) (newPos % partitions.size()));
-    } else
-      // ONLY ONE PARTITION: JUST USE IT
-      partition = partitions.get(0);
-
-    return iManager.newPartition(partition);
-  }
+@Deprecated
+public class ORoundRobinPartitioninStrategy {
 }

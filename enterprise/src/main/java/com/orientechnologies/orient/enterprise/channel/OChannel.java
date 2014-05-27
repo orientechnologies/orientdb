@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.orient.enterprise.channel;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -31,28 +25,27 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.util.concurrent.atomic.AtomicLong;
+
 public abstract class OChannel extends OListenerManger<OChannelListener> {
   private static final OProfilerMBean PROFILER                     = Orient.instance().getProfiler();
-
-  public Socket                       socket;
-
-  public InputStream                  inStream;
-  public OutputStream                 outStream;
-
-  protected final OAdaptiveLock       lockRead                     = new OAdaptiveLock();
-  protected final OAdaptiveLock       lockWrite                    = new OAdaptiveLock();
-  protected long                      timeout;
-
-  public int                          socketBufferSize;
-
-  private long                        metricTransmittedBytes       = 0;
-  private long                        metricReceivedBytes          = 0;
-  private long                        metricFlushes                = 0;
-
   private static final AtomicLong     metricGlobalTransmittedBytes = new AtomicLong();
   private static final AtomicLong     metricGlobalReceivedBytes    = new AtomicLong();
   private static final AtomicLong     metricGlobalFlushes          = new AtomicLong();
-
+  private final OAdaptiveLock         lockRead                     = new OAdaptiveLock();
+  private final OAdaptiveLock         lockWrite                    = new OAdaptiveLock();
+  public volatile Socket              socket;
+  public InputStream                  inStream;
+  public OutputStream                 outStream;
+  public int                          socketBufferSize;
+  protected long                      timeout;
+  private long                        metricTransmittedBytes       = 0;
+  private long                        metricReceivedBytes          = 0;
+  private long                        metricFlushes                = 0;
   private String                      profilerMetric;
 
   static {
@@ -101,38 +94,58 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   }
 
   public void flush() throws IOException {
-    outStream.flush();
+    if (outStream != null)
+      outStream.flush();
   }
 
-  public void close() {
+  public OAdaptiveLock getLockRead() {
+    return lockRead;
+  }
+
+  public OAdaptiveLock getLockWrite() {
+    return lockWrite;
+  }
+
+  public synchronized void close() {
     PROFILER.unregisterHookValue(profilerMetric + ".transmittedBytes");
     PROFILER.unregisterHookValue(profilerMetric + ".receivedBytes");
     PROFILER.unregisterHookValue(profilerMetric + ".flushes");
 
     try {
-      if (socket != null)
+      if (socket != null) {
         socket.close();
-    } catch (IOException e) {
+        socket = null;
+      }
+    } catch (Exception e) {
     }
 
     try {
-      if (inStream != null)
+      if (inStream != null) {
         inStream.close();
-    } catch (IOException e) {
+        inStream = null;
+      }
+    } catch (Exception e) {
     }
 
     try {
-      if (outStream != null)
+      if (outStream != null) {
         outStream.close();
-    } catch (IOException e) {
+        outStream = null;
+      }
+    } catch (Exception e) {
     }
 
-    for (OChannelListener l : browseListeners())
+    for (OChannelListener l : getListenersCopy())
       try {
         l.onChannelClose(this);
       } catch (Exception e) {
         // IGNORE ANY EXCEPTION
       }
+
+    lockRead.close();
+    lockWrite.close();
+
+    resetListeners();
   }
 
   public void connected() {
@@ -164,6 +177,10 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   @Override
   public String toString() {
     return socket != null ? socket.getRemoteSocketAddress().toString() : "Not connected";
+  }
+
+  public String getLocalSocketAddress() {
+    return socket != null ? socket.getLocalSocketAddress().toString() : "?";
   }
 
   protected void updateMetricTransmittedBytes(final int iDelta) {

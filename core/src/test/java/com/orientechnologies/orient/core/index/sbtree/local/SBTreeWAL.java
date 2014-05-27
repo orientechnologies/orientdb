@@ -140,8 +140,8 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, actualStorage);
+    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true, ".nbt");
+    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, actualStorage, false);
   }
 
   private void createExpectedSBTree() {
@@ -176,8 +176,8 @@ public class SBTreeWAL extends SBTreeTest {
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, expectedStorage);
+    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true, ".nbt");
+    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, expectedStorage, false);
   }
 
   @Override
@@ -252,20 +252,20 @@ public class SBTreeWAL extends SBTreeTest {
 
   @Test(enabled = false)
   @Override
-  public void testValuesMajor() {
-    super.testValuesMajor();
+  public void testIterateEntriesMajor() {
+    super.testIterateEntriesMajor();
   }
 
   @Test(enabled = false)
   @Override
-  public void testValuesMinor() {
-    super.testValuesMinor();
+  public void testIterateEntriesMinor() {
+    super.testIterateEntriesMinor();
   }
 
   @Test(enabled = false)
   @Override
-  public void testValuesBetween() {
-    super.testValuesBetween();
+  public void testIterateEntriesBetween() {
+    super.testIterateEntriesBetween();
   }
 
   private void assertFileRestoreFromWAL() throws IOException {

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
+import java.util.HashMap;
 import java.util.List;
 
 public interface OTransaction {
@@ -42,7 +43,7 @@ public interface OTransaction {
 
   public void commit();
 
-	public void commit(boolean force);
+  public void commit(boolean force);
 
   public void rollback();
 
@@ -114,4 +115,10 @@ public interface OTransaction {
   public void updateIdentityAfterCommit(final ORID oldRid, final ORID newRid);
 
   public int amountOfNestedTxs();
+
+  public OTransaction lockRecord(OIdentifiable iRecord, OStorage.LOCKING_STRATEGY iLockingStrategy);
+
+  public OTransaction unlockRecord(OIdentifiable iRecord);
+
+  HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords();
 }

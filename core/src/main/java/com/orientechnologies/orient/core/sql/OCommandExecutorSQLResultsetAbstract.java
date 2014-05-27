@@ -110,11 +110,6 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   @Override
-  public boolean isReplicated() {
-    return true;
-  }
-
-  @Override
   public boolean isIdempotent() {
     return true;
   }
@@ -183,15 +178,15 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return null;
   }
 
-  protected boolean handleResult(final OIdentifiable iRecord, boolean iCloneIt) {
+  protected boolean handleResult(final OIdentifiable iRecord) {
     if (iRecord != null) {
       resultCount++;
 
-      OIdentifiable recordCopy = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord).copy() : iRecord.getIdentity().copy();
+      OIdentifiable identifiable = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord) : iRecord.getIdentity();
 
       // CALL THE LISTENER NOW
-      if (recordCopy != null && request.getResultListener() != null) {
-        final boolean result = request.getResultListener().result(recordCopy);
+      if (identifiable != null && request.getResultListener() != null) {
+        final boolean result = request.getResultListener().result(identifiable);
         if (!result)
           return false;
       }
@@ -293,9 +288,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return skip;
   }
 
-  protected boolean filter(final ORecordInternal<?> iRecord) {
-    context.setVariable("current", iRecord);
-
+  protected boolean filter(final ORecord<?> iRecord) {
     if (iRecord instanceof ORecordSchemaAware<?>) {
       // CHECK THE TARGET CLASS
       final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
@@ -314,6 +307,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   protected boolean evaluateRecord(final ORecord<?> iRecord) {
+    context.setVariable("current", iRecord);
+    context.updateMetric("evaluated", +1);
+
     assignLetClauses(iRecord);
     if (compiledFilter == null)
       return true;

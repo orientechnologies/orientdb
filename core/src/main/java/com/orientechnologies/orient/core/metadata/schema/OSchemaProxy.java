@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Proxy class to use the shared OSchemaShared instance. Before to delegate each operations it sets the current database in the
@@ -74,7 +74,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   public OClass createClass(final String iClassName, final OClass iSuperClass) {
     setCurrentDatabaseInThreadLocal();
-    return delegate.createClass(iClassName, iSuperClass);
+    return delegate.createClass(iClassName, iSuperClass, (int[]) null);
   }
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final CLUSTER_TYPE iType) {

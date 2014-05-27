@@ -25,6 +25,7 @@ import java.util.Set;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Utility class to create indexes. New OIndexFactory can be registered
@@ -51,8 +52,9 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
  */
 public final class OIndexes {
 
-  private static Set<OIndexFactory> FACTORIES         = null;
-  private static ClassLoader        orientClassLoader = OIndexes.class.getClassLoader();
+  private static Set<OIndexFactory>       FACTORIES         = null;
+  private static final Set<OIndexFactory> DYNAMIC_FACTORIES = Collections.synchronizedSet(new HashSet<OIndexFactory>());
+  private static ClassLoader              orientClassLoader = OIndexes.class.getClassLoader();
 
   private OIndexes() {
   }
@@ -71,6 +73,7 @@ public final class OIndexes {
       while (ite.hasNext()) {
         factories.add(ite.next());
       }
+      factories.addAll(DYNAMIC_FACTORIES);
       FACTORIES = Collections.unmodifiableSet(factories);
     }
     return FACTORIES;
@@ -113,12 +116,12 @@ public final class OIndexes {
    *           if index type does not exist
    */
   public static OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm,
-      String valueContainerAlgorithm) throws OConfigurationException, OIndexException {
+      String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException, OIndexException {
     final Iterator<OIndexFactory> ite = getAllFactories();
     while (ite.hasNext()) {
       final OIndexFactory factory = ite.next();
-      if (factory.getTypes().contains(indexType)) {
-        return factory.createIndex(database, indexType, algorithm, valueContainerAlgorithm);
+      if (factory.getTypes().contains(indexType) && factory.getAlgorithms().contains(algorithm)) {
+        return factory.createIndex(database, indexType, algorithm, valueContainerAlgorithm, metadata);
       }
     }
 
@@ -136,6 +139,26 @@ public final class OIndexes {
   public static synchronized void scanForPlugins() {
     // clear cache, will cause a rescan on next getFactories call
     FACTORIES = null;
+  }
+
+  /**
+   * Register at runtime custom factories
+   * 
+   * @param factory
+   */
+  public static void registerFactory(OIndexFactory factory) {
+    DYNAMIC_FACTORIES.add(factory);
+    scanForPlugins();
+  }
+
+  /**
+   * Unregister custom factories
+   * 
+   * @param factory
+   */
+  public static void unregisterFactory(OIndexFactory factory) {
+    DYNAMIC_FACTORIES.remove(factory);
+    scanForPlugins();
   }
 
 }

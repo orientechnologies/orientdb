@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.common.concur.resource.OResourcePool;
+import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 
@@ -47,8 +47,6 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
     setup(OGlobalConfiguration.DB_POOL_MIN.getValueAsInteger(), OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger());
     return this;
   }
-
-  protected abstract DB createResource(Object owner, String iDatabaseName, Object... iAdditionalArgs);
 
   public ODatabasePoolBase<DB> setup(final int iMinSize, final int iMaxSize) {
     return this.setup(iMinSize, iMaxSize, OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT.getValueAsLong(),
@@ -122,6 +120,21 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
   }
 
   /**
+   * Returns amount of available connections which you can acquire for given source and user name. Source id is consist of
+   * "source name" and "source user name".
+   * 
+   * @param name
+   *          Source name.
+   * @param userName
+   *          User name which is used to acquire source.
+   * @return amount of available connections which you can acquire for given source and user name.
+   */
+  public int getAvailableConnections(final String name, final String userName) {
+    setup();
+    return dbPool.getMaxConnections(name, userName);
+  }
+
+  /**
    * Acquires a connection from the pool specifying options. If the pool is empty, then the caller thread will wait for it.
    * 
    * @param iName
@@ -177,7 +190,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
    * Returns all the configured pools.
    * 
    */
-  public Map<String, OResourcePool<String, DB>> getPools() {
+  public Map<String, OReentrantResourcePool<String, DB>> getPools() {
     return dbPool.getPools();
   }
 
@@ -193,4 +206,6 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
   public void run() {
     close();
   }
+
+  protected abstract DB createResource(Object owner, String iDatabaseName, Object... iAdditionalArgs);
 }

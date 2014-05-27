@@ -22,7 +22,7 @@ package com.orientechnologies.common.listener;
  * 
  */
 public interface OProgressListener {
-	public void onBegin(Object iTask, long iTotal);
+	public void onBegin(Object iTask, long iTotal, Object iMetadata);
 
 	public boolean onProgress(Object iTask, long iCounter, float iPercent);
 

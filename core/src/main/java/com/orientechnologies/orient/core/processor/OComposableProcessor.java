@@ -15,27 +15,18 @@
  */
 package com.orientechnologies.orient.core.processor;
 
+import com.orientechnologies.common.factory.OConfigurableStatefulFactory;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.processor.block.*;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import com.orientechnologies.common.factory.ODynamicFactory;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.processor.block.OExecuteBlock;
-import com.orientechnologies.orient.core.processor.block.OFunctionBlock;
-import com.orientechnologies.orient.core.processor.block.OIfBlock;
-import com.orientechnologies.orient.core.processor.block.OIterateBlock;
-import com.orientechnologies.orient.core.processor.block.OLetBlock;
-import com.orientechnologies.orient.core.processor.block.OOutputBlock;
-import com.orientechnologies.orient.core.processor.block.OProcessorBlock;
-import com.orientechnologies.orient.core.processor.block.OQueryBlock;
-import com.orientechnologies.orient.core.processor.block.OScriptBlock;
-import com.orientechnologies.orient.core.processor.block.OTableBlock;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
-public class OComposableProcessor extends ODynamicFactory<String, Class<? extends OProcessorBlock>> implements OProcessor {
+public class OComposableProcessor extends OConfigurableStatefulFactory<String, OProcessorBlock> implements OProcessor {
 
   private String path;
   private String extension;
@@ -58,7 +49,8 @@ public class OComposableProcessor extends ODynamicFactory<String, Class<? extend
     return process(null, template, iContext, new ODocument().setOrdered(true), iReadOnly);
   }
 
-  public Object process(final OProcessorBlock iParent, final Object iContent, final OCommandContext iContext, final ODocument iOutput, final boolean iReadOnly) {
+  public Object process(final OProcessorBlock iParent, final Object iContent, final OCommandContext iContext,
+      final ODocument iOutput, final boolean iReadOnly) {
     if (!(iContent instanceof ODocument))
       throw new OProcessException("Composable processor needs a document");
 
@@ -76,13 +68,9 @@ public class OComposableProcessor extends ODynamicFactory<String, Class<? extend
     if (iContent == null)
       throw new OProcessException("Cannot find block type '" + iType + "'");
 
-    final Class<? extends OProcessorBlock> blockClass = registry.get(iType);
-    if (blockClass == null)
-      throw new OProcessException("Cannot find block type '" + iType + "'");
-
     OProcessorBlock block;
     try {
-      block = blockClass.newInstance();
+      block = newInstance(iType);
     } catch (Exception e) {
       throw new OProcessException("Cannot create block of class '" + iType + "'", e);
     }

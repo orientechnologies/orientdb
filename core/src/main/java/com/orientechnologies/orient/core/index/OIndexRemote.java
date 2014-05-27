@@ -47,20 +47,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   protected final static String QUERY_ENTRIES                                     = "select key, rid from index:%s";
 
-  private final static String   QUERY_GET_MAJOR                                   = "select from index:%s where key > ?";
-  private final static String   QUERY_GET_MAJOR_EQUALS                            = "select from index:%s where key >= ?";
-  private final static String   QUERY_GET_VALUE_MAJOR                             = "select EXPAND( rid ) from index:%s where key > ?";
-  private final static String   QUERY_GET_VALUE_MAJOR_EQUALS                      = "select EXPAND( rid ) from index:%s where key >= ?";
-  private final static String   QUERY_GET_MINOR                                   = "select from index:%s where key < ?";
-  private final static String   QUERY_GET_MINOR_EQUALS                            = "select from index:%s where key <= ?";
-  private final static String   QUERY_GET_VALUE_MINOR                             = "select EXPAND( rid ) from index:%s where key < ?";
-  private final static String   QUERY_GET_VALUE_MINOR_EQUALS                      = "select EXPAND( rid ) from index:%s where key <= ?";
-  private final static String   QUERY_GET_RANGE                                   = "select from index:%s where key between ? and ?";
-
-  private final static String   QUERY_GET_VALUES                                  = "select EXPAND( rid ) from index:%s where key in [%s]";
   private final static String   QUERY_GET_ENTRIES                                 = "select from index:%s where key in [%s]";
-
-  private final static String   QUERY_GET_VALUE_RANGE                             = "select EXPAND( rid ) from index:%s where key between ? and ?";
 
   private final static String   QUERY_PUT                                         = "insert into index:%s (key,rid) values (?,?)";
   private final static String   QUERY_REMOVE                                      = "delete from index:%s where key = ?";
@@ -111,91 +98,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   public String getDatabaseName() {
     return databaseName;
-  }
-
-  public Set<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive) {
-    final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE, name);
-    return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
-  }
-
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final Object iRangeTo, boolean ascSortOrder) {
-    if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported");
-
-    final OCommandRequest cmd = formatCommand(QUERY_GET_VALUE_RANGE, name);
-    return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
-  }
-
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-      final boolean iToInclusive, boolean ascSortOrder) {
-    if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported");
-
-    final StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
-
-    if (iFromInclusive) {
-      query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION);
-    } else {
-      query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION);
-    }
-
-    query.append(QUERY_GET_VALUES_AND_OPERATOR);
-
-    if (iToInclusive) {
-      query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION);
-    } else {
-      query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION);
-    }
-
-    final OCommandRequest cmd = formatCommand(query.toString());
-    return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
-  }
-
-  public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo) {
-    final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE, name);
-    return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
-  }
-
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, boolean ascSortOrder) {
-    if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported");
-
-    final OCommandRequest cmd;
-    if (isInclusive)
-      cmd = formatCommand(QUERY_GET_VALUE_MAJOR_EQUALS, name);
-    else
-      cmd = formatCommand(QUERY_GET_VALUE_MAJOR, name);
-    return getDatabase().command(cmd).execute(fromKey);
-  }
-
-  public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive) {
-    final OCommandRequest cmd;
-    if (isInclusive)
-      cmd = formatCommand(QUERY_GET_MAJOR_EQUALS, name);
-    else
-      cmd = formatCommand(QUERY_GET_MAJOR, name);
-    return getDatabase().command(cmd).execute(fromKey);
-  }
-
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder) {
-    if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported");
-
-    final OCommandRequest cmd;
-    if (isInclusive)
-      cmd = formatCommand(QUERY_GET_VALUE_MINOR_EQUALS, name);
-    else
-      cmd = formatCommand(QUERY_GET_VALUE_MINOR, name);
-    return getDatabase().command(cmd).execute(toKey);
-  }
-
-  public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive) {
-    final OCommandRequest cmd;
-    if (isInclusive)
-      cmd = formatCommand(QUERY_GET_MINOR_EQUALS, name);
-    else
-      cmd = formatCommand(QUERY_GET_MINOR, name);
-    return getDatabase().command(cmd).execute(toKey);
   }
 
   public boolean contains(final Object iKey) {
@@ -289,11 +191,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return this;
   }
 
-  public Iterable<Object> keys() {
-    final OCommandRequest cmd = formatCommand(QUERY_KEYS, name);
-    return (Iterable<Object>) getDatabase().command(cmd).execute();
-  }
-
   public long getSize() {
     final OCommandRequest cmd = formatCommand(QUERY_SIZE, name);
     final List<ODocument> result = getDatabase().command(cmd).execute();
@@ -364,22 +261,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return null;
   }
 
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, boolean ascSortOrder) {
-    if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported");
-
-    final StringBuilder params = new StringBuilder();
-    if (!iKeys.isEmpty()) {
-      params.append("?");
-      for (int i = 1; i < iKeys.size(); i++) {
-        params.append(", ?");
-      }
-    }
-
-    final OCommandRequest cmd = formatCommand(QUERY_GET_VALUES, name, params.toString());
-    return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKeys.toArray());
-  }
-
   public Collection<ODocument> getEntries(final Collection<?> iKeys) {
     final StringBuilder params = new StringBuilder();
     if (!iKeys.isEmpty()) {
@@ -412,191 +293,6 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   @Override
   public int hashCode() {
     return name.hashCode();
-  }
-
-  @Override
-  public void getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive,
-      boolean ascSortOrder, IndexValuesResultListener resultListener) {
-    if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported");
-
-    Collection<OIdentifiable> result = getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, -1);
-
-    addValues(resultListener, result);
-  }
-
-  private void addValues(IndexValuesResultListener resultListener, Collection<OIdentifiable> result) {
-    for (OIdentifiable identifiable : result)
-      if (!resultListener.addResult(identifiable))
-        break;
-  }
-
-  @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, IndexValuesResultListener resultListener) {
-    if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported");
-
-    Collection<OIdentifiable> result = getValuesMajor(fromKey, isInclusive, true);
-
-    addValues(resultListener, result);
-  }
-
-  @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, IndexValuesResultListener valuesResultListener) {
-    if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported");
-
-    Collection<OIdentifiable> result = getValuesMinor(toKey, isInclusive, true);
-
-    addValues(valuesResultListener, result);
-  }
-
-  @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener) {
-    Collection<ODocument> result = getEntriesMajor(fromKey, isInclusive);
-
-    addEntries(entriesResultListener, result);
-  }
-
-  private void addEntries(IndexEntriesResultListener entriesResultListener, Collection<ODocument> result) {
-    for (ODocument entry : result)
-      if (!entriesResultListener.addResult(entry))
-        break;
-  }
-
-  @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener) {
-    Collection<ODocument> result = getEntriesMinor(toKey, isInclusive);
-
-    addEntries(entriesResultListener, result);
-  }
-
-  @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive,
-      IndexEntriesResultListener entriesResultListener) {
-    Collection<ODocument> result = getEntriesBetween(iRangeFrom, iRangeTo, iInclusive);
-
-    addEntries(entriesResultListener, result);
-  }
-
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-      final boolean iToInclusive, final int maxValuesToFetch) {
-    if (maxValuesToFetch < 0)
-      return getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, true);
-
-    final StringBuilder query = new StringBuilder(QUERY_GET_VALUES_BEETWEN_SELECT);
-
-    if (iFromInclusive) {
-      query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION);
-    } else {
-      query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION);
-    }
-
-    query.append(QUERY_GET_VALUES_AND_OPERATOR);
-
-    if (iToInclusive) {
-      query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION);
-    } else {
-      query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION);
-    }
-
-    query.append(QUERY_GET_VALUES_LIMIT).append(maxValuesToFetch);
-
-    final OCommandRequest cmd = formatCommand(query.toString());
-    return getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
-  }
-
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, final int maxValuesToFetch) {
-    if (maxValuesToFetch < 0)
-      return getValuesMajor(fromKey, isInclusive, true);
-
-    final OCommandRequest cmd;
-    if (isInclusive)
-      cmd = formatCommand(QUERY_GET_VALUE_MAJOR_EQUALS + QUERY_GET_VALUES_LIMIT + maxValuesToFetch, name);
-    else
-      cmd = formatCommand(QUERY_GET_VALUE_MAJOR + QUERY_GET_VALUES_LIMIT + maxValuesToFetch, name);
-
-    return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(fromKey);
-  }
-
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, final int maxValuesToFetch) {
-    if (maxValuesToFetch < 0)
-      return getValuesMinor(toKey, isInclusive, true);
-
-    final OCommandRequest cmd;
-
-    if (isInclusive)
-      cmd = formatCommand(QUERY_GET_VALUE_MINOR_EQUALS + QUERY_GET_VALUES_LIMIT + maxValuesToFetch, name);
-    else
-      cmd = formatCommand(QUERY_GET_VALUE_MINOR + QUERY_GET_VALUES_LIMIT + maxValuesToFetch, name);
-    return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(toKey);
-  }
-
-  public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive, final int maxEntriesToFetch) {
-    if (maxEntriesToFetch < 0)
-      return getEntriesMajor(fromKey, isInclusive);
-
-    final OCommandRequest cmd;
-    if (isInclusive)
-      cmd = formatCommand(QUERY_GET_MAJOR_EQUALS + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name);
-    else
-      cmd = formatCommand(QUERY_GET_MAJOR + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name);
-
-    return (Collection<ODocument>) getDatabase().command(cmd).execute(fromKey);
-  }
-
-  public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive, final int maxEntriesToFetch) {
-    if (maxEntriesToFetch < 0)
-      return getEntriesMinor(toKey, isInclusive);
-
-    final OCommandRequest cmd;
-    if (isInclusive)
-      cmd = formatCommand(QUERY_GET_MINOR_EQUALS + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name);
-    else
-      cmd = formatCommand(QUERY_GET_MINOR + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name);
-    return (Collection<ODocument>) getDatabase().command(cmd).execute(toKey);
-  }
-
-  public Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
-      final int maxEntriesToFetch) {
-    if (maxEntriesToFetch < 0)
-      return getEntriesBetween(iRangeFrom, iRangeTo, iInclusive);
-
-    final OCommandRequest cmd = formatCommand(QUERY_GET_RANGE + QUERY_GET_VALUES_LIMIT + maxEntriesToFetch, name);
-    return (Set<ODocument>) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
-  }
-
-  @Override
-  public void getValues(Collection<?> iKeys, boolean ascSortOrder, IndexValuesResultListener resultListener) {
-    if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported");
-
-    Collection<OIdentifiable> result = getValues(iKeys, ascSortOrder);
-
-    addValues(resultListener, result);
-  }
-
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys, final int maxValuesToFetch) {
-    if (maxValuesToFetch < 0)
-      return getValues(iKeys, true);
-
-    final StringBuilder params = new StringBuilder();
-    if (!iKeys.isEmpty()) {
-      params.append("?");
-      for (int i = 1; i < iKeys.size(); i++) {
-        params.append(", ?");
-      }
-    }
-
-    final OCommandRequest cmd = formatCommand(QUERY_GET_VALUES + QUERY_GET_VALUES_LIMIT + maxValuesToFetch, name, params.toString());
-    return (Collection<OIdentifiable>) getDatabase().command(cmd).execute(iKeys.toArray());
-  }
-
-  @Override
-  public void getEntries(final Collection<?> iKeys, IndexEntriesResultListener resultListener) {
-    final Collection<ODocument> result = getEntries(iKeys);
-
-    addEntries(resultListener, result);
   }
 
   public Collection<ODocument> getEntries(final Collection<?> iKeys, int maxEntriesToFetch) {
@@ -636,5 +332,82 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   @Override
   public Object getLastKey() {
     throw new UnsupportedOperationException("getLastKey");
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+      boolean ascOrder) {
+    throw new UnsupportedOperationException("iterateEntriesBetween");
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+    throw new UnsupportedOperationException("iterateEntriesMajor");
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+    throw new UnsupportedOperationException("iterateEntriesMinor");
+  }
+
+  @Override
+  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+    throw new UnsupportedOperationException("iterateEntries");
+  }
+
+  @Override
+  public OIndexCursor cursor() {
+    final OCommandRequest cmd = formatCommand(QUERY_ENTRIES, name);
+    final Collection<ODocument> result = getDatabase().command(cmd).execute();
+
+    return new OIndexAbstractCursor() {
+      private final Iterator<ODocument> documentIterator = result.iterator();
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
+        if (!documentIterator.hasNext())
+          return null;
+
+        final ODocument value = documentIterator.next();
+
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return value.field("key");
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return value.field("rid");
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException("setValue");
+          }
+        };
+      }
+    };
+
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    final OCommandRequest cmd = formatCommand(QUERY_KEYS, name);
+    final Collection<ODocument> result = getDatabase().command(cmd).execute();
+
+    return new OIndexKeyCursor() {
+      private final Iterator<ODocument> documentIterator = result.iterator();
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
+        if (!documentIterator.hasNext())
+          return null;
+
+        final ODocument value = documentIterator.next();
+
+        return value.field("key");
+      }
+    };
   }
 }

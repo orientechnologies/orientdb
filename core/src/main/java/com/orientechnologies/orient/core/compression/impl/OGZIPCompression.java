@@ -16,32 +16,31 @@
 
 package com.orientechnologies.orient.core.compression.impl;
 
+import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.core.serialization.OMemoryStream;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
-import com.orientechnologies.orient.core.serialization.OMemoryStream;
-import com.orientechnologies.orient.core.compression.OCompression;
-
 /**
  * @author Andrey Lomakin
  * @since 05.06.13
  */
-public class OGZIPCompression implements OCompression {
+public class OGZIPCompression extends OAbstractCompression {
   public static final String           NAME     = "gzip";
 
   public static final OGZIPCompression INSTANCE = new OGZIPCompression();
 
   @Override
-  public byte[] compress(final byte[] content) {
+  public byte[] compress(final byte[] content, final int offset, final int length) {
     try {
       final byte[] result;
       final OMemoryStream memoryOutputStream = new OMemoryStream();
       final GZIPOutputStream gzipOutputStream = new GZIPOutputStream(memoryOutputStream, 16384); // 16KB
       try {
-        gzipOutputStream.write(content);
+        gzipOutputStream.write(content, offset, length);
         gzipOutputStream.finish();
         result = memoryOutputStream.toByteArray();
       } finally {
@@ -55,9 +54,9 @@ public class OGZIPCompression implements OCompression {
   }
 
   @Override
-  public byte[] uncompress(byte[] content) {
+  public byte[] uncompress(byte[] content, final int offset, final int length) {
     try {
-      final OMemoryInputStream memoryInputStream = new OMemoryInputStream(content);
+      final OMemoryInputStream memoryInputStream = new OMemoryInputStream(content, offset, length);
       final GZIPInputStream gzipInputStream = new GZIPInputStream(memoryInputStream, 16384); // 16KB
 
       try {

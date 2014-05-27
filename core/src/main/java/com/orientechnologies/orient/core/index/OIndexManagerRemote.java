@@ -53,7 +53,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     acquireExclusiveLock();
     try {
       if (iProgressListener != null)
-        iProgressListener.onBegin(this, 0);
+        iProgressListener.onBegin(this, 0, false);
 
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
@@ -110,6 +110,10 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     return false;
   }
 
+  @Override
+  public void removeClassPropertyIndex(OIndex<?> idx) {
+  }
+
   protected OIndex<?> getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, Set<String> clustersToIndex,
       OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
     if (isMultiValueIndex)
@@ -128,13 +132,14 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       if (idxs != null) {
         for (ODocument d : idxs) {
           try {
-            OIndexInternal<?> newIndex = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE),
-                document.<String> field(OIndexInternal.ALGORITHM),
-                document.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
-            OIndexInternal.IndexMetadata newIndexMetadata = newIndex.loadMetadata(d);
+            final boolean isMultiValue = ODefaultIndexFactory.isMultiValueIndex((String) d.field(OIndexInternal.CONFIG_TYPE));
 
-            addIndexInternal(getRemoteIndexInstance(newIndex instanceof OIndexMultiValues, newIndexMetadata.getType(),
-                newIndexMetadata.getName(), newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(),
+            final OIndexInternal.IndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataInternal(d,
+                (String) d.field(OIndexInternal.CONFIG_TYPE), d.<String> field(OIndexInternal.ALGORITHM),
+                d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+
+            addIndexInternal(getRemoteIndexInstance(isMultiValue, newIndexMetadata.getType(), newIndexMetadata.getName(),
+                newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(),
                 (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID, OType.LINK), d));
           } catch (Exception e) {
             OLogManager.instance().error(this, "Error on loading of index by configuration: %s", e, d);

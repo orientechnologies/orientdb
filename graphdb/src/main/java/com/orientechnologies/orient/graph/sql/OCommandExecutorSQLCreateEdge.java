@@ -15,13 +15,15 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRetryAbstract;
 import com.orientechnologies.orient.core.sql.OCommandParameters;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
@@ -43,8 +45,9 @@ import java.util.Set;
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
+public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest {
   public static final String            NAME = "CREATE EDGE";
+
   private String                        from;
   private String                        to;
   private OClass                        clazz;
@@ -81,6 +84,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
       } else if (temp.equals(KEYWORD_CONTENT)) {
         parseContent();
 
+      } else if (temp.equals(KEYWORD_RETRY)) {
+        parseRetry();
+
       } else if (className == null && temp.length() > 0)
         className = temp;
 
@@ -111,17 +117,17 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
     return OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<List<Object>>() {
       @Override
       public List<Object> call(OrientBaseGraph graph) {
-        final Set<ORID> fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), from);
-        final Set<ORID> toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), to);
+        final Set<OIdentifiable> fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), from, context);
+        final Set<OIdentifiable> toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), to, context);
 
         // CREATE EDGES
         final List<Object> edges = new ArrayList<Object>();
-        for (ORID from : fromIds) {
+        for (OIdentifiable from : fromIds) {
           final OrientVertex fromVertex = graph.getVertex(from);
           if (fromVertex == null)
             throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
 
-          for (ORID to : toIds) {
+          for (OIdentifiable to : toIds) {
             final OrientVertex toVertex;
             if (from.equals(to)) {
               toVertex = fromVertex;
@@ -138,23 +144,47 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
                   fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, null, context));
               }
 
-            final OrientEdge edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
+            OrientEdge edge = null;
+            for (int r = 0; r < retry; ++r) {
+              try {
+                edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
 
-            if (fields != null && !fields.isEmpty()) {
-              if (!edge.getRecord().getIdentity().isValid())
-                edge.convertToDocument();
+                if (fields != null && !fields.isEmpty()) {
+                  if (!edge.getRecord().getIdentity().isValid())
+                    edge.convertToDocument();
 
-              OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
+                  OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
+                }
+
+                if (content != null) {
+                  if (!edge.getRecord().getIdentity().isValid())
+                    // LIGHTWEIGHT EDGE, TRANSFORM IT BEFORE
+                    edge.convertToDocument();
+                  edge.getRecord().merge(content, true, false);
+                }
+
+                edge.save(clusterName);
+
+                // OK
+                break;
+
+              } catch (OConcurrentModificationException e) {
+                if (r + 1 >= retry)
+                  // NO RETRY; PROPAGATE THE EXCEPTION
+                  throw e;
+
+                // RETRY?
+                if (wait > 0)
+                  try {
+                    Thread.sleep(wait);
+                  } catch (InterruptedException e1) {
+                  }
+
+                // RELOAD LAST VERSION
+                fromVertex.getRecord().reload(null, true);
+                toVertex.getRecord().reload(null, true);
+              }
             }
-
-            if (content != null) {
-              if (!edge.getRecord().getIdentity().isValid())
-                // LIGHTWEIGHT EDGE, TRANSFORM IT BEFORE
-                edge.convertToDocument();
-              edge.getRecord().merge(content, true, false);
-            }
-
-            edge.save(clusterName);
 
             edges.add(edge);
           }
@@ -167,6 +197,6 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLSetAware {
 
   @Override
   public String getSyntax() {
-    return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) [SET <field> = <expression>[,]*]|CONTENT {<JSON>}";
+    return "CREATE EDGE [<class>] [CLUSTER <cluster>] FROM <rid>|(<query>|[<rid>]*) TO <rid>|(<query>|[<rid>]*) [SET <field> = <expression>[,]*]|CONTENT {<JSON>} [RETRY <retry> [WAIT <pauseBetweenRetriesInMs]]";
   }
 }

@@ -27,9 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -55,6 +52,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -1338,6 +1337,14 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(result2.size() != 0);
     Assert.assertTrue(result2.get(0).field("$names") instanceof Collection<?>);
     Assert.assertFalse(((Collection<?>) result2.get(0).field("$names")).isEmpty());
+  }
+
+  @Test
+  public void subQueryLetAndIndexedWhere() {
+    List<ODocument> result = executeQuery("select $now from OUser where name = 'admin' let $now = eval('42')", database);
+
+    Assert.assertEquals(result.size(), 1);
+    Assert.assertNotNull(result.get(0).field("$now"), result.get(0).toString());
   }
 
   @Test

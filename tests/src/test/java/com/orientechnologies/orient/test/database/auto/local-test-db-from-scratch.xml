@@ -1,5 +1,5 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
-<suite name="Test Suite Example" verbose="2" parallel="false">
+<suite name="Local Test Suite" verbose="2" parallel="false">
 
     <parameter name="path" value="@PATH@"/>
     <parameter name="url" value="@URL@"/>
@@ -50,6 +50,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectEnhancingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.EmbeddedObjectSerializationTest"/>
         </classes>
     </test>
     <test name="PopulationObjectSchemaFull">
@@ -102,6 +103,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTxTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OrderByIndexReuseTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.LinkSetIndexTest"/>
         </classes>
     </test>
     <test name="Dictionary">
@@ -169,6 +171,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentQueriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseThreadFactoryTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CollateTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.PoolTest"/>
         </classes>
     </test>
     <test name="DbTools">

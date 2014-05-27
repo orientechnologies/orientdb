@@ -15,19 +15,10 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -37,160 +28,20 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> implements ORecordSchemaAware<T> {
 
   protected OClass _clazz;
 
   public ORecordSchemaAwareAbstract() {
-  }
-
-  /**
-   * Validates the record following the declared constraints defined in schema such as mandatory, notNull, min, max, regexp, etc. If
-   * the schema is not defined for the current class or there are not constraints then the validation is ignored.
-   * 
-   * @see OProperty
-   * @throws OValidationException
-   *           if the document breaks some validation constraints defined in the schema
-   */
-  public void validate() throws OValidationException {
-    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !getDatabase().isValidationEnabled())
-      return;
-
-    checkForLoading();
-    checkForFields();
-
-    if (_clazz != null) {
-      if (_clazz.isStrictMode()) {
-        // CHECK IF ALL FIELDS ARE DEFINED
-        for (String f : fieldNames()) {
-          if (_clazz.getProperty(f) == null)
-            throw new OValidationException("Found additional field '" + f + "'. It cannot be added because the schema class '"
-                + _clazz.getName() + "' is defined as STRICT");
-        }
-      }
-
-      for (OProperty p : _clazz.properties()) {
-        validateField(this, p);
-      }
-    }
-  }
-
-  public OClass getSchemaClass() {
-    if (_clazz == null) {
-      final ODatabaseRecord database = getDatabaseIfDefined();
-      if (database != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
-        if (_recordId.clusterId < 0) {
-          checkForLoading();
-          checkForFields("@class");
-        } else {
-          final OSchema schema = database.getMetadata().getSchema();
-          if (schema != null)
-            _clazz = schema.getClassByClusterId(_recordId.clusterId);
-        }
-      } else {
-        // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
-        checkForLoading();
-        checkForFields("@class");
-      }
-    }
-
-    return _clazz;
-  }
-
-  public String getClassName() {
-    if (_clazz != null)
-      return _clazz.getName();
-
-    final ODatabaseRecord database = getDatabaseIfDefined();
-    if (database != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
-      if (_recordId.clusterId < 0) {
-        checkForLoading();
-        checkForFields("@class");
-      } else {
-        final OSchema schema = database.getMetadata().getSchema();
-        if (schema != null)
-          _clazz = schema.getClassByClusterId(_recordId.clusterId);
-      }
-    } else {
-      // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
-      checkForLoading();
-      checkForFields("@class");
-    }
-
-    return _clazz != null ? _clazz.getName() : null;
-  }
-
-  public void setClassName(final String iClassName) {
-    if (iClassName == null) {
-      _clazz = null;
-      return;
-    }
-
-    setClass(getDatabase().getMetadata().getSchema().getOrCreateClass(iClassName));
-  }
-
-  public void setClassNameIfExists(final String iClassName) {
-    if (iClassName == null) {
-      _clazz = null;
-      return;
-    }
-
-    setClass(getDatabase().getMetadata().getSchema().getClass(iClassName));
-  }
-
-  @Override
-  public ORecordSchemaAwareAbstract<T> reset() {
-    super.reset();
-    _clazz = null;
-    return this;
-  }
-
-  public byte[] toStream() {
-    return toStream(false);
-  }
-
-  public byte[] toStream(final boolean iOnlyDelta) {
-    if (_source == null)
-      _source = _recordFormat.toStream(this, iOnlyDelta);
-
-    invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
-
-    return _source;
-  }
-
-  public void remove() {
-    throw new UnsupportedOperationException();
-  }
-
-  protected boolean checkForFields(final String... iFields) {
-    if (_status == ORecordElement.STATUS.LOADED && fields() == 0)
-      // POPULATE FIELDS LAZY
-      return deserializeFields(iFields);
-    return true;
-  }
-
-  public boolean deserializeFields(final String... iFields) {
-    if (_source == null)
-      return false;
-
-    _status = ORecordElement.STATUS.UNMARSHALLING;
-    _recordFormat.fromStream(_source, this, iFields);
-    _status = ORecordElement.STATUS.LOADED;
-
-    return true;
-  }
-
-  protected void setClass(final OClass iClass) {
-    if (iClass != null && iClass.isAbstract())
-      throw new OSchemaException("Cannot create a document of an abstract class");
-
-    _clazz = iClass;
-  }
-
-  protected void checkFieldAccess(final int iIndex) {
-    if (iIndex < 0 || iIndex >= fields())
-      throw new IndexOutOfBoundsException("Index " + iIndex + " is outside the range allowed: 0-" + fields());
   }
 
   public static void validateField(ORecordSchemaAwareAbstract<?> iRecord, OProperty p) throws OValidationException {
@@ -456,5 +307,154 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
     } else
       throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
           + " but an incompatible type is used. Value: " + fieldValue);
+  }
+
+  /**
+   * Validates the record following the declared constraints defined in schema such as mandatory, notNull, min, max, regexp, etc. If
+   * the schema is not defined for the current class or there are not constraints then the validation is ignored.
+   * 
+   * @see OProperty
+   * @throws OValidationException
+   *           if the document breaks some validation constraints defined in the schema
+   */
+  public void validate() throws OValidationException {
+    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && !getDatabase().isValidationEnabled())
+      return;
+
+    checkForLoading();
+    checkForFields();
+
+    if (_clazz != null) {
+      if (_clazz.isStrictMode()) {
+        // CHECK IF ALL FIELDS ARE DEFINED
+        for (String f : fieldNames()) {
+          if (_clazz.getProperty(f) == null)
+            throw new OValidationException("Found additional field '" + f + "'. It cannot be added because the schema class '"
+                + _clazz.getName() + "' is defined as STRICT");
+        }
+      }
+
+      for (OProperty p : _clazz.properties()) {
+        validateField(this, p);
+      }
+    }
+  }
+
+  public OClass getSchemaClass() {
+    if (_clazz == null) {
+      final ODatabaseRecord database = getDatabaseIfDefined();
+      if (database != null && database.getStorageVersions() != null
+          && database.getStorageVersions().classesAreDetectedByClusterId()) {
+        if (_recordId.clusterId < 0) {
+          checkForLoading();
+          checkForFields("@class");
+        } else {
+          final OSchema schema = database.getMetadata().getSchema();
+          if (schema != null)
+            _clazz = schema.getClassByClusterId(_recordId.clusterId);
+        }
+      } else {
+        // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
+        checkForLoading();
+        checkForFields("@class");
+      }
+    }
+
+    return _clazz;
+  }
+
+  public String getClassName() {
+    if (_clazz != null)
+      return _clazz.getName();
+
+    final ODatabaseRecord database = getDatabaseIfDefined();
+    if (database != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
+      if (_recordId.clusterId < 0) {
+        checkForLoading();
+        checkForFields("@class");
+      } else {
+        final OSchema schema = database.getMetadata().getSchema();
+        if (schema != null)
+          _clazz = schema.getClassByClusterId(_recordId.clusterId);
+      }
+    } else {
+      // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
+      checkForLoading();
+      checkForFields("@class");
+    }
+
+    return _clazz != null ? _clazz.getName() : null;
+  }
+
+  public void setClassName(final String iClassName) {
+    if (iClassName == null) {
+      _clazz = null;
+      return;
+    }
+
+    setClass(getDatabase().getMetadata().getSchema().getOrCreateClass(iClassName));
+  }
+
+  public void setClassNameIfExists(final String iClassName) {
+    if (iClassName == null) {
+      _clazz = null;
+      return;
+    }
+
+    setClass(getDatabase().getMetadata().getSchema().getClass(iClassName));
+  }
+
+  @Override
+  public ORecordSchemaAwareAbstract<T> reset() {
+    super.reset();
+    _clazz = null;
+    return this;
+  }
+
+  public byte[] toStream() {
+    return toStream(false);
+  }
+
+  public byte[] toStream(final boolean iOnlyDelta) {
+    if (_source == null)
+      _source = _recordFormat.toStream(this, iOnlyDelta);
+
+    invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
+
+    return _source;
+  }
+
+  public void remove() {
+    throw new UnsupportedOperationException();
+  }
+
+  public boolean deserializeFields(final String... iFields) {
+    if (_source == null)
+      return false;
+
+    _status = ORecordElement.STATUS.UNMARSHALLING;
+    _recordFormat.fromStream(_source, this, iFields);
+    _status = ORecordElement.STATUS.LOADED;
+
+    return true;
+  }
+
+  protected boolean checkForFields(final String... iFields) {
+    if (_status == ORecordElement.STATUS.LOADED && fields() == 0)
+      // POPULATE FIELDS LAZY
+      return deserializeFields(iFields);
+    return true;
+  }
+
+  protected void setClass(final OClass iClass) {
+    if (iClass != null && iClass.isAbstract())
+      throw new OSchemaException("Cannot create a document of the abstract class '" + iClass + "'");
+
+    _clazz = iClass;
+  }
+
+  protected void checkFieldAccess(final int iIndex) {
+    if (iIndex < 0 || iIndex >= fields())
+      throw new IndexOutOfBoundsException("Index " + iIndex + " is outside the range allowed: 0-" + fields());
   }
 }

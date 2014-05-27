@@ -25,7 +25,8 @@ public interface OIndexEngine<V> {
 
   void deleteWithoutLoad(String indexName);
 
-  void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic);
+  void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
+      boolean isAutomatic);
 
   boolean contains(Object key);
 
@@ -34,16 +35,6 @@ public interface OIndexEngine<V> {
   ORID getIdentity();
 
   void clear();
-
-  Iterator<Map.Entry<Object, V>> iterator();
-
-  Iterator<Map.Entry<Object, V>> inverseIterator();
-
-  Iterator<V> valuesIterator();
-
-  Iterator<V> inverseValuesIterator();
-
-  Iterable<Object> keys();
 
   void unload();
 
@@ -65,27 +56,21 @@ public interface OIndexEngine<V> {
 
   void put(Object key, V value);
 
-	public Object getFirstKey();
+  public Object getFirstKey();
 
-	public Object getLastKey();
+  public Object getLastKey();
 
-  void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-												boolean ascSortOrder, ValuesTransformer<V> transformer, ValuesResultListener valuesResultListener);
+  OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer<V> transformer);
 
-  void getValuesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-											ValuesResultListener valuesResultListener);
+  OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer);
 
-  void getValuesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer,
-											ValuesResultListener valuesResultListener);
+  OIndexCursor iterateEntriesMinor(final Object toKey, final boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer);
 
-  void getEntriesMajor(final Object fromKey, final boolean isInclusive, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener);
+  OIndexCursor cursor(ValuesTransformer<V> valuesTransformer);
 
-  void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener);
-
-  void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer<V> transformer,
-      EntriesResultListener entriesResultListener);
+  OIndexKeyCursor keyCursor();
 
   long size(ValuesTransformer<V> transformer);
 
@@ -93,15 +78,5 @@ public interface OIndexEngine<V> {
 
   interface ValuesTransformer<V> {
     Collection<OIdentifiable> transformFromValue(V value);
-
-    V transformToValue(Collection<OIdentifiable> collection);
-  }
-
-  interface ValuesResultListener {
-    boolean addResult(OIdentifiable identifiable);
-  }
-
-  interface EntriesResultListener {
-    boolean addResult(ODocument entry);
   }
 }

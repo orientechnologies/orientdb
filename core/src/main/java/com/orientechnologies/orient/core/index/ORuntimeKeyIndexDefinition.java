@@ -82,6 +82,7 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
     try {
       document.field("keySerializerId", serializer.getId());
       document.field("collate", collate.getName());
+      document.field("nullValuesIgnored", isNullValuesIgnored());
       return document;
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -100,6 +101,7 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
     String collateField = document.field("collate");
     if (collateField == null)
       collateField = ODefaultCollate.NAME;
+    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {

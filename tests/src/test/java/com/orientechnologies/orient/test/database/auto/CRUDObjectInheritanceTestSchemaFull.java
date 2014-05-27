@@ -15,6 +15,17 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -44,16 +55,6 @@ import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestBaseC
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestClass;
 import com.orientechnologies.orient.test.domain.schemageneration.JavaTestSchemaGeneration;
 import com.orientechnologies.orient.test.domain.schemageneration.TestSchemaGenerationChild;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
 
 @Test(groups = { "crud", "object", "schemafull", "inheritanceSchemaFull" })
 public class CRUDObjectInheritanceTestSchemaFull {
@@ -70,8 +71,8 @@ public class CRUDObjectInheritanceTestSchemaFull {
   public CRUDObjectInheritanceTestSchemaFull(String iURL, String iTestPath) {
     url = iURL;
     testsRoot = iTestPath;
-		if (testsRoot != null && testsRoot.length() > 0)
-			testsRoot = testsRoot + "/";
+    if (testsRoot != null && testsRoot.length() > 0)
+      testsRoot = testsRoot + "/";
   }
 
   @BeforeClass
@@ -245,6 +246,10 @@ public class CRUDObjectInheritanceTestSchemaFull {
     OClass abstractClass = database.getMetadata().getSchema().getClass(InheritanceTestAbstractClass.class);
     OClass baseClass = database.getMetadata().getSchema().getClass(InheritanceTestBaseClass.class);
     OClass testClass = database.getMetadata().getSchema().getClass(InheritanceTestClass.class);
+    Assert.assertTrue(abstractClass.isAbstract());
+    Assert.assertEquals(abstractClass.getDefaultClusterId(), -1);
+    Assert.assertEquals(abstractClass.getClusterIds().length, 1);
+    Assert.assertEquals(abstractClass.getClusterIds()[0], -1);
     Assert.assertEquals(baseClass.getSuperClass(), abstractClass);
     Assert.assertEquals(baseClass.getSuperClass().getName(), abstractClass.getName());
     Assert.assertEquals(testClass.getSuperClass(), baseClass);
@@ -362,6 +367,14 @@ public class CRUDObjectInheritanceTestSchemaFull {
     checkProperty(testSchemaClass, "embeddedChildren", OType.EMBEDDEDMAP, childClass);
     checkProperty(testSchemaClass, "embeddedChild", OType.EMBEDDED, childClass);
     checkProperty(testSchemaClass, "embeddedList", OType.EMBEDDEDLIST, childClass);
+
+    // Test transientFields
+    checkNotExistsProperty(testSchemaClass, "tranisentText");
+    checkNotExistsProperty(testSchemaClass, "transientList ");
+    checkNotExistsProperty(testSchemaClass, "transientSet");
+    checkNotExistsProperty(testSchemaClass, "transientChildren");
+    checkNotExistsProperty(testSchemaClass, "transientDocument ");
+    checkNotExistsProperty(testSchemaClass, "transientDateField");
 
     database.setAutomaticSchemaGeneration(false);
     database.close();

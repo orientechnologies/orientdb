@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 import com.orientechnologies.common.collection.OLazyIterator;
-import com.orientechnologies.common.collection.OMVRBTreeEntry;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
@@ -60,6 +60,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
   private static final Object                                          NEWMAP_VALUE        = new Object();
   private static final long                                            serialVersionUID    = 1L;
+
+	private boolean marshalling;
 
   public OMVRBTreeRID(Collection<OIdentifiable> iInitValues) {
     this();
@@ -149,12 +151,25 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
     final OIdentifiable oldValue = super.internalPut(e, null);
 
-    if (oldValue != null)
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
-          e, v, oldValue));
+		if(!isMarshalling()) {
+			if (oldValue != null)
+				fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+								OMultiValueChangeEvent.OChangeType.UPDATE, e, e, oldValue));
+			else
+				fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
+								e, e));
+		}
 
     return oldValue;
   }
+
+	public boolean isMarshalling() {
+		return marshalling;
+	}
+
+	public void setMarshalling(boolean marshalling) {
+		this.marshalling = marshalling;
+	}
 
   public void putAll(final Collection<OIdentifiable> coll) {
     final long timer = PROFILER.startChrono();
@@ -189,8 +204,9 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
         removed = null;
     }
 
-    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.REMOVE,
-        (OIdentifiable) o, null, (OIdentifiable) o));
+    if (removed != null)
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+          OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) removed, null, (OIdentifiable) removed));
 
     return removed;
   }

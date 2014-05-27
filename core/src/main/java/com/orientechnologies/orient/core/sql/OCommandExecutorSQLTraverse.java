@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -29,6 +22,13 @@ import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -66,17 +66,18 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     final int pos = parseFields();
     if (pos == -1)
       throw new OCommandSQLParsingException("Traverse must have the field list. Use " + getSyntax());
+    parserSetCurrentPosition(pos);
 
     int endPosition = parserText.length();
-    int endP = parserTextUpperCase.indexOf(" " + OCommandExecutorSQLTraverse.KEYWORD_LIMIT, parserGetCurrentPosition());
-    if (endP > -1 && endP < endPosition)
-      endPosition = endP;
 
     parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(pos, endPosition), getContext(), KEYWORD_WHILE);
 
-    if (!parsedTarget.parserIsEnded()) {
-      parserSetCurrentPosition(parsedTarget.parserGetCurrentPosition() + pos);
+    if (parsedTarget.parserIsEnded())
+      parserSetCurrentPosition(endPosition);
+    else
+      parserMoveCurrentPosition(parsedTarget.parserGetCurrentPosition());
 
+    if (!parserIsEnded()) {
       parserNextWord(true);
 
       if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE))
@@ -94,9 +95,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
             + parserGetCurrentPosition());
       } else
         parserGoBack();
-
-    } else
-      parserSetCurrentPosition(-1);
+    }
 
     parserSkipWhiteSpaces();
 
@@ -124,23 +123,6 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     return this;
   }
 
-  protected void warnDeprecatedWhere() {
-    OLogManager
-        .instance()
-        .warn(
-            this,
-            "Keyword WHERE in traverse has been replaced by WHILE. Please change your query to support WHILE instead of WHERE because now it's only deprecated, but in future it will be removed the back-ward compatibility.");
-  }
-
-  @Override
-  protected boolean assignTarget(Map<Object, Object> iArgs) {
-    if (super.assignTarget(iArgs)) {
-      traverse.target(target);
-      return true;
-    }
-    return false;
-  }
-
   public Object execute(final Map<Object, Object> iArgs) {
     if (!assignTarget(iArgs))
       throw new OQueryParsingException("No source found in query: specify class, cluster(s) or single record(s)");
@@ -148,12 +130,18 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     context = traverse.getContext();
     context.beginExecution(timeoutMs, timeoutStrategy);
 
-    // BROWSE ALL THE RECORDS AND COLLECTS RESULT
-    final List<OIdentifiable> result = traverse.execute();
-    for (OIdentifiable r : result)
-      handleResult(r, true);
+    try {
+      // BROWSE ALL THE RECORDS AND COLLECTS RESULT
+      final List<OIdentifiable> result = traverse.execute();
+      for (OIdentifiable r : result)
+        if (!handleResult(r))
+          // LIMIT REACHED
+          break;
 
-    return getResult();
+      return getResult();
+    } finally {
+      request.getResultListener().end();
+    }
   }
 
   @Override
@@ -172,6 +160,23 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
 
   public String getSyntax() {
     return "TRAVERSE <field>* FROM <target> [WHILE <condition>] [STRATEGY <strategy>]";
+  }
+
+  protected void warnDeprecatedWhere() {
+    OLogManager
+        .instance()
+        .warn(
+            this,
+            "Keyword WHERE in traverse has been replaced by WHILE. Please change your query to support WHILE instead of WHERE because now it's only deprecated, but in future it will be removed the back-ward compatibility.");
+  }
+
+  @Override
+  protected boolean assignTarget(Map<Object, Object> iArgs) {
+    if (super.assignTarget(iArgs)) {
+      traverse.target(target);
+      return true;
+    }
+    return false;
   }
 
   protected int parseFields() {

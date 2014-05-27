@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.*;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -79,7 +80,6 @@ public class IndexTest {
     database = new OObjectDatabaseTx(iURL);
   }
 
-  @Test(dependsOnMethods = "testIndexGetValuesUniqueIndex")
   public void testDuplicatedIndexOnUnique() {
     Profile jayMiner = new Profile("Jay", "Jay", "Miner", null);
     database.save(jayMiner);
@@ -282,202 +282,6 @@ public class IndexTest {
     } catch (OIndexException e) {
       Assert.assertTrue(true);
     }
-  }
-
-  @Test(dependsOnMethods = "populateIndexDocuments")
-  public void testValuesMajor() {
-    database.command(new OCommandSQL("create index equalityIdx unique")).execute();
-
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("equalityIdx"));
-
-    for (int key = 0; key <= 5; key++) {
-      database.command(new OCommandSQL("insert into index:equalityIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
-    }
-
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
-
-    final Collection<Long> valuesMajorResults = new ArrayList<Long>(Arrays.asList(4L, 5L));
-    Collection<OIdentifiable> indexCollection = index.getValuesMajor(3, false, true);
-    Assert.assertEquals(indexCollection.size(), 2);
-    for (OIdentifiable identifiable : indexCollection) {
-      valuesMajorResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
-    }
-    Assert.assertEquals(valuesMajorResults.size(), 0);
-
-    final Collection<Long> valuesMajorInclusiveResults = new ArrayList<Long>(Arrays.asList(3L, 4L, 5L));
-    indexCollection = index.getValuesMajor(3, true, true);
-    Assert.assertEquals(indexCollection.size(), 3);
-    for (OIdentifiable identifiable : indexCollection) {
-      valuesMajorInclusiveResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
-    }
-    Assert.assertEquals(valuesMajorInclusiveResults.size(), 0);
-
-    indexCollection = index.getValuesMajor(5, true, true);
-    Assert.assertEquals(indexCollection.size(), 1);
-    Assert.assertEquals(indexCollection.iterator().next().getIdentity().getClusterPosition(),
-        OClusterPositionFactory.INSTANCE.valueOf(5));
-
-    indexCollection = index.getValuesMajor(5, false, true);
-    Assert.assertEquals(indexCollection.size(), 0);
-
-    database.command(new OCommandSQL("drop index equalityIdx")).execute();
-  }
-
-  @Test(dependsOnMethods = "populateIndexDocuments")
-  public void testEntriesMajor() {
-    database.command(new OCommandSQL("create index equalityIdx unique")).execute();
-
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("equalityIdx"));
-
-    for (int key = 0; key <= 5; key++) {
-      database.command(new OCommandSQL("insert into index:equalityIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
-    }
-
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
-
-    final Collection<Integer> valuesMajorResults = new ArrayList<Integer>(Arrays.asList(4, 5));
-    Collection<ODocument> indexCollection = index.getEntriesMajor(3, false);
-    Assert.assertEquals(indexCollection.size(), 2);
-    for (ODocument doc : indexCollection) {
-      valuesMajorResults.remove(doc.<Integer> field("key"));
-      Assert.assertEquals(doc.<ORecordId> rawField("rid"),
-          new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(doc.<Integer> field("key").longValue())));
-    }
-    Assert.assertEquals(valuesMajorResults.size(), 0);
-
-    final Collection<Integer> valuesMajorInclusiveResults = new ArrayList<Integer>(Arrays.asList(3, 4, 5));
-    indexCollection = index.getEntriesMajor(3, true);
-    Assert.assertEquals(indexCollection.size(), 3);
-    for (ODocument doc : indexCollection) {
-      valuesMajorInclusiveResults.remove(doc.<Integer> field("key"));
-      Assert.assertEquals(doc.<ORecordId> rawField("rid"),
-          new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(doc.<Integer> field("key").longValue())));
-    }
-    Assert.assertEquals(valuesMajorInclusiveResults.size(), 0);
-
-    indexCollection = index.getEntriesMajor(5, true);
-    Assert.assertEquals(indexCollection.size(), 1);
-    Assert.assertEquals(indexCollection.iterator().next().<Integer> field("key"), Integer.valueOf(5));
-    Assert.assertEquals(indexCollection.iterator().next().<ORecordId> rawField("rid"), new ORecordId(10,
-        OClusterPositionFactory.INSTANCE.valueOf(5)));
-
-    indexCollection = index.getEntriesMajor(5, false);
-    Assert.assertEquals(indexCollection.size(), 0);
-
-    database.command(new OCommandSQL("drop index equalityIdx")).execute();
-  }
-
-  @Test(dependsOnMethods = "populateIndexDocuments")
-  public void testValuesMinor() {
-    database.command(new OCommandSQL("create index equalityIdx unique")).execute();
-
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("equalityIdx"));
-
-    for (int key = 0; key <= 5; key++) {
-      database.command(new OCommandSQL("insert into index:equalityIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
-    }
-
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
-
-    final Collection<Long> valuesMinorResults = new ArrayList<Long>(Arrays.asList(0L, 1L, 2L));
-    Collection<OIdentifiable> indexCollection = index.getValuesMinor(3, false, true);
-    Assert.assertEquals(indexCollection.size(), 3);
-    for (OIdentifiable identifiable : indexCollection) {
-      valuesMinorResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
-    }
-    Assert.assertEquals(valuesMinorResults.size(), 0);
-
-    final Collection<Long> valuesMinorInclusiveResults = new ArrayList<Long>(Arrays.asList(0L, 1L, 2L, 3L));
-    indexCollection = index.getValuesMinor(3, true, true);
-    Assert.assertEquals(indexCollection.size(), 4);
-    for (OIdentifiable identifiable : indexCollection) {
-      valuesMinorInclusiveResults.remove(identifiable.getIdentity().getClusterPosition().longValue());
-    }
-    Assert.assertEquals(valuesMinorInclusiveResults.size(), 0);
-
-    indexCollection = index.getValuesMinor(0, true, true);
-    Assert.assertEquals(indexCollection.size(), 1);
-    Assert.assertEquals(indexCollection.iterator().next().getIdentity().getClusterPosition(),
-        OClusterPositionFactory.INSTANCE.valueOf(0));
-
-    indexCollection = index.getValuesMinor(0, false, true);
-    Assert.assertEquals(indexCollection.size(), 0);
-
-    database.command(new OCommandSQL("drop index equalityIdx")).execute();
-  }
-
-  @Test(dependsOnMethods = "populateIndexDocuments")
-  public void testEntriesMinor() {
-    database.command(new OCommandSQL("create index equalityIdx unique")).execute();
-
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("equalityIdx"));
-
-    for (int key = 0; key <= 5; key++) {
-      database.command(new OCommandSQL("insert into index:equalityIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
-    }
-
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
-
-    final Collection<Integer> valuesMinorResults = new ArrayList<Integer>(Arrays.asList(0, 1, 2));
-    Collection<ODocument> indexCollection = index.getEntriesMinor(3, false);
-    Assert.assertEquals(indexCollection.size(), 3);
-    for (ODocument doc : indexCollection) {
-      valuesMinorResults.remove(doc.<Integer> field("key"));
-      Assert.assertEquals(doc.<ORecordId> rawField("rid"),
-          new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(doc.<Integer> field("key").longValue())));
-    }
-    Assert.assertEquals(valuesMinorResults.size(), 0);
-
-    final Collection<Integer> valuesMinorInclusiveResults = new ArrayList<Integer>(Arrays.asList(0, 1, 2, 3));
-    indexCollection = index.getEntriesMinor(3, true);
-    Assert.assertEquals(indexCollection.size(), 4);
-    for (ODocument doc : indexCollection) {
-      valuesMinorInclusiveResults.remove(doc.<Integer> field("key"));
-      Assert.assertEquals(doc.<ORecordId> rawField("rid"),
-          new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(doc.<Integer> field("key").longValue())));
-    }
-    Assert.assertEquals(valuesMinorInclusiveResults.size(), 0);
-
-    indexCollection = index.getEntriesMinor(0, true);
-    Assert.assertEquals(indexCollection.size(), 1);
-    Assert.assertEquals(indexCollection.iterator().next().<Integer> field("key"), Integer.valueOf(0));
-    Assert.assertEquals(indexCollection.iterator().next().<ORecordId> rawField("rid"), new ORecordId(10,
-        OClusterPositionFactory.INSTANCE.valueOf(0)));
-
-    indexCollection = index.getEntriesMinor(0, false);
-    Assert.assertEquals(indexCollection.size(), 0);
-
-    database.command(new OCommandSQL("drop index equalityIdx")).execute();
-  }
-
-  @Test(dependsOnMethods = "populateIndexDocuments")
-  public void testBetweenEntries() {
-    database.command(new OCommandSQL("create index equalityIdx unique integer")).execute();
-
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("equalityIdx"));
-
-    for (int key = 0; key <= 5; key++) {
-      database.command(new OCommandSQL("insert into index:equalityIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
-    }
-
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("equalityIdx");
-
-    final Collection<Integer> betweenResults = new ArrayList<Integer>(Arrays.asList(1, 2, 3));
-    Collection<ODocument> indexCollection = index.getEntriesBetween(1, 3);
-    Assert.assertEquals(indexCollection.size(), 3);
-    for (ODocument doc : indexCollection) {
-      betweenResults.remove(doc.<Integer> field("key"));
-      Assert.assertEquals(doc.<ORecordId> rawField("rid"),
-          new ORecordId(10, OClusterPositionFactory.INSTANCE.valueOf(doc.<Integer> field("key").longValue())));
-    }
-    Assert.assertEquals(betweenResults.size(), 0);
-
-    database.command(new OCommandSQL("drop index equalityIdx")).execute();
   }
 
   @Test(dependsOnMethods = "populateIndexDocuments")
@@ -818,127 +622,12 @@ public class IndexTest {
     }
   }
 
-  @Test(dependsOnMethods = "populateIndexDocuments")
-  public void testIndexGetValuesUniqueIndex() {
-    database.command(new OCommandSQL("create index inIdx unique")).execute();
-
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("inIdx"));
-
-    for (int key = 0; key <= 5; key++) {
-      database.command(new OCommandSQL("insert into index:inIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
-    }
-
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("inIdx");
-    final Collection<Integer> multiGetResults = new ArrayList<Integer>(Arrays.asList(1, 3));
-    final Collection<OIdentifiable> indexCollection = index.getValues(Arrays.asList(1, 3), true);
-    Assert.assertEquals(indexCollection.size(), 2);
-    for (final OIdentifiable identifiable : indexCollection) {
-      multiGetResults.remove(identifiable.getIdentity().getClusterPosition().intValue());
-    }
-    Assert.assertEquals(multiGetResults.size(), 0);
-
-    database.command(new OCommandSQL("drop index inIdx")).execute();
-  }
-
-  @Test(dependsOnMethods = "populateIndexDocuments")
-  public void testIndexGetValuesNotUniqueIndex() {
-    database.command(new OCommandSQL("create index inIdx notunique")).execute();
-
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("inIdx"));
-
-    for (int i = 0; i < 2; i++)
-      for (int key = 0; key <= 2; key++) {
-        database.command(new OCommandSQL("insert into index:inIdx (key,rid) values (" + key + ",#10:" + (i + key * 2) + ")"))
-            .execute();
-      }
-
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("inIdx");
-    final Collection<Integer> multiGetResults = new ArrayList<Integer>(Arrays.asList(0, 1, 4, 5));
-    final Collection<OIdentifiable> indexCollection = index.getValues(Arrays.asList(0, 2), true);
-    Assert.assertEquals(indexCollection.size(), 4);
-    for (final OIdentifiable identifiable : indexCollection) {
-      multiGetResults.remove(identifiable.getIdentity().getClusterPosition().intValue());
-    }
-    Assert.assertEquals(multiGetResults.size(), 0);
-
-    database.command(new OCommandSQL("drop index inIdx")).execute();
-  }
-
-  @Test(dependsOnMethods = "populateIndexDocuments")
-  public void testIndexGetEntriesUniqueIndex() {
-    database.command(new OCommandSQL("create index inIdx unique")).execute();
-
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("inIdx"));
-
-    for (int key = 0; key <= 5; key++) {
-      database.command(new OCommandSQL("insert into index:inIdx (key,rid) values (" + key + ",#10:" + key + ")")).execute();
-    }
-
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("inIdx");
-    final Collection<Integer> multiGetResults = new ArrayList<Integer>(Arrays.asList(1, 3));
-    final Collection<ODocument> indexCollection = index.getEntries(Arrays.asList(1, 3));
-    Assert.assertEquals(indexCollection.size(), 2);
-    for (final ODocument doc : indexCollection) {
-      multiGetResults.remove(doc.<Integer> field("key"));
-    }
-    Assert.assertEquals(multiGetResults.size(), 0);
-
-    database.command(new OCommandSQL("drop index inIdx")).execute();
-  }
-
-  @Test(dependsOnMethods = "populateIndexDocuments")
-  public void testIndexGetEntriesNotUniqueIndex() {
-    database.command(new OCommandSQL("create index inIdx notunique")).execute();
-
-    database.getMetadata().getIndexManager().reload();
-    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("inIdx"));
-
-    for (int i = 0; i < 2; i++)
-      for (int key = 0; key <= 2; key++) {
-        database.command(new OCommandSQL("insert into index:inIdx (key,rid) values (" + key + ",#10:" + (i + key * 2) + ")"))
-            .execute();
-      }
-
-    final OIndex<?> index = database.getMetadata().getIndexManager().getIndex("inIdx");
-    final Collection<Integer> multiGetResults = new ArrayList<Integer>(Arrays.asList(0, 0, 2, 2));
-    final Collection<ODocument> indexCollection = index.getEntries(Arrays.asList(0, 2));
-    Assert.assertEquals(indexCollection.size(), 4);
-    for (final ODocument doc : indexCollection) {
-      multiGetResults.remove(doc.<Integer> field("key"));
-    }
-    Assert.assertEquals(multiGetResults.size(), 0);
-
-    database.command(new OCommandSQL("drop index inIdx")).execute();
-  }
-
   @Test
   public void testIndexCount() {
     final OIndex<?> nickIndex = database.getMetadata().getIndexManager().getIndex("Profile.nick");
     final List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select count(*) from index:Profile.nick"));
     Assert.assertEquals(result.size(), 1);
     Assert.assertEquals(result.get(0).<Long> field("count").longValue(), nickIndex.getSize());
-  }
-
-  @SuppressWarnings("unchecked")
-  public void longTypes() {
-    database.getMetadata().getSchema().getClass("Profile").createProperty("hash", OType.LONG).createIndex(OClass.INDEX_TYPE.UNIQUE);
-
-    OIndex<OIdentifiable> idx = (OIndex<OIdentifiable>) database.getMetadata().getIndexManager().getIndex("Profile.hash");
-
-    for (int i = 0; i < 5; i++) {
-      Profile profile = new Profile("HashTest" + i).setHash(100l + i);
-      database.save(profile);
-    }
-
-    Iterator<Entry<Object, OIdentifiable>> it = idx.iterator();
-    while (it.hasNext()) {
-      it.next();
-    }
-
-    Assert.assertEquals(idx.getSize(), 5);
   }
 
   public void indexLinks() {
@@ -1199,7 +888,9 @@ public class IndexTest {
       Assert.fail();
     } catch (OResponseProcessingException e) {
       Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
+      db.rollback();
     } catch (ORecordDuplicatedException oie) {
+      db.rollback();
     }
 
     final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>(
@@ -1278,7 +969,9 @@ public class IndexTest {
       Assert.fail();
     } catch (OResponseProcessingException e) {
       Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
+      db.rollback();
     } catch (ORecordDuplicatedException oie) {
+      db.rollback();
     }
 
     final List<ODocument> resultAfterCommit = db.query(new OSQLSynchQuery<ODocument>(
@@ -1619,6 +1312,309 @@ public class IndexTest {
       Assert.assertEquals(document.field("val"), 1);
       Assert.assertEquals(document.field("index"), 15 + i);
     }
+  }
+
+  public void testIndexPaginationTest() {
+    ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+
+    final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    final OClass indexPaginationTest = schema.createClass("IndexPaginationTestClass");
+    indexPaginationTest.createProperty("prop", OType.INTEGER);
+    indexPaginationTest.createIndex("IndexPaginationTest", INDEX_TYPE.UNIQUE, "prop", "@rid");
+
+    List<ORID> rids = new ArrayList<ORID>();
+
+    for (int i = 99; i >= 0; i--) {
+      final ODocument document = new ODocument("IndexPaginationTestClass");
+      document.field("prop", i / 2);
+      document.save();
+
+      rids.add(document.getIdentity());
+    }
+
+    List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+        "select from index:IndexPaginationTest limit 5 order by key"));
+
+    Assert.assertEquals(result.size(), 5);
+
+    int lastKey = -1;
+    ORID lastRid = null;
+    for (ODocument document : result) {
+      if (lastKey > -1)
+        Assert.assertTrue(lastKey <= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+
+      lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
+      lastRid = document.field("rid", OType.LINK);
+
+      Assert.assertTrue(rids.remove(document.<ORID> field("rid")));
+    }
+
+    while (true) {
+      result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+          "select from index:IndexPaginationTest where key > ? limit 5  order by key"), new OCompositeKey(lastKey, lastRid));
+      if (result.isEmpty())
+        break;
+
+      Assert.assertEquals(result.size(), 5);
+
+      for (ODocument document : result) {
+        if (lastKey > -1)
+          Assert.assertTrue(lastKey <= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+
+        lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
+        lastRid = document.field("rid", OType.LINK);
+
+        Assert.assertTrue(rids.remove(document.<ORID> field("rid", OType.LINK)));
+      }
+    }
+
+    Assert.assertTrue(rids.isEmpty());
+  }
+
+  public void testIndexPaginationTestDescOrder() {
+    ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+
+    final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    final OClass indexPaginationTest = schema.createClass("IndexPaginationTestDescOrderClass");
+    indexPaginationTest.createProperty("prop", OType.INTEGER);
+    indexPaginationTest.createIndex("IndexPaginationTestDescOrder", INDEX_TYPE.UNIQUE, "prop", "@rid");
+
+    List<ORID> rids = new ArrayList<ORID>();
+
+    for (int i = 99; i >= 0; i--) {
+      final ODocument document = new ODocument("IndexPaginationTestDescOrderClass");
+      document.field("prop", i / 2);
+      document.save();
+
+      rids.add(document.getIdentity());
+    }
+
+    List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+        "select from index:IndexPaginationTestDescOrder limit 5 order by key desc"));
+
+    Assert.assertEquals(result.size(), 5);
+
+    int lastKey = -1;
+    ORID lastRid = null;
+    for (ODocument document : result) {
+      if (lastKey > -1)
+        Assert.assertTrue(lastKey >= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+
+      lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
+      lastRid = document.field("rid", OType.LINK);
+
+      Assert.assertTrue(rids.remove(document.<ORID> field("rid")));
+    }
+
+    while (true) {
+      result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+          "select from index:IndexPaginationTestDescOrder where key < ? limit 5  order by key desc"), new OCompositeKey(lastKey,
+          lastRid));
+      if (result.isEmpty())
+        break;
+
+      Assert.assertEquals(result.size(), 5);
+
+      for (ODocument document : result) {
+        if (lastKey > -1)
+          Assert.assertTrue(lastKey >= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+
+        lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
+        lastRid = document.field("rid", OType.LINK);
+
+        Assert.assertTrue(rids.remove(document.<ORID> field("rid", OType.LINK)));
+      }
+    }
+
+    Assert.assertTrue(rids.isEmpty());
+  }
+
+  public void testNullIndexKeysSupport() {
+    if (database.getURL().startsWith("memory:"))
+      return;
+
+    final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+
+    final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    final OClass clazz = schema.createClass("NullIndexKeysSupport");
+    clazz.createProperty("nullField", OType.STRING);
+
+    ODocument metadata = new ODocument();
+    metadata.field("ignoreNullValues", false);
+
+    clazz.createIndex("NullIndexKeysSupportIndex", INDEX_TYPE.NOTUNIQUE.toString(), null, metadata, new String[] { "nullField" });
+    for (int i = 0; i < 20; i++) {
+      if (i % 5 == 0) {
+        ODocument document = new ODocument("NullIndexKeysSupport");
+        document.field("nullField", (Object) null);
+        document.save();
+      } else {
+        ODocument document = new ODocument("NullIndexKeysSupport");
+        document.field("nullField", "val" + i);
+        document.save();
+      }
+    }
+
+    List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+        "select from NullIndexKeysSupport where nullField = 'val3'"));
+    Assert.assertEquals(result.size(), 1);
+
+    Assert.assertEquals(result.get(0).field("nullField"), "val3");
+
+    final String query = "select from NullIndexKeysSupport where nullField is null";
+    result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from NullIndexKeysSupport where nullField is null"));
+
+    Assert.assertEquals(result.size(), 4);
+    for (ODocument document : result)
+      Assert.assertNull(document.field("nullField"));
+
+    final ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + query)).execute();
+    Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("NullIndexKeysSupportIndex"));
+  }
+
+  public void testNullHashIndexKeysSupport() {
+    if (database.getURL().startsWith("memory:"))
+      return;
+
+    final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+
+    final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    final OClass clazz = schema.createClass("NullHashIndexKeysSupport");
+    clazz.createProperty("nullField", OType.STRING);
+
+    ODocument metadata = new ODocument();
+    metadata.field("ignoreNullValues", false);
+
+    clazz.createIndex("NullHashIndexKeysSupportIndex", INDEX_TYPE.NOTUNIQUE.toString(), null, metadata,
+        new String[] { "nullField" });
+    for (int i = 0; i < 20; i++) {
+      if (i % 5 == 0) {
+        ODocument document = new ODocument("NullHashIndexKeysSupport");
+        document.field("nullField", (Object) null);
+        document.save();
+      } else {
+        ODocument document = new ODocument("NullHashIndexKeysSupport");
+        document.field("nullField", "val" + i);
+        document.save();
+      }
+    }
+
+    List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+        "select from NullHashIndexKeysSupport where nullField = 'val3'"));
+    Assert.assertEquals(result.size(), 1);
+
+    Assert.assertEquals(result.get(0).field("nullField"), "val3");
+
+    final String query = "select from NullHashIndexKeysSupport where nullField is null";
+    result = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select from NullHashIndexKeysSupport where nullField is null"));
+
+    Assert.assertEquals(result.size(), 4);
+    for (ODocument document : result)
+      Assert.assertNull(document.field("nullField"));
+
+    final ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + query)).execute();
+    Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("NullHashIndexKeysSupportIndex"));
+  }
+
+  public void testNullIndexKeysSupportInTx() {
+    if (database.getURL().startsWith("memory:"))
+      return;
+
+    final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+
+    final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    final OClass clazz = schema.createClass("NullIndexKeysSupportInTx");
+    clazz.createProperty("nullField", OType.STRING);
+
+    ODocument metadata = new ODocument();
+    metadata.field("ignoreNullValues", false);
+
+    clazz.createIndex("NullIndexKeysSupportInTxIndex", INDEX_TYPE.NOTUNIQUE.toString(), null, metadata,
+        new String[] { "nullField" });
+
+    database.begin();
+
+    for (int i = 0; i < 20; i++) {
+      if (i % 5 == 0) {
+        ODocument document = new ODocument("NullIndexKeysSupportInTx");
+        document.field("nullField", (Object) null);
+        document.save();
+      } else {
+        ODocument document = new ODocument("NullIndexKeysSupportInTx");
+        document.field("nullField", "val" + i);
+        document.save();
+      }
+    }
+
+    database.commit();
+
+    List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+        "select from NullIndexKeysSupportInTx where nullField = 'val3'"));
+    Assert.assertEquals(result.size(), 1);
+
+    Assert.assertEquals(result.get(0).field("nullField"), "val3");
+
+    final String query = "select from NullIndexKeysSupportInTx where nullField is null";
+    result = databaseDocumentTx
+        .query(new OSQLSynchQuery<ODocument>("select from NullIndexKeysSupportInTx where nullField is null"));
+
+    Assert.assertEquals(result.size(), 4);
+    for (ODocument document : result)
+      Assert.assertNull(document.field("nullField"));
+
+    final ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + query)).execute();
+    Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("NullIndexKeysSupportInTxIndex"));
+  }
+
+  public void testNullIndexKeysSupportInMiddleTx() {
+    if (database.getURL().startsWith("memory:") || database.getURL().startsWith("remote:"))
+      return;
+
+    final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+
+    final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    final OClass clazz = schema.createClass("NullIndexKeysSupportInMiddleTx");
+    clazz.createProperty("nullField", OType.STRING);
+
+    ODocument metadata = new ODocument();
+    metadata.field("ignoreNullValues", false);
+
+    clazz.createIndex("NullIndexKeysSupportInMiddleTxIndex", INDEX_TYPE.NOTUNIQUE.toString(), null, metadata,
+        new String[] { "nullField" });
+
+    database.begin();
+
+    for (int i = 0; i < 20; i++) {
+      if (i % 5 == 0) {
+        ODocument document = new ODocument("NullIndexKeysSupportInMiddleTx");
+        document.field("nullField", (Object) null);
+        document.save();
+      } else {
+        ODocument document = new ODocument("NullIndexKeysSupportInMiddleTx");
+        document.field("nullField", "val" + i);
+        document.save();
+      }
+    }
+
+    List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+        "select from NullIndexKeysSupportInMiddleTx where nullField = 'val3'"));
+    Assert.assertEquals(result.size(), 1);
+
+    Assert.assertEquals(result.get(0).field("nullField"), "val3");
+
+    final String query = "select from NullIndexKeysSupportInMiddleTx where nullField is null";
+    result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
+        "select from NullIndexKeysSupportInMiddleTx where nullField is null"));
+
+    Assert.assertEquals(result.size(), 4);
+    for (ODocument document : result)
+      Assert.assertNull(document.field("nullField"));
+
+    final ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + query)).execute();
+    Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("NullIndexKeysSupportInMiddleTxIndex"));
+
+    database.commit();
   }
 
   private List<OClusterPosition> getValidPositions(int clusterId) {

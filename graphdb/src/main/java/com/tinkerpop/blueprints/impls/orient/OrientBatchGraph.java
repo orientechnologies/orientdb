@@ -5,7 +5,7 @@ import com.tinkerpop.blueprints.util.wrappers.batch.BatchGraph;
 import com.tinkerpop.blueprints.util.wrappers.batch.VertexIDType;
 
 /**
- * A Blueprints implementation of the batch graph database OrientDB (http://www.orientechnologies.com)
+ * A Blueprints implementation of the script graph database OrientDB (http://www.orientechnologies.com)
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */

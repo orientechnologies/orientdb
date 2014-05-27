@@ -3,8 +3,9 @@ package com.tinkerpop.blueprints.impls.orient;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
@@ -50,7 +51,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   protected OrientIndex(final OrientBaseGraph orientGraph, final OIndex<?> rawIndex) {
     this.graph = orientGraph;
     this.underlying = rawIndex instanceof OIndexTxAwareMultiValue ? rawIndex : new OIndexTxAwareMultiValue(
-        orientGraph.getRawGraph(), (OIndex<Collection<OIdentifiable>>) rawIndex);
+        orientGraph.getRawGraph(), (OIndex<Set<OIdentifiable>>) rawIndex);
 
     final ODocument metadata = rawIndex.getMetadata();
     if (metadata == null) {
@@ -120,8 +121,12 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   protected void removeElement(final T element) {
     graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
-    Collection<ODocument> entries = recordKeyValueIndex.getEntriesBetween(new OCompositeKey(element.getIdentity()),
-        new OCompositeKey(element.getIdentity()));
+
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from index:" + recordKeyValueIndex.getName()
+        + " where key between [" + element.getIdentity() + "] and [" + element.getIdentity() + "]");
+
+    Collection<ODocument> entries = (Collection<ODocument>) graph.getRawGraph().query(query);
+
     for (ODocument entry : entries) {
       OCompositeKey key = entry.field("key");
       List<Object> keys = key.getKeys();
@@ -160,7 +165,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     metadata.field(CONFIG_RECORD_MAP_NAME, recordKeyValueIndex.getName());
 
     // CREATE THE MAP
-    this.underlying = new OIndexTxAwareMultiValue(graph.getRawGraph(), (OIndex<Collection<OIdentifiable>>) graph
+    this.underlying = new OIndexTxAwareMultiValue(graph.getRawGraph(), (OIndex<Set<OIdentifiable>>) graph
         .getRawGraph()
         .getMetadata()
         .getIndexManager()

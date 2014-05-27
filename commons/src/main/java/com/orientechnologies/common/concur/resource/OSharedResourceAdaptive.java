@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.common.concur.resource;
 
+import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.concur.lock.OLockException;
+
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.common.concur.lock.OLockException;
 
 /**
  * Adaptive class to handle shared resources. It's configurable specifying if it's running in a concurrent environment and allow o
@@ -30,11 +30,12 @@ import com.orientechnologies.common.concur.lock.OLockException;
  * 
  */
 public class OSharedResourceAdaptive {
-  private final ReentrantReadWriteLock lock  = new ReentrantReadWriteLock();
-  private final AtomicInteger          users = new AtomicInteger(0);
+  private final ReentrantReadWriteLock lock          = new ReentrantReadWriteLock();
+  private final AtomicInteger          users         = new AtomicInteger(0);
   private final boolean                concurrent;
   private final int                    timeout;
   private final boolean                ignoreThreadInterruption;
+  private int                          scaledUpCount = 0;
 
   protected OSharedResourceAdaptive() {
     this.concurrent = true;
@@ -60,10 +61,40 @@ public class OSharedResourceAdaptive {
     this.ignoreThreadInterruption = ignoreThreadInterruption;
   }
 
+  public int getUsers() {
+    return users.get();
+  }
+
+  public int addUser() {
+    return users.incrementAndGet();
+  }
+
+  public int removeUser() {
+    if (users.get() < 1)
+      throw new IllegalStateException("Cannot remove user of the shared resource " + toString() + " because no user is using it");
+
+    return users.decrementAndGet();
+  }
+
+  public boolean isConcurrent() {
+    return concurrent;
+  }
+
+  /** To use in assert block. */
+  public boolean assertExclusiveLockHold() {
+    return lock.getWriteHoldCount() > 0;
+  }
+
+  /** To use in assert block. */
+  public boolean assertSharedLockHold() {
+    return lock.getReadHoldCount() > 0;
+  }
+
   protected void acquireExclusiveLock() {
     if (concurrent)
       if (timeout > 0) {
         try {
+
           if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS))
             // OK
             return;
@@ -86,8 +117,9 @@ public class OSharedResourceAdaptive {
         }
         throw new OTimeoutException("Timeout on acquiring exclusive lock against resource of class: " + getClass()
             + " with timeout=" + timeout);
-      } else
+      } else {
         lock.writeLock().lock();
+      }
   }
 
   protected boolean tryAcquireExclusiveLock() {
@@ -128,8 +160,9 @@ public class OSharedResourceAdaptive {
   }
 
   protected void releaseExclusiveLock() {
-    if (concurrent)
+    if (concurrent) {
       lock.writeLock().unlock();
+    }
   }
 
   protected void releaseSharedLock() {
@@ -137,32 +170,4 @@ public class OSharedResourceAdaptive {
       lock.readLock().unlock();
   }
 
-  public int getUsers() {
-    return users.get();
-  }
-
-  public int addUser() {
-    return users.incrementAndGet();
-  }
-
-  public int removeUser() {
-    if (users.get() < 1)
-      throw new IllegalStateException("Cannot remove user of the shared resource " + toString() + " because no user is using it");
-
-    return users.decrementAndGet();
-  }
-
-  public boolean isConcurrent() {
-    return concurrent;
-  }
-
-  /** To use in assert block. */
-  public boolean assertExclusiveLockHold() {
-    return lock.getWriteHoldCount() > 0;
-  }
-
-  /** To use in assert block. */
-  public boolean assertSharedLockHold() {
-    return lock.getReadHoldCount() > 0;
-  }
 }

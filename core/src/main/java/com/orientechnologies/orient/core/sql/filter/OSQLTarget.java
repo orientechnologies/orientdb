@@ -15,14 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -32,9 +26,15 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLResultsetDelegate;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Target parser.
@@ -43,13 +43,14 @@ import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
  * 
  */
 public class OSQLTarget extends OBaseParser {
-  protected String                            targetVariable;
-  protected Iterable<? extends OIdentifiable> targetRecords;
-  protected Map<String, String>               targetClusters;
-  protected Map<OClass, String>               targetClasses;
-  protected String                            targetIndex;
-  protected final boolean                     empty;
-  protected final OCommandContext             context;
+  protected final boolean                        empty;
+  protected final OCommandContext                context;
+  protected String                               targetVariable;
+  protected OCommandExecutorSQLResultsetDelegate targetQuery;
+  protected Iterable<? extends OIdentifiable>    targetRecords;
+  protected Map<String, String>                  targetClusters;
+  protected Map<OClass, String>                  targetClasses;
+  protected String                               targetIndex;
 
   public OSQLTarget(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
     super();
@@ -69,6 +70,54 @@ public class OSQLTarget extends OBaseParser {
     } catch (Throwable t) {
       throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
     }
+  }
+
+  public Map<String, String> getTargetClusters() {
+    return targetClusters;
+  }
+
+  public Map<OClass, String> getTargetClasses() {
+    return targetClasses;
+  }
+
+  public Iterable<? extends OIdentifiable> getTargetRecords() {
+    return targetRecords;
+  }
+
+  public OCommandExecutorSQLResultsetDelegate getTargetQuery() {
+    return targetQuery;
+  }
+
+  public String getTargetIndex() {
+    return targetIndex;
+  }
+
+  @Override
+  public String toString() {
+    if (targetClasses != null)
+      return "class " + targetClasses.keySet();
+    else if (targetClusters != null)
+      return "cluster " + targetClusters.keySet();
+    if (targetIndex != null)
+      return "index " + targetIndex;
+    if (targetRecords != null)
+      return "records from " + targetRecords.getClass().getSimpleName();
+    if (targetVariable != null)
+      return "variable " + targetVariable;
+    return "?";
+  }
+
+  public String getTargetVariable() {
+    return targetVariable;
+  }
+
+  public boolean isEmpty() {
+    return empty;
+  }
+
+  @Override
+  protected void throwSyntaxErrorException(String iText) {
+    throw new OCommandSQLParsingException(iText + ". Use " + getSyntax(), parserText, parserGetPreviousPosition());
   }
 
   @SuppressWarnings("unchecked")
@@ -94,7 +143,8 @@ public class OSQLTarget extends OBaseParser {
       parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, subText) + 1);
       final OCommandSQL subCommand = new OCommandSQLResultset(subText.toString());
 
-      final OCommandExecutor executor = OCommandManager.instance().getExecutor(subCommand);
+      final OCommandExecutorSQLResultsetDelegate executor = (OCommandExecutorSQLResultsetDelegate) OCommandManager.instance()
+          .getExecutor(subCommand);
       executor.setProgressListener(subCommand.getProgressListener());
       executor.parse(subCommand);
       context.setChild(executor.getContext());
@@ -103,6 +153,7 @@ public class OSQLTarget extends OBaseParser {
         throw new OCommandSQLParsingException("Sub-query cannot be iterated because doesn't implement the Iterable interface: "
             + subCommand);
 
+      targetQuery = executor;
       targetRecords = (Iterable<? extends OIdentifiable>) executor;
 
     } else if (c == OStringSerializerHelper.LIST_BEGIN) {
@@ -179,49 +230,5 @@ public class OSQLTarget extends OBaseParser {
     }
 
     return !parserIsEnded();
-  }
-
-  public Map<String, String> getTargetClusters() {
-    return targetClusters;
-  }
-
-  public Map<OClass, String> getTargetClasses() {
-    return targetClasses;
-  }
-
-  public Iterable<? extends OIdentifiable> getTargetRecords() {
-    return targetRecords;
-  }
-
-  public String getTargetIndex() {
-    return targetIndex;
-  }
-
-  @Override
-  public String toString() {
-    if (targetClasses != null)
-      return "class " + targetClasses.keySet();
-    else if (targetClusters != null)
-      return "cluster " + targetClusters.keySet();
-    if (targetIndex != null)
-      return "index " + targetIndex;
-    if (targetRecords != null)
-      return "records from " + targetRecords.getClass().getSimpleName();
-    if (targetVariable != null)
-      return "variable " + targetVariable;
-    return "?";
-  }
-
-  public String getTargetVariable() {
-    return targetVariable;
-  }
-
-  @Override
-  protected void throwSyntaxErrorException(String iText) {
-    throw new OCommandSQLParsingException(iText + ". Use " + getSyntax(), parserText, parserGetPreviousPosition());
-  }
-
-  public boolean isEmpty() {
-    return empty;
   }
 }

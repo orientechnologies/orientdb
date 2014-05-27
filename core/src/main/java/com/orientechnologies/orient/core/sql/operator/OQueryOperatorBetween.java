@@ -24,10 +24,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
@@ -85,11 +82,10 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
-    final Object result;
 
+    OIndexCursor cursor;
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
@@ -103,12 +99,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyOne == null || keyTwo == null)
         return null;
 
-      if (resultListener != null) {
-        index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
-        result = resultListener.getResult();
-      } else
-        result = index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder);
-
+      cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
     } else {
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
 
@@ -142,16 +133,11 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      if (resultListener != null) {
-        index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
-        result = resultListener.getResult();
-      } else
-        result = index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder);
-
+      cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return result;
+    return cursor;
   }
 
   @Override

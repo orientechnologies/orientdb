@@ -15,21 +15,23 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
+import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * CONTAINSTEXT operator. Look if a text is contained in a property. This is usually used with the FULLTEXT-INDEX for fast lookup at
@@ -116,8 +118,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
 
     final OIndexDefinition indexDefinition = index.getDefinition();
     if (indexDefinition.getParamCount() > 1)
@@ -125,22 +126,21 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 
     final OIndex<?> internalIndex = index.getInternal();
 
-    final Object result;
-
+    OIndexCursor cursor;
     if (internalIndex instanceof OIndexFullText) {
-      final Object indexResult = index.get(indexDefinition.createValue(keyParams));
-      if (indexResult instanceof Collection)
-        result = indexResult;
-      else if (indexResult == null)
-        result = Collections.emptyList();
+      final Object key = indexDefinition.createValue(keyParams);
+      final Object indexResult = index.get(key);
+
+      if (indexResult == null || indexResult instanceof OIdentifiable)
+        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
       else
-        result = Collections.singletonList((OIdentifiable) indexResult);
+        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
     } else
       return null;
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
 
-    return result;
+    return cursor;
   }
 
   @Override

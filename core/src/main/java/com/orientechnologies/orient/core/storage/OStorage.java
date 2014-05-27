@@ -169,6 +169,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * Drops a cluster.
    * 
    * @param iId
+   *          id of the cluster to delete
    * @return true if has been removed, otherwise false
    */
   public boolean dropCluster(int iId, final boolean iTruncate);
@@ -281,4 +282,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public OCurrentStorageComponentsFactory getComponentsFactory();
 
   public long getLastOperationId();
+
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback);
+
+  public OCluster getClusterByName(String clusterName);
 }

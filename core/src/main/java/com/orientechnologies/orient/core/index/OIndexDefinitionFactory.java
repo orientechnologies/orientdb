@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.index;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -20,6 +21,7 @@ public class OIndexDefinitionFactory {
   /**
    * Creates an instance of {@link OIndexDefinition} for automatic index.
    * 
+   * 
    * @param oClass
    *          class which will be indexed
    * @param fieldNames
@@ -27,15 +29,17 @@ public class OIndexDefinitionFactory {
    *          describe how to index maps. By default maps indexed by key
    * @param types
    *          types of indexed properties
+   * @param collates
    * @return index definition instance
    */
-  public static OIndexDefinition createIndexDefinition(final OClass oClass, final List<String> fieldNames, final List<OType> types) {
+  public static OIndexDefinition createIndexDefinition(final OClass oClass, final List<String> fieldNames, final List<OType> types,
+      List<OCollate> collates) {
     checkTypes(oClass, fieldNames, types);
 
     if (fieldNames.size() == 1)
-      return createSingleFieldIndexDefinition(oClass, fieldNames.get(0), types.get(0));
+      return createSingleFieldIndexDefinition(oClass, fieldNames.get(0), types.get(0), collates == null ? null : collates.get(0));
     else
-      return createMultipleFieldIndexDefinition(oClass, fieldNames, types);
+      return createMultipleFieldIndexDefinition(oClass, fieldNames, types, collates);
   }
 
   /**
@@ -57,12 +61,16 @@ public class OIndexDefinitionFactory {
   }
 
   private static OIndexDefinition createMultipleFieldIndexDefinition(final OClass oClass, final List<String> fieldsToIndex,
-      final List<OType> types) {
+      final List<OType> types, List<OCollate> collates) {
     final String className = oClass.getName();
     final OCompositeIndexDefinition compositeIndex = new OCompositeIndexDefinition(className);
 
     for (int i = 0, fieldsToIndexSize = fieldsToIndex.size(); i < fieldsToIndexSize; i++) {
-      compositeIndex.addIndex(createSingleFieldIndexDefinition(oClass, fieldsToIndex.get(i), types.get(i)));
+      OCollate collate = null;
+      if (collates != null)
+        collate = collates.get(i);
+
+      compositeIndex.addIndex(createSingleFieldIndexDefinition(oClass, fieldsToIndex.get(i), types.get(i), collate));
     }
 
     return compositeIndex;
@@ -84,10 +92,12 @@ public class OIndexDefinitionFactory {
     }
   }
 
-  private static OIndexDefinition createSingleFieldIndexDefinition(OClass oClass, final String field, final OType type) {
+  private static OIndexDefinition createSingleFieldIndexDefinition(OClass oClass, final String field, final OType type,
+      OCollate collate) {
     final String fieldName = adjustFieldName(oClass, extractFieldName(field));
     final OIndexDefinition indexDefinition;
 
+    final OProperty propertyToIndex = oClass.getProperty(fieldName);
     final OType indexType;
     if (type == OType.EMBEDDEDMAP || type == OType.LINKMAP) {
       final OPropertyMapIndexDefinition.INDEX_BY indexBy = extractMapIndexSpecifier(field);
@@ -98,7 +108,6 @@ public class OIndexDefinitionFactory {
         if (type == OType.LINKMAP)
           indexType = OType.LINK;
         else {
-          final OProperty propertyToIndex = oClass.getProperty(fieldName);
           indexType = propertyToIndex.getLinkedType();
           if (indexType == null)
             throw new OIndexException("Linked type was not provided."
@@ -111,11 +120,10 @@ public class OIndexDefinitionFactory {
     } else if (type.equals(OType.EMBEDDEDLIST) || type.equals(OType.EMBEDDEDSET) || type.equals(OType.LINKLIST)
         || type.equals(OType.LINKSET)) {
       if (type.equals(OType.LINKSET))
-        throw new OIndexException("LINKSET indexing is not supported.");
+        indexType = OType.LINK;
       else if (type.equals(OType.LINKLIST)) {
         indexType = OType.LINK;
       } else {
-        final OProperty propertyToIndex = oClass.getProperty(fieldName);
         indexType = propertyToIndex.getLinkedType();
         if (indexType == null)
           throw new OIndexException("Linked type was not provided."
@@ -127,6 +135,13 @@ public class OIndexDefinitionFactory {
       indexDefinition = new OPropertyRidBagIndexDefinition(oClass.getName(), fieldName);
     } else
       indexDefinition = new OPropertyIndexDefinition(oClass.getName(), fieldName, type);
+
+    if (collate == null && propertyToIndex != null)
+      collate = propertyToIndex.getCollate();
+
+    if (collate != null)
+      indexDefinition.setCollate(collate);
+
     return indexDefinition;
   }
 

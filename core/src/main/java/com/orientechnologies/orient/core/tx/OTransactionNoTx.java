@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -32,6 +29,9 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * No operation transaction.
@@ -55,9 +55,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
 	}
 
 	public void rollback() {
-  }
-
-  public void close() {
   }
 
   public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,

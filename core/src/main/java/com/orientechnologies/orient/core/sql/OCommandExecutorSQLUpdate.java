@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -23,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.query.OQuery;
@@ -45,13 +48,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+
 /**
  * SQL UPDATE command.
  * 
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware implements OCommandResultListener {
+public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest,
+    OCommandResultListener {
   public static final String                 KEYWORD_UPDATE    = "UPDATE";
   private static final String                KEYWORD_ADD       = "ADD";
   private static final String                KEYWORD_PUT       = "PUT";
@@ -67,7 +72,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
   private Map<String, Number>                incrementEntries  = new LinkedHashMap<String, Number>();
   private ODocument                          merge             = null;
   private String                             lockStrategy      = "NONE";
-  private String                             returning         = "COUNT";
+  private Object                             returnExpression = null;
+  private SQLUpdateReturnModeEnum            returnMode          = SQLUpdateReturnModeEnum.COUNT;
   private List<ORecord<?>>                   allUpdatedRecords;
   private OQuery<?>                          query;
   private OSQLFilter                         compiledFilter;
@@ -134,7 +140,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       else if (word.equals(KEYWORD_UPSERT))
         upsertMode = true;
       else if (word.equals(KEYWORD_RETURN))
-        returning = parseReturn();
+        returnMode = parseReturn();
+      else if (word.equals(KEYWORD_RETRY))
+        parseRetry();
       else
         break;
 
@@ -192,13 +200,31 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     query.setUseCache(false);
     query.setContext(context);
 
-    if (!returning.equalsIgnoreCase("COUNT"))
-      allUpdatedRecords = new ArrayList<ORecord<?>>();
+    allUpdatedRecords = new ArrayList<ORecord<?>>();
 
     if (lockStrategy.equals("RECORD"))
       query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
 
-    getDatabase().query(query, queryArgs);
+    for (int r = 0; r < retry; ++r) {
+      try {
+
+        getDatabase().query(query, queryArgs);
+
+        break;
+
+      } catch (OConcurrentModificationException e) {
+        if (r + 1 >= retry)
+          // NO RETRY; PROPAGATE THE EXCEPTION
+          throw e;
+
+        // RETRY?
+        if (wait > 0)
+          try {
+            Thread.sleep(wait);
+          } catch (InterruptedException e1) {
+          }
+      }
+    }
 
     // IF UPDATE DOES NOT PRODUCE RESULTS AND UPSERT MODE IS ENABLED, CREATE DOCUMENT AND APPLY SET/ADD/PUT/MERGE and so on
     if (upsertMode && recordCount == 0) {
@@ -209,12 +235,36 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       lockStrategy = suspendedLockStrategy;
     }
 
-    if (returning.equalsIgnoreCase("COUNT"))
+    if (returnMode== SQLUpdateReturnModeEnum.COUNT)
       // RETURNS ONLY THE COUNT
       return recordCount;
     else
-      // RETURNS ALL THE DELETED RECORDS
-      return allUpdatedRecords;
+      if (returnExpression ==null)
+      {
+          return allUpdatedRecords;
+      }
+      else
+      {
+          List<Object> result = new ArrayList<Object>();
+          Object itemResult = null;
+          ODocument wrappingDoc = null;
+          for (ORecord o : allUpdatedRecords)
+          {
+            this.getContext().setVariable("current",o);
+            itemResult = OSQLHelper.getValue(returnExpression, (ODocument) ((OIdentifiable) o).getRecord(), this.getContext());
+            // WRAP WITH ODOCUMENT IF NEEDED
+            if (itemResult instanceof OIdentifiable)
+                    result.add(itemResult);
+            else
+            {
+               wrappingDoc =  new ODocument("result",itemResult);
+               wrappingDoc.field("rid",o.getIdentity());// passing record id.In many cases usable on client side
+               wrappingDoc.field("version",o.getVersion());// passing record version
+               result.add(wrappingDoc);
+            }
+          }
+          return result;
+      }
   }
 
   /**
@@ -234,10 +284,12 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     parameters.reset();
 
-    if (returning.equalsIgnoreCase("BEFORE"))
+
+    if (returnMode == SQLUpdateReturnModeEnum.BEFORE)
       allUpdatedRecords.add(record.copy());
-    else if (returning.equalsIgnoreCase("AFTER"))
+    else
       allUpdatedRecords.add(record);
+
 
     if (content != null) {
       // REPLACE ALL THE CONTENT
@@ -286,21 +338,29 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
         // GET THE TYPE IF ANY
         if (record.getSchemaClass() != null) {
           OProperty prop = record.getSchemaClass().getProperty(entry.getKey());
-          if (prop != null && prop.getType() == OType.LINKSET)
+            if (prop != null && prop.getType() == OType.LINKSET)
             // SET TYPE
             coll = new HashSet<Object>();
+            if (prop != null && prop.getType() == OType.LINKBAG)
+            {
+                // there is no ridbag value already but property type is defined as LINKBAG
+                bag = new ORidBag();
+                bag.setOwner(record);
+                record.field(entry.getKey(),bag);
+            }
         }
-
-        if (coll == null)
+         if (coll == null && bag==null)
           // IN ALL OTHER CASES USE A LIST
           coll = new ArrayList<Object>();
-
-        // containField's condition above does NOT check subdocument's fields so
-        Collection<Object> currColl = record.field(entry.getKey());
-        if (currColl == null)
-          record.field(entry.getKey(), coll);
-        else
-          coll = currColl;
+         if (coll!=null)
+         {
+            // containField's condition above does NOT check subdocument's fields so
+            Collection<Object> currColl = record.field(entry.getKey());
+            if (currColl == null)
+              record.field(entry.getKey(), coll);
+            else
+              coll = currColl;
+         }
 
       } else {
         fieldValue = record.field(entry.getKey());
@@ -322,15 +382,21 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       else if (v instanceof OCommandRequest)
         v = ((OCommandRequest) v).execute(record, null, context);
 
-      if (coll != null)
-        coll.add(v);
-      else {
+      if (v instanceof OIdentifiable)
+        // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
+        v = ((OIdentifiable) v).getIdentity();
+
+      if (coll != null) {
+        if (v instanceof OIdentifiable)
+          coll.add(v);
+        else
+          OMultiValue.add(coll, v);
+      } else {
         if (!(v instanceof OIdentifiable))
           throw new OCommandExecutionException("Only links or records can be added to LINKBAG");
 
         bag.add((OIdentifiable) v);
       }
-
       updatedRecords.add(record);
     }
 
@@ -369,6 +435,10 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
           else if (v instanceof OCommandRequest)
             v = ((OCommandRequest) v).execute(record, null, context);
 
+          if (v instanceof OIdentifiable)
+            // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
+            v = ((OIdentifiable) v).getIdentity();
+
           map.put(pair.getKey(), v);
           updatedRecords.add(record);
         }
@@ -379,6 +449,18 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       // REMOVE FIELD IF ANY
       for (OPair<String, Object> entry : removeEntries) {
         v = entry.getValue();
+
+        if (v instanceof OSQLFilterItem)
+          v = ((OSQLFilterItem) v).getValue(record, null, context);
+        else if (entry.getValue() instanceof OSQLFunctionRuntime)
+          v = ((OSQLFunctionRuntime) v).execute(record, record, null, context);
+        else if (v instanceof OCommandRequest)
+          v = ((OCommandRequest) v).execute(record, null, context);
+
+        if (v instanceof OIdentifiable)
+          // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
+          v = ((OIdentifiable) v).getIdentity();
+
         if (v == EMPTY_VALUE) {
           record.removeField(entry.getKey());
           updatedRecords.add(record);
@@ -416,6 +498,15 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
     return true;
   }
 
+  @Override
+  public String getSyntax() {
+    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
+  }
+
+  @Override
+  public void end() {
+  }
+
   protected void parseMerge() {
     if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE)) {
       final String contentAsString = parserRequiredWord(false, "document to merge expected").trim();
@@ -425,6 +516,25 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
 
     if (merge == null)
       throwSyntaxErrorException("Document to merge not provided. Example: MERGE { \"name\": \"Jay\" }");
+  }
+
+  protected String getBlock(String fieldValue) {
+    final int startPos = parserGetCurrentPosition();
+
+    if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
+      if (startPos > 0)
+        parserSetCurrentPosition(startPos - fieldValue.length());
+      else
+        parserSetCurrentPosition(parserText.length() - fieldValue.length());
+
+      parserSkipWhiteSpaces();
+      final StringBuilder buffer = new StringBuilder();
+      parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
+          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, -1, false,
+          OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
+      fieldValue = buffer.toString();
+    }
+    return fieldValue;
   }
 
   private void parseAddFields() {
@@ -485,7 +595,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
           parserGoBack();
           value = EMPTY_VALUE;
         } else {
-          fieldValue = getBlock(parserRequiredWord(false, "Value expected"));
+          fieldValue = getBlock(parserRequiredWord(false, "Value expected", " =><,\r\n"));
           value = getFieldValueCountingParameters(fieldValue);
         }
       else
@@ -520,24 +630,43 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLSetAware imple
       throwSyntaxErrorException("Entries to increment <field> = <value> are missed. Example: salary = -100");
   }
 
-  @Override
-  public String getSyntax() {
-    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
-  }
+    /**
+     * Parses the returning keyword if found.
+     */
+    protected SQLUpdateReturnModeEnum parseReturn() throws OCommandSQLParsingException {
+        parserNextWord(false," ");
+        String returning = parserGetLastWord().trim();
+        String optionalExp = "";
 
-  @Override
-  public void end() {
-  }
+        if (returning.equalsIgnoreCase("COUNT"))
+        {
+            returnMode = SQLUpdateReturnModeEnum.COUNT;
+            returnExpression = null;
+        }else
+        if (returning.equalsIgnoreCase("BEFORE") || returning.equalsIgnoreCase("AFTER"))
+        {
+            returnMode = (returning.equalsIgnoreCase("BEFORE"))? SQLUpdateReturnModeEnum.BEFORE : SQLUpdateReturnModeEnum.AFTER;
+            parserNextWord(false," ");
+            returning = parserGetLastWord().trim();
+            if (returning.equalsIgnoreCase(KEYWORD_WHERE) || returning.equalsIgnoreCase(KEYWORD_TIMEOUT) || returning.equalsIgnoreCase(KEYWORD_LIMIT)
+                    || returning.equalsIgnoreCase(KEYWORD_UPSERT) || returning.equalsIgnoreCase(KEYWORD_LOCK) || returning.length()==0)
+            {
+                returnExpression = null;
+                parserGoBack();
+            }
+            else
+            {
+                if (returning.startsWith("$") || returning.startsWith("@"))
+                    returnExpression = (returning.length()>0) ? OSQLHelper.parseValue(this, returning,this.getContext()) : null;
+                else
+                    throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
 
-  protected String getBlock(String fieldValue) {
-    if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
-      parserSkipWhiteSpaces();
-      final StringBuilder buffer = new StringBuilder();
-      parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
-          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, -1, false,
-          OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
-      fieldValue = buffer.toString();
+            }
+        }else
+            throwSyntaxErrorException(" COUNT | BEFORE | AFTER keywords expected");
+
+
+        return returnMode;
     }
-    return fieldValue;
-  }
+
 }

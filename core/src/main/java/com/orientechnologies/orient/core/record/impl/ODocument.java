@@ -15,6 +15,16 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -27,7 +37,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.iterator.OEmptyIterator;
+import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -39,16 +49,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -226,10 +227,10 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * @param iFieldMap
    *          Map of Object/Object
    */
-  public ODocument(final Map<? extends Object, Object> iFieldMap) {
+  public ODocument(final Map<?, Object> iFieldMap) {
     setup();
     if (iFieldMap != null && !iFieldMap.isEmpty())
-      for (Entry<? extends Object, Object> entry : iFieldMap.entrySet()) {
+      for (Entry<?, Object> entry : iFieldMap.entrySet()) {
         field(entry.getKey().toString(), entry.getValue());
       }
   }
@@ -267,16 +268,21 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     destination._trackingChanges = _trackingChanges;
     if (_owners != null)
       destination._owners = new ArrayList<WeakReference<ORecordElement>>(_owners);
+    else
+      destination._owners = null;
 
     if (_fieldValues != null) {
       destination._fieldValues = _fieldValues instanceof LinkedHashMap ? new LinkedHashMap<String, Object>()
           : new HashMap<String, Object>();
       for (Entry<String, Object> entry : _fieldValues.entrySet())
         ODocumentHelper.copyFieldValue(destination, entry);
-    }
+    } else
+      destination._fieldValues = null;
 
     if (_fieldTypes != null)
       destination._fieldTypes = new HashMap<String, OType>(_fieldTypes);
+    else
+      destination._fieldTypes = null;
 
     destination._fieldChangeListeners = null;
     destination._fieldCollectionChangeTimeLines = null;
@@ -302,7 +308,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   /**
    * Returns an empty record as place-holder of the current. Used when a record is requested, but only the identity is needed.
    * 
-   * @return
+   * @return placeholder of this document
    */
   public ORecord<?> placeholder() {
     final ODocument cloned = new ODocument();
@@ -366,7 +372,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    *          Ignore the cache or use it
    */
   public ODocument load(final String iFetchPlan, boolean iIgnoreCache) {
-    Object result = null;
+    Object result;
     try {
       result = getDatabase().load(this, iFetchPlan, iIgnoreCache);
     } catch (Exception e) {
@@ -553,7 +559,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     final OType t = fieldType(iFieldName);
 
-    if (_lazyLoad && value instanceof ORID && (((ORID) value).isPersistent() || ((ORID) value).isNew()) && t != OType.LINK
+    if (!iFieldName.startsWith("@") && _lazyLoad && value instanceof ORID
+        && (((ORID) value).isPersistent() || ((ORID) value).isNew()) && t != OType.LINK
         && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
       value = (RET) getDatabase().load((ORID) value);
@@ -797,6 +804,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
       if (iPropertyValue instanceof ORidBag) {
         final ORidBag ridBag = (ORidBag) iPropertyValue;
+        ridBag.setOwner(null); // in order to avoid IllegalStateException when ridBag changes the owner (ODocument.merge)
         ridBag.setOwner(this);
       }
     }
@@ -986,7 +994,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     checkForFields();
 
     if (_fieldValues == null)
-      return OEmptyIterator.INSTANCE;
+      return OEmptyMapEntryIterator.INSTANCE;
 
     final Iterator<Entry<String, Object>> iterator = _fieldValues.entrySet().iterator();
     return new Iterator<Entry<String, Object>>() {
@@ -1052,7 +1060,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   /**
    * Internal.
    * 
-   * @return
+   * @return this
    */
   public ODocument addOwner(final ORecordElement iOwner) {
     if (_owners == null)
@@ -1200,7 +1208,20 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   /**
-   * Clears all the field values and types.
+   * <p>
+   * Clears all the field values and types. Clears only record content, but saves its identity.
+   * </p>
+   * 
+   * <p>
+   * The following code will clear all data from specified document.
+   * </p>
+   * <code>
+   *   doc.clear();
+   *   doc.save();
+   * </code>
+   * 
+   * @return this
+   * @see #reset()
    */
   @Override
   public ODocument clear() {
@@ -1211,7 +1232,28 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   /**
-   * Resets the record values and class type to being reused. This can be used only if no transactions are begun.
+   * <p>
+   * Resets the record values and class type to being reused. It's like you create a ODocument from scratch. This method is handy
+   * when you want to insert a bunch of documents and don't want to strain GC.
+   * </p>
+   * 
+   * <p>
+   * The following code will create a new document in database.
+   * </p>
+   * <code>
+   *   doc.clear();
+   *   doc.save();
+   * </code>
+   * 
+   * <p>
+   * IMPORTANT! This can be used only if no transactions are begun.
+   * </p>
+   * 
+   * @return this
+   * @throws IllegalStateException
+   *           if transaction is begun.
+   * 
+   * @see #clear()
    */
   @Override
   public ODocument reset() {
@@ -1367,7 +1409,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   @Override
   public ODocument save(boolean forceCreate) {
     if (_clazz != null)
-      return save(getDatabase().getClusterNameById(_clazz.getDefaultClusterId()), forceCreate);
+      return save(getDatabase().getClusterNameById(_clazz.getClusterForNewInstance()), forceCreate);
 
     convertAllMultiValuesToTrackedVersions();
     validate();
@@ -1480,7 +1522,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         fieldsToUpdate
             .put(fieldEntry.getKey(), new OTrackedMap<OIdentifiable>(this, (Map<Object, OIdentifiable>) fieldValue, null));
       else if (fieldValue instanceof Set && fieldType.equals(OType.LINKSET) && !(fieldValue instanceof OTrackedMultiValue))
-        fieldsToUpdate.put(fieldEntry.getKey(), new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue));
+        fieldsToUpdate.put(fieldEntry.getKey(), new OMVRBTreeRIDSet(this, (Collection<OIdentifiable>) fieldValue));
       else if (fieldValue instanceof List && fieldType.equals(OType.LINKLIST) && !(fieldValue instanceof OTrackedMultiValue))
         fieldsToUpdate.put(fieldEntry.getKey(), new ORecordLazyList(this, (List<OIdentifiable>) fieldValue));
       else if (fieldValue instanceof Map && fieldType.equals(OType.LINKMAP) && !(fieldValue instanceof OTrackedMultiValue))
@@ -1550,6 +1592,9 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     if (_fieldValues != null)
       _fieldValues.clear();
+
+    if (_fieldTypes != null)
+      _fieldTypes.clear();
   }
 
   @Override

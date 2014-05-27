@@ -15,16 +15,15 @@
         -->
         <fileSet>
             <directory>${basedir}/../server/benchmarks</directory>
-            <outputDirectory>benchmark</outputDirectory>
+            <outputDirectory>benchmarks</outputDirectory>
             <excludes>
                 <exclude>*.sh</exclude>
             </excludes>
-            <fileMode>644</fileMode>
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../server/benchmarks</directory>
-            <outputDirectory>benchmark</outputDirectory>
+            <outputDirectory>benchmarks</outputDirectory>
             <includes>
                 <include>*.sh</include>
             </includes>
@@ -139,6 +138,10 @@
             <directory>${basedir}/../graphdb/config</directory>
             <outputDirectory>config</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>${basedir}/../server/config/cert</directory>
+            <outputDirectory>config/cert</outputDirectory>
+        </fileSet>        
 
         <!--
          | Plugins

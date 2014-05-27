@@ -87,10 +87,12 @@ public class ConcurrentUpdatesTest {
             } catch (OResponseProcessingException e) {
               Assert.assertTrue(e.getCause() instanceof ONeedRetryException);
 
-              System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES + "...");
+              // System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES +
+              // "...");
               Thread.sleep(retry * 10);
             } catch (ONeedRetryException e) {
-              System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES + "...");
+              // System.out.println("Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/" + MAX_RETRIES +
+              // "...");
               Thread.sleep(retry * 10);
             }
           }
@@ -138,16 +140,16 @@ public class ConcurrentUpdatesTest {
               if (e.getCause() instanceof ONeedRetryException) {
                 Assert.assertTrue(e.getCause() instanceof ONeedRetryException);
 
-                System.out.println("SQL UPDATE - Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/"
-                    + MAX_RETRIES + "...");
+                // System.out.println("SQL UPDATE - Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/"
+                // + MAX_RETRIES + "...");
                 // Thread.sleep(retry * 10);
               } else {
                 e.printStackTrace();
                 Assert.assertTrue(false);
               }
             } catch (ONeedRetryException e) {
-              System.out.println("SQL UPDATE - Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/"
-                  + MAX_RETRIES + "...");
+              // System.out.println("SQL UPDATE - Retry " + Thread.currentThread().getName() + " " + i + " - " + retry + "/"
+              // + MAX_RETRIES + "...");
               // Thread.sleep(retry * 10);
             }
             // System.out.println("thread " + threadName + " counter " + counter.get());
@@ -304,6 +306,7 @@ public class ConcurrentUpdatesTest {
     for (int i = 0; i < THREADS; ++i)
       databases[i].close();
 
-    System.out.println("Test " + (lock ? "LOCK" : "") + " completed in " + (System.currentTimeMillis() - startedOn));
+    System.out.println("concurrentOptimisticSQLUpdates Test " + (lock ? "LOCK" : "") + " completed in "
+        + (System.currentTimeMillis() - startedOn));
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -30,10 +31,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * SQL CREATE INDEX command: Create a new index against a property.
@@ -54,14 +52,15 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
   public static final String KEYWORD_METADATA = "METADATA";
   public static final String KEYWORD_ENGINE   = "ENGINE";
 
-  private String            indexName;
-  private OClass            oClass;
-  private String[]          fields;
-  private OClass.INDEX_TYPE indexType;
-  private OType[]           keyTypes;
-  private byte              serializerKeyId;
-  private String            engine;
-  private ODocument metadataDoc = null;
+  private String             indexName;
+  private OClass             oClass;
+  private String[]           fields;
+  private OClass.INDEX_TYPE  indexType;
+  private OType[]            keyTypes;
+  private byte               serializerKeyId;
+  private String             engine;
+  private ODocument          metadataDoc      = null;
+  private String[]           collates;
 
   public OCommandExecutorSQLCreateIndex parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
@@ -109,14 +108,33 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       final String props = parserText.substring(oldPos, pos).trim().substring(1);
 
       List<String> propList = new ArrayList<String>();
-      for (String propToIndex : props.trim().split("\\s*,\\s*")) {
+      Collections.addAll(propList, props.trim().split("\\s*,\\s*"));
+
+      fields = new String[propList.size()];
+      propList.toArray(fields);
+
+      for (int i = 0; i < fields.length; i++) {
+        final String fieldName = fields[i];
+
+        final int collatePos = fieldName.toUpperCase().indexOf(" COLLATE ");
+
+        if (collatePos > 0) {
+          if (collates == null)
+            collates = new String[fields.length];
+
+          collates[i] = fieldName.substring(collatePos + " COLLATE ".length()).toLowerCase().trim();
+          fields[i] = fieldName.substring(0, collatePos);
+        } else {
+          if (collates != null)
+            collates[i] = null;
+        }
+      }
+
+      for (String propToIndex : fields) {
         checkMapIndexSpecifier(propToIndex, parserText, oldPos);
 
         propList.add(propToIndex);
       }
-
-      fields = new String[propList.size()];
-      propList.toArray(fields);
 
       oldPos = pos + 1;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
@@ -145,7 +163,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     if (word.toString().equals(KEYWORD_ENGINE)) {
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-
+      oldPos = pos;
       engine = word.toString().toUpperCase();
     } else
       parserGoBack();
@@ -202,18 +220,37 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
     if (fields == null || fields.length == 0) {
       if (keyTypes != null)
         idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes), null, null, metadataDoc);
+            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes), null, null, metadataDoc, engine);
       else if (serializerKeyId != 0) {
-        idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null, metadataDoc);
+        idx = database
+            .getMetadata()
+            .getIndexManager()
+            .createIndex(indexName, indexType.toString(), new ORuntimeKeyIndexDefinition(serializerKeyId), null, null, metadataDoc,
+                engine);
       } else
-        idx = database.getMetadata().getIndexManager().createIndex(indexName, indexType.toString(), null, null, null, metadataDoc);
+        idx = database.getMetadata().getIndexManager()
+            .createIndex(indexName, indexType.toString(), null, null, null, metadataDoc, engine);
     } else {
-      if (keyTypes == null || keyTypes.length == 0) {
-        idx = oClass.createIndex(indexName, indexType.toString(), null, metadataDoc, fields);
+      if ((keyTypes == null || keyTypes.length == 0) && collates == null) {
+        idx = oClass.createIndex(indexName, indexType.toString(), null, metadataDoc, engine, fields);
       } else {
+
+        List<OCollate> collatesList = null;
+
+        if (collates != null) {
+          collatesList = new ArrayList<OCollate>();
+
+          for (String collate : collates) {
+            if (collate != null) {
+              final OCollate col = OSQLEngine.getCollate(collate);
+              collatesList.add(col);
+            } else
+              collatesList.add(null);
+          }
+        }
+
         final OIndexDefinition idxDef = OIndexDefinitionFactory.createIndexDefinition(oClass, Arrays.asList(fields),
-            Arrays.asList(keyTypes));
+            Arrays.asList(keyTypes), collatesList);
 
         idx = database.getMetadata().getIndexManager()
             .createIndex(indexName, indexType.name(), idxDef, oClass.getPolymorphicClusterIds(), null, metadataDoc, engine);

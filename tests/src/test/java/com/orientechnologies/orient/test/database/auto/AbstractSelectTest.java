@@ -1,17 +1,17 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.testng.Assert;
+
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import org.testng.Assert;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class AbstractSelectTest {
   protected List<ODocument> executeQuery(String sql, ODatabaseDocument db, Object... args) {
@@ -33,7 +33,8 @@ public abstract class AbstractSelectTest {
     }), args);
 
     Assert.assertTrue(endWasCalled.get());
-    Assert.assertTrue(ODocumentHelper.compareCollections(db, synchResult, db, asynchResult, null));
+    Assert.assertTrue(ODocumentHelper.compareCollections(db, synchResult, db, asynchResult, null),
+        "Synch: " + synchResult.toString() + ", but asynch: " + asynchResult.toString());
 
     return synchResult;
   }

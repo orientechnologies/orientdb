@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
@@ -89,13 +88,13 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     if (cls != null) {
       final Collection<OIndex<?>> indexes = cls.getIndexes();
       for (final OIndex<?> index : indexes) {
-        final Object key = index.getDefinition().getDocumentValueToIndex(document);
-        // SAVE A COPY TO AVOID PROBLEM ON RECYCLING OF THE RECORD
+        final OIndexDefinition indexDefinition = index.getDefinition();
+        final Object key = indexDefinition.getDocumentValueToIndex(document);
         if (key instanceof Collection) {
           for (final Object keyItem : (Collection<?>) key)
-            if (keyItem != null)
+            if (!indexDefinition.isNullValuesIgnored() || keyItem != null)
               index.put(keyItem, rid);
-        } else if (key != null)
+        } else if (!indexDefinition.isNullValuesIgnored() || key != null)
           index.put(key, rid);
       }
 
@@ -285,10 +284,10 @@ public class OClassIndexManager extends ODocumentHookAbstract {
           final Object origValue = indexDefinition.createValue(origValues);
           final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
 
-          if (origValue != null)
+          if (!indexDefinition.isNullValuesIgnored() || origValue != null)
             index.remove(origValue, iRecord);
 
-          if (newValue != null)
+          if (!indexDefinition.isNullValuesIgnored() || newValue != null)
             index.put(newValue, iRecord.placeholder());
         } else {
           final OMultiValueChangeTimeLine<?, ?> multiValueChangeTimeLine = iRecord.getCollectionTimeLine(multiValueField);
@@ -372,6 +371,8 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   private static void processIndexUpdateFieldAssignment(OIndex<?> index, ODocument iRecord, final Object origValue,
       final Object newValue) {
+
+    final OIndexDefinition indexDefinition = index.getDefinition();
     if ((origValue instanceof Collection) && (newValue instanceof Collection)) {
       final Set<Object> valuesToRemove = new HashSet<Object>((Collection<?>) origValue);
       final Set<Object> valuesToAdd = new HashSet<Object>((Collection<?>) newValue);
@@ -380,13 +381,13 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       valuesToAdd.removeAll((Collection<?>) origValue);
 
       for (final Object valueToRemove : valuesToRemove) {
-        if (valueToRemove != null) {
+        if (!indexDefinition.isNullValuesIgnored() || valueToRemove != null) {
           index.remove(valueToRemove, iRecord);
         }
       }
 
       for (final Object valueToAdd : valuesToAdd) {
-        if (valueToAdd != null) {
+        if (!indexDefinition.isNullValuesIgnored() || valueToAdd != null) {
           index.put(valueToAdd, iRecord);
         }
       }
@@ -397,7 +398,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         for (final Object newValueItem : (Collection<?>) newValue) {
           index.put(newValueItem, iRecord.placeholder());
         }
-      } else if (newValue != null) {
+      } else if (!indexDefinition.isNullValuesIgnored() || newValue != null) {
         index.put(newValue, iRecord.placeholder());
       }
     }
@@ -444,12 +445,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   private static void deleteIndexKey(final OIndex<?> index, final ODocument iRecord, final Object origValue) {
+    final OIndexDefinition indexDefinition = index.getDefinition();
+
     if (origValue instanceof Collection) {
       for (final Object valueItem : (Collection<?>) origValue) {
-        if (valueItem != null)
+        if (!indexDefinition.isNullValuesIgnored() || valueItem != null)
           index.remove(valueItem, iRecord);
       }
-    } else if (origValue != null) {
+    } else if (!indexDefinition.isNullValuesIgnored() || origValue != null) {
       index.remove(origValue, iRecord);
     }
   }
@@ -502,14 +505,15 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   private static void checkIndexedPropertiesOnCreation(final ODocument iRecord, final Collection<OIndex<?>> iIndexes) {
     for (final OIndex<?> index : iIndexes) {
+      final OIndexDefinition indexDefinition = index.getDefinition();
       final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
       if (key instanceof Collection) {
         for (final Object keyItem : (Collection<?>) key) {
-          if (keyItem != null)
+          if (!indexDefinition.isNullValuesIgnored() || keyItem != null)
             index.checkEntry(iRecord, keyItem);
         }
       } else {
-        if (key != null)
+        if (!indexDefinition.isNullValuesIgnored() || key != null)
           index.checkEntry(iRecord, key);
       }
     }
@@ -528,11 +532,11 @@ public class OClassIndexManager extends ODocumentHookAbstract {
           final Object key = index.getDefinition().getDocumentValueToIndex(iRecord);
           if (key instanceof Collection) {
             for (final Object keyItem : (Collection<?>) key) {
-              if (keyItem != null)
+              if (!indexDefinition.isNullValuesIgnored() || keyItem != null)
                 index.checkEntry(iRecord, keyItem);
             }
           } else {
-            if (key != null)
+            if (!indexDefinition.isNullValuesIgnored() || key != null)
               index.checkEntry(iRecord, key);
           }
           break;

@@ -15,17 +15,16 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import org.junit.Assert;
-
 import com.hazelcast.core.Hazelcast;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.junit.Assert;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Test class that creates and executes distributed operations against a cluster of servers created in the same JVM.
@@ -38,80 +37,6 @@ public abstract class AbstractServerClusterTest {
   protected List<ServerRun> serverInstance     = new ArrayList<ServerRun>();
 
   protected AbstractServerClusterTest() {
-  }
-
-  protected abstract String getDatabaseName();
-
-  /**
-   * Event called right after the database has been created and right before to be replicated to the X servers
-   * 
-   * @param db
-   *          Current database
-   */
-  protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db) {
-  }
-
-  protected abstract void executeTest() throws Exception;
-
-  public void init(final int servers) {
-    Orient.setRegisterDatabaseByPath(true);
-    for (int i = 0; i < servers; ++i)
-      serverInstance.add(new ServerRun(rootDirectory, "" + i));
-  }
-
-  public void execute() throws Exception {
-    System.out.println("Starting test against " + serverInstance.size() + " server nodes...");
-
-    for (ServerRun server : serverInstance) {
-      server.startServer("orientdb-dserver-config-" + server.getServerId() + ".xml");
-      try {
-        Thread.sleep(delayServerStartup * serverInstance.size());
-      } catch (InterruptedException e) {
-      }
-    }
-
-    try {
-      System.out.println("Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000)
-          + "secs)...");
-      Thread.sleep(delayServerAlign * serverInstance.size());
-    } catch (InterruptedException e) {
-    }
-
-    for (ServerRun server : serverInstance) {
-      final ODocument cfg = server.getServerInstance().getDistributedManager().getClusterConfiguration();
-      Assert.assertNotNull(cfg);
-      // Assert.assertEquals(((Collection<?>) cfg.field("members")).size(), serverInstance.size());
-    }
-
-    System.out.println("Executing test...");
-
-    try {
-      executeTest();
-    } finally {
-      for (ServerRun server : serverInstance)
-        server.shutdownServer();
-      Hazelcast.shutdownAll();
-      System.out.println("Test finished");
-    }
-  }
-
-  protected void prepare() throws IOException {
-    // CREATE THE DATABASE
-    final Iterator<ServerRun> it = serverInstance.iterator();
-    final ServerRun master = it.next();
-
-    final ODatabaseDocumentTx db = master.createDatabase(getDatabaseName());
-    try {
-      onAfterDatabaseCreation(db);
-    } finally {
-      db.close();
-    }
-
-    // COPY DATABASE TO OTHER SERVERS
-    while (it.hasNext()) {
-      final ServerRun replicaSrv = it.next();
-      master.copyDatabase(getDatabaseName(), replicaSrv.getDatabasePath(getDatabaseName()));
-    }
   }
 
   @SuppressWarnings("unchecked")
@@ -137,11 +62,11 @@ public abstract class AbstractServerClusterTest {
     main.init(servers);
 
     if (command.equals("prepare"))
-      main.prepare();
+      main.prepare(true);
     else if (command.equals("execute"))
       main.execute();
     else if (command.equals("prepare+execute")) {
-      main.prepare();
+      main.prepare(true);
       main.execute();
     } else
       System.out.println("Usage: prepare, execute or prepare+execute ...");
@@ -152,4 +77,92 @@ public abstract class AbstractServerClusterTest {
         .println("Syntax error. Usage: <class> <operation> [<servers>]\nWhere <operation> can be: prepare|execute|prepare+execute");
     System.exit(1);
   }
+
+  public void init(final int servers) {
+    Orient.setRegisterDatabaseByPath(true);
+    for (int i = 0; i < servers; ++i)
+      serverInstance.add(new ServerRun(rootDirectory, "" + i));
+  }
+
+  public void execute() throws Exception {
+    System.out.println("Starting test against " + serverInstance.size() + " server nodes...");
+
+    for (ServerRun server : serverInstance) {
+      server.startServer(getDistributedServerConfiguration(server));
+      try {
+        Thread.sleep(delayServerStartup * serverInstance.size());
+      } catch (InterruptedException e) {
+      }
+    }
+
+    try {
+      System.out.println("Server started, waiting for synchronization (" + (delayServerAlign * serverInstance.size() / 1000)
+          + "secs)...");
+      Thread.sleep(delayServerAlign * serverInstance.size());
+    } catch (InterruptedException e) {
+    }
+
+    for (ServerRun server : serverInstance) {
+      final ODocument cfg = server.getServerInstance().getDistributedManager().getClusterConfiguration();
+      Assert.assertNotNull(cfg);
+    }
+
+    System.out.println("Executing test...");
+
+    try {
+      executeTest();
+    } finally {
+      System.out.println("Shutting down nodes...");
+      for (ServerRun server : serverInstance)
+        server.shutdownServer();
+      Hazelcast.shutdownAll();
+      System.out.println("Test finished");
+    }
+  }
+
+  protected abstract String getDatabaseName();
+
+  /**
+   * Event called right after the database has been created and right before to be replicated to the X servers
+   * 
+   * @param db
+   *          Current database
+   */
+  protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db) {
+  }
+
+  protected abstract void executeTest() throws Exception;
+
+  /**
+   * Create the database on first node only
+   * 
+   * @throws IOException
+   */
+  protected void prepare(final boolean iCopyDatabaseToNodes) throws IOException {
+    // CREATE THE DATABASE
+    final Iterator<ServerRun> it = serverInstance.iterator();
+    final ServerRun master = it.next();
+
+    final ODatabaseDocumentTx db = master.createDatabase(getDatabaseName());
+    try {
+      onAfterDatabaseCreation(db);
+    } finally {
+      db.close();
+    }
+
+    // COPY DATABASE TO OTHER SERVERS
+    while (it.hasNext()) {
+      final ServerRun replicaSrv = it.next();
+
+      replicaSrv.deleteNode();
+
+      if (iCopyDatabaseToNodes)
+        master.copyDatabase(getDatabaseName(), replicaSrv.getDatabasePath(getDatabaseName()));
+    }
+  }
+
+  protected String getDistributedServerConfiguration(final ServerRun server) {
+    return "orientdb-dserver-config-" + server.getServerId() + ".xml";
+  }
+
 }

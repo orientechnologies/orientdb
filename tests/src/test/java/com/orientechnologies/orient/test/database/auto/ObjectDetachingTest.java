@@ -400,6 +400,28 @@ public class ObjectDetachingTest {
     }
   }
 
+  public void testAttachDetachJavaInstances() {
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+    try {
+      JavaAttachDetachTestClass attach = new JavaAttachDetachTestClass();
+      attach.setText("xxx");
+      attach = database.save(attach);
+      attach = database.detach(attach, true);
+      Assert.assertEquals(attach.getText(), "xxx");
+
+      JavaAttachDetachTestClass second = new JavaAttachDetachTestClass();
+      second.setText("xxx");
+      second = database.save(second);
+      Assert.assertEquals(second.getText(), "xxx");
+      second.setText("yyy");
+      second = database.save(second);
+      second = database.detach(second, true);
+      Assert.assertEquals(second.getText(), "yyy"); // this line throws an NPE, because getValue()
+    } finally {
+      database.close();
+    }
+  }
+
   public void testDetachAll() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -742,4 +764,5 @@ public class ObjectDetachingTest {
       database.close();
     }
   }
+
 }

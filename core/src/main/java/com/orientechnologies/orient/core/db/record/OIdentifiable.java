@@ -40,4 +40,8 @@ public interface OIdentifiable extends Comparable<OIdentifiable>, Comparator<OId
    * @return ORecord instance
    */
   public <T extends ORecord<?>> T getRecord();
+
+  public void lock(boolean iExclusive);
+
+  public void unlock();
 }

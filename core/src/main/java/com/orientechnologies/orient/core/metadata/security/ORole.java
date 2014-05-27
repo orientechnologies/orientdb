@@ -15,17 +15,17 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Contains the user settings about security and permissions roles.<br/>
@@ -40,17 +40,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  */
 @SuppressWarnings("unchecked")
 public class ORole extends ODocumentWrapper {
-  private static final long  serialVersionUID = 1L;
-
-  public static final String ADMIN            = "admin";
-  public static final String CLASS_NAME       = "ORole";
-
-  public enum ALLOW_MODES {
-    DENY_ALL_BUT, ALLOW_ALL_BUT
-  }
-
-  // CRUD OPERATIONS
-  private static Map<Integer, String> PERMISSION_BIT_NAMES;
+  public static final String          ADMIN             = "admin";
+  public static final String          CLASS_NAME        = "ORole";
   public final static int             PERMISSION_NONE   = 0;
   public final static int             PERMISSION_CREATE = registerPermissionBit(0, "Create");
   public final static int             PERMISSION_READ   = registerPermissionBit(1, "Read");
@@ -58,13 +49,18 @@ public class ORole extends ODocumentWrapper {
   public final static int             PERMISSION_DELETE = registerPermissionBit(3, "Delete");
   public final static int             PERMISSION_ALL    = PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
                                                             + PERMISSION_DELETE;
-
   protected final static byte         STREAM_DENY       = 0;
   protected final static byte         STREAM_ALLOW      = 1;
-
+  private static final long           serialVersionUID  = 1L;
+  // CRUD OPERATIONS
+  private static Map<Integer, String> PERMISSION_BIT_NAMES;
   protected ALLOW_MODES               mode              = ALLOW_MODES.DENY_ALL_BUT;
   protected ORole                     parentRole;
   protected Map<String, Byte>         rules             = new LinkedHashMap<String, Byte>();
+
+  public enum ALLOW_MODES {
+    DENY_ALL_BUT, ALLOW_ALL_BUT
+  }
 
   /**
    * Constructor used in unmarshalling.
@@ -88,6 +84,49 @@ public class ORole extends ODocumentWrapper {
     fromStream(iSource);
   }
 
+  /**
+   * Convert the permission code to a readable string.
+   * 
+   * @param iPermission
+   *          Permission to convert
+   * @return String representation of the permission
+   */
+  public static String permissionToString(final int iPermission) {
+    int permission = iPermission;
+    final StringBuilder returnValue = new StringBuilder();
+    for (Entry<Integer, String> p : PERMISSION_BIT_NAMES.entrySet()) {
+      if ((permission & p.getKey()) == p.getKey()) {
+        if (returnValue.length() > 0)
+          returnValue.append(", ");
+        returnValue.append(p.getValue());
+        permission &= ~p.getKey();
+      }
+    }
+    if (permission != 0) {
+      if (returnValue.length() > 0)
+        returnValue.append(", ");
+      returnValue.append("Unknown 0x");
+      returnValue.append(Integer.toHexString(permission));
+    }
+
+    return returnValue.toString();
+  }
+
+  public static int registerPermissionBit(final int iBitNo, final String iName) {
+    if (iBitNo < 0 || iBitNo > 31)
+      throw new IndexOutOfBoundsException("Permission bit number must be positive and less than 32");
+
+    final int value = 1 << iBitNo;
+    if (PERMISSION_BIT_NAMES == null)
+      PERMISSION_BIT_NAMES = new HashMap<Integer, String>();
+
+    if (PERMISSION_BIT_NAMES.containsKey(value))
+      throw new IndexOutOfBoundsException("Permission bit number " + String.valueOf(iBitNo) + " already in use");
+
+    PERMISSION_BIT_NAMES.put(value, iName);
+    return value;
+  }
+
   @Override
   @OBeforeDeserialization
   public void fromStream(final ODocument iSource) {
@@ -97,7 +136,9 @@ public class ORole extends ODocumentWrapper {
     document = iSource;
 
     try {
-      mode = ((Number) document.field("mode")).byteValue() == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT : ALLOW_MODES.DENY_ALL_BUT;
+      final Number modeField = document.field("mode");
+      mode = modeField == null ? ALLOW_MODES.DENY_ALL_BUT : modeField.byteValue() == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT
+          : ALLOW_MODES.DENY_ALL_BUT;
     } catch (Exception ex) {
       OLogManager.instance().error(this, "illegal mode " + ex.getMessage());
       mode = ALLOW_MODES.DENY_ALL_BUT;
@@ -225,48 +266,5 @@ public class ORole extends ODocumentWrapper {
   @Override
   public String toString() {
     return getName();
-  }
-
-  /**
-   * Convert the permission code to a readable string.
-   * 
-   * @param iPermission
-   *          Permission to convert
-   * @return String representation of the permission
-   */
-  public static String permissionToString(final int iPermission) {
-    int permission = iPermission;
-    final StringBuilder returnValue = new StringBuilder();
-    for (Entry<Integer, String> p : PERMISSION_BIT_NAMES.entrySet()) {
-      if ((permission & p.getKey()) == p.getKey()) {
-        if (returnValue.length() > 0)
-          returnValue.append(", ");
-        returnValue.append(p.getValue());
-        permission &= ~p.getKey();
-      }
-    }
-    if (permission != 0) {
-      if (returnValue.length() > 0)
-        returnValue.append(", ");
-      returnValue.append("Unknown 0x");
-      returnValue.append(Integer.toHexString(permission));
-    }
-
-    return returnValue.toString();
-  }
-
-  public static int registerPermissionBit(final int iBitNo, final String iName) {
-    if (iBitNo < 0 || iBitNo > 31)
-      throw new IndexOutOfBoundsException("Permission bit number must be positive and less than 32");
-
-    final int value = 1 << iBitNo;
-    if (PERMISSION_BIT_NAMES == null)
-      PERMISSION_BIT_NAMES = new HashMap<Integer, String>();
-
-    if (PERMISSION_BIT_NAMES.containsKey(value))
-      throw new IndexOutOfBoundsException("Permission bit number " + String.valueOf(iBitNo) + " already in use");
-
-    PERMISSION_BIT_NAMES.put(value, iName);
-    return value;
   }
 }

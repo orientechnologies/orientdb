@@ -22,10 +22,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Transforms current value in a List.
@@ -65,14 +63,14 @@ public class OSQLMethodAsList extends OAbstractSQLMethod {
       final List<Object> list = ioResult instanceof OSizeable ? new ArrayList<Object>(((OSizeable) ioResult).size())
           : new ArrayList<Object>();
 
-      for (Iterator<Object> iter = (Iterator<Object>) ioResult; iter.hasNext(); ) {
+      for (Iterator<Object> iter = (Iterator<Object>) ioResult; iter.hasNext();) {
         list.add(iter.next());
       }
       return list;
     }
 
     // SINGLE ITEM: ADD IT AS UNIQUE ITEM
-    final Set<Object> list = new HashSet<Object>();
+    final List<Object> list = new ArrayList<Object>();
     list.add(ioResult);
     return list;
   }

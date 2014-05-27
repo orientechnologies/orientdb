@@ -220,11 +220,7 @@ public class PropertyIndexTest {
       oClass.getProperty("prop4").dropIndexes();
       Assert.fail();
     } catch (IllegalArgumentException e) {
-      Assert.assertEquals(e.getMessage(), "This operation applicable only for property indexes. "
-          + "PropertyIndexSecondIndex is OCompositeIndexDefinition{indexDefinitions=["
-          + "OPropertyIndexDefinition{className='PropertyIndexTestClass', field='prop4', keyType=INTEGER}, "
-          + "OPropertyIndexDefinition{className='PropertyIndexTestClass', field='prop5', keyType=STRING}], "
-          + "className='PropertyIndexTestClass'}");
+      Assert.assertTrue(e.getMessage().contains("This operation applicable only for property indexes. "));
     }
 
     Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("PropertyIndexFirstIndex"));

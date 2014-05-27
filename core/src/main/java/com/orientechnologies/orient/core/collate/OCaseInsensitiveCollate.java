@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.collate;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 
 /**
@@ -25,23 +25,36 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
  * 
  */
 public class OCaseInsensitiveCollate extends ODefaultComparator implements OCollate {
+  public static final String NAME = "ci";
+
   public String getName() {
-    return "ci";
+    return NAME;
   }
 
   public Object transform(final Object obj) {
     if (obj instanceof String)
       return ((String) obj).toLowerCase();
-    else if (obj instanceof OCompositeKey) {
-      final OCompositeKey result = new OCompositeKey();
-      for (Object k : ((OCompositeKey) obj).getKeys()) {
-        if (k instanceof String)
-          result.addKey(((String) k).toLowerCase());
-        else
-          result.addKey(k);
-      }
-      return result;
-    }
+
     return obj;
+  }
+
+  @Override
+  public int hashCode() {
+    return getName().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj.getClass() != this.getClass())
+      return false;
+
+    final OCaseInsensitiveCollate that = (OCaseInsensitiveCollate) obj;
+
+    return getName().equals(that.getName());
+  }
+
+  @Override
+  public String toString() {
+    return "{" + getClass().getSimpleName() + " : name = " + getName() + "}";
   }
 }

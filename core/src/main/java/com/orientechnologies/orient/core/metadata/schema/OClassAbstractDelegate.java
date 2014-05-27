@@ -16,13 +16,15 @@
 
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
+
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Abstract Delegate for OClass interface.
@@ -103,17 +105,17 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OProperty createProperty(String iPropertyName, OType iType) {
+  public OProperty createProperty(final String iPropertyName, final OType iType) {
     return delegate.createProperty(iPropertyName, iType);
   }
 
   @Override
-  public OProperty createProperty(String iPropertyName, OType iType, OClass iLinkedClass) {
+  public OProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
     return delegate.createProperty(iPropertyName, iType, iLinkedClass);
   }
 
   @Override
-  public OProperty createProperty(String iPropertyName, OType iType, OType iLinkedType) {
+  public OProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType) {
     return delegate.createProperty(iPropertyName, iType, iLinkedType);
   }
 
@@ -133,8 +135,18 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
+  public int getClusterForNewInstance() {
+    return delegate.getClusterForNewInstance();
+  }
+
+  @Override
   public int getDefaultClusterId() {
     return delegate.getDefaultClusterId();
+  }
+
+  @Override
+  public void setDefaultClusterId(final int iDefaultClusterId) {
+    delegate.setDefaultClusterId(iDefaultClusterId);
   }
 
   @Override
@@ -143,12 +155,37 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OClass addClusterId(int iId) {
+  public OClass addClusterId(final int iId) {
     return delegate.addClusterId(iId);
   }
 
   @Override
-  public OClass removeClusterId(int iId) {
+  public OClusterSelectionStrategy getClusterSelection() {
+    return delegate.getClusterSelection();
+  }
+
+  @Override
+  public OClass setClusterSelection(final OClusterSelectionStrategy clusterSelection) {
+    return delegate.setClusterSelection(clusterSelection);
+  }
+
+  @Override
+  public OClass setClusterSelection(final String iStrategyName) {
+    return delegate.setClusterSelection(iStrategyName);
+  }
+
+  @Override
+  public OClass addCluster(final String iClusterName) {
+    return delegate.addCluster(iClusterName);
+  }
+
+  @Override
+  public OClass addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType) {
+    return delegate.addCluster(iClusterName, iClusterType);
+  }
+
+  @Override
+  public OClass removeClusterId(final int iId) {
     return delegate.removeClusterId(iId);
   }
 
@@ -178,7 +215,7 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OClass setOverSize(float overSize) {
+  public OClass setOverSize(final float overSize) {
     return delegate.setOverSize(overSize);
   }
 
@@ -188,7 +225,7 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public long count(boolean iPolymorphic) {
+  public long count(final boolean iPolymorphic) {
     return delegate.count(iPolymorphic);
   }
 
@@ -198,17 +235,17 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public boolean isSubClassOf(String iClassName) {
+  public boolean isSubClassOf(final String iClassName) {
     return delegate.isSubClassOf(iClassName);
   }
 
   @Override
-  public boolean isSubClassOf(OClass iClass) {
+  public boolean isSubClassOf(final OClass iClass) {
     return delegate.isSubClassOf(iClass);
   }
 
   @Override
-  public boolean isSuperClassOf(OClass iClass) {
+  public boolean isSuperClassOf(final OClass iClass) {
     return delegate.isSuperClassOf(iClass);
   }
 
@@ -218,7 +255,7 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OClass setShortName(String shortName) {
+  public OClass setShortName(final String shortName) {
     return delegate.setShortName(shortName);
   }
 
@@ -233,58 +270,65 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, INDEX_TYPE iType, String... fields) {
+  public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
     return delegate.createIndex(iName, iType, fields);
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, String iType, String... fields) {
+  public OIndex<?> createIndex(final String iName, final String iType, final String... fields) {
     return delegate.createIndex(iName, iType, fields);
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, INDEX_TYPE iType, OProgressListener iProgressListener, String... fields) {
+  public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final OProgressListener iProgressListener,
+      final String... fields) {
     return delegate.createIndex(iName, iType, iProgressListener, fields);
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
-      String... fields) {
+  public OIndex<?> createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
+      final ODocument metadata, String algorithm, String... fields) {
+    return delegate.createIndex(iName, iType, iProgressListener, metadata, algorithm, fields);
+  }
+
+  @Override
+  public OIndex<?> createIndex(final String iName, final String iType, final OProgressListener iProgressListener,
+      final ODocument metadata, String... fields) {
     return delegate.createIndex(iName, iType, iProgressListener, metadata, fields);
   }
 
   @Override
-  public Set<OIndex<?>> getInvolvedIndexes(Collection<String> fields) {
+  public Set<OIndex<?>> getInvolvedIndexes(final Collection<String> fields) {
     return delegate.getInvolvedIndexes(fields);
   }
 
   @Override
-  public Set<OIndex<?>> getInvolvedIndexes(String... fields) {
+  public Set<OIndex<?>> getInvolvedIndexes(final String... fields) {
     return delegate.getInvolvedIndexes(fields);
   }
 
   @Override
-  public Set<OIndex<?>> getClassInvolvedIndexes(Collection<String> fields) {
+  public Set<OIndex<?>> getClassInvolvedIndexes(final Collection<String> fields) {
     return delegate.getClassInvolvedIndexes(fields);
   }
 
   @Override
-  public Set<OIndex<?>> getClassInvolvedIndexes(String... fields) {
+  public Set<OIndex<?>> getClassInvolvedIndexes(final String... fields) {
     return delegate.getClassInvolvedIndexes(fields);
   }
 
   @Override
-  public boolean areIndexed(Collection<String> fields) {
+  public boolean areIndexed(final Collection<String> fields) {
     return delegate.areIndexed(fields);
   }
 
   @Override
-  public boolean areIndexed(String... fields) {
+  public boolean areIndexed(final String... fields) {
     return delegate.areIndexed(fields);
   }
 
   @Override
-  public OIndex<?> getClassIndex(String iName) {
+  public OIndex<?> getClassIndex(final String iName) {
     return delegate.getClassIndex(iName);
   }
 
@@ -299,22 +343,17 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public void setDefaultClusterId(int iDefaultClusterId) {
-    delegate.setDefaultClusterId(iDefaultClusterId);
-  }
-
-  @Override
-  public String getCustom(String iName) {
+  public String getCustom(final String iName) {
     return delegate.getCustom(iName);
   }
 
   @Override
-  public OClassImpl setCustom(String iName, String iValue) {
+  public OClassImpl setCustom(final String iName, String iValue) {
     return delegate.setCustom(iName, iValue);
   }
 
   @Override
-  public void removeCustom(String iName) {
+  public void removeCustom(final String iName) {
     delegate.removeCustom(iName);
   }
 
@@ -329,7 +368,7 @@ public class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public int compareTo(OClass o) {
+  public int compareTo(final OClass o) {
     return delegate.compareTo(o);
   }
 }

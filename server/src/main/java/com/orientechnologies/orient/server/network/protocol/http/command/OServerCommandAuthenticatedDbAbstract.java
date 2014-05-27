@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -35,6 +32,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Database based authenticated command. Authenticats against the database taken as second parameter of the URL. The URL must be in
@@ -80,6 +80,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (currentSession == null) {
       // NO SESSION
       if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
+        iResponse.setSessionId(SESSIONID_UNAUTHORIZED);
         sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
         return false;
       } else

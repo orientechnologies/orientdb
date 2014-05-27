@@ -37,4 +37,19 @@ public class OSharedLock extends OAbstractLock {
   public void unlock() {
     lock.readLock().unlock();
   }
+
+  @Override
+  public void close() {
+    try {
+      lock.readLock().unlock();
+    } catch (Exception e) {
+      // IGNORE IT
+    }
+
+    try {
+      lock.writeLock().unlock();
+    } catch (Exception e) {
+      // IGNORE IT
+    }
+  }
 }

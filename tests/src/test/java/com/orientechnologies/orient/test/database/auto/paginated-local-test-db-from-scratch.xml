@@ -1,4 +1,4 @@
-<suite name="Test Suite Example" verbose="2" parallel="false">
+<suite name="Paginated Local Test Suite" verbose="2" parallel="false">
 
     <parameter name="path" value="@PATH@"/>
     <parameter name="url" value="@URL@"/>
@@ -50,6 +50,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectEnhancingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.EmbeddedObjectSerializationTest"/>
         </classes>
     </test>
     <test name="PopulationObjectSchemaFull">
@@ -103,6 +104,8 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTxTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OrderByIndexReuseTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.LinkSetIndexTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.CompositeIndexWithNullTest"/>
         </classes>
     </test>
     <test name="Dictionary">
@@ -173,6 +176,8 @@
             <class name="com.orientechnologies.orient.test.database.auto.CollateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OEmbeddedRidBagTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OSBTreeRidBagTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.HideRecordTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.PoolTest"/> 
         </classes>
     </test>
     <test name="DbTools">

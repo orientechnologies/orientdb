@@ -19,6 +19,9 @@ import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEG
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * SQL abstract Command Executor implementation.
  * 
@@ -49,14 +52,6 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   protected long             timeoutMs         = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
   protected TIMEOUT_STRATEGY timeoutStrategy   = TIMEOUT_STRATEGY.EXCEPTION;
 
-  protected void throwSyntaxErrorException(final String iText) {
-    throw new OCommandSQLParsingException(iText + ". Use " + getSyntax(), parserText, parserGetPreviousPosition());
-  }
-
-  protected void throwParsingException(final String iText) {
-    throw new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition());
-  }
-
   /**
    * The command is replicated
    * 
@@ -68,6 +63,19 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   public boolean isIdempotent() {
     return false;
+  }
+
+  @Override
+  public Set<String> getInvolvedClusters() {
+    return Collections.EMPTY_SET;
+  }
+
+  protected void throwSyntaxErrorException(final String iText) {
+    throw new OCommandSQLParsingException(iText + ". Use " + getSyntax(), parserText, parserGetPreviousPosition());
+  }
+
+  protected void throwParsingException(final String iText) {
+    throw new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition());
   }
 
   /**
@@ -110,24 +118,12 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     parserNextWord(true);
     final String lockStrategy = parserGetLastWord();
 
-    if (!lockStrategy.equalsIgnoreCase("NONE") && !lockStrategy.equalsIgnoreCase("RECORD"))
+    if (!lockStrategy.equalsIgnoreCase("DEFAULT") && !lockStrategy.equalsIgnoreCase("NONE") && !lockStrategy.equalsIgnoreCase("RECORD"))
       throwParsingException("Invalid " + KEYWORD_LOCK + " value set to '" + lockStrategy
           + "' but it should be NONE (default) or RECORD. Example: " + KEYWORD_LOCK + " RECORD");
 
     return lockStrategy;
   }
 
-  /**
-   * Parses the returning keyword if found.
-   */
-  protected String parseReturn() throws OCommandSQLParsingException {
-    parserNextWord(true);
-    final String returning = parserGetLastWord();
 
-    if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE") && !returning.equalsIgnoreCase("AFTER"))
-      throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
-          + "' but it should be COUNT (default), BEFORE or AFTER. Example: " + KEYWORD_RETURN + " BEFORE");
-
-    return returning;
-  }
 }

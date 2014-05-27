@@ -34,7 +34,7 @@ public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("local:" + buildDirectory + "/SBTreeInsertionSpeedTTest");
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/SBTreeInsertionSpeedTTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -49,8 +49,10 @@ public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   @Override
   @Test(enabled = false)
   public void cycle() throws Exception {
+    databaseDocumentTx.begin();
     String key = "bsadfasfas" + random.nextInt();
     index.put(key, new ORecordId(0, new OClusterPositionLong(0)));
+    databaseDocumentTx.commit();
   }
 
   @Override

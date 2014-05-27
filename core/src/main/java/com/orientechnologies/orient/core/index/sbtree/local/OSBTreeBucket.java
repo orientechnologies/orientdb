@@ -43,8 +43,14 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   private static final int            TREE_SIZE_OFFSET        = RIGHT_SIBLING_OFFSET + OLongSerializer.LONG_SIZE;
 
+  /**
+   * KEY_SERIALIZER_OFFSET and VALUE_SERIALIZER_OFFSET are no longer used by sb-tree since 1.7.
+   * 
+   * However we left them in buckets to support backward compatibility.
+   */
   private static final int            KEY_SERIALIZER_OFFSET   = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int            VALUE_SERIALIZER_OFFSET = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
+
   private static final int            FREE_VALUES_LIST_OFFSET = VALUE_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
 
   private static final int            POSITIONS_ARRAY_OFFSET  = FREE_VALUES_LIST_OFFSET + OLongSerializer.LONG_SIZE;
@@ -77,8 +83,8 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     setLongValue(TREE_SIZE_OFFSET, 0);
     setLongValue(FREE_VALUES_LIST_OFFSET, -1);
 
-    setByteValue(KEY_SERIALIZER_OFFSET, (byte) -1);
-    setByteValue(VALUE_SERIALIZER_OFFSET, (byte) -1);
+    setByteValue(KEY_SERIALIZER_OFFSET, this.keySerializer.getId());
+    setByteValue(VALUE_SERIALIZER_OFFSET, this.valueSerializer.getId());
   }
 
   public OSBTreeBucket(ODirectMemoryPointer cachePointer, OBinarySerializer<K> keySerializer, OType[] keyTypes,
@@ -89,22 +95,6 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     this.isLeaf = getByteValue(IS_LEAF_OFFSET) > 0;
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
-  }
-
-  public byte getKeySerializerId() {
-    return getByteValue(KEY_SERIALIZER_OFFSET);
-  }
-
-  public void setKeySerializerId(byte keySerializerId) {
-    setByteValue(KEY_SERIALIZER_OFFSET, keySerializerId);
-  }
-
-  public byte getValueSerializerId() {
-    return getByteValue(VALUE_SERIALIZER_OFFSET);
-  }
-
-  public void setValueSerializerId(byte valueSerializerId) {
-    setByteValue(VALUE_SERIALIZER_OFFSET, valueSerializerId);
   }
 
   public void setTreeSize(long size) throws IOException {
@@ -412,8 +402,13 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
         return false;
       if (!key.equals(that.key))
         return false;
-      if (value != null ? !value.equals(that.value) : that.value != null)
-        return false;
+      if (value != null) {
+        if (!value.equals(that.value))
+          return false;
+      } else {
+        if (that.value != null)
+          return false;
+      }
 
       return true;
     }

@@ -1,8 +1,9 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -58,7 +59,10 @@ public class IndexTxAwareOneValueGetValuesTest {
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultOne = index.getValues(Arrays.asList(1, 2), true);
+
+    Set<OIdentifiable> resultOne = new HashSet<OIdentifiable>();
+    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, resultOne);
     Assert.assertEquals(resultOne.size(), 2);
 
     database.begin();
@@ -66,13 +70,18 @@ public class IndexTxAwareOneValueGetValuesTest {
     index.put(3, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(3)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultTwo = index.getValues(Arrays.asList(1, 2, 3), true);
+
+    Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
+    cursor = index.iterateEntries(Arrays.asList(1, 2, 3), true);
+    cursorToSet(cursor, resultTwo);
     Assert.assertEquals(resultTwo.size(), 3);
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultThree = index.getValues(Arrays.asList(1, 2), true);
+    Set<OIdentifiable> resultThree = new HashSet<OIdentifiable>();
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, resultThree);
     Assert.assertEquals(resultThree.size(), 2);
   }
 
@@ -89,7 +98,9 @@ public class IndexTxAwareOneValueGetValuesTest {
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultOne = index.getValues(Arrays.asList(1, 2), true);
+    Set<OIdentifiable> resultOne = new HashSet<OIdentifiable>();
+    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, resultOne);
     Assert.assertEquals(resultOne.size(), 2);
 
     database.begin();
@@ -97,13 +108,18 @@ public class IndexTxAwareOneValueGetValuesTest {
     index.clear();
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultTwo = index.getValues(Arrays.asList(1, 2), true);
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
+    cursorToSet(cursor, resultTwo);
     Assert.assertEquals(resultTwo.size(), 0);
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultThree = index.getValues(Arrays.asList(1, 2), true);
+    Set<OIdentifiable> resultThree = new HashSet<OIdentifiable>();
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, resultThree);
+
     Assert.assertEquals(resultThree.size(), 2);
   }
 
@@ -120,7 +136,10 @@ public class IndexTxAwareOneValueGetValuesTest {
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultOne = index.getValues(Arrays.asList(1, 2), true);
+    Set<OIdentifiable> resultOne = new HashSet<OIdentifiable>();
+    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, resultOne);
+
     Assert.assertEquals(resultOne.size(), 2);
 
     database.begin();
@@ -129,13 +148,20 @@ public class IndexTxAwareOneValueGetValuesTest {
     index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultTwo = index.getValues(Arrays.asList(1, 2), true);
+    Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, resultTwo);
+
     Assert.assertEquals(resultTwo.size(), 1);
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultThree = index.getValues(Arrays.asList(1, 2), true);
+
+    Set<OIdentifiable> resultThree = new HashSet<OIdentifiable>();
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, resultThree);
+
     Assert.assertEquals(resultThree.size(), 2);
   }
 
@@ -153,7 +179,9 @@ public class IndexTxAwareOneValueGetValuesTest {
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultOne = index.getValues(Arrays.asList(1, 2), true);
+    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    Set<OIdentifiable> resultOne = new HashSet<OIdentifiable>();
+    cursorToSet(cursor, resultOne);
     Assert.assertEquals(resultOne.size(), 2);
 
     database.begin();
@@ -161,13 +189,17 @@ public class IndexTxAwareOneValueGetValuesTest {
     index.remove(1);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultTwo = index.getValues(Arrays.asList(1, 2), true);
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
+    cursorToSet(cursor, resultTwo);
     Assert.assertEquals(resultTwo.size(), 1);
 
     database.rollback();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultThree = index.getValues(Arrays.asList(1, 2), true);
+    Set<OIdentifiable> resultThree = new HashSet<OIdentifiable>();
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, resultThree);
     Assert.assertEquals(resultThree.size(), 2);
   }
 
@@ -185,7 +217,9 @@ public class IndexTxAwareOneValueGetValuesTest {
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultOne = index.getValues(Arrays.asList(1, 2), true);
+    Set<OIdentifiable> resultOne = new HashSet<OIdentifiable>();
+    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, resultOne);
     Assert.assertEquals(resultOne.size(), 2);
 
     database.begin();
@@ -194,7 +228,9 @@ public class IndexTxAwareOneValueGetValuesTest {
     index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    final Collection<?> resultTwo = index.getValues(Arrays.asList(1, 2), true);
+    Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, resultTwo);
     Assert.assertEquals(resultTwo.size(), 2);
 
     database.rollback();
@@ -214,11 +250,17 @@ public class IndexTxAwareOneValueGetValuesTest {
     index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Assert.assertEquals(index.getValues(Arrays.asList(1, 2), true).size(), 2);
+    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, result);
+
+    Assert.assertEquals(result.size(), 2);
 
     database.commit();
 
-    Assert.assertEquals(index.getValues(Arrays.asList(1, 2), true).size(), 2);
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, result);
+    Assert.assertEquals(result.size(), 2);
   }
 
   @Test
@@ -234,12 +276,20 @@ public class IndexTxAwareOneValueGetValuesTest {
     index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Assert.assertEquals(index.getValues(Arrays.asList(1, 2), true).size(), 2);
+
+    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, result);
+
+    Assert.assertEquals(result.size(), 2);
     database.commit();
 
     index.put(3, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(3)));
 
-    Assert.assertEquals(index.getValues(Arrays.asList(1, 2, 3), true).size(), 3);
+    cursor = index.iterateEntries(Arrays.asList(1, 2, 3), true);
+    cursorToSet(cursor, result);
+
+    Assert.assertEquals(result.size(), 3);
   }
 
   @Test
@@ -257,11 +307,16 @@ public class IndexTxAwareOneValueGetValuesTest {
     index.remove(1);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Assert.assertEquals(index.getValues(Arrays.asList(1, 2), true).size(), 1);
+    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, result);
+    Assert.assertEquals(result.size(), 1);
 
     database.commit();
 
-    Assert.assertEquals(index.getValues(Arrays.asList(1, 2), true).size(), 1);
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, result);
+    Assert.assertEquals(result.size(), 1);
   }
 
   @Test
@@ -279,11 +334,16 @@ public class IndexTxAwareOneValueGetValuesTest {
     index.remove(1, null);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Assert.assertEquals(index.getValues(Arrays.asList(1, 2), true).size(), 1);
+    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, result);
+    Assert.assertEquals(result.size(), 1);
 
     database.commit();
 
-    Assert.assertEquals(index.getValues(Arrays.asList(1, 2), true).size(), 1);
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, result);
+    Assert.assertEquals(result.size(), 1);
   }
 
   @Test
@@ -302,11 +362,25 @@ public class IndexTxAwareOneValueGetValuesTest {
     index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetValuesTest"));
-    Assert.assertEquals(index.getValues(Arrays.asList(1, 2), true).size(), 2);
+    Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    OIndexCursor cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, result);
+
+    Assert.assertEquals(result.size(), 2);
 
     database.commit();
 
-    Assert.assertEquals(index.getValues(Arrays.asList(1, 2), true).size(), 2);
+    cursor = index.iterateEntries(Arrays.asList(1, 2), true);
+    cursorToSet(cursor, result);
+    Assert.assertEquals(result.size(), 2);
   }
 
+  private void cursorToSet(OIndexCursor cursor, Set<OIdentifiable> result) {
+    result.clear();
+    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
+    while (entry != null) {
+      result.add(entry.getValue());
+      entry = cursor.nextEntry();
+    }
+  }
 }

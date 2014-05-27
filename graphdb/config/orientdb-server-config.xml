@@ -38,12 +38,33 @@
         <handler
                 class="com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter">
             <parameters>
-                <parameter name="enabled" value="false"/>
+                <parameter name="enabled" value="true"/>
+                <parameter name="allowedLanguages" value="SQL"/>
             </parameters>
         </handler>
 
     </handlers>
     <network>
+        <sockets>
+	        <socket implementation="com.orientechnologies.orient.server.network.OServerSSLSocketFactory" name="ssl">
+	          <parameters>
+	            <parameter value="false" name="network.ssl.clientAuth"/>
+	            <parameter value="config/cert/orientdb.ks" name="network.ssl.keyStore"/>
+	            <parameter value="password" name="network.ssl.keyStorePassword"/>
+	            <parameter value="config/cert/orientdb.ks" name="network.ssl.trustStore"/>
+	            <parameter value="password" name="network.ssl.trustStorePassword"/>
+	          </parameters>
+	        </socket>
+	        <socket implementation="com.orientechnologies.orient.server.network.OServerSSLSocketFactory" name="https">
+	          <parameters>
+	            <parameter value="false" name="network.ssl.clientAuth"/>
+	            <parameter value="config/cert/orientdb.ks" name="network.ssl.keyStore"/>
+	            <parameter value="password" name="network.ssl.keyStorePassword"/>
+	            <parameter value="config/cert/orientdb.ks" name="network.ssl.trustStore"/>
+	            <parameter value="password" name="network.ssl.trustStorePassword"/>
+	          </parameters>
+	        </socket>
+        </sockets>    
         <protocols>
             <!-- Default registered protocol. It reads commands using the HTTP protocol
                 and write data locally -->
@@ -53,8 +74,9 @@
                       implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb"/>
         </protocols>
         <listeners>
-            <listener protocol="binary" ip-address="0.0.0.0" port-range="2424-2430"/>
-            <listener protocol="http" ip-address="0.0.0.0" port-range="2480-2490">
+            <listener protocol="binary" ip-address="0.0.0.0" port-range="2424-2430" socket="default"/>
+            <!-- <listener protocol="binary" ip-address="0.0.0.0" port-range="2434-2440" socket="ssl"/> -->
+            <listener protocol="http" ip-address="0.0.0.0" port-range="2480-2490" socket="default">
                 <parameters>
                     <!-- Connection's custom parameters. If not specified the global configuration
                         will be taken -->

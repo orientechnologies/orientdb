@@ -15,16 +15,6 @@
  */
 package com.orientechnologies.orient.object.db;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.storage.OStorage;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -34,11 +24,16 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.entity.OEntityManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -49,6 +44,7 @@ import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.object.dictionary.ODictionaryWrapper;
@@ -61,6 +57,13 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.metadata.OMetadataObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx that handles conversion between ODocument instances and
@@ -382,7 +385,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
       result = underlying.updatedReplica(record);
 
-      ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).updateLoadedFieldMap(proxiedObject);
+      ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).updateLoadedFieldMap(proxiedObject, false);
+
       // RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
       registerUserObject(proxiedObject, record);
     } finally {
@@ -432,7 +436,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
               iRecordUpdatedCallback);
 
           ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).setDoc(savedRecord);
-          ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).updateLoadedFieldMap(proxiedObject);
+          ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).updateLoadedFieldMap(proxiedObject, false);
           // RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
           registerUserObject(proxiedObject, record);
         }
@@ -496,58 +500,14 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
+  public boolean hide(ORID rid) {
+    throw new UnsupportedOperationException("hide");
+  }
+
+  @Override
   public ODatabaseComplex<Object> cleanOutRecord(ORID iRID, ORecordVersion iVersion) {
     deleteRecord(iRID, iVersion, true);
     return this;
-  }
-
-  private boolean deleteRecord(ORID iRID, ORecordVersion iVersion, boolean prohibitTombstones) {
-    checkOpeness();
-
-    if (iRID == null)
-      return true;
-
-    ODocument record = iRID.getRecord();
-    if (record != null) {
-      Object iPojo = getUserObjectByRecord(record, null);
-
-      deleteCascade(record);
-
-      if (prohibitTombstones)
-        underlying.cleanOutRecord(iRID, iVersion);
-      else
-        underlying.delete(iRID, iVersion);
-
-      if (getTransaction() instanceof OTransactionNoTx)
-        unregisterPojo(iPojo, record);
-
-    }
-    return false;
-  }
-
-  protected void deleteCascade(final ODocument record) {
-    if (record == null)
-      return;
-    List<String> toDeleteCascade = OObjectEntitySerializer.getCascadeDeleteFields(record.getClassName());
-    if (toDeleteCascade != null) {
-      for (String field : toDeleteCascade) {
-        Object toDelete = record.field(field);
-        if (toDelete instanceof OIdentifiable) {
-          if (toDelete != null)
-            delete(((OIdentifiable) toDelete).getIdentity());
-        } else if (toDelete instanceof Collection) {
-          for (OIdentifiable cascadeRecord : ((Collection<OIdentifiable>) toDelete)) {
-            if (cascadeRecord != null)
-              delete(((OIdentifiable) cascadeRecord).getIdentity());
-          }
-        } else if (toDelete instanceof Map) {
-          for (OIdentifiable cascadeRecord : ((Map<Object, OIdentifiable>) toDelete).values()) {
-            if (cascadeRecord != null)
-              delete(((OIdentifiable) cascadeRecord).getIdentity());
-          }
-        }
-      }
-    }
   }
 
   public long countClass(final String iClassName) {
@@ -723,7 +683,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
       if (iPojo != null) {
         if (iPojo instanceof Proxy) {
           ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).setDoc(iRecord);
-          ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).updateLoadedFieldMap(iPojo);
+          ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).updateLoadedFieldMap(iPojo, iReload);
           return iPojo;
         } else
           return OObjectEntityEnhancer.getInstance().getProxiedInstance(iPojo.getClass(), iRecord);
@@ -780,6 +740,31 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     OObjectEntityEnhancer.getInstance().deregisterClassMethodFilter(iClass);
   }
 
+  protected void deleteCascade(final ODocument record) {
+    if (record == null)
+      return;
+    List<String> toDeleteCascade = OObjectEntitySerializer.getCascadeDeleteFields(record.getClassName());
+    if (toDeleteCascade != null) {
+      for (String field : toDeleteCascade) {
+        Object toDelete = record.field(field);
+        if (toDelete instanceof OIdentifiable) {
+          if (toDelete != null)
+            delete(((OIdentifiable) toDelete).getIdentity());
+        } else if (toDelete instanceof Collection) {
+          for (OIdentifiable cascadeRecord : ((Collection<OIdentifiable>) toDelete)) {
+            if (cascadeRecord != null)
+              delete(((OIdentifiable) cascadeRecord).getIdentity());
+          }
+        } else if (toDelete instanceof Map) {
+          for (OIdentifiable cascadeRecord : ((Map<Object, OIdentifiable>) toDelete).values()) {
+            if (cascadeRecord != null)
+              delete(((OIdentifiable) cascadeRecord).getIdentity());
+          }
+        }
+      }
+    }
+  }
+
   protected void init() {
     entityManager = OEntityManager.getEntityManagerByDatabaseURL(getURL());
     entityManager.setClassHandler(OObjectEntityClassHandler.getInstance());
@@ -799,6 +784,30 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
       underlying.delete(doc);
     }
     handler.getOrphans().clear();
+  }
+
+  private boolean deleteRecord(ORID iRID, ORecordVersion iVersion, boolean prohibitTombstones) {
+    checkOpeness();
+
+    if (iRID == null)
+      return true;
+
+    ODocument record = iRID.getRecord();
+    if (record != null) {
+      Object iPojo = getUserObjectByRecord(record, null);
+
+      deleteCascade(record);
+
+      if (prohibitTombstones)
+        underlying.cleanOutRecord(iRID, iVersion);
+      else
+        underlying.delete(iRID, iVersion);
+
+      if (getTransaction() instanceof OTransactionNoTx)
+        unregisterPojo(iPojo, record);
+
+    }
+    return false;
   }
 
 }

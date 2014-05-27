@@ -169,8 +169,10 @@ public abstract class OStringSerializerHelper {
     final ArrayList<String> parts = new ArrayList<String>();
 
     if (iSource != null && !iSource.isEmpty()) {
-      while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended,
-          iConsiderBraces, iConsiderSets, -1, considerBags, iJumpChars)) > -1) {
+      final char[] source = iSource.toCharArray();
+
+      while ((beginIndex = parse(source, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iConsiderBraces,
+          iConsiderSets, -1, considerBags, iJumpChars)) > -1) {
         parts.add(buffer.toString());
         buffer.setLength(0);
       }
@@ -191,11 +193,13 @@ public abstract class OStringSerializerHelper {
 
     int startSeparatorAt = -1;
     if (iSource != null && !iSource.isEmpty()) {
-      while ((beginIndex = parse(iSource, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended,
-          iConsiderBraces, iConsiderSets, startSeparatorAt, considerBags, iJumpChars)) > -1) {
+      final char[] source = iSource.toCharArray();
+
+      while ((beginIndex = parse(source, buffer, beginIndex, endIndex, iRecordSeparator, iStringSeparatorExtended, iConsiderBraces,
+          iConsiderSets, startSeparatorAt, considerBags, iJumpChars)) > -1) {
 
         if (beginIndex > -1) {
-          final char lastSeparator = iSource.charAt(beginIndex - 1);
+          final char lastSeparator = source[beginIndex - 1];
           for (int i = 0; i < iRecordSeparator.length; ++i)
             if (iRecordSeparator[i] == lastSeparator) {
               if (iRecordSeparatorIncludeAsPrefix[i]) {
@@ -210,15 +214,15 @@ public abstract class OStringSerializerHelper {
           buffer.setLength(0);
         }
 
-        startSeparatorAt = 0;
+        startSeparatorAt = beginIndex;
 
         if (beginIndex > -1) {
-          final char lastSeparator = iSource.charAt(beginIndex - 1);
+          final char lastSeparator = source[beginIndex - 1];
           for (int i = 0; i < iRecordSeparator.length; ++i)
             if (iRecordSeparator[i] == lastSeparator) {
               if (iRecordSeparatorIncludeAsPostfix[i]) {
                 beginIndex--;
-                startSeparatorAt = 1;
+                startSeparatorAt = beginIndex + 1;
               }
               break;
             }
@@ -235,6 +239,16 @@ public abstract class OStringSerializerHelper {
   public static int parse(final String iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
       final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
       final int iMinPosSeparatorAreValid, boolean considerBags, final char... iJumpChars) {
+    return parse(iSource.toCharArray(), iBuffer, beginIndex, endIndex, iSeparator, iStringSeparatorExtended, iConsiderBraces,
+        iConsiderSets, iMinPosSeparatorAreValid, considerBags, iJumpChars);
+  }
+
+  public static int parse(final char[] iSource, final StringBuilder iBuffer, final int beginIndex, final int endIndex,
+      final char[] iSeparator, final boolean iStringSeparatorExtended, final boolean iConsiderBraces, final boolean iConsiderSets,
+      final int iMinPosSeparatorAreValid, boolean considerBags, final char... iJumpChars) {
+    if (beginIndex < 0)
+      return beginIndex;
+
     char stringBeginChar = ' ';
     boolean encodeMode = false;
     int insideParenthesis = 0;
@@ -244,22 +258,20 @@ public abstract class OStringSerializerHelper {
     int insideLinkPart = 0;
     int insideBag = 0;
 
-    final int max = endIndex > -1 ? endIndex + 1 : iSource.length();
+    final int max = endIndex > -1 ? endIndex + 1 : iSource.length;
 
-    final char[] buffer = new char[max - beginIndex];
-    iSource.getChars(beginIndex, max, buffer, 0);
     iBuffer.ensureCapacity(max);
 
     // JUMP FIRST CHARS
-    int i = 0;
-    for (; i < buffer.length; ++i) {
-      final char c = buffer[i];
+    int i = beginIndex;
+    for (; i < max; ++i) {
+      final char c = iSource[i];
       if (!isCharPresent(c, iJumpChars))
         break;
     }
 
-    for (; i < buffer.length; ++i) {
-      final char c = buffer[i];
+    for (; i < max; ++i) {
+      final char c = iSource[i];
 
       if (stringBeginChar == ' ') {
         // OUTSIDE A STRING
@@ -272,7 +284,7 @@ public abstract class OStringSerializerHelper {
             if (i < iMinPosSeparatorAreValid || insideParenthesis > 0 || insideList > 0 || !isCharPresent(c, iSeparator)) {
               if (insideList == 0)
                 throw new OSerializationException("Found invalid " + LIST_END + " character at position " + i + " of text "
-                    + iSource + ". Ensure it is opened and closed correctly.");
+                    + new String(iSource) + ". Ensure it is opened and closed correctly.");
               insideList--;
             }
           } else if (c == EMBEDDED_BEGIN) {
@@ -281,7 +293,7 @@ public abstract class OStringSerializerHelper {
             // if (!isCharPresent(c, iRecordSeparator)) {
             if (insideParenthesis == 0)
               throw new OSerializationException("Found invalid " + EMBEDDED_END + " character at position " + i + " of text "
-                  + iSource + ". Ensure it is opened and closed correctly.");
+                  + new String(iSource) + ". Ensure it is opened and closed correctly.");
             // }
             insideParenthesis--;
 
@@ -291,7 +303,7 @@ public abstract class OStringSerializerHelper {
             if (i < iMinPosSeparatorAreValid || !isCharPresent(c, iSeparator)) {
               if (insideMap == 0)
                 throw new OSerializationException("Found invalid " + MAP_END + " character at position " + i + " of text "
-                    + iSource + ". Ensure it is opened and closed correctly.");
+                    + new String(iSource) + ". Ensure it is opened and closed correctly.");
               insideMap--;
             }
           } else if (c == LINK)
@@ -308,7 +320,7 @@ public abstract class OStringSerializerHelper {
                 if (i < iMinPosSeparatorAreValid || !isCharPresent(c, iSeparator)) {
                   if (insideSet == 0)
                     throw new OSerializationException("Found invalid " + SET_END + " character at position " + i + " of text "
-                        + iSource + ". Ensure it is opened and closed correctly.");
+                        + new String(iSource) + ". Ensure it is opened and closed correctly.");
                   insideSet--;
                 }
               }
@@ -338,7 +350,7 @@ public abstract class OStringSerializerHelper {
           // OUTSIDE A PARAMS/COLLECTION/MAP
           if (i >= iMinPosSeparatorAreValid && isCharPresent(c, iSeparator)) {
             // SEPARATOR (OUTSIDE A STRING): PUSH
-            return beginIndex + i + 1;
+            return i + 1;
           }
         }
 
@@ -358,9 +370,9 @@ public abstract class OStringSerializerHelper {
 
       if (c == '\\' && !encodeMode) {
         // ESCAPE CHARS
-        final char nextChar = buffer[i + 1];
+        final char nextChar = iSource[i + 1];
         if (nextChar == 'u') {
-          i = OStringParser.readUnicode(buffer, i + 2, iBuffer);
+          i = OStringParser.readUnicode(iSource, i + 2, iBuffer);
           continue;
         } else if (nextChar == 'n') {
           iBuffer.append("\n");

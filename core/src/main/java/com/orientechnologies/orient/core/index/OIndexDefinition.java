@@ -34,33 +34,33 @@ public interface OIndexDefinition extends OIndexCallback {
   /**
    * @return Names of fields which given index is used to calculate key value. Order of fields is important.
    */
-  public List<String> getFields();
+  List<String> getFields();
 
   /**
    * @return Names of fields and their index modifiers (like "by value" for fields that hold <code>Map</code> values) which given
    *         index is used to calculate key value. Order of fields is important.
    */
-  public List<String> getFieldsToIndex();
+  List<String> getFieldsToIndex();
 
   /**
    * @return Name of the class which this index belongs to.
    */
-  public String getClassName();
+  String getClassName();
 
   /**
    * {@inheritDoc}
    */
-  public boolean equals(Object index);
+  boolean equals(Object index);
 
   /**
    * {@inheritDoc}
    */
-  public int hashCode();
+  int hashCode();
 
   /**
    * {@inheritDoc}
    */
-  public String toString();
+  String toString();
 
   /**
    * Calculates key value by passed in parameters.
@@ -72,7 +72,7 @@ public interface OIndexDefinition extends OIndexCallback {
    * 
    * @return Key value or null if calculation is impossible.
    */
-  public Object createValue(List<?> params);
+  Object createValue(List<?> params);
 
   /**
    * Calculates key value by passed in parameters.
@@ -85,7 +85,7 @@ public interface OIndexDefinition extends OIndexCallback {
    * 
    * @return Key value or null if calculation is impossible.
    */
-  public Object createValue(Object... params);
+  Object createValue(Object... params);
 
   /**
    * Returns amount of parameters that are used to calculate key value. It does not mean that all parameters should be supplied. It
@@ -93,7 +93,7 @@ public interface OIndexDefinition extends OIndexCallback {
    * 
    * @return Amount of that are used to calculate key value. Call result should be equals to {@code getTypes().length}.
    */
-  public int getParamCount();
+  int getParamCount();
 
   /**
    * Return types of values from which index key consist. In case of index that is built on single document property value single
@@ -101,14 +101,14 @@ public interface OIndexDefinition extends OIndexCallback {
    * 
    * @return Types of values from which index key consist.
    */
-  public OType[] getTypes();
+  OType[] getTypes();
 
   /**
    * Serializes internal index state to document.
    * 
    * @return Document that contains internal index state.
    */
-  public ODocument toStream();
+  ODocument toStream();
 
   /**
    * Deserialize internal index state from document.
@@ -116,13 +116,17 @@ public interface OIndexDefinition extends OIndexCallback {
    * @param document
    *          Serialized index presentation.
    */
-  public void fromStream(ODocument document);
+  void fromStream(ODocument document);
 
-  public String toCreateIndexDDL(String indexName, String indexType);
+  String toCreateIndexDDL(String indexName, String indexType);
 
-  public boolean isAutomatic();
+  boolean isAutomatic();
 
-  public OCollate getCollate();
+  OCollate getCollate();
 
-  public void setCollate(OCollate iCollate);
+  void setCollate(OCollate collate);
+
+	boolean isNullValuesIgnored();
+
+	void setNullValuesIgnored(boolean value);
 }

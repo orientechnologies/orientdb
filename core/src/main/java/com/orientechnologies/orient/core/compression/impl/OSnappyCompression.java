@@ -16,27 +16,43 @@
 
 package com.orientechnologies.orient.core.compression.impl;
 
-import org.iq80.snappy.Snappy;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import org.xerial.snappy.Snappy;
 
-import com.orientechnologies.orient.core.compression.OCompression;
+import java.io.IOException;
 
 /**
  * @author Andrey Lomakin
  * @since 05.06.13
  */
-public class OSnappyCompression implements OCompression {
+public class OSnappyCompression extends OAbstractCompression {
   public static final String             NAME     = "snappy";
 
   public static final OSnappyCompression INSTANCE = new OSnappyCompression();
 
   @Override
-  public byte[] compress(byte[] content) {
-    return Snappy.compress(content);
+  public byte[] compress(byte[] content, final int offset, final int length) {
+    try {
+      final byte[] buf = new byte[Snappy.maxCompressedLength(length)];
+      final int compressedByteSize = Snappy.rawCompress(content, offset, length, buf, 0);
+      final byte[] result = new byte[compressedByteSize];
+      System.arraycopy(buf, 0, result, 0, compressedByteSize);
+      return result;
+    } catch (IOException e) {
+      throw new ODatabaseException("Error during data compression.", e);
+    }
   }
 
   @Override
-  public byte[] uncompress(byte[] content) {
-    return Snappy.uncompress(content, 0, content.length);
+  public byte[] uncompress(byte[] content, final int offset, final int length) {
+    try {
+      byte[] result = new byte[Snappy.uncompressedLength(content, offset, length)];
+      int byteSize = Snappy.uncompress(content, offset, length, result, 0);
+      return result;
+
+    } catch (IOException e) {
+      throw new ODatabaseException("Error during data decompression.", e);
+    }
   }
 
   @Override

@@ -25,8 +25,8 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import com.orientechnologies.common.collection.OLimitedMap;
-import com.orientechnologies.common.collection.OMVRBTree;
-import com.orientechnologies.common.collection.OMVRBTreeEntry;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;

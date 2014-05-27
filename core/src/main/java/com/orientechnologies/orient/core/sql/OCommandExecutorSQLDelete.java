@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -24,9 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -171,28 +168,18 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
           return total;
         } else {
           // RETURNS ALL THE DELETED RECORDS
-          for (Iterator<Map.Entry> it = index.iterator(); it.hasNext();) {
-            final Map.Entry entry = it.next();
-            final Object entryValue = entry.getValue();
-            if (entryValue instanceof OIdentifiable) {
-              OIdentifiable rec = (OIdentifiable) entryValue;
-              rec = rec.getRecord();
+          OIndexCursor cursor = index.cursor();
+          Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
 
-              if (rec != null)
-                allDeletedRecords.add((ORecord<?>) rec);
-
-            } else if (entryValue instanceof Collection) {
-              final Collection<OIdentifiable> identifiables = (Collection<OIdentifiable>) entryValue;
-              for (OIdentifiable rec : identifiables) {
-                if (rec != null)
-                  rec = rec.getRecord();
-
-                if (rec != null)
-                  allDeletedRecords.add((ORecord<?>) rec);
-              }
-            } else
-              throw new IllegalStateException("Invalid index value : " + entryValue);
+          while (entry != null) {
+            OIdentifiable rec = entry.getValue();
+            rec = rec.getRecord();
+            if (rec != null)
+              allDeletedRecords.add((ORecord<?>) rec);
           }
+
+          index.clear();
+
           return allDeletedRecords;
         }
 
@@ -287,6 +274,22 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       return OSQLHelper.getValue(value);
     }
   }
+
+    /**
+     * Parses the returning keyword if found.
+     */
+    protected String parseReturn() throws OCommandSQLParsingException {
+        parserNextWord(true);
+        final String returning = parserGetLastWord();
+
+        if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
+            throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
+                    + "' but it should be COUNT (default), BEFORE. Example: " + KEYWORD_RETURN + " BEFORE");
+
+        return returning;
+    }
+
+
 
   @Override
   public void end() {

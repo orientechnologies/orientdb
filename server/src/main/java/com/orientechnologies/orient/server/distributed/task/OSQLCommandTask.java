@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -26,6 +28,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Map;
 
 /**
  * Distributed task used for synchronization.
@@ -34,15 +37,18 @@ import java.io.ObjectOutput;
  * 
  */
 public class OSQLCommandTask extends OAbstractReplicatedTask {
-  private static final long serialVersionUID = 1L;
+  private static final long     serialVersionUID = 1L;
 
-  protected String          text;
+  protected String              text;
+  protected Map<Object, Object> params;
+  protected RESULT_STRATEGY     resultStrategy;
 
   public OSQLCommandTask() {
   }
 
-  public OSQLCommandTask(final String iCommand) {
-    text = iCommand;
+  public OSQLCommandTask(final OCommandRequestText iCommand) {
+    text = iCommand.getText();
+    params = iCommand.getParameters();
   }
 
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
@@ -50,11 +56,26 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "execute command=%s db=%s",
         text.toString(), database.getName());
 
-    return database.command(new OCommandSQL(text)).execute();
+    final OCommandRequest cmd = database.command(new OCommandSQL(text));
+
+    if (params != null)
+      // EXECUTE WITH PARAMETERS
+      return cmd.execute(params);
+
+    return cmd.execute();
   }
 
   public QUORUM_TYPE getQuorumType() {
     return QUORUM_TYPE.ALL;
+  }
+
+  @Override
+  public RESULT_STRATEGY getResultStrategy() {
+    return resultStrategy;
+  }
+
+  public void setResultStrategy(final RESULT_STRATEGY resultStrategy) {
+    this.resultStrategy = resultStrategy;
   }
 
   @Override
@@ -65,11 +86,13 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeUTF(text);
+    out.writeObject(params);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     text = in.readUTF();
+    params = (Map<Object, Object>) in.readObject();
   }
 
   @Override

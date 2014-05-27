@@ -76,6 +76,11 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL("storage.diskCache.writeCachePageFlushInterval",
       "Interval between flushing of pages from write cache in ms.", Integer.class, 100),
 
+  DISK_WRITE_CACHE_FLUSH_WRITE_INACTIVITY_INTERVAL("storage.diskCache.writeCacheFlushInactivityInterval",
+      "Interval between 2 writes to the disk cache,"
+          + " if writes are done with interval more than provided all files will be fsynced before next write,"
+          + " which allows do not do data restore after server crash (in ms).", Long.class, 60 * 1000),
+
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
 
@@ -135,15 +140,18 @@ public enum OGlobalConfiguration {
   USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
       + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),
 
+  STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
+      "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
+
   STORAGE_KEEP_OPEN(
       "storage.keepOpen",
       "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
       Boolean.class, Boolean.TRUE),
 
-  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 600000),
+  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 30000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 300000),
+      Integer.class, 30000),
 
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
@@ -183,11 +191,11 @@ public enum OGlobalConfiguration {
   // DATABASE
   DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
 
-  DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
+  DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 100),
 
-  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Default database pool maximum size", Integer.class, 0),
+  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Timeout for checking of free database in the pool", Integer.class, 0),
 
-  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Default database pool maximum size", Integer.class, 0),
+  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
 
   @Deprecated
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
@@ -244,7 +252,7 @@ public enum OGlobalConfiguration {
       "Configure the TreeMaps for automatic indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 10000),
 
-	INDEX_FLUSH_AFTER_CREATE("index.flushAfterCreate", "Flush storage buffer after index creation", Boolean.class, true),
+  INDEX_FLUSH_AFTER_CREATE("index.flushAfterCreate", "Flush storage buffer after index creation", Boolean.class, true),
 
   INDEX_MANUAL_LAZY_UPDATES("index.manual.lazyUpdates",
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
@@ -263,6 +271,8 @@ public enum OGlobalConfiguration {
 
   INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT("index.notunique.useSBTreeContainerByDefault",
       "Prefer SBTree based algorithm instead MVRBTree for storing sets of RID", Boolean.class, true),
+
+  INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 
   // TREEMAP
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
@@ -437,6 +447,13 @@ public enum OGlobalConfiguration {
   NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
       "Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
 
+  // SECURITY
+  SECURITY_MAX_CACHED_USERS("security.maxCachedUsers",
+      "Maximum users cached in RAM. This speeds up authentication for the most used users", Integer.class, 100),
+
+  SECURITY_MAX_CACHED_ROLES("security.maxCachedRoles",
+      "Maximum roles cached in RAM. This speeds up authentication for the most used roles", Integer.class, 100),
+
   // PROFILER
   PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
       new OConfigurationChangeCallback() {
@@ -489,6 +506,8 @@ public enum OGlobalConfiguration {
 
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
       "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),
+
+  CLIENT_USE_SSL("client.ssl.enabled", "Use SSL for client connections", Boolean.class, false),
 
   // SERVER
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,
@@ -555,65 +574,6 @@ public enum OGlobalConfiguration {
     description = iDescription;
     defValue = iDefValue;
     type = iType;
-  }
-
-  public void setValue(final Object iValue) {
-    Object oldValue = value;
-
-    if (iValue != null)
-      if (type == Boolean.class)
-        value = Boolean.parseBoolean(iValue.toString());
-      else if (type == Integer.class)
-        value = Integer.parseInt(iValue.toString());
-      else if (type == Float.class)
-        value = Float.parseFloat(iValue.toString());
-      else if (type == String.class)
-        value = iValue.toString();
-      else
-        value = iValue;
-
-    if (changeCallback != null)
-      changeCallback.change(oldValue, value);
-  }
-
-  public Object getValue() {
-    return value != null ? value : defValue;
-  }
-
-  public boolean getValueAsBoolean() {
-    final Object v = value != null ? value : defValue;
-    return v instanceof Boolean ? ((Boolean) v).booleanValue() : Boolean.parseBoolean(v.toString());
-  }
-
-  public String getValueAsString() {
-    return value != null ? value.toString() : defValue != null ? defValue.toString() : null;
-  }
-
-  public int getValueAsInteger() {
-    final Object v = value != null ? value : defValue;
-    return (int) (v instanceof Number ? ((Number) v).intValue() : OFileUtils.getSizeAsNumber(v.toString()));
-  }
-
-  public long getValueAsLong() {
-    final Object v = value != null ? value : defValue;
-    return v instanceof Number ? ((Number) v).longValue() : OFileUtils.getSizeAsNumber(v.toString());
-  }
-
-  public float getValueAsFloat() {
-    final Object v = value != null ? value : defValue;
-    return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
-  }
-
-  public String getKey() {
-    return key;
-  }
-
-  public Class<?> getType() {
-    return type;
-  }
-
-  public String getDescription() {
-    return description;
   }
 
   public static void dumpConfiguration(final PrintStream out) {
@@ -707,6 +667,65 @@ public enum OGlobalConfiguration {
 
     System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
     System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
+  }
+
+  public Object getValue() {
+    return value != null ? value : defValue;
+  }
+
+  public void setValue(final Object iValue) {
+    Object oldValue = value;
+
+    if (iValue != null)
+      if (type == Boolean.class)
+        value = Boolean.parseBoolean(iValue.toString());
+      else if (type == Integer.class)
+        value = Integer.parseInt(iValue.toString());
+      else if (type == Float.class)
+        value = Float.parseFloat(iValue.toString());
+      else if (type == String.class)
+        value = iValue.toString();
+      else
+        value = iValue;
+
+    if (changeCallback != null)
+      changeCallback.change(oldValue, value);
+  }
+
+  public boolean getValueAsBoolean() {
+    final Object v = value != null ? value : defValue;
+    return v instanceof Boolean ? ((Boolean) v).booleanValue() : Boolean.parseBoolean(v.toString());
+  }
+
+  public String getValueAsString() {
+    return value != null ? value.toString() : defValue != null ? defValue.toString() : null;
+  }
+
+  public int getValueAsInteger() {
+    final Object v = value != null ? value : defValue;
+    return (int) (v instanceof Number ? ((Number) v).intValue() : OFileUtils.getSizeAsNumber(v.toString()));
+  }
+
+  public long getValueAsLong() {
+    final Object v = value != null ? value : defValue;
+    return v instanceof Number ? ((Number) v).longValue() : OFileUtils.getSizeAsNumber(v.toString());
+  }
+
+  public float getValueAsFloat() {
+    final Object v = value != null ? value : defValue;
+    return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
+  }
+
+  public String getKey() {
+    return key;
+  }
+
+  public Class<?> getType() {
+    return type;
+  }
+
+  public String getDescription() {
+    return description;
   }
 }
 

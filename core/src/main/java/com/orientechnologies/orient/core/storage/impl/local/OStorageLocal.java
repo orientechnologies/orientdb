@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
@@ -84,7 +83,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
       ".oef", ".oem", OWriteAheadLog.MASTER_RECORD_EXTENSION, OWriteAheadLog.WAL_SEGMENT_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
-      OLocalHashTableIndexEngine.TREE_FILE_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION };
+      OLocalHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.TREE_FILE_EXTENSION,
+      OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION, OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION };
   private final int                     DELETE_MAX_RETRIES;
   private final int                     DELETE_WAIT_TIME;
   private final Map<String, OCluster>   clusterMap                = new LinkedHashMap<String, OCluster>();
@@ -128,17 +128,17 @@ public class OStorageLocal extends OStorageLocalAbstract {
   }
 
   public synchronized void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
+    addUser();
+
+    if (status != STATUS.CLOSED)
+      // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
+      // REUSED
+      return;
+
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
-
-      addUser();
-
-      if (status != STATUS.CLOSED)
-        // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
-        // REUSED
-        return;
 
       if (!exists())
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
@@ -1785,7 +1785,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       switch (iLockingStrategy) {
       case DEFAULT:
       case KEEP_SHARED_LOCK:
-        lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+        iRid.lock(false);
         break;
       case NONE:
         // DO NOTHING
@@ -1811,7 +1811,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       } finally {
         switch (iLockingStrategy) {
         case DEFAULT:
-          lockManager.releaseLock(Thread.currentThread(), iRid, OLockManager.LOCK.SHARED);
+          iRid.unlock();
           break;
         case NONE:
         case KEEP_SHARED_LOCK:
@@ -2078,8 +2078,12 @@ public class OStorageLocal extends OStorageLocalAbstract {
     return null;
   }
 
+  @Override
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
+    throw new UnsupportedOperationException("Given operation is not supported in current version.");
+  }
 
-	protected void init() {
+  protected void init() {
     componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
     final long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;

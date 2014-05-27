@@ -20,8 +20,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECU
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
-import java.util.List;
-import java.util.Set;
+import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -42,13 +42,15 @@ public interface ODistributedServerManager {
 
   public boolean isEnabled();
 
+  public Map<String, Object> getConfigurationMap();
+
   public long getLastClusterChangeOn();
 
   public NODE_STATUS getNodeStatus();
 
-  public boolean checkNodeStatus(NODE_STATUS string);
-
   public void setNodeStatus(NODE_STATUS iStatus);
+
+  public boolean checkNodeStatus(NODE_STATUS string);
 
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName);
 
@@ -95,18 +97,7 @@ public interface ODistributedServerManager {
 
   public ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
-  public ODistributedPartition newPartition(List<String> partition);
-
-  public Object sendRequest(String iDatabaseName, String iClusterName, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
-
-  public Object sendRequest2Node(String iDatabaseName, String iTargetNodeName, OAbstractRemoteTask iTask,
-      EXECUTION_MODE iExecutionMode);
-
-  public Object sendRequest2Nodes(String iDatabaseName, Set<String> iTargetNodeNames, OAbstractRemoteTask iTask,
-      EXECUTION_MODE iExecutionMode);
-
-  public ODistributedPartitioningStrategy getPartitioningStrategy(String partitionStrategy);
+  public Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
 
   public ODocument getStats();
-
 }

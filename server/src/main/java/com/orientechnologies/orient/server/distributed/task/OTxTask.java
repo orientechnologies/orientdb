@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -70,22 +69,36 @@ public class OTxTask extends OAbstractReplicatedTask {
 
       database.commit();
 
-      // TRANSFORM ALL RECORDS IN PLACEHOLDER TO REDUCE TRANSPORT
+      // SEND BACK CHANGED VALUE TO UPDATE
       for (int i = 0; i < results.size(); ++i) {
         final Object o = results.get(i);
-        if (o instanceof ORecord<?>)
-          results.set(i, new OPlaceholder((ORecord<?>) o));
+
+        final OAbstractRecordReplicatedTask task = tasks.get(i);
+
+        if (task instanceof OCreateRecordTask) {
+          // SEND RID + VERSION
+          final OCreateRecordTask t = (OCreateRecordTask) task;
+          results.set(i, new OPlaceholder(task.getRid(), task.getVersion()));
+
+        } else if (task instanceof OUpdateRecordTask) {
+          // SEND VERSION ONLY
+          final OUpdateRecordTask t = (OUpdateRecordTask) task;
+          results.set(i, task.getVersion());
+
+        } else if (task instanceof ODeleteRecordTask) {
+
+        }
       }
 
       return results;
 
     } catch (ONeedRetryException e) {
-      return Boolean.FALSE;
+      return e;
     } catch (OTransactionException e) {
-      return Boolean.FALSE;
+      return e;
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on distributed transaction commit", e);
-      return Boolean.FALSE;
+      return e;
     }
   }
 
@@ -100,6 +113,13 @@ public class OTxTask extends OAbstractReplicatedTask {
       // TODO: MANAGE ERROR ON LOCAL NODE
       ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
           "error on creating fix-task for request: '%s' because bad response is not expected type: %s", iRequest, iBadResponse);
+      return null;
+    }
+
+    if (!(iGoodResponse instanceof List)) {
+      // TODO: MANAGE ERROR ON LOCAL NODE
+      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
+          "error on creating fix-task for request: '%s' because good response is not expected type: %s", iRequest, iBadResponse);
       return null;
     }
 
@@ -118,9 +138,12 @@ public class OTxTask extends OAbstractReplicatedTask {
 
   @Override
   public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
-    if (iBadResponse instanceof Boolean)
+    if (!(iBadResponse instanceof List)) {
       // TODO: MANAGE ERROR ON LOCAL NODE!
+      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
+          "error on creating undo-task for request: '%s' because bad response is not expected type: %s", iRequest, iBadResponse);
       return null;
+    }
 
     final OFixTxTask fixTask = new OFixTxTask();
 

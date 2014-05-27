@@ -33,4 +33,24 @@ public class ODefaultCollate extends ODefaultComparator implements OCollate {
   public Object transform(final Object obj) {
     return obj;
   }
+
+  @Override
+  public int hashCode() {
+    return getName().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj.getClass() != this.getClass())
+      return false;
+
+    final ODefaultCollate that = (ODefaultCollate) obj;
+
+    return getName().equals(that.getName());
+  }
+
+  @Override
+  public String toString() {
+    return "{" + getClass().getSimpleName() + " : name = " + getName() + "}";
+  }
 }

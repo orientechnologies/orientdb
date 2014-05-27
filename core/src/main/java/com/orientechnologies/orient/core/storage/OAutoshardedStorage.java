@@ -21,12 +21,12 @@ package com.orientechnologies.orient.core.storage;
  * @author edegtyarenko
  * @since 15.10.12 10:27
  */
-public interface OAutoshardedStorage extends OStorage {
+public interface OAutoshardedStorage {
 
   /**
-   * Storage unique id
+   * Storage unique id, made by node name + database name
    * 
    * @return storage unique id
    */
-  long getStorageId();
+  String getStorageId();
 }

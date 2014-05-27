@@ -1,6 +1,27 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import static org.testng.Assert.*;
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
+import com.orientechnologies.orient.core.index.OPropertyListIndexDefinition;
+import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
+import com.orientechnologies.orient.core.index.OPropertyRidBagIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -8,17 +29,11 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 @Test(groups = { "index" })
 public class ClassIndexTest {
@@ -68,7 +83,7 @@ public class ClassIndexTest {
     oClass.createProperty("fEmbeddedSet", OType.EMBEDDEDSET, OType.INTEGER);
     oClass.createProperty("fLinkSet", OType.LINKSET);
 
-		oClass.createProperty("fRidBag", OType.LINKBAG);
+    oClass.createProperty("fRidBag", OType.LINKBAG);
 
     oSuperClass.createProperty("fNine", OType.INTEGER);
     oClass.setSuperClass(oSuperClass);
@@ -152,7 +167,7 @@ public class ClassIndexTest {
     final AtomicInteger atomicInteger = new AtomicInteger(0);
     final OProgressListener progressListener = new OProgressListener() {
       @Override
-      public void onBegin(final Object iTask, final long iTotal) {
+      public void onBegin(final Object iTask, final long iTotal, Object metadata) {
         atomicInteger.incrementAndGet();
       }
 
@@ -292,9 +307,21 @@ public class ClassIndexTest {
     assertEquals(indexDefinition.getParamCount(), 2);
   }
 
-  @Test(expectedExceptions = OIndexException.class)
   public void testCreateCompositeLinkSetIndex() {
-    oClass.createIndex("ClassIndexTestCompositeLinkSet", OClass.INDEX_TYPE.UNIQUE, "fTwelve", "fLinkSet");
+    final OIndex result = oClass.createIndex("ClassIndexTestCompositeLinkSet", OClass.INDEX_TYPE.UNIQUE, "fTwelve", "fLinkSet");
+
+    assertEquals(result.getName(), "ClassIndexTestCompositeLinkSet");
+    assertEquals(oClass.getClassIndex("ClassIndexTestCompositeLinkSet").getName(), result.getName());
+    assertEquals(database.getMetadata().getIndexManager().getClassIndex("ClassIndexTestClass", "ClassIndexTestCompositeLinkSet")
+        .getName(), result.getName());
+
+    final OIndexDefinition indexDefinition = result.getDefinition();
+
+    assertTrue(indexDefinition instanceof OCompositeIndexDefinition);
+    assertEquals(indexDefinition.getFields().toArray(), new String[] { "fTwelve", "fLinkSet" });
+
+    assertEquals(indexDefinition.getTypes(), new OType[] { OType.INTEGER, OType.LINK });
+    assertEquals(indexDefinition.getParamCount(), 2);
   }
 
   @Test
@@ -334,25 +361,24 @@ public class ClassIndexTest {
     assertEquals(indexDefinition.getParamCount(), 2);
   }
 
-	public void testCreateCompositeRidBagIndex() {
-		final OIndex result = oClass.createIndex("ClassIndexTestCompositeRidBag", OClass.INDEX_TYPE.UNIQUE, "fFourteen", "fRidBag");
+  public void testCreateCompositeRidBagIndex() {
+    final OIndex result = oClass.createIndex("ClassIndexTestCompositeRidBag", OClass.INDEX_TYPE.UNIQUE, "fFourteen", "fRidBag");
 
-		assertEquals(result.getName(), "ClassIndexTestCompositeRidBag");
-		assertEquals(oClass.getClassIndex("ClassIndexTestCompositeRidBag").getName(), result.getName());
-		assertEquals(database.getMetadata().getIndexManager().getClassIndex("ClassIndexTestClass", "ClassIndexTestCompositeRidBag")
-						.getName(), result.getName());
+    assertEquals(result.getName(), "ClassIndexTestCompositeRidBag");
+    assertEquals(oClass.getClassIndex("ClassIndexTestCompositeRidBag").getName(), result.getName());
+    assertEquals(database.getMetadata().getIndexManager().getClassIndex("ClassIndexTestClass", "ClassIndexTestCompositeRidBag")
+        .getName(), result.getName());
 
-		final OIndexDefinition indexDefinition = result.getDefinition();
+    final OIndexDefinition indexDefinition = result.getDefinition();
 
-		assertTrue(indexDefinition instanceof OCompositeIndexDefinition);
-		assertEquals(indexDefinition.getFields().toArray(), new String[] { "fFourteen", "fRidBag" });
+    assertTrue(indexDefinition instanceof OCompositeIndexDefinition);
+    assertEquals(indexDefinition.getFields().toArray(), new String[] { "fFourteen", "fRidBag" });
 
-		assertEquals(indexDefinition.getTypes(), new OType[] { OType.INTEGER, OType.LINK });
-		assertEquals(indexDefinition.getParamCount(), 2);
-	}
+    assertEquals(indexDefinition.getTypes(), new OType[] { OType.INTEGER, OType.LINK });
+    assertEquals(indexDefinition.getParamCount(), 2);
+  }
 
-
-	@Test
+  @Test
   public void testCreateOnePropertyLinkedMapIndex() {
     final OIndex result = oClass.createIndex("ClassIndexTestPropertyLinkedMap", OClass.INDEX_TYPE.UNIQUE, "fLinkMap");
 
@@ -1022,7 +1048,7 @@ public class ClassIndexTest {
       "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex", "testCreateCompositeEmbeddedMapIndex",
       "testCreateCompositeEmbeddedMapByKeyIndex", "testCreateCompositeEmbeddedMapByValueIndex",
       "testCreateCompositeLinkMapByValueIndex", "testCreateCompositeEmbeddedSetIndex", "testCreateCompositeEmbeddedListIndex",
-					"testCreateCompositeLinkListIndex", "testCreateCompositeRidBagIndex"})
+      "testCreateCompositeLinkListIndex", "testCreateCompositeRidBagIndex" })
   public void testGetClassIndexes() {
     final Set<OIndex<?>> indexes = oClass.getClassIndexes();
     final Set<OIndexDefinition> expectedIndexDefinitions = new HashSet<OIndexDefinition>();
@@ -1079,15 +1105,15 @@ public class ClassIndexTest {
         OPropertyMapIndexDefinition.INDEX_BY.KEY));
     expectedIndexDefinitions.add(compositeIndexNine);
 
-		final OCompositeIndexDefinition compositeIndexTen = new OCompositeIndexDefinition("ClassIndexTestClass");
-		compositeIndexTen.addIndex(new OPropertyIndexDefinition("ClassIndexTestClass", "fFourteen", OType.INTEGER));
-		compositeIndexTen.addIndex(new OPropertyListIndexDefinition("ClassIndexTestClass", "fLinkList", OType.LINK));
-		expectedIndexDefinitions.add(compositeIndexTen);
+    final OCompositeIndexDefinition compositeIndexTen = new OCompositeIndexDefinition("ClassIndexTestClass");
+    compositeIndexTen.addIndex(new OPropertyIndexDefinition("ClassIndexTestClass", "fFourteen", OType.INTEGER));
+    compositeIndexTen.addIndex(new OPropertyListIndexDefinition("ClassIndexTestClass", "fLinkList", OType.LINK));
+    expectedIndexDefinitions.add(compositeIndexTen);
 
-		final OCompositeIndexDefinition compositeIndexEleven = new OCompositeIndexDefinition("ClassIndexTestClass");
-		compositeIndexEleven.addIndex(new OPropertyIndexDefinition("ClassIndexTestClass", "fFourteen", OType.INTEGER));
-		compositeIndexEleven.addIndex(new OPropertyRidBagIndexDefinition("ClassIndexTestClass", "fRidBag"));
-		expectedIndexDefinitions.add(compositeIndexEleven);
+    final OCompositeIndexDefinition compositeIndexEleven = new OCompositeIndexDefinition("ClassIndexTestClass");
+    compositeIndexEleven.addIndex(new OPropertyIndexDefinition("ClassIndexTestClass", "fFourteen", OType.INTEGER));
+    compositeIndexEleven.addIndex(new OPropertyRidBagIndexDefinition("ClassIndexTestClass", "fRidBag"));
+    expectedIndexDefinitions.add(compositeIndexEleven);
 
     final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition("ClassIndexTestClass", "fOne", OType.INTEGER);
     expectedIndexDefinitions.add(propertyIndex);
@@ -1122,8 +1148,8 @@ public class ClassIndexTest {
       "testCreateOnePropertyLinkedMapIndex", "testCreateOnePropertyLinkMapByKeyIndex", "testCreateOnePropertyLinkMapByValueIndex",
       "testCreateCompositeEmbeddedMapIndex", "testCreateCompositeEmbeddedMapByKeyIndex",
       "testCreateCompositeEmbeddedMapByValueIndex", "testCreateCompositeLinkMapByValueIndex",
-      "testCreateCompositeEmbeddedSetIndex", "testCreateCompositeEmbeddedListIndex",
-					"testCreateCompositeLinkListIndex", "testCreateCompositeRidBagIndex" })
+      "testCreateCompositeEmbeddedSetIndex", "testCreateCompositeEmbeddedListIndex", "testCreateCompositeLinkListIndex",
+      "testCreateCompositeRidBagIndex" })
   public void testGetIndexes() {
     final Set<OIndex<?>> indexes = oClass.getIndexes();
     final Set<OIndexDefinition> expectedIndexDefinitions = new HashSet<OIndexDefinition>();
@@ -1180,15 +1206,15 @@ public class ClassIndexTest {
         OPropertyMapIndexDefinition.INDEX_BY.KEY));
     expectedIndexDefinitions.add(compositeIndexNine);
 
-		final OCompositeIndexDefinition compositeIndexTen = new OCompositeIndexDefinition("ClassIndexTestClass");
-		compositeIndexTen.addIndex(new OPropertyIndexDefinition("ClassIndexTestClass", "fFourteen", OType.INTEGER));
-		compositeIndexTen.addIndex(new OPropertyListIndexDefinition("ClassIndexTestClass", "fLinkList", OType.LINK));
-		expectedIndexDefinitions.add(compositeIndexTen);
+    final OCompositeIndexDefinition compositeIndexTen = new OCompositeIndexDefinition("ClassIndexTestClass");
+    compositeIndexTen.addIndex(new OPropertyIndexDefinition("ClassIndexTestClass", "fFourteen", OType.INTEGER));
+    compositeIndexTen.addIndex(new OPropertyListIndexDefinition("ClassIndexTestClass", "fLinkList", OType.LINK));
+    expectedIndexDefinitions.add(compositeIndexTen);
 
-		final OCompositeIndexDefinition compositeIndexEleven = new OCompositeIndexDefinition("ClassIndexTestClass");
-		compositeIndexEleven.addIndex(new OPropertyIndexDefinition("ClassIndexTestClass", "fFourteen", OType.INTEGER));
-		compositeIndexEleven.addIndex(new OPropertyRidBagIndexDefinition("ClassIndexTestClass", "fRidBag"));
-		expectedIndexDefinitions.add(compositeIndexEleven);
+    final OCompositeIndexDefinition compositeIndexEleven = new OCompositeIndexDefinition("ClassIndexTestClass");
+    compositeIndexEleven.addIndex(new OPropertyIndexDefinition("ClassIndexTestClass", "fFourteen", OType.INTEGER));
+    compositeIndexEleven.addIndex(new OPropertyRidBagIndexDefinition("ClassIndexTestClass", "fRidBag"));
+    expectedIndexDefinitions.add(compositeIndexEleven);
 
     final OPropertyIndexDefinition propertyIndex = new OPropertyIndexDefinition("ClassIndexTestClass", "fOne", OType.INTEGER);
     expectedIndexDefinitions.add(propertyIndex);

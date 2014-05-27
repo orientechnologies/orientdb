@@ -61,6 +61,10 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
     ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
         "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));
 
+    if (result.last)
+      // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+      iManager.setDatabaseStatus(database.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+
     return result;
   }
 
@@ -101,5 +105,10 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
     fileName = in.readUTF();
     chunkNum = in.readInt();
     offset = in.readLong();
+  }
+
+  @Override
+  public boolean isRequiredOpenDatabase() {
+    return false;
   }
 }

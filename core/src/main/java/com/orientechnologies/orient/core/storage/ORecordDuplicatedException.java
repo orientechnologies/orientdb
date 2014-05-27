@@ -20,7 +20,7 @@ public class ORecordDuplicatedException extends OException {
     this.iRid = iRid;
   }
 
-  public ORID getiRid() {
+  public ORID getRid() {
     return iRid;
   }
 

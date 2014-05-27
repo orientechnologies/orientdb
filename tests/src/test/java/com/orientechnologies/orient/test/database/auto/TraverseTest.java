@@ -262,4 +262,11 @@ public class TraverseTest {
     Assert.assertEquals(result1, result4);
   }
 
+  @Test
+  public void traverseNoConditionLimit1() {
+    List<ODocument> result1 = database.command(new OSQLSynchQuery<ODocument>("traverse any() from Movie limit 1")).execute();
+
+    Assert.assertEquals(result1.size(), 1);
+  }
+
 }

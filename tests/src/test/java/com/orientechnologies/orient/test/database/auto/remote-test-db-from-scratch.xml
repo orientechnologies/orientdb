@@ -1,5 +1,5 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
-<suite name="Test Suite Example" verbose="2" parallel="false">
+<suite name="Remote Test Suite" verbose="2" parallel="false">
     <parameter name="url" value="remote:localhost/demo"/>
     <parameter name="path" value="@PATH@"/>
     <parameter name="testPath" value="tests"/>
@@ -14,6 +14,7 @@
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.DbListenerTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DbCreationTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ServerTest"/>
         </classes>
     </test>
     <test name="Schema">
@@ -42,6 +43,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.ObjectDetachingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ObjectEnhancingTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DocumentTrackingTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.EmbeddedObjectSerializationTest"/>
         </classes>
     </test>
     <test name="PopulationObjectSchemaFull">
@@ -88,6 +90,8 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLIndexWithoutSchemaTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.IndexTxTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OrderByIndexReuseTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.LinkSetIndexTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.CompositeIndexWithNullTest"/>
         </classes>
     </test>
     <test name="Dictionary">
@@ -151,6 +155,8 @@
             <class name="com.orientechnologies.orient.test.database.auto.ConcurrentQueriesTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DatabaseThreadFactoryTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.CollateTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.HideRecordTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.PoolTest"/>
         </classes>
     </test>
     <test name="DbTools">

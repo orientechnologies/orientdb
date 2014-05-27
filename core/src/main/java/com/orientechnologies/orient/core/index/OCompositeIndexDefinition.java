@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -40,6 +40,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
   private final List<OIndexDefinition> indexDefinitions;
   private String                       className;
   private int                          multiValueDefinitionIndex = -1;
+  private OCompositeCollate            collate                   = new OCompositeCollate();
 
   public OCompositeIndexDefinition() {
     indexDefinitions = new ArrayList<OIndexDefinition>(5);
@@ -68,6 +69,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
     indexDefinitions = new ArrayList<OIndexDefinition>(5);
     for (OIndexDefinition indexDefinition : iIndexes) {
       indexDefinitions.add(indexDefinition);
+      collate.addCollate(indexDefinition.getCollate());
 
       if (indexDefinition instanceof OIndexDefinitionMultiValue)
         if (multiValueDefinitionIndex == -1)
@@ -101,6 +103,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
         throw new OIndexException("Composite key can not contain more than one collection item");
     }
 
+    collate.addCollate(indexDefinition.getCollate());
   }
 
   /**
@@ -138,7 +141,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
     for (final OIndexDefinition indexDefinition : indexDefinitions) {
       final Object result = indexDefinition.getDocumentValueToIndex(iDocument);
 
-      if (result == null)
+      if (result == null && isNullValuesIgnored())
         return null;
 
       containsCollection = addKey(firstKey, compositeKeys, containsCollection, result);
@@ -188,7 +191,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
 
       final Object keyValue = indexDefinition.createValue(indexParams);
 
-      if (keyValue == null)
+      if (keyValue == null && isNullValuesIgnored())
         return null;
 
       containsCollection = addKey(firstKey, compositeKeys, containsCollection, keyValue);
@@ -231,7 +234,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
       else
         keyValue = indexDefinition.createValue(indexParams);
 
-      if (keyValue == null)
+      if (keyValue == null && isNullValuesIgnored())
         return null;
 
       compositeKey.addKey(keyValue);
@@ -361,10 +364,11 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
       }
       document.field("indexDefinitions", inds, OType.EMBEDDEDLIST);
       document.field("indClasses", indClasses, OType.EMBEDDEDLIST);
+      document.field("nullValuesIgnored", isNullValuesIgnored());
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
-    document.field("collate", collate.getName());
+
     return document;
   }
 
@@ -411,6 +415,9 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
       final List<String> indClasses = document.field("indClasses");
 
       indexDefinitions.clear();
+
+      collate = new OCompositeCollate();
+
       for (int i = 0; i < indClasses.size(); i++) {
         final Class<?> clazz = Class.forName(indClasses.get(i));
         final ODocument indDoc = inds.get(i);
@@ -419,13 +426,13 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
         indexDefinition.fromStream(indDoc);
 
         indexDefinitions.add(indexDefinition);
+        collate.addCollate(indexDefinition.getCollate());
 
         if (indexDefinition instanceof OIndexDefinitionMultiValue)
           multiValueDefinitionIndex = indexDefinitions.size() - 1;
       }
 
-      setCollate((String) document.field("collate"));
-
+      setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
     } catch (final ClassNotFoundException e) {
       throw new OIndexException("Error during composite index deserialization", e);
     } catch (final NoSuchMethodException e) {
@@ -437,6 +444,16 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
     } catch (final IllegalAccessException e) {
       throw new OIndexException("Error during composite index deserialization", e);
     }
+  }
+
+  @Override
+  public OCollate getCollate() {
+    return collate;
+  }
+
+  @Override
+  public void setCollate(OCollate collate) {
+    throw new UnsupportedOperationException();
   }
 
   private static final class CompositeWrapperMap implements Map<Object, Integer> {
@@ -523,5 +540,64 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
   @Override
   public boolean isAutomatic() {
     return indexDefinitions.get(0).isAutomatic();
+  }
+
+  private final class OCompositeCollate implements OCollate {
+    private final List<OCollate> collates = new ArrayList<OCollate>();
+
+    public void addCollate(OCollate collate) {
+      collates.add(collate);
+    }
+
+    @Override
+    public String getName() {
+      throw new UnsupportedOperationException("getName");
+    }
+
+    @Override
+    public Object transform(Object obj) {
+      final OCompositeKey compositeKey = (OCompositeKey) obj;
+      List<Object> keys = compositeKey.getKeys();
+
+      OCompositeKey transformedKey = new OCompositeKey();
+
+      final int size = Math.min(keys.size(), collates.size());
+      for (int i = 0; i < size; i++) {
+        final Object key = keys.get(i);
+
+        final OCollate collate = collates.get(i);
+        transformedKey.addKey(collate.transform(key));
+      }
+
+      for (int i = size; i < keys.size(); i++)
+        transformedKey.addKey(keys.get(i));
+
+      return transformedKey;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      OCompositeCollate that = (OCompositeCollate) o;
+
+      if (!collates.equals(that.collates))
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return collates.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "OCompositeCollate{" + "collates=" + collates + ", null values ignored = " + isNullValuesIgnored() + '}';
+    }
   }
 }

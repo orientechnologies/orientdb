@@ -18,10 +18,13 @@ package com.orientechnologies.orient.core.compression;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.orient.core.compression.impl.OGZIPCompression;
-import com.orientechnologies.orient.core.compression.impl.OSnappyCompression;
+import com.orientechnologies.orient.core.compression.impl.OHighZIPCompression;
+import com.orientechnologies.orient.core.compression.impl.OLowZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
+import com.orientechnologies.orient.core.compression.impl.OSnappyCompression;
 
 /**
  * @author Andrey Lomakin
@@ -33,6 +36,8 @@ public class OCompressionFactory {
   private final Map<String, OCompression> compressions = new HashMap<String, OCompression>();
 
   public OCompressionFactory() {
+    register(OHighZIPCompression.INSTANCE);
+    register(OLowZIPCompression.INSTANCE);
     register(OGZIPCompression.INSTANCE);
     register(OSnappyCompression.INSTANCE);
     register(ONothingCompression.INSTANCE);
@@ -51,5 +56,9 @@ public class OCompressionFactory {
       throw new IllegalArgumentException("Compression with name " + compression.name() + " was already registered.");
 
     compressions.put(compression.name(), compression);
+  }
+
+  public Set<String> getCompressions() {
+    return compressions.keySet();
   }
 }

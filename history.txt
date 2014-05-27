@@ -26,6 +26,48 @@
 This document contains the last changes to the OrientDB project.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 1.7 - (May, 27th 2014)
+---------------------------------------------------------------------------------------------------
+- Core: new “minimumclusters” to auto-create X clusters per class
+        new cluster strategy to pick the cluster. Available round-robin, default and balanced
+        added record locking via API
+        removed rw/locks on schema and index manager
+        cached most used users and roles in RAM (configurable)
+- Server: New support for SSL connections on binary and HTTP protocols 
+- Console: New “script” command to execute multiple SQL statements + transaction control
+           New “next” command to move the cursor on the next record in the result set
+           New “pref” command to move the cursor on the previous record in the result set
+           New “move <predicate>” command to move from current record by executing a predicate
+           New “eval <predicate>” command to evaluate a predicate against current record
+           Ability to ignore errors by setting “set ignore = true”
+- Distributed: New support for sharding
+               Simplified (JSON) configuration
+- Graph: New functions to return the traversed items: traversedVertex(), traversedEdge() and
+          traversedElement()
+         addEdge() can takes ORID to use implicitly last record version
+- SQL: New PARALLEL keyword to run the query on multiple threads
+       New “INSERT INTO … SELECT” to copy records
+       New “INSERT INTO … RETURN <expression>” to return expressions on INSERT
+       New “UPDATE … RETURN <expression>” to return expressions on UPDATE
+       distance() accepts measure unit (default = km)
+- HTTP: added support for context variables in SCRIPT command
+- Indexes: Added Full-Text Lucene indexes (as plugin)
+           Added GEO Spatial Lucene indexes (as plugin)
+           Added WAL (Journal) support for Hash-Index so can be used in Transactions
+           Added NULL support for composite and non-composite indexes
+           Full-Text can be configured through METADATA keyword
+           Full-Text now indexes also sub-words
+           Improved SQL optimizer by avoiding calling evaluate() when not needed
+           LINKSET types can be indexed now
+           RID can be used on composite indexes
+- Studio: Bookmarks for queries
+          Ability to interrupt running commands
+- Bug fixing: 135 issues in total
+
+Full list: https://github.com/orientechnologies/orientdb/issues?labels=&milestone=16&page=1&state=closed
+
+
+---------------------------------------------------------------------------------------------------
 VERSION 1.7-rc2 - (March, 25th 2014)
 ---------------------------------------------------------------------------------------------------
 - Core: supported retro-compatibility for databases created with OrientDB v1.5 or further (#1899)

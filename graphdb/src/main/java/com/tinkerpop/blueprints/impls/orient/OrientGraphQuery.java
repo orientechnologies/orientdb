@@ -1,10 +1,5 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Contains;
@@ -14,6 +9,12 @@ import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.Query;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.DefaultGraphQuery;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Set;
 
 /**
  * OrientDB implementation for Graph query.
@@ -50,17 +51,17 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   protected static final String SKIP               = " SKIP ";
   protected static final String LIMIT              = " LIMIT ";
   protected static final String ORDERBY            = " ORDER BY ";
-
-  protected String              fetchPlan;
-
   public int                    skip               = 0;
   public String                 orderBy            = "";
   public String                 orderByDir         = "desc";
+  protected String              fetchPlan;
 
   public class OrientGraphQueryIterable<T extends Element> extends DefaultGraphQueryIterable<T> {
-
-    public OrientGraphQueryIterable(final boolean forVertex) {
+    public OrientGraphQueryIterable(final boolean forVertex, final String[] labels) {
       super(forVertex);
+      if (labels != null && labels.length > 0)
+        // TREAT CLASS AS LABEL
+        has("_class", Contains.IN, Arrays.asList(labels));
     }
 
     protected Set<String> getIndexedKeys(final Class<? extends Element> elementClass) {
@@ -68,31 +69,66 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     }
   }
 
-  public OrientGraphQuery(final Graph iGraph) {
+  protected OrientGraphQuery(final Graph iGraph) {
     super(iGraph);
   }
 
+  /**
+   * (Blueprints Extension) Sets the labels to filter. Labels are bound to Class names by default.
+   * 
+   * @param labels
+   *          String vararg of labels
+   * @return Current Query Object to allow calls in chain.
+   */
   public Query labels(final String... labels) {
     this.labels = labels;
     return this;
   }
 
-  public Query skip(int cnt) {
-    this.skip = cnt;
+  /**
+   * Skips first iSkip items from the result set.
+   * 
+   * @param iSkip
+   *          Number of items to skip on result set
+   * @return Current Query Object to allow calls in chain.
+   */
+  public Query skip(final int iSkip) {
+    this.skip = iSkip;
     return this;
   }
 
+  /**
+   * (Blueprints Extension) Sets the order of results by a field in ascending (asc) order. This is translated on ORDER BY in the
+   * underlying SQL query.
+   * 
+   * @param props
+   *          Field to order by
+   * @return Current Query Object to allow calls in chain.
+   */
   public Query order(final String props) {
     this.order(props, orderByDir);
     return this;
   }
 
+  /**
+   * (Blueprints Extension) Sets the order of results by a field in ascending (asc) or descending (desc) order based on dir
+   * parameter. This is translated on ORDER BY in the underlying SQL query.
+   * 
+   * @param props
+   *          Field to order by
+   * @param dir
+   *          Direction. Use "asc" for ascending and "desc" for descending
+   * @return Current Query Object to allow calls in chain.
+   */
   public Query order(final String props, final String dir) {
     this.orderBy = props;
     this.orderByDir = dir;
     return this;
   }
 
+  /**
+   * Returns the result set of the query as iterable vertices.
+   */
   @Override
   public Iterable<Vertex> vertices() {
     if (limit == 0)
@@ -101,7 +137,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive())
       // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
       // SUPPORTED USED THE BASIC IMPL
-      return new OrientGraphQueryIterable<Vertex>(true);
+      return new OrientGraphQueryIterable<Vertex>(true, labels);
 
     final StringBuilder text = new StringBuilder();
 
@@ -115,7 +151,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
         text.append(OrientBaseGraph.encodeClassName(labels[0]));
       else {
         // MULTIPLE CLASSES NOT SUPPORTED DIRECTLY: CREATE A SUB-QUERY
-        return new OrientGraphQueryIterable<Vertex>(true);
+        return new OrientGraphQueryIterable<Vertex>(true, labels);
       }
     } else
       text.append(OrientVertexType.CLASS_NAME);
@@ -149,6 +185,10 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     return new OrientElementIterable<Vertex>(((OrientBaseGraph) graph), ((OrientBaseGraph) graph).getRawGraph().query(query));
   }
 
+  /**
+   * 
+   * Returns the result set of the query as iterable edges.
+   */
   @Override
   public Iterable<Edge> edges() {
     if (limit == 0)
@@ -157,10 +197,10 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive())
       // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
       // SUPPORTED USED THE BASIC IMPL
-      return new OrientGraphQueryIterable<Edge>(false);
+      return new OrientGraphQueryIterable<Edge>(false, labels);
 
     if (((OrientBaseGraph) graph).isUseLightweightEdges())
-      return new OrientGraphQueryIterable<Edge>(false);
+      return new OrientGraphQueryIterable<Edge>(false, labels);
 
     final StringBuilder text = new StringBuilder();
 
@@ -174,7 +214,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
         text.append(OrientBaseGraph.encodeClassName(labels[0]));
       else {
         // MULTIPLE CLASSES NOT SUPPORTED DIRECTLY: CREATE A SUB-QUERY
-        return new OrientGraphQueryIterable<Edge>(false);
+        return new OrientGraphQueryIterable<Edge>(false, labels);
       }
     } else
       text.append(OrientEdgeType.CLASS_NAME);
@@ -197,10 +237,16 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     return new OrientElementIterable<Edge>(((OrientBaseGraph) graph), ((OrientBaseGraph) graph).getRawGraph().query(query));
   }
 
+  /**
+   * (Blueprints Extension) Returns the fetch plan used.
+   */
   public String getFetchPlan() {
     return fetchPlan;
   }
 
+  /**
+   * (Blueprints Extension) Sets the fetch plan to use on returning result set.
+   */
   public void setFetchPlan(final String fetchPlan) {
     this.fetchPlan = fetchPlan;
   }

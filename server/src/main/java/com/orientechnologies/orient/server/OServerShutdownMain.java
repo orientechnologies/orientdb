@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -31,6 +28,9 @@ import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Sends a shutdown command to the server.
@@ -100,7 +100,7 @@ public class OServerShutdownMain {
     // TRY TO CONNECT TO THE RIGHT PORT
     for (int port : networkPort)
       try {
-        channel = new OChannelBinaryAsynchClientSynch(networkAddress, port, contextConfig);
+        channel = new OChannelBinaryAsynchClientSynch(networkAddress, port, null, contextConfig);
         break;
       } catch (Exception e) {
         e.printStackTrace();

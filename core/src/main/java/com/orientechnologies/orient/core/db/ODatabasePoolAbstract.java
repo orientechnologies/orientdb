@@ -15,6 +15,17 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.concur.lock.OAdaptiveLock;
+import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
+import com.orientechnologies.common.concur.resource.OResourcePoolListener;
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OOrientListener;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.storage.OStorage;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,26 +36,71 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.orientechnologies.common.concur.lock.OAdaptiveLock;
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.concur.resource.OResourcePool;
-import com.orientechnologies.common.concur.resource.OResourcePoolListener;
-import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OOrientListener;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.storage.OStorage;
-
 public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdaptiveLock implements
     OResourcePoolListener<String, DB>, OOrientListener {
 
-  private final HashMap<String, OResourcePool<String, DB>> pools = new HashMap<String, OResourcePool<String, DB>>();
-  private int                                              maxSize;
-  private int                                              timeout;
-  protected Object                                         owner;
-  private Timer                                            evictionTask;
-  private Evictor                                          evictor;
+  private final HashMap<String, OReentrantResourcePool<String, DB>> pools = new HashMap<String, OReentrantResourcePool<String, DB>>();
+  protected Object                                                  owner;
+  private int                                                       maxSize;
+  private int                                                       timeout;
+  private Timer                                                     evictionTask;
+  private Evictor                                                   evictor;
+
+  /**
+   * The idle object evictor {@link TimerTask}.
+   */
+  class Evictor extends TimerTask {
+
+    private HashMap<String, Map<DB, Long>> evictionMap = new HashMap<String, Map<DB, Long>>();
+    private long                           minIdleTime;
+
+    public Evictor(long minIdleTime) {
+      this.minIdleTime = minIdleTime;
+    }
+
+    /**
+     * Run pool maintenance. Evict objects qualifying for eviction
+     */
+    @Override
+    public void run() {
+      OLogManager.instance().debug(this, "Running Connection Pool Evictor Service...");
+      lock();
+      try {
+        for (Entry<String, Map<DB, Long>> pool : this.evictionMap.entrySet()) {
+          Map<DB, Long> poolDbs = pool.getValue();
+          Iterator<Entry<DB, Long>> iterator = poolDbs.entrySet().iterator();
+          while (iterator.hasNext()) {
+            Entry<DB, Long> db = iterator.next();
+            if (System.currentTimeMillis() - db.getValue() >= this.minIdleTime) {
+
+              OReentrantResourcePool<String, DB> oResourcePool = pools.get(pool.getKey());
+              if (oResourcePool != null) {
+                OLogManager.instance().debug(this, "Closing idle pooled database '%s'...", db.getKey().getName());
+                ((ODatabasePooled) db.getKey()).forceClose();
+                oResourcePool.remove(db.getKey());
+                iterator.remove();
+              }
+
+            }
+          }
+
+        }
+      } finally {
+        unlock();
+      }
+    }
+
+    public void updateIdleTime(final String poolName, final DB iDatabase) {
+      Map<DB, Long> pool = this.evictionMap.get(poolName);
+      if (pool == null) {
+        pool = new HashMap<DB, Long>();
+        this.evictionMap.put(poolName, pool);
+      }
+
+      pool.put(iDatabase, System.currentTimeMillis());
+
+    }
+  }
 
   public ODatabasePoolAbstract(final Object iOwner, final int iMinSize, final int iMaxSize) {
     this(iOwner, iMinSize, iMaxSize, OGlobalConfiguration.CLIENT_CONNECT_POOL_WAIT_TIMEOUT.getValueAsInteger(),
@@ -85,10 +141,10 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
     lock();
     try {
 
-      OResourcePool<String, DB> pool = pools.get(dbPooledName);
+      OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
       if (pool == null)
         // CREATE A NEW ONE
-        pool = new OResourcePool<String, DB>(maxSize, this);
+        pool = new OReentrantResourcePool<String, DB>(maxSize, this);
 
       final DB db = pool.getResource(iURL, timeout, iUserName, iUserPassword, iOptionalParams);
 
@@ -101,11 +157,39 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
     }
   }
 
+  public int getMaxConnections(final String url, final String userName) {
+    final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    lock();
+    try {
+      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
+      if (pool == null)
+        return maxSize;
+
+      return pool.getMaxResources();
+    } finally {
+      unlock();
+    }
+  }
+
+  public int getAvailableConnections(final String url, final String userName) {
+    final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    lock();
+    try {
+      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
+      if (pool == null)
+        return 0;
+
+      return pool.getAvailableResources();
+    } finally {
+      unlock();
+    }
+  }
+
   public int getConnectionsInCurrentThread(final String url, final String userName) {
     final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
     lock();
     try {
-      final OResourcePool<String, DB> pool = pools.get(dbPooledName);
+      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
       if (pool == null)
         return 0;
 
@@ -122,7 +206,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
     lock();
     try {
 
-      final OResourcePool<String, DB> pool = pools.get(dbPooledName);
+      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
       if (pool == null)
         throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
 
@@ -138,7 +222,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
     return iValue;
   }
 
-  public Map<String, OResourcePool<String, DB>> getPools() {
+  public Map<String, OReentrantResourcePool<String, DB>> getPools() {
     lock();
     try {
 
@@ -160,7 +244,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
         this.evictionTask.cancel();
       }
 
-      for (Entry<String, OResourcePool<String, DB>> pool : pools.entrySet()) {
+      for (Entry<String, OReentrantResourcePool<String, DB>> pool : pools.entrySet()) {
         for (DB db : pool.getValue().getResources()) {
           pool.getValue().close();
           try {
@@ -186,7 +270,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
     lock();
     try {
 
-      final OResourcePool<String, DB> pool = pools.get(iPoolName);
+      final OReentrantResourcePool<String, DB> pool = pools.get(iPoolName);
 
       if (pool != null) {
         for (DB db : pool.getResources()) {
@@ -226,7 +310,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
     try {
       Set<String> poolToClose = null;
 
-      for (Entry<String, OResourcePool<String, DB>> e : pools.entrySet()) {
+      for (Entry<String, OReentrantResourcePool<String, DB>> e : pools.entrySet()) {
         final int pos = e.getKey().indexOf("@");
         final String dbName = e.getKey().substring(pos + 1);
         if (storageURL.equals(dbName)) {
@@ -249,62 +333,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
   private void notifyEvictor(final String poolName, final DB iDatabase) {
     if (this.evictor != null) {
       this.evictor.updateIdleTime(poolName, iDatabase);
-    }
-  }
-
-  /**
-   * The idle object evictor {@link TimerTask}.
-   */
-  class Evictor extends TimerTask {
-
-    private HashMap<String, Map<DB, Long>> evictionMap = new HashMap<String, Map<DB, Long>>();
-    private long                           minIdleTime;
-
-    public Evictor(long minIdleTime) {
-      this.minIdleTime = minIdleTime;
-    }
-
-    /**
-     * Run pool maintenance. Evict objects qualifying for eviction
-     */
-    @Override
-    public void run() {
-      OLogManager.instance().debug(this, "Running Connection Pool Evictor Service...");
-      lock();
-      try {
-        for (Entry<String, Map<DB, Long>> pool : this.evictionMap.entrySet()) {
-          Map<DB, Long> poolDbs = pool.getValue();
-          Iterator<Entry<DB, Long>> iterator = poolDbs.entrySet().iterator();
-          while (iterator.hasNext()) {
-            Entry<DB, Long> db = iterator.next();
-            if (System.currentTimeMillis() - db.getValue() >= this.minIdleTime) {
-
-              OResourcePool<String, DB> oResourcePool = pools.get(pool.getKey());
-              if (oResourcePool != null) {
-                OLogManager.instance().debug(this, "Closing idle pooled database '%s'...", db.getKey().getName());
-                ((ODatabasePooled) db.getKey()).forceClose();
-                oResourcePool.remove(db.getKey());
-                iterator.remove();
-              }
-
-            }
-          }
-
-        }
-      } finally {
-        unlock();
-      }
-    }
-
-    public void updateIdleTime(final String poolName, final DB iDatabase) {
-      Map<DB, Long> pool = this.evictionMap.get(poolName);
-      if (pool == null) {
-        pool = new HashMap<DB, Long>();
-        this.evictionMap.put(poolName, pool);
-      }
-
-      pool.put(iDatabase, System.currentTimeMillis());
-
     }
   }
 }

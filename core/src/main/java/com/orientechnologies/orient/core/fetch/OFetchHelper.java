@@ -293,10 +293,10 @@ public class OFetchHelper {
     }
   }
 
-  private static void processRecord(final ORecordSchemaAware<?> record, final Object iUserObject,
-      final Map<String, Integer> iFetchPlan, final int iCurrentLevel, final int iLevelFromRoot, final int iFieldDepthLevel,
-      final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot, final OFetchListener iListener,
-      final OFetchContext iContext, final String iFormat) throws IOException {
+  private static void processRecord(final ODocument record, final Object iUserObject, final Map<String, Integer> iFetchPlan,
+      final int iCurrentLevel, final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
+      final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext, final String iFormat)
+      throws IOException {
 
     Object fieldValue;
 
@@ -329,10 +329,10 @@ public class OFetchHelper {
       if (debug)
         System.out.println("     depthLevel: " + depthLevel);
 
-      fieldValue = record.field(fieldName);
+      fieldValue = record.rawField(fieldName);
 
       boolean fetch = !iFormat.contains("shallow")
-          && (!(fieldValue instanceof ODocument) || depthLevel == -1 || iCurrentLevel <= depthLevel || iFetchPlan
+          && (!(fieldValue instanceof OIdentifiable) || depthLevel == -1 || iCurrentLevel <= depthLevel || iFetchPlan
               .containsKey(fieldPath));
 
       final boolean isEmbedded = isEmbedded(fieldValue);
@@ -567,7 +567,7 @@ public class OFetchHelper {
     final Integer fieldDepthLevel = parsedRecords.get(fieldValue.getIdentity());
     if (!fieldValue.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
       removeParsedFromMap(parsedRecords, fieldValue);
-      final ODocument linked = (ODocument) fieldValue;
+      final ODocument linked = (ODocument) fieldValue.getRecord();
       iContext.onBeforeDocument(iRootRecord, linked, fieldName, iUserObject);
       Object userObject = iListener.fetchLinked(iRootRecord, iUserObject, fieldName, linked, iContext);
       processRecord(linked, userObject, iFetchPlan, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords,

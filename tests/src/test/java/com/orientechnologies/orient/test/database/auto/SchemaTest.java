@@ -18,7 +18,6 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -440,4 +439,94 @@ public class SchemaTest {
     result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest2"));
     Assert.assertEquals(result.size(), 2);
   }
+
+  public void testMinimumClustersAndClusterSelection() {
+    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(url);
+    databaseDocumentTx.open("admin", "admin");
+
+    databaseDocumentTx.command(new OCommandSQL("alter database minimumclusters 3")).execute();
+
+    try {
+      databaseDocumentTx.command(new OCommandSQL("create class multipleclusters")).execute();
+
+      databaseDocumentTx.close();
+
+      databaseDocumentTx.open("admin", "admin");
+      databaseDocumentTx.reload();
+
+      Assert.assertFalse(databaseDocumentTx.existsCluster("multipleclusters"));
+
+      for (int i = 0; i < 3; ++i) {
+        Assert.assertTrue(databaseDocumentTx.existsCluster("multipleclusters_" + i));
+      }
+
+      for (int i = 0; i < 6; ++i) {
+        new ODocument("multipleclusters").field("num", i).save();
+      }
+
+      // CHECK THERE ARE 2 RECORDS IN EACH CLUSTER (ROUND-ROBIN STRATEGY)
+      for (int i = 0; i < 3; ++i) {
+        Assert.assertEquals(
+            databaseDocumentTx.countClusterElements(databaseDocumentTx.getClusterIdByName("multipleclusters_" + i)), 2);
+      }
+
+      // DELETE ALL THE RECORDS
+      int deleted = databaseDocumentTx.command(new OCommandSQL("delete from cluster:multipleclusters_2")).execute();
+      Assert.assertEquals(deleted, 2);
+
+      // CHANGE CLASS STRATEGY to BALANCED
+      databaseDocumentTx.command(new OCommandSQL("alter class multipleclusters clusterselection balanced")).execute();
+      databaseDocumentTx.reload();
+      databaseDocumentTx.getMetadata().getSchema().reload();
+
+      for (int i = 0; i < 2; ++i) {
+        new ODocument("multipleclusters").field("num", i).save();
+      }
+
+      Assert.assertEquals(databaseDocumentTx.countClusterElements(databaseDocumentTx.getClusterIdByName("multipleclusters_2")), 2);
+
+    } finally {
+      // RESTORE DEFAULT
+      databaseDocumentTx.command(new OCommandSQL("alter database minimumclusters 1")).execute();
+    }
+  }
+
+  public void testExchangeCluster() {
+    if (url.startsWith("memory:"))
+      return;
+
+    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(url);
+    databaseDocumentTx.open("admin", "admin");
+
+    try {
+      databaseDocumentTx.command(new OCommandSQL("CREATE CLASS TestRenameClusterOriginal")).execute();
+
+      swapClusters(databaseDocumentTx, 1);
+      swapClusters(databaseDocumentTx, 2);
+      swapClusters(databaseDocumentTx, 3);
+    } finally {
+      databaseDocumentTx.close();
+    }
+  }
+
+  private void swapClusters(ODatabaseDocumentTx databaseDocumentTx, int i) {
+    databaseDocumentTx.command(new OCommandSQL("CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal")).execute();
+
+    databaseDocumentTx.command(new OCommandSQL("INSERT INTO TestRenameClusterNew (iteration) VALUES(" + i + ")")).execute();
+
+    databaseDocumentTx.command(new OCommandSQL("ALTER CLASS TestRenameClusterOriginal removecluster TestRenameClusterOriginal"))
+        .execute();
+    databaseDocumentTx.command(new OCommandSQL("ALTER CLASS TestRenameClusterNew removecluster TestRenameClusterNew")).execute();
+    databaseDocumentTx.command(new OCommandSQL("DROP CLASS TestRenameClusterNew")).execute();
+    databaseDocumentTx.command(new OCommandSQL("ALTER CLASS TestRenameClusterOriginal addcluster TestRenameClusterNew")).execute();
+    databaseDocumentTx.command(new OCommandSQL("DROP CLUSTER TestRenameClusterOriginal")).execute();
+    databaseDocumentTx.command(new OCommandSQL("ALTER CLUSTER TestRenameClusterNew name TestRenameClusterOriginal")).execute();
+
+    List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from TestRenameClusterOriginal"));
+    Assert.assertEquals(result.size(), 1);
+
+    ODocument document = result.get(0);
+    Assert.assertEquals(document.field("iteration"), i);
+  }
+
 }

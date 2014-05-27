@@ -267,7 +267,25 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    */
   public ODatabaseComplex<T> delete(ORID iRID, ORecordVersion iVersion);
 
+  /**
+   * Hides records content by putting tombstone on the records position but does not delete record itself.
+   * 
+   * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method. This
+   * method can be used only if there is no active transaction in database.
+   * 
+   * 
+   * 
+   * @param rid
+   *          record id.
+   * @throws java.lang.UnsupportedOperationException
+   *           In case current version of cluster does not support given operation.
+   * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException
+   *           if record is already deleted/hidden.
+   * 
+   * @return <code>true</code> if record was hidden and <code>false</code> if record does not exits in database.
+   */
 
+  public boolean hide(ORID rid);
 
   public ODatabaseComplex<T> cleanOutRecord(ORID rid, ORecordVersion version);
 
@@ -342,7 +360,6 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * @param iCommand
    *          Command request to execute.
    * @return The same Command request received as parameter.
-   * @see OStorageRemote
    */
   public <RET extends OCommandRequest> RET command(OCommandRequest iCommand);
 

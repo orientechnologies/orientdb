@@ -19,66 +19,90 @@ import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test(groups = "sql-delete", sequential = true)
 public class SQLCommandsTest {
-	private ODatabaseDocument	database;
+  private ODatabaseDocument database;
 
-	@Parameters(value = "url")
-	public SQLCommandsTest(String iURL) {
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  @Parameters(value = "url")
+  public SQLCommandsTest(String iURL) {
+    database = new ODatabaseDocumentTx(iURL);
+  }
 
-	@Test
-	public void createProperty() {
-		database.open("admin", "admin");
+  @Test
+  public void createProperty() {
+    database.open("admin", "admin");
 
-		database.command(new OCommandSQL("create property account.timesheet string")).execute();
+    database.command(new OCommandSQL("create property account.timesheet string")).execute();
 
-		Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("timesheet").getType(), OType.STRING);
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("timesheet").getType(), OType.STRING);
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "createProperty")
-	public void createLinkedClassProperty() {
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "createProperty")
+  public void createLinkedClassProperty() {
+    database.open("admin", "admin");
 
-		database.command(new OCommandSQL("create property account.knows embeddedmap account")).execute();
+    database.command(new OCommandSQL("create property account.knows embeddedmap account")).execute();
 
-		Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("knows").getType(), OType.EMBEDDEDMAP);
-		Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("knows").getLinkedClass(), database
-				.getMetadata().getSchema().getClass("account"));
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("knows").getType(), OType.EMBEDDEDMAP);
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("knows").getLinkedClass(), database
+        .getMetadata().getSchema().getClass("account"));
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "createLinkedClassProperty")
-	public void createLinkedTypeProperty() {
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "createLinkedClassProperty")
+  public void createLinkedTypeProperty() {
+    database.open("admin", "admin");
 
-		database.command(new OCommandSQL("create property account.tags embeddedlist string")).execute();
+    database.command(new OCommandSQL("create property account.tags embeddedlist string")).execute();
 
-		Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("tags").getType(), OType.EMBEDDEDLIST);
-		Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("tags").getLinkedType(), OType.STRING);
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("tags").getType(), OType.EMBEDDEDLIST);
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("tags").getLinkedType(), OType.STRING);
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@Test(dependsOnMethods = "createLinkedTypeProperty")
-	public void removeProperty() {
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "createLinkedTypeProperty")
+  public void removeProperty() {
+    database.open("admin", "admin");
 
-		database.command(new OCommandSQL("drop property account.timesheet")).execute();
-		database.command(new OCommandSQL("drop property account.tags")).execute();
+    database.command(new OCommandSQL("drop property account.timesheet")).execute();
+    database.command(new OCommandSQL("drop property account.tags")).execute();
 
-		Assert.assertFalse(database.getMetadata().getSchema().getClass("account").existsProperty("timesheet"));
-		Assert.assertFalse(database.getMetadata().getSchema().getClass("account").existsProperty("tags"));
+    Assert.assertFalse(database.getMetadata().getSchema().getClass("account").existsProperty("timesheet"));
+    Assert.assertFalse(database.getMetadata().getSchema().getClass("account").existsProperty("tags"));
 
-		database.close();
-	}
+    database.close();
+  }
+
+  @Test(dependsOnMethods = "removeProperty")
+  public void testSQLScript() {
+    database.open("admin", "admin");
+
+    String cmd = "";
+    cmd += "select from ouser limit 1;begin;";
+    cmd += "let a = create vertex set script = true\n";
+    cmd += "let b = select from v limit 1;";
+    cmd += "create edge from $a to $b;";
+    cmd += "commit;";
+    cmd += "return $a;";
+
+    Object result = database.command(new OCommandScript("sql", cmd)).execute();
+    
+    Assert.assertTrue(result instanceof OIdentifiable);
+    Assert.assertTrue(((OIdentifiable)result).getRecord() instanceof ODocument);
+    Assert.assertTrue((Boolean) ((ODocument)((OIdentifiable)result).getRecord()).field("script"));
+
+    database.close();
+  }
 }

@@ -15,9 +15,7 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.util.Collection;
-import java.util.Map;
-
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -27,6 +25,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
+
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Executes a batch of operations in a single call. This is useful to reduce network latency issuing multiple commands as multiple
@@ -83,7 +84,8 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
     ODatabaseDocumentTx db = null;
 
     ODocument batch = null;
-    int executed = 0;
+
+    Object lastResult = null;
 
     try {
       db = getProfiledDatabaseInstance(iRequest);
@@ -115,46 +117,80 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
           // CREATE
           final ODocument doc = getRecord(operation);
           doc.save();
-          executed++;
+          lastResult = doc;
         } else if (type.equals("u")) {
           // UPDATE
           final ODocument doc = getRecord(operation);
           doc.save();
-          executed++;
+          lastResult = doc;
         } else if (type.equals("d")) {
           // DELETE
           final ODocument doc = getRecord(operation);
           db.delete(doc.getIdentity());
-          executed++;
+          lastResult = doc.getIdentity();
         } else if (type.equals("cmd")) {
           // COMMAND
           final String language = (String) operation.get("language");
-          final String command = (String) operation.get("command");
+          if (language == null)
+            throw new IllegalArgumentException("language parameter is null");
+
+          final Object command = operation.get("command");
+          if (command == null)
+            throw new IllegalArgumentException("command parameter is null");
+
+          String commandAsString = null;
+          if (command != null)
+            if (OMultiValue.isMultiValue(command)) {
+              for (Object c : OMultiValue.getMultiValueIterable(command)) {
+                if (commandAsString == null)
+                  commandAsString = c.toString();
+                else
+                  commandAsString += ";" + c.toString();
+              }
+            } else
+              commandAsString = command.toString();
 
           final OCommandRequestText cmd = (OCommandRequestText) OCommandManager.instance().getRequester(language);
-          cmd.setText(command);
-          db.command(cmd).execute();
-          executed++;
+          cmd.setText(commandAsString);
+          lastResult = db.command(cmd).execute();
         } else if (type.equals("script")) {
           // COMMAND
           final String language = (String) operation.get("language");
-          final String script = (String) operation.get("script");
+          if (language == null)
+            throw new IllegalArgumentException("language parameter is null");
 
-          db.command(new OCommandScript(language, script)).execute();
-          executed++;
+          final Object script = operation.get("script");
+          if (script == null)
+            throw new IllegalArgumentException("script parameter is null");
+
+          StringBuilder text = new StringBuilder();
+          if (OMultiValue.isMultiValue(script)) {
+            // ENSEMBLE ALL THE SCRIPT LINES IN JUST ONE SEPARATED BY LINEFEED
+            int i = 0;
+            for (Object o : OMultiValue.getMultiValueIterable(script)) {
+              if (o != null) {
+                if (i++ > 0)
+                  text.append("\n");
+                text.append(o.toString());
+              }
+            }
+          } else
+            text.append(script);
+
+          lastResult = db.command(new OCommandScript(language, text.toString())).execute();
         }
       }
 
       if (tx)
         db.commit();
 
+      iResponse.writeResult(lastResult);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
+
     } finally {
       if (db != null)
         db.close();
     }
-
-    iResponse
-        .send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, executed, null, true);
     return false;
   }
 

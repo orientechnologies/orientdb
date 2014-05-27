@@ -18,12 +18,14 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -34,7 +36,10 @@ import java.util.Map.Entry;
  * 
  */
 public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
-  protected ODatabaseRecord database;
+  private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
+  private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
+
+  protected ODatabaseRecord              database;
 
   public OIndexTxAware(final ODatabaseRecord iDatabase, final OIndex<T> iDelegate) {
     super(iDelegate);
@@ -59,6 +64,15 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
               tot--;
           } else if (e.operation == OPERATION.PUT) {
           }
+        }
+      }
+
+      for (final OTransactionIndexEntry e : indexChanges.nullKeyChanges.entries) {
+        if (e.operation == OPERATION.REMOVE) {
+          if (e.value == null)
+            // KEY REMOVED
+            tot--;
+        } else if (e.operation == OPERATION.PUT) {
         }
       }
     }
@@ -181,5 +195,75 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
       if (lastKey == null)
         return indexLastKey;
     }
+  }
+
+  protected Object enhanceCompositeKey(Object key, OMVRBTree.PartialSearchMode partialSearchMode) {
+    if (!(key instanceof OCompositeKey))
+      return key;
+
+    final OCompositeKey compositeKey = (OCompositeKey) key;
+    final int keySize = getDefinition().getParamCount();
+
+    if (!(keySize == 1 || compositeKey.getKeys().size() == keySize || partialSearchMode.equals(OMVRBTree.PartialSearchMode.NONE))) {
+      final OCompositeKey fullKey = new OCompositeKey(compositeKey);
+      int itemsToAdd = keySize - fullKey.getKeys().size();
+
+      final Comparable<?> keyItem;
+      if (partialSearchMode.equals(OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY))
+        keyItem = ALWAYS_GREATER_KEY;
+      else
+        keyItem = ALWAYS_LESS_KEY;
+
+      for (int i = 0; i < itemsToAdd; i++)
+        fullKey.addKey(keyItem);
+
+      return fullKey;
+    }
+
+    return key;
+  }
+
+  protected Object enhanceToCompositeKeyBetweenAsc(Object keyTo, boolean toInclusive) {
+    OMVRBTree.PartialSearchMode partialSearchModeTo;
+    if (toInclusive)
+      partialSearchModeTo = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
+    else
+      partialSearchModeTo = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
+
+    keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo);
+    return keyTo;
+  }
+
+  protected Object enhanceFromCompositeKeyBetweenAsc(Object keyFrom, boolean fromInclusive) {
+    OMVRBTree.PartialSearchMode partialSearchModeFrom;
+    if (fromInclusive)
+      partialSearchModeFrom = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
+    else
+      partialSearchModeFrom = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
+
+    keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
+    return keyFrom;
+  }
+
+  protected Object enhanceToCompositeKeyBetweenDesc(Object keyTo, boolean toInclusive) {
+    OMVRBTree.PartialSearchMode partialSearchModeTo;
+    if (toInclusive)
+      partialSearchModeTo = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
+    else
+      partialSearchModeTo = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
+
+    keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo);
+    return keyTo;
+  }
+
+  protected Object enhanceFromCompositeKeyBetweenDesc(Object keyFrom, boolean fromInclusive) {
+    OMVRBTree.PartialSearchMode partialSearchModeFrom;
+    if (fromInclusive)
+      partialSearchModeFrom = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
+    else
+      partialSearchModeFrom = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
+
+    keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
+    return keyFrom;
   }
 }

@@ -18,11 +18,7 @@ package com.orientechnologies.orient.core.sql.operator;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -61,15 +57,14 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams,
-																	boolean ascSortOrder, IndexResultListener resultListener, int fetchLimit) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
+    OIndexCursor cursor;
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
 
-    final Object result;
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
       if (indexDefinition instanceof OIndexDefinitionMultiValue)
@@ -80,11 +75,7 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      if (resultListener != null) {
-        index.getValuesMinor(key, true, ascSortOrder, resultListener);
-        result = resultListener.getResult();
-      } else
-        result = index.getValuesMinor(key, true, ascSortOrder);
+      cursor = index.iterateEntriesMinor(key, true, ascSortOrder);
     } else {
       // if we have situation like "field1 = 1 AND field2 <= 2"
       // then we fetch collection which left included boundary is the smallest composite key in the
@@ -103,15 +94,11 @@ public class OQueryOperatorMinorEquals extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      if (resultListener != null) {
-        index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder, resultListener);
-        result = resultListener.getResult();
-      } else
-        result = index.getValuesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+      cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return result;
+    return cursor;
   }
 
   @Override

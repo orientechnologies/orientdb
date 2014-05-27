@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import java.io.IOException;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
+
+import java.io.IOException;
+import java.util.Set;
 
 /**
  * This class is heart of OrientDB storage model it presents disk backed data cache which works with direct memory.
@@ -52,10 +52,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirty
  * If you want to add new data but not to change existing one and you do not have enough space to add new data use method
  * {@link #allocateNewPage(long)} instead of {@link #load(long, long, boolean)}.
  * 
- * {@link #load(long, long, boolean)} method has checkPinnedPages parameter. Pinned pages are pages which are kept
- * always loaded in RAM ,this class of pages is needed for some data structures usually
- * this attribute should be set to <code>false</code> and it is set to
- * <code>true</code> when storage goes through data restore procedure after system crash.
+ * {@link #load(long, long, boolean)} method has checkPinnedPages parameter. Pinned pages are pages which are kept always loaded in
+ * RAM ,this class of pages is needed for some data structures usually this attribute should be set to <code>false</code> and it is
+ * set to <code>true</code> when storage goes through data restore procedure after system crash.
  * 
  * @author Andrey Lomakin
  * @since 14.03.13
@@ -64,6 +63,8 @@ public interface ODiskCache {
   long openFile(String fileName) throws IOException;
 
   void openFile(long fileId) throws IOException;
+
+  void openFile(String fileName, long fileId) throws IOException;
 
   OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages) throws IOException;
 
@@ -114,4 +115,8 @@ public interface ODiskCache {
   boolean exists(String name);
 
   String fileNameById(long fileId);
+
+  void lock() throws IOException;
+
+  void unlock() throws IOException;
 }

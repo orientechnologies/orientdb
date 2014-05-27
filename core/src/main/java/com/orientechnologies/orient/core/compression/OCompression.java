@@ -23,7 +23,11 @@ package com.orientechnologies.orient.core.compression;
 public interface OCompression {
   byte[] compress(byte[] content);
 
+  byte[] compress(byte[] content, final int offset, final int length);
+
   byte[] uncompress(byte[] content);
+
+  byte[] uncompress(byte[] content, final int offset, final int length);
 
   String name();
 }

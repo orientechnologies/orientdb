@@ -30,19 +30,12 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTr
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -80,8 +73,6 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
 
   public abstract ODiskCache getDiskCache();
 
-  public abstract boolean wasClusterSoftlyClosed(String clusterIndexName);
-
   public abstract boolean check(boolean b, OCommandOutputListener dbCheckTest);
 
   public OStorageTransaction getStorageTransaction() {
@@ -106,7 +97,8 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
 
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
-        OZIPCompressionUtil.compressDirectory(getStoragePath(), bo, new String[] { ".wal" }, iOutput, compressionLevel);
+        OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" }, iOutput,
+            compressionLevel);
       } finally {
         if (bufferSize > 0) {
           bo.flush();
@@ -223,6 +215,11 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
           cachePointer.releaseExclusiveLock();
           diskCache.release(cacheEntry);
         }
+      } else if (record instanceof OFileCreatedCreatedWALRecord) {
+        final OFileCreatedCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedCreatedWALRecord) record;
+
+        diskCache.openFile(fileCreatedCreatedRecord.getFileName(), fileCreatedCreatedRecord.getFileId());
+        diskCache.deleteFile(fileCreatedCreatedRecord.getFileId());
       } else {
         OLogManager.instance().error(this, "Invalid WAL record type was passed %s. Given record will be skipped.",
             record.getClass());

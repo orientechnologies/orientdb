@@ -6,6 +6,7 @@ import org.testng.annotations.*;
 @Test
 public abstract class BaseTest {
   protected ODatabaseDocumentTx database;
+  protected String              url;
   private boolean               dropDb = false;
 
   @Parameters(value = "url")
@@ -17,6 +18,7 @@ public abstract class BaseTest {
     }
 
     database = new ODatabaseDocumentTx(url);
+    this.url = database.getURL();
   }
 
   @BeforeClass

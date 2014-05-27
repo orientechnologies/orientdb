@@ -66,6 +66,7 @@ public class OChannelBinaryProtocol {
   public static final byte  REQUEST_COUNT                           = 40; // DEPRECATED: USE REQUEST_DATACLUSTER_COUNT
   public static final byte  REQUEST_COMMAND                         = 41;
   public static final byte  REQUEST_POSITIONS_CEILING               = 42; // since 1.3.0
+  public static final byte  REQUEST_RECORD_HIDE                     = 43; // since 1.7
 
   public static final byte  REQUEST_TX_COMMIT                       = 60;
 
@@ -108,7 +109,7 @@ public class OChannelBinaryProtocol {
   public static final short RECORD_RID                              = -3;
 
   // FOR MORE INFO: https://github.com/orientechnologies/orientdb/wiki/Network-Binary-Protocol#wiki-Compatibility
-  public static final int   CURRENT_PROTOCOL_VERSION                = 20; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+  public static final int   CURRENT_PROTOCOL_VERSION                = 21; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {
     final int classId = network.readShort();

@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -569,12 +568,23 @@ public class LinkBagIndexTest extends BaseTest {
     final ODocument docTwo = new ODocument();
     docTwo.save();
 
-    final ODocument document = new ODocument("RidBagIndexTestClass");
+    final ODocument docThree = new ODocument();
+    docThree.save();
+
+    ODocument document = new ODocument("RidBagIndexTestClass");
     final ORidBag ridBagOne = new ORidBag();
     ridBagOne.add(docOne);
     ridBagOne.add(docTwo);
 
     document.field("ridBag", ridBagOne);
+    document.save();
+
+    document = new ODocument("RidBagIndexTestClass");
+    ORidBag ridBag = new ORidBag();
+    ridBag.add(docThree);
+    ridBag.add(docTwo);
+
+    document.field("ridBag", ridBag);
     document.save();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(

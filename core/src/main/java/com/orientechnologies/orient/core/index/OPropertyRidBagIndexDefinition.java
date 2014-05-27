@@ -12,7 +12,7 @@ import java.util.Map;
 
 /**
  * Index definition for index which is bound to field with type {@link OType#LINKBAG} .
- *
+ * 
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 1/30/14
  */

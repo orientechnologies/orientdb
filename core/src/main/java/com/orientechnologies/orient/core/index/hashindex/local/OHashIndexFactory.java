@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine
 import com.orientechnologies.orient.core.index.engine.OMemoryHashMapIndexEngine;
 import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -38,7 +39,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OHashIndexFactory implements OIndexFactory {
+
   private static final Set<String> TYPES;
+  public static final String       SBTREE_ALGORITHM   = "SBTREE";
+  public static final String       MVRBTREE_ALGORITHM = "MVRBTREE";
+  private static final Set<String> ALGORITHMS;
   static {
     final Set<String> types = new HashSet<String>();
     types.add(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString());
@@ -46,6 +51,12 @@ public class OHashIndexFactory implements OIndexFactory {
     types.add(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString());
     types.add(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString());
     TYPES = Collections.unmodifiableSet(types);
+  }
+  static {
+    final Set<String> algorithms = new HashSet<String>();
+    algorithms.add(SBTREE_ALGORITHM);
+    algorithms.add(MVRBTREE_ALGORITHM);
+    ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
 
   /**
@@ -61,8 +72,12 @@ public class OHashIndexFactory implements OIndexFactory {
     return TYPES;
   }
 
-  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm, String valueContainerAlgorithm)
-      throws OConfigurationException {
+  public Set<String> getAlgorithms() {
+    return ALGORITHMS;
+  }
+
+  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm,
+      String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
     if (valueContainerAlgorithm == null) {
       if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)
           || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType)
@@ -107,7 +122,7 @@ public class OHashIndexFactory implements OIndexFactory {
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
       return new OIndexNotUnique(indexType, algorithm, indexEngine, valueContainerAlgorithm);
     else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(indexType, algorithm, indexEngine, valueContainerAlgorithm);
+      return new OIndexFullText(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
       return new OIndexDictionary(indexType, algorithm, indexEngine, valueContainerAlgorithm);
 

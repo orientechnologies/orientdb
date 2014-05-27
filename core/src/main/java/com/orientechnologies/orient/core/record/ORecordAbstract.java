@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -35,8 +27,17 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
@@ -82,6 +83,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _recordId;
   }
 
+  public ORecordAbstract<?> setIdentity(final ORecordId iIdentity) {
+    _recordId = iIdentity;
+    return this;
+  }
+
   @Override
   public ORecordElement getOwner() {
     return null;
@@ -98,11 +104,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
       _recordId.clusterId = iClusterId;
       _recordId.clusterPosition = iClusterPosition;
     }
-    return this;
-  }
-
-  public ORecordAbstract<?> setIdentity(final ORecordId iIdentity) {
-    _recordId = iIdentity;
     return this;
   }
 
@@ -199,7 +200,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   public <RET extends ORecord<T>> RET fromJSON(final String iSource, final String iOptions) {
     // ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions);
     ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions, false); // Add new parameter to accommodate new API,
-                                                                                     // noting change
+                                                                                     // nothing change
     return (RET) this;
   }
 
@@ -344,9 +345,15 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _size;
   }
 
-  protected void setup() {
-    if (_recordId == null)
-      _recordId = new ORecordId();
+  @Override
+  public void lock(final boolean iExclusive) {
+    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
+        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK);
+  }
+
+  @Override
+  public void unlock() {
+    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().unlockRecord(this);
   }
 
   @Override
@@ -432,20 +439,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     }
   }
 
-  protected void invokeListenerEvent(final ORecordListener.EVENT iEvent) {
-    if (_listeners != null)
-      for (final ORecordListener listener : _listeners)
-        if (listener != null)
-          listener.onEvent(this, iEvent);
-  }
-
   public <RET extends ORecord<T>> RET flatCopy() {
     return (RET) copy();
-  }
-
-  protected void checkForLoading() {
-    if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
-      reload(null, true);
   }
 
   @Override
@@ -456,5 +451,22 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   @Override
   public void removeIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
     identityChangeListeners.remove(identityChangeListener);
+  }
+
+  protected void setup() {
+    if (_recordId == null)
+      _recordId = new ORecordId();
+  }
+
+  protected void invokeListenerEvent(final ORecordListener.EVENT iEvent) {
+    if (_listeners != null)
+      for (final ORecordListener listener : _listeners)
+        if (listener != null)
+          listener.onEvent(this, iEvent);
+  }
+
+  protected void checkForLoading() {
+    if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
+      reload(null, true);
   }
 }

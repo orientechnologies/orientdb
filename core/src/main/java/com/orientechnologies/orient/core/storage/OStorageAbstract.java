@@ -40,17 +40,15 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class OStorageAbstract extends OSharedContainerImpl implements OStorage {
   protected final String                              url;
   protected final String                              mode;
+  protected final OSharedResourceAdaptiveExternal     lock;
   protected volatile OStorageConfiguration            configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
-
   protected String                                    name;
   protected AtomicLong                                version = new AtomicLong();
   protected OLevel2RecordCache                        level2Cache;
-
   protected volatile STATUS                           status  = STATUS.CLOSED;
-  protected final OSharedResourceAdaptiveExternal     lock;
 
-  public OStorageAbstract(final String name, final String URL, final String mode, final int timeout,
+  public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout,
       final OCacheLevelTwoLocator cacheLocator) {
     if (OStringSerializerHelper.contains(name, '/'))
       this.name = name.substring(name.lastIndexOf("/") + 1);
@@ -63,11 +61,13 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     level2Cache = new OLevel2RecordCache(this, cacheLocator);
     level2Cache.startup();
 
-    url = URL;
+    url = iURL;
     this.mode = mode;
 
     lock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), timeout, true);
   }
+
+  public abstract OCluster getClusterByName(final String iClusterName);
 
   public OStorage getUnderlying() {
     return this;
@@ -137,21 +137,6 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     return dropCluster(getClusterIdByName(iClusterName), iTruncate);
-  }
-
-  protected boolean checkForClose(final boolean force) {
-    lock.acquireSharedLock();
-    try {
-      if (status == STATUS.CLOSED)
-        return false;
-
-      final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
-
-      return force
-          || (!(OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && this instanceof OStorageEmbedded) && remainingUsers == 0);
-    } finally {
-      lock.releaseSharedLock();
-    }
   }
 
   public int getUsers() {
@@ -235,5 +220,20 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   @Override
   public long getLastOperationId() {
     return 0;
+  }
+
+  protected boolean checkForClose(final boolean force) {
+    lock.acquireSharedLock();
+    try {
+      if (status == STATUS.CLOSED)
+        return false;
+
+      final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
+
+      return force
+          || (!(OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && this instanceof OStorageEmbedded) && remainingUsers == 0);
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 }
