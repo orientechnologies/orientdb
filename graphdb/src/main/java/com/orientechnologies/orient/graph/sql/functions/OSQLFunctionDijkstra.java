@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -25,8 +28,6 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.Iterator;
 
 /**
  * Dijkstra's algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph.
@@ -43,8 +44,8 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     super(NAME, 3, 4);
   }
 
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
-      OCommandContext iContext) {
+  public LinkedList<OrientVertex> execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult,
+      final Object[] iParams,      OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
@@ -55,7 +56,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
         throw new IllegalArgumentException("Only one sourceVertex is allowed");
       source = OMultiValue.getFirstValue(source);
     }
-    paramSourceVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(source, record, iContext));
+    paramSourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
 
     Object dest = iParams[1];
     if (OMultiValue.isMultiValue(dest)) {
@@ -63,7 +64,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
         throw new IllegalArgumentException("Only one destinationVertex is allowed");
       dest = OMultiValue.getFirstValue(dest);
     }
-    paramDestinationVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(dest, record, iContext));
+    paramDestinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
 
     paramWeightFieldName = (String) OSQLHelper.getValue(iParams[2], record, iContext);
     if (iParams.length > 3)

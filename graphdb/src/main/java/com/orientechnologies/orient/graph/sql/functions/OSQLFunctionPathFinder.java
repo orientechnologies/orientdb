@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
@@ -22,13 +29,6 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Abstract class to find paths between nodes.
@@ -54,7 +54,7 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
     super(iName, iMinParams, iMaxParams);
   }
 
-  public Object execute(final Object[] iParameters, final OCommandContext iContext) {
+  public LinkedList<OrientVertex> execute(final Object[] iParameters, final OCommandContext iContext) {
     context = iContext;
     unSettledNodes = new HashSet<OrientVertex>();
     distance = new HashMap<ORID, Float>();
