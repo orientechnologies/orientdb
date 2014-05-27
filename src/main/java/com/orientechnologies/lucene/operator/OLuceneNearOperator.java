@@ -45,19 +45,18 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
     super("NEAR", 5, false);
   }
 
-  // @Override
-  // protected boolean evaluateExpression(OIdentifiable iRecord, OSQLFilterCondition iCondition, Object iLeft, Object iRight,
-  // OCommandContext iContext) {
-  //
-  // SpatialContext ctx = SpatialContext.GEO;
-  // Object[] points = parseParams(iRecord, iCondition);
-  // Point p = ctx.makePoint((Double) points[3], (Double) points[2]);
-  //
-  // double docDistDEG = ctx.getDistCalc().distance(p, (Double) points[1], (Double) points[0]);
-  // double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
-  // iContext.setVariable("$distance", docDistInKM);
-  // return true;
-  // }
+  @Override
+  public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
+      Object iRight, OCommandContext iContext) {
+    SpatialContext ctx = SpatialContext.GEO;
+    Object[] points = parseParams(iRecord, iCondition);
+    Point p = ctx.makePoint((Double) points[3], (Double) points[2]);
+
+    double docDistDEG = ctx.getDistCalc().distance(p, (Double) points[1], (Double) points[0]);
+    double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
+    iContext.setVariable("$distance", docDistInKM);
+    return true;
+  }
 
   private Object[] parseParams(OIdentifiable iRecord, OSQLFilterCondition iCondition) {
 

@@ -136,6 +136,7 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   @Override
   public void closeDb() {
     lucene.commit();
+    lucene.closeDb();
   }
 
   @Override
