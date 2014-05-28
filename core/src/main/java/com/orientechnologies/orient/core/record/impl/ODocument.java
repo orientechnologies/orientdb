@@ -22,8 +22,18 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
@@ -31,7 +41,20 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODetachable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -386,7 +409,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   public ODocument load(final String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone) {
-    Object result = null;
+    Object result;
     try {
       result = getDatabase().load(this, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
     } catch (Exception e) {
@@ -555,7 +578,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iFieldName) {
-    RET value = this.<RET> rawField(iFieldName);
+    RET value = this.rawField(iFieldName);
 
     final OType t = fieldType(iFieldName);
 
@@ -579,13 +602,13 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       if (t == OType.BINARY && value instanceof String)
         newValue = OStringSerializerHelper.getBinaryContent(value);
       else if (t == OType.DATE && value instanceof Long)
-        newValue = (RET) new Date(((Long) value).longValue());
+        newValue = new Date((Long) value);
       else if ((t == OType.EMBEDDEDSET || t == OType.LINKSET) && value instanceof List)
         // CONVERT LIST TO SET
-        newValue = (RET) ODocumentHelper.convertField(this, iFieldName, Set.class, value);
+        newValue = ODocumentHelper.convertField(this, iFieldName, Set.class, value);
       else if ((t == OType.EMBEDDEDLIST || t == OType.LINKLIST) && value instanceof Set)
         // CONVERT SET TO LIST
-        newValue = (RET) ODocumentHelper.convertField(this, iFieldName, List.class, value);
+        newValue = ODocumentHelper.convertField(this, iFieldName, List.class, value);
 
       if (newValue != null) {
         // VALUE CHANGED: SET THE NEW ONE
@@ -612,10 +635,10 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iFieldName, final Class<?> iFieldType) {
-    RET value = this.<RET> rawField(iFieldName);
+    RET value = this.rawField(iFieldName);
 
     if (value != null)
-      value = (RET) ODocumentHelper.convertField(this, iFieldName, iFieldType, value);
+      value = ODocumentHelper.convertField(this, iFieldName, iFieldType, value);
 
     return value;
   }
@@ -768,20 +791,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         }
       }
 
-    OType fieldType;
-
-    if (iFieldType != null && iFieldType.length == 1) {
-      setFieldType(iFieldName, iFieldType[0]);
-      fieldType = iFieldType[0];
-    } else
-      fieldType = null;
-
-    if (fieldType == null && _clazz != null) {
-      // SCHEMAFULL?
-      final OProperty prop = _clazz.getProperty(iFieldName);
-      if (prop != null)
-        fieldType = prop.getType();
-    }
+    OType fieldType = deriveFieldType(iFieldName, iFieldType);
 
     if (oldValue instanceof ORidBag) {
       final ORidBag ridBag = (ORidBag) oldValue;
@@ -817,18 +827,40 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     if (_status != STATUS.UNMARSHALLING) {
       setDirty();
 
-      if (_trackingChanges && _recordId.isValid()) {
-        // SAVE THE OLD VALUE IN A SEPARATE MAP ONLY IF TRACKING IS ACTIVE AND THE RECORD IS NOT NEW
-        if (_fieldOriginalValues == null)
-          _fieldOriginalValues = new HashMap<String, Object>();
-
-        // INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
-        if (!_fieldOriginalValues.containsKey(iFieldName))
-          _fieldOriginalValues.put(iFieldName, oldValue);
-      }
+      saveOldFieldValue(iFieldName, oldValue);
     }
 
     return this;
+  }
+
+  private void saveOldFieldValue(String iFieldName, Object oldValue) {
+    if (_trackingChanges && _recordId.isValid()) {
+      // SAVE THE OLD VALUE IN A SEPARATE MAP ONLY IF TRACKING IS ACTIVE AND THE RECORD IS NOT NEW
+      if (_fieldOriginalValues == null)
+        _fieldOriginalValues = new HashMap<String, Object>();
+
+      // INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
+      if (!_fieldOriginalValues.containsKey(iFieldName))
+        _fieldOriginalValues.put(iFieldName, oldValue);
+    }
+  }
+
+  private OType deriveFieldType(String iFieldName, OType[] iFieldType) {
+    OType fieldType;
+
+    if (iFieldType != null && iFieldType.length == 1) {
+      setFieldType(iFieldName, iFieldType[0]);
+      fieldType = iFieldType[0];
+    } else
+      fieldType = null;
+
+    if (fieldType == null && _clazz != null) {
+      // SCHEMAFULL?
+      final OProperty prop = _clazz.getProperty(iFieldName);
+      if (prop != null)
+        fieldType = prop.getType();
+    }
+    return fieldType;
   }
 
   /**
@@ -1195,6 +1227,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * Returns the forced field type if any.
    * 
    * @param iFieldName
+   *          name of field to check
    */
   public OType fieldType(final String iFieldName) {
     return _fieldTypes != null ? _fieldTypes.get(iFieldName) : null;
@@ -1316,7 +1349,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * 
    * @param iTrackingChanges
    *          True to enable it, otherwise false
-   * @return
+   * @return this
    */
   public ODocument setTrackingChanges(final boolean iTrackingChanges) {
     this._trackingChanges = iTrackingChanges;
@@ -1576,8 +1609,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   /**
    * Change the behavior of field() methods allowing access to the sub documents with dot notation ('.'). Default is true. Set it to
    * false if you allow to store properties with the dot.
-   * 
-   * @param _allowChainedAccess
    */
   public ODocument setAllowChainedAccess(final boolean _allowChainedAccess) {
     this._allowChainedAccess = _allowChainedAccess;
