@@ -18,16 +18,21 @@ package com.orientechnologies.lucene.index;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneIndexEngine;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 public class OLuceneFullTextIndex extends OIndexMultiValues implements OLuceneIndex {
 
@@ -129,6 +134,35 @@ public class OLuceneFullTextIndex extends OIndexMultiValues implements OLuceneIn
   @Override
   public boolean canBeUsedInEqualityOperators() {
     return true;
+  }
+
+  @Override
+  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+
+    Object snapshotValue = snapshot.get(key);
+
+    Set<OIdentifiable> values;
+    if (snapshotValue == null)
+      values = null;
+    else if (snapshotValue.equals(RemovedValue.INSTANCE))
+      values = null;
+    else
+      values = (Set<OIdentifiable>) snapshotValue;
+
+    if (values == null) {
+      if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+        values = new OIndexRIDContainer(getName());
+      } else {
+        values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
+        ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
+      }
+
+      snapshot.put(key, values);
+    }
+
+    values.add(value.getIdentity());
+    snapshot.put(key, values);
   }
 
   @Override

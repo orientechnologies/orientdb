@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-
 public class OLuceneIndexFactory implements OIndexFactory {
 
   private static final Set<String> TYPES;

@@ -115,4 +115,20 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
       modificationLock.releaseModificationLock();
     }
   }
+
+  @Override
+  public long rebuild(OProgressListener iProgressListener) {
+
+    long size = 0;
+    OLuceneIndexEngine engine = (OLuceneIndexEngine) indexEngine;
+    try {
+      engine.setRebuilding(true);
+      super.rebuild(iProgressListener);
+    } finally {
+      engine.setRebuilding(false);
+    }
+
+    return size;
+
+  }
 }

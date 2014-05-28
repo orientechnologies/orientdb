@@ -94,22 +94,25 @@ public class OLuceneIndexType {
     String query = null;
     if (key instanceof String) {
       query = (String) key;
-      queryParser = getQueryParser(index, query, analyzer, version);
+      return getQueryParser(index, query, analyzer, version);
     } else if (key instanceof OCompositeKey) {
       query = ((OCompositeKey) key).getKeys().get(0).toString();
-      queryParser = getQueryParser(index, query, analyzer, version);
+      return getQueryParser(index, query, analyzer, version);
     }
-    return queryParser.parse(query);
+    return null;
   }
 
-  protected static QueryParser getQueryParser(OIndexDefinition index, String key, Analyzer analyzer, Version version) {
+  protected static Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer, Version version)
+      throws ParseException {
     QueryParser queryParser;
-    if (((String) key).startsWith("(")) {
+    if ((key).startsWith("(")) {
       queryParser = new QueryParser(version, "", analyzer);
+
     } else {
       queryParser = new MultiFieldQueryParser(version, index.getFields().toArray(new String[index.getFields().size()]), analyzer);
+      key = QueryParser.escape(key);
     }
-    return queryParser;
+    return queryParser.parse(key);
   }
 
   public static Sort sort(Query query, OIndexDefinition index, boolean ascSortOrder) {
