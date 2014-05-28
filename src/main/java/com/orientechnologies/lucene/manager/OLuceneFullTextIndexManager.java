@@ -17,10 +17,7 @@
 package com.orientechnologies.lucene.manager;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.orient.core.index.*;
 import org.apache.lucene.analysis.Analyzer;
@@ -126,7 +123,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   private Set<OIdentifiable> getResults(Query query) {
-    Set<OIdentifiable> results = new HashSet<OIdentifiable>();
+    Set<OIdentifiable> results = new LinkedHashSet<>();
     try {
       IndexSearcher searcher = getSearcher();
 

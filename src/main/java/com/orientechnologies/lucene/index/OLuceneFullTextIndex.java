@@ -16,6 +16,7 @@
 
 package com.orientechnologies.lucene.index;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -27,7 +28,6 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
 
 public class OLuceneFullTextIndex extends OIndexMultiValues implements OLuceneIndex {
 
@@ -72,6 +72,27 @@ public class OLuceneFullTextIndex extends OIndexMultiValues implements OLuceneIn
       return this;
     } finally {
       modificationLock.releaseModificationLock();
+    }
+  }
+
+  @Override
+  public Set<OIdentifiable> get(Object key) {
+    checkForRebuild();
+
+    key = getCollatingValue(key);
+
+    acquireSharedLock();
+    try {
+
+      final Set<OIdentifiable> values = indexEngine.get(key);
+
+      if (values == null)
+        return Collections.emptySet();
+
+      return values;
+
+    } finally {
+      releaseSharedLock();
     }
   }
 
