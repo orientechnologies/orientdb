@@ -31,7 +31,7 @@ module.controller('ClusterEditController', function ($scope, Cluster) {
     }
 
 });
-module.controller('ClusterMainController', function ($scope, $i18n, Cluster) {
+module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $modal, $q, Server) {
 
 
     Cluster.getAll().then(function (data) {
@@ -42,14 +42,47 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster) {
     });
 
 
+    $scope.db = false;
+    $scope.editCluster = function () {
+
+        if ($scope.cluster) {
+            var modalScope = $scope.$new(true);
+            modalScope.cluster = $scope.cluster;
+            var modalPromise = $modal({template: 'views/cluster/editCluster.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
+
+            $q.when(modalPromise).then(function (modalEl) {
+                modalEl.modal('show');
+            });
+        }
+    }
     $scope.$watch("cluster", function (data) {
 
         if (data) {
             Cluster.getServers(data).then(function (servers) {
                 $scope.servers = servers;
+                $scope.nodes = new Array;
+                $scope.servers.forEach(function (s, idx, arr) {
+                    Server.findDatabases(s.name, function (data) {
+                        s.databases = [];
+                        data.forEach(function (db, idx, arr) {
+                            s.databases.push(db);
+                        });
+                        $scope.nodes = $scope.nodes.concat(s);
+                    });
+                })
+
             });
         }
     });
 
+    $scope.$on("dbselected", function (event, data) {
+        if (data.el.db) {
+            var db = data.el.name;
+            Cluster.getClusterDbInfo($scope.cluster.name, data.el.name).then(function (data) {
+                $scope.dbConfig = {name: db, config: data.result }
+                $scope.db = true;
+            });
+        }
+    });
 });
 

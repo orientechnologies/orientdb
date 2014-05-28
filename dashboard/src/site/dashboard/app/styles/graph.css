@@ -36,11 +36,20 @@ path.link.hidden {
 }
 
 circle.node {
+     stroke-width: 1.5px;
+     cursor: pointer;
+ }
+
+circle.node.reflexive {
+    stroke: #000 !important;
+    stroke-width: 2.5px;
+}
+rect.rectdb {
     stroke-width: 1.5px;
     cursor: pointer;
 }
 
-circle.node.reflexive {
+rect.rectdb.reflexive {
     stroke: #000 !important;
     stroke-width: 2.5px;
 }
@@ -56,4 +65,10 @@ text.id {
 }
 .graph-server {
     border: 1px solid #DEDEDE;
+}
+.link {
+    fill: none;
+    stroke: #000;
+    stroke-width: 4px;
+    cursor: default;
 }

@@ -1,5 +1,6 @@
 package com.orientechnologies.workbench.http;
 
+import com.hazelcast.core.IMap;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -22,7 +23,7 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
 
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: distributed/<db>/<type>");
+    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: distributed/<db>/<type>/<cluster>");
 
     if (monitor == null)
       monitor = OServerMain.server().getPluginByClass(OWorkbenchPlugin.class);
@@ -42,6 +43,16 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
             docs.add(cluster.getClusterConfig());
           }
           iResponse.writeResult(docs);
+        } else if ("dbconfig".equals(type)) {
+          String cluster = urlParts[3];
+          String db = urlParts[4];
+
+          OMonitoredCluster c = monitor.getClusterByName(cluster);
+          IMap<String, Object> config = c.getConfigurationMap();
+
+          ODocument dbConf = (ODocument) config.get("database." + db);
+
+          iResponse.writeResult(dbConf);
         }
 
       }

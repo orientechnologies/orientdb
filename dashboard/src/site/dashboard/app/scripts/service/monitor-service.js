@@ -378,5 +378,14 @@ monitor.factory('Cluster', function ($http, $resource, $q) {
         });
         return deferred.promise;
     }
+    resource.getClusterDbInfo = function (cluster, db) {
+        var deferred = $q.defer();
+        var url = API + 'distributed/monitor/dbconfig/{{cluster}}/{{db}}';
+        url = S(url).template({cluster: cluster, db: db}).s;
+        $http.get(url).success(function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
+    }
     return resource;
 });

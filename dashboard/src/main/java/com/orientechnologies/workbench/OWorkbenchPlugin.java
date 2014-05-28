@@ -559,4 +559,8 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   public Collection<OMonitoredCluster> getClustersList() {
     return clusters.values();
   }
+
+  public OMonitoredCluster getClusterByName(String cluster) {
+    return clusters.get(cluster);
+  }
 }

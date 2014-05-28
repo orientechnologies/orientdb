@@ -1128,3 +1128,9 @@ div.messageText label {
     left: 50%;
     top: 50%;
 }
+div.container select {
+    margin-bottom: 0px;
+}
+.nomargin {
+    margin: 0;
+}

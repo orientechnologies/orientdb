@@ -11,9 +11,12 @@
 
     <div class="row-fluid well" style="width: 96%">
         <div class="span3">
-            {{ 'cluster.cluster' | i18n }}:
-            <select id="cluster" ng-model="cluster" class="span6" ng-options="s.name for s in clusters"
-                    data-placeholder="Pick a Cluster"></select>
+            <form class="form-inline">
+                <label for="cluster">{{ 'cluster.cluster' | i18n }}:</label>
+                <select id="cluster" ng-model="cluster" class="span6 nomargin" ng-options="s.name for s in clusters"
+                        data-placeholder="Pick a Cluster"></select>
+                <button class="btn btn-small" ng-click="editCluster()"><i class="icon-edit"></i></button>
+            </form>
         </div>
         <div class="span9">
             <div class="span12">
@@ -28,5 +31,6 @@
         </div>
     </div>
 
-    <div class="row-fluid graph-server" servergraph ng-model="servers"></div>
+    <div class="row-fluid graph-server" servergraph ng-show="!db" ng-model="nodes"></div>
+    <div class="row-fluid graph-server" dbgraph ng-show="db" ng-model="dbConfig"></div>
 </div>
