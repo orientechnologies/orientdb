@@ -15,7 +15,11 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -27,68 +31,55 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
+import java.io.File;
+import java.util.Collection;
+
 @Test(groups = "sql-delete", sequential = true)
-public class SQLCommandsTest {
-  private ODatabaseDocument database;
+public class SQLCommandsTest extends BaseTest {
 
   @Parameters(value = "url")
-  public SQLCommandsTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public SQLCommandsTest(@Optional String url) {
+    super(url);
   }
 
-  @Test
   public void createProperty() {
-    database.open("admin", "admin");
+    OSchema schema = database.getMetadata().getSchema();
+    if (!schema.existsClass("account"))
+      schema.createClass("account");
 
     database.command(new OCommandSQL("create property account.timesheet string")).execute();
 
     Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("timesheet").getType(), OType.STRING);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "createProperty")
   public void createLinkedClassProperty() {
-    database.open("admin", "admin");
-
     database.command(new OCommandSQL("create property account.knows embeddedmap account")).execute();
 
     Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("knows").getType(), OType.EMBEDDEDMAP);
     Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("knows").getLinkedClass(), database
         .getMetadata().getSchema().getClass("account"));
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "createLinkedClassProperty")
   public void createLinkedTypeProperty() {
-    database.open("admin", "admin");
-
     database.command(new OCommandSQL("create property account.tags embeddedlist string")).execute();
 
     Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("tags").getType(), OType.EMBEDDEDLIST);
     Assert.assertEquals(database.getMetadata().getSchema().getClass("account").getProperty("tags").getLinkedType(), OType.STRING);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "createLinkedTypeProperty")
   public void removeProperty() {
-    database.open("admin", "admin");
-
     database.command(new OCommandSQL("drop property account.timesheet")).execute();
     database.command(new OCommandSQL("drop property account.tags")).execute();
 
     Assert.assertFalse(database.getMetadata().getSchema().getClass("account").existsProperty("timesheet"));
     Assert.assertFalse(database.getMetadata().getSchema().getClass("account").existsProperty("tags"));
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "removeProperty")
   public void testSQLScript() {
-    database.open("admin", "admin");
-
     String cmd = "";
     cmd += "select from ouser limit 1;begin;";
     cmd += "let a = create vertex set script = true\n";
@@ -98,11 +89,38 @@ public class SQLCommandsTest {
     cmd += "return $a;";
 
     Object result = database.command(new OCommandScript("sql", cmd)).execute();
-    
-    Assert.assertTrue(result instanceof OIdentifiable);
-    Assert.assertTrue(((OIdentifiable)result).getRecord() instanceof ODocument);
-    Assert.assertTrue((Boolean) ((ODocument)((OIdentifiable)result).getRecord()).field("script"));
 
-    database.close();
+    Assert.assertTrue(result instanceof OIdentifiable);
+    Assert.assertTrue(((OIdentifiable) result).getRecord() instanceof ODocument);
+    Assert.assertTrue((Boolean) ((ODocument) ((OIdentifiable) result).getRecord()).field("script"));
+  }
+
+  public void testClusterRename() {
+    if (database.getURL().startsWith("memory:"))
+      return;
+
+    Collection<String> names = database.getClusterNames();
+    Assert.assertFalse(names.contains("testClusterRename".toLowerCase()));
+
+    database.command(new OCommandSQL("create cluster testClusterRename physical")).execute();
+
+    names = database.getClusterNames();
+    Assert.assertTrue(names.contains("testClusterRename".toLowerCase()));
+
+    database.command(new OCommandSQL("alter cluster testClusterRename name testClusterRename42")).execute();
+    names = database.getClusterNames();
+
+    Assert.assertTrue(names.contains("testClusterRename42".toLowerCase()));
+    Assert.assertFalse(names.contains("testClusterRename".toLowerCase()));
+
+    if (database.getURL().startsWith("plocal:")) {
+      String storagePath = database.getStorage().getConfiguration().getDirectory();
+      File dataFile = new File(storagePath, "testClusterRename42" + OPaginatedCluster.DEF_EXTENSION);
+      File mapFile = new File(storagePath, "testClusterRename42" + OClusterPositionMap.DEF_EXTENSION);
+
+      Assert.assertTrue(dataFile.exists());
+      Assert.assertTrue(mapFile.exists());
+    }
+
   }
 }
