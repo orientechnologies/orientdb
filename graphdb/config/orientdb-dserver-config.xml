@@ -7,17 +7,13 @@
         <!-- CLUSTER PLUGIN, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
         <handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
             <parameters>
-                <!-- <parameter name="alias" value="europe1" /> -->
+                <!-- <parameter name="nodeName" value="europe1" /> -->
                 <parameter name="enabled" value="true"/>
                 <parameter name="configuration.db.default"
                            value="${ORIENTDB_HOME}/config/default-distributed-db-config.json"/>
                 <parameter name="configuration.hazelcast" value="${ORIENTDB_HOME}/config/hazelcast.xml"/>
                 <parameter name="conflict.resolver.impl"
                            value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver"/>
-
-                <!-- PARTITIONING STRATEGIES -->
-                <parameter name="sharding.strategy.round-robin"
-                           value="com.orientechnologies.orient.server.hazelcast.sharding.strategy.ORoundRobinPartitioninStrategy"/>
             </parameters>
         </handler>
         <!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
