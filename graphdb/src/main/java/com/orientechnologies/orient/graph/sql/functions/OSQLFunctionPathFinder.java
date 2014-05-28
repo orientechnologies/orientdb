@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
@@ -22,13 +29,6 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Abstract class to find paths between nodes.
@@ -48,18 +48,17 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
   protected OCommandContext         context;
 
   protected static final float      MIN            = 0f;
-  protected static final float      DISTANCE       = 1f;
 
   public OSQLFunctionPathFinder(final String iName, final int iMinParams, final int iMaxParams) {
     super(iName, iMinParams, iMaxParams);
   }
 
-  public Object execute(final Object[] iParameters, final OCommandContext iContext) {
+  protected LinkedList<OrientVertex> execute(final OCommandContext iContext) {
     context = iContext;
     unSettledNodes = new HashSet<OrientVertex>();
     distance = new HashMap<ORID, Float>();
     predecessors = new HashMap<ORID, OrientVertex>();
-    distance.put(paramSourceVertex.getIdentity(), getMinimumDistance());
+    distance.put(paramSourceVertex.getIdentity(), MIN);
     unSettledNodes.add(paramSourceVertex);
 
     int maxDistances = 0;
@@ -131,13 +130,13 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
   }
 
   protected void findMinimalDistances(final OrientVertex node) {
-    for (OrientVertex target : getNeighbors(node)) {
-      final float d = sumDistances(getShortestDistance(node), getDistance(node, target));
+    for (OrientVertex neighbor : getNeighbors(node)) {
+      final float d = sumDistances(getShortestDistance(node), getDistance(node, neighbor));
 
-      if (getShortestDistance(target) > d) {
-        distance.put(target.getIdentity(), d);
-        predecessors.put(target.getIdentity(), node);
-        unSettledNodes.add(target);
+      if (getShortestDistance(neighbor) > d) {
+        distance.put(neighbor.getIdentity(), d);
+        predecessors.put(neighbor.getIdentity(), node);
+        unSettledNodes.add(neighbor);
       }
     }
 
@@ -150,7 +149,7 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
     if (node != null) {
       for (Vertex v : node.getVertices(paramDirection)) {
         final OrientVertex ov = (OrientVertex) v;
-        if (ov != null && !isSettled(ov))
+        if (ov != null && isNotSettled(ov))
           neighbors.add(ov);
       }
     }
@@ -169,8 +168,8 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
     return minimum;
   }
 
-  protected boolean isSettled(final OrientVertex vertex) {
-    return distance.containsKey(vertex.getIdentity());
+  protected boolean isNotSettled(final OrientVertex vertex) {
+    return unSettledNodes.contains(vertex) || !distance.containsKey(vertex.getIdentity());
   }
 
   protected boolean continueTraversing() {
@@ -185,15 +184,9 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
     return d == null ? Float.MAX_VALUE : d;
   }
 
-  protected Float getMinimumDistance() {
-    return MIN;
-  }
-
   protected float sumDistances(final float iDistance1, final float iDistance2) {
     return iDistance1 + iDistance2;
   }
 
-  protected float getDistance(final OrientVertex node, final OrientVertex target) {
-    return DISTANCE;
-  }
+  protected abstract float getDistance(final OrientVertex node, final OrientVertex target);
 }
