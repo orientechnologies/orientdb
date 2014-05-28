@@ -129,7 +129,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final Class<? extends OCommandExecutorSQLAbstract> clazz = COMMANDS.get(name);
 
     if (clazz == null) {
-      throw new OCommandExecutionException("Unknowned command name :" + name);
+      throw new OCommandExecutionException("Unknown command name :" + name);
     }
 
     try {
