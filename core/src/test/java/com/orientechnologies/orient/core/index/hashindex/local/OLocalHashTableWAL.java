@@ -224,17 +224,9 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
       if (lowMemory.get()) {
         System.out.println("Heap memory is low, apply batch");
         atomicChangeIsProcessed = restoreDataFromBatch(atomicChangeIsProcessed, atomicUnit, batch);
-        batch.clear();
+        batch = new ArrayList<OWALRecord>();
 
         lowMemory.set(false);
-
-        System.gc();
-        try {
-          Thread.sleep(2000);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw new RuntimeException(e);
-        }
       }
 
       lsn = log.next(lsn);
@@ -243,7 +235,7 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     if (batch.size() > 0) {
       System.out.println("Apply batch the last batch.");
       restoreDataFromBatch(atomicChangeIsProcessed, atomicUnit, batch);
-      batch.clear();
+      batch = null;
     }
 
     Assert.assertTrue(atomicUnit.isEmpty());

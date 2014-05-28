@@ -154,7 +154,12 @@ public class LocalPaginatedStorageUpdateCrashRestore {
 
     testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath()
         + "/testLocalPaginatedStorageUpdateCrashRestore");
+
+    long startRestoreTime = System.currentTimeMillis();
     testDocumentTx.open("admin", "admin");
+    long endRestoreTime = System.currentTimeMillis();
+
+    System.out.println("Restore time : " + (endRestoreTime - startRestoreTime));
     testDocumentTx.close();
 
     testDocumentTx.open("admin", "admin");
