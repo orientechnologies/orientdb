@@ -1695,7 +1695,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         directory.setMaxLeftChildDepth(parentPath.nodeIndex, (byte) childDepth);
     } else {
       final int maxChildDepth = directory.getMaxRightChildDepth(parentPath.nodeIndex);
-      if (childDepth + 1 > maxChildDepth)
+      if (childDepth > maxChildDepth)
         directory.setMaxRightChildDepth(parentPath.nodeIndex, (byte) childDepth);
     }
   }
@@ -1748,7 +1748,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         newNodeDepth = 1;
 
       mapInterval = 1 << (MAX_LEVEL_DEPTH - newNodeDepth);
-      newNodeStartIndex = ((bucketPath.itemIndex - MAX_LEVEL_SIZE) / mapInterval) * mapInterval + MAX_LEVEL_SIZE / 2;
+      newNodeStartIndex = ((bucketPath.itemIndex - MAX_LEVEL_SIZE / 2) / mapInterval) * mapInterval + MAX_LEVEL_SIZE / 2;
     }
 
     final int newNodeIndex = directory.addNewNode((byte) 0, (byte) 0, (byte) newNodeDepth, new long[MAX_LEVEL_SIZE]);

@@ -50,14 +50,14 @@ public class SQLSelectCompositeIndexDirectSearchTest {
 
     database
         .command(
-								new OCommandSQL(
-												"create index SQLSelectCompositeIndexDirectSearchTestIndex on SQLSelectCompositeIndexDirectSearchTestClass (prop1, prop2) NOTUNIQUE"))
+            new OCommandSQL(
+                "create index SQLSelectCompositeIndexDirectSearchTestIndex on SQLSelectCompositeIndexDirectSearchTestClass (prop1, prop2) NOTUNIQUE"))
         .execute();
 
     database
         .command(
-								new OCommandSQL(
-												"create index SQLSelectCompositeHashIndexDirectSearchTestIndex on SQLSelectCompositeIndexDirectSearchTestClass (prop1, prop2) NOTUNIQUE_HASH_INDEX"))
+            new OCommandSQL(
+                "create index SQLSelectCompositeHashIndexDirectSearchTestIndex on SQLSelectCompositeIndexDirectSearchTestClass (prop1, prop2) NOTUNIQUE_HASH_INDEX"))
         .execute();
 
     database.close();
