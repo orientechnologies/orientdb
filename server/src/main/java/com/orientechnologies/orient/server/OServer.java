@@ -369,7 +369,7 @@ public class OServer {
 
     // SEARCH IN DEFAULT DATABASE DIRECTORY
     final String rootDirectory = getDatabaseDirectory();
-    scanDatabaseDirectory(rootDirectory, new File(rootDirectory), storages);
+    scanDatabaseDirectory(new File(rootDirectory), storages);
 
     for (OStorage storage : Orient.instance().getStorages()) {
       final String storageUrl = storage.getURL();
@@ -399,7 +399,7 @@ public class OServer {
     // SEARCH IN DEFAULT DATABASE DIRECTORY
     final Map<String, String> storages = new HashMap<String, String>();
     final String rootDirectory = getDatabaseDirectory();
-    scanDatabaseDirectory(rootDirectory, new File(rootDirectory), storages);
+    scanDatabaseDirectory(new File(rootDirectory), storages);
 
     return storages.get(iName);
   }
@@ -674,7 +674,7 @@ public class OServer {
                 db.getMetadata().getSecurity().getUser(OUser.ADMIN).setPassword(stg.userPassword);
             } else {
               // CREATE A NEW USER AS ADMIN AND REMOVE THE DEFAULT ONE
-              db.getMetadata().getSecurity().createUser(stg.userName, stg.userPassword, new String[] { ORole.ADMIN });
+              db.getMetadata().getSecurity().createUser(stg.userName, stg.userPassword, ORole.ADMIN);
               db.getMetadata().getSecurity().dropUser(OUser.ADMIN);
               db.close();
               db.open(stg.userName, stg.userPassword);
@@ -744,24 +744,26 @@ public class OServer {
     OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(true);
   }
 
-  protected void scanDatabaseDirectory(final String rootDirectory, final File directory, final Map<String, String> storages) {
+  private void scanDatabaseDirectory(final File directory, final Map<String, String> storages) {
     if (directory.exists() && directory.isDirectory()) {
-      for (File db : directory.listFiles()) {
-        if (db.isDirectory()) {
-          final File localFile = new File(db.getAbsolutePath() + "/default.odh");
-          final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
-          final String dbPath = db.getPath().replace('\\', '/');
-          final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
-          if (localFile.exists()) {
-            // FOUND DB FOLDER
-            storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "local:" + dbPath);
-          } else if (plocalFile.exists()) {
-            storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "plocal:" + dbPath);
-          } else
-            // TRY TO GO IN DEEP RECURSIVELY
-            scanDatabaseDirectory(rootDirectory, db, storages);
+      final File[] files = directory.listFiles();
+      if (files != null)
+        for (File db : files) {
+          if (db.isDirectory()) {
+            final File localFile = new File(db.getAbsolutePath() + "/default.odh");
+            final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
+            final String dbPath = db.getPath().replace('\\', '/');
+            final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
+            if (localFile.exists()) {
+              // FOUND DB FOLDER
+              storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "local:" + dbPath);
+            } else if (plocalFile.exists()) {
+              storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "plocal:" + dbPath);
+            } else
+              // TRY TO GO IN DEEP RECURSIVELY
+              scanDatabaseDirectory(db, storages);
+          }
         }
-      }
     }
   }
 }
