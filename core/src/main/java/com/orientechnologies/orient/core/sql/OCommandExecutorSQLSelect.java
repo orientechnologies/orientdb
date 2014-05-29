@@ -201,7 +201,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * @param iContext
    * @return true if the property was indexed and found, otherwise false
    */
-  private static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem, final OCommandContext iContext) {
+  private static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem,
+      final OCommandContext iContext) {
     if (iItem == null || !(iItem instanceof OSQLFilterItemField))
       return null;
 
@@ -222,7 +223,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final Object value = OSQLHelper.getValue(origValue);
     return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
   }
-  
+
   private static Object getIndexKey(final OIndexDefinition indexDefinition, Object value, OCommandContext context) {
     if (indexDefinition instanceof OCompositeIndexDefinition || indexDefinition.getParamCount() > 1) {
       if (value instanceof List) {
@@ -1451,7 +1452,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             fieldValue = expandTarget.toString();
 
           if (fieldValue != null)
-            if (fieldValue instanceof Collection<?> || fieldValue instanceof OMultiCollectionIterator
+            if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray() || fieldValue instanceof Iterator<?>
                 || fieldValue instanceof OIdentifiable) {
               finalResult.add(fieldValue);
             } else if (fieldValue instanceof Map<?, ?>) {

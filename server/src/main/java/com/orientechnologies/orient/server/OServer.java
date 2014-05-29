@@ -15,6 +15,27 @@
  */
 package com.orientechnologies.orient.server;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -36,8 +57,18 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
-import com.orientechnologies.orient.server.config.*;
+import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
+import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
+import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
+import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
+import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
+import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -46,26 +77,6 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
   private static ThreadGroup                               threadGroup;
@@ -358,16 +369,24 @@ public class OServer {
 
     // SEARCH IN DEFAULT DATABASE DIRECTORY
     final String rootDirectory = getDatabaseDirectory();
-    scanDatabaseDirectory(rootDirectory, new File(rootDirectory), storages);
+    scanDatabaseDirectory(new File(rootDirectory), storages);
 
     for (OStorage storage : Orient.instance().getStorages()) {
       final String storageUrl = storage.getURL();
       // TEST IT'S OF CURRENT SERVER INSTANCE BY CHECKING THE PATH
-      if (storage.exists() && !storages.containsValue(storageUrl) && storageUrl.contains(rootDirectory))
+      if (storage.exists() && !storages.containsValue(storageUrl) && isStorageOfCurrentServerInstance(storage))
         storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
     }
 
     return storages;
+  }
+
+  private boolean isStorageOfCurrentServerInstance(OStorage storage) {
+    if (storage.getUnderlying() instanceof OStorageLocalAbstract) {
+      final String rootDirectory = getDatabaseDirectory();
+      return storage.getURL().contains(rootDirectory);
+    } else
+      return true;
   }
 
   public String getStorageURL(final String iName) {
@@ -380,7 +399,7 @@ public class OServer {
     // SEARCH IN DEFAULT DATABASE DIRECTORY
     final Map<String, String> storages = new HashMap<String, String>();
     final String rootDirectory = getDatabaseDirectory();
-    scanDatabaseDirectory(rootDirectory, new File(rootDirectory), storages);
+    scanDatabaseDirectory(new File(rootDirectory), storages);
 
     return storages.get(iName);
   }
@@ -655,7 +674,7 @@ public class OServer {
                 db.getMetadata().getSecurity().getUser(OUser.ADMIN).setPassword(stg.userPassword);
             } else {
               // CREATE A NEW USER AS ADMIN AND REMOVE THE DEFAULT ONE
-              db.getMetadata().getSecurity().createUser(stg.userName, stg.userPassword, new String[] { ORole.ADMIN });
+              db.getMetadata().getSecurity().createUser(stg.userName, stg.userPassword, ORole.ADMIN);
               db.getMetadata().getSecurity().dropUser(OUser.ADMIN);
               db.close();
               db.open(stg.userName, stg.userPassword);
@@ -725,24 +744,26 @@ public class OServer {
     OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(true);
   }
 
-  protected void scanDatabaseDirectory(final String rootDirectory, final File directory, final Map<String, String> storages) {
+  private void scanDatabaseDirectory(final File directory, final Map<String, String> storages) {
     if (directory.exists() && directory.isDirectory()) {
-      for (File db : directory.listFiles()) {
-        if (db.isDirectory()) {
-          final File localFile = new File(db.getAbsolutePath() + "/default.odh");
-          final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
-          final String dbPath = db.getPath().replace('\\', '/');
-          final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
-          if (localFile.exists()) {
-            // FOUND DB FOLDER
-            storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "local:" + dbPath);
-          } else if (plocalFile.exists()) {
-            storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "plocal:" + dbPath);
-          } else
-            // TRY TO GO IN DEEP RECURSIVELY
-            scanDatabaseDirectory(rootDirectory, db, storages);
+      final File[] files = directory.listFiles();
+      if (files != null)
+        for (File db : files) {
+          if (db.isDirectory()) {
+            final File localFile = new File(db.getAbsolutePath() + "/default.odh");
+            final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
+            final String dbPath = db.getPath().replace('\\', '/');
+            final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
+            if (localFile.exists()) {
+              // FOUND DB FOLDER
+              storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "local:" + dbPath);
+            } else if (plocalFile.exists()) {
+              storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "plocal:" + dbPath);
+            } else
+              // TRY TO GO IN DEEP RECURSIVELY
+              scanDatabaseDirectory(db, storages);
+          }
         }
-      }
     }
   }
 }
