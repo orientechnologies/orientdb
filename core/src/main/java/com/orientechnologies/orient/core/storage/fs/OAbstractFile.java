@@ -305,12 +305,12 @@ public abstract class OAbstractFile implements OFile {
     try {
       close();
       if (osFile != null) {
-        boolean deleted = osFile.delete();
+        boolean deleted = OFileUtils.delete(osFile);
         int retryCount = 0;
 
         while (!deleted) {
           OMemoryWatchDog.freeMemoryForResourceCleanup(100);
-          deleted = !osFile.exists() || osFile.delete();
+          deleted = OFileUtils.delete(osFile);
           retryCount++;
 
           if (retryCount > 10)
@@ -816,12 +816,16 @@ public abstract class OAbstractFile implements OFile {
     }
   }
 
-  public boolean renameTo(final File newFile) {
+  public boolean renameTo(final File newFile) throws IOException {
     acquireWriteLock();
     try {
-      final boolean renamed = osFile.renameTo(newFile);
+      close();
+
+      final boolean renamed = OFileUtils.renameFile(osFile, newFile);
       if (renamed)
         osFile = newFile;
+
+      open();
 
       return renamed;
     } finally {

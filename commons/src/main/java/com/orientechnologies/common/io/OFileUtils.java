@@ -20,13 +20,19 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Locale;
 
 public class OFileUtils {
-  private static final int  KILOBYTE = 1024;
-  private static final int  MEGABYTE = 1048576;
-  private static final int  GIGABYTE = 1073741824;
-  private static final long TERABYTE = 1099511627776L;
+  private static final boolean useOldFileAPI = System.getProperty("java.version").startsWith("1.6");
+
+  private static final int     KILOBYTE      = 1024;
+  private static final int     MEGABYTE      = 1048576;
+  private static final int     GIGABYTE      = 1073741824;
+  private static final long    TERABYTE      = 1099511627776L;
 
   public static long getSizeAsNumber(final Object iSize) {
     if (iSize == null)
@@ -158,5 +164,33 @@ public class OFileUtils {
       else
         copyDirectory(f, target);
     }
+  }
+
+  public static boolean renameFile(File from, File to) throws IOException {
+    if (useOldFileAPI)
+      return from.renameTo(to);
+
+    final FileSystem fileSystem = FileSystems.getDefault();
+
+    final Path fromPath = fileSystem.getPath(from.getAbsolutePath());
+    final Path toPath = fileSystem.getPath(to.getAbsolutePath());
+    Files.move(fromPath, toPath);
+
+    return true;
+  }
+
+  public static boolean delete(File file) throws IOException {
+    if (!file.exists())
+      return true;
+
+    if (useOldFileAPI)
+      return file.delete();
+
+    final FileSystem fileSystem = FileSystems.getDefault();
+    final Path path = fileSystem.getPath(file.getAbsolutePath());
+
+    Files.delete(path);
+
+    return true;
   }
 }

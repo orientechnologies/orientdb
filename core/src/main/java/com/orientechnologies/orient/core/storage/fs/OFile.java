@@ -135,7 +135,7 @@ public interface OFile {
 
   public abstract String getAbsolutePath();
 
-  public abstract boolean renameTo(File newFile);
+  public abstract boolean renameTo(File newFile) throws IOException;
 
   public abstract long allocateSpace(final long iSize) throws IOException;
 

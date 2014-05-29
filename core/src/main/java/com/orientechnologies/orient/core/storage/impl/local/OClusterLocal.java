@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
@@ -295,7 +296,7 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
         break;
       case DATASEGMENT:
         setDataSegmentInternal(stringValue);
-        break;        
+        break;
       default:
         throw new IllegalArgumentException("Runtime change of attribute '" + iAttribute + " is not supported");
       }
@@ -694,29 +695,33 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     if (storage.getClusterIdByName(iNewName) > -1)
       throw new IllegalArgumentException("Cluster with name '" + iNewName + "' already exists");
 
-    for (int i = 0; i < fileSegment.files.length; i++) {
-      final String osFileName = fileSegment.files[i].getName();
-      if (osFileName.startsWith(name)) {
-        final File newFile = new File(storage.getStoragePath() + "/" + iNewName
-            + osFileName.substring(osFileName.lastIndexOf(name) + name.length()));
-        for (OStorageFileConfiguration conf : config.infoFiles) {
-          if (conf.parent.name.equals(name))
-            conf.parent.name = iNewName;
-          if (conf.path.endsWith(osFileName))
-            conf.path = new String(conf.path.replace(osFileName, newFile.getName()));
-        }
-        boolean renamed = fileSegment.files[i].renameTo(newFile);
-        while (!renamed) {
-          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
-          renamed = fileSegment.files[i].renameTo(newFile);
+    try {
+      for (int i = 0; i < fileSegment.files.length; i++) {
+        final String osFileName = fileSegment.files[i].getName();
+        if (osFileName.startsWith(name)) {
+          final File newFile = new File(storage.getStoragePath() + "/" + iNewName
+              + osFileName.substring(osFileName.lastIndexOf(name) + name.length()));
+          for (OStorageFileConfiguration conf : config.infoFiles) {
+            if (conf.parent.name.equals(name))
+              conf.parent.name = iNewName;
+            if (conf.path.endsWith(osFileName))
+              conf.path = new String(conf.path.replace(osFileName, newFile.getName()));
+          }
+          boolean renamed = fileSegment.files[i].renameTo(newFile);
+          while (!renamed) {
+            OMemoryWatchDog.freeMemoryForResourceCleanup(100);
+            renamed = fileSegment.files[i].renameTo(newFile);
+          }
         }
       }
+      config.name = iNewName;
+      holeSegment.rename(name, iNewName);
+      storage.renameCluster(name, iNewName);
+      name = iNewName;
+      storage.getConfiguration().update();
+    } catch (IOException e) {
+      throw new OStorageException("Error during cluster rename", e);
     }
-    config.name = iNewName;
-    holeSegment.rename(name, iNewName);
-    storage.renameCluster(name, iNewName);
-    name = iNewName;
-    storage.getConfiguration().update();
   }
 
   /**
@@ -1004,8 +1009,8 @@ public class OClusterLocal extends OSharedResourceAdaptive implements OCluster {
     }
   }
 
-	@Override
-	public boolean hideRecord(OClusterPosition position) {
-		throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
-	}
+  @Override
+  public boolean hideRecord(OClusterPosition position) {
+    throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
+  }
 }
