@@ -15,13 +15,12 @@
  */
 package com.orientechnologies.orient.server.plugin.mail;
 
-import java.io.File;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.script.OScriptInjection;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -38,13 +37,13 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import javax.script.Bindings;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.script.OScriptInjection;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import java.io.File;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class OMailPlugin extends OServerPluginAbstract implements OScriptInjection {
   private static final String       CONFIG_PROFILE_PREFIX = "profile.";
@@ -84,8 +83,7 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
       }
     }
 
-    OLogManager.instance().info(this, "Mail plugin installed and active. Loaded %d profile(s): %s", profiles.size(),
-        profiles.keySet());
+    OLogManager.instance().info(this, "Installing Mail plugin, loaded %d profile(s): %s", profiles.size(), profiles.keySet());
   }
 
   /**
@@ -98,6 +96,9 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
    * @throws ParseException
    */
   public void send(final Map<String, Object> iMessage) throws AddressException, MessagingException, ParseException {
+    if (iMessage == null)
+      throw new IllegalArgumentException("Configuration is null");
+
     final String profileName = (String) iMessage.get("profile");
 
     final OMailProfile profile = profiles.get(profileName);
@@ -107,25 +108,34 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
     // creates a new session with an authenticator
     Authenticator auth = new OSMTPAuthenticator((String) profile.getProperty("mail.smtp.user"),
         (String) profile.getProperty("mail.smtp.password"));
-    Session session = Session.getInstance(profile, auth);
+    final Session session = Session.getInstance(profile, auth);
 
     // creates a new e-mail message
     MimeMessage msg = new MimeMessage(session);
 
-    msg.setFrom(new InternetAddress((String) iMessage.get("from")));
+    final String from;
+    if (iMessage.containsKey("from"))
+      // GET THE 'FROM' FROM THE MESSAGE
+      from = (String) iMessage.get("from");
+    else
+      // GET THE 'FROM' FROM PROFILE
+      from = (String) profile.getProperty("mail.from");
 
-    InternetAddress[] toAddresses = { new InternetAddress((String) iMessage.get("to")) };
-    msg.setRecipients(Message.RecipientType.TO, toAddresses);
-    String cc = (String) iMessage.get("cc");
-    if (cc != null && !cc.isEmpty()) {
-      InternetAddress[] ccAddresses = { new InternetAddress(cc) };
-      msg.setRecipients(Message.RecipientType.CC, ccAddresses);
-    }
-    String bcc = (String) iMessage.get("bcc");
-    if (bcc != null && !bcc.isEmpty()) {
-      InternetAddress[] bccAddresses = { new InternetAddress(bcc) };
-      msg.setRecipients(Message.RecipientType.BCC, bccAddresses);
-    }
+    if (from != null)
+      msg.setFrom(new InternetAddress(from));
+
+    final String to = (String) iMessage.get("to");
+    if (to != null && !to.isEmpty())
+      msg.setRecipients(Message.RecipientType.TO, getEmails(to));
+
+    final String cc = (String) iMessage.get("cc");
+    if (cc != null && !cc.isEmpty())
+      msg.setRecipients(Message.RecipientType.CC, getEmails(cc));
+
+    final String bcc = (String) iMessage.get("bcc");
+    if (bcc != null && !bcc.isEmpty())
+      msg.setRecipients(Message.RecipientType.BCC, getEmails(bcc));
+
     msg.setSubject((String) iMessage.get("subject"));
 
     // DATE
@@ -169,21 +179,6 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
     Transport.send(msg);
   }
 
-  /**
-   * Adds a file as an attachment to the email's content
-   * 
-   * @param multipart
-   * @param filePath
-   * @throws MessagingException
-   */
-  private void addAttachment(final Multipart multipart, final String filePath) throws MessagingException {
-    MimeBodyPart attachPart = new MimeBodyPart();
-    DataSource source = new FileDataSource(filePath);
-    attachPart.setDataHandler(new DataHandler(source));
-    attachPart.setFileName(new File(filePath).getName());
-    multipart.addBodyPart(attachPart);
-  }
-
   @Override
   public void bind(Bindings binding) {
     binding.put("mail", this);
@@ -210,5 +205,31 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
   public OMailPlugin registerProfile(final String iName, final OMailProfile iProfile) {
     profiles.put(iName, iProfile);
     return this;
+  }
+
+  protected InternetAddress[] getEmails(final String iText) throws AddressException {
+    if (iText == null)
+      return null;
+
+    final String[] items = iText.split(",");
+    final InternetAddress[] addresses = new InternetAddress[items.length];
+    for (int i = 0; i < items.length; ++i)
+      addresses[i] = new InternetAddress(items[i]);
+    return addresses;
+  }
+
+  /**
+   * Adds a file as an attachment to the email's content
+   * 
+   * @param multipart
+   * @param filePath
+   * @throws MessagingException
+   */
+  private void addAttachment(final Multipart multipart, final String filePath) throws MessagingException {
+    MimeBodyPart attachPart = new MimeBodyPart();
+    DataSource source = new FileDataSource(filePath);
+    attachPart.setDataHandler(new DataHandler(source));
+    attachPart.setFileName(new File(filePath).getName());
+    multipart.addBodyPart(attachPart);
   }
 }
