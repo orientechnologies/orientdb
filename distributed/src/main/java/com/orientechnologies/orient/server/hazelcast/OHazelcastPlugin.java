@@ -548,6 +548,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       final ODocument cfg = (ODocument) iEvent.getValue();
       activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+      updateLastClusterChange();
 
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
@@ -556,13 +557,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "update configuration db=%s from=%s", dbName,
             getNodeName(iEvent.getMember()));
 
+        updateLastClusterChange();
+
         installNewDatabases(false);
         updateCachedDatabaseConfiguration(dbName, (ODocument) iEvent.getValue(), true, false);
         OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+
+        updateLastClusterChange();
       }
     } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
       ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
           "received updated status %s=%s", key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
+
+      updateLastClusterChange();
     }
   }
 
@@ -577,13 +584,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         activeNodes.remove(nName);
       }
 
+      updateLastClusterChange();
+
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       synchronized (cachedDatabaseConfiguration) {
         cachedDatabaseConfiguration.remove(key.substring(CONFIG_DATABASE_PREFIX.length()));
       }
+      updateLastClusterChange();
+
     } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
       ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
           "received removed status %s=%s", key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
+      updateLastClusterChange();
     }
   }
 
