@@ -431,6 +431,10 @@ public class ODistributedResponseManager {
       // NO QUORUM
       return;
 
+    if (dManager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
+      // CURRENT NODE OFFLINE: JUST RETURN
+      return;
+
     final int bestResponsesGroupIndex = getBestResponsesGroup();
     final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
 
