@@ -59,16 +59,7 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
-import com.orientechnologies.orient.server.config.OServerConfiguration;
-import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
-import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
-import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
-import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.config.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -273,14 +264,6 @@ public class OServer {
 
     OLogManager.instance().info(this, "OrientDB Server is shutting down...");
 
-    if (!Orient.isRegisterDatabaseByPath())
-      try {
-        OLogManager.instance().info(this, "Shutting down databases:");
-        Orient.instance().shutdown();
-      } catch (Throwable e) {
-        OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
-      }
-
     if (shutdownHook != null)
       shutdownHook.cancel();
 
@@ -324,6 +307,14 @@ public class OServer {
     } finally {
       lock.unlock();
     }
+
+    if (!Orient.isRegisterDatabaseByPath())
+      try {
+        OLogManager.instance().info(this, "Shutting down databases:");
+        Orient.instance().shutdown();
+      } catch (Throwable e) {
+        OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
+      }
 
     OLogManager.instance().info(this, "OrientDB Server shutdown complete");
     OLogManager.instance().flush();
@@ -379,14 +370,6 @@ public class OServer {
     }
 
     return storages;
-  }
-
-  private boolean isStorageOfCurrentServerInstance(OStorage storage) {
-    if (storage.getUnderlying() instanceof OStorageLocalAbstract) {
-      final String rootDirectory = getDatabaseDirectory();
-      return storage.getURL().contains(rootDirectory);
-    } else
-      return true;
   }
 
   public String getStorageURL(final String iName) {
@@ -742,6 +725,14 @@ public class OServer {
   protected void defaultSettings() {
     OGlobalConfiguration.TX_USE_LOG.setValue(true);
     OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(true);
+  }
+
+  private boolean isStorageOfCurrentServerInstance(OStorage storage) {
+    if (storage.getUnderlying() instanceof OStorageLocalAbstract) {
+      final String rootDirectory = getDatabaseDirectory();
+      return storage.getURL().contains(rootDirectory);
+    } else
+      return true;
   }
 
   private void scanDatabaseDirectory(final File directory, final Map<String, String> storages) {
