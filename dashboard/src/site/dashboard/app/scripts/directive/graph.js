@@ -1,4 +1,4 @@
-var Widget = angular.module('monitor.directive', []);
+var Widget = angular.module('monitor.gdirective', []);
 
 
 Widget.directive('servergraph', function () {
@@ -94,7 +94,7 @@ Widget.directive('servergraph', function () {
                     .attr('width', dbHeight)
                     .attr('height', dbHeight)
                     .style('fill', function (d) {
-                        return (d === selected_node) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.id);
+                        return '#c5c5c5';
                     })
                     .style('stroke', function (d) {
                         return d3.rgb(colors(d.id)).darker().toString();
@@ -118,10 +118,11 @@ Widget.directive('servergraph', function () {
                     .attr('r', 40)
                     .attr("fixed", true)
                     .style('fill', function (d) {
-                        return (d === selected_node) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.id);
+
+                        return (d.el.status === "ONLINE") ? "#468847" : "#B94A48";
                     })
                     .style('stroke', function (d) {
-                        return d3.rgb(colors(d.id)).darker().toString();
+                        return (d.el.status === "ONLINE") ? "#468847" : "#B94A48";
                     })
                     .classed('reflexive', function (d) {
                         return d.reflexive;
@@ -195,20 +196,59 @@ Widget.directive('dbgraph', function () {
 
     var drawDbGraph = function (scope, element, attrs, model) {
         element.empty();
-        var width = 960,
-            height = 400,
-            colors = d3.scale.category10();
+
+        var margin = {top: 20, right: 120, bottom: 20, left: 120},
+            width = 400 - margin.right - margin.left,
+            height = 400 - margin.top - margin.bottom;
 
 
-        var nodes = {name: model.name};
-        var svg = d3.select(element[0]).append('svg').attr('width', width)
-            .attr('height', height);
+        var children = [];
+        var keys = Object.keys(model.config[0].clusters);
 
-        var cluster = d3.layout.cluster()
-            .size([height, width, -160]);
+        keys.forEach(function (val) {
+            if (val.indexOf("@") != 0) {
+                var servChild = undefined;
+                if (model.config[0].clusters[val]) {
+                    var servChild = [];
+                    var serv = model.config[0].clusters[val].servers;
+                    serv.forEach(function (val) {
+                        servChild.push({ name: val });
+                    });
+
+                }
+                children.push({name: val, children: servChild});
+            }
+        });
+        var root = {name: model.name, children: children};
+
+
+        var svg = d3.select(element[0]).append('svg')
+            .attr("width", width + margin.right + margin.left)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+        var cluster = d3.layout.tree()
+            .size([height, width]);
+
+
+        var diagonal = d3.svg.diagonal()
+            .projection(function (d) {
+                return [d.y, d.x];
+            });
+
+        var nodes = cluster.nodes(root);
+        var links = cluster.links(nodes);
+
+        svg.selectAll(".link-db")
+            .data(links)
+            .enter().append("path")
+            .attr("class", "link-db")
+            .attr("d", diagonal);
 
         var node = svg.selectAll("g.node")
-            .data(cluster.nodes(nodes))
+            .data(nodes)
             .enter().append("svg:g")
             .attr("class", "node")
             .attr("transform", function (d) {
@@ -216,16 +256,12 @@ Widget.directive('dbgraph', function () {
             });
 
         node.append("svg:circle")
-            .attr("r", 4.5);
+            .attr("r", 30);
 
         node.append("svg:text")
-            .attr("dx", function (d) {
-                return d.children ? -8 : 8;
-            })
-            .attr("dy", 3)
-            .attr("text-anchor", function (d) {
-                return d.children ? "end" : "start";
-            })
+            .attr("x", 0)
+            .attr("y", 4)
+            .attr('class', 'id')
             .text(function (d) {
                 return d.name;
             });

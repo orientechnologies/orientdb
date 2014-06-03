@@ -16,15 +16,8 @@
 
 package com.orientechnologies.workbench;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -37,6 +30,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -562,5 +556,17 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 
   public OMonitoredCluster getClusterByName(String cluster) {
     return clusters.get(cluster);
+  }
+
+  public Collection<OMonitoredServer> getServersByClusterName(String cluster) {
+    List<OMonitoredServer> srvs = new ArrayList<OMonitoredServer>();
+    for (OMonitoredServer s : servers.values()) {
+      ODocument doc = s.getConfiguration().field("cluster");
+      String name = doc.field("name");
+      if (doc != null && cluster.equals(name)) {
+        srvs.add(s);
+      }
+    }
+    return srvs;
   }
 }

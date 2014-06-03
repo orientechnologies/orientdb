@@ -226,6 +226,13 @@ monitor.factory('Server', function ($http, $resource, Metric) {
             callback(databases)
         });
     }
+    resource.findDatabasesOnSnapshot = function (server, callback) {
+        var params = {  server: server, type: 'snapshot', kind: 'information', names: 'system.databases' };
+        Metric.get(params, function (data) {
+            var databases = data.result[0]['value'].split(",");
+            callback(databases)
+        });
+    }
     return resource;
 });
 

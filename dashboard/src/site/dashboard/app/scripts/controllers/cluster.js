@@ -62,7 +62,7 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
                 $scope.servers = servers;
                 $scope.nodes = new Array;
                 $scope.servers.forEach(function (s, idx, arr) {
-                    Server.findDatabases(s.name, function (data) {
+                    Server.findDatabasesOnSnapshot(s.name, function (data) {
                         s.databases = [];
                         data.forEach(function (db, idx, arr) {
                             s.databases.push(db);
@@ -75,14 +75,26 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
         }
     });
 
+    $scope.isInConfig = function (cluster, node) {
+        return ($scope.dbConfig && $scope.dbConfig.config[0].clusters[cluster]) ? $scope.dbConfig.config[0].clusters[cluster].servers.indexOf(node) : false;
+    }
     $scope.$on("dbselected", function (event, data) {
         if (data.el.db) {
             var db = data.el.name;
             Cluster.getClusterDbInfo($scope.cluster.name, data.el.name).then(function (data) {
                 $scope.dbConfig = {name: db, config: data.result }
+                var clusters = [];
+                var arr = Object.keys($scope.dbConfig.config[0].clusters);
+                arr.forEach(function (v) {
+                    if (v.indexOf("@") != 0) {
+                        clusters.push({name: v});
+                    }
+                });
+                $scope.clusters = clusters;
                 $scope.db = true;
             });
         }
     });
-});
+})
+;
 

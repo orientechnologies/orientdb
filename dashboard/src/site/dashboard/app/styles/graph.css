@@ -24,7 +24,7 @@ svg:not(.active):not(.ctrl) path.link {
 }
 
 path.link.selected {
-    stroke-dasharray: 10,2;
+    stroke-dasharray: 10, 2;
 }
 
 path.link.dragline {
@@ -36,14 +36,15 @@ path.link.hidden {
 }
 
 circle.node {
-     stroke-width: 1.5px;
-     cursor: pointer;
- }
+    stroke-width: 1.5px;
+    cursor: pointer;
+}
 
-circle.node.reflexive {
+circle.node {
     stroke: #000 !important;
     stroke-width: 2.5px;
 }
+
 rect.rectdb {
     stroke-width: 1.5px;
     cursor: pointer;
@@ -63,12 +64,37 @@ text.id {
     text-anchor: middle;
     font-weight: bold;
 }
+
 .graph-server {
     border: 1px solid #DEDEDE;
 }
+
 .link {
     fill: none;
     stroke: #000;
     stroke-width: 4px;
+    cursor: default;
+}
+
+.node circle {
+    fill: #fff;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+}
+
+.node {
+    font: 10px sans-serif;
+}
+
+.link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 1.5px;
+}
+
+path.link-db {
+    fill: none;
+    stroke: #c5c5c5;
+    stroke-width: 2px;
     cursor: default;
 }

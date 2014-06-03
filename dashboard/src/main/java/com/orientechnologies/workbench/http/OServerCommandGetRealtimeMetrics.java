@@ -66,7 +66,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
       final String[] metricNames = parts[6].split(",");
       String from = null;
       String to = null;
-      String compress = null;
+      String compress = "none";
       String limit = null;
       if (parts.length > 7) {
         limit = parts[7];

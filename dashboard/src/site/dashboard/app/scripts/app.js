@@ -13,6 +13,7 @@ var app = angular.module('MonitorApp',
         'ui.select2',
         '$strap.directives',
         'monitor.directive',
+        'monitor.gdirective',
         'orientdb.directives',
         'ui.codemirror',
         'ngGrid',
@@ -50,7 +51,7 @@ app.config(function ($routeProvider) {
             templateUrl: 'views/main.html',
             controller: 'ServerMonitorController'
         })
-        .when('/dashboard/cluster/:cluster', {
+        .when('/dashboard/cluster/:cluster/:db', {
             templateUrl: 'views/server/cluster.html',
             controller: 'ClusterMainController'
         })
