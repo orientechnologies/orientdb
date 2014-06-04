@@ -46,7 +46,7 @@ public class OFunction {
    */
   public OFunction() {
     document = new ODocument(CLASS_NAME);
-    setLanguage("SQL");
+    document.field("language", "SQL");
   }
 
   /**
@@ -75,6 +75,7 @@ public class OFunction {
 
   public OFunction setName(final String iName) {
     document.field("name", iName);
+    saveChanges();
     return this;
   }
 
@@ -94,6 +95,7 @@ public class OFunction {
 
   public OFunction setLanguage(final String iLanguage) {
     document.field("language", iLanguage);
+    saveChanges();
     return this;
   }
 
@@ -103,6 +105,7 @@ public class OFunction {
 
   public OFunction setParameters(final List<String> iParameters) {
     document.field("parameters", iParameters);
+    saveChanges();
     return this;
   }
 
