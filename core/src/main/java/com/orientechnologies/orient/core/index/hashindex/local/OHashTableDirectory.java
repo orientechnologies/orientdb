@@ -327,7 +327,7 @@ public class OHashTableDirectory extends ODurableComponent {
     acquireExclusiveLock();
     startAtomicOperation();
     try {
-      final ODirectoryPage page = loadPage(nodeIndex, false);
+      final ODirectoryPage page = loadPage(nodeIndex, true);
       try {
         page.setMaxLeftChildDepth(getLocalNodeIndex(nodeIndex), maxLeftChildDepth);
 
@@ -336,7 +336,7 @@ public class OHashTableDirectory extends ODurableComponent {
 
         logPageChanges(page, cacheEntry.getFileId(), cacheEntry.getPageIndex(), false);
       } finally {
-        releasePage(page, false);
+        releasePage(page, true);
       }
 
       endAtomicOperation(false);
@@ -369,7 +369,7 @@ public class OHashTableDirectory extends ODurableComponent {
     acquireExclusiveLock();
     startAtomicOperation();
     try {
-      final ODirectoryPage page = loadPage(nodeIndex, false);
+      final ODirectoryPage page = loadPage(nodeIndex, true);
       try {
         page.setMaxRightChildDepth(getLocalNodeIndex(nodeIndex), (byte) maxRightChildDepth);
 
@@ -378,7 +378,7 @@ public class OHashTableDirectory extends ODurableComponent {
 
         logPageChanges(page, cacheEntry.getFileId(), cacheEntry.getPageIndex(), false);
       } finally {
-        releasePage(page, false);
+        releasePage(page, true);
       }
 
       endAtomicOperation(false);

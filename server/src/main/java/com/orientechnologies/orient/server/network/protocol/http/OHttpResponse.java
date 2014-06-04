@@ -15,6 +15,21 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.GZIPOutputStream;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -23,20 +38,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Maintains information about current HTTP response.
@@ -170,34 +171,34 @@ public class OHttpResponse {
     if (iResult == null)
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
     else {
-      if (iResult instanceof Map<?, ?>) {
-        iResult = ((Map<?, ?>) iResult).entrySet().iterator();
+      final Object newResult;
+      if (isJSObject(iResult)) {
+        newResult = Collections.singleton(new ODocument().field("value", iResult)).iterator();
+      } else if (iResult instanceof Map<?, ?>) {
+        newResult = ((Map<?, ?>) iResult).entrySet().iterator();
       } else if (OMultiValue.isMultiValue(iResult)
           && (OMultiValue.getSize(iResult) > 0 && !(OMultiValue.getFirstValue(iResult) instanceof OIdentifiable))) {
-        final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
-        resultSet.add(new ODocument().field("value", iResult));
-        iResult = resultSet.iterator();
-
+        newResult = Collections.singleton(new ODocument().field("value", iResult)).iterator();
       } else if (iResult instanceof OIdentifiable) {
         // CONVERT SIGLE VALUE IN A COLLECTION
-        final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
-        resultSet.add((OIdentifiable) iResult);
-        iResult = resultSet.iterator();
+        newResult = Collections.singleton(iResult).iterator();
       } else if (iResult instanceof Iterable<?>)
-        iResult = ((Iterable<OIdentifiable>) iResult).iterator();
+        newResult = ((Iterable<OIdentifiable>) iResult).iterator();
       else if (OMultiValue.isMultiValue(iResult))
-        iResult = OMultiValue.getMultiValueIterator(iResult);
+        newResult = OMultiValue.getMultiValueIterator(iResult);
       else {
-        final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
-        resultSet.add(new ODocument().field("value", iResult));
-        iResult = resultSet.iterator();
+        newResult = Collections.singleton(new ODocument().field("value", iResult)).iterator();
       }
 
-      if (iResult == null)
+      if (newResult == null)
         send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
-      else if (iResult instanceof Iterator<?>)
-        writeRecords(iResult, null, iFormat, accept);
+      else
+        writeRecords(newResult, null, iFormat, accept);
     }
+  }
+
+  private boolean isJSObject(Object iResult) {
+    return iResult.getClass().getName().equals("jdk.nashorn.api.scripting.ScriptObjectMirror");
   }
 
   public void writeRecords(final Object iRecords) throws IOException {

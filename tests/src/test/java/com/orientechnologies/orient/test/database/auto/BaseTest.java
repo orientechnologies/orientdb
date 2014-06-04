@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.testng.annotations.*;
 
@@ -17,7 +18,7 @@ public abstract class BaseTest {
       dropDb = true;
     }
 
-    database = new ODatabaseDocumentTx(url);
+    database = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
     this.url = database.getURL();
   }
 

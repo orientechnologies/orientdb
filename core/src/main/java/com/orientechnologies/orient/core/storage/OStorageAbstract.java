@@ -107,9 +107,6 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   }
 
   public void close(final boolean iForce, boolean onDelete) {
-    if (!checkForClose(iForce))
-      return;
-
     lock.acquireExclusiveLock();
     try {
       for (Object resource : sharedResources.values()) {
@@ -120,9 +117,6 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
           ((OCloseable) resource).close(onDelete);
       }
       sharedResources.clear();
-
-      Orient.instance().unregisterStorage(this);
-
     } finally {
       lock.releaseExclusiveLock();
     }
@@ -223,6 +217,9 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   }
 
   protected boolean checkForClose(final boolean force) {
+    if (status == STATUS.CLOSED)
+      return false;
+
     lock.acquireSharedLock();
     try {
       if (status == STATUS.CLOSED)

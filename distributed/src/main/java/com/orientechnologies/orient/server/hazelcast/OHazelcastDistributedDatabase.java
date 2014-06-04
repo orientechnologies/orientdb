@@ -93,6 +93,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   @Override
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
       final Collection<String> iNodes) {
+    checkForServerOnline(iRequest);
+
     final String databaseName = iRequest.getDatabaseName();
 
     if (iNodes.isEmpty()) {
@@ -330,6 +332,17 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   public ODatabaseDocumentTx getDatabase() {
     return database;
+  }
+
+  protected void checkForServerOnline(ODistributedRequest iRequest) throws ODistributedException {
+    final ODistributedServerManager.NODE_STATUS srvStatus = manager.getNodeStatus();
+    if (srvStatus == ODistributedServerManager.NODE_STATUS.OFFLINE
+        || srvStatus == ODistributedServerManager.NODE_STATUS.SHUTDOWNING) {
+      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
+          "Local server is not online (status='%s'). Request %s will be ignored", srvStatus, iRequest);
+      throw new ODistributedException("Local server is not online (status='" + srvStatus + "'). Request " + iRequest
+          + " will be ignored");
+    }
   }
 
   protected boolean waitForLocalNode(final ODistributedConfiguration cfg, final Collection<String> iClusterNames,

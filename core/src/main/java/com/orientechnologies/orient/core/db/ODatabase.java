@@ -15,6 +15,12 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
 import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -24,12 +30,6 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.util.OBackupable;
-
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br/>
@@ -116,14 +116,14 @@ public interface ODatabase extends OBackupable, Closeable {
   public STATUS getStatus();
 
   /**
-   * Returns the total size of database as the real used space.
-   */
-  public long getSize();
-
-  /**
    * Returns the current status of database.
    */
   public <DB extends ODatabase> DB setStatus(STATUS iStatus);
+
+  /**
+   * Returns the total size of database as the real used space.
+   */
+  public long getSize();
 
   /**
    * Returns the database name.
@@ -444,17 +444,21 @@ public interface ODatabase extends OBackupable, Closeable {
   /**
    * Flush cached storage content to the disk.
    * 
-   * After this call users can perform only select queries. All write-related commands will queued till {@link #release()} command
-   * will be called.
+   * After this call users can perform only idempotent calls like read records and select/traverse queries. All write-related
+   * operations will queued till {@link #release()} command will be called.
    * 
    * Given command waits till all on going modifications in indexes or DB will be finished.
    * 
    * IMPORTANT: This command is not reentrant.
+   * 
+   * @see #release()
    */
   public void freeze();
 
   /**
    * Allows to execute write-related commands on DB. Called after {@link #freeze()} command.
+   * 
+   * @see #freeze()
    */
   public void release();
 

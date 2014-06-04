@@ -15,21 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -76,6 +61,11 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -211,7 +201,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * @param iContext
    * @return true if the property was indexed and found, otherwise false
    */
-  private static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem, final OCommandContext iContext) {
+  private static OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem,
+      final OCommandContext iContext) {
     if (iItem == null || !(iItem instanceof OSQLFilterItemField))
       return null;
 
@@ -232,7 +223,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final Object value = OSQLHelper.getValue(origValue);
     return new OIndexSearchResult(iCondition.getOperator(), item.getFieldChain(), value);
   }
-  
+
   private static Object getIndexKey(final OIndexDefinition indexDefinition, Object value, OCommandContext context) {
     if (indexDefinition instanceof OCompositeIndexDefinition || indexDefinition.getParamCount() > 1) {
       if (value instanceof List) {
@@ -367,45 +358,46 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final Set<String> clusters = new HashSet<String>();
 
-    final ODatabaseRecord db = getDatabase();
+    if (parsedTarget != null) {
+      final ODatabaseRecord db = getDatabase();
 
-    if (parsedTarget.getTargetQuery() != null) {
-      // SUB QUERY, PROPAGATE THE CALL
-      clusters.addAll(parsedTarget.getTargetQuery().getInvolvedClusters());
-    } else if (parsedTarget.getTargetRecords() != null) {
-      // SINGLE RECORDS: BROWSE ALL (COULD BE EXPENSIVE).
-      for (OIdentifiable identifiable : parsedTarget.getTargetRecords()) {
-        clusters.add(db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase());
+      if (parsedTarget.getTargetQuery() != null) {
+        // SUB QUERY, PROPAGATE THE CALL
+        clusters.addAll(parsedTarget.getTargetQuery().getInvolvedClusters());
+      } else if (parsedTarget.getTargetRecords() != null) {
+        // SINGLE RECORDS: BROWSE ALL (COULD BE EXPENSIVE).
+        for (OIdentifiable identifiable : parsedTarget.getTargetRecords()) {
+          clusters.add(db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase());
+        }
       }
-    }
 
-    if (parsedTarget.getTargetClasses() != null) {
-      for (String clazz : parsedTarget.getTargetClasses().values()) {
-        final OClass cls = db.getMetadata().getSchema().getClass(clazz);
-        if (cls != null)
-          for (int clId : cls.getClusterIds()) {
-            clusters.add(db.getClusterNameById(clId).toLowerCase());
-          }
-      }
-    }
-    if (parsedTarget.getTargetClusters() != null) {
-      final OStorage storage = getDatabase().getStorage();
-      for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-        clusters.add(cluster.toLowerCase());
-      }
-    }
-    if (parsedTarget.getTargetIndex() != null) {
-      // EXTRACT THE CLASS NAME -> CLUSTERS FROM THE INDEX DEFINITION
-      final OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex());
-      if (idx != null) {
-        final String clazz = idx.getDefinition().getClassName();
-
-        if (clazz != null) {
+      if (parsedTarget.getTargetClasses() != null) {
+        for (String clazz : parsedTarget.getTargetClasses().values()) {
           final OClass cls = db.getMetadata().getSchema().getClass(clazz);
           if (cls != null)
             for (int clId : cls.getClusterIds()) {
               clusters.add(db.getClusterNameById(clId).toLowerCase());
             }
+        }
+      }
+      if (parsedTarget.getTargetClusters() != null) {
+        for (String cluster : parsedTarget.getTargetClusters().keySet()) {
+          clusters.add(cluster.toLowerCase());
+        }
+      }
+      if (parsedTarget.getTargetIndex() != null) {
+        // EXTRACT THE CLASS NAME -> CLUSTERS FROM THE INDEX DEFINITION
+        final OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex());
+        if (idx != null) {
+          final String clazz = idx.getDefinition().getClassName();
+
+          if (clazz != null) {
+            final OClass cls = db.getMetadata().getSchema().getClass(clazz);
+            if (cls != null)
+              for (int clId : cls.getClusterIds()) {
+                clusters.add(db.getClusterNameById(clId).toLowerCase());
+              }
+          }
         }
       }
     }
@@ -1044,7 +1036,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     final int cores = Runtime.getRuntime().availableProcessors();
-    OLogManager.instance().warn(this, "Parallel query against %d threads", cores);
+    OLogManager.instance().debug(this, "Parallel query against %d threads", cores);
 
     final ThreadPoolExecutor workers = Orient.instance().getWorkers();
 
@@ -1461,7 +1453,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             fieldValue = expandTarget.toString();
 
           if (fieldValue != null)
-            if (fieldValue instanceof Collection<?> || fieldValue instanceof OMultiCollectionIterator
+            if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray() || fieldValue instanceof Iterator<?>
                 || fieldValue instanceof OIdentifiable) {
               finalResult.add(fieldValue);
             } else if (fieldValue instanceof Map<?, ?>) {

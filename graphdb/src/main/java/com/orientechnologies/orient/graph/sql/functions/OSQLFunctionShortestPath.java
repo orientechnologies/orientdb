@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * Shortest path algorithm to find the shortest path from one node to another node in a directed graph.
@@ -32,6 +33,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
  */
 public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder {
   public static final String NAME = "shortestPath";
+
+  protected static final float DISTANCE = 1f;
 
   public OSQLFunctionShortestPath() {
     super(NAME, 2, 3);
@@ -49,7 +52,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder {
         throw new IllegalArgumentException("Only one sourceVertex is allowed");
       source = OMultiValue.getFirstValue(source);
     }
-    paramSourceVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(source, record, iContext));
+    paramSourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
 
     Object dest = iParams[1];
     if (OMultiValue.isMultiValue(dest)) {
@@ -57,12 +60,17 @@ public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder {
         throw new IllegalArgumentException("Only one destinationVertex is allowed");
       dest = OMultiValue.getFirstValue(dest);
     }
-    paramDestinationVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(dest, record, iContext));
+    paramDestinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
 
     if (iParams.length > 2)
       paramDirection = Direction.valueOf(iParams[2].toString().toUpperCase());
 
-    return super.execute(iParams, iContext);
+    return super.execute(iContext);
+  }
+
+  @Override
+  protected float getDistance(final OrientVertex node, final OrientVertex target) {
+    return DISTANCE;
   }
 
   public String getSyntax() {

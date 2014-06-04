@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project basedir="." default="installg" name="orient-ant">
-    <!-- Copyright (c) 1999-2011 Luca Garulli - LICENSE: Apache 2.0 -->
+    <!-- Copyright (c) 1999-2013 Orient Technologies LTD - LICENSE: Apache 2.0 -->
 
     <property environment="env"/>
-    <property name="vendor" value="NuvolaBase Ltd"/>
+    <property name="vendor" value="Orient Technologies Ltd"/>
     <property name="product" value="OrientDB"/>
-    <property name="version" value="1.7"/>
+    <property name="version" value="1.7.1"/>
     <condition property="community.release" value="${releaseHome}/orientdb-community-${version}"
                else="../releases/orientdb-community-${version}">
         <isset property="releaseHome"/>
