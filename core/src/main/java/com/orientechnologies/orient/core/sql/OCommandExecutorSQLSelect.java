@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -66,6 +61,11 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -358,44 +358,46 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final Set<String> clusters = new HashSet<String>();
 
-    final ODatabaseRecord db = getDatabase();
+    if (parsedTarget != null) {
+      final ODatabaseRecord db = getDatabase();
 
-    if (parsedTarget.getTargetQuery() != null) {
-      // SUB QUERY, PROPAGATE THE CALL
-      clusters.addAll(parsedTarget.getTargetQuery().getInvolvedClusters());
-    } else if (parsedTarget.getTargetRecords() != null) {
-      // SINGLE RECORDS: BROWSE ALL (COULD BE EXPENSIVE).
-      for (OIdentifiable identifiable : parsedTarget.getTargetRecords()) {
-        clusters.add(db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase());
+      if (parsedTarget.getTargetQuery() != null) {
+        // SUB QUERY, PROPAGATE THE CALL
+        clusters.addAll(parsedTarget.getTargetQuery().getInvolvedClusters());
+      } else if (parsedTarget.getTargetRecords() != null) {
+        // SINGLE RECORDS: BROWSE ALL (COULD BE EXPENSIVE).
+        for (OIdentifiable identifiable : parsedTarget.getTargetRecords()) {
+          clusters.add(db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase());
+        }
       }
-    }
 
-    if (parsedTarget.getTargetClasses() != null) {
-      for (String clazz : parsedTarget.getTargetClasses().values()) {
-        final OClass cls = db.getMetadata().getSchema().getClass(clazz);
-        if (cls != null)
-          for (int clId : cls.getClusterIds()) {
-            clusters.add(db.getClusterNameById(clId).toLowerCase());
-          }
-      }
-    }
-    if (parsedTarget.getTargetClusters() != null) {
-      for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-        clusters.add(cluster.toLowerCase());
-      }
-    }
-    if (parsedTarget.getTargetIndex() != null) {
-      // EXTRACT THE CLASS NAME -> CLUSTERS FROM THE INDEX DEFINITION
-      final OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex());
-      if (idx != null) {
-        final String clazz = idx.getDefinition().getClassName();
-
-        if (clazz != null) {
+      if (parsedTarget.getTargetClasses() != null) {
+        for (String clazz : parsedTarget.getTargetClasses().values()) {
           final OClass cls = db.getMetadata().getSchema().getClass(clazz);
           if (cls != null)
             for (int clId : cls.getClusterIds()) {
               clusters.add(db.getClusterNameById(clId).toLowerCase());
             }
+        }
+      }
+      if (parsedTarget.getTargetClusters() != null) {
+        for (String cluster : parsedTarget.getTargetClusters().keySet()) {
+          clusters.add(cluster.toLowerCase());
+        }
+      }
+      if (parsedTarget.getTargetIndex() != null) {
+        // EXTRACT THE CLASS NAME -> CLUSTERS FROM THE INDEX DEFINITION
+        final OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex());
+        if (idx != null) {
+          final String clazz = idx.getDefinition().getClassName();
+
+          if (clazz != null) {
+            final OClass cls = db.getMetadata().getSchema().getClass(clazz);
+            if (cls != null)
+              for (int clId : cls.getClusterIds()) {
+                clusters.add(db.getClusterNameById(clId).toLowerCase());
+              }
+          }
         }
       }
     }
