@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -61,11 +66,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -380,7 +380,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
     if (parsedTarget.getTargetClusters() != null) {
-      final OStorage storage = getDatabase().getStorage();
       for (String cluster : parsedTarget.getTargetClusters().keySet()) {
         clusters.add(cluster.toLowerCase());
       }
