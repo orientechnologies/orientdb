@@ -197,20 +197,21 @@ Widget.directive('dbgraph', function () {
     var drawDbGraph = function (scope, element, attrs, model) {
         element.empty();
 
-        var margin = {top: 20, right: 120, bottom: 20, left: 120},
+        var sizeC = Object.keys(model.config.clusters).length * 50;
+        var margin = {top: 20, right: 120, bottom: 20, left: 40},
             width = 400 - margin.right - margin.left,
-            height = 400 - margin.top - margin.bottom;
+            height = (sizeC + 400) - margin.top - margin.bottom;
 
 
         var children = [];
-        var keys = Object.keys(model.config[0].clusters);
+        var keys = Object.keys(model.config.clusters);
 
         keys.forEach(function (val) {
             if (val.indexOf("@") != 0) {
                 var servChild = undefined;
-                if (model.config[0].clusters[val]) {
+                if (model.config.clusters[val]) {
                     var servChild = [];
-                    var serv = model.config[0].clusters[val].servers;
+                    var serv = model.config.clusters[val].servers;
                     serv.forEach(function (val) {
                         servChild.push({ name: val });
                     });

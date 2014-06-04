@@ -31,17 +31,23 @@ module.controller('ClusterEditController', function ($scope, Cluster) {
     }
 
 });
+module.controller('ClusterChangeController', function ($scope, Cluster) {
+
+    $scope.dimension = Object.keys($scope.dirty);
+    console.log($scope.dirty.length);
+
+});
 module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $modal, $q, Server) {
 
 
     Cluster.getAll().then(function (data) {
-        $scope.clusters = data;
-        if ($scope.clusters.length > 0) {
-            $scope.cluster = $scope.clusters[0];
+        $scope.nodeClusters = data;
+        if ($scope.nodeClusters.length > 0) {
+            $scope.cluster = $scope.nodeClusters[0];
         }
     });
 
-
+    $scope.dirty = {};
     $scope.db = false;
     $scope.editCluster = function () {
 
@@ -76,15 +82,65 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
     });
 
     $scope.isInConfig = function (cluster, node) {
-        return ($scope.dbConfig && $scope.dbConfig.config[0].clusters[cluster]) ? $scope.dbConfig.config[0].clusters[cluster].servers.indexOf(node) : false;
+        return ($scope.dbConfig && $scope.dbConfig.config.clusters[cluster]) ? $scope.dbConfig.config.clusters[cluster].servers.indexOf(node) : false;
+    }
+    $scope.saveConfig = function () {
+
+        var modalScope = $scope.$new(true);
+        modalScope.dirty = $scope.dirty;
+        modalScope.ok = function () {
+            var meta = $scope.dbConfig.config.metadata;
+            delete $scope.dbConfig.config.metadata;
+            Cluster.saveClusterDbInfo($scope.cluster.name, $scope.dbConfig.name, $scope.dbConfig.config).then(function (data) {
+                $scope.dbConfig.config.metadata = meta;
+            });
+        }
+        modalScope.cluster = $scope.cluster;
+        var modalPromise = $modal({template: 'views/cluster/changeCluster.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
+
+        $q.when(modalPromise).then(function (modalEl) {
+            modalEl.modal('show');
+        });
+
+
+    }
+    $scope.addCluster = function () {
+        $scope.clusters.push({name: ""});
+    }
+    $scope.isSelectedCluster = function (c, p) {
+        return c.name == p.name;
+    }
+    $scope.setDirtyCluster = function (cluster, p) {
+        cluster.name = p;
+        $scope.matrix[p] = [];
+    }
+    $scope.changeServerConfig = function (c, s, bool) {
+        $scope.matrix[c][s] = bool;
+        if (!$scope.dbConfig.config.clusters[c]) {
+            $scope.dbConfig.config.clusters[c] = { servers: []}
+        }
+        if (!$scope.dirty[c]) {
+            $scope.dirty[c] = {};
+        }
+        $scope.dirty[c][s] = bool;
+        if (bool) {
+
+            $scope.dbConfig.config.clusters[c].servers.push(s);
+        } else {
+            var idx = $scope.dbConfig.config.clusters[c].servers.indexOf(s);
+            $scope.dbConfig.config.clusters[c].servers.splice(idx, 1);
+        }
+
     }
     $scope.$on("dbselected", function (event, data) {
         if (data.el.db) {
             var db = data.el.name;
             Cluster.getClusterDbInfo($scope.cluster.name, data.el.name).then(function (data) {
-                $scope.dbConfig = {name: db, config: data.result }
+                $scope.dbConfig = {name: db, config: data.result[0] }
+                $scope.phisicalCluster = $scope.dbConfig.config.metadata.clusters;
+                $scope.phisicalCluster.push({name: '*'});
                 var clusters = [];
-                var arr = Object.keys($scope.dbConfig.config[0].clusters);
+                var arr = Object.keys($scope.dbConfig.config.clusters);
                 arr.forEach(function (v) {
                     if (v.indexOf("@") != 0) {
                         clusters.push({name: v});
@@ -92,6 +148,15 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
                 });
                 $scope.clusters = clusters;
                 $scope.db = true;
+                $scope.matrix = [];
+                $scope.clusters.forEach(function (val) {
+                    $scope.matrix[val.name] = [];
+                    if ($scope.dbConfig.config.clusters[val.name]) {
+                        $scope.dbConfig.config.clusters[val.name].servers.forEach(function (s) {
+                            $scope.matrix[val.name][s] = true;
+                        });
+                    }
+                });
             });
         }
     });

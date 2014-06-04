@@ -1,0 +1,29 @@
+<div ng-controller="ClusterChangeController">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3> {{ 'settings.server.cluster.title.change' | i18n }}</h3>
+    </div>
+    <div class="modal-body">
+        <div class="row-fluid">
+            <p ng-show="dimension== 0"><b>{{ 'settings.server.cluster.title.unchanged' | i18n }}</b></p>
+            <ul class="dirtyList" ng-hide="dimension == 0">
+                <li ng-repeat="(key, value)  in dirty">
+                    <h4>{{key}}</h4>
+                    <ul>
+                        <li ng-repeat="(k, v) in value">
+                            <div ng-show="v">Added to the Server <b>{{k}}</b></div>
+                            <div ng-hide="v">Removed from the Server <b>{{k}}</b></div>
+                        </li>
+
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn" ng-click="hide()">Close</button>
+        <button class="btn btn-primary" ng-disabled="dirty.length == 0" ng-click="modal.saved=true;hide();ok();">Apply
+            changes
+        </button>
+    </div>
+</div>

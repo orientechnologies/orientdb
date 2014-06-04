@@ -183,7 +183,7 @@ button.btn-primary, .btn.btn-primary {
     font-size: 12px;
 }
 
-.box  a {
+.box a {
     color: #ffffff;
 }
 
@@ -831,7 +831,7 @@ div.pagination span.disabled {
     }
 }
 
-@media (max-width:768px) {
+@media (max-width: 768px) {
     .navbar .btn-navbar {
         display: block;
     }
@@ -1038,7 +1038,7 @@ tr.read {
     position: relative;
 }
 
-table.messages_table>tbody>tr {
+table.messages_table > tbody > tr {
     border-bottom: 1px solid #d3d3d3;
 }
 
@@ -1101,17 +1101,21 @@ div.messageText label {
 .config .popover-content label {
     font-size: 12px !important;
 }
+
 .config .popover-content > .row-fluid {
     margin-bottom: 5px;
     margin-top: 5px;
 }
+
 .pagination a, .pagination span {
     line-height: 30px;
 }
+
 .pagination ul {
     display: inline;
 }
-.spinner-start{
+
+.spinner-start {
     text-align: center;
     position: absolute;
     top: 0;
@@ -1128,9 +1132,15 @@ div.messageText label {
     left: 50%;
     top: 50%;
 }
+
 div.container select {
     margin-bottom: 0px;
 }
+
 .nomargin {
     margin: 0;
+}
+
+ul.dirtyList  {
+    list-style: none;
 }

@@ -87,6 +87,8 @@
     "cluster.cluster": "Cluster",
     "cluster.port": "Port",
     "cluster.multicast": "Multicast",
+    "cluster.add": "Add Cluster",
+    "cluster.apply": "Apply Config",
     "MetricsWhen": "Metrics",
     "LogWhen": "Log",
     "FunctionWhat": "Function",
@@ -105,6 +107,8 @@
     "settings.cluster.multicast.group": "Multicast Group",
     "settings.cluster.multicast.port": "Multicast Port",
     "settings.server.cluster.title": "New Cluster",
-    "settings.server.cluster.title.edit": "Edit Cluster"
+    "settings.server.cluster.title.edit": "Edit Cluster",
+    "settings.server.cluster.title.change": "Change Cluster Configuration",
+    "settings.server.cluster.title.unchanged": "No changes has been done.!"
 
 }

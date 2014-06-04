@@ -351,7 +351,7 @@ monitor.factory('Cluster', function ($http, $resource, $q) {
 
     resource.saveCluster = function (cluster) {
         var deferred = $q.defer();
-        var url = API + 'distributed/monitor';
+        var url = API + 'distributed/monitor/configuration';
         $http.post(url, cluster).success(function (data) {
             deferred.resolve(data);
         });
@@ -390,6 +390,15 @@ monitor.factory('Cluster', function ($http, $resource, $q) {
         var url = API + 'distributed/monitor/dbconfig/{{cluster}}/{{db}}';
         url = S(url).template({cluster: cluster, db: db}).s;
         $http.get(url).success(function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
+    }
+    resource.saveClusterDbInfo = function (cluster, db, config) {
+        var deferred = $q.defer();
+        var url = API + 'distributed/monitor/dbconfig/{{cluster}}/{{db}}';
+        url = S(url).template({cluster: cluster, db: db}).s;
+        $http.post(url, config).success(function (data) {
             deferred.resolve(data);
         });
         return deferred.promise;
