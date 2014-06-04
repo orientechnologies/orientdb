@@ -447,7 +447,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   public String getNodeName(final Member iMember) {
     final ODocument cfg = getNodeConfigurationById(iMember.getUuid());
-    return (String) (cfg != null ? cfg.field("name") : null);
+    if (cfg != null)
+      return cfg.field("name");
+
+    return "ext:" + iMember.getUuid();
   }
 
   public Set<String> getRemoteNodeIds() {
@@ -542,9 +545,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public void entryUpdated(EntryEvent<String, Object> iEvent) {
     final String key = iEvent.getKey();
+    final String eventNodeName = getNodeName(iEvent.getMember());
+
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "updated node configuration id=%s name=%s",
-          iEvent.getMember(), getNodeName(iEvent.getMember()));
+      ODistributedServerLog.info(this, getLocalNodeName(), eventNodeName, DIRECTION.NONE,
+          "updated node configuration id=%s name=%s", iEvent.getMember(), eventNodeName);
 
       final ODocument cfg = (ODocument) iEvent.getValue();
       activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
@@ -554,8 +559,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
         final String dbName = key.substring(CONFIG_DATABASE_PREFIX.length());
 
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "update configuration db=%s from=%s", dbName,
-            getNodeName(iEvent.getMember()));
+        ODistributedServerLog.info(this, getLocalNodeName(), eventNodeName, DIRECTION.NONE, "update configuration db=%s", dbName);
 
         updateLastClusterChange();
 
@@ -566,8 +570,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         updateLastClusterChange();
       }
     } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
-      ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
-          "received updated status %s=%s", key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
+      ODistributedServerLog.info(this, getLocalNodeName(), eventNodeName, DIRECTION.IN, "received updated status %s=%s",
+          key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
 
       updateLastClusterChange();
     }
