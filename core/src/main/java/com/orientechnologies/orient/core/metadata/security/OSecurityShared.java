@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -51,30 +52,16 @@ import java.util.Set;
  * 
  */
 public class OSecurityShared implements OSecurity, OCloseable {
-  public static final String                             RESTRICTED_CLASSNAME   = "ORestricted";
-  public static final String                             IDENTITY_CLASSNAME     = "OIdentity";
-  public static final String                             ALLOW_ALL_FIELD        = "_allow";
-  public static final String                             ALLOW_READ_FIELD       = "_allowRead";
-  public static final String                             ALLOW_UPDATE_FIELD     = "_allowUpdate";
-  public static final String                             ALLOW_DELETE_FIELD     = "_allowDelete";
-  public static final String                             ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
-  public static final String                             ONCREATE_FIELD         = "onCreate.fields";
-
-  protected final ConcurrentLinkedHashMap<String, OUser> cachedUsers;
-  protected final ConcurrentLinkedHashMap<String, ORole> cachedRoles;
+  public static final String RESTRICTED_CLASSNAME   = "ORestricted";
+  public static final String IDENTITY_CLASSNAME     = "OIdentity";
+  public static final String ALLOW_ALL_FIELD        = "_allow";
+  public static final String ALLOW_READ_FIELD       = "_allowRead";
+  public static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
+  public static final String ALLOW_DELETE_FIELD     = "_allowDelete";
+  public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
+  public static final String ONCREATE_FIELD         = "onCreate.fields";
 
   public OSecurityShared() {
-    final int maxCachedUsers = OGlobalConfiguration.SECURITY_MAX_CACHED_USERS.getValueAsInteger();
-    if (maxCachedUsers > 0)
-      cachedUsers = new ConcurrentLinkedHashMap.Builder<String, OUser>().maximumWeightedCapacity(maxCachedUsers).build();
-    else
-      cachedUsers = null;
-
-    final int maxCachedRoles = OGlobalConfiguration.SECURITY_MAX_CACHED_ROLES.getValueAsInteger();
-    if (maxCachedRoles > 0)
-      cachedRoles = new ConcurrentLinkedHashMap.Builder<String, ORole>().maximumWeightedCapacity(maxCachedRoles).build();
-    else
-      cachedRoles = null;
   }
 
   public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
@@ -190,16 +177,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return user;
   }
 
-  @Override
-  public OSecurity uncacheUsersAndRoles() {
-    if (cachedRoles != null)
-      cachedRoles.clear();
-
-    if (cachedUsers != null)
-      cachedUsers.clear();
-    return this;
-  }
-
   public OUser getUser(final String iUserName) {
     return getUser(iUserName, true);
   }
@@ -212,27 +189,21 @@ public class OSecurityShared implements OSecurity, OCloseable {
         user.addRole(r);
       }
 
-    cacheUser(user);
-
     return user.save();
   }
 
-  public OUser createUser(final String iUserName, final String iUserPassword, final ORole... iRoles) {
-    final OUser user = new OUser(iUserName, iUserPassword);
+  public OUser createUser(final String userName, final String userPassword, final ORole... roles) {
+    final OUser user = new OUser(userName, userPassword);
 
-    if (iRoles != null)
-      for (ORole r : iRoles) {
+    if (roles != null)
+      for (ORole r : roles) {
         user.addRole(r);
       }
-
-    cacheUser(user);
 
     return user.save();
   }
 
   public boolean dropUser(final String iUserName) {
-    uncacheUser(iUserName);
-
     final Number removed = getDatabase().<OCommandRequest> command(
         new OCommandSQL("delete from OUser where name = '" + iUserName + "'")).execute();
 
@@ -247,39 +218,33 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return null;
   }
 
-  public ORole getRole(final String iRoleName) {
-    return getRole(iRoleName, true);
+  public ORole getRole(final String roleName) {
+    return getRole(roleName, true);
   }
 
-  public ORole getRole(final String iRoleName, final boolean iAllowRepair) {
-    if (cachedRoles != null) {
-      final ORole role = cachedRoles.get(iRoleName);
-      if (role != null)
-        return role;
-    }
-
+  public ORole getRole(final String roleName, final boolean allowRepair) {
     List<ODocument> result;
 
     try {
       result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1")).execute();
+          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
 
-      if (iRoleName.equalsIgnoreCase("admin") && result.isEmpty()) {
-        if (iAllowRepair)
+      if (roleName.equalsIgnoreCase("admin") && result.isEmpty()) {
+        if (allowRepair)
           repair();
         result = getDatabase().<OCommandRequest> command(
-            new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1")).execute();
+            new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
       }
     } catch (Exception e) {
-      if (iAllowRepair)
+      if (allowRepair)
         repair();
       result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + iRoleName + "' limit 1").setFetchPlan("roles:1"))
+          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1").setFetchPlan("roles:1"))
           .execute();
     }
 
     if (result != null && !result.isEmpty())
-      return cacheRole(new ORole(result.get(0)));
+      return new ORole(result.get(0));
 
     return null;
 
@@ -291,13 +256,10 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public ORole createRole(final String iRoleName, final ORole iParent, final ORole.ALLOW_MODES iAllowMode) {
     final ORole role = new ORole(iRoleName, iParent, iAllowMode);
-    cacheRole(role);
     return role.save();
   }
 
   public boolean dropRole(final String iRoleName) {
-    uncacheRole(iRoleName);
-
     final Number removed = getDatabase().<OCommandRequest> command(
         new OCommandSQL("delete from ORole where name = '" + iRoleName + "'")).execute();
 
@@ -364,12 +326,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     OLogManager.instance().warn(this, "Repairing security structures...");
 
     try {
-      if (cachedUsers != null)
-        cachedUsers.clear();
       getDatabase().getMetadata().getIndexManager().dropIndex("OUser.name");
-
-      if (cachedRoles != null)
-        cachedRoles.clear();
       getDatabase().getMetadata().getIndexManager().dropIndex("ORole.name");
 
       return createMetadata();
@@ -455,6 +412,13 @@ public class OSecurityShared implements OSecurity, OCloseable {
       restrictedClass.createProperty(ALLOW_DELETE_FIELD, OType.LINKSET,
           database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
 
+    final OLevel2RecordCache cache = getDatabase().getLevel2Cache();
+    for (final int clusterId : userClass.getPolymorphicClusterIds())
+      cache.addPinnedCluster(clusterId);
+
+    for (final int clusterId : roleClass.getPolymorphicClusterIds())
+      cache.addPinnedCluster(clusterId);
+
     return adminUser;
   }
 
@@ -462,8 +426,13 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public void load() {
+    final OLevel2RecordCache cache = getDatabase().getLevel2Cache();
+
     final OClass userClass = getDatabase().getMetadata().getSchema().getClass("OUser");
     if (userClass != null) {
+      for (final int clusterId : userClass.getPolymorphicClusterIds())
+        cache.addPinnedCluster(clusterId);
+
       // @COMPATIBILITY <1.3.0
       if (!userClass.existsProperty("status")) {
         userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
@@ -477,6 +446,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
       // ROLE
       final OClass roleClass = getDatabase().getMetadata().getSchema().getClass("ORole");
+      for (final int clusterId : roleClass.getPolymorphicClusterIds())
+        cache.addPinnedCluster(clusterId);
+
       if (!roleClass.existsProperty("inheritedRole")) {
         roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
       }
@@ -488,6 +460,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
       if (roleClass.getInvolvedIndexes("name") == null)
         p.createIndex(INDEX_TYPE.UNIQUE);
     }
+
   }
 
   public void createClassTrigger() {
@@ -503,13 +476,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   protected OUser getUser(final String iUserName, final boolean iAllowRepair) {
-
-    if (cachedUsers != null) {
-      final OUser user = cachedUsers.get(iUserName);
-      if (user != null)
-        return user;
-    }
-
     List<ODocument> result;
     try {
       result = getDatabase().<OCommandRequest> command(
@@ -532,43 +498,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
     }
 
     if (result != null && !result.isEmpty())
-      return cacheUser(new OUser(result.get(0)));
+      return new OUser(result.get(0));
 
     return null;
-
-  }
-
-  protected OUser cacheUser(final OUser user) {
-    if (cachedUsers != null)
-      cachedUsers.put(user.getName(), user);
-    return user;
-  }
-
-  protected void uncacheUser(final String iName) {
-    if (cachedUsers != null)
-      cachedUsers.remove(iName);
-  }
-
-  protected void uncacheUsersOfRole(final String iName) {
-    if (cachedUsers != null) {
-      for (final Iterator<Map.Entry<String, OUser>> it = cachedUsers.entrySet().iterator(); it.hasNext();) {
-        if (it.next().getValue().hasRole(iName, true))
-          it.remove();
-      }
-    }
-  }
-
-  protected ORole cacheRole(final ORole iRole) {
-    if (cachedRoles != null)
-      cachedRoles.put(iRole.getName(), iRole);
-    return iRole;
-  }
-
-  protected void uncacheRole(final String iName) {
-    if (cachedRoles != null) {
-      cachedRoles.remove(iName);
-      uncacheUsersOfRole(iName);
-    }
   }
 
   private ODatabaseRecord getDatabase() {

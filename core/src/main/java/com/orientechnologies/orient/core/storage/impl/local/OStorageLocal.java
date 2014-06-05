@@ -1484,11 +1484,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
     }
   }
 
-  @Override
-  public OStorageConfiguration getConfiguration() {
-    return configuration;
-  }
-
   public int getDefaultClusterId() {
     return defaultClusterId;
   }

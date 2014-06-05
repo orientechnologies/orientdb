@@ -31,8 +31,8 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  */
 @SuppressWarnings("serial")
 public class OStorageConfigurationSegment extends OStorageConfiguration {
-  private static final int   START_SIZE = 10000;
-  private OSingleFileSegment segment;
+  private static final int         START_SIZE = 10000;
+  private final OSingleFileSegment segment;
 
   public OStorageConfigurationSegment(final OStorageLocalAbstract iStorage) throws IOException {
     super(iStorage);

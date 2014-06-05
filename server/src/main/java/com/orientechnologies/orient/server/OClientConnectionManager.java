@@ -71,6 +71,7 @@ public class OClientConnectionManager {
             try {
               entry.getValue().close();
             } catch (Exception e) {
+              OLogManager.instance().error(this, "Error during close of connection for close channel", e);
             }
             iterator.remove();
           }

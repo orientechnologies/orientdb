@@ -31,10 +31,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import java.io.IOException;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
 
 /**
  * Versions:
@@ -53,34 +50,40 @@ import java.util.TimeZone;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId             CONFIG_RID                    = new OImmutableRecordId(0,
-                                                                              OClusterPositionFactory.INSTANCE.valueOf(0));
+  public static final ORecordId                      CONFIG_RID                    = new OImmutableRecordId(0,
+                                                                                       OClusterPositionFactory.INSTANCE.valueOf(0));
 
-  public static final String                DEFAULT_CHARSET               = "UTF-8";
-  private String                            charset                       = DEFAULT_CHARSET;
-  public static final int                   CURRENT_VERSION               = 9;
-  public static final int                   CURRENT_BINARY_FORMAT_VERSION = 11;
-  public int                                version                       = -1;
-  public String                             name;
-  public String                             schemaRecordId;
-  public String                             dictionaryRecordId;
-  public String                             indexMgrRecordId;
-  public String                             dateFormat                    = "yyyy-MM-dd";
-  public String                             dateTimeFormat                = "yyyy-MM-dd HH:mm:ss";
-  public int                                binaryFormatVersion;
-  public OStorageSegmentConfiguration       fileTemplate;
-  public List<OStorageClusterConfiguration> clusters                      = new ArrayList<OStorageClusterConfiguration>();
-  public List<OStorageDataConfiguration>    dataSegments                  = new ArrayList<OStorageDataConfiguration>();
-  public OStorageTxConfiguration            txSegment                     = new OStorageTxConfiguration();
-  public List<OStorageEntryConfiguration>   properties                    = new ArrayList<OStorageEntryConfiguration>();
-  protected transient OStorage              storage;
-  private String                            localeLanguage                = Locale.getDefault().getLanguage();
-  private String                            localeCountry                 = Locale.getDefault().getCountry();
-  private TimeZone                          timeZone                      = TimeZone.getDefault();
-  private transient Locale                  localeInstance;
-  private transient DecimalFormatSymbols    unusualSymbols;
-  private String                            clusterSelection;
-  private int                               minimumClusters               = 1;
+  public static final String                         DEFAULT_CHARSET               = "UTF-8";
+  private String                                     charset                       = DEFAULT_CHARSET;
+  public static final int                            CURRENT_VERSION               = 9;
+  public static final int                            CURRENT_BINARY_FORMAT_VERSION = 11;
+  public volatile int                                version                       = -1;
+
+  public volatile String                             name;
+  public volatile String                             schemaRecordId;
+  public volatile String                             dictionaryRecordId;
+  public volatile String                             indexMgrRecordId;
+  public volatile String                             dateFormat                    = "yyyy-MM-dd";
+  public volatile String                             dateTimeFormat                = "yyyy-MM-dd HH:mm:ss";
+  public volatile int                                binaryFormatVersion;
+  public volatile OStorageSegmentConfiguration       fileTemplate;
+
+  public volatile List<OStorageClusterConfiguration> clusters                      = Collections
+                                                                                       .synchronizedList(new ArrayList<OStorageClusterConfiguration>());
+  public final List<OStorageDataConfiguration>       dataSegments                  = Collections
+                                                                                       .synchronizedList(new ArrayList<OStorageDataConfiguration>());
+  public volatile OStorageTxConfiguration            txSegment                     = new OStorageTxConfiguration();
+  public final List<OStorageEntryConfiguration>      properties                    = Collections
+                                                                                       .synchronizedList(new ArrayList<OStorageEntryConfiguration>());
+
+  protected final transient OStorage                 storage;
+  private volatile String                            localeLanguage                = Locale.getDefault().getLanguage();
+  private volatile String                            localeCountry                 = Locale.getDefault().getCountry();
+  private volatile TimeZone                          timeZone                      = TimeZone.getDefault();
+  private transient volatile Locale                  localeInstance;
+  private transient volatile DecimalFormatSymbols    unusualSymbols;
+  private volatile String                            clusterSelection;
+  private volatile int                               minimumClusters               = 1;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
@@ -186,7 +189,7 @@ public class OStorageConfiguration implements OSerializableStream {
     int size = Integer.parseInt(read(values[index++]));
 
     // PREPARE THE LIST OF CLUSTERS
-    clusters = new ArrayList<OStorageClusterConfiguration>(size);
+    clusters.clear();
 
     for (int i = 0; i < size; ++i) {
       final int clusterId = Integer.parseInt(read(values[index++]));
@@ -237,7 +240,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
     // PREPARE THE LIST OF DATA SEGS
     size = Integer.parseInt(read(values[index++]));
-    dataSegments = new ArrayList<OStorageDataConfiguration>(size);
+    dataSegments.clear();
     for (int i = 0; i < size; ++i)
       dataSegments.add(null);
 
@@ -260,7 +263,7 @@ public class OStorageConfiguration implements OSerializableStream {
         read(values[index++]), read(values[index++]));
 
     size = Integer.parseInt(read(values[index++]));
-    properties = new ArrayList<OStorageEntryConfiguration>(size);
+    properties.clear();
     for (int i = 0; i < size; ++i) {
       properties.add(new OStorageEntryConfiguration(read(values[index++]), read(values[index++])));
     }

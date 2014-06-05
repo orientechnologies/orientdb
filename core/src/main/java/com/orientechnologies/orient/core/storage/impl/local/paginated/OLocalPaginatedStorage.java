@@ -1202,11 +1202,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return clusters.get(iClusterId) != null ? clusters.get(iClusterId).getName() : null;
   }
 
-  @Override
-  public OStorageConfiguration getConfiguration() {
-    return configuration;
-  }
-
   public int getDefaultClusterId() {
     return defaultClusterId;
   }

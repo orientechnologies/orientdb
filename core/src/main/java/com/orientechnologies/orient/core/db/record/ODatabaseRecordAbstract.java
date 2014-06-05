@@ -296,8 +296,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         if (metadata.getIndexManager().autoRecreateIndexesAfterCrash()) {
           metadata.getIndexManager().recreateIndexes();
 
-          // REMOVE CACHED USES AND ROLES AND RE-SET THE CURRENT DB (AFTER INDEX REBUILD)
-          metadata.getSecurity().uncacheUsersAndRoles();
           setCurrentDatabaseinThreadLocal();
           user = null;
         }

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -23,6 +24,8 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.InetSocketAddress;
 
 public class OClientConnection {
@@ -43,7 +46,9 @@ public class OClientConnection {
 
   public void close() {
     if (database != null) {
-      database.close();
+      if (!database.isClosed())
+        database.close();
+
       database = null;
     }
   }

@@ -19,14 +19,14 @@ import java.io.Serializable;
 
 @SuppressWarnings("serial")
 public class OStorageEntryConfiguration implements Serializable {
-	public String	name;
-	public String	value;
+  public volatile String name;
+  public volatile String value;
 
-	public OStorageEntryConfiguration() {
-	}
+  public OStorageEntryConfiguration() {
+  }
 
-	public OStorageEntryConfiguration(final String iName, final String iValue) {
-		name = iName;
-		value = iValue;
-	}
+  public OStorageEntryConfiguration(final String iName, final String iValue) {
+    name = iName;
+    value = iValue;
+  }
 }
