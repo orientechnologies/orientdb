@@ -541,9 +541,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final int num;
     if (clusterId < 0)
-      num = connection.database.addCluster(type, name, location, dataSegmentName, null);
+      num = connection.database.addCluster(type, name, location, dataSegmentName);
     else
-      num = connection.database.addCluster(type, name, clusterId, location, dataSegmentName, null);
+      num = connection.database.addCluster(type, name, clusterId, location, dataSegmentName);
 
     beginResponse();
     try {
