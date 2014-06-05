@@ -17,7 +17,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassAbstractDelegate;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyAbstractDelegate;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -29,9 +28,8 @@ import com.tinkerpop.blueprints.Direction;
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public class OrientVertexType extends OClassAbstractDelegate {
-  public static final String      CLASS_NAME = "V";
-  protected final OrientBaseGraph graph;
+public class OrientVertexType extends OrientElementType {
+  public static final String CLASS_NAME = "V";
 
   public class OrientVertexProperty extends OPropertyAbstractDelegate {
     protected final OrientBaseGraph graph;
@@ -53,8 +51,7 @@ public class OrientVertexType extends OClassAbstractDelegate {
   }
 
   public OrientVertexType(final OrientBaseGraph graph, final OClass delegate) {
-    super(delegate);
-    this.graph = graph;
+    super(graph, delegate);
   }
 
   protected static final void checkType(final OClass iType) {
@@ -64,21 +61,6 @@ public class OrientVertexType extends OClassAbstractDelegate {
     if (!iType.isSubClassOf(CLASS_NAME))
       throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + CLASS_NAME
           + "' and therefore cannot be considered a Vertex");
-  }
-
-  @Override
-  public OrientVertexProperty createProperty(final String iPropertyName, final OType iType) {
-    return new OrientVertexProperty(graph, delegate.createProperty(iPropertyName, iType));
-  }
-
-  @Override
-  public OrientVertexProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
-    return new OrientVertexProperty(graph, delegate.createProperty(iPropertyName, iType, iLinkedClass));
-  }
-
-  @Override
-  public OrientVertexProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType) {
-    return new OrientVertexProperty(graph, delegate.createProperty(iPropertyName, iType, iLinkedType));
   }
 
   public OrientVertexProperty createEdgeProperty(final Direction iDirection, String iEdgeClassName) {
@@ -108,4 +90,23 @@ public class OrientVertexType extends OClassAbstractDelegate {
     return this;
   }
 
+  @Override
+  public OrientVertexProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
+    return new OrientVertexProperty(graph, super.createProperty(iPropertyName, iType, iLinkedClass));
+  }
+
+  @Override
+  public OrientVertexProperty createProperty(final String iPropertyName, final OType iType, final OType iLinkedType) {
+    return new OrientVertexProperty(graph, super.createProperty(iPropertyName, iType, iLinkedType));
+  }
+
+  @Override
+  public OrientVertexProperty createProperty(final String iPropertyName, final OType iType) {
+    return new OrientVertexProperty(graph, super.createProperty(iPropertyName, iType));
+  }
+
+  @Override
+  protected String getTypeName() {
+    return "vertex";
+  }
 }

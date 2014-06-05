@@ -27,6 +27,31 @@ public class OpenCloseMTTest {
 
   private volatile boolean      stop            = false;
 
+  public class OpenCloser implements Callable<Void> {
+    @Override
+    public Void call() throws Exception {
+      while (!stop) {
+        try {
+          ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(URL);
+          databaseDocumentTx.open("admin", "admin");
+
+          List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from OUser"));
+          Assert.assertTrue(!result.isEmpty());
+
+          Thread.sleep(500);
+
+          databaseDocumentTx.close();
+
+          Thread.sleep(500);
+        } catch (Exception e) {
+          e.printStackTrace();
+          throw e;
+        }
+      }
+      return null;
+    }
+  }
+
   public void openCloseMTTest() throws Exception {
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
@@ -51,30 +76,5 @@ public class OpenCloseMTTest {
 
     databaseDocumentTx.open("admin", "admin");
     databaseDocumentTx.drop();
-  }
-
-  public class OpenCloser implements Callable<Void> {
-    @Override
-    public Void call() throws Exception {
-      while (!stop) {
-        try {
-          ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(URL);
-          databaseDocumentTx.open("admin", "admin");
-
-          List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from OUser"));
-          Assert.assertTrue(!result.isEmpty());
-
-          Thread.sleep(500);
-
-          databaseDocumentTx.close();
-
-          Thread.sleep(500);
-        } catch (Exception e) {
-          e.printStackTrace();
-          throw e;
-        }
-      }
-      return null;
-    }
   }
 }
