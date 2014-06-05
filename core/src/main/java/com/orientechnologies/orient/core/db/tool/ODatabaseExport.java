@@ -71,7 +71,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       fileName += ".gz";
     }
     final File f = new File(fileName);
-    f.getParentFile().mkdirs();
+    if (f.getParentFile() != null)
+      f.getParentFile().mkdirs();
     if (f.exists())
       f.delete();
 
