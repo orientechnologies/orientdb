@@ -231,7 +231,7 @@ public class ODocumentSchemalessSerializationTest {
   }
 
   @Test
-  private void testCollectionOfDocumentEmbedded() {
+  private void testCollectionOfEmbeddedDocument() {
 
     ODocument document = new ODocument();
 
@@ -267,6 +267,29 @@ public class ODocumentSchemalessSerializationTest {
     assertNotNull(inSet);
     assertEquals(inSet.field("name"), embeddedInSet.field("name"));
     assertEquals(inSet.field("surname"), embeddedInSet.field("surname"));
+  }
+
+  @Test
+  public void testMapOfEmbeddedDocument() {
+
+    ODocument document = new ODocument();
+
+    ODocument embeddedInMap = new ODocument();
+    embeddedInMap.field("name", "test");
+    embeddedInMap.field("surname", "something");
+    Map<String, ODocument> map = new HashMap<String, ODocument>();
+    map.put("embedded", embeddedInMap);
+    document.field("map", map, OType.EMBEDDEDMAP);
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    Map<String, ODocument> mapS = extr.field("map");
+    assertEquals(1, mapS.size());
+    ODocument emb = mapS.get("embedded");
+    assertNotNull(emb);
+    assertEquals(emb.field("name"), embeddedInMap.field("name"));
+    assertEquals(emb.field("surname"), embeddedInMap.field("surname"));
+
   }
 
 }
