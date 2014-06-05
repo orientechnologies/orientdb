@@ -539,14 +539,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection.data.protocolVersion >= 18)
       clusterId = channel.readShort();
 
-    Object[] params = null;
-
     final int num;
-
     if (clusterId < 0)
-      num = connection.database.addCluster(type, name, location, dataSegmentName, params);
+      num = connection.database.addCluster(type, name, location, dataSegmentName, null);
     else
-      num = connection.database.addCluster(type, name, clusterId, location, dataSegmentName, params);
+      num = connection.database.addCluster(type, name, clusterId, location, dataSegmentName, null);
 
     beginResponse();
     try {
@@ -685,36 +682,17 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
 
-      Throwable current;
+      final Throwable current;
       if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
         // BYPASS THE DB POOL EXCEPTION TO PROPAGATE THE RIGHT SECURITY ONE
         current = t.getCause();
       else
         current = t;
 
-      final Throwable original = current;
-      while (current != null) {
-        // MORE DETAILS ARE COMING AS EXCEPTION
-        channel.writeByte((byte) 1);
-
-        channel.writeString(current.getClass().getName());
-        channel.writeString(current.getMessage());
-
-        current = current.getCause();
-      }
-      channel.writeByte((byte) 0);
+      sendErrorDetails(current);
 
       if (connection != null && connection.data.protocolVersion >= 19) {
-        final OMemoryStream memoryStream = new OMemoryStream();
-        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
-
-        objectOutputStream.writeObject(original);
-        objectOutputStream.flush();
-
-        final byte[] result = memoryStream.toByteArray();
-        objectOutputStream.close();
-
-        channel.writeBytes(result);
+        serializeExceptionObject(current);
       }
 
       channel.flush();
@@ -730,10 +708,45 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     } catch (Exception e) {
       if (e instanceof SocketException)
         shutdown();
+      else
+        OLogManager.instance().error(this, "Error during sending an error to client", e);
     } finally {
       if (channel.getLockWrite().isHeldByCurrentThread())
         // NO EXCEPTION SO FAR: UNLOCK IT
         channel.releaseWriteLock();
+    }
+  }
+
+  private void sendErrorDetails(Throwable current) throws IOException {
+    while (current != null) {
+      // MORE DETAILS ARE COMING AS EXCEPTION
+      channel.writeByte((byte) 1);
+
+      channel.writeString(current.getClass().getName());
+      channel.writeString(current.getMessage());
+
+      current = current.getCause();
+    }
+    channel.writeByte((byte) 0);
+  }
+
+  private void serializeExceptionObject(Throwable original) throws IOException {
+    try {
+      final OMemoryStream memoryStream = new OMemoryStream();
+      final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
+
+      objectOutputStream.writeObject(original);
+      objectOutputStream.flush();
+
+      final byte[] result = memoryStream.toByteArray();
+      objectOutputStream.close();
+
+      channel.writeBytes(result);
+    } catch (Exception e) {
+      OLogManager.instance().warn(this, "Can't serialize an exception object", e);
+
+      // Write empty stream for binary compatibility
+      channel.writeBytes(new byte[0]);
     }
   }
 

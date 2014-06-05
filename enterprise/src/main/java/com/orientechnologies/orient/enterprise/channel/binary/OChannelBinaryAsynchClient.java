@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
-import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
-import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
@@ -41,16 +30,27 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 
+import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
+import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
+
 public class OChannelBinaryAsynchClient extends OChannelBinary {
-  protected final int                 socketTimeout;                                               // IN MS
-  protected final short               srvProtocolVersion;
-  private final Condition             readCondition = getLockRead().getUnderlying().newCondition();
-  private final int                   maxUnreadResponses;
-  private String                      serverURL;
-  private volatile boolean            channelRead   = false;
-  private byte                        currentStatus;
-  private int                         currentSessionId;
-  private OAsynchChannelServiceThread serviceThread;
+  protected final int                          socketTimeout;                                               // IN MS
+  protected final short                        srvProtocolVersion;
+  private final Condition                      readCondition = getLockRead().getUnderlying().newCondition();
+  private final int                            maxUnreadResponses;
+  private String                               serverURL;
+  private volatile boolean                     channelRead   = false;
+  private byte                                 currentStatus;
+  private int                                  currentSessionId;
+  private volatile OAsynchChannelServiceThread serviceThread;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int iProtocolVersion) throws IOException {
@@ -139,9 +139,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           rootException = (RuntimeException) e;
         else
           rootException = new OException(e);
-      } catch (InstantiationException e) {
-      } catch (IllegalAccessException e) {
-      } catch (InvocationTargetException e) {
+      } catch (InstantiationException ignored) {
+      } catch (IllegalAccessException ignored) {
+      } catch (InvocationTargetException ignored) {
       }
 
     return rootException;
@@ -313,9 +313,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
    */
   public boolean isConnected() {
     final Socket s = socket;
-    if (s != null && s.isConnected() && !s.isInputShutdown() && !s.isOutputShutdown())
-      return true;
-    return false;
+    return s != null && s.isConnected() && !s.isInputShutdown() && !s.isOutputShutdown();
   }
 
   /**
@@ -331,10 +329,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   }
 
   public boolean tryLock() {
-    if (getLockWrite().tryAcquireLock()) {
-      return true;
-    }
-    return false;
+    return getLockWrite().tryAcquireLock();
   }
 
   public void unlock() {
@@ -343,8 +338,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
   protected int handleStatus(final byte iResult, final int iClientTxId) throws IOException {
     if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_OK || iResult == OChannelBinaryProtocol.PUSH_DATA) {
+      return iClientTxId;
     } else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
-      StringBuilder buffer = new StringBuilder();
 
       final List<OPair<String, String>> exceptions = new ArrayList<OPair<String, String>>();
 
@@ -371,14 +366,13 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       if (previous != null) {
         throw new RuntimeException(previous);
       } else
-        throw new ONetworkProtocolException("Network response error: " + buffer.toString());
+        throw new ONetworkProtocolException("Network response error");
 
     } else {
       // PROTOCOL ERROR
       // close();
       throw new ONetworkProtocolException("Error on reading response from the server");
     }
-    return iClientTxId;
   }
 
   private void throwSerializedException(final byte[] serializedException) throws IOException {
