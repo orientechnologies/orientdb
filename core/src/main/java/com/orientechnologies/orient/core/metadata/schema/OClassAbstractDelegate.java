@@ -16,22 +16,22 @@
 
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Set;
+
 /**
  * Abstract Delegate for OClass interface.
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public class OClassAbstractDelegate implements OClass {
+public abstract class OClassAbstractDelegate implements OClass {
 
   protected final OClass delegate;
 

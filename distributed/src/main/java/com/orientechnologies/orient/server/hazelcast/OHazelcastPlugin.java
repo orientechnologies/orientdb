@@ -153,7 +153,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     status = NODE_STATUS.STARTING;
 
-    OLogManager.instance().info(this, "Starting distributed server '%s'...", getLocalNodeName());
+    final String localNodeName = getLocalNodeName();
+
+    OLogManager.instance().info(this, "Starting distributed server '%s'...", localNodeName);
 
     activeNodes.clear();
 
@@ -162,22 +164,24 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       nodeId = hazelcastInstance.getCluster().getLocalMember().getUuid();
       timeOffset = System.currentTimeMillis() - hazelcastInstance.getCluster().getClusterTime();
-      activeNodes.put(getLocalNodeName(), hazelcastInstance.getCluster().getLocalMember());
+      activeNodes.put(localNodeName, hazelcastInstance.getCluster().getLocalMember());
 
       membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
 
-      OServer.registerServerInstance(getLocalNodeName(), serverInstance);
+      OServer.registerServerInstance(localNodeName, serverInstance);
 
       final IMap<String, Object> configurationMap = (IMap<String, Object>) getConfigurationMap();
       configurationMap.addEntryListener(this, true);
 
       // REGISTER CURRENT NODES
       for (Member m : hazelcastInstance.getCluster().getMembers()) {
-        final String memberName = getNodeName(m);
-        if (memberName != null)
-          activeNodes.put(memberName, m);
-        else if (!m.equals(hazelcastInstance.getCluster().getLocalMember()))
-          ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "Cannot find configuration for member: %s", m);
+        if (!m.getUuid().equals(getLocalNodeId())) {
+          final String memberName = getNodeName(m);
+          if (memberName != null)
+            activeNodes.put(memberName, m);
+          else if (!m.equals(hazelcastInstance.getCluster().getLocalMember()))
+            ODistributedServerLog.warn(this, localNodeName, null, DIRECTION.NONE, "Cannot find configuration for member: %s", m);
+        }
       }
 
       messageService = new OHazelcastDistributedMessageService(this);
