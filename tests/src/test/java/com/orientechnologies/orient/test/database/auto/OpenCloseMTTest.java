@@ -29,8 +29,6 @@ public class OpenCloseMTTest {
 
   public void openCloseMTTest() throws Exception {
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
-    OGlobalConfiguration.SECURITY_MAX_CACHED_USERS.setValue(0);
-    OGlobalConfiguration.SECURITY_MAX_CACHED_ROLES.setValue(0);
 
     ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(URL);
     databaseDocumentTx.create();
