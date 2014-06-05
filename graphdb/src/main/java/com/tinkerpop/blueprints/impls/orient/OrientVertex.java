@@ -1,12 +1,5 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -28,6 +21,13 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * OrientDB Vertex implementation of TinkerPop Blueprints standard.
@@ -1026,7 +1026,7 @@ public class OrientVertex extends OrientElement implements Vertex {
         final OClass cls = graph.getEdgeType(label);
         if (cls != null)
           for (OProperty p : cls.properties()) {
-            if (p.isMandatory() || p.isNotNull())
+            if (p.isMandatory() || p.isNotNull() || !p.getOwnerClass().getInvolvedIndexes(p.getName()).isEmpty())
               return false;
           }
       }

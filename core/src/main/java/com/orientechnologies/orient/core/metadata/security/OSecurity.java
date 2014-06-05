@@ -48,8 +48,6 @@ public interface OSecurity {
 
   public OUser authenticate(String iUsername, String iUserPassword);
 
-  public OSecurity uncacheUsersAndRoles();
-
   public OUser getUser(String iUserName);
 
   public OUser createUser(String iUserName, String iUserPassword, String... iRoles);

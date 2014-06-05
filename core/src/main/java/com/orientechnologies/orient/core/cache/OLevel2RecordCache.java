@@ -24,6 +24,10 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Second level cache. It's shared among database instances with the same URL.
  * 
@@ -31,9 +35,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Sylvain Spinelli
  */
 public class OLevel2RecordCache extends OAbstractRecordCache {
-  private final String CACHE_HIT;
-  private final String CACHE_MISS;
-  private STRATEGY     strategy;
+  private final String       CACHE_HIT;
+  private final String       CACHE_MISS;
+  private STRATEGY           strategy;
+
+  private final Set<Integer> pinnedClusters = Collections.newSetFromMap(new ConcurrentHashMap<Integer, Boolean>());
 
   public enum STRATEGY {
     POP_RECORD, COPY_RECORD
@@ -57,6 +63,14 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
     setEnable(OGlobalConfiguration.CACHE_LEVEL2_ENABLED.getValueAsBoolean());
   }
 
+  public void addPinnedCluster(int clusterId) {
+    pinnedClusters.add(clusterId);
+  }
+
+  public void removePinnedCluster(int clusterId) {
+    pinnedClusters.remove(clusterId);
+  }
+
   /**
    * Push record to cache. Identifier of record used as access key
    * 
@@ -67,6 +81,9 @@ public class OLevel2RecordCache extends OAbstractRecordCache {
     if (!isEnabled() || fresh == null || fresh.isDirty() || fresh.getIdentity().isNew() || !fresh.getIdentity().isValid()
         || fresh.getIdentity().getClusterId() == excludedCluster || fresh.getRecordVersion().isTombstone())
       return;
+
+    if (pinnedClusters.contains(fresh.getIdentity().getClusterId()))
+      fresh.pin();
 
     if (fresh.isPinned() == null || fresh.isPinned()) {
       underlying.lock(fresh.getIdentity());

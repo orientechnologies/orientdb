@@ -82,11 +82,6 @@ public class OSecurityNull implements OSecurity {
     return null;
   }
 
-  @Override
-  public OSecurity uncacheUsersAndRoles() {
-    return this;
-  }
-
   public void close(boolean onDelete) {
   }
 

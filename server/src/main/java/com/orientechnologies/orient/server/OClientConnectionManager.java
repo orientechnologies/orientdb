@@ -71,6 +71,7 @@ public class OClientConnectionManager {
             try {
               entry.getValue().close();
             } catch (Exception e) {
+              OLogManager.instance().error(this, "Error during close of connection for close channel", e);
             }
             iterator.remove();
           }
@@ -117,14 +118,13 @@ public class OClientConnectionManager {
    *          id of connection
    * @return The connection if any, otherwise null
    */
-  public OClientConnection getConnection(final int iChannelId) {
+  public OClientConnection getConnection(final int iChannelId, ONetworkProtocol protocol) {
     // SEARCH THE CONNECTION BY ID
-    return connections.get(iChannelId);
+    OClientConnection connection = connections.get(iChannelId);
+    if (connection != null)
+      connection.protocol = protocol;
 
-    // COMMENTED TO USE SOCKET POOL: THINK TO ANOTHER WAY TO IMPROVE SECURITY
-    // if (conn != null && conn.getChannel().socket != socket)
-    // throw new IllegalStateException("Requested sessionId " + iChannelId + " by connection " + socket
-    // + " while it's tied to connection " + conn.getChannel().socket);
+    return connection;
   }
 
   /**

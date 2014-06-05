@@ -27,34 +27,6 @@ public class OpenCloseMTTest {
 
   private volatile boolean      stop            = false;
 
-  public void openCloseMTTest() throws Exception {
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
-    OGlobalConfiguration.SECURITY_MAX_CACHED_USERS.setValue(0);
-    OGlobalConfiguration.SECURITY_MAX_CACHED_ROLES.setValue(0);
-
-    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(URL);
-    databaseDocumentTx.create();
-    databaseDocumentTx.close();
-
-    databaseDocumentTx = new ODatabaseDocumentTx(URL);
-    databaseDocumentTx.open("admin", "admin");
-    databaseDocumentTx.close();
-
-    List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < NUM_THREADS; i++)
-      futures.add(executorService.submit(new OpenCloser()));
-
-    Thread.sleep(30 * 60 * 1000);
-
-    stop = true;
-
-    for (Future future : futures)
-      future.get();
-
-    databaseDocumentTx.open("admin", "admin");
-    databaseDocumentTx.drop();
-  }
-
   public class OpenCloser implements Callable<Void> {
     @Override
     public Void call() throws Exception {
@@ -78,5 +50,31 @@ public class OpenCloseMTTest {
       }
       return null;
     }
+  }
+
+  public void openCloseMTTest() throws Exception {
+    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
+
+    ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(URL);
+    databaseDocumentTx.create();
+    databaseDocumentTx.close();
+
+    databaseDocumentTx = new ODatabaseDocumentTx(URL);
+    databaseDocumentTx.open("admin", "admin");
+    databaseDocumentTx.close();
+
+    List<Future> futures = new ArrayList<Future>();
+    for (int i = 0; i < NUM_THREADS; i++)
+      futures.add(executorService.submit(new OpenCloser()));
+
+    Thread.sleep(30 * 60 * 1000);
+
+    stop = true;
+
+    for (Future future : futures)
+      future.get();
+
+    databaseDocumentTx.open("admin", "admin");
+    databaseDocumentTx.drop();
   }
 }

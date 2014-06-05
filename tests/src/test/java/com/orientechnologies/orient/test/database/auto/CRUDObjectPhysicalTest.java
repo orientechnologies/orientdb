@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.*;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -57,6 +59,16 @@ public class CRUDObjectPhysicalTest {
   @Parameters(value = "url")
   public CRUDObjectPhysicalTest(String iURL) {
     url = iURL;
+  }
+
+  @BeforeClass
+  public void beforeClass() {
+
+  }
+
+  @AfterClass
+  public void afterClass() {
+
   }
 
   @Test
