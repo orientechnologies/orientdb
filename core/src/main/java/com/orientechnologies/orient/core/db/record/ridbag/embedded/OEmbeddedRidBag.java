@@ -206,9 +206,22 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     if (!deserialized)
       return "[size=" + size + "]";
 
-    if (size < 10)
-      return OMultiValue.toString(this);
-    else
+    if (size < 10) {
+      final StringBuilder sb = new StringBuilder();
+      sb.append('[');
+      for (final Iterator<OIdentifiable> it = this.iterator(); it.hasNext();) {
+        try {
+          OIdentifiable e = it.next();
+          sb.append(e.getIdentity());
+          if (it.hasNext())
+            sb.append(", ");
+        } catch (NoSuchElementException ex) {
+          // IGNORE THIS
+        }
+      }
+      return sb.append(']').toString();
+
+    } else
       return "[size=" + size + "]";
   }
 

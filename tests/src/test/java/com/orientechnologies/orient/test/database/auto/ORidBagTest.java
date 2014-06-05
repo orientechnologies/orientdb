@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -1433,6 +1435,25 @@ public abstract class ORidBagTest extends BaseTest {
     doc.fromJSON(json);
 
     Assert.assertTrue(ODocumentHelper.hasSameContentOf(doc, database, testDocument, database, null));
+  }
+
+  public void stackOverflowDuringToString() {
+    final OrientGraph graph = new OrientGraph(database);
+
+    OrientVertex a = graph.addVertex("A");
+    OrientVertex b = graph.addVertex("B");
+    OrientVertex c = graph.addVertex("C");
+
+    a.addEdge("link", b);
+    a.addEdge("link", c);
+    b.addEdge("link", a);
+    b.addEdge("link", c);
+    c.addEdge("link", a);
+    c.addEdge("link", b);
+
+    System.out.println("A: " + a.getRecord());
+    System.out.println("B: " + b.getRecord());
+    System.out.println("C: " + c.getRecord());
   }
 
   protected abstract void assertEmbedded(boolean isEmbedded);
