@@ -51,7 +51,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
   }
 
   public LinkedList<OrientVertex> execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult,
-      final Object[] iParams,      OCommandContext iContext) {
+      final Object[] iParams, OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);

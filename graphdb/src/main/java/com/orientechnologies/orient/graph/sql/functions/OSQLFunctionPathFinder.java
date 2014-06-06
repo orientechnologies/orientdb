@@ -78,7 +78,7 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
       if (predecessors.size() > maxPredecessors)
         maxPredecessors = predecessors.size();
 
-      if( !isVariableEdgeWeight() && distance.containsKey(paramDestinationVertex.getIdentity()))
+      if (!isVariableEdgeWeight() && distance.containsKey(paramDestinationVertex.getIdentity()))
         // FOUND
         break;
 
