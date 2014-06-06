@@ -2826,12 +2826,6 @@ public class CRUDObjectPhysicalTestSchemaFull {
       for (int i = 0; i < 10; ++i)
         Assert.assertEquals(b[i], i);
 
-      // TO REFACTOR OR DELETE SINCE SERIALIZATION AND DESERIALIZATION DON'T APPLY ANYMORE
-      // Assert.assertNotNull(aa.getPhoto());
-      // b = aa.getPhoto();
-      // for (int i = 0; i < 10; ++i)
-      // Assert.assertEquals(b[i], i);
-
     } finally {
       database.close();
     }

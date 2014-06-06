@@ -36,9 +36,6 @@ public class OEngineRemote extends OEngineAbstract {
   }
 
   public OStorage createStorage(final String iURL, final Map<String, String> iConfiguration) {
-    OGlobalConfiguration.SECURITY_MAX_CACHED_ROLES.setValue(0);
-    OGlobalConfiguration.SECURITY_MAX_CACHED_USERS.setValue(0);
-
     try {
       synchronized (sharedStorages) {
         OStorageRemote sharedStorage = sharedStorages.get(iURL);

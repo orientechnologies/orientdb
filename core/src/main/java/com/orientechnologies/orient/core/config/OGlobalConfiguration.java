@@ -447,13 +447,6 @@ public enum OGlobalConfiguration {
   NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
       "Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
 
-  // SECURITY
-  SECURITY_MAX_CACHED_USERS("security.maxCachedUsers",
-      "Maximum users cached in RAM. This speeds up authentication for the most used users", Integer.class, 100),
-
-  SECURITY_MAX_CACHED_ROLES("security.maxCachedRoles",
-      "Maximum roles cached in RAM. This speeds up authentication for the most used roles", Integer.class, 100),
-
   // PROFILER
   PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
       new OConfigurationChangeCallback() {

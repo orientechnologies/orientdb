@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -176,8 +177,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       // POST OPEN
       openRemoteDatabase();
 
-      configuration = new OStorageConfiguration(this);
-      configuration.load();
+      final OStorageConfiguration storageConfiguration = new OStorageConfiguration(this);
+      storageConfiguration.load();
+
+      configuration = storageConfiguration;
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
     } catch (Exception e) {
@@ -242,10 +245,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public void close(final boolean iForce, boolean onDelete) {
+    if (status == STATUS.CLOSED)
+      return;
+
     OChannelBinaryAsynchClient network = null;
 
     lock.acquireExclusiveLock();
     try {
+      if (status == STATUS.CLOSED)
+        return;
 
       network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
       try {
@@ -259,6 +267,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       if (!checkForClose(iForce))
         return;
 
+      status = STATUS.CLOSING;
       // CLOSE ALL THE CONNECTIONS
       engine.getConnectionManager().closePool(getCurrentServerURL());
 
@@ -267,7 +276,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       status = STATUS.CLOSED;
 
       Orient.instance().unregisterStorage(this);
-
     } catch (Exception e) {
       if (network != null) {
         OLogManager.instance().debug(this, "Error on closing remote connection: %s", network);

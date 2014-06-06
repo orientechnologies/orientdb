@@ -197,8 +197,12 @@ public class OMultiValue {
             : (Iterator<Object>) iObject;
         for (int i = 0; it.hasNext(); ++i) {
           final Object o = it.next();
-          if (i == iIndex)
+          if (i == iIndex) {
+            if (it instanceof OResettable)
+              ((OResettable) it).reset();
+
             return o;
+          }
         }
 
         if (it instanceof OResettable)

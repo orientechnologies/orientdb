@@ -18,20 +18,19 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
-import static org.junit.Assert.fail;
-
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import org.junit.Test;
+
+import static org.junit.Assert.fail;
 
 public class GraphTests {
 
-  public static final String URL = "plocal:/target/databases/testExceptionOnCommit";
+  public static final String URL = "plocal:target/databases/testExceptionOnCommit";
 
   @Test
   public void indexes() {

@@ -694,9 +694,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public String getCustom(final String iName) {
-    if (storage.getConfiguration().properties == null)
-      return null;
-
     for (OStorageEntryConfiguration e : storage.getConfiguration().properties) {
       if (e.name.equals(iName))
         return e.value;
@@ -707,21 +704,16 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   public void setCustomInternal(final String iName, final String iValue) {
     if (iValue == null || "null".equalsIgnoreCase(iValue)) {
       // REMOVE
-      if (storage.getConfiguration().properties != null) {
-        for (Iterator<OStorageEntryConfiguration> it = storage.getConfiguration().properties.iterator(); it.hasNext();) {
-          final OStorageEntryConfiguration e = it.next();
-          if (e.name.equals(iName)) {
-            it.remove();
-            break;
-          }
+      for (Iterator<OStorageEntryConfiguration> it = storage.getConfiguration().properties.iterator(); it.hasNext();) {
+        final OStorageEntryConfiguration e = it.next();
+        if (e.name.equals(iName)) {
+          it.remove();
+          break;
         }
       }
 
     } else {
       // SET
-      if (storage.getConfiguration().properties == null)
-        storage.getConfiguration().properties = new ArrayList<OStorageEntryConfiguration>();
-
       boolean found = false;
       for (OStorageEntryConfiguration e : storage.getConfiguration().properties) {
         if (e.name.equals(iName)) {
@@ -740,7 +732,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public void clearCustomInternal() {
-    storage.getConfiguration().properties = null;
+    storage.getConfiguration().properties.clear();
   }
 
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {

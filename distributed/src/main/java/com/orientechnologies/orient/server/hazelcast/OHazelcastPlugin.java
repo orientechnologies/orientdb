@@ -153,7 +153,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     status = NODE_STATUS.STARTING;
 
-    OLogManager.instance().info(this, "Starting distributed server '%s'...", getLocalNodeName());
+    final String localNodeName = getLocalNodeName();
+
+    OLogManager.instance().info(this, "Starting distributed server '%s'...", localNodeName);
 
     activeNodes.clear();
 
@@ -162,22 +164,24 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       nodeId = hazelcastInstance.getCluster().getLocalMember().getUuid();
       timeOffset = System.currentTimeMillis() - hazelcastInstance.getCluster().getClusterTime();
-      activeNodes.put(getLocalNodeName(), hazelcastInstance.getCluster().getLocalMember());
+      activeNodes.put(localNodeName, hazelcastInstance.getCluster().getLocalMember());
 
       membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
 
-      OServer.registerServerInstance(getLocalNodeName(), serverInstance);
+      OServer.registerServerInstance(localNodeName, serverInstance);
 
       final IMap<String, Object> configurationMap = (IMap<String, Object>) getConfigurationMap();
       configurationMap.addEntryListener(this, true);
 
       // REGISTER CURRENT NODES
       for (Member m : hazelcastInstance.getCluster().getMembers()) {
-        final String memberName = getNodeName(m);
-        if (memberName != null)
-          activeNodes.put(memberName, m);
-        else if (!m.equals(hazelcastInstance.getCluster().getLocalMember()))
-          ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "Cannot find configuration for member: %s", m);
+        if (!m.getUuid().equals(getLocalNodeId())) {
+          final String memberName = getNodeName(m);
+          if (memberName != null)
+            activeNodes.put(memberName, m);
+          else if (!m.equals(hazelcastInstance.getCluster().getLocalMember()))
+            ODistributedServerLog.warn(this, localNodeName, null, DIRECTION.NONE, "Cannot find configuration for member: %s", m);
+        }
       }
 
       messageService = new OHazelcastDistributedMessageService(this);
@@ -447,7 +451,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   public String getNodeName(final Member iMember) {
     final ODocument cfg = getNodeConfigurationById(iMember.getUuid());
-    return (String) (cfg != null ? cfg.field("name") : null);
+    if (cfg != null)
+      return cfg.field("name");
+
+    return "ext:" + iMember.getUuid();
   }
 
   public Set<String> getRemoteNodeIds() {
@@ -542,27 +549,35 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public void entryUpdated(EntryEvent<String, Object> iEvent) {
     final String key = iEvent.getKey();
+    final String eventNodeName = getNodeName(iEvent.getMember());
+
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
-      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "updated node configuration id=%s name=%s",
-          iEvent.getMember(), getNodeName(iEvent.getMember()));
+      ODistributedServerLog.info(this, getLocalNodeName(), eventNodeName, DIRECTION.NONE,
+          "updated node configuration id=%s name=%s", iEvent.getMember(), eventNodeName);
 
       final ODocument cfg = (ODocument) iEvent.getValue();
       activeNodes.put((String) cfg.field("name"), (Member) iEvent.getMember());
+      updateLastClusterChange();
 
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
         final String dbName = key.substring(CONFIG_DATABASE_PREFIX.length());
 
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "update configuration db=%s from=%s", dbName,
-            getNodeName(iEvent.getMember()));
+        ODistributedServerLog.info(this, getLocalNodeName(), eventNodeName, DIRECTION.NONE, "update configuration db=%s", dbName);
+
+        updateLastClusterChange();
 
         installNewDatabases(false);
         updateCachedDatabaseConfiguration(dbName, (ODocument) iEvent.getValue(), true, false);
         OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
+
+        updateLastClusterChange();
       }
     } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
-      ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
-          "received updated status %s=%s", key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
+      ODistributedServerLog.info(this, getLocalNodeName(), eventNodeName, DIRECTION.IN, "received updated status %s=%s",
+          key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
+
+      updateLastClusterChange();
     }
   }
 
@@ -577,13 +592,18 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         activeNodes.remove(nName);
       }
 
+      updateLastClusterChange();
+
     } else if (key.startsWith(CONFIG_DATABASE_PREFIX)) {
       synchronized (cachedDatabaseConfiguration) {
         cachedDatabaseConfiguration.remove(key.substring(CONFIG_DATABASE_PREFIX.length()));
       }
+      updateLastClusterChange();
+
     } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
       ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
           "received removed status %s=%s", key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
+      updateLastClusterChange();
     }
   }
 

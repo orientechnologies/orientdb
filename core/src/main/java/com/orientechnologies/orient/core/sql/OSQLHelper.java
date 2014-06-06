@@ -329,7 +329,8 @@ public class OSQLHelper {
                     tempColl.add(doc);
                   }
                 }
-              }
+              } else
+                tempColl.add(o);
             }
 
             fieldValue = tempColl;

@@ -157,6 +157,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.CollateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.HideRecordTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.PoolTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.RemoteProtocolCommandsTest"/>
         </classes>
     </test>
     <test name="DbTools">

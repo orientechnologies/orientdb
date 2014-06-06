@@ -196,13 +196,19 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
     addUser();
 
-    if (status != STATUS.CLOSED)
+    if (status == STATUS.OPEN)
       // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
       // REUSED
       return;
 
     lock.acquireExclusiveLock();
     try {
+      if (status == STATUS.OPEN)
+        // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
+        // REUSED
+        return;
+
+      status = STATUS.OPENING;
 
       if (!exists())
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
@@ -221,8 +227,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         }
       } else
         dirtyFlag.create();
-
-      status = STATUS.OPEN;
 
       // OPEN BASIC SEGMENTS
       int pos;
@@ -261,6 +265,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       restoreIfNeeded();
       dirtyFlag.clearDirty();
+
+      status = STATUS.OPEN;
     } catch (Exception e) {
       close(true, false);
       throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
@@ -350,31 +356,31 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public void delete() {
-    // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-    if (status != STATUS.CLOSED) {
-      if (getUsers() > 0) {
-        while (removeUser() > 0)
-          ;
-      }
-    }
-
-    doClose(true, true);
-
-    try {
-      Orient.instance().unregisterStorage(this);
-    } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot unregister storage", e);
-    }
-
     final long timer = Orient.instance().getProfiler().startChrono();
-
-    // GET REAL DIRECTORY
-    File dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
-    if (!dbDir.exists() || !dbDir.isDirectory())
-      dbDir = dbDir.getParentFile();
+    File dbDir = null;
 
     lock.acquireExclusiveLock();
     try {
+      // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
+      if (status != STATUS.CLOSED) {
+        if (getUsers() > 0) {
+          while (removeUser() > 0)
+            ;
+        }
+      }
+
+      doClose(true, true);
+
+      try {
+        Orient.instance().unregisterStorage(this);
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Cannot unregister storage", e);
+      }
+
+      // GET REAL DIRECTORY
+      dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
+      if (!dbDir.exists() || !dbDir.isDirectory())
+        dbDir = dbDir.getParentFile();
 
       if (writeAheadLog != null)
         writeAheadLog.delete();
@@ -1196,11 +1202,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return clusters.get(iClusterId) != null ? clusters.get(iClusterId).getName() : null;
   }
 
-  @Override
-  public OStorageConfiguration getConfiguration() {
-    return configuration;
-  }
-
   public int getDefaultClusterId() {
     return defaultClusterId;
   }
@@ -1935,13 +1936,16 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   private void doClose(boolean force, boolean onDelete) {
-    if (!checkForClose(force))
+    if (status == STATUS.CLOSED)
       return;
 
     final long timer = Orient.instance().getProfiler().startChrono();
 
     lock.acquireExclusiveLock();
     try {
+      if (!checkForClose(force))
+        return;
+
       status = STATUS.CLOSING;
 
       if (!onDelete)
@@ -1988,7 +1992,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         dirtyFlag.close();
       }
 
-      Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
     } catch (InterruptedException ie) {
       OLogManager.instance().error(this, "Error on closing of storage '" + name, ie, OStorageException.class);

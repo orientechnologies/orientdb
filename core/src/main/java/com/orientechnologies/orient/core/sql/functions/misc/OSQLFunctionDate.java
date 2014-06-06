@@ -70,7 +70,7 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
     try {
       return format.parse((String) iParams[0]);
     } catch (ParseException e) {
-      throw new OQueryParsingException("Error on formatting date '" + iParams[0] + "' using the format: " + format, e);
+      throw new OQueryParsingException("Error on formatting date '" + iParams[0] + "' using the format: " + format.toPattern(), e);
     }
   }
 

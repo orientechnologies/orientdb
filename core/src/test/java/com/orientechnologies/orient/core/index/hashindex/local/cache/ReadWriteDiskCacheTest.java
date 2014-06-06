@@ -50,6 +50,7 @@ public class ReadWriteDiskCacheTest {
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/ReadWriteDiskCacheTest");
     storageLocal.create(null);
+    storageLocal.close(true, false);
 
     fileName = "readWriteDiskCacheTest.tst";
 
@@ -78,12 +79,12 @@ public class ReadWriteDiskCacheTest {
       writeAheadLog = null;
     }
 
-    File testFile = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
+    File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "readWriteDiskCacheTest.tst");
     if (testFile.exists()) {
       Assert.assertTrue(testFile.delete());
     }
 
-    File idMapFile = new File(storageLocal.getConfiguration().getDirectory() + "/name_id_map.cm");
+    File idMapFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "name_id_map.cm");
     if (idMapFile.exists()) {
       Assert.assertTrue(idMapFile.delete());
     }

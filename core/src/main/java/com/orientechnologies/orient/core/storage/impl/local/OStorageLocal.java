@@ -354,7 +354,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
       if (writeAheadLog != null)
         writeAheadLog.delete();
 
-      Orient.instance().unregisterStorage(this);
       status = STATUS.CLOSED;
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on closing of storage '" + name, e, OStorageException.class);
@@ -1483,11 +1482,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
     } finally {
       lock.releaseSharedLock();
     }
-  }
-
-  @Override
-  public OStorageConfiguration getConfiguration() {
-    return configuration;
   }
 
   public int getDefaultClusterId() {

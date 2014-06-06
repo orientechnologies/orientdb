@@ -15,6 +15,16 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -48,16 +58,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -149,27 +149,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, final String iOptions,
       boolean needReload) {
-    if (iSource == null)
-      throw new OSerializationException("Error on unmarshalling JSON content: content is null");
-
-    iSource = iSource.trim();
-    if (!iSource.startsWith("{") || !iSource.endsWith("}"))
-      throw new OSerializationException("Error on unmarshalling JSON content: content must be between { }");
+    iSource = unwrapSource(iSource);
 
     if (iRecord != null)
       // RESET ALL THE FIELDS
       iRecord.clear();
 
-    iSource = iSource.substring(1, iSource.length() - 1).trim();
-
-    // PARSE OPTIONS
-    boolean noMap = false;
-    if (iOptions != null) {
-      final String[] format = iOptions.split(",");
-      for (String f : format)
-        if (f.equals("noMap"))
-          noMap = true;
-    }
+    boolean noMap = isNoMap(iOptions);
 
     final List<String> fields = OStringSerializerHelper.smartSplit(iSource, PARAMETER_SEPARATOR, 0, -1, true, true, false, false,
         ' ', '\n', '\r', '\t');
@@ -187,17 +173,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         final String fieldValueAsString = OStringSerializerHelper.getStringContent(fieldValue);
 
         if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
-          // LOAD THE FIELD TYPE MAP
-          final String[] fieldTypesParts = fieldValueAsString.split(",");
-          if (fieldTypesParts.length > 0) {
-            fieldTypes = new HashMap<String, Character>();
-            String[] part;
-            for (String f : fieldTypesParts) {
-              part = f.split("=");
-              if (part.length == 2)
-                fieldTypes.put(part[0], part[1].charAt(0));
-            }
-          }
+          fieldTypes = loadFieldTypes(fieldTypes, fieldValueAsString);
         } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
           if (iRecord == null || iRecord.getRecordType() != fieldValueAsString.charAt(0)) {
             // CREATE THE RIGHT RECORD INSTANCE
@@ -229,7 +205,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           // RECORD ATTRIBUTES
           if (fieldName.equals(ODocumentHelper.ATTRIBUTE_RID))
             iRecord.setIdentity(new ORecordId(fieldValueAsString));
-
           else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION))
             if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
               recordVersion = Integer.parseInt(fieldValue);
@@ -255,69 +230,62 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
               iRecord.fromStream(OBase64Utils.decode(fieldValueAsString));
             } else if (iRecord instanceof ORecordStringable) {
               ((ORecordStringable) iRecord).value(fieldValueAsString);
-            }
-          } else {
-            if (iRecord instanceof ODocument) {
-              final ODocument doc = ((ODocument) iRecord);
+            } else
+              throw new IllegalArgumentException("unsupported type of record");
+          } else if (iRecord instanceof ODocument) {
+            final ODocument doc = ((ODocument) iRecord);
 
-              // DETERMINE THE TYPE FROM THE SCHEMA
-              OType type = null;
-              final OClass cls = doc.getSchemaClass();
-              if (cls != null) {
-                final OProperty prop = cls.getProperty(fieldName);
-                if (prop != null)
-                  type = prop.getType();
-              }
+            // DETERMINE THE TYPE FROM THE SCHEMA
+            OType type = determineType(doc, fieldName);
 
-              final Object v = getValue(doc, fieldName, fieldValue, fieldValueAsString, type, null, fieldTypes, noMap, iOptions);
+            final Object v = getValue(doc, fieldName, fieldValue, fieldValueAsString, type, null, fieldTypes, noMap, iOptions);
 
-              if (v != null)
-                if (v instanceof Collection<?> && !((Collection<?>) v).isEmpty()) {
-                  if (v instanceof ORecordLazyMultiValue)
-                    ((ORecordLazyMultiValue) v).setAutoConvertToRecord(false);
+            if (v != null)
+              if (v instanceof Collection<?> && !((Collection<?>) v).isEmpty()) {
+                if (v instanceof ORecordLazyMultiValue)
+                  ((ORecordLazyMultiValue) v).setAutoConvertToRecord(false);
 
-                  // CHECK IF THE COLLECTION IS EMBEDDED
-                  if (type == null) {
-                    // TRY TO UNDERSTAND BY FIRST ITEM
-                    Object first = ((Collection<?>) v).iterator().next();
-                    if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid())
-                      type = v instanceof Set<?> ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST;
-                  }
-
-                  if (type != null) {
-                    // TREAT IT AS EMBEDDED
-                    doc.field(fieldName, v, type);
-                    continue;
-                  }
-                } else if (v instanceof Map<?, ?> && !((Map<?, ?>) v).isEmpty()) {
-                  // CHECK IF THE MAP IS EMBEDDED
-                  Object first = ((Map<?, ?>) v).values().iterator().next();
-                  if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
-                    doc.field(fieldName, v, OType.EMBEDDEDMAP);
-                    continue;
-                  }
-                } else if (v instanceof ODocument && type != null && type.isLink()) {
-                  String className = ((ODocument) v).getClassName();
-                  if (className != null && className.length() > 0)
-                    ((ODocument) v).save();
+                // CHECK IF THE COLLECTION IS EMBEDDED
+                if (type == null) {
+                  // TRY TO UNDERSTAND BY FIRST ITEM
+                  Object first = ((Collection<?>) v).iterator().next();
+                  if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid())
+                    type = v instanceof Set<?> ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST;
                 }
 
-              if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName))
-                type = ORecordSerializerStringAbstract.getType(fieldValue, fieldTypes.get(fieldName));
+                if (type != null) {
+                  // TREAT IT AS EMBEDDED
+                  doc.field(fieldName, v, type);
+                  continue;
+                }
+              } else if (v instanceof Map<?, ?> && !((Map<?, ?>) v).isEmpty()) {
+                // CHECK IF THE MAP IS EMBEDDED
+                Object first = ((Map<?, ?>) v).values().iterator().next();
+                if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
+                  doc.field(fieldName, v, OType.EMBEDDEDMAP);
+                  continue;
+                }
+              } else if (v instanceof ODocument && type != null && type.isLink()) {
+                String className = ((ODocument) v).getClassName();
+                if (className != null && className.length() > 0)
+                  ((ODocument) v).save();
+              }
 
-              if (type != null)
-                doc.field(fieldName, v, type);
-              else
-                doc.field(fieldName, v);
-            }
+            if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName))
+              type = ORecordSerializerStringAbstract.getType(fieldValue, fieldTypes.get(fieldName));
+
+            if (type != null)
+              doc.field(fieldName, v, type);
+            else
+              doc.field(fieldName, v);
           }
+
         }
         if (timestamp != 0 && OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean()) {
           ((ODistributedVersion) iRecord.getRecordVersion()).update(recordVersion, timestamp, macAddress);
         }
 
       } catch (Exception e) {
-        e.printStackTrace();
         if (iRecord.getIdentity().isValid())
           throw new OSerializationException("Error on unmarshalling JSON content for record " + iRecord.getIdentity(), e);
         else
@@ -325,6 +293,55 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       }
     }
     return iRecord;
+  }
+
+  private OType determineType(ODocument doc, String fieldName) {
+    OType type = null;
+    final OClass cls = doc.getSchemaClass();
+    if (cls != null) {
+      final OProperty prop = cls.getProperty(fieldName);
+      if (prop != null)
+        type = prop.getType();
+    }
+    return type;
+  }
+
+  private Map<String, Character> loadFieldTypes(Map<String, Character> fieldTypes, String fieldValueAsString) {
+    // LOAD THE FIELD TYPE MAP
+    final String[] fieldTypesParts = fieldValueAsString.split(",");
+    if (fieldTypesParts.length > 0) {
+      fieldTypes = new HashMap<String, Character>();
+      String[] part;
+      for (String f : fieldTypesParts) {
+        part = f.split("=");
+        if (part.length == 2)
+          fieldTypes.put(part[0], part[1].charAt(0));
+      }
+    }
+    return fieldTypes;
+  }
+
+  private String unwrapSource(String iSource) {
+    if (iSource == null)
+      throw new OSerializationException("Error on unmarshalling JSON content: content is null");
+
+    iSource = iSource.trim();
+    if (!iSource.startsWith("{") || !iSource.endsWith("}"))
+      throw new OSerializationException("Error on unmarshalling JSON content: content must be between { }");
+
+    iSource = iSource.substring(1, iSource.length() - 1).trim();
+    return iSource;
+  }
+
+  private boolean isNoMap(String iOptions) {
+    boolean noMap = false;
+    if (iOptions != null) {
+      final String[] format = iOptions.split(",");
+      for (String f : format)
+        if (f.equals("noMap"))
+          noMap = true;
+    }
+    return noMap;
   }
 
   @Override

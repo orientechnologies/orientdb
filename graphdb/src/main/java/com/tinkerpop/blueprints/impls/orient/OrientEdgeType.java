@@ -17,7 +17,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassAbstractDelegate;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -25,18 +24,15 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public class OrientEdgeType extends OClassAbstractDelegate {
-  public static final String      CLASS_NAME = "E";
-  protected final OrientBaseGraph graph;
+public class OrientEdgeType extends OrientElementType {
+  public static final String CLASS_NAME = "E";
 
   public OrientEdgeType(final OrientBaseGraph graph, final OClass delegate) {
-    super(delegate);
-    this.graph = graph;
+    super(graph, delegate);
   }
 
   public OrientEdgeType(final OrientBaseGraph graph) {
-    super(graph.getRawGraph().getMetadata().getSchema().getClass(CLASS_NAME));
-    this.graph = graph;
+    super(graph, graph.getRawGraph().getMetadata().getSchema().getClass(CLASS_NAME));
   }
 
   protected static final void checkType(final OClass iType) {
@@ -65,4 +61,8 @@ public class OrientEdgeType extends OClassAbstractDelegate {
     return this;
   }
 
+  @Override
+  protected String getTypeName() {
+    return "edge";
+  }
 }

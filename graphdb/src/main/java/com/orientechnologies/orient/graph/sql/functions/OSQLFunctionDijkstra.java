@@ -15,10 +15,14 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
@@ -26,10 +30,13 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.Iterator;
-
 /**
  * Dijkstra's algorithm describes how to find the cheapest path from one node to another node in a directed weighted graph.
+ * 
+ * The first parameter is source record. The second parameter is destination record. The third parameter is a name of property that
+ * represents 'weight'.
+ * 
+ * If property is not defined in edge or is null, distance between vertexes are 0.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
@@ -43,8 +50,8 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     super(NAME, 3, 4);
   }
 
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
-      OCommandContext iContext) {
+  public LinkedList<OrientVertex> execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult,
+      final Object[] iParams,      OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
@@ -55,7 +62,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
         throw new IllegalArgumentException("Only one sourceVertex is allowed");
       source = OMultiValue.getFirstValue(source);
     }
-    paramSourceVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(source, record, iContext));
+    paramSourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
 
     Object dest = iParams[1];
     if (OMultiValue.isMultiValue(dest)) {
@@ -63,13 +70,13 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
         throw new IllegalArgumentException("Only one destinationVertex is allowed");
       dest = OMultiValue.getFirstValue(dest);
     }
-    paramDestinationVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(dest, record, iContext));
+    paramDestinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
 
-    paramWeightFieldName = (String) OSQLHelper.getValue(iParams[2], record, iContext);
+    paramWeightFieldName = OStringSerializerHelper.getStringContent(iParams[2]);
     if (iParams.length > 3)
       paramDirection = Direction.valueOf(iParams[3].toString().toUpperCase());
 
-    return super.execute(iParams, iContext);
+    return super.execute(iContext);
   }
 
   public String getSyntax() {

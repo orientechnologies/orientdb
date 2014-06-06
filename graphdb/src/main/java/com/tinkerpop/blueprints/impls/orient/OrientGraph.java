@@ -172,6 +172,7 @@ public class OrientGraph extends OrientTransactionalGraph {
    * </table>
    * 
    * @param configuration
+   *          graph settings see the details above.
    */
   public OrientGraph(final Configuration configuration) {
     super(configuration);

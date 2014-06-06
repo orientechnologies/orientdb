@@ -26,6 +26,13 @@
 This document contains the last changes to the OrientDB project.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 1.7.1 - (June, 4th 2014)
+---------------------------------------------------------------------------------------------------
+Hot fixes only
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=18&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
 VERSION 1.7 - (May, 27th 2014)
 ---------------------------------------------------------------------------------------------------
 - Core: new “minimumclusters” to auto-create X clusters per class

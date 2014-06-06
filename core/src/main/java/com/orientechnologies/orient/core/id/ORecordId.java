@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.id;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -25,11 +30,6 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-
 public class ORecordId implements ORID {
   public static final ORecordId EMPTY_RECORD_ID        = new ORecordId();
   public static final byte[]    EMPTY_RECORD_ID_STREAM = EMPTY_RECORD_ID.toStream();
@@ -38,7 +38,7 @@ public class ORecordId implements ORID {
   private static final long     serialVersionUID       = 247070594054408657L;
   public int                    clusterId              = CLUSTER_ID_INVALID;                                      // INT TO AVOID
                                                                                                                    // JVM
-                                                                                                                   // PENALITY, BUT
+                                                                                                                   // PENALTY, BUT
                                                                                                                    // IT'S STORED
                                                                                                                    // AS SHORT
   public OClusterPosition       clusterPosition        = OClusterPosition.INVALID_POSITION;

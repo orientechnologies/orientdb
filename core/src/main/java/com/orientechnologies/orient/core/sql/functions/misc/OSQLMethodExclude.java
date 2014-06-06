@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Filter the content by excluding only some fields. If the content is a document, then creates a copy without the excluded fields.
@@ -59,9 +59,9 @@ public class OSQLMethodExclude extends OAbstractSQLMethod {
 
   private Object copy(final ODocument document, final Object[] iFieldNames) {
     final ODocument doc = document.copy();
-    for (int i = 0; i < iFieldNames.length; ++i) {
-      if (iFieldNames[i] != null) {
-        final String fieldName = (String) iFieldNames[i].toString();
+    for (Object iFieldName : iFieldNames) {
+      if (iFieldName != null) {
+        final String fieldName = iFieldName.toString();
         doc.removeField(fieldName);
       }
     }

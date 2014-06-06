@@ -15,6 +15,12 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,12 +33,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
 
 /**
  * Asynchronous response manager
@@ -360,8 +360,8 @@ public class ODistributedResponseManager {
         final long elapsed = now - beginTime;
         currentTimeout = synchTimeout - elapsed;
 
-        final long lastMemberAddedOn = dManager.getLastClusterChangeOn();
-        if (lastMemberAddedOn > 0 && now - lastMemberAddedOn < (synchTimeout * 2)) {
+        final long lastClusterChange = dManager.getLastClusterChangeOn();
+        if (lastClusterChange > 0 && now - lastClusterChange < (synchTimeout * 2)) {
           // NEW NODE DURING WAIT: ENLARGE TIMEOUT
           currentTimeout += synchTimeout;
           ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
@@ -429,6 +429,10 @@ public class ODistributedResponseManager {
   protected void manageConflicts() {
     if (!groupResponsesByResult || request.getTask().getQuorumType() == OAbstractRemoteTask.QUORUM_TYPE.NONE)
       // NO QUORUM
+      return;
+
+    if (dManager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
+      // CURRENT NODE OFFLINE: JUST RETURN
       return;
 
     final int bestResponsesGroupIndex = getBestResponsesGroup();
