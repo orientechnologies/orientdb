@@ -846,10 +846,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
                     if (result instanceof Boolean)
                       continue;
-                    else if (value instanceof Exception) {
+                    else if (result instanceof Exception) {
                       ODistributedServerLog.error(this, getLocalNodeName(), r.getKey(), DIRECTION.IN,
-                          "error on installing database %s in %s (chunk #%d)", (Exception) value, databaseName, dbPath, chunkNum);
-                    } else if (value instanceof ODistributedDatabaseChunk) {
+                          "error on installing database %s in %s (chunk #%d)", (Exception) result, databaseName, dbPath, chunkNum);
+                    } else if (result instanceof ODistributedDatabaseChunk) {
                       chunk = (ODistributedDatabaseChunk) result;
                       fileSize += writeDatabaseChunk(chunkNum, chunk, out);
                     }

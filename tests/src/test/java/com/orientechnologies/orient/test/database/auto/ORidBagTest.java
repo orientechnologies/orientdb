@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -35,6 +33,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 @Test
 public abstract class ORidBagTest extends BaseTest {
@@ -1454,6 +1454,8 @@ public abstract class ORidBagTest extends BaseTest {
     System.out.println("A: " + a.getRecord());
     System.out.println("B: " + b.getRecord());
     System.out.println("C: " + c.getRecord());
+
+    database.commit();
   }
 
   protected abstract void assertEmbedded(boolean isEmbedded);

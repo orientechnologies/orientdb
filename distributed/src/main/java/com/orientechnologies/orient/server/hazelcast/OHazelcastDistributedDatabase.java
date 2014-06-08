@@ -233,21 +233,21 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           try {
             message = readRequest(requestQueue);
 
-            // DECIDE TO USE THE HZ MAP ONLY IF THE COMMAND IS NOT IDEMPOTENT (ALL BUT READ-RECORD/SQL SELECT/SQL TRAVERSE
-            final boolean saveAsPending = !message.getTask().isIdempotent();
-
-            if (saveAsPending)
-              // SAVE THE MESSAGE IN TO THE UNDO MAP IN CASE OF FAILURE
-              lastPendingMessagesMap.put(databaseName, message);
-
             if (message != null) {
+              // DECIDE TO USE THE HZ MAP ONLY IF THE COMMAND IS NOT IDEMPOTENT (ALL BUT READ-RECORD/SQL SELECT/SQL TRAVERSE
+              final boolean saveAsPending = !message.getTask().isIdempotent();
+
+              if (saveAsPending)
+                // SAVE THE MESSAGE IN TO THE UNDO MAP IN CASE OF FAILURE
+                lastPendingMessagesMap.put(databaseName, message);
+
               senderNode = message.getSenderNodeName();
               onMessage(message);
-            }
 
-            if (saveAsPending)
-              // OK: REMOVE THE UNDO BUFFER
-              lastPendingMessagesMap.remove(databaseName);
+              if (saveAsPending)
+                // OK: REMOVE THE UNDO BUFFER
+                lastPendingMessagesMap.remove(databaseName);
+            }
 
           } catch (InterruptedException e) {
             // EXIT CURRENT THREAD
