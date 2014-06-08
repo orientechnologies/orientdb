@@ -33,6 +33,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 @Test
 public abstract class ORidBagTest extends BaseTest {
@@ -1433,6 +1435,27 @@ public abstract class ORidBagTest extends BaseTest {
     doc.fromJSON(json);
 
     Assert.assertTrue(ODocumentHelper.hasSameContentOf(doc, database, testDocument, database, null));
+  }
+
+  public void stackOverflowDuringToString() {
+    final OrientGraph graph = new OrientGraph(database);
+
+    OrientVertex a = graph.addVertex("A");
+    OrientVertex b = graph.addVertex("B");
+    OrientVertex c = graph.addVertex("C");
+
+    a.addEdge("link", b);
+    a.addEdge("link", c);
+    b.addEdge("link", a);
+    b.addEdge("link", c);
+    c.addEdge("link", a);
+    c.addEdge("link", b);
+
+    System.out.println("A: " + a.getRecord());
+    System.out.println("B: " + b.getRecord());
+    System.out.println("C: " + c.getRecord());
+
+    database.commit();
   }
 
   protected abstract void assertEmbedded(boolean isEmbedded);

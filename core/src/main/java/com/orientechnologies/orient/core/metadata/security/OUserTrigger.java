@@ -48,15 +48,7 @@ public class OUserTrigger extends ODocumentHookAbstract {
     if ("OUser".equalsIgnoreCase(iDocument.getClassName())) {
       // REMOVE THE USER FROM THE CACHE
       final OSecurity sec = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUnderlying();
-      if (sec instanceof OSecurityShared)
-        ((OSecurityShared) sec).uncacheUser((String) iDocument.field("name"));
-
       return encodePassword(iDocument);
-
-    } else if ("ORole".equalsIgnoreCase(iDocument.getClassName())) {
-      final OSecurity sec = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUnderlying();
-      if (sec instanceof OSecurityShared)
-        ((OSecurityShared) sec).uncacheRole((String) iDocument.field("name"));
     }
 
     return RESULT.RECORD_NOT_CHANGED;

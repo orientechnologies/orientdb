@@ -323,6 +323,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       throw new IllegalStateException("Cannot execute a flat copy of a dirty record");
 
     final ODocument cloned = new ODocument();
+
+    cloned._pinned = _pinned;
     cloned.setOrdered(_ordered);
     cloned.fill(_recordId, _recordVersion, _source, false);
     return cloned;

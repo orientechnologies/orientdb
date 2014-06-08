@@ -268,7 +268,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       status = STATUS.OPEN;
     } catch (Exception e) {
-      close(true, false);
+      status = STATUS.CLOSED;
       throw new OStorageException("Cannot open local storage '" + url + "' with mode=" + mode, e);
     } finally {
       lock.releaseExclusiveLock();
@@ -1202,11 +1202,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     return clusters.get(iClusterId) != null ? clusters.get(iClusterId).getName() : null;
   }
 
-  @Override
-  public OStorageConfiguration getConfiguration() {
-    return configuration;
-  }
-
   public int getDefaultClusterId() {
     return defaultClusterId;
   }
@@ -1596,7 +1591,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
   }
 
-  private void restoreIfNeeded() throws IOException {
+  private void restoreIfNeeded() throws Exception {
     if (dirtyFlag.isDirty()) {
       OLogManager.instance().warn(this, "Storage " + name + " was not closed properly. Will try to restore from write ahead log.");
       try {
@@ -1604,9 +1599,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         makeFullCheckpoint();
       } catch (Exception e) {
         OLogManager.instance().error(this, "Exception during storage data restore.", e);
-      } finally {
-        OLogManager.instance().info(this, "Storage data restore was completed");
+        throw e;
       }
+
+      OLogManager.instance().info(this, "Storage data restore was completed");
     }
   }
 

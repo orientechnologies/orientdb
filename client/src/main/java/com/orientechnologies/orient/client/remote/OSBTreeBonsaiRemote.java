@@ -152,6 +152,9 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
       client.writeBytes(keyStream);
       client.writeBoolean(inclusive);
 
+      if (client.getSrvProtocolVersion() >= 21)
+        client.writeInt(128);
+
       storage.endRequest(client);
 
       storage.beginResponse(client);
@@ -253,27 +256,27 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
     return valueSerializer;
   }
 
-  class TreeEntry<K, V> implements Map.Entry<K, V> {
-    private final K key;
-    private final V value;
+  class TreeEntry<EK, EV> implements Map.Entry<EK, EV> {
+    private final EK key;
+    private final EV value;
 
-    TreeEntry(K key, V value) {
+    TreeEntry(EK key, EV value) {
       this.key = key;
       this.value = value;
     }
 
     @Override
-    public K getKey() {
+    public EK getKey() {
       return key;
     }
 
     @Override
-    public V getValue() {
+    public EV getValue() {
       return value;
     }
 
     @Override
-    public V setValue(V value) {
+    public EV setValue(EV value) {
       throw new UnsupportedOperationException();
     }
   }

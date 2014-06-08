@@ -132,7 +132,8 @@ public enum OGlobalConfiguration {
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
       "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
 
-  DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
+  DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes,!!! NEVER CHANGE THIS VALUE !!!",
+      Integer.class, 64),
 
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
       + " in page which is tracked in paginated storage", Integer.class, 16),
@@ -447,13 +448,6 @@ public enum OGlobalConfiguration {
   NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
       "Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
 
-  // SECURITY
-  SECURITY_MAX_CACHED_USERS("security.maxCachedUsers",
-      "Maximum users cached in RAM. This speeds up authentication for the most used users", Integer.class, 100),
-
-  SECURITY_MAX_CACHED_ROLES("security.maxCachedRoles",
-      "Maximum roles cached in RAM. This speeds up authentication for the most used roles", Integer.class, 100),
-
   // PROFILER
   PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
       new OConfigurationChangeCallback() {
@@ -728,4 +722,3 @@ public enum OGlobalConfiguration {
     return description;
   }
 }
-
