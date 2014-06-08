@@ -80,6 +80,9 @@ public class DbCreationTest {
     if (url.startsWith(OEngineMemory.NAME))
       OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
 
+    if (ODatabaseHelper.existsDatabase(url))
+      ODatabaseHelper.dropDatabase(new OObjectDatabaseTx(url), url, "plocal");
+
     ODatabaseHelper.createDatabase(new OObjectDatabaseTx(url), url, "plocal");
   }
 
@@ -252,8 +255,8 @@ public class DbCreationTest {
 
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("gzip");
 
-		final String buildDirectory = System.getProperty("buildDirectory", ".");
-		String dburl = "plocal:" + buildDirectory + "/test-db/" + this.getClass().getSimpleName();
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    String dburl = "plocal:" + buildDirectory + "/test-db/" + this.getClass().getSimpleName();
 
     final OrientGraphFactory factory = new OrientGraphFactory(dburl, "admin", "admin");
     if (factory.exists())
