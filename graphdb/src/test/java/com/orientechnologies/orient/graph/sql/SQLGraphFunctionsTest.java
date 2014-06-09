@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -57,7 +58,23 @@ public class SQLGraphFunctionsTest {
 
     for (OrientVertex d : result) {
       System.out.println("Shortest path from " + ((OrientVertex) d.getProperty("$current")).getProperty("name") + " and "
-          + ((Iterable<OrientVertex>) d.getProperty("$target")).iterator().next().getProperty("name") + " is: " + d.getProperty("path"));
+          + ((Iterable<OrientVertex>) d.getProperty("$target")).iterator().next().getProperty("name") + " is: "
+          + d.getProperty("path"));
     }
   }
+
+  @Test
+  public void checkMinusInString() {
+    graph.command(new OCommandSQL("update V set name='MO-NA' where name='MONA'")).execute();
+    try {
+      Iterable<OrientVertex> result = graph.command(new OCommandSQL("select expand( out()[name='MO-NA'][type='song'] ) from V"))
+          .execute();
+      Assert.assertTrue(result.iterator().hasNext());
+
+    } finally {
+      // RESTORE ORIGINAL VALUE
+      graph.command(new OCommandSQL("update V set name='MONA' where name='MO-NA'")).execute();
+    }
+  }
+
 }
