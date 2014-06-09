@@ -15,17 +15,14 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Collection;
-
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class SQLGraphFunctionsTest {
@@ -59,8 +56,8 @@ public class SQLGraphFunctionsTest {
     Assert.assertTrue(result.iterator().hasNext());
 
     for (OrientVertex d : result) {
-      System.out.println("Shortest path from " + ((ODocument) d.getProperty("$current")).field("name") + " and "
-          + ((Collection<ODocument>) d.getProperty("$target")).iterator().next().field("name") + " is: " + d.getProperty("path"));
+      System.out.println("Shortest path from " + ((OrientVertex) d.getProperty("$current")).getProperty("name") + " and "
+          + ((Iterable<OrientVertex>) d.getProperty("$target")).iterator().next().getProperty("name") + " is: " + d.getProperty("path"));
     }
   }
 }

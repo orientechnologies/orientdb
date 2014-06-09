@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -53,7 +54,10 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
           // AGGREGATION MODE (STATEFULL)
           context = new HashSet<Object>();
 
-        OMultiValue.add(context, value);
+        if (value instanceof ODocument)
+          context.add(value);
+        else
+          OMultiValue.add(context, value);
       }
     }
 
@@ -75,17 +79,6 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
     return prepareResult(res);
   }
 
-  protected Set<Object> prepareResult(Set<Object> res) {
-    if (returnDistributedResult()) {
-      final Map<String, Object> doc = new HashMap<String, Object>();
-      doc.put("node", getDistributedStorageId());
-      doc.put("context", context);
-      return Collections.<Object> singleton(doc);
-    } else {
-      return res;
-    }
-  }
-
   @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
@@ -99,5 +92,16 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
       result.addAll(chunk);
     }
     return result;
+  }
+
+  protected Set<Object> prepareResult(Set<Object> res) {
+    if (returnDistributedResult()) {
+      final Map<String, Object> doc = new HashMap<String, Object>();
+      doc.put("node", getDistributedStorageId());
+      doc.put("context", context);
+      return Collections.<Object> singleton(doc);
+    } else {
+      return res;
+    }
   }
 }
