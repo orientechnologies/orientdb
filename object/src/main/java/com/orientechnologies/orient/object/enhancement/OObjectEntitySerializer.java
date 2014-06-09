@@ -39,6 +39,7 @@ import javax.persistence.CascadeType;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.ManyToOne;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
@@ -962,6 +963,22 @@ public class OObjectEntitySerializer {
       return null;
     return getField(fieldName, iClass.getSuperclass());
   }
+
+  public static Class<?> getSpecifiedMultiLinkedType(final Field f) {
+	  final OneToMany m1=f.getAnnotation(OneToMany.class);
+	  if (m1!=null && !m1.targetEntity().equals(void.class)) return m1.targetEntity();
+	  final ManyToMany m3=f.getAnnotation(ManyToMany.class);
+	  if (m3!=null && !m3.targetEntity().equals(void.class)) return m3.targetEntity();
+	  return null;
+	  }
+  public static Class<?> getSpecifiedLinkedType(final Field f) {
+	  final ManyToOne m=f.getAnnotation(ManyToOne.class);
+	  if (m!=null && !m.targetEntity().equals(void.class)) return m.targetEntity();
+	  final OneToOne m2=f.getAnnotation(OneToOne.class);
+	  if (m2!=null && !m2.targetEntity().equals(void.class)) return m2.targetEntity();
+	
+	  return null;
+	  }
 
   @SuppressWarnings("unchecked")
   public static <T> T getNonProxiedInstance(T iObject) {

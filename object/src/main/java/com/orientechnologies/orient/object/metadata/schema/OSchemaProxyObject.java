@@ -262,13 +262,15 @@ public class OSchemaProxyObject implements OSchema {
         switch (t) {
 
         case LINK:
-          Class<?> linkedClazz = f.getType();
+          Class<?> linkedClazz = OObjectEntitySerializer.getSpecifiedLinkedType(f);
+           if (linkedClazz==null)  linkedClazz = f.getType();
           generateLinkProperty(database, schema, field, t, linkedClazz);
           break;
         case LINKLIST:
         case LINKMAP:
         case LINKSET:
-          linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
+           linkedClazz= OObjectEntitySerializer.getSpecifiedMultiLinkedType(f);
+          if (linkedClazz==null) linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
           if (linkedClazz != null)
             generateLinkProperty(database, schema, field, t, linkedClazz);
           break;
