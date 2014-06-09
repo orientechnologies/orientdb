@@ -153,6 +153,29 @@ public abstract class OStringSerializerHelper {
     throw new IllegalArgumentException("Type " + iType + " does not support converting value: " + iValue);
   }
 
+  public static String smartTrim(final String iSource, final boolean iRemoveLeadingSpaces, final boolean iRemoveTailingSpaces) {
+    final StringBuilder buffer = new StringBuilder();
+    boolean spaced = iRemoveLeadingSpaces;
+    for (int i = 0; i < iSource.length(); ++i) {
+      final char c = iSource.charAt(i);
+      if (c != ' ') {
+        // ALWAYS APPEND
+        spaced = false;
+        buffer.append(c);
+      } else if (!spaced) {
+        // FIRST SPACE, APPEND
+        spaced = true;
+        buffer.append(c);
+      } // ELSE SKIP
+    }
+
+    final int len = buffer.length();
+    if (iRemoveTailingSpaces && buffer.charAt(len - 1) == ' ')
+      buffer.setLength(len - 1);
+
+    return buffer.toString();
+  }
+
   public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final char... iJumpChars) {
     return smartSplit(iSource, new char[] { iRecordSeparator }, 0, -1, false, true, false, false, iJumpChars);
   }

@@ -83,7 +83,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public static final String          KEYWORD_BY           = "BY";
   public static final String          KEYWORD_GROUP        = "GROUP";
   public static final String          KEYWORD_FETCHPLAN    = "FETCHPLAN";
-  private static final String         KEYWORD_AS           = " AS ";
+  private static final String         KEYWORD_AS           = "AS";
   private static final String         KEYWORD_PARALLEL     = "PARALLEL";
   private Map<String, String>         projectionDefinition = null;
   // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT IT'S USED THE PROJECTIONS IN GROUPED-RESULTS
@@ -769,8 +769,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     int lastRealPositionProjection = -1;
 
-    final String projectionString = parserText.substring(parserGetCurrentPosition(), upperBound).trim();
-    if (projectionString.length() > 0) {
+    final String projectionString = parserText.substring(parserGetCurrentPosition(), upperBound);
+    if (projectionString.trim().length() > 0) {
       // EXTRACT PROJECTIONS
       projections = new LinkedHashMap<String, Object>();
       projectionDefinition = new LinkedHashMap<String, String>();
@@ -779,36 +779,47 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       int beginPos;
       int endPos;
-      for (String projection : items) {
-        projection = projection.trim();
+      for (String projectionItem : items) {
+        String projection = OStringSerializerHelper.smartTrim(projectionItem.trim(), true, true);
 
         if (projectionDefinition == null)
           throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() and EXPAND() operators");
 
         final List<String> words = OStringSerializerHelper.smartSplit(projection, ' ');
-        if (words.size() > 1)
-          lastRealPositionProjection += words.get(0).length();
 
         String fieldName;
-        endPos = projection.toUpperCase(Locale.ENGLISH).indexOf(KEYWORD_AS);
-        if (endPos > -1) {
-          // EXTRACT ALIAS
-          fieldName = projection.substring(endPos + KEYWORD_AS.length()).trim();
-          lastRealPositionProjection += endPos + KEYWORD_AS.length() + fieldName.length() + 1;
-          projection = projection.substring(0, endPos).trim();
+        if (words.size() > 1 && words.get(1).trim().equalsIgnoreCase(KEYWORD_AS)) {
+          // FOUND AS, EXTRACT ALIAS
+          if (words.size() < 3)
+            throw new OCommandSQLParsingException("Found 'AS' without alias");
+
+          fieldName = words.get(2).trim();
 
           if (projectionDefinition.containsKey(fieldName))
             throw new OCommandSQLParsingException("Field '" + fieldName
                 + "' is duplicated in current SELECT, choose a different name");
+
+          projection = words.get(0).trim();
+
+          if (words.size() > 3)
+            lastRealPositionProjection = projectionString.indexOf(words.get(3));
+          else
+            lastRealPositionProjection += projectionItem.length() + 1;
+
         } else {
           // EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
-          beginPos = projection.charAt(0) == '@' ? 1 : 0;
+          projection = words.get(0);
+          fieldName = projection;
 
-          endPos = extractProjectionNameSubstringEndPosition(projection);
+          lastRealPositionProjection = projectionString.indexOf(fieldName) + fieldName.length() + 1;
 
-          fieldName = endPos > -1 ? projection.substring(beginPos, endPos) : projection.substring(beginPos);
+          if (fieldName.charAt(0) == '@')
+            fieldName = fieldName.substring(1);
 
-          fieldName = OStringSerializerHelper.getStringContent(fieldName);
+          endPos = extractProjectionNameSubstringEndPosition(fieldName);
+
+          if (endPos > -1)
+            fieldName = fieldName.substring(0, endPos);
 
           // FIND A UNIQUE NAME BY ADDING A COUNTER
           for (int fieldIndex = 2; projectionDefinition.containsKey(fieldName); ++fieldIndex)
@@ -837,6 +848,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           continue;
         }
 
+        fieldName = OStringSerializerHelper.getStringContent(fieldName);
+
         projectionDefinition.put(fieldName, projection);
       }
 
@@ -863,7 +876,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (upperBound < parserText.length() - 1)
       parserSetCurrentPosition(upperBound);
     else if (lastRealPositionProjection > -1)
-      parserMoveCurrentPosition(lastRealPositionProjection + 1);
+      parserMoveCurrentPosition(lastRealPositionProjection);
     else
       parserSetEndOfText();
 
