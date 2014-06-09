@@ -32,7 +32,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * 
  */
 public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder {
-  public static final String NAME = "shortestPath";
+  public static final String   NAME     = "shortestPath";
 
   protected static final float DISTANCE = 1f;
 

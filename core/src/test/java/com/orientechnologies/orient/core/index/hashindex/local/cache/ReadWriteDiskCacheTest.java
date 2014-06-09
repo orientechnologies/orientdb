@@ -57,7 +57,6 @@ public class ReadWriteDiskCacheTest {
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
   }
 
-
   @BeforeMethod
   public void beforeMethod() throws IOException {
     closeBufferAndDeleteFile();

@@ -59,11 +59,11 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
 
   /**
    * Returns a Transactional OrientGraph implementation from the current database in thread local.
-   *
+   * 
    * @param autoStartTx
    *          Whether returned graph will start transaction before each operation till commit automatically or user should do it
    *          explicitly be calling {@link OrientGraph#getRawGraph()} method {@link ODatabaseDocumentTx#begin()}.
-   *
+   * 
    * @return Transactional OrientGraph implementation from the current database in thread local.
    */
   public static OrientGraph getGraph(final boolean autoStartTx) {
