@@ -35,7 +35,7 @@ public class SQLGraphFunctionsTest {
 
     OrientVertex v1 = graph.addVertex(null, "name", "A");
     OrientVertex v2 = graph.addVertex(null, "name", "B");
-    OrientVertex v3 = graph.addVertex(null, "name", "C");
+    OrientVertex v3 = graph.addVertex(null, "name", "C-C");
     OrientVertex v4 = graph.addVertex(null, "name", "D");
     OrientVertex v5 = graph.addVertex(null, "name", "E");
     OrientVertex v6 = graph.addVertex(null, "name", "F");
@@ -65,16 +65,9 @@ public class SQLGraphFunctionsTest {
 
   @Test
   public void checkMinusInString() {
-    graph.command(new OCommandSQL("update V set name='MO-NA' where name='MONA'")).execute();
-    try {
-      Iterable<OrientVertex> result = graph.command(new OCommandSQL("select expand( out()[name='MO-NA'][type='song'] ) from V"))
-          .execute();
-      Assert.assertTrue(result.iterator().hasNext());
-
-    } finally {
-      // RESTORE ORIGINAL VALUE
-      graph.command(new OCommandSQL("update V set name='MONA' where name='MO-NA'")).execute();
-    }
+    Iterable<OrientVertex> result = graph.command(new OCommandSQL("select expand( out()[name='C-C'] ) from V"))
+        .execute();
+    Assert.assertTrue(result.iterator().hasNext());
   }
 
 }
