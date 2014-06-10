@@ -946,11 +946,35 @@ public class OWriteAheadLog {
     return log(new OFullCheckpointStartRecord(lastCheckpoint));
   }
 
-  public void logFullCheckpointEnd() throws IOException {
+  public OLogSequenceNumber logFullCheckpointEnd() throws IOException {
     synchronized (syncObject) {
       checkForClose();
 
-      log(new OCheckpointEndRecord());
+      return log(new OCheckpointEndRecord());
+    }
+  }
+
+  public void truncateTill(OLogSequenceNumber lsn) throws IOException {
+    synchronized (syncObject) {
+      checkForClose();
+
+      flush();
+
+      int lastTruncateIndex = -1;
+
+      for (int i = 0; i < logSegments.size(); i++) {
+        final LogSegment logSegment = logSegments.get(i);
+
+        if (logSegment.end().compareTo(lsn) < 0)
+          lastTruncateIndex = i;
+        else
+          break;
+      }
+
+      for (int i = 0; i <= lastTruncateIndex; i++) {
+        final LogSegment logSegment = logSegments.remove(0);
+        logSegment.delete(false);
+      }
     }
   }
 
