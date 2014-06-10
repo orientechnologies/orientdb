@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import static org.testng.Assert.assertEquals;
-
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -13,8 +11,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 import java.util.List;
