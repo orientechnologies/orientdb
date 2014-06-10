@@ -15,24 +15,22 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Collection;
-import java.util.List;
-
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.List;
 
 @Test(groups = "sql-select")
 public class SQLSelectProjectionsTest {
@@ -414,6 +412,43 @@ public class SQLSelectProjectionsTest {
       for (ODocument d : result) {
         Assert.assertFalse(OMultiValue.isMultiValue(d.field("unique")));
       }
+    } finally {
+      database.close();
+    }
+  }
+
+  public void projectionWithNoTarget() {
+    database.open("admin", "admin");
+
+    try {
+      List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select 'Ay' as a , 'bEE'")).execute();
+      Assert.assertEquals(result.size(), 1);
+      for (ODocument d : result) {
+        Assert.assertTrue(d.field("a").equals("Ay"));
+        Assert.assertTrue(d.field("bEE").equals("bEE"));
+      }
+
+      result = database.command(new OSQLSynchQuery<ODocument>("select 'Ay' as a , 'bEE' as b")).execute();
+      Assert.assertEquals(result.size(), 1);
+      for (ODocument d : result) {
+        Assert.assertTrue(d.field("a").equals("Ay"));
+        Assert.assertTrue(d.field("b").equals("bEE"));
+      }
+
+      result = database.command(new OSQLSynchQuery<ODocument>("select 'Ay' as a , 'bEE' as b fetchplan *:1")).execute();
+      Assert.assertEquals(result.size(), 1);
+      for (ODocument d : result) {
+        Assert.assertTrue(d.field("a").equals("Ay"));
+        Assert.assertTrue(d.field("b").equals("bEE"));
+      }
+
+      result = database.command(new OSQLSynchQuery<ODocument>("select 'Ay' as a , 'bEE' fetchplan *:1")).execute();
+      Assert.assertEquals(result.size(), 1);
+      for (ODocument d : result) {
+        Assert.assertTrue(d.field("a").equals("Ay"));
+        Assert.assertTrue(d.field("bEE").equals("bEE"));
+      }
+
     } finally {
       database.close();
     }

@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -179,7 +180,15 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     else if (key.equals("_rid"))
       return (T) rawElement.getIdentity().toString();
 
-    return getRecord().field(key);
+    final Object fieldValue = getRecord().field(key);
+    if (fieldValue instanceof OIdentifiable)
+      // CONVERT IT TO VERTEX/EDGE
+      return (T) graph.getElement(fieldValue);
+    else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable)
+      // CONVERT IT TO ITERABLE<VERTEX/EDGE>
+      return (T) new OrientElementIterable<OrientElement>(graph, OMultiValue.getMultiValueIterable(fieldValue));
+
+    return (T) fieldValue;
   }
 
   /**

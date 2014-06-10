@@ -15,17 +15,15 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Collection;
-
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class SQLGraphFunctionsTest {
@@ -38,7 +36,7 @@ public class SQLGraphFunctionsTest {
     OrientVertex v1 = graph.addVertex(null, "name", "A");
     OrientVertex v2 = graph.addVertex(null, "name", "B");
     OrientVertex v3 = graph.addVertex(null, "name", "C");
-    OrientVertex v4 = graph.addVertex(null, "name", "D");
+    OrientVertex v4 = graph.addVertex(null, "name", "D-D");
     OrientVertex v5 = graph.addVertex(null, "name", "E");
     OrientVertex v6 = graph.addVertex(null, "name", "F");
 
@@ -59,8 +57,17 @@ public class SQLGraphFunctionsTest {
     Assert.assertTrue(result.iterator().hasNext());
 
     for (OrientVertex d : result) {
-      System.out.println("Shortest path from " + ((ODocument) d.getProperty("$current")).field("name") + " and "
-          + ((Collection<ODocument>) d.getProperty("$target")).iterator().next().field("name") + " is: " + d.getProperty("path"));
+      System.out.println("Shortest path from " + ((OrientVertex) d.getProperty("$current")).getProperty("name") + " and "
+          + ((Iterable<OrientVertex>) d.getProperty("$target")).iterator().next().getProperty("name") + " is: "
+          + d.getProperty("path"));
     }
   }
+
+  @Test
+  public void checkMinusInString() {
+    Iterable<OrientVertex> result = graph.command(new OCommandSQL("select expand( out()[name='D-D'] ) from V"))
+        .execute();
+    Assert.assertTrue(result.iterator().hasNext());
+  }
+
 }
