@@ -175,10 +175,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   private void initDurableComponent(OStorageLocalAbstract storageLocal) {
-    final OWriteAheadLog writeAheadLog = storageLocal.getWALInstance();
-    final OAtomicOperationsManager atomicOperationsManager = storageLocal.getAtomicOperationsManager();
-
-    init(atomicOperationsManager, writeAheadLog);
+    init(storageLocal);
   }
 
   public String getName() {

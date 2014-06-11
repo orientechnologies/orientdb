@@ -338,13 +338,21 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
     entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition) + OByteSerializer.BYTE_SIZE;
 
-    final int newSize = valueSerializer.getObjectSize(value.getValue());
+    int newSize = 0;
+    if (value.isLink())
+      newSize = OLongSerializer.LONG_SIZE;
+    else
+      newSize = valueSerializer.getObjectSize(value.getValue());
+
     final int oldSize = valueSerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition);
     if (newSize != oldSize)
       return -1;
 
     byte[] serializedValue = new byte[newSize];
-    valueSerializer.serializeNative(value.getValue(), serializedValue, 0);
+    if (value.isLink())
+      OLongSerializer.INSTANCE.serializeNative(value.getLink(), serializedValue, 0);
+    else
+      valueSerializer.serializeNative(value.getValue(), serializedValue, 0);
 
     byte[] oldSerializedValue = pagePointer.get(entryPosition, oldSize);
 

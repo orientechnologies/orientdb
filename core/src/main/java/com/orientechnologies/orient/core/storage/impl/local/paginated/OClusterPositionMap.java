@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -43,15 +44,14 @@ public class OClusterPositionMap extends ODurableComponent {
   private long               fileId;
   private boolean            useWal;
 
-  public OClusterPositionMap(ODiskCache diskCache, String name, OWriteAheadLog writeAheadLog,
-      OAtomicOperationsManager atomicOperationsManager, boolean useWal) {
+  public OClusterPositionMap(OStorageLocalAbstract storage, ODiskCache diskCache, String name, boolean useWal) {
     acquireExclusiveLock();
     try {
       this.diskCache = diskCache;
       this.name = name;
       this.useWal = useWal;
 
-      init(atomicOperationsManager, writeAheadLog);
+      init(storage);
     } finally {
       releaseExclusiveLock();
     }

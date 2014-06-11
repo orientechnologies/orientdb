@@ -19,9 +19,14 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 import java.io.IOException;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
 /**
  * Base class for all durable data structures, that is data structures state of which can be consistently restored after system
@@ -59,6 +64,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
   private OWriteAheadLog           writeAheadLog;
   private OAtomicOperationsManager atomicOperationsManager;
+  private OStorageLocalAbstract    storage;
 
   public ODurableComponent() {
   }
@@ -75,9 +81,10 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     super(iConcurrent, iTimeout, ignoreThreadInterruption);
   }
 
-  protected void init(final OAtomicOperationsManager atomicOperationsManager, final OWriteAheadLog writeAheadLog) {
-    this.atomicOperationsManager = atomicOperationsManager;
-    this.writeAheadLog = writeAheadLog;
+  protected void init(final OStorageLocalAbstract storage) {
+    this.storage = storage;
+    this.atomicOperationsManager = storage.getAtomicOperationsManager();
+    this.writeAheadLog = storage.getWALInstance();
   }
 
   protected void endAtomicOperation(boolean rollback) throws IOException {
@@ -126,11 +133,22 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected ODurablePage.TrackMode getTrackMode() {
     final ODurablePage.TrackMode trackMode;
 
-    if (writeAheadLog == null)
+    final OStorageTransaction transaction = storage.getStorageTransaction();
+
+    final OTransaction clientTx;
+    if (transaction != null)
+      clientTx = transaction.getClientTx();
+    else
+      clientTx = null;
+
+    // very risky and not durable case which may lead to data corruption.
+    if (clientTx instanceof OTransactionOptimistic && !clientTx.isUsingLog())
+      trackMode = ODurablePage.TrackMode.NONE;
+    else if (writeAheadLog == null)
       trackMode = ODurablePage.TrackMode.NONE;
     else
       trackMode = ODurablePage.TrackMode.FULL;
+
     return trackMode;
   }
-
 }

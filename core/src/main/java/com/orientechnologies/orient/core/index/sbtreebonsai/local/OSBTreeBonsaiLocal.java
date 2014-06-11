@@ -181,10 +181,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   private void initDurableComponent(OStorageLocalAbstract storageLocal) {
-    final OWriteAheadLog writeAheadLog = storageLocal.getWALInstance();
-    final OAtomicOperationsManager atomicOperationsManager = storageLocal.getAtomicOperationsManager();
-
-    init(atomicOperationsManager, writeAheadLog);
+    init(storageLocal);
   }
 
   public String getName() {
