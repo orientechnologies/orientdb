@@ -48,6 +48,32 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 /**
+ * This is implementation which is based on B+-tree implementation threaded tree.
+ * 
+ * The main differences are:
+ * <ol>
+ * <li>Buckets are not compacted/removed if they are empty after deletion of item. They reused later when new items are added.</li>
+ * <li>All non-leaf buckets have links to neighbor buckets which contain keys which are less/more than keys contained in current
+ * bucket</li>
+ * <ol/>
+ * 
+ * 
+ * There is support of null values for keys, but values itself can not be null. Null keys support is switched off by default if null
+ * keys are supported value which is related to null key will be stored in separate file which has only one page.
+ * 
+ * Buckets/pages for usual (non-null) key-value entries can be considered as sorted array. The first bytes of page contains such
+ * auxiliary information as size of entries contained in bucket, links to neighbors which contain entries with keys less/more than
+ * keys in current bucket.
+ * 
+ * The next bytes contain sorted array of entries. Array itself is split on two parts. First part is growing from start to end, and
+ * second part is growing from end to start.
+ * 
+ * First part is array of offsets to real key-value entries which are stored in second part of array which grows from end to start.
+ * This array of offsets is sorted by accessing order according to key value. So we can use binary search to find requested key.
+ * When new key-value pair is added we append binary presentation of this pair to the second part of array which grows from end of
+ * page to start, remember value of offset for this pair, and find proper position of this offset inside of first part of array.
+ * Such approach allows to minimize amount of memory involved in performing of operations and as result speed up data processing.
+ * 
  * @author Andrey Lomakin
  * @since 8/7/13
  */
