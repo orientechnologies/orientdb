@@ -954,7 +954,7 @@ public class OWriteAheadLog {
     }
   }
 
-  public void truncateTill(OLogSequenceNumber lsn) throws IOException {
+  public void cutTill(OLogSequenceNumber lsn) throws IOException {
     synchronized (syncObject) {
       checkForClose();
 
