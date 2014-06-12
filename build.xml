@@ -70,7 +70,6 @@
         <echo>`` `. COMMUNITY EDITION</echo>
         <echo>`` www.orientdb.org</echo>
         <echo>`</echo>
-
         <mkdir dir="${community.release}"/>
         <mkdir dir="${community.release}/log"/>
         <mkdir dir="${community.release}/databases"/>

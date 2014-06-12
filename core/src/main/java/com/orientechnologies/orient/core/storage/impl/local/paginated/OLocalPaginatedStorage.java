@@ -204,8 +204,14 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           dirtyFlag.create();
           dirtyFlag.makeDirty();
         }
-      } else
-        dirtyFlag.create();
+      } else {
+        if (dirtyFlag.exits())
+          dirtyFlag.open();
+        else {
+          dirtyFlag.create();
+          dirtyFlag.clearDirty();
+        }
+      }
 
       // OPEN BASIC SEGMENTS
       int pos;
@@ -443,9 +449,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   public int getDataSegmentIdByName(final String dataSegmentName) {
     OLogManager.instance().debug(
-        this,
-        "getDataSegmentIdByName: Local paginated storage does not support data segments. "
-            + "-1 will be returned for data segment %s.", dataSegmentName);
+						this,
+						"getDataSegmentIdByName: Local paginated storage does not support data segments. "
+										+ "-1 will be returned for data segment %s.", dataSegmentName);
 
     return -1;
   }
@@ -534,7 +540,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     } catch (Exception e) {
       OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
-          OStorageException.class);
+							OStorageException.class);
     } finally {
       lock.releaseExclusiveLock();
     }
