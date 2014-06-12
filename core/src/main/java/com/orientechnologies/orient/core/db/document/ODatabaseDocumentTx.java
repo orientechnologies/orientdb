@@ -480,12 +480,19 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * Returns the number of the records of the class iClassName.
    */
   public long countClass(final String iClassName) {
+    return countClass(iClassName, true);
+  }
+
+  /**
+   * Returns the number of the records of the class iClassName considering also sub classes if polymorphic is true.
+   */
+  public long countClass(final String iClassName, final boolean iPolymorphic) {
     final OClass cls = getMetadata().getSchema().getClass(iClassName);
 
     if (cls == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");
 
-    return cls.count();
+    return cls.count(iPolymorphic);
   }
 
   /**

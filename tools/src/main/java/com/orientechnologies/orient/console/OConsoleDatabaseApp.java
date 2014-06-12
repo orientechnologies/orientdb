@@ -1244,10 +1244,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
             final List<String> fields = indexDefinition.getFields();
             if (fields.size() == 1) {
               message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10),
-                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getSize());
+                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getKeySize());
             } else {
               message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10),
-                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getSize());
+                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getKeySize());
               for (int i = 1; i < fields.size(); i++) {
                 message("\n %-45s| %-10s | %-22s| %-15s|%11s |", "", "", "", fields.get(i), "");
               }
