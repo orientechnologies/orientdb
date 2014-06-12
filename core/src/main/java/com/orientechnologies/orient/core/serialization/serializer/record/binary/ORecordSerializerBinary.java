@@ -31,6 +31,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
       checkTypeODocument(iRecord);
 
     BytesContainer container = new BytesContainer(iSource);
+    container.read(1);
     serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
     return iRecord;
   }

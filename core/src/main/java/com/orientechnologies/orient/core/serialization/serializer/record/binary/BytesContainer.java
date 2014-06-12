@@ -10,6 +10,7 @@ public class BytesContainer {
   }
 
   public BytesContainer() {
+    bytes = new byte[1024];
   }
 
   public BytesContainer(byte[] iBytes, short valuePos) {
@@ -26,8 +27,12 @@ public class BytesContainer {
   }
 
   private void resize() {
-    // TODO Auto-generated method stub
-
+    int newLength = bytes.length;
+    while (newLength > offset)
+      newLength *= 2;
+    byte[] newBytes = new byte[newLength];
+    System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
+    bytes = newBytes;
   }
 
   public void read(int read) {
