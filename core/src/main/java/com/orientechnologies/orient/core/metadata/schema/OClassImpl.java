@@ -1193,26 +1193,24 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public OIndex<?> getClassIndex(final String iName) {
-    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
-
-    return indexManager.getClassIndex(name, iName);
+    return getDatabase().getMetadata().getIndexManager().getClassIndex(name, iName);
   }
 
   public Set<OIndex<?>> getClassIndexes() {
-    final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+    return getDatabase().getMetadata().getIndexManager().getClassIndexes(name);
+  }
 
-    return indexManager.getClassIndexes(name);
+  @Override
+  public void getClassIndexes(final Collection<OIndex<?>> indexes) {
+    getDatabase().getMetadata().getIndexManager().getClassIndexes(name, indexes);
   }
 
   public Set<OIndex<?>> getIndexes() {
     final Set<OIndex<?>> indexes = getClassIndexes();
-    if (superClass == null)
-      return indexes;
-
-    final Set<OIndex<?>> result = new HashSet<OIndex<?>>(indexes);
-    result.addAll(superClass.getIndexes());
-
-    return result;
+    for (OClass s = superClass; s != null; s = s.getSuperClass()) {
+      s.getClassIndexes(indexes);
+    }
+    return indexes;
   }
 
   protected OProperty addProperty(final String iPropertyName, final OType iType, final OType iLinkedType, final OClass iLinkedClass) {
