@@ -443,6 +443,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     underlying.callOnCloseListeners();
 
+    for (ORecordHook h : hooks.keySet())
+      h.onUnregister();
+    hooks.clear();
+
     if (metadata != null) {
       if (!(getStorage() instanceof OStorageProxy)) {
         final OIndexManager indexManager = metadata.getIndexManager();
@@ -458,8 +462,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     }
 
     super.close();
-
-    hooks.clear();
 
     user = null;
     level1Cache.shutdown();
@@ -1385,7 +1387,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
+  public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl, final ORecordHook.HOOK_POSITION iPosition) {
     final Map<ORecordHook, ORecordHook.HOOK_POSITION> tmp = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>(hooks);
     tmp.put(iHookImpl, iPosition);
     hooks.clear();
@@ -1409,7 +1411,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * {@inheritDoc}
    */
   public <DB extends ODatabaseComplex<?>> DB unregisterHook(final ORecordHook iHookImpl) {
-    hooks.remove(iHookImpl);
+    if (iHookImpl != null) {
+      iHookImpl.onUnregister();
+      hooks.remove(iHookImpl);
+    }
     return (DB) this;
   }
 

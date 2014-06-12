@@ -24,6 +24,13 @@ import com.orientechnologies.orient.core.record.ORecord;
  * @see ORecordHook
  */
 public abstract class ORecordHookAbstract implements ORecordHook {
+
+  /**
+   * Called on unregistration.
+   */
+  public void onUnregister() {
+  }
+
   /**
    * It's called just before to create the new iRecord.
    * 
