@@ -73,9 +73,8 @@ public class ODocumentSchemafullSerializationTest {
     this(new ORecordSerializerSchemaAware2CSV());
   }
 
-  @BeforeTest
   public void before() {
-    databaseDocument = new ODatabaseDocumentTx("memory:test").create();
+    databaseDocument = new ODatabaseDocumentTx("memory:ODocumentSchemafullSerializationTest").create();
     // databaseDocument.getMetadata().
     OSchema schema = databaseDocument.getMetadata().getSchema();
     address = schema.createClass("Address");
@@ -124,13 +123,13 @@ public class ODocumentSchemafullSerializationTest {
     clazzEmbComp.createProperty("addressByStreet", OType.EMBEDDEDMAP, address);
   }
 
-  @AfterTest
   public void after() {
     databaseDocument.drop();
   }
 
   @Test
   public void testSimpleSerialization() {
+    before();
     ODocument document = new ODocument(simple);
 
     document.field(STRING_FIELD, NAME);
@@ -158,13 +157,13 @@ public class ODocumentSchemafullSerializationTest {
     assertEquals(extr.field(BOOLEAN_FIELD), document.field(BOOLEAN_FIELD));
     assertEquals(extr.field(DATE_FIELD), document.field(DATE_FIELD));
     assertEquals(extr.field(RECORDID_FIELD), document.field(RECORDID_FIELD));
-
+    after();
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
   @Test
   public void testSimpleLiteralList() {
-
+    before();
     ODocument document = new ODocument(embSimp);
     List<String> strings = new ArrayList<String>();
     strings.add("a");
@@ -250,10 +249,12 @@ public class ODocumentSchemafullSerializationTest {
     assertEquals(extr.field(LIST_BYTES), document.field(LIST_BYTES));
     assertEquals(extr.field(LIST_BOOLEANS), document.field(LIST_BOOLEANS));
     assertEquals(extr.field(LIST_MIXED), document.field(LIST_MIXED));
+    after();
   }
 
   @Test
   public void testSimpleMapStringLiteral() {
+    before();
     ODocument document = new ODocument(embMapSimple);
 
     Map<String, String> mapString = new HashMap<String, String>();
@@ -305,10 +306,12 @@ public class ODocumentSchemafullSerializationTest {
     assertEquals(extr.field(MAP_DATE), document.field(MAP_DATE));
     assertEquals(extr.field(MAP_DOUBLE), document.field(MAP_DOUBLE));
     assertEquals(extr.field(MAP_BYTES), document.field(MAP_BYTES));
+    after();
   }
 
   @Test
   public void testSimpleEmbeddedDoc() {
+    before();
     ODocument document = new ODocument(simple);
     ODocument embedded = new ODocument(address);
     embedded.field(NAME, "test");
@@ -324,7 +327,7 @@ public class ODocumentSchemafullSerializationTest {
     assertEquals(emb.field(NAME), embedded.field(NAME));
     assertEquals(emb.field(NUMBER), embedded.field(NUMBER));
     assertEquals(emb.field(CITY), embedded.field(CITY));
-
+    after();
   }
 
 }
