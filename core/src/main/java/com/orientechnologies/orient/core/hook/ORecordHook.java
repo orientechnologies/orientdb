@@ -41,6 +41,8 @@ public interface ORecordHook {
     RECORD_NOT_CHANGED, RECORD_CHANGED, SKIP
   }
 
+  public void onUnregister();
+
   public RESULT onTrigger(TYPE iType, ORecord<?> iRecord);
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode();

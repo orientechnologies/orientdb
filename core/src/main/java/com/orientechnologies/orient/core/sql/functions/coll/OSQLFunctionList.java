@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +40,8 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
     super(NAME, 1, -1);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams, OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
     if (iParams.length > 1)
       // IN LINE MODE
       context = new ArrayList<Object>();
@@ -50,7 +52,10 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
           // AGGREGATION MODE (STATEFULL)
           context = new ArrayList<Object>();
 
-        OMultiValue.add(context, value);
+        if (value instanceof ODocument)
+          context.add(value);
+        else
+          OMultiValue.add(context, value);
       }
     }
     return prepareResult(context);
@@ -71,17 +76,6 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
     return prepareResult(res);
   }
 
-  protected List<Object> prepareResult(List<Object> res) {
-    if (returnDistributedResult()) {
-      final Map<String, Object> doc = new HashMap<String, Object>();
-      doc.put("node", getDistributedStorageId());
-      doc.put("context", res);
-      return Collections.<Object> singletonList(doc);
-    } else {
-      return res;
-    }
-  }
-
   @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
@@ -95,5 +89,16 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
       result.addAll(chunk);
     }
     return result;
+  }
+
+  protected List<Object> prepareResult(List<Object> res) {
+    if (returnDistributedResult()) {
+      final Map<String, Object> doc = new HashMap<String, Object>();
+      doc.put("node", getDistributedStorageId());
+      doc.put("context", res);
+      return Collections.<Object> singletonList(doc);
+    } else {
+      return res;
+    }
   }
 }

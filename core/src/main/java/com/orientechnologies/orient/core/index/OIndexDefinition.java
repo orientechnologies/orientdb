@@ -126,7 +126,7 @@ public interface OIndexDefinition extends OIndexCallback {
 
   void setCollate(OCollate collate);
 
-	boolean isNullValuesIgnored();
+  boolean isNullValuesIgnored();
 
-	void setNullValuesIgnored(boolean value);
+  void setNullValuesIgnored(boolean value);
 }

@@ -161,7 +161,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       this.name = name;
 
-      init(storage.getAtomicOperationsManager(), storage.getWALInstance());
+      init(storage);
       this.directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
 
       startAtomicOperation();
@@ -683,7 +683,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       this.name = name;
 
-      init(storage.getAtomicOperationsManager(), storage.getWALInstance());
+      init(storage);
 
       fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
       hashStateEntry = diskCache.load(fileStateId, 0, true);

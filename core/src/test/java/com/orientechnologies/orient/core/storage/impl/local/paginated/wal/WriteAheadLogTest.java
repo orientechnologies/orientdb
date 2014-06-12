@@ -1867,6 +1867,61 @@ public class WriteAheadLogTest {
     }
   }
 
+  public void testTruncateFirstSegment() throws IOException {
+    writeAheadLog.close();
+    writeAheadLog = createWAL(6, 3 * OWALPage.PAGE_SIZE);
+
+    OWALRecord walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(2 * (OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET), false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord((OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET) / 2, false);
+    OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+
+    writeAheadLog.cutTill(lsn);
+
+    final OLogSequenceNumber startLSN = writeAheadLog.begin();
+    Assert.assertEquals(startLSN, lsn);
+  }
+
+  public void testTruncateLastSegment() throws IOException {
+    writeAheadLog.close();
+    writeAheadLog = createWAL(6, 3 * OWALPage.PAGE_SIZE);
+
+    OWALRecord walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(2 * (OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET), false);
+    writeAheadLog.log(walRecord);
+
+    // second segment
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    // last segment
+    walRecord = new TestRecord((OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET) / 2, false);
+    OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+
+    writeAheadLog.cutTill(lsn);
+
+    final OLogSequenceNumber startLSN = writeAheadLog.begin();
+    Assert.assertEquals(startLSN, lsn);
+  }
+
   private void assertLogContent(OWriteAheadLog writeAheadLog, List<? extends OWALRecord> writtenRecords) throws Exception {
     Iterator<? extends OWALRecord> iterator = writtenRecords.iterator();
 

@@ -63,12 +63,12 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static final boolean useSBTree = OGlobalConfiguration.INDEX_USE_SBTREE_BY_DEFAULT.getValueAsBoolean();
   private static AtomicInteger txSerial  = new AtomicInteger();
-  private boolean              usingLog;
+
+  private boolean              usingLog  = true;
   private int                  txStartCounter;
 
   public OTransactionOptimistic(final ODatabaseRecordTx iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
-    usingLog = OGlobalConfiguration.TX_USE_LOG.getValueAsBoolean();
   }
 
   public void begin() {

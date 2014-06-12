@@ -101,8 +101,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
   protected OUser             account;
 
-  private String              dbType;
-
   public ONetworkProtocolBinary() {
     super("OrientDB <- BinaryClient/?");
   }
@@ -621,7 +619,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String dbURL = channel.readString();
 
-    dbType = ODatabaseDocument.TYPE;
+    String dbType = ODatabaseDocument.TYPE;
     if (connection.data.protocolVersion >= 8)
       // READ DB-TYPE FROM THE CLIENT
       dbType = channel.readString();
@@ -770,14 +768,33 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         endResponse();
       }
       channel.close();
-      server.shutdown();
-      System.exit(0);
+      runShutdownInNonDaemonThread();
     }
 
     OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.",
         channel.socket.getInetAddress(), channel.socket.getPort());
 
     sendError(clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
+  }
+
+  /**
+   * Due to protocol thread is daemon, shutdown should be executed in separate thread to guarantee its complete execution.
+   * 
+   * This method never returns normally.
+   */
+  private void runShutdownInNonDaemonThread() {
+    Thread shutdownThread = new Thread("OrientDB server shutdown thread") {
+      public void run() {
+        server.shutdown();
+        System.exit(0);
+      }
+    };
+    shutdownThread.setDaemon(false);
+    shutdownThread.start();
+    try {
+      shutdownThread.join();
+    } catch (InterruptedException ignored) {
+    }
   }
 
   protected void copyDatabase() throws IOException {
