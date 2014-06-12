@@ -133,7 +133,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       iRequest.data.currentUserId = db.getUser() == null ? "<server user>" : db.getUser().getDocument().getIdentity().toString();
 
       // AUTHENTICATED: CREATE THE SESSION
-      iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0));
+      iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0),
+          iAuthenticationParts.get(1));
       iResponse.sessionId = iRequest.sessionId;
       return true;
 
@@ -162,15 +163,17 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   }
 
   protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
-    if (iRequest.authorization == null)
-      throw new OSecurityAccessException(iRequest.databaseName, "No user and password received");
+    final OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
+
+    if (session == null)
+      throw new OSecurityAccessException(iRequest.databaseName, "No session active");
 
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
     ODatabaseRecord localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
     if (localDatabase == null) {
-      final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, parts.get(0), parts.get(1));
+      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, session.getUserName(),
+          session.getUserPassword());
     } else {
 
       String currentUserId = iRequest.data.currentUserId;
