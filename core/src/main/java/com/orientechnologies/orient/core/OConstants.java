@@ -16,11 +16,7 @@
 package com.orientechnologies.orient.core;
 
 public class OConstants {
-<<<<<<< HEAD
   public static final String ORIENT_VERSION = "1.7.4-SNAPSHOT";
-=======
-  public static final String ORIENT_VERSION = "1.7.3";
->>>>>>> master
 
   public static final String ORIENT_URL     = "www.orientechnologies.com";
 
