@@ -79,7 +79,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
     while (it.hasNext()) {
       Object o = it.next();
-      if (o instanceof OIdentifiable)
+      if (o == null)
+        add(null);
+      else if (o instanceof OIdentifiable)
         add((OIdentifiable) o);
       else
         OMultiValue.add(this, o);
@@ -407,9 +409,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
 
     for (String item : items) {
       if (item.length() == 0)
-        continue;
-
-      super.add(new ORecordId(item));
+        super.add(new ORecordId());
+      else
+        super.add(new ORecordId(item));
     }
 
     modCount = currentModCount;

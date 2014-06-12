@@ -85,8 +85,13 @@ public class OJSONWriter {
       } else {
         if (iFormat != null && iFormat.contains("shallow"))
           buffer.append("{}");
-        else
-          buffer.append(linked.getRecord().toJSON(iFormat));
+        else {
+          final ORecord<?> rec = linked.getRecord();
+          if (rec != null)
+            buffer.append(rec.toJSON(iFormat));
+          else
+            buffer.append("null");
+        }
       }
 
     } else if (iValue.getClass().isArray()) {
@@ -374,8 +379,10 @@ public class OJSONWriter {
 
     format(iIdentLevel, iNewLine);
 
-    out.append(writeValue(iName, iFormat));
-    out.append(":");
+    if (iName != null) {
+      out.append(writeValue(iName, iFormat));
+      out.append(":");
+    }
 
     if (iFormat.contains("graph") && (iValue == null || iValue instanceof OIdentifiable)
         && (iName.startsWith("in_") || iName.startsWith("out_"))) {
