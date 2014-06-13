@@ -7,11 +7,15 @@ module.controller('ClusterNewController', function ($scope, Cluster) {
     $scope.cluster['@rid'] = '#-1:-1';
     $scope.cluster['@class'] = 'Cluster';
     $scope.cluster.multicast = new Object();
+    $scope.cluster.tcp = new Object();
     $scope.cluster.port = "2434";
     $scope.cluster.portIncrement = true;
     $scope.cluster.multicast.enabled = true;
+    $scope.cluster.tcp.enabled = false;
+    $scope.cluster.tcp.members = [];
     $scope.cluster.multicast.group = "235.1.1.1";
     $scope.cluster.multicast.port = 2434;
+
 
 
     $scope.save = function () {
@@ -34,10 +38,10 @@ module.controller('ClusterEditController', function ($scope, Cluster) {
 module.controller('ClusterChangeController', function ($scope, Cluster) {
 
     $scope.dimension = Object.keys($scope.dirty);
-    console.log($scope.dirty.length);
+
 
 });
-module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $modal, $q, Server) {
+module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $modal, $q, Server, $odialog) {
 
 
     Cluster.getAll().then(function (data) {
@@ -61,6 +65,21 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
             });
         }
     }
+    $scope.removeCluster = function () {
+
+        if ($scope.cluster) {
+            $odialog.confirm({
+                title: 'Warning!',
+                body: 'You are removing Cluster ' + $scope.cluster.name + '. Are you sure?',
+                success: function () {
+                    Cluster.delete($scope.cluster.name, function (data) {
+                        var idx = $scope.nodeClusters.indexOf($scope.cluster);
+                        $scope.nodeClusters.splice(idx, 1);
+                    });
+                }
+            });
+        }
+    }
     $scope.$watch("cluster", function (data) {
 
         if (data) {
@@ -75,8 +94,8 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
                         });
                         $scope.nodes = $scope.nodes.concat(s);
                     });
-                })
-
+                });
+                $scope.servers.push({name: "<NEW_NODE>"})
             });
         }
     });

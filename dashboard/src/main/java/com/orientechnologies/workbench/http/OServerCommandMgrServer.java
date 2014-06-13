@@ -20,25 +20,27 @@ import java.net.MalformedURLException;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+import com.orientechnologies.workbench.OL;
 import com.orientechnologies.workbench.OMonitoredServer;
 import com.orientechnologies.workbench.OWorkbenchPlugin;
 import com.orientechnologies.workbench.OWorkbenchPurgeMetricLogHelper;
 
-public class OServerCommandDeleteServer extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES = { "DELETE|monitoredServer/*" };
+public class OServerCommandMgrServer extends OServerCommandAuthenticatedDbAbstract {
+  private static final String[] NAMES = { "DELETE|monitoredServer/*", "PUT|monitoredServer/*", "POST|monitoredServer/*" };
 
   private OWorkbenchPlugin      monitor;
 
-  public OServerCommandDeleteServer() {
+  public OServerCommandMgrServer() {
   }
 
-  public OServerCommandDeleteServer(final OServerCommandConfiguration iConfiguration) {
+  public OServerCommandMgrServer(final OServerCommandConfiguration iConfiguration) {
   }
 
   @Override
@@ -50,9 +52,24 @@ public class OServerCommandDeleteServer extends OServerCommandAuthenticatedDbAbs
 
     iRequest.data.commandInfo = "Reset metrics";
 
+    if ("DELETE".equals(iRequest.httpMethod)) {
+      doDelete(iRequest, iResponse, parts[2]);
+    } else {
+      ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+      ODocument server = new ODocument().fromJSON(iRequest.content);
+      String pwd = server.field("password");
+      String enc = OL.encrypt(pwd);
+      server.field("password", enc);
+      server.save();
+      iResponse.writeResult(server);
+    }
+    return false;
+  }
+
+  private void doDelete(OHttpRequest iRequest, OHttpResponse iResponse, String part) throws IOException {
     try {
 
-      final String serverName = parts[2];
+      final String serverName = part;
       final OMonitoredServer server = monitor.getMonitoredServer(serverName);
       if (server == null)
         throw new IllegalArgumentException("Invalid server '" + serverName + "'");
@@ -61,12 +78,12 @@ public class OServerCommandDeleteServer extends OServerCommandAuthenticatedDbAbs
       OWorkbenchPurgeMetricLogHelper.purgeLogsNow(server.getConfiguration(), db);
       OWorkbenchPurgeMetricLogHelper.purgeMetricNow(server.getConfiguration(), db);
       OWorkbenchPurgeMetricLogHelper.purgeConfigNow(server.getConfiguration(), db);
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
       server.getConfiguration().delete();
+      monitor.removeMonitoredServer(serverName);
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
     } catch (Exception e) {
       iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
     }
-    return false;
   }
 
   protected void clearRealtimeMetrics(OHttpResponse iResponse, final String iMetricKind, final String[] metricNames,

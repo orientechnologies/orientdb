@@ -1141,6 +1141,15 @@ div.container select {
     margin: 0;
 }
 
-ul.dirtyList  {
+ul.dirtyList {
     list-style: none;
+}
+
+ul.tcp-members {
+    list-style: none;
+    margin-left: 0px;
+}
+
+ul.tcp-members li {
+    padding: 5px;
 }

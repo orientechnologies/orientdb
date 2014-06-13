@@ -280,24 +280,32 @@ public final class OWorkbenchTask extends TimerTask {
   protected static ODocument fetchFromRemoteServer(final ODocument server, final URL iRemoteUrl) throws IOException {
     URLConnection urlConnection = iRemoteUrl.openConnection();
 
-    String authString = server.field("user") + ":" + server.field("password");
-    String authStringEnc = OBase64Utils.encodeBytes(authString.getBytes());
+    String enc = server.field("password");
+    try {
+      String pwd = OL.decrypt(enc);
+      String authString = server.field("user") + ":" + pwd;
+      String authStringEnc = OBase64Utils.encodeBytes(authString.getBytes());
 
-    urlConnection.setRequestProperty("Authorization", "Basic " + authStringEnc);
-    urlConnection.connect();
-    InputStream is = urlConnection.getInputStream();
-    InputStreamReader isr = new InputStreamReader(is);
+      urlConnection.setRequestProperty("Authorization", "Basic " + authStringEnc);
+      urlConnection.connect();
+      InputStream is = urlConnection.getInputStream();
+      InputStreamReader isr = new InputStreamReader(is);
 
-    int numCharsRead;
-    char[] charArray = new char[1024];
-    StringBuffer sb = new StringBuffer();
-    while ((numCharsRead = isr.read(charArray)) > 0) {
-      sb.append(charArray, 0, numCharsRead);
+      int numCharsRead;
+      char[] charArray = new char[1024];
+      StringBuffer sb = new StringBuffer();
+      while ((numCharsRead = isr.read(charArray)) > 0) {
+        sb.append(charArray, 0, numCharsRead);
+      }
+      String result = sb.toString();
+
+      final ODocument docMetrics = new ODocument().fromJSON(result);
+      return docMetrics;
+    } catch (Exception e) {
+      e.printStackTrace();
     }
-    String result = sb.toString();
 
-    final ODocument docMetrics = new ODocument().fromJSON(result);
-    return docMetrics;
+    return new ODocument();
   }
 
   public static void log(final OIdentifiable iServer, final OWorkbenchPlugin.STATUS iLevel, final String iDescription) {

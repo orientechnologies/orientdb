@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.orientechnologies</groupId>
-    <version>1.6.2</version>
+    <version>1.7.1</version>
     <artifactId>orientdb-workbench</artifactId>
 
     <name>OrientDB Workbench</name>
@@ -16,7 +16,7 @@
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
         <osgi.import>*</osgi.import>
         <osgi.export>com.orientechnologies.orient.graph.*</osgi.export>
-        <orientdb.version>1.7-SNAPSHOT</orientdb.version>
+        <orientdb.version>1.7.3</orientdb.version>
         <blueprints.version>2.5.0-SNAPSHOT</blueprints.version>
     </properties>
     <scm>

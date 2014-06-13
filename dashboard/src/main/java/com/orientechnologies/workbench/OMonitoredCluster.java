@@ -15,13 +15,19 @@ import java.util.Set;
  */
 public class OMonitoredCluster {
 
-  private ODocument         clusterConfig;
-  private OWorkbenchPlugin  handler;
-  private HazelcastInstance hazelcast;
+  public static final String EE   = "ee.";
+  public static final String NODE = "node.";
+  private ODocument          clusterConfig;
+  private OWorkbenchPlugin   handler;
+  private HazelcastInstance  hazelcast;
 
   OMonitoredCluster(final OWorkbenchPlugin iHandler, final ODocument cluster) {
     this.handler = iHandler;
     this.clusterConfig = cluster;
+    init();
+  }
+
+  private void init() {
     createHazelcastFromConfig();
     retrievePwd();
     registerMemberChangeListener();
@@ -38,7 +44,8 @@ public class OMonitoredCluster {
       String cPasswd = clusterConfig.field("password");
       Integer port = clusterConfig.field("port");
       Boolean portIncrement = clusterConfig.field("portIncrement");
-      Map<String, Object> multicast = clusterConfig.field("multicast");
+      ODocument multicast = clusterConfig.field("multicast");
+      ODocument tcp = clusterConfig.field("tcp");
       Config cfg = new Config();
       GroupConfig groupConfig = cfg.getGroupConfig();
       groupConfig.setName(cName);
@@ -47,10 +54,14 @@ public class OMonitoredCluster {
       network.setPort(port);
       network.setPortAutoIncrement(portIncrement);
       JoinConfig join = network.getJoin();
-      join.getTcpIpConfig().setEnabled(false);
+      join.getTcpIpConfig().setEnabled((Boolean) tcp.field("enabled"));
+      Collection<String> members = tcp.field("members");
+      for (String m : members) {
+        join.getTcpIpConfig().addMember(m);
+      }
       join.getAwsConfig().setEnabled(false);
-      join.getMulticastConfig().setEnabled((Boolean) multicast.get("enabled")).setMulticastGroup((String) multicast.get("group"))
-          .setMulticastPort((Integer) multicast.get("port"));
+      join.getMulticastConfig().setEnabled((Boolean) multicast.field("enabled"))
+          .setMulticastGroup((String) multicast.field("group")).setMulticastPort((Integer) multicast.field("port"));
       hazelcast = Hazelcast.newHazelcastInstance(cfg);
     } catch (Exception e) {
       e.printStackTrace();
@@ -62,7 +73,7 @@ public class OMonitoredCluster {
     // update policy
     for (Member member : getMembers()) {
 
-      IMap<String,Object> maps = getConfigurationMap();
+      IMap<String, Object> maps = getConfigurationMap();
       ODocument doc = (ODocument) getConfigValue("node." + member.getUuid());
       if (doc != null) {
         String nodeName = (String) doc.field("name");
@@ -73,9 +84,9 @@ public class OMonitoredCluster {
   }
 
   private String getAndRemovePwd(String nodeName) {
-    String name = "ee." + nodeName;
+    String name = EE + nodeName;
     String iPropertyValue = (String) getConfigValue(name);
-    //removeConfigValue(name);
+    removeConfigValue(name);
     return iPropertyValue;
   }
 
@@ -96,10 +107,29 @@ public class OMonitoredCluster {
         server.field("url", map.get("listen"));
         server.field("user", "root");
         server.field("cluster", clusterConfig);
-        server.field("password", iPropertyValue);
+        if (iPropertyValue != null)
+          server.field("password", iPropertyValue);
         server.save();
+        handler.updateActiveServerList();
       }
     }
+  }
+
+  private void changeServerPwd(String nodeName, String pwd) {
+    OMonitoredServer mServer = handler.getMonitoredServer(nodeName);
+    ODatabaseRecordThreadLocal.INSTANCE.set(handler.getDb());
+    ODocument server = null;
+    if (mServer == null) {
+      server = new ODocument(OWorkbenchPlugin.CLASS_SERVER);
+      server.field("enabled", true);
+    } else {
+      server = mServer.getConfiguration();
+    }
+    server.field("name", nodeName);
+    if (pwd != null)
+      server.field("password", pwd);
+    server.save();
+    handler.updateActiveServerList();
   }
 
   private Set<Member> getMembers() {
@@ -129,8 +159,8 @@ public class OMonitoredCluster {
         final String mapListener = getConfigurationMap().addEntryListener(new EntryListener<String, Object>() {
           @Override
           public void entryAdded(EntryEvent<String, Object> stringObjectEntryEvent) {
-            final String expectedKey = "node." + membershipEvent.getMember().getUuid();
-            if (expectedKey.equals(stringObjectEntryEvent.getKey())) {
+            final String key = stringObjectEntryEvent.getKey();
+            if (key.startsWith(NODE)) {
 
               ODocument doc = (ODocument) stringObjectEntryEvent.getValue();
               if (doc != null) {
@@ -139,6 +169,10 @@ public class OMonitoredCluster {
                 registerNewServer(doc, pwdString);
               }
 
+            } else if (key.startsWith(EE)) {
+              String pwd = (String) stringObjectEntryEvent.getValue();
+              String nodeName = key.replace(EE, "");
+              changeServerPwd(nodeName, pwd);
             }
           }
 
@@ -178,7 +212,16 @@ public class OMonitoredCluster {
 
   public ODocument getClusterConfig() {
 
-    IMap map = getConfigurationMap();
-    return null;
+    return clusterConfig;
+  }
+
+  public void refreshConfig(ODocument res) {
+    clusterConfig = res;
+    shutdownDistributed();
+    init();
+  }
+
+  public void shutdownDistributed() {
+    hazelcast.shutdown();
   }
 }

@@ -39,13 +39,16 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
+import javax.crypto.SecretKey;
+
 public class OEnterpriseAgent extends OServerPluginAbstract {
+  public static final String  EE                         = "ee.";
   private OServer             server;
   private String              license;
   private String              version;
   private boolean             enabled                    = false;
-  private static final String ORIENDB_ENTERPRISE_VERSION = "1.7-SNAPSHOT"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH
-                                                                           // THIS
+  private static final String ORIENDB_ENTERPRISE_VERSION = "1.7.3"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH
+                                                                    // THIS
 
   public OEnterpriseAgent() {
   }
@@ -73,9 +76,39 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
       installProfiler();
       installCommands();
 
-      ODistributedServerManager manager = OServerMain.server().getDistributedManager();
-      Map<String, Object> map = manager.getConfigurationMap();
-      map.put("ee." + manager.getLocalNodeName(), OServerMain.server().getConfiguration().getUser("root").password);
+      Thread installer = new Thread(new Runnable() {
+        @Override
+        public void run() {
+
+          while (true) {
+            ODistributedServerManager manager = OServerMain.server().getDistributedManager();
+            if (manager == null) {
+              try {
+                Thread.sleep(2000);
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+              }
+              continue;
+            } else {
+              Map<String, Object> map = manager.getConfigurationMap();
+              String pwd = OServerMain.server().getConfiguration().getUser("root").password;
+              try {
+                String enc = OL.encrypt(pwd);
+                map.put(EE + manager.getLocalNodeName(), enc);
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+
+              break;
+            }
+
+          }
+
+        }
+      });
+
+      installer.setDaemon(true);
+      installer.start();
 
     }
   }

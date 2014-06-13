@@ -46,7 +46,41 @@
                 <input type="text" id="inputMulticastPort" ng-model="cluster.multicast.port" class="input-xlarge">
             </div>
         </div>
+        <div class="control-group">
+            <div class="controls">
+                <label class="checkbox">
+                    <input type="checkbox" ng-model="cluster.tcp.enabled"> {{ 'settings.cluster.tcp.enabled'
+                    | i18n }}
+                </label>
 
+            </div>
+        </div>
+        <div class="control-group" ng-show="cluster.tcp.enabled">
+            <div class="controls">
+                <button class="btn btn-small" ng-click="cluster.tcp.members.push('')">
+                    <span class="icon-plus"></span>
+                </button>
+            </div>
+        </div>
+
+        <div class="control-group" ng-show="cluster.tcp.enabled">
+
+            <div class="controls">
+                <ul class="tcp-members">
+                    <li ng-repeat="m in cluster.tcp.members track by $index">
+                        {{ 'settings.cluster.tcp.member'
+                        | i18n }} {{$index}} :
+                        <div class="input-append">
+                            <input class="input-medium" type="text" ng-model="cluster.tcp.members[$index]">
+                            <button class="btn" type="button" ng-click="cluster.tcp.members.splice($index,1)">
+                                <span class="icon-remove"></span>
+                            </button>
+                        </div>
+                    </li>
+                </ul>
+
+            </div>
+        </div>
 
     </fieldset>
 </form>

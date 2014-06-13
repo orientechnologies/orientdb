@@ -37,11 +37,11 @@ monitor.factory('Monitor', function ($http, $resource) {
     resource.updateServer = function (server, callback) {
 
         if (server['@rid'].replace("#", '') == '-1:-1') {
-            $http.post(API + 'document/monitor/-1:-1', server).success(function (data) {
+            $http.post(API + 'monitoredServer/monitor/-1:-1', server).success(function (data) {
                 callback(data);
             });
         } else {
-            $http.put(API + 'document/monitor/' + server['@rid'].replace("#", ''), server).success(function (data) {
+            $http.put(API + 'monitoredServer/monitor/' + server['@rid'].replace("#", ''), server).success(function (data) {
                 callback(data);
             });
         }
@@ -349,6 +349,12 @@ monitor.factory('Users', function ($http, $resource) {
 monitor.factory('Cluster', function ($http, $resource, $q) {
     var resource = $resource(API + 'database/:database');
 
+    resource.delete = function (name, callback) {
+        var url = API + 'distributed/monitor/configuration/' + name;
+        $http.delete(url).success(function (data) {
+            callback(data);
+        })
+    }
     resource.saveCluster = function (cluster) {
         var deferred = $q.defer();
         var url = API + 'distributed/monitor/configuration';

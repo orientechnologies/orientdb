@@ -20,7 +20,6 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.hazelcast.core.HazelcastInstance;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
@@ -30,7 +29,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -201,7 +199,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     listener.registerStatelessCommand(new OServerCommandGetServerLog());
     listener.registerStatelessCommand(new OServerCommandGetServerConfiguration());
     listener.registerStatelessCommand(new OServerCommandPurgeMetric());
-    listener.registerStatelessCommand(new OServerCommandDeleteServer());
+    listener.registerStatelessCommand(new OServerCommandMgrServer());
     listener.registerStatelessCommand(new OServerCommandNotifyChangedMetric());
     listener.registerStatelessCommand(new OServerCommandMessageExecute());
     listener.registerStatelessCommand(new OServerCommandDistributedManager());
@@ -223,7 +221,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     listener.unregisterStatelessCommand(OServerCommandGetServerLog.class);
     listener.unregisterStatelessCommand(OServerCommandGetServerConfiguration.class);
     listener.unregisterStatelessCommand(OServerCommandPurgeMetric.class);
-    listener.unregisterStatelessCommand(OServerCommandDeleteServer.class);
+    listener.unregisterStatelessCommand(OServerCommandMgrServer.class);
     listener.unregisterStatelessCommand(OServerCommandNotifyChangedMetric.class);
     listener.unregisterStatelessCommand(OServerCommandMessageExecute.class);
     listener.unregisterStatelessCommand(OServerCommandDistributedManager.class);
@@ -231,6 +229,10 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 
   public OMonitoredServer getMonitoredServer(final String iServer) {
     return servers.get(iServer);
+  }
+
+  public void removeMonitoredServer(final String name) {
+    servers.remove(name);
   }
 
   public Set<Entry<String, OMonitoredServer>> getMonitoredServers() {
@@ -568,5 +570,9 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
       }
     }
     return srvs;
+  }
+
+  public void removeMonitoredCluster(String cluster) {
+    clusters.remove(cluster);
   }
 }

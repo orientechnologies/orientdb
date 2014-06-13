@@ -98,3 +98,6 @@ path.link-db {
     stroke-width: 2px;
     cursor: default;
 }
+svg {
+    pointer-events: all;
+}

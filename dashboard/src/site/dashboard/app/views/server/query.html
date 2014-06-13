@@ -3,7 +3,8 @@
         <h3>
             <i class=" icon-eye-open"></i>
             {{ 'profiler.title' | i18n }}
-            <a href="#/help/queryprofiler" style="text-decoration: none"><i class="icon-question-sign pull-right"></i></a>
+            <a href="#/help/queryprofiler" style="text-decoration: none"><i
+                    class="icon-question-sign pull-right"></i></a>
         </h3>
         <hr/>
     </div>
@@ -33,18 +34,14 @@
             </div>
             <div class="span6">
                 <div class="btn-toolbar pull-right">
-                    <div class="btn-group">
-                        <button class="btn  btn-clean" ng-click="refresh()">
-                            <i class="icon-refresh icon-white"></i>
-                            {{ 'queryprofiler.refresh' | i18n }}
-                        </button>
-                    </div>
-                    <div class="btn-group">
-                        <button class="btn  btn-clean" ng-click="delete()">
-                            <i class="icon-eraser"></i>
-                            {{ 'queryprofiler.clean' | i18n }}
-                        </button>
-                    </div>
+                    <button class="btn  btn-small" ng-click="refresh()">
+                        <i class="icon-refresh icon-white"></i>
+                        {{ 'queryprofiler.refresh' | i18n }}
+                    </button>
+                    <button class="btn  btn-small" ng-click="delete()">
+                        <i class="icon-eraser"></i>
+                        {{ 'queryprofiler.clean' | i18n }}
+                    </button>
                 </div>
             </div>
         </div>

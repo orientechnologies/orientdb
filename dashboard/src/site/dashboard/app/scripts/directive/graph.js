@@ -227,7 +227,8 @@ Widget.directive('dbgraph', function () {
             .attr("width", width + margin.right + margin.left)
             .attr("height", height + margin.top + margin.bottom)
             .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+            .attr("class", "drawarea");
 
 
         var cluster = d3.layout.tree()
@@ -266,6 +267,29 @@ Widget.directive('dbgraph', function () {
             .text(function (d) {
                 return d.name;
             });
+
+        d3.select("svg")
+            .call(d3.behavior.zoom()
+                .scaleExtent([0.5, 5])
+                .on("zoom", zoom));
+
+        function zoom() {
+            var scale = d3.event.scale,
+                translation = d3.event.translate,
+                tbound = -h * scale,
+                bbound = h * scale,
+                lbound = (-w + m[1]) * scale,
+                rbound = (w - m[3]) * scale;
+            // limit translation to thresholds
+            translation = [
+                Math.max(Math.min(translation[0], rbound), lbound),
+                Math.max(Math.min(translation[1], bbound), tbound)
+            ];
+            d3.select(".drawarea")
+                .attr("transform", "translate(" + translation + ")" +
+                    " scale(" + scale + ")");
+        }
+
     }
     return {
         require: 'ngModel',

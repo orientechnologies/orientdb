@@ -21,7 +21,7 @@ public class OWorkbenchHazelcastTask extends TimerTask {
 
   @Override
   public void run() {
-    OLogManager.instance().info(this, "WORKBENCH contacting hazelcast cluster...");
+    OLogManager.instance().info(this, "WORKBENCH looking for hazelcast cluster...");
     String osql = "select from Cluster ";
     OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
     final List<ODocument> response = this.handler.getDb().query(osqlQuery);

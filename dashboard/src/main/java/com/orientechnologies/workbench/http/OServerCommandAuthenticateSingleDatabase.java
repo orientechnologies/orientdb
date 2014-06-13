@@ -87,7 +87,8 @@ public class OServerCommandAuthenticateSingleDatabase extends OServerCommandAuth
         }
 
         // AUTHENTICATED: CREATE THE SESSION
-        iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0));
+        iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0),
+            iAuthenticationParts.get(1));
         iResponse.sessionId = iRequest.sessionId;
         OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
         if (host != null) {

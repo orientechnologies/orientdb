@@ -33,10 +33,7 @@
                                                                       ng-click="currentTab = 'globalsettings'"
                                                                       data-toggle="tab">{{
             'dashboard.globalsettings' | i18n }}</a></li>
-        <li ng-class="{ active : 'distributed' == currentTab }"><a href="javascript:void(0)"
-                                                                   ng-click="currentTab = 'distributed'"
-                                                                   data-toggle="tab">{{
-            'dashboard.distributedsettings' | i18n }}</a></li>
+
 
 
     </ul>
@@ -367,8 +364,6 @@
 
 </div>
 
-<div class="row-fluid" ng-show="currentTab == 'distributed'">
-    <ng-include src="'views/server/distributed/distributed.html'"></ng-include>
-</div>
+
 
 </div>
