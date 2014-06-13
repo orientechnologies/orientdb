@@ -4,9 +4,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 
 public class OVarIntSerializer {
 
-  public static short write(BytesContainer bytes, long length) {
-    short pos = bytes.alloc((short) bytesLength(length));
-    writeSignedVarLong(length, bytes.bytes, pos);
+  public static short write(BytesContainer bytes, long value) {
+    short pos = bytes.alloc((short) bytesLength(value));
+    writeSignedVarLong(value, bytes.bytes, pos);
     return pos;
 
   }
