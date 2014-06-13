@@ -6,7 +6,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -89,8 +89,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case DATETIME:
       value = new Date(OVarIntSerializer.read(bytes).longValue());
       break;
+    case EMBEDDEDSET:
+      value = readList(bytes, new HashSet<Object>());
+      break;
     case EMBEDDEDLIST:
-      value = readList(bytes);
+      value = readList(bytes, new ArrayList<Object>());
+      break;
     case DECIMAL:
       break;
     default:
@@ -99,11 +103,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return value;
   }
 
-  private List<?> readList(BytesContainer bytes) {
+  private Collection<?> readList(BytesContainer bytes, Collection<Object> found) {
     int items = OVarIntSerializer.read(bytes).intValue();
     OType type = readOType(bytes);
     if (type == OType.ANY) {
-      List<Object> found = new ArrayList<Object>();
       for (int i = 0; i < items; i++) {
         OType itemType = readOType(bytes);
         found.add(readValue(bytes, itemType));
@@ -126,7 +129,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       values[i] = entry;
       i++;
     }
-    // TODO:document it
     OVarIntSerializer.write(bytes, 0);
 
     for (i = 0; i < values.length; i++) {
@@ -176,8 +178,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       long time = ((Date) value).getTime();
       pointer = OVarIntSerializer.write(bytes, time);
       break;
+    case EMBEDDEDSET:
     case EMBEDDEDLIST:
-      pointer = writeList(bytes, (List<?>) value);
+      pointer = writeList(bytes, (Collection<?>) value);
     case DECIMAL:
       break;
     default:
@@ -186,7 +189,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return pointer;
   }
 
-  private short writeList(BytesContainer bytes, List<?> value) {
+  private short writeList(BytesContainer bytes, Collection<?> value) {
     short pos = OVarIntSerializer.write(bytes, value.size());
     // TODO manage embedded type from schema and autodeterminated.
     writeOType(bytes, bytes.alloc((short) 1), OType.ANY);
