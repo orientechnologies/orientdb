@@ -1617,6 +1617,45 @@ public class IndexTest {
     database.commit();
   }
 
+  public void testCreateIndexAbstractClass() {
+    final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
+    final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+
+    OClass abstractClass = schema.createAbstractClass("TestCreateIndexAbstractClass");
+    abstractClass.createProperty("value", OType.STRING);
+
+    abstractClass.createIndex("abstractIndex", INDEX_TYPE.UNIQUE, "value");
+
+    schema.createClass("TestCreateIndexAbstractClassChildOne", abstractClass);
+    schema.createClass("TestCreateIndexAbstractClassChildTwo", abstractClass);
+
+    ODocument docOne = new ODocument("TestCreateIndexAbstractClassChildOne");
+    docOne.field("value", "val1");
+    docOne.save();
+
+    ODocument docTwo = new ODocument("TestCreateIndexAbstractClassChildTwo");
+    docTwo.field("value", "val2");
+    docTwo.save();
+
+    final String queryOne = "select from TestCreateIndexAbstractClass where value = 'val1'";
+
+    List<ODocument> resultOne = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(queryOne));
+    Assert.assertEquals(resultOne.size(), 1);
+    Assert.assertEquals(resultOne.get(0), docOne);
+
+    ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryOne)).execute();
+    Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("abstractIndex"));
+
+    final String queryTwo = "select from TestCreateIndexAbstractClass where value = 'val2'";
+
+    List<ODocument> resultTwo = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(queryTwo));
+    Assert.assertEquals(resultTwo.size(), 1);
+    Assert.assertEquals(resultTwo.get(0), docTwo);
+
+    explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryTwo)).execute();
+    Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("abstractIndex"));
+  }
+
   private List<OClusterPosition> getValidPositions(int clusterId) {
     final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
 
