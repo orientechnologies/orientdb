@@ -38,7 +38,7 @@ public interface ORecordHook {
   }
 
   public enum RESULT {
-    RECORD_NOT_CHANGED, RECORD_CHANGED, SKIP
+    RECORD_NOT_CHANGED, RECORD_CHANGED, SKIP, SKIP_IO
   }
 
   public void onUnregister();

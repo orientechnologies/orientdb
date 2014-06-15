@@ -1113,9 +1113,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           if (iCallTriggers) {
             final TYPE triggerType = wasNew ? TYPE.BEFORE_CREATE : TYPE.BEFORE_UPDATE;
 
-            if (callbackHooks(triggerType, record) == RESULT.RECORD_CHANGED) {
+            final RESULT hookResult = callbackHooks(triggerType, record);
+            if (hookResult == RESULT.RECORD_CHANGED)
               stream = updateStream(record);
-            }
+            else if (hookResult == RESULT.SKIP_IO)
+              return (RET) record;
           }
         }
 
@@ -1478,6 +1480,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
         if (res == RESULT.RECORD_CHANGED)
           recordChanged = true;
+        else if (res == RESULT.SKIP_IO)
+          // SKIP IO OPERATION
+          return res;
         else if (res == RESULT.SKIP)
           // SKIP NEXT HOOKS AND RETURN IT
           return res;
