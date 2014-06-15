@@ -8,9 +8,9 @@ svg {
     user-select: none;
 }
 
-svg:not(.active):not(.ctrl) {
-    cursor: crosshair;
-}
+/*svg:not(.active):not(.ctrl) {*/
+/*cursor: crosshair;*/
+/*}*/
 
 path.link {
     fill: none;
@@ -65,7 +65,7 @@ text.id {
     font-weight: bold;
 }
 
-.graph-server {
+.graph-server, .graph-db {
     border: 1px solid #DEDEDE;
 }
 
@@ -98,6 +98,35 @@ path.link-db {
     stroke-width: 2px;
     cursor: default;
 }
+
 svg {
     pointer-events: all;
 }
+
+.graph-db svg {
+    width: 100%;
+}
+
+circle.db {
+    fill: #D3D3D3;
+    stroke: black;
+    stroke-width: 1.5px;
+}
+
+circle.cluster {
+    fill: #D3D3D3;
+    stroke: black;
+    stroke-width: 1.5px;
+}
+
+circle.server-online {
+    fill: #468847;
+    stroke: black;
+    stroke-width: 1.5px;
+}
+circle.server-offline {
+    fill: #B94A48;
+    stroke: black;
+    stroke-width: 1.5px;
+}
+

@@ -96,7 +96,7 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
           dbConf.field("metadata", result);
           break;
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
       }
 

@@ -229,7 +229,11 @@ monitor.factory('Server', function ($http, $resource, Metric) {
     resource.findDatabasesOnSnapshot = function (server, callback) {
         var params = {  server: server, type: 'snapshot', kind: 'information', names: 'system.databases' };
         Metric.get(params, function (data) {
-            var databases = data.result[0]['value'].split(",");
+            if (data.result[0] && data.result[0]['value']) {
+                var databases = data.result[0]['value'].split(",");
+            } else {
+                var databases = [];
+            }
             callback(databases)
         });
     }

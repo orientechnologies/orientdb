@@ -53,7 +53,8 @@ app.config(function ($routeProvider) {
         })
         .when('/dashboard/cluster/:cluster/:db', {
             templateUrl: 'views/server/cluster.html',
-            controller: 'ClusterMainController'
+            controller: 'ClusterMainController',
+            reloadOnSearch: false
         })
         .when('/server/:rid', {
             templateUrl: 'views/server/main.html',
@@ -86,7 +87,8 @@ app.config(function ($routeProvider) {
         .otherwise({
             redirectTo: '/'
         });
-});
+})
+;
 
 app.config(function ($httpProvider) {
     $httpProvider.interceptors.push(function ($rootScope, $location, $q) {
@@ -129,3 +131,16 @@ $('.popover').on("hide", function (e) {
 
     e.stopPropagation();
 });
+app.run(['$route', '$rootScope', '$location', function ($route, $rootScope, $location) {
+    var original = $location.path;
+    $location.path = function (path, reload) {
+        if (reload === false) {
+            var lastRoute = $route.current;
+            var un = $rootScope.$on('$locationChangeSuccess', function () {
+                $route.current = lastRoute;
+                un();
+            });
+        }
+        return original.apply($location, [path]);
+    };
+}])

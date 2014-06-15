@@ -17,7 +17,6 @@ module.controller('ClusterNewController', function ($scope, Cluster) {
     $scope.cluster.multicast.port = 2434;
 
 
-
     $scope.save = function () {
         Cluster.saveCluster($scope.cluster).then(function (data) {
             console.log(data);
@@ -41,13 +40,14 @@ module.controller('ClusterChangeController', function ($scope, Cluster) {
 
 
 });
-module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $modal, $q, Server, $odialog) {
+module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $modal, $q, Server, $odialog, $routeParams, $location) {
 
 
     Cluster.getAll().then(function (data) {
         $scope.nodeClusters = data;
         if ($scope.nodeClusters.length > 0) {
             $scope.cluster = $scope.nodeClusters[0];
+            $location.path("dashboard/cluster/" + $scope.cluster.name, false);
         }
     });
 
@@ -152,10 +152,12 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
 
     }
     $scope.$on("dbselected", function (event, data) {
+
+        $location.path("dashboard/cluster/" + $scope.cluster.name + "/" + data.el.name, false);
         if (data.el.db) {
             var db = data.el.name;
             Cluster.getClusterDbInfo($scope.cluster.name, data.el.name).then(function (data) {
-                $scope.dbConfig = {name: db, config: data.result[0] }
+                $scope.dbConfig = {name: db, config: data.result[0], servers: $scope.servers }
                 $scope.phisicalCluster = $scope.dbConfig.config.metadata.clusters;
                 $scope.phisicalCluster.push({name: '*'});
                 var clusters = [];

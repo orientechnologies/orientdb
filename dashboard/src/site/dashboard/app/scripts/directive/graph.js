@@ -3,6 +3,7 @@ var Widget = angular.module('monitor.gdirective', []);
 
 Widget.directive('servergraph', function () {
 
+    var m = [40, 240, 40, 240]
     var drawGrap = function (scope, element, attrs, model) {
 
         var dbHeight = 80;
@@ -144,6 +145,14 @@ Widget.directive('servergraph', function () {
 
         });
 
+        var selSvl = d3.select("svg");
+        selSvl.call(d3.behavior.zoom()
+            .scaleExtent([0.5, 5])
+            .on("zoom", zoom));
+
+        function zoom() {
+
+        }
 
         // remove old nodes
         function tick() {
@@ -197,15 +206,19 @@ Widget.directive('dbgraph', function () {
     var drawDbGraph = function (scope, element, attrs, model) {
         element.empty();
 
-        var sizeC = Object.keys(model.config.clusters).length * 50;
+        var m = [20, 120, 20, 40]
         var margin = {top: 20, right: 120, bottom: 20, left: 40},
             width = 400 - margin.right - margin.left,
-            height = (sizeC + 400) - margin.top - margin.bottom;
+            height = ( 400) - margin.top - margin.bottom;
 
 
         var children = [];
         var keys = Object.keys(model.config.clusters);
 
+        var status = []
+        model.servers.forEach(function (elem) {
+            status[elem.name] = elem.status ? elem.status.toLowerCase() : "offline";
+        })
         keys.forEach(function (val) {
             if (val.indexOf("@") != 0) {
                 var servChild = undefined;
@@ -213,19 +226,19 @@ Widget.directive('dbgraph', function () {
                     var servChild = [];
                     var serv = model.config.clusters[val].servers;
                     serv.forEach(function (val) {
-                        servChild.push({ name: val });
+                        servChild.push({ name: val, clazz: "server-" + status[val] });
                     });
 
                 }
-                children.push({name: val, children: servChild});
+                children.push({name: val, children: servChild, clazz: "cluster"});
             }
         });
-        var root = {name: model.name, children: children};
+        var root = {name: model.name, children: children, clazz: "db"};
 
 
-        var svg = d3.select(element[0]).append('svg')
-            .attr("width", width + margin.right + margin.left)
-            .attr("height", height + margin.top + margin.bottom)
+        var masterSVG = d3.select(element[0]).append('svg');
+        var svg = masterSVG.attr("width", width)
+            .attr("height", height)
             .append("g")
             .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
             .attr("class", "drawarea");
@@ -258,7 +271,10 @@ Widget.directive('dbgraph', function () {
             });
 
         node.append("svg:circle")
-            .attr("r", 30);
+            .attr("r", 30)
+            .attr("class", function (d) {
+                return d.clazz ? d.clazz : "node"
+            });
 
         node.append("svg:text")
             .attr("x", 0)
@@ -268,18 +284,18 @@ Widget.directive('dbgraph', function () {
                 return d.name;
             });
 
-        d3.select("svg")
-            .call(d3.behavior.zoom()
-                .scaleExtent([0.5, 5])
-                .on("zoom", zoom));
+
+        masterSVG.call(d3.behavior.zoom()
+            .scaleExtent([0.5, 5])
+            .on("zoom", zoom));
 
         function zoom() {
             var scale = d3.event.scale,
                 translation = d3.event.translate,
-                tbound = -h * scale,
-                bbound = h * scale,
-                lbound = (-w + m[1]) * scale,
-                rbound = (w - m[3]) * scale;
+                tbound = -height * scale,
+                bbound = height * scale,
+                lbound = (-width + m[1]) * scale,
+                rbound = (width - m[3]) * scale;
             // limit translation to thresholds
             translation = [
                 Math.max(Math.min(translation[0], rbound), lbound),
