@@ -9,10 +9,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-import com.orientechnologies.workbench.OMonitoredCluster;
-import com.orientechnologies.workbench.OMonitoredServer;
-import com.orientechnologies.workbench.OWorkbenchPlugin;
-import com.orientechnologies.workbench.OWorkbenchUtils;
+import com.orientechnologies.workbench.*;
 
 import java.io.IOException;
 import java.net.URL;
@@ -96,7 +93,7 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
           dbConf.field("metadata", result);
           break;
         } catch (Exception e) {
-            e.printStackTrace();
+          e.printStackTrace();
         }
       }
 
@@ -112,6 +109,14 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
       ODocument doc = new ODocument().fromJSON(iRequest.content, NO_MAP);
       OMonitoredCluster c = monitor.getClusterByName((String) doc.field("name"));
 
+      String pwd = doc.field("password");
+      if (pwd != null) {
+        try {
+          doc.field("password", OL.encrypt(pwd));
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
       ODocument res = doc.save();
       if (c != null) {
         c.refreshConfig(res);

@@ -49,7 +49,7 @@ public class OMonitoredCluster {
       Config cfg = new Config();
       GroupConfig groupConfig = cfg.getGroupConfig();
       groupConfig.setName(cName);
-      groupConfig.setPassword(cPasswd);
+      groupConfig.setPassword(OL.decrypt(cPasswd));
       NetworkConfig network = cfg.getNetworkConfig();
       network.setPort(port);
       network.setPortAutoIncrement(portIncrement);

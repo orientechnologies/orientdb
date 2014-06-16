@@ -19,7 +19,7 @@ module.controller('ClusterNewController', function ($scope, Cluster) {
 
     $scope.save = function () {
         Cluster.saveCluster($scope.cluster).then(function (data) {
-            console.log(data);
+
         })
     }
 
@@ -29,7 +29,7 @@ module.controller('ClusterEditController', function ($scope, Cluster) {
 
     $scope.save = function () {
         Cluster.saveCluster($scope.cluster).then(function (data) {
-            console.log(data);
+            
         })
     }
 
@@ -42,6 +42,10 @@ module.controller('ClusterChangeController', function ($scope, Cluster) {
 });
 module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $modal, $q, Server, $odialog, $routeParams, $location) {
 
+
+    if ($routeParams.db) {
+        $scope.dbselected = {el: { db: true}, name: $routeParams.db};
+    }
 
     Cluster.getAll().then(function (data) {
         $scope.nodeClusters = data;

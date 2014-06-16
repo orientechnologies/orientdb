@@ -103,8 +103,12 @@ svg {
     pointer-events: all;
 }
 
+div.graph-db {
+    max-height: 600px;
+}
 .graph-db svg {
     width: 100%;
+    max-height: 600px;
 }
 
 circle.db {

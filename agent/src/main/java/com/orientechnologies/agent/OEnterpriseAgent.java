@@ -80,14 +80,19 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
         @Override
         public void run() {
 
+          int retry = 0;
           while (true) {
             ODistributedServerManager manager = OServerMain.server().getDistributedManager();
             if (manager == null) {
+              if (retry == 5) {
+                break;
+              }
               try {
                 Thread.sleep(2000);
               } catch (InterruptedException e) {
                 e.printStackTrace();
               }
+              retry++;
               continue;
             } else {
               Map<String, Object> map = manager.getConfigurationMap();

@@ -74,7 +74,7 @@
       <file leaf-file-name="cluster.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/cluster.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="155" column="86" selection-start="5355" selection-end="5355" vertical-scroll-proportion="0.22240803" vertical-offset="2192" max-vertical-offset="2880">
+            <state line="31" column="12" selection-start="926" selection-end="926" vertical-scroll-proportion="0.61409396" vertical-offset="99" max-vertical-offset="2940">
               <folding />
             </state>
           </provider>
@@ -92,7 +92,7 @@
       <file leaf-file-name="graph.css" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/styles/graph.css">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="127" column="17" selection-start="1761" selection-end="1761" vertical-scroll-proportion="-16.153847" vertical-offset="1485" max-vertical-offset="2070">
+            <state line="110" column="22" selection-start="1530" selection-end="1530" vertical-scroll-proportion="-4.0384617" vertical-offset="1545" max-vertical-offset="2130">
               <folding />
             </state>
           </provider>
@@ -101,7 +101,7 @@
       <file leaf-file-name="cluster.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/views/server/cluster.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="39" column="34" selection-start="1751" selection-end="1751" vertical-scroll-proportion="-5.625" vertical-offset="450" max-vertical-offset="1200">
+            <state line="41" column="46" selection-start="1862" selection-end="1862" vertical-scroll-proportion="-6.875" vertical-offset="450" max-vertical-offset="1200">
               <folding />
             </state>
           </provider>
@@ -110,7 +110,7 @@
       <file leaf-file-name="graph.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/directive/graph.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="228" column="0" selection-start="6890" selection-end="6890" vertical-scroll-proportion="-15.576923" vertical-offset="3015" max-vertical-offset="4965">
+            <state line="210" column="23" selection-start="6219" selection-end="6219" vertical-scroll-proportion="47.307693" vertical-offset="4380" max-vertical-offset="4965">
               <folding />
             </state>
           </provider>
@@ -157,10 +157,10 @@
         <option value="$PROJECT_DIR$/app/views/cluster/baseEditCluster.html" />
         <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/header.js" />
-        <option value="$PROJECT_DIR$/app/views/server/cluster.html" />
-        <option value="$PROJECT_DIR$/app/styles/graph.css" />
-        <option value="$PROJECT_DIR$/app/scripts/directive/graph.js" />
         <option value="$PROJECT_DIR$/app/scripts/app.js" />
+        <option value="$PROJECT_DIR$/app/views/server/cluster.html" />
+        <option value="$PROJECT_DIR$/app/scripts/directive/graph.js" />
+        <option value="$PROJECT_DIR$/app/styles/graph.css" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/cluster.js" />
       </list>
     </option>
@@ -781,27 +781,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/cluster.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="39" column="34" selection-start="1751" selection-end="1751" vertical-scroll-proportion="-5.625" vertical-offset="450" max-vertical-offset="1200">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/styles/graph.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="127" column="17" selection-start="1761" selection-end="1761" vertical-scroll-proportion="-16.153847" vertical-offset="1485" max-vertical-offset="2070">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/directive/graph.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="228" column="0" selection-start="6890" selection-end="6890" vertical-scroll-proportion="-15.576923" vertical-offset="3015" max-vertical-offset="4965">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
       <provider selected="true" editor-type-id="text-editor">
         <state line="145" column="3" selection-start="4728" selection-end="4728" vertical-scroll-proportion="0.0" vertical-offset="1594" max-vertical-offset="2265">
@@ -809,9 +788,30 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/cluster.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="41" column="46" selection-start="1862" selection-end="1862" vertical-scroll-proportion="-6.875" vertical-offset="450" max-vertical-offset="1200">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/styles/graph.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="110" column="22" selection-start="1530" selection-end="1530" vertical-scroll-proportion="-4.0384617" vertical-offset="1545" max-vertical-offset="2130">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/directive/graph.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="210" column="23" selection-start="6219" selection-end="6219" vertical-scroll-proportion="47.307693" vertical-offset="4380" max-vertical-offset="4965">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/cluster.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="155" column="86" selection-start="5355" selection-end="5355" vertical-scroll-proportion="0.22240803" vertical-offset="2192" max-vertical-offset="2880">
+        <state line="31" column="12" selection-start="926" selection-end="926" vertical-scroll-proportion="0.61409396" vertical-offset="99" max-vertical-offset="2940">
           <folding />
         </state>
       </provider>

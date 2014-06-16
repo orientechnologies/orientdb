@@ -209,7 +209,7 @@ Widget.directive('dbgraph', function () {
         var m = [20, 120, 20, 40]
         var margin = {top: 20, right: 120, bottom: 20, left: 40},
             width = 400 - margin.right - margin.left,
-            height = ( 400) - margin.top - margin.bottom;
+            height = ( 600) - margin.top - margin.bottom;
 
 
         var children = [];
