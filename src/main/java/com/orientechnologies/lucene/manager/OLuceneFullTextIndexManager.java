@@ -17,26 +17,37 @@
 package com.orientechnologies.lucene.manager;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.codecs.TermStats;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.PriorityQueue;
 import org.apache.lucene.util.Version;
 
 import com.orientechnologies.lucene.OLuceneIndexType;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
@@ -93,7 +104,12 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     Query q = null;
     try {
       q = OLuceneIndexType.createFullQuery(index, key, mgrWriter.getIndexWriter().getAnalyzer(), getVersion(metadata));
-      return getResults(q);
+
+      OCommandContext context = null;
+      if (key instanceof OFullTextCompositeKey) {
+        context = ((OFullTextCompositeKey) key).getContext();
+      }
+      return getResults(q, context);
     } catch (ParseException e) {
       throw new OIndexException("Error parsing lucene query ", e);
     }
@@ -122,16 +138,22 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     }
   }
 
-  private Set<OIdentifiable> getResults(Query query) {
+  private Set<OIdentifiable> getResults(Query query, OCommandContext context) {
     Set<OIdentifiable> results = new LinkedHashSet<>();
     try {
       IndexSearcher searcher = getSearcher();
 
+      Map<String, Float> scores = new HashMap<>();
       TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
       ScoreDoc[] hits = docs.scoreDocs;
       for (ScoreDoc score : hits) {
         Document ret = searcher.doc(score.doc);
-        results.add(new ORecordId(ret.get(RID)));
+        String rId = ret.get(RID);
+        results.add(new ORecordId(rId));
+        scores.put(rId, score.score);
+      }
+      if (context != null) {
+        context.setVariable("$luceneScore", scores);
       }
     } catch (IOException e) {
       throw new OIndexException("Error reading from Lucene index", e);
@@ -172,7 +194,12 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
   @Override
   public OIndexKeyCursor keyCursor() {
-    return null;
+    return new OIndexKeyCursor() {
+      @Override
+      public Object next(int prefetchSize) {
+        return null;
+      }
+    };
   }
 
   @Override

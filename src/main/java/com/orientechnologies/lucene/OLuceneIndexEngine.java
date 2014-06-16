@@ -21,6 +21,7 @@ import java.util.Map;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -153,6 +154,8 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   public V get(Object key) {
     return (V) lucene.get(key);
   }
+
+
 
   @Override
   public void put(Object key, V value) {

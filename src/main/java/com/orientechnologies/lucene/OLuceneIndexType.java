@@ -81,6 +81,17 @@ public class OLuceneIndexType {
         booleanQ.add(new TermQuery(new Term(OLuceneIndexManagerAbstract.KEY, key.toString())), BooleanClause.Occur.SHOULD);
       }
       query = booleanQ;
+    } else if (key instanceof OCompositeKey) {
+      BooleanQuery booleanQ = new BooleanQuery();
+      int i = 0;
+      OCompositeKey keys = (OCompositeKey) key;
+      for (String idx : index.getFields()) {
+        String val = (String) keys.getKeys().get(i);
+        booleanQ.add(new TermQuery(new Term(idx, val)), BooleanClause.Occur.MUST);
+        i++;
+
+      }
+      query = booleanQ;
     }
     return query;
   }
@@ -96,8 +107,13 @@ public class OLuceneIndexType {
       query = (String) key;
       return getQueryParser(index, query, analyzer, version);
     } else if (key instanceof OCompositeKey) {
-      query = ((OCompositeKey) key).getKeys().get(0).toString();
-      return getQueryParser(index, query, analyzer, version);
+      if (((OCompositeKey) key).getKeys().size() == 1) {
+        query = ((OCompositeKey) key).getKeys().get(0).toString();
+
+        return getQueryParser(index, query, analyzer, version);
+      } else {
+        return createExactQuery(index, key);
+      }
     }
     return null;
   }

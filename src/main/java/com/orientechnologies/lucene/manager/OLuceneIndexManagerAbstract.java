@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.index.OIndexException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;

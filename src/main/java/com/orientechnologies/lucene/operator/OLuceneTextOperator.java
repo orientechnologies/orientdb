@@ -18,7 +18,9 @@ package com.orientechnologies.lucene.operator;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
+import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -42,11 +44,11 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   @Override
   public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     OIndexCursor cursor;
-    Object indexResult = index.get(new OCompositeKey(keyParams));
+    Object indexResult = index.get(new OFullTextCompositeKey(keyParams).setContext(iContext));
     if (indexResult == null || indexResult instanceof OIdentifiable)
-      cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
+      cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OFullTextCompositeKey(keyParams));
     else
-      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OSpatialCompositeKey(
+      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OFullTextCompositeKey(
           keyParams));
     return cursor;
   }
@@ -81,6 +83,12 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   @Override
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
+
+    Map<String, Float> scores = (Map<String, Float>) iContext.getVariable("$luceneScore");
+    if (scores != null) {
+      iContext.setVariable("$score", scores.get(iRecord.getIdentity().toString()));
+    }
+
     return super.evaluateRecord(iRecord, iCurrentResult, iCondition, iLeft, iRight, iContext);
   }
 }

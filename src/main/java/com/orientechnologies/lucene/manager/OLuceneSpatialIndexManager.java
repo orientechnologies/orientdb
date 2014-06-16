@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.*;
 
 import com.orientechnologies.lucene.shape.OShapeFactory;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;

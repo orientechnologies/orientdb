@@ -24,6 +24,7 @@ import java.util.Set;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneIndexEngine;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
@@ -80,11 +81,29 @@ public class OLuceneFullTextIndex extends OIndexMultiValues implements OLuceneIn
     }
   }
 
-  @Override
-  public Set<OIdentifiable> get(Object key) {
+  public Set<OIdentifiable> get(Object key, OCommandContext context) {
     checkForRebuild();
 
     key = getCollatingValue(key);
+
+    acquireSharedLock();
+    try {
+
+      final Set<OIdentifiable> values = indexEngine.get(key);
+
+      if (values == null)
+        return Collections.emptySet();
+
+      return values;
+
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public Set<OIdentifiable> get(Object key) {
+    checkForRebuild();
 
     acquireSharedLock();
     try {
