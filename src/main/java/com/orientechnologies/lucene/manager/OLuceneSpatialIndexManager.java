@@ -63,6 +63,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     super();
     this.ctx = SpatialContext.GEO;
     this.factory = factory;
+
     SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 11);
     this.strategy = new RecursivePrefixTreeStrategy(grid, "location");
   }

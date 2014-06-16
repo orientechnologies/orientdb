@@ -39,12 +39,6 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     super("LUCENE", 5, false);
   }
 
-  // @Override
-  // protected boolean evaluateExpression(OIdentifiable iRecord, OSQLFilterCondition iCondition, Object iLeft, Object iRight,
-  // OCommandContext iContext) {
-  // return false;
-  // }
-
   @Override
   public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     OIndexCursor cursor;
@@ -52,8 +46,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     if (indexResult == null || indexResult instanceof OIdentifiable)
       cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else
-      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(),
-          new OSpatialCompositeKey(keyParams));
+      cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OSpatialCompositeKey(
+          keyParams));
     return cursor;
   }
 
