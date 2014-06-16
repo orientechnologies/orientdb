@@ -89,11 +89,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case DATETIME:
       value = new Date(OVarIntSerializer.read(bytes).longValue());
       break;
+    case EMBEDDED:
+      value = new ODocument();
+      deserialize((ODocument) value, bytes);
+      break;
     case EMBEDDEDSET:
-      value = readList(bytes, new HashSet<Object>());
+      value = readCollection(bytes, new HashSet<Object>());
       break;
     case EMBEDDEDLIST:
-      value = readList(bytes, new ArrayList<Object>());
+      value = readCollection(bytes, new ArrayList<Object>());
       break;
     case DECIMAL:
       break;
@@ -103,7 +107,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return value;
   }
 
-  private Collection<?> readList(BytesContainer bytes, Collection<Object> found) {
+  private Collection<?> readCollection(BytesContainer bytes, Collection<Object> found) {
     int items = OVarIntSerializer.read(bytes).intValue();
     OType type = readOType(bytes);
     if (type == OType.ANY) {
@@ -178,9 +182,13 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       long time = ((Date) value).getTime();
       pointer = OVarIntSerializer.write(bytes, time);
       break;
+    case EMBEDDED:
+      pointer = bytes.offset;
+      serialize((ODocument) value, bytes);
+      break;
     case EMBEDDEDSET:
     case EMBEDDEDLIST:
-      pointer = writeList(bytes, (Collection<?>) value);
+      pointer = writeCollection(bytes, (Collection<?>) value);
     case DECIMAL:
       break;
     default:
@@ -189,7 +197,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return pointer;
   }
 
-  private short writeList(BytesContainer bytes, Collection<?> value) {
+  private short writeCollection(BytesContainer bytes, Collection<?> value) {
     short pos = OVarIntSerializer.write(bytes, value.size());
     // TODO manage embedded type from schema and autodeterminated.
     writeOType(bytes, bytes.alloc((short) 1), OType.ANY);

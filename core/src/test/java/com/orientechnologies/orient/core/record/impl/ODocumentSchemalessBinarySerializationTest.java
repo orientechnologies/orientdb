@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,6 +13,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
@@ -241,6 +243,24 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(extr.field("bytes"), document.field("bytes"));
     assertEquals(extr.field("booleans"), document.field("booleans"));
     assertEquals(extr.field("listMixed"), document.field("listMixed"));
+  }
+
+  @Test
+  public void testSimpleEmbeddedDoc() {
+    ODocument document = new ODocument();
+    ODocument embedded = new ODocument();
+    embedded.field("name", "test");
+    embedded.field("surname", "something");
+    document.field("embed", embedded, OType.EMBEDDED);
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    assertEquals(document.fields(), extr.fields());
+    ODocument emb = extr.field("embed");
+    assertNotNull(emb);
+    assertEquals(emb.field("name"), embedded.field("name"));
+    assertEquals(emb.field("surname"), embedded.field("surname"));
+
   }
 
 }
