@@ -15,7 +15,9 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -99,12 +101,50 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case EMBEDDEDLIST:
       value = readCollection(bytes, new ArrayList<Object>());
       break;
+    case LINKSET:
+      value = readLinkCollection(bytes, new HashSet<ORID>());
+      break;
+    case LINKLIST:
+      value = readLinkCollection(bytes, new ArrayList<ORID>());
+      break;
+    case BINARY:
+      Number n = OVarIntSerializer.read(bytes);
+      byte[] newValue = new byte[n.intValue()];
+      System.arraycopy(bytes.bytes, bytes.offset, newValue, 0, newValue.length);
+      bytes.read(n.intValue());
+      value = newValue;
+      break;
+    case LINK:
+      value = readOptimizedLink(bytes);
+      break;
     case DECIMAL:
       break;
     default:
       break;
     }
     return value;
+  }
+
+  private Collection<ORID> readLinkCollection(BytesContainer bytes, Collection<ORID> found) {
+    int items = OVarIntSerializer.read(bytes).intValue();
+    for (int i = 0; i < items; i++) {
+      found.add(readLink(bytes));
+    }
+    return found;
+  }
+
+  private ORID readLink(BytesContainer bytes) {
+    int cluster = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
+    bytes.read((short) OIntegerSerializer.INT_SIZE);
+    long record = OLongSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
+    bytes.read((short) OLongSerializer.LONG_SIZE);
+    return new ORecordId(cluster, new OClusterPositionLong(record));
+  }
+
+  private ORID readOptimizedLink(BytesContainer bytes) {
+    int cluster = OVarIntSerializer.read(bytes).intValue();
+    long record = OVarIntSerializer.read(bytes).longValue();
+    return new ORecordId(cluster, new OClusterPositionLong(record));
   }
 
   private Collection<?> readCollection(BytesContainer bytes, Collection<Object> found) {
@@ -149,6 +189,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   }
 
+  @SuppressWarnings("unchecked")
   private short writeSingleValue(BytesContainer bytes, Object value, OType type) {
     short pointer = 0;
     switch (type) {
@@ -182,6 +223,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       long time = ((Date) value).getTime();
       pointer = OVarIntSerializer.write(bytes, time);
       break;
+    case DATE:
+      break;
     case EMBEDDED:
       pointer = bytes.offset;
       serialize((ODocument) value, bytes);
@@ -189,12 +232,49 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case EMBEDDEDSET:
     case EMBEDDEDLIST:
       pointer = writeCollection(bytes, (Collection<?>) value);
+      break;
     case DECIMAL:
+      break;
+    case BINARY:
+      byte[] valueBytes = (byte[]) (value);
+      pointer = OVarIntSerializer.write(bytes, valueBytes.length);
+      short start = bytes.alloc((short) valueBytes.length);
+      System.arraycopy(valueBytes, 0, bytes.bytes, start, valueBytes.length);
+      break;
+    case LINKSET:
+    case LINKLIST:
+      Collection<ORID> ridCollection = (Collection<ORID>) value;
+      pointer = writeLinkCollection(bytes, ridCollection);
+      break;
+    case LINK:
+      pointer = writeOptimizedLink(bytes, (ORID) value);
       break;
     default:
       break;
     }
     return pointer;
+  }
+
+  public short writeOptimizedLink(BytesContainer bytes, ORID link) {
+    short pos = OVarIntSerializer.write(bytes, link.getClusterId());
+    OVarIntSerializer.write(bytes, link.getClusterPosition().longValue());
+    return pos;
+  }
+
+  public short writeLink(BytesContainer bytes, ORID link) {
+    short pos = bytes.alloc((short) OIntegerSerializer.INT_SIZE);
+    OIntegerSerializer.INSTANCE.serialize(link.getClusterId(), bytes.bytes, pos);
+    short posR = bytes.alloc((short) OLongSerializer.LONG_SIZE);
+    OLongSerializer.INSTANCE.serialize(link.getClusterPosition().longValue(), bytes.bytes, posR);
+    return pos;
+  }
+
+  private short writeLinkCollection(BytesContainer bytes, Collection<ORID> value) {
+    short pos = OVarIntSerializer.write(bytes, value.size());
+    for (ORID itemValue : value) {
+      writeLink(bytes, itemValue);
+    }
+    return pos;
   }
 
   private short writeCollection(BytesContainer bytes, Collection<?> value) {
@@ -278,8 +358,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   private short writeString(BytesContainer bytes, String toWrite) {
-    short pointer = OVarIntSerializer.write(bytes, toWrite.length());
     byte[] nameBytes = toWrite.getBytes(utf8);
+    short pointer = OVarIntSerializer.write(bytes, nameBytes.length);
     short start = bytes.alloc((short) nameBytes.length);
     System.arraycopy(nameBytes, 0, bytes.bytes, start, nameBytes.length);
     return pointer;

@@ -4,6 +4,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +41,11 @@ public class ODocumentSchemalessBinarySerializationTest {
     document.field("character", 'C');
     document.field("alive", true);
     document.field("date", new Date());
+    byte[] byteValue = new byte[10];
+    Arrays.fill(byteValue, (byte) 10);
+    document.field("bytes", byteValue);
+
+    document.field("utf8String", new String("A" + "\u00ea" + "\u00f1" + "\u00fc" + "C"));
     document.field("recordId", new ORecordId(10, new OClusterPositionLong(10)));
 
     byte[] res = serializer.toStream(document, false);
@@ -57,7 +63,9 @@ public class ODocumentSchemalessBinarySerializationTest {
     // assertEquals(document.field("character"), extr.field("character"));
     assertEquals(extr.field("alive"), document.field("alive"));
     assertEquals(extr.field("date"), document.field("date"));
-    // assertEquals(extr.field("recordId"), document.field("recordId"));
+    assertEquals(extr.field("bytes"), document.field("bytes"));
+    assertEquals(extr.field("utf8String"), document.field("utf8String"));
+    assertEquals(extr.field("recordId"), document.field("recordId"));
 
   }
 
@@ -230,6 +238,7 @@ public class ODocumentSchemalessBinarySerializationTest {
     listMixed.add("hello");
     listMixed.add(new Date());
     listMixed.add((byte) 10);
+    listMixed.add(new ORecordId(10, new OClusterPositionLong(20)));
     document.field("listMixed", listMixed);
 
     byte[] res = serializer.toStream(document, false);
@@ -243,6 +252,31 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(extr.field("bytes"), document.field("bytes"));
     assertEquals(extr.field("booleans"), document.field("booleans"));
     assertEquals(extr.field("listMixed"), document.field("listMixed"));
+  }
+
+  @Test
+  public void testLinkCollections() {
+    ODocument document = new ODocument();
+    Set<ORecordId> linkSet = new HashSet<ORecordId>();
+    linkSet.add(new ORecordId(10, new OClusterPositionLong(20)));
+    linkSet.add(new ORecordId(10, new OClusterPositionLong(21)));
+    linkSet.add(new ORecordId(10, new OClusterPositionLong(22)));
+    linkSet.add(new ORecordId(11, new OClusterPositionLong(22)));
+    document.field("linkSet", linkSet, OType.LINKSET);
+
+    List<ORecordId> linkList = new ArrayList<ORecordId>();
+    linkList.add(new ORecordId(10, new OClusterPositionLong(20)));
+    linkList.add(new ORecordId(10, new OClusterPositionLong(21)));
+    linkList.add(new ORecordId(10, new OClusterPositionLong(22)));
+    linkList.add(new ORecordId(11, new OClusterPositionLong(22)));
+    document.field("linkList", linkList, OType.LINKLIST);
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+
+    assertEquals(extr.fields(), document.fields());
+    assertEquals(extr.field("linkSet"), document.field("linkSet"));
+    assertEquals(extr.field("linkList"), document.field("linkList"));
+
   }
 
   @Test
