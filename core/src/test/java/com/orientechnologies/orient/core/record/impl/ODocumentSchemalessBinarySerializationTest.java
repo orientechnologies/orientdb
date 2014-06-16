@@ -6,8 +6,10 @@ import static org.testng.AssertJUnit.assertNotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.testng.annotations.Test;
@@ -294,7 +296,122 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertNotNull(emb);
     assertEquals(emb.field("name"), embedded.field("name"));
     assertEquals(emb.field("surname"), embedded.field("surname"));
+  }
 
+  @Test
+  public void testSimpleMapStringLiteral() {
+    ODocument document = new ODocument();
+
+    Map<String, String> mapString = new HashMap<String, String>();
+    mapString.put("key", "value");
+    mapString.put("key1", "value1");
+    document.field("mapString", mapString);
+
+    Map<String, Integer> mapInt = new HashMap<String, Integer>();
+    mapInt.put("key", 2);
+    mapInt.put("key1", 3);
+    document.field("mapInt", mapInt);
+
+    Map<String, Long> mapLong = new HashMap<String, Long>();
+    mapLong.put("key", 2L);
+    mapLong.put("key1", 3L);
+    document.field("mapLong", mapLong);
+
+    Map<String, Short> shortMap = new HashMap<String, Short>();
+    shortMap.put("key", (short) 2);
+    shortMap.put("key1", (short) 3);
+    document.field("shortMap", shortMap);
+
+    Map<String, Date> dateMap = new HashMap<String, Date>();
+    dateMap.put("key", new Date());
+    dateMap.put("key1", new Date());
+    document.field("dateMap", dateMap);
+
+    Map<String, Float> floatMap = new HashMap<String, Float>();
+    floatMap.put("key", 10f);
+    floatMap.put("key1", 11f);
+    document.field("floatMap", floatMap);
+
+    Map<String, Double> doubleMap = new HashMap<String, Double>();
+    doubleMap.put("key", 10d);
+    doubleMap.put("key1", 11d);
+    document.field("doubleMap", doubleMap);
+
+    Map<String, Byte> bytesMap = new HashMap<String, Byte>();
+    bytesMap.put("key", (byte) 10);
+    bytesMap.put("key1", (byte) 11);
+    document.field("bytesMap", bytesMap);
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    assertEquals(extr.fields(), document.fields());
+    assertEquals(extr.field("mapString"), document.field("mapString"));
+    assertEquals(extr.field("mapLong"), document.field("mapLong"));
+    assertEquals(extr.field("shortMap"), document.field("shortMap"));
+    assertEquals(extr.field("dateMap"), document.field("dateMap"));
+    assertEquals(extr.field("doubleMap"), document.field("doubleMap"));
+    assertEquals(extr.field("bytesMap"), document.field("bytesMap"));
+  }
+
+  @Test
+  private void testCollectionOfEmbeddedDocument() {
+
+    ODocument document = new ODocument();
+
+    ODocument embeddedInList = new ODocument();
+    embeddedInList.field("name", "test");
+    embeddedInList.field("surname", "something");
+
+    List<ODocument> embeddedList = new ArrayList<ODocument>();
+    embeddedList.add(embeddedInList);
+    document.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
+
+    ODocument embeddedInSet = new ODocument();
+    embeddedInSet.field("name", "test1");
+    embeddedInSet.field("surname", "something2");
+
+    Set<ODocument> embeddedSet = new HashSet<ODocument>();
+    embeddedSet.add(embeddedInSet);
+    document.field("embeddedSet", embeddedSet, OType.EMBEDDEDSET);
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+
+    List<ODocument> ser = extr.field("embeddedList");
+    assertEquals(1, ser.size());
+    ODocument inList = ser.get(0);
+    assertNotNull(inList);
+    assertEquals(inList.field("name"), embeddedInList.field("name"));
+    assertEquals(inList.field("surname"), embeddedInList.field("surname"));
+
+    Set<ODocument> setEmb = extr.field("embeddedSet");
+    assertEquals(1, setEmb.size());
+    ODocument inSet = setEmb.iterator().next();
+    assertNotNull(inSet);
+    assertEquals(inSet.field("name"), embeddedInSet.field("name"));
+    assertEquals(inSet.field("surname"), embeddedInSet.field("surname"));
+  }
+
+  @Test
+  public void testMapOfEmbeddedDocument() {
+
+    ODocument document = new ODocument();
+
+    ODocument embeddedInMap = new ODocument();
+    embeddedInMap.field("name", "test");
+    embeddedInMap.field("surname", "something");
+    Map<String, ODocument> map = new HashMap<String, ODocument>();
+    map.put("embedded", embeddedInMap);
+    document.field("map", map, OType.EMBEDDEDMAP);
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    Map<String, ODocument> mapS = extr.field("map");
+    assertEquals(1, mapS.size());
+    ODocument emb = mapS.get("embedded");
+    assertNotNull(emb);
+    assertEquals(emb.field("name"), embeddedInMap.field("name"));
+    assertEquals(emb.field("surname"), embeddedInMap.field("surname"));
   }
 
 }
