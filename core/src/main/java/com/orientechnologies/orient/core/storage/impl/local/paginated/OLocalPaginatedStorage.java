@@ -449,9 +449,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   public int getDataSegmentIdByName(final String dataSegmentName) {
     OLogManager.instance().debug(
-						this,
-						"getDataSegmentIdByName: Local paginated storage does not support data segments. "
-										+ "-1 will be returned for data segment %s.", dataSegmentName);
+        this,
+        "getDataSegmentIdByName: Local paginated storage does not support data segments. "
+            + "-1 will be returned for data segment %s.", dataSegmentName);
 
     return -1;
   }
@@ -540,7 +540,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     } catch (Exception e) {
       OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
-							OStorageException.class);
+          OStorageException.class);
     } finally {
       lock.releaseExclusiveLock();
     }
@@ -1841,9 +1841,17 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       } else if (walRecord instanceof OOperationUnitRecord) {
         OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
         OOperationUnitId unitId = operationUnitRecord.getOperationUnitId();
-        List<OLogSequenceNumber> records = operationUnits.get(unitId);
+
+        final List<OLogSequenceNumber> records = operationUnits.get(unitId);
 
         assert records != null;
+
+        if (records == null) {
+          OLogManager.instance().warn(this,
+              "Record with lsn %s  which indication of start of atomic operation was truncated will be skipped.",
+              walRecord.getLsn());
+          continue;
+        }
 
         records.add(lsn);
 
