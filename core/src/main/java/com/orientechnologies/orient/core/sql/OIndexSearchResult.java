@@ -24,11 +24,11 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
  * index search and filed - value pair that uses this index should always be placed at last position.
  */
 public class OIndexSearchResult {
-  final Map<String, Object>            fieldValuePairs = new HashMap<String, Object>(8);
-  final OQueryOperator                 lastOperator;
-  final OSQLFilterItemField.FieldChain lastField;
-  final Object                         lastValue;
-  boolean                              containsNullValues;
+  public final Map<String, Object>            fieldValuePairs = new HashMap<String, Object>(8);
+  public final OQueryOperator                 lastOperator;
+  public final OSQLFilterItemField.FieldChain lastField;
+  public final Object                         lastValue;
+  boolean                                     containsNullValues;
 
   public OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
     this.lastOperator = lastOperator;
@@ -100,7 +100,44 @@ public class OIndexSearchResult {
     return list;
   }
 
-  public OSQLFilterItemField.FieldChain getLastField() {
-    return lastField;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIndexSearchResult that = (OIndexSearchResult) o;
+
+    if (containsNullValues != that.containsNullValues)
+      return false;
+    for (Map.Entry<String, Object> entry : fieldValuePairs.entrySet()) {
+      if (!that.fieldValuePairs.get(entry.getKey()).equals(entry.getValue()))
+        return false;
+    }
+
+    if (!lastField.equals(that.lastField))
+      return false;
+    if (!lastOperator.equals(that.lastOperator))
+      return false;
+    if (!lastValue.equals(that.lastValue))
+      return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = lastOperator.hashCode();
+
+    for (Map.Entry<String, Object> entry : fieldValuePairs.entrySet()) {
+      result = 31 * result + entry.getKey().hashCode();
+      result = 31 * result + entry.getValue().hashCode();
+    }
+
+    result = 31 * result + lastField.hashCode();
+    result = 31 * result + lastValue.hashCode();
+    result = 31 * result + (containsNullValues ? 1 : 0);
+    return result;
   }
 }

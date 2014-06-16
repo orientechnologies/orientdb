@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import java.util.Set;
+
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -25,8 +27,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
-
-import java.util.Set;
 
 /**
  * Represent an object field as value in the query condition.
@@ -153,6 +153,10 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
      */
     public boolean isLong() {
       return operationsChain != null && operationsChain.size() > 0;
+    }
+
+    public boolean belongsTo(OSQLFilterItemField filterItemField) {
+      return OSQLFilterItemField.this == filterItemField;
     }
   }
 }

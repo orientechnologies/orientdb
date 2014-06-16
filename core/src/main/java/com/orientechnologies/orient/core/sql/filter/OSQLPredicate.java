@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
@@ -106,7 +105,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     if (rootCondition == null)
       return true;
 
-    return rootCondition.evaluate((ORecordSchemaAware<?>) iRecord, iCurrentResult, iContext);
+    return rootCondition.evaluate(iRecord, iCurrentResult, iContext);
   }
 
   private Object extractConditions(final OSQLFilterCondition iParentCondition) {
@@ -346,8 +345,6 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
   /**
    * Binds parameters.
-   * 
-   * @param iArgs
    */
   public void bindParameters(final Map<Object, Object> iArgs) {
     if (parameterItems == null || iArgs == null || iArgs.size() == 0)
