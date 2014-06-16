@@ -1848,7 +1848,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
         if (records == null) {
           OLogManager.instance().warn(this,
-              "Record which indicates start of atomic operation was truncated record with lsn %s will be skipped.",
+              "Record with lsn %s  which indication of start of atomic operation was truncated will be skipped.",
               walRecord.getLsn());
           continue;
         }
