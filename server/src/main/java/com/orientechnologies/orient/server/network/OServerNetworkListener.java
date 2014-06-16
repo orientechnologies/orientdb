@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
@@ -237,12 +238,16 @@ public class OServerNetworkListener extends Thread {
     return inboundAddr;
   }
 
-  public String getListeningAddress() {
+  public String getListeningAddress(final boolean resolveMultiIfcWithLocal) {
     String address = serverSocket.getInetAddress().getHostAddress().toString();
-    if (address.equals("0.0.0.0"))
+    if (resolveMultiIfcWithLocal && address.equals("0.0.0.0"))
       try {
         address = InetAddress.getLocalHost().getHostAddress().toString();
       } catch (UnknownHostException e) {
+        try {
+          address = OChannel.getLocalIpAddress(true);
+        } catch (Exception ex) {
+        }
       }
     return address + ":" + serverSocket.getLocalPort();
   }
