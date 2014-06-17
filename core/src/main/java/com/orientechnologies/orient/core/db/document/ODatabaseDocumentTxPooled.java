@@ -49,7 +49,7 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 
   public void reuse(final Object iOwner, final Object[] iAdditionalArgs) {
     ownerPool = (ODatabaseDocumentPool) iOwner;
-    getLevel1Cache().invalidate();
+    getLocalCache().invalidate();
     // getMetadata().reload();
     ODatabaseRecordThreadLocal.INSTANCE.set(this);
 
@@ -114,7 +114,7 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
       OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }
 
-    getLevel1Cache().clear();
+    getLocalCache().clear();
 
     if (ownerPool != null) {
       final ODatabaseDocumentPool localCopy = ownerPool;

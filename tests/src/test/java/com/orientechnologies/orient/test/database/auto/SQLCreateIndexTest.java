@@ -67,7 +67,6 @@ public class SQLCreateIndexTest {
     database.command(new OCommandSQL("delete from sqlCreateIndexTestClass")).execute();
     database.command(new OCommandSQL("drop class sqlCreateIndexTestClass")).execute();
     database.getMetadata().getSchema().reload();
-    database.getLevel2Cache().clear();
     database.close();
   }
 
@@ -322,24 +321,23 @@ public class SQLCreateIndexTest {
     Assert.assertEquals(index.getType(), "NOTUNIQUE");
   }
 
-	public void testCreateRidBagIndex() throws Exception {
-		database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexRidBagIndex ON sqlCreateIndexTestClass (prop9) NOTUNIQUE"))
-						.execute();
-		database.getMetadata().getIndexManager().reload();
+  public void testCreateRidBagIndex() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexRidBagIndex ON sqlCreateIndexTestClass (prop9) NOTUNIQUE"))
+        .execute();
+    database.getMetadata().getIndexManager().reload();
 
-		final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
-						.getClassIndex("sqlCreateIndexRidBagIndex");
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+        .getClassIndex("sqlCreateIndexRidBagIndex");
 
-		Assert.assertNotNull(index);
+    Assert.assertNotNull(index);
 
-		final OIndexDefinition indexDefinition = index.getDefinition();
+    final OIndexDefinition indexDefinition = index.getDefinition();
 
-		Assert.assertTrue(indexDefinition instanceof OPropertyRidBagIndexDefinition);
-		Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop9"));
-		Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.LINK });
-		Assert.assertEquals(index.getType(), "NOTUNIQUE");
-	}
-
+    Assert.assertTrue(indexDefinition instanceof OPropertyRidBagIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop9"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.LINK });
+    Assert.assertEquals(index.getType(), "NOTUNIQUE");
+  }
 
   public void testCreateOldStileEmbeddedListIndex() throws Exception {
     database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexTestClass.prop5 NOTUNIQUE")).execute();
@@ -358,22 +356,22 @@ public class SQLCreateIndexTest {
     Assert.assertEquals(index.getType(), "NOTUNIQUE");
   }
 
-	public void testCreateOldStileRidBagIndex() throws Exception {
-		database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexTestClass.prop9 NOTUNIQUE")).execute();
-		database.getMetadata().getIndexManager().reload();
+  public void testCreateOldStileRidBagIndex() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX sqlCreateIndexTestClass.prop9 NOTUNIQUE")).execute();
+    database.getMetadata().getIndexManager().reload();
 
-		final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
-						.getClassIndex("sqlCreateIndexTestClass.prop9");
+    final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")
+        .getClassIndex("sqlCreateIndexTestClass.prop9");
 
-		Assert.assertNotNull(index);
+    Assert.assertNotNull(index);
 
-		final OIndexDefinition indexDefinition = index.getDefinition();
+    final OIndexDefinition indexDefinition = index.getDefinition();
 
-		Assert.assertTrue(indexDefinition instanceof OPropertyRidBagIndexDefinition);
-		Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop9"));
-		Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.LINK });
-		Assert.assertEquals(index.getType(), "NOTUNIQUE");
-	}
+    Assert.assertTrue(indexDefinition instanceof OPropertyRidBagIndexDefinition);
+    Assert.assertEquals(indexDefinition.getFields(), Arrays.asList("prop9"));
+    Assert.assertEquals(indexDefinition.getTypes(), new OType[] { OType.LINK });
+    Assert.assertEquals(index.getType(), "NOTUNIQUE");
+  }
 
   @Test
   public void testCreateEmbeddedListWithoutLinkedTypeIndex() throws Exception {

@@ -19,7 +19,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheLevelOneLocatorImpl;
-import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
+import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -101,7 +101,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   private String                                            recordFormat;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION>       hooks               = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   private boolean                                           retainRecords       = true;
-  private OLevel1RecordCache                                level1Cache;
+  private OLocalRecordCache                                 level1Cache;
   private boolean                                           mvcc;
   private boolean                                           validation;
   private ODataSegmentStrategy                              dataSegmentStrategy = new ODefaultDataSegmentStrategy();
@@ -161,15 +161,15 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
           callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToUpdate);
           replicaToUpdate.unsetDirty();
-          getLevel1Cache().updateRecord(replicaToUpdate);
+          getLocalCache().updateRecord(replicaToUpdate);
         } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
           callbackHooks(TYPE.AFTER_REPLICA_UPDATE, replicaToUpdate);
           replicaToUpdate.unsetDirty();
-          getLevel1Cache().updateRecord(replicaToUpdate);
+          getLocalCache().updateRecord(replicaToUpdate);
         } else if (!loadedRecordMetadata.getRecordVersion().isTombstone() && replicaVersion.isTombstone()) {
           callbackHooks(TYPE.AFTER_REPLICA_DELETE, replicaToUpdate);
           replicaToUpdate.unsetDirty();
-          getLevel1Cache().deleteRecord(rid);
+          getLocalCache().deleteRecord(rid);
         }
       } catch (Exception e) {
         if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
@@ -208,7 +208,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         if (!replicaVersion.isTombstone()) {
           callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToAdd);
           replicaToAdd.unsetDirty();
-          getLevel1Cache().updateRecord(replicaToAdd);
+          getLocalCache().updateRecord(replicaToAdd);
         }
 
       } catch (Exception e) {
@@ -251,7 +251,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     databaseOwner = this;
 
     recordType = iRecordType;
-    level1Cache = new OLevel1RecordCache(new OCacheLevelOneLocatorImpl());
+    level1Cache = new OLocalRecordCache(new OCacheLevelOneLocatorImpl());
 
     mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
     validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
@@ -545,8 +545,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   /**
    * {@inheritDoc}
    */
-  public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
-    return (RET) executeReadRecord((ORecordId) iRecordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+  public <RET extends ORecordInternal<?>> RET load(final ORID recordId) {
+    return (RET) executeReadRecord((ORecordId) recordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   /**
@@ -989,7 +989,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       if (record == null && !iIgnoreCache)
         // SEARCH INTO THE CACHE
-        record = getLevel1Cache().findRecord(rid);
+        record = getLocalCache().findRecord(rid);
 
       if (record != null) {
         if (iRecord != null) {
@@ -1035,7 +1035,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       callbackHooks(TYPE.AFTER_READ, iRecord);
 
       if (!iIgnoreCache)
-        getLevel1Cache().updateRecord(iRecord);
+        getLocalCache().updateRecord(iRecord);
 
       return (RET) iRecord;
     } catch (OException e) {
@@ -1163,7 +1163,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       if (stream != null && stream.length > 0 && !operationResult.isMoved())
         // ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
-        getLevel1Cache().updateRecord(record);
+        getLocalCache().updateRecord(record);
     } catch (OException e) {
       // RE-THROW THE EXCEPTION
       throw e;
@@ -1248,7 +1248,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
         // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
         if (!operationResult.isMoved()) {
-          getLevel1Cache().deleteRecord(rid);
+          getLocalCache().deleteRecord(rid);
         }
 
       } catch (OException e) {
@@ -1287,7 +1287,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
       if (!operationResult.isMoved())
-        getLevel1Cache().deleteRecord(rid);
+        getLocalCache().deleteRecord(rid);
 
       return operationResult.getResult();
     } finally {
@@ -1430,7 +1430,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * {@inheritDoc}
    */
   @Override
-  public OLevel1RecordCache getLevel1Cache() {
+  public OLocalRecordCache getLocalCache() {
     return level1Cache;
   }
 

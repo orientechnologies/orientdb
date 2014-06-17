@@ -392,8 +392,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
-      database.getLevel1Cache().setEnable(false);
-      database.getLevel2Cache().setEnable(false);
+      database.getLocalCache().setEnable(false);
       database.setMVCC(false);
       database.setValidationEnabled(false);
 

@@ -15,12 +15,9 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -40,9 +37,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -412,13 +407,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
       restrictedClass.createProperty(ALLOW_DELETE_FIELD, OType.LINKSET,
           database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
 
-    final OLevel2RecordCache cache = getDatabase().getLevel2Cache();
-    for (final int clusterId : userClass.getPolymorphicClusterIds())
-      cache.addPinnedCluster(clusterId);
-
-    for (final int clusterId : roleClass.getPolymorphicClusterIds())
-      cache.addPinnedCluster(clusterId);
-
     return adminUser;
   }
 
@@ -426,13 +414,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public void load() {
-    final OLevel2RecordCache cache = getDatabase().getLevel2Cache();
-
     final OClass userClass = getDatabase().getMetadata().getSchema().getClass("OUser");
     if (userClass != null) {
-      for (final int clusterId : userClass.getPolymorphicClusterIds())
-        cache.addPinnedCluster(clusterId);
-
       // @COMPATIBILITY <1.3.0
       if (!userClass.existsProperty("status")) {
         userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
@@ -446,8 +429,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
       // ROLE
       final OClass roleClass = getDatabase().getMetadata().getSchema().getClass("ORole");
-      for (final int clusterId : roleClass.getPolymorphicClusterIds())
-        cache.addPinnedCluster(clusterId);
 
       if (!roleClass.existsProperty("inheritedRole")) {
         roleClass.createProperty("inheritedRole", OType.LINK, roleClass);

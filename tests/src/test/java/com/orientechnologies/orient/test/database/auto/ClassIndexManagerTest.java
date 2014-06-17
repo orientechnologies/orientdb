@@ -98,7 +98,7 @@ public class ClassIndexManagerTest {
     database.command(new OCommandSQL("drop class classIndexManagerTestClassTwo")).execute();
     database.command(new OCommandSQL("drop class classIndexManagerTestSuperClass")).execute();
     database.getMetadata().getSchema().reload();
-    database.getLevel2Cache().clear();
+
     database.close();
   }
 

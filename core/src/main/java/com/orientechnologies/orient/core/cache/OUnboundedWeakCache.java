@@ -41,12 +41,7 @@ public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, Wea
     if (!isEnabled())
       return null;
 
-    lock.acquireExclusiveLock();
-    try {
-      return get(cache.get(id));
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    return get(cache.get(id));
   }
 
   @Override
@@ -54,12 +49,7 @@ public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, Wea
     if (!isEnabled())
       return null;
 
-    lock.acquireExclusiveLock();
-    try {
-      return get(cache.put(record.getIdentity(), new WeakReference<ORecordInternal<?>>(record)));
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    return get(cache.put(record.getIdentity(), new WeakReference<ORecordInternal<?>>(record)));
   }
 
   @Override
@@ -67,12 +57,7 @@ public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, Wea
     if (!isEnabled())
       return null;
 
-    lock.acquireExclusiveLock();
-    try {
-      return get(cache.remove(id));
-    } finally {
-      lock.releaseExclusiveLock();
-    }
+    return get(cache.remove(id));
   }
 
   private ORecordInternal<?> get(WeakReference<ORecordInternal<?>> value) {

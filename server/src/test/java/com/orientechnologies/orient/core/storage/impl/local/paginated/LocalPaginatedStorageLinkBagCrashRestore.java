@@ -46,10 +46,8 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
   @BeforeClass
   public void beforeClass() throws Exception {
-    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
-    OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
-    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-    OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
+    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
+    OGlobalConfiguration.CACHE_LOCAL_SIZE.setValue(0);
 
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(10);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(5);
@@ -227,10 +225,8 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-      OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
-      OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
-      OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-      OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
+      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
+      OGlobalConfiguration.CACHE_LOCAL_SIZE.setValue(0);
 
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
       OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);

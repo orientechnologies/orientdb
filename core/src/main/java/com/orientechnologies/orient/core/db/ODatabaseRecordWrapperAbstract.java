@@ -223,8 +223,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return this;
   }
 
-  public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
-    return (RET) underlying.load(iRecordId);
+  public <RET extends ORecordInternal<?>> RET load(final ORID recordId) {
+    return (RET) underlying.load(recordId);
   }
 
   public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId, final String iFetchPlan) {

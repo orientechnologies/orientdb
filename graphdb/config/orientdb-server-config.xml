@@ -46,25 +46,25 @@
     </handlers>
     <network>
         <sockets>
-	        <socket implementation="com.orientechnologies.orient.server.network.OServerSSLSocketFactory" name="ssl">
-	          <parameters>
-	            <parameter value="false" name="network.ssl.clientAuth"/>
-	            <parameter value="config/cert/orientdb.ks" name="network.ssl.keyStore"/>
-	            <parameter value="password" name="network.ssl.keyStorePassword"/>
-	            <parameter value="config/cert/orientdb.ks" name="network.ssl.trustStore"/>
-	            <parameter value="password" name="network.ssl.trustStorePassword"/>
-	          </parameters>
-	        </socket>
-	        <socket implementation="com.orientechnologies.orient.server.network.OServerSSLSocketFactory" name="https">
-	          <parameters>
-	            <parameter value="false" name="network.ssl.clientAuth"/>
-	            <parameter value="config/cert/orientdb.ks" name="network.ssl.keyStore"/>
-	            <parameter value="password" name="network.ssl.keyStorePassword"/>
-	            <parameter value="config/cert/orientdb.ks" name="network.ssl.trustStore"/>
-	            <parameter value="password" name="network.ssl.trustStorePassword"/>
-	          </parameters>
-	        </socket>
-        </sockets>    
+            <socket implementation="com.orientechnologies.orient.server.network.OServerSSLSocketFactory" name="ssl">
+                <parameters>
+                    <parameter value="false" name="network.ssl.clientAuth"/>
+                    <parameter value="config/cert/orientdb.ks" name="network.ssl.keyStore"/>
+                    <parameter value="password" name="network.ssl.keyStorePassword"/>
+                    <parameter value="config/cert/orientdb.ks" name="network.ssl.trustStore"/>
+                    <parameter value="password" name="network.ssl.trustStorePassword"/>
+                </parameters>
+            </socket>
+            <socket implementation="com.orientechnologies.orient.server.network.OServerSSLSocketFactory" name="https">
+                <parameters>
+                    <parameter value="false" name="network.ssl.clientAuth"/>
+                    <parameter value="config/cert/orientdb.ks" name="network.ssl.keyStore"/>
+                    <parameter value="password" name="network.ssl.keyStorePassword"/>
+                    <parameter value="config/cert/orientdb.ks" name="network.ssl.trustStore"/>
+                    <parameter value="password" name="network.ssl.trustStorePassword"/>
+                </parameters>
+            </socket>
+        </sockets>
         <protocols>
             <!-- Default registered protocol. It reads commands using the HTTP protocol
                 and write data locally -->
@@ -115,10 +115,8 @@
         <entry name="db.pool.min" value="1"/>
         <entry name="db.pool.max" value="50"/>
 
-        <!-- LEVEL1 AND 2 CACHE: enable/disable and set the size as number of entries -->
+        <!-- LEVEL1 CACHE: enable/disable and set the size as number of entries -->
         <entry name="cache.level1.enabled" value="true"/>
-        <entry name="cache.level2.enabled" value="false"/>
-        <entry name="cache.level2.size" value="0"/>
 
         <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size> -->
         <entry name="profiler.enabled" value="true"/>

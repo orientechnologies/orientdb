@@ -32,10 +32,8 @@ public class TestOrientBulkInsert {
     // this.dbWrapper.setMassiveInserts();
     // wurde es besser aber immer noch nicht 100%
     //
-    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false); // Turn off cache
-    OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0); // Turn off cache
-    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false); // Turn off cache
-    OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0); // Turn off cache
+    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false); // Turn off cache
+    OGlobalConfiguration.CACHE_LOCAL_SIZE.setValue(0); // Turn off cache
 
     OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.setValue(0); // Turn off cache
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(0);
@@ -105,9 +103,9 @@ public class TestOrientBulkInsert {
     return document;
   }
 
-  static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  static Random rnd = new Random();
-  static int counter = 0;
+  static final String AB      = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  static Random       rnd     = new Random();
+  static int          counter = 0;
 
   private String getRandomText(int len) {
 

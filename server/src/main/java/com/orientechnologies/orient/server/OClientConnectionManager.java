@@ -288,44 +288,4 @@ public class OClientConnectionManager {
       }
     }
   }
-
-  /**
-   * Pushes the record to all the connected clients with the same database.
-   * 
-   * @param iRecord
-   *          Record to broadcast
-   * @param iExcludeConnection
-   *          Connection to exclude if any, usually the current where the change has been just applied
-   */
-  public void pushRecord2Clients(final ORecordInternal<?> iRecord, final OClientConnection iExcludeConnection)
-      throws InterruptedException, IOException {
-    final String dbName = iRecord.getDatabase().getName();
-
-    for (OClientConnection c : connections.values()) {
-      if (c != iExcludeConnection) {
-        final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
-        final OChannelBinaryAsynchClient channel = (OChannelBinaryAsynchClient) p.getChannel();
-
-        if (c.database != null && c.database.getName().equals(dbName))
-          synchronized (c) {
-            try {
-              channel.acquireWriteLock();
-              try {
-                channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-                channel.writeInt(Integer.MIN_VALUE);
-                channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_RECORD);
-                p.writeIdentifiable(iRecord);
-              } finally {
-                channel.releaseWriteLock();
-              }
-            } catch (IOException e) {
-              OLogManager.instance().warn(this, "Cannot push record to the client %s", c.getRemoteAddress());
-            }
-
-          }
-
-      }
-    }
-
-  }
 }

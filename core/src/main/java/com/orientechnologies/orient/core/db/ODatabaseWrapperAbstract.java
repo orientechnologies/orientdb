@@ -25,8 +25,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -112,12 +111,8 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.getStorage();
   }
 
-  public OLevel1RecordCache getLevel1Cache() {
-    return underlying.getLevel1Cache();
-  }
-
-  public OLevel2RecordCache getLevel2Cache() {
-    return getStorage().getLevel2Cache();
+  public OLocalRecordCache getLocalCache() {
+    return underlying.getLocalCache();
   }
 
   public boolean isClosed() {
@@ -225,12 +220,12 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
-    getLevel1Cache().freeCluster(getClusterIdByName(iClusterName));
+    getLocalCache().freeCluster(getClusterIdByName(iClusterName));
     return underlying.dropCluster(iClusterName, true);
   }
 
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
-    getLevel1Cache().freeCluster(iClusterId);
+    getLocalCache().freeCluster(iClusterId);
     return underlying.dropCluster(iClusterId, true);
   }
 

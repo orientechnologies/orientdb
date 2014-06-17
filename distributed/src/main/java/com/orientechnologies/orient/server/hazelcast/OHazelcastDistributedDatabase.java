@@ -491,7 +491,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
       } finally {
         if (database != null)
-          database.getLevel1Cache().clear();
+          database.getLocalCache().clear();
       }
 
       if (ODistributedServerLog.isDebugEnabled())

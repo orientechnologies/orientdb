@@ -19,7 +19,6 @@ import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocatorLocal;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -46,7 +45,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   protected final String             PROFILER_DELETE_RECORD;
 
   public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
-    super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger(), new OCacheLevelTwoLocatorLocal());
+    super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
     lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger());
 
     PROFILER_CREATE_RECORD = "db." + name + ".createRecord";
