@@ -97,6 +97,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private final OOrderByOptimizer     orderByOptimizer     = new OOrderByOptimizer();
   private final OMetricRecorder       metricRecorder       = new OMetricRecorder();
   private final OFilterOptimizer      filterOptimizer      = new OFilterOptimizer();
+  private final OFilterAnalyzer       filterAnalyzer       = new OFilterAnalyzer();
   private Map<String, String>         projectionDefinition = null;
   // THIS HAS BEEN KEPT FOR COMPATIBILITY; BUT IT'S USED THE PROJECTIONS IN GROUPED-RESULTS
   private Map<String, Object>         projections          = null;
@@ -915,7 +916,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             break;
 
           if (!executeSearchRecord(next))
-    break;
+            break;
         }
 
     } finally {
@@ -1024,12 +1025,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       else
         return optimizeSort(iSchemaClass);
 
-    final List<OIndexSearchResult> indexSearchResults = new OFilterAnalyzer().analyzeCondition(compiledFilter.getRootCondition(),
+    final List<OIndexSearchResult> indexSearchResults = filterAnalyzer.analyzeCondition(compiledFilter.getRootCondition(),
         iSchemaClass, context);
 
     // go through all variants to choose which one can be used for index search.
     for (final OIndexSearchResult searchResult : indexSearchResults) {
-      final List<OIndex<?>> involvedIndexes = new OFilterAnalyzer().getInvolvedIndexes(iSchemaClass, searchResult);
+      final List<OIndex<?>> involvedIndexes = filterAnalyzer.getInvolvedIndexes(iSchemaClass, searchResult);
 
       Collections.sort(involvedIndexes, new IndexComparator());
 
