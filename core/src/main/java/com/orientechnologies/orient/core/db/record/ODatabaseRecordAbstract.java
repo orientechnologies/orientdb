@@ -973,23 +973,23 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   /**
    * {@inheritDoc}
    */
-  public <RET extends ORecordInternal<?>> RET executeReadRecord(final ORecordId iRid, ORecordInternal<?> iRecord,
+  public <RET extends ORecordInternal<?>> RET executeReadRecord(final ORecordId rid, ORecordInternal<?> iRecord,
       final String iFetchPlan, final boolean iIgnoreCache, final boolean loadTombstones,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
 
     try {
-      checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iRid.getClusterId()));
+      checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(rid.getClusterId()));
 
       // SEARCH IN LOCAL TX
-      ORecordInternal<?> record = getTransaction().getRecord(iRid);
+      ORecordInternal<?> record = getTransaction().getRecord(rid);
       if (record == OTransactionRealAbstract.DELETED_RECORD)
         // DELETED IN TX
         return null;
 
       if (record == null && !iIgnoreCache)
         // SEARCH INTO THE CACHE
-        record = getLevel1Cache().findRecord(iRid);
+        record = getLevel1Cache().findRecord(rid);
 
       if (record != null) {
         if (iRecord != null) {
@@ -1014,7 +1014,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         return (RET) record;
       }
 
-      final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan, iIgnoreCache, loadTombstones, iLockingStrategy).getResult();
+      final ORawBuffer recordBuffer = underlying.read(rid, iFetchPlan, iIgnoreCache, loadTombstones, iLockingStrategy).getResult();
       if (recordBuffer == null)
         return null;
 
@@ -1022,7 +1022,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
         iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType);
 
-      iRecord.fill(iRid, recordBuffer.version, recordBuffer.buffer, false);
+      iRecord.fill(rid, recordBuffer.version, recordBuffer.buffer, false);
 
       if (iRecord.getRecordVersion().isTombstone())
         return (RET) iRecord;
@@ -1044,9 +1044,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     } catch (Exception e) {
       // WRAP IT AS ODATABASE EXCEPTION
-      OLogManager.instance().exception("Error on retrieving record " + iRid, e, ODatabaseException.class);
+      throw new ODatabaseException("Error on retrieving record " + rid, e);
     }
-    return null;
   }
 
   public <RET extends ORecordInternal<?>> RET executeSaveRecord(final ORecordInternal<?> record, String iClusterName,

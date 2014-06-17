@@ -513,13 +513,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       return doAddCluster(clusterName, location, true, parameters);
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
-          OStorageException.class);
+      throw new OStorageException("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e);
     } finally {
       lock.releaseExclusiveLock();
     }
-
-    return -1;
   }
 
   public int addCluster(String clusterType, String clusterName, int requestedId, String location, String dataSegmentName,
@@ -539,28 +536,25 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       return addClusterInternal(clusterName, requestedId, location, true, parameters);
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
-          OStorageException.class);
+      throw new OStorageException("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e);
     } finally {
       lock.releaseExclusiveLock();
     }
-
-    return -1;
   }
 
-  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
+  public boolean dropCluster(final int clusterId, final boolean iTruncate) {
     lock.acquireExclusiveLock();
     try {
 
-      if (iClusterId < 0 || iClusterId >= clusters.size())
-        throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is outside the of range of configured clusters (0-"
+      if (clusterId < 0 || clusterId >= clusters.size())
+        throw new IllegalArgumentException("Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-"
             + (clusters.size() - 1) + ") in database '" + name + "'");
 
-      final OCluster cluster = clusters.get(iClusterId);
+      final OCluster cluster = clusters.get(clusterId);
       if (cluster == null)
         return false;
 
-      getLevel2Cache().freeCluster(iClusterId);
+      getLevel2Cache().freeCluster(clusterId);
 
       if (iTruncate)
         cluster.truncate();
@@ -568,21 +562,19 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       dirtyFlag.makeDirty();
       clusterMap.remove(cluster.getName().toLowerCase());
-      clusters.set(iClusterId, null);
+      clusters.set(clusterId, null);
 
       // UPDATE CONFIGURATION
-      configuration.dropCluster(iClusterId);
+      configuration.dropCluster(clusterId);
 
       makeFullCheckpoint();
       return true;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error while removing cluster '" + iClusterId + "'", e, OStorageException.class);
+      throw new OStorageException("Error while removing cluster '" + clusterId + "'", e);
 
     } finally {
       lock.releaseExclusiveLock();
     }
-
-    return false;
   }
 
   public boolean dropDataSegment(final String iName) {

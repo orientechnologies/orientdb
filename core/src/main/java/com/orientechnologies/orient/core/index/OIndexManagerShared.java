@@ -50,6 +50,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -589,18 +590,26 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     private void tryRecreateIndexClusterAndSegment() {
       try {
         // DROP AND RE-CREATE 'INDEX' DATA-SEGMENT AND CLUSTER IF ANY
-        final int dataId = newDb.getStorage().getDataSegmentIdByName(OMetadataDefault.DATASEGMENT_INDEX_NAME);
-        if (dataId > -1)
-          newDb.getStorage().dropDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
 
-        final int clusterId = newDb.getStorage().getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
-        if (clusterId > -1)
-          newDb.dropCluster(clusterId, false);
+        final OStorage storage = newDb.getStorage();
+        storage.callInLock(new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            final int dataId = storage.getDataSegmentIdByName(OMetadataDefault.DATASEGMENT_INDEX_NAME);
+            if (dataId > -1)
+              storage.dropDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
 
-        newDb.addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME, null);
-        newDb.getStorage().addCluster(OClusterLocal.TYPE, OMetadataDefault.CLUSTER_INDEX_NAME, null,
-            OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
+            final int clusterId = storage.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
+            if (clusterId > -1)
+              storage.dropCluster(clusterId, false);
 
+            storage.addDataSegment(OMetadataDefault.DATASEGMENT_INDEX_NAME);
+            storage.addCluster(OClusterLocal.TYPE, OMetadataDefault.CLUSTER_INDEX_NAME, null,
+                OMetadataDefault.DATASEGMENT_INDEX_NAME, true);
+
+            return null;
+          }
+        }, true);
       } catch (IllegalArgumentException ex) {
         // OLD DATABASE: CREATE SEPARATE DATASEGMENT AND LET THE INDEX CLUSTER TO POINT TO IT
         OLogManager.instance().info(this, "Creating 'index' data-segment to store all the index content...");

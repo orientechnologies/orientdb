@@ -31,30 +31,24 @@ import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryHashi
 public class ODefaultClusterFactory implements OClusterFactory {
   protected static final String[] TYPES = { OClusterLocal.TYPE, OClusterMemory.TYPE };
 
-  public OCluster createCluster(final String iType) {
-    if (iType.equalsIgnoreCase(OClusterLocal.TYPE))
+  public OCluster createCluster(final String type) {
+    if (type.equalsIgnoreCase(OClusterLocal.TYPE))
       return new OClusterLocal();
-    else if (iType.equalsIgnoreCase(OClusterMemory.TYPE))
+    else if (type.equalsIgnoreCase(OClusterMemory.TYPE))
       return new OClusterMemoryArrayList();
     else
-      OLogManager.instance().exception(
-          "Cluster type '" + iType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
-          OStorageException.class);
-    return null;
+      throw new OStorageException("Cluster type '" + type + "' is not supported. Supported types are: " + Arrays.toString(TYPES));
   }
 
-  public OCluster createCluster(final OStorageClusterConfiguration iConfig) {
-    if (iConfig instanceof OStoragePhysicalClusterConfigurationLocal)
+  public OCluster createCluster(final OStorageClusterConfiguration config) {
+    if (config instanceof OStoragePhysicalClusterConfigurationLocal)
       return new OClusterLocal();
-    else if (iConfig instanceof OStorageMemoryClusterConfiguration)
+    else if (config instanceof OStorageMemoryClusterConfiguration)
       return new OClusterMemoryArrayList();
-    else if (iConfig instanceof OStorageMemoryLinearHashingClusterConfiguration)
+    else if (config instanceof OStorageMemoryLinearHashingClusterConfiguration)
       return new OClusterMemoryHashing();
     else
-      OLogManager.instance().exception(
-          "Cluster type '" + iConfig + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
-          OStorageException.class);
-    return null;
+      throw new OStorageException("Cluster type '" + config + "' is not supported. Supported types are: " + Arrays.toString(TYPES));
   }
 
   public String[] getSupported() {

@@ -300,19 +300,18 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public OStorageOperationResult<Boolean> delete(final ORecordId iRid, final ORecordVersion iVersion, final boolean iRequired,
+  public OStorageOperationResult<Boolean> delete(final ORecordId rid, final ORecordVersion iVersion, final boolean iRequired,
       final int iMode) {
     try {
-      final OStorageOperationResult<Boolean> result = storage.deleteRecord(iRid, iVersion, iMode, null);
+      final OStorageOperationResult<Boolean> result = storage.deleteRecord(rid, iVersion, iMode, null);
       if (!result.getResult() && iRequired)
-        throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
+        throw new ORecordNotFoundException("The record with id " + rid + " was not found");
       return result;
     } catch (OException e) {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on deleting record " + iRid, e, ODatabaseException.class);
-      return new OStorageOperationResult<Boolean>(Boolean.FALSE);
+      throw new ODatabaseException("Error on deleting record " + rid, e);
     }
   }
 
@@ -323,23 +322,21 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on deleting record " + rid, e, ODatabaseException.class);
-      return new OStorageOperationResult<Boolean>(Boolean.FALSE);
+      throw new ODatabaseException("Error on deleting record " + rid, e);
     }
   }
 
-  public boolean cleanOutRecord(final ORecordId iRid, final ORecordVersion iVersion, final boolean iRequired, final int iMode) {
+  public boolean cleanOutRecord(final ORecordId rid, final ORecordVersion iVersion, final boolean iRequired, final int iMode) {
     try {
-      final boolean result = storage.cleanOutRecord(iRid, iVersion, iMode, null);
+      final boolean result = storage.cleanOutRecord(rid, iVersion, iMode, null);
       if (!result && iRequired)
-        throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
+        throw new ORecordNotFoundException("The record with id " + rid + " was not found");
       return result;
     } catch (OException e) {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on deleting record " + iRid, e, ODatabaseException.class);
-      return false;
+      throw new ODatabaseException("Error on deleting record " + rid, e);
     }
   }
 
@@ -395,24 +392,20 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return storage.getPhysicalClusterNameById(iClusterId);
   }
 
-  public long getClusterRecordSizeById(final int iClusterId) {
+  public long getClusterRecordSizeById(final int clusterId) {
     try {
-      return storage.getClusterById(iClusterId).getRecordsSize();
+      return storage.getClusterById(clusterId).getRecordsSize();
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on reading records size for cluster with id '" + iClusterId + "'", e,
-          ODatabaseException.class);
+      throw new ODatabaseException("Error on reading records size for cluster with id '" + clusterId + "'", e);
     }
-    return 0l;
   }
 
-  public long getClusterRecordSizeByName(final String iClusterName) {
+  public long getClusterRecordSizeByName(final String clusterName) {
     try {
-      return storage.getClusterById(getClusterIdByName(iClusterName)).getRecordsSize();
+      return storage.getClusterById(getClusterIdByName(clusterName)).getRecordsSize();
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on reading records size for cluster '" + iClusterName + "'", e,
-          ODatabaseException.class);
+      throw new ODatabaseException("Error on reading records size for cluster '" + clusterName + "'", e);
     }
-    return 0l;
   }
 
   public int addCluster(String iClusterName, CLUSTER_TYPE iType, Object... iParameters) {
