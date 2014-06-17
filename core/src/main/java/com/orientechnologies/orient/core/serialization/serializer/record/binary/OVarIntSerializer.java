@@ -5,14 +5,32 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 public class OVarIntSerializer {
 
   public static short write(BytesContainer bytes, long value) {
+    value = signedToUnsigned(value);
     short pos = bytes.alloc((short) bytesLength(value));
-    writeSignedVarLong(value, bytes.bytes, pos);
+    writeUnsignedVarLong(value, bytes.bytes, pos);
     return pos;
 
   }
 
   public static Number read(BytesContainer bytes) {
     return readSignedVarLong(bytes);
+  }
+
+  /**
+   * Encodes a value using the variable-length encoding from <a
+   * href="http://code.google.com/apis/protocolbuffers/docs/encoding.html"> Google Protocol Buffers</a>. It uses zig-zag encoding to
+   * efficiently encode signed values. If values are known to be nonnegative, {@link #writeUnsignedVarLong(long, DataOutput)} should
+   * be used.
+   * 
+   * @param value
+   *          value to encode
+   * @param out
+   *          to write bytes to
+   * @throws IOException
+   *           if {@link DataOutput} throws {@link IOException}
+   */
+  private static long signedToUnsigned(long value) {
+    return (value << 1) ^ (value >> 63);
   }
 
   /**
@@ -39,25 +57,6 @@ public class OVarIntSerializer {
     if (value < 0x2000000000000l) // 2^49
       return 7;
     return 8;
-  }
-
-  /**
-   * Encodes a value using the variable-length encoding from <a
-   * href="http://code.google.com/apis/protocolbuffers/docs/encoding.html"> Google Protocol Buffers</a>. It uses zig-zag encoding to
-   * efficiently encode signed values. If values are known to be nonnegative, {@link #writeUnsignedVarLong(long, DataOutput)} should
-   * be used.
-   * 
-   * @param value
-   *          value to encode
-   * @param out
-   *          to write bytes to
-   * @throws IOException
-   *           if {@link DataOutput} throws {@link IOException}
-   */
-  public static void writeSignedVarLong(long value, byte[] bos, int pos) {
-    // Great trick from
-    // http://code.google.com/apis/protocolbuffers/docs/encoding.html#types
-    writeUnsignedVarLong((value << 1) ^ (value >> 63), bos, pos);
   }
 
   /**

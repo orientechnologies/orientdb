@@ -27,7 +27,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
-  private Charset utf8;
+  private Charset           utf8;
+  private static final long MILLISEC_PER_DAY = 86400000;
+  private static final long ONE_HOUR         = 3600000;
 
   public ORecordSerializerBinaryV0() {
     utf8 = Charset.forName("UTF-8");
@@ -94,6 +96,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case DATETIME:
       value = new Date(OVarIntSerializer.read(bytes).longValue());
       break;
+    case DATE:
+      value = new Date((OVarIntSerializer.read(bytes).longValue() * MILLISEC_PER_DAY) - ONE_HOUR);
+      break;
     case EMBEDDED:
       value = new ODocument();
       deserialize((ODocument) value, bytes);
@@ -120,6 +125,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case LINK:
       value = readOptimizedLink(bytes);
       break;
+    case LINKMAP:
+      value = readLinkMap(bytes);
+      break;
     case EMBEDDEDMAP:
       value = readEmbeddedMap(bytes);
       break;
@@ -129,6 +137,18 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     }
     return value;
+  }
+
+  private Map<Object, OIdentifiable> readLinkMap(BytesContainer bytes) {
+    int size = OVarIntSerializer.read(bytes).intValue();
+    Map<Object, OIdentifiable> result = new HashMap<Object, OIdentifiable>(size);
+    while ((size--) > 0) {
+      OType keyType = readOType(bytes);
+      Object key = readSingleValue(bytes, keyType);
+      OIdentifiable value = readOptimizedLink(bytes);
+      result.put(key, value);
+    }
+    return result;
   }
 
   private Object readEmbeddedMap(BytesContainer bytes) {
@@ -244,10 +264,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       bytes.bytes[pointer] = ((Boolean) value) ? (byte) 1 : (byte) 0;
       break;
     case DATETIME:
-      long time = ((Date) value).getTime();
-      pointer = OVarIntSerializer.write(bytes, time);
+      pointer = OVarIntSerializer.write(bytes, ((Date) value).getTime());
       break;
     case DATE:
+      pointer = OVarIntSerializer.write(bytes, (((Date) value).getTime() + ONE_HOUR) / MILLISEC_PER_DAY);
       break;
     case EMBEDDED:
       pointer = bytes.offset;
@@ -274,6 +294,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       pointer = writeOptimizedLink(bytes, (OIdentifiable) value);
       break;
     case LINKMAP:
+      pointer = writeLinkMap(bytes, (Map<Object, OIdentifiable>) value);
       break;
     case EMBEDDEDMAP:
       pointer = writeEmbeddedMap(bytes, (Map<Object, Object>) value);
@@ -283,6 +304,19 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     }
     return pointer;
+  }
+
+  private short writeLinkMap(BytesContainer bytes, Map<Object, OIdentifiable> map) {
+    short fullPos = OVarIntSerializer.write(bytes, map.size());
+    for (Entry<Object, OIdentifiable> entry : map.entrySet()) {
+      // TODO:check skip of complex types
+      OType type = getTypeFromValue(entry.getKey(), true);
+      writeOType(bytes, bytes.alloc((short) 1), type);
+      writeSingleValue(bytes, entry.getKey(), type);
+
+      writeOptimizedLink(bytes, entry.getValue());
+    }
+    return fullPos;
   }
 
   @SuppressWarnings("unchecked")
@@ -315,13 +349,13 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return fullPos;
   }
 
-  public short writeOptimizedLink(BytesContainer bytes, OIdentifiable link) {
+  private short writeOptimizedLink(BytesContainer bytes, OIdentifiable link) {
     short pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition().longValue());
     return pos;
   }
 
-  public short writeLink(BytesContainer bytes, OIdentifiable link) {
+  private short writeLink(BytesContainer bytes, OIdentifiable link) {
     short pos = bytes.alloc((short) OIntegerSerializer.INT_SIZE);
     OIntegerSerializer.INSTANCE.serialize(link.getIdentity().getClusterId(), bytes.bytes, pos);
     short posR = bytes.alloc((short) OLongSerializer.LONG_SIZE);

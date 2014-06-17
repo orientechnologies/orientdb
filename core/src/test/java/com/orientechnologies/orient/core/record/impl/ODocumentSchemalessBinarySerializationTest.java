@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertNotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -42,7 +44,16 @@ public class ODocumentSchemalessBinarySerializationTest {
     document.field("class", (byte) 'C');
     document.field("character", 'C');
     document.field("alive", true);
-    document.field("date", new Date());
+    document.field("dateTime", new Date());
+    Calendar c = Calendar.getInstance();
+    document.field("date", c.getTime(), OType.DATE);
+    Calendar c1 = Calendar.getInstance();
+    c1.set(Calendar.MILLISECOND, 0);
+    c1.set(Calendar.SECOND, 0);
+    c1.set(Calendar.MINUTE, 0);
+    c1.set(Calendar.HOUR_OF_DAY, 0);
+    document.field("date1", c1.getTime(), OType.DATE);
+
     byte[] byteValue = new byte[10];
     Arrays.fill(byteValue, (byte) 10);
     document.field("bytes", byteValue);
@@ -52,6 +63,11 @@ public class ODocumentSchemalessBinarySerializationTest {
 
     byte[] res = serializer.toStream(document, false);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+
+    c.set(Calendar.MILLISECOND, 0);
+    c.set(Calendar.SECOND, 0);
+    c.set(Calendar.MINUTE, 0);
+    c.set(Calendar.HOUR_OF_DAY, 0);
 
     assertEquals(extr.fields(), document.fields());
     assertEquals(extr.field("name"), document.field("name"));
@@ -64,7 +80,9 @@ public class ODocumentSchemalessBinarySerializationTest {
     // TODO fix char management issue:#2427
     // assertEquals(document.field("character"), extr.field("character"));
     assertEquals(extr.field("alive"), document.field("alive"));
-    assertEquals(extr.field("date"), document.field("date"));
+    assertEquals(extr.field("dateTime"), document.field("dateTime"));
+    assertEquals(extr.field("date"), c.getTime());
+    assertEquals(extr.field("date1"), c1.getTime());
     assertEquals(extr.field("bytes"), document.field("bytes"));
     assertEquals(extr.field("utf8String"), document.field("utf8String"));
     assertEquals(extr.field("recordId"), document.field("recordId"));
@@ -412,6 +430,23 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertNotNull(emb);
     assertEquals(emb.field("name"), embeddedInMap.field("name"));
     assertEquals(emb.field("surname"), embeddedInMap.field("surname"));
+  }
+
+  @Test
+  public void testMapOfLink() {
+
+    ODocument document = new ODocument();
+
+    Map<String, OIdentifiable> map = new HashMap<String, OIdentifiable>();
+    map.put("link", new ORecordId(10, new OClusterPositionLong(20)));
+    map.put("link1", new ORecordId(11, new OClusterPositionLong(20)));
+    map.put("link2", new ODocument(new ORecordId(12, new OClusterPositionLong(20))));
+    document.field("map", map, OType.LINKMAP);
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    assertEquals(extr.fields(), document.fields());
+    assertEquals(extr.field("map"), document.field("map"));
   }
 
 }
