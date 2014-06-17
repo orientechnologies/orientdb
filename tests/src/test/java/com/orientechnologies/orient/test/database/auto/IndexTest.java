@@ -1622,9 +1622,7 @@ public class IndexTest {
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
 
     OClass abstractClass = schema.createAbstractClass("TestCreateIndexAbstractClass");
-    abstractClass.createProperty("value", OType.STRING);
-
-    abstractClass.createIndex("abstractIndex", INDEX_TYPE.UNIQUE, "value");
+    abstractClass.createProperty("value", OType.STRING).setMandatory(true).createIndex(INDEX_TYPE.UNIQUE);
 
     schema.createClass("TestCreateIndexAbstractClassChildOne", abstractClass);
     schema.createClass("TestCreateIndexAbstractClassChildTwo", abstractClass);
@@ -1644,7 +1642,7 @@ public class IndexTest {
     Assert.assertEquals(resultOne.get(0), docOne);
 
     ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryOne)).execute();
-    Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("abstractIndex"));
+    Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
 
     final String queryTwo = "select from TestCreateIndexAbstractClass where value = 'val2'";
 
@@ -1653,7 +1651,7 @@ public class IndexTest {
     Assert.assertEquals(resultTwo.get(0), docTwo);
 
     explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryTwo)).execute();
-    Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("abstractIndex"));
+    Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
   }
 
   private List<OClusterPosition> getValidPositions(int clusterId) {

@@ -479,7 +479,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       clusterIds = (int[]) cc;
     Arrays.sort(clusterIds);
 
-    setPolymorphicClusterIds(clusterIds);
+    if (clusterIds.length == 1 && clusterIds[0] == -1)
+      setPolymorphicClusterIds(new int[0]);
+    else
+      setPolymorphicClusterIds(clusterIds);
 
     // READ PROPERTIES
     OPropertyImpl prop;
