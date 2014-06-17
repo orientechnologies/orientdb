@@ -92,14 +92,6 @@ public class OIndexSearchResult {
     return fieldValuePairs.size() + 1;
   }
 
-  public List<String> getInvolvedFields() {
-    final List<String> list = new ArrayList<String>();
-    list.add(lastField.getItemName(lastField.getItemCount() - 1));
-    for (String f : fieldValuePairs.keySet())
-      list.add(f);
-    return list;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o)

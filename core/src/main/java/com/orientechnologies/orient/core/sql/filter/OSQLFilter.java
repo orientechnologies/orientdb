@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -65,13 +61,6 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
       return true;
 
     return rootCondition.evaluate(iRecord, iCurrentResult, iContext);
-  }
-
-  public List<String> getInvolvedFields() {
-    if (rootCondition != null)
-      return rootCondition.getInvolvedFields(new ArrayList<String>());
-
-    return Collections.EMPTY_LIST;
   }
 
   public OSQLFilterCondition getRootCondition() {
