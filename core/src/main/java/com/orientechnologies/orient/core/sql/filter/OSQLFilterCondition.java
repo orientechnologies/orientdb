@@ -15,6 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -33,16 +43,6 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * Run-time query condition evaluator.
@@ -134,8 +134,13 @@ public class OSQLFilterCondition {
   }
 
   public List<String> getInvolvedFields(final List<String> list) {
-    final Object left = getLeft();
+    extractInvolvedFields(getLeft(), list);
+    extractInvolvedFields(getRight(), list);
 
+    return list;
+  }
+
+  private void extractInvolvedFields(Object left, List<String> list) {
     if (left != null)
       if (left instanceof OSQLFilterItemField) {
         if (((OSQLFilterItemField) left).isFieldChain())
@@ -143,17 +148,6 @@ public class OSQLFilterCondition {
               ((OSQLFilterItemField) left).getFieldChain().getItemCount() - 1));
       } else if (left instanceof OSQLFilterCondition)
         ((OSQLFilterCondition) left).getInvolvedFields(list);
-
-    final Object right = getRight();
-    if (right != null)
-      if (right instanceof OSQLFilterItemField) {
-        if (((OSQLFilterItemField) right).isFieldChain())
-          list.add(((OSQLFilterItemField) right).getFieldChain().getItemName(
-              ((OSQLFilterItemField) right).getFieldChain().getItemCount() - 1));
-      } else if (right instanceof OSQLFilterCondition)
-        ((OSQLFilterCondition) right).getInvolvedFields(list);
-
-    return list;
   }
 
   @Override

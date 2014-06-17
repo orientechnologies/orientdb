@@ -1,16 +1,16 @@
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsKey;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsValue;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Presents query subset in form of field1 = "field1 value" AND field2 = "field2 value" ... AND fieldN anyOpetator "fieldN value"
@@ -24,11 +24,11 @@ import java.util.Map;
  * index search and filed - value pair that uses this index should always be placed at last position.
  */
 public class OIndexSearchResult {
-  final Map<String, Object>            fieldValuePairs = new HashMap<String, Object>(8);
-  final OQueryOperator                 lastOperator;
-  final OSQLFilterItemField.FieldChain lastField;
-  final Object                         lastValue;
-  boolean                              containsNullValues;
+  public final Map<String, Object>            fieldValuePairs = new HashMap<String, Object>(8);
+  public final OQueryOperator                 lastOperator;
+  public final OSQLFilterItemField.FieldChain lastField;
+  public final Object                         lastValue;
+  boolean                                     containsNullValues;
 
   public OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
     this.lastOperator = lastOperator;
@@ -52,22 +52,19 @@ public class OIndexSearchResult {
    * @return New instance that presents merged query.
    */
   public OIndexSearchResult merge(final OIndexSearchResult searchResult) {
-    final OQueryOperator operator;
-    final OIndexSearchResult result;
-
     if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
-      result = new OIndexSearchResult(this.lastOperator, lastField, lastValue);
-      result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
-      result.fieldValuePairs.putAll(fieldValuePairs);
-      result.fieldValuePairs.put(searchResult.lastField.getItemName(0), searchResult.lastValue);
+      return mergeFields(this, searchResult);
     } else {
-      operator = searchResult.lastOperator;
-      result = new OIndexSearchResult(operator, searchResult.lastField, searchResult.lastValue);
-      result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
-      result.fieldValuePairs.putAll(fieldValuePairs);
-      result.fieldValuePairs.put(lastField.getItemName(0), lastValue);
+      return mergeFields(searchResult, this);
     }
+  }
 
+  private OIndexSearchResult mergeFields(OIndexSearchResult mainSearchResult, OIndexSearchResult searchResult) {
+    OIndexSearchResult result = new OIndexSearchResult(mainSearchResult.lastOperator, mainSearchResult.lastField,
+        mainSearchResult.lastValue);
+    result.fieldValuePairs.putAll(searchResult.fieldValuePairs);
+    result.fieldValuePairs.putAll(mainSearchResult.fieldValuePairs);
+    result.fieldValuePairs.put(searchResult.lastField.getItemName(0), searchResult.lastValue);
     result.containsNullValues = searchResult.containsNullValues || this.containsNullValues;
     return result;
   }
@@ -95,15 +92,44 @@ public class OIndexSearchResult {
     return fieldValuePairs.size() + 1;
   }
 
-  public List<String> getInvolvedFields() {
-    final List<String> list = new ArrayList<String>();
-    list.add(lastField.getItemName(lastField.getItemCount() - 1));
-    for (String f : fieldValuePairs.keySet())
-      list.add(f);
-    return list;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+
+    OIndexSearchResult that = (OIndexSearchResult) o;
+
+    if (containsNullValues != that.containsNullValues)
+      return false;
+    for (Map.Entry<String, Object> entry : fieldValuePairs.entrySet()) {
+      if (!that.fieldValuePairs.get(entry.getKey()).equals(entry.getValue()))
+        return false;
+    }
+
+    if (!lastField.equals(that.lastField))
+      return false;
+    if (!lastOperator.equals(that.lastOperator))
+      return false;
+    if (!lastValue.equals(that.lastValue))
+      return false;
+
+    return true;
   }
 
-  public OSQLFilterItemField.FieldChain getLastField() {
-    return lastField;
+  @Override
+  public int hashCode() {
+    int result = lastOperator.hashCode();
+
+    for (Map.Entry<String, Object> entry : fieldValuePairs.entrySet()) {
+      result = 31 * result + entry.getKey().hashCode();
+      result = 31 * result + entry.getValue().hashCode();
+    }
+
+    result = 31 * result + lastField.hashCode();
+    result = 31 * result + lastValue.hashCode();
+    result = 31 * result + (containsNullValues ? 1 : 0);
+    return result;
   }
 }
