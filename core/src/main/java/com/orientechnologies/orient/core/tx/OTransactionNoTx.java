@@ -50,11 +50,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void commit() {
   }
 
-	@Override
-	public void commit(boolean force) {
-	}
+  @Override
+  public void commit(boolean force) {
+  }
 
-	public void rollback() {
+  public void rollback() {
   }
 
   public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,
@@ -82,7 +82,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
       if (rid.isValid())
-        database.getLevel1Cache().freeRecord(rid);
+        database.getLocalCache().freeRecord(rid);
 
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
@@ -97,7 +97,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
-      database.getLevel1Cache().freeRecord(rid);
+      database.getLocalCache().freeRecord(rid);
 
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
@@ -118,7 +118,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
       if (rid.isValid())
-        database.getLevel1Cache().freeRecord(rid);
+        database.getLocalCache().freeRecord(rid);
 
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;

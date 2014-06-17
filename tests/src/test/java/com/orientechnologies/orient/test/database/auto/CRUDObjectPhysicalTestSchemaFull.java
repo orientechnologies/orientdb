@@ -526,8 +526,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
 
-      database.getLevel1Cache().invalidate();
-      database.getLevel2Cache().clear();
+      database.getLocalCache().invalidate();
 
       // BROWSE ALL THE OBJECTS
 
@@ -562,8 +561,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
 
-      database.getLevel1Cache().invalidate();
-      database.getLevel2Cache().clear();
+      database.getLocalCache().invalidate();
 
       // BROWSE ALL THE OBJECTS
       Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
@@ -598,8 +596,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
 
-      database.getLevel1Cache().invalidate();
-      database.getLevel2Cache().clear();
+      database.getLocalCache().invalidate();
       database.setLazyLoading(false);
 
       // BROWSE ALL THE OBJECTS
@@ -611,6 +608,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
       for (Account a : result) {
         if (Company.class.isAssignableFrom(a.getClass()))
           continue;
+
         int id = a.getId();
         Assert.assertTrue(ids.remove(id));
 

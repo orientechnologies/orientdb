@@ -38,8 +38,6 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
 
   @BeforeClass
   public static void startEmbeddedServer() throws Exception {
-    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-
     final String buildDirectory = System.getProperty("buildDirectory", ".");
     serverHome = buildDirectory + "/" + OrientGraphNoTxRemoteTest.class.getSimpleName();
 

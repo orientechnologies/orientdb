@@ -529,16 +529,14 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void update(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("update", iCommandText, "\nUpdated record(s) '%s' in %f sec(s).\n", true);
     updateDatabaseInfo();
-    currentDatabase.getLevel1Cache().invalidate();
-    currentDatabase.getLevel2Cache().clear();
+    currentDatabase.getLocalCache().invalidate();
   }
 
   @ConsoleCommand(splitInWords = false, description = "Delete records from the database")
   public void delete(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("delete", iCommandText, "\nDelete record(s) '%s' in %f sec(s).\n", true);
     updateDatabaseInfo();
-    currentDatabase.getLevel1Cache().invalidate();
-    currentDatabase.getLevel2Cache().clear();
+    currentDatabase.getLocalCache().invalidate();
   }
 
   @ConsoleCommand(splitInWords = false, description = "Grant privileges to a role")

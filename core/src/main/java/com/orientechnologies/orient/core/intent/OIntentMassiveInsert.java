@@ -6,22 +6,26 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class OIntentMassiveInsert implements OIntent {
-  private boolean                                     previousLevel1CacheEnabled;
+  private boolean                                     previousLocalCacheEnabled;
   private boolean                                     previousLevel2CacheEnabled;
   private boolean                                     previousRetainRecords;
   private boolean                                     previousRetainObjects;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
+  private OUser                       currentUser;
 
   public void begin(final ODatabaseRaw iDatabase, final Object... iArgs) {
-    previousLevel1CacheEnabled = iDatabase.getDatabaseOwner().getLevel1Cache().isEnabled();
-    iDatabase.getDatabaseOwner().getLevel1Cache().setEnable(false);
-    previousLevel2CacheEnabled = iDatabase.getDatabaseOwner().getLevel2Cache().isEnabled();
-    iDatabase.getDatabaseOwner().getLevel2Cache().setEnable(false);
+    // DISABLE CHECK OF SECURITY
+    currentUser = iDatabase.getDatabaseOwner().getUser();
+    iDatabase.getDatabaseOwner().setUser(null);
+
+    previousLocalCacheEnabled = iDatabase.getDatabaseOwner().getLocalCache().isEnabled();
+    iDatabase.getDatabaseOwner().getLocalCache().setEnable(false);
 
     ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
 
@@ -50,9 +54,11 @@ public class OIntentMassiveInsert implements OIntent {
   }
 
   public void end(final ODatabaseRaw iDatabase) {
-    iDatabase.getDatabaseOwner().getLevel1Cache().setEnable(previousLevel1CacheEnabled);
-    iDatabase.getDatabaseOwner().getLevel2Cache().setEnable(previousLevel2CacheEnabled);
+    if (currentUser != null)
+      // RE-ENABLE CHECK OF SECURITY
+      iDatabase.getDatabaseOwner().setUser(currentUser);
 
+    iDatabase.getDatabaseOwner().getLocalCache().setEnable(previousLocalCacheEnabled);
     ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseRecord)

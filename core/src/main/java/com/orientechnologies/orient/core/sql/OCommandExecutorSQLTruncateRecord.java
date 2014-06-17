@@ -85,7 +85,7 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
       try {
         final ORecordId rid = new ORecordId(rec);
         database.getStorage().deleteRecord(rid, OVersionFactory.instance().createUntrackedVersion(), 0, null);
-        database.getLevel1Cache().deleteRecord(rid);
+        database.getLocalCache().deleteRecord(rid);
       } catch (Throwable e) {
         throw new OCommandExecutionException("Error on executing command", e);
       }
