@@ -21,7 +21,6 @@ import com.hazelcast.core.*;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -407,9 +406,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     for (String dbName : messageService.getDatabases()) {
       Map<String, Object> db = new HashMap<String, Object>();
       databases.put(dbName, db);
-      final OProfilerEntry chrono = Orient.instance().getProfiler().getChrono("distributed.replication." + dbName + ".resynch");
-      if (chrono != null)
-        db.put("resync", new ODocument().fromJSON(chrono.toJSON()));
     }
 
     for (Entry<String, QueueConfig> entry : hazelcastInstance.getConfig().getQueueConfigs().entrySet()) {
@@ -512,7 +508,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public void entryAdded(final EntryEvent<String, Object> iEvent) {
-    if( iEvent.getMember() == null )
+    if (iEvent.getMember() == null)
       // IGNORE IT
       return;
 
