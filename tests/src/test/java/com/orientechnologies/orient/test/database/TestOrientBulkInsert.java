@@ -33,7 +33,6 @@ public class TestOrientBulkInsert {
     // wurde es besser aber immer noch nicht 100%
     //
     OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false); // Turn off cache
-    OGlobalConfiguration.CACHE_LOCAL_SIZE.setValue(0); // Turn off cache
 
     OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.setValue(0); // Turn off cache
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(0);

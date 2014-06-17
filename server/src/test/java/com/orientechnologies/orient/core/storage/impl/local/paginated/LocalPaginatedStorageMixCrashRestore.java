@@ -62,7 +62,6 @@ public class LocalPaginatedStorageMixCrashRestore {
   @BeforeClass
   public void beforeClass() throws Exception {
     OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-    OGlobalConfiguration.CACHE_LOCAL_SIZE.setValue(0);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageMixCrashRestore";
@@ -88,7 +87,6 @@ public class LocalPaginatedStorageMixCrashRestore {
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
       OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-      OGlobalConfiguration.CACHE_LOCAL_SIZE.setValue(0);
 
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class

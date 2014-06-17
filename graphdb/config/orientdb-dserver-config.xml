@@ -118,8 +118,8 @@
         <entry name="db.pool.min" value="1"/>
         <entry name="db.pool.max" value="50"/>
 
-        <!-- LEVEL1 enable/disable and set the size as number of entries -->
-        <entry name="cache.level1.enabled" value="true"/>
+        <!-- LOCAL CACHE enable/disable-->
+        <entry name="cache.local.enabled" value="true"/>
 
         <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size>  -->
         <entry name="profiler.enabled" value="true"/>

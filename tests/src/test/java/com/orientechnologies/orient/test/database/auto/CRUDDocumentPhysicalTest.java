@@ -710,7 +710,6 @@ public class CRUDDocumentPhysicalTest {
 
     ODocument doc = new ODocument();
     doc.field("test", s);
-    doc.unpin();
     doc.save();
 
     doc.reload(null, true);
