@@ -88,7 +88,9 @@ public class ODistributedConfiguration {
           if (!s.equals(NEW_NODE_TAG) && !s.equals(iLocalNode))
             otherServers++;
 
-        return otherServers > 0;
+        return true;
+        // TEMPORARY PATCH TO FIX OPTIMIZATION OF RUNNING AS SINGLE SERVER
+        //return otherServers > 0;
       }
       return false;
     }

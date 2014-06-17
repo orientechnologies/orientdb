@@ -148,10 +148,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // DON'T REPLICATE
       return wrapped.command(iCommand);
 
-    // if (dManager.getDatabaseStatus(dManager.getLocalNodeName(), getName()) != ODistributedServerManager.DB_STATUS.ONLINE)
-    // // NODE OFFLINE, DON'T DISTRIBUTE
-    // return wrapped.command(iCommand);
-
     final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 
     executor.setProgressListener(iCommand.getProgressListener());
