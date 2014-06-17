@@ -10,12 +10,13 @@ app.controller('ServerMonitorController', function ($scope, $location, $routePar
 
 });
 
-app.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server, MetricConfig, $i18n) {
+app.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server, MetricConfig, $i18n, ContextNotification) {
 
 
     $scope.rid = $routeParams.server;
 
 
+    $scope.error = false;
     $scope.currentTab = 'overview';
     Monitor.getServers(function (data) {
         $scope.servers = data.result;
@@ -64,10 +65,18 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
                 $scope.databases = data;
                 var db = $scope.databases[0];
                 $scope.dbselected = db;
+                if (db) {
+                    $scope.getDbMetrics(db);
+                }
+                Server.getConfiguration(server, function (data) {
+                    $scope.configuration = data.configuration;
+                });
+                $scope.error = false;
+            }, function (error) {
+                $scope.error = true;
+                ContextNotification.push({content: error.data, error: true});
             });
-            Server.getConfiguration(server, function (data) {
-                $scope.configuration = data.configuration;
-            });
+
         }
     });
     $scope.getDbMetrics = function (db) {

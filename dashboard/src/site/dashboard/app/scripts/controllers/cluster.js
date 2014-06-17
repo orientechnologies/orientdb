@@ -29,7 +29,7 @@ module.controller('ClusterEditController', function ($scope, Cluster) {
 
     $scope.save = function () {
         Cluster.saveCluster($scope.cluster).then(function (data) {
-            
+
         })
     }
 

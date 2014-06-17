@@ -10,6 +10,9 @@
     </div>
     <div ng-controller="QueryMonitorController">
         <div class="row-fluid">
+            <div ng-include src="'views/notification.html'"></div>
+        </div>
+        <div class="row-fluid">
             <form class="form-inline well">
                 <div class="span6">
                     <label for="serverOnline" class="span6">{{ 'queryprofiler.server' | i18n }}</label>
@@ -25,6 +28,7 @@
                 </div>
             </form>
         </div>
+
         <div class="row-fluid">
             <div class="span6">
                 <div class="input-append querySearch">
@@ -45,8 +49,10 @@
                 </div>
             </div>
         </div>
+
         <div class="row-fluid">
             <div class="gridStyle" ng-grid="gridOptions"></div>
         </div>
+
     </div>
 </div>

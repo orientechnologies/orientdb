@@ -11,6 +11,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
         $scope.range = { start: moment().subtract('days', 6), end: moment()};
         $scope.popover = { compress: $scope.compress, pollTime: $scope.pollTime, range: $scope.range, render: $scope.render};
 
+
         $scope['fs'] = $scope.metricScope['fullScreen'];
         $scope.metricScope.$watch($scope.metric, function (data) {
             $scope.config = data;

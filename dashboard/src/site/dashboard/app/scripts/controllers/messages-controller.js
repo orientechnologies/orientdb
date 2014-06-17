@@ -199,3 +199,10 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
     }
 
 }]);
+
+dbModule.controller("ContextNotificationController", ['$scope', 'ContextNotification', function ($scope, ContextNotification) {
+    $scope.alerts = ContextNotification.notifications;
+    $scope.errors = ContextNotification.errors;
+
+
+}]);

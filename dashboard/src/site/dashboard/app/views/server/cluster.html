@@ -25,7 +25,8 @@
                     <i class="icon-angle-right"></i> {{ 'cluster.port' | i18n }}: <b>{{cluster.port}}</b>
                 </div>
                 <div>
-                    <i class="icon-angle-right"></i> {{ 'cluster.multicast' | i18n }} : <b>{{cluster.multicast | tconfig}}</b>
+                    <i class="icon-angle-right"></i> {{ 'cluster.multicast' | i18n }} : <b>{{cluster.multicast |
+                    tconfig}}</b>
                 </div>
                 <div>
                     <i class="icon-angle-right"></i> {{ 'cluster.tcp' | i18n }} : <b>{{cluster.tcp | tconfig}}</b>
@@ -39,7 +40,38 @@
     <div class="row-fluid" ng-show="db">
         <div class="span4 graph-db" dbgraph ng-model="dbConfig"></div>
         <div class="span8">
+            <div class="row-fluid">
+                <form class="form-inline well">
+                    <fieldset>
+                        <legend>{{'cluster.db.config' | i18n }} {{dbConfig.name}}</legend>
+
+                        <label>{{'cluster.writeQuorum' | i18n}}</label>
+                        <input type="text" class="input-medium" ng-model="dbConfig.config.writeQuorum">
+                        <label>{{'cluster.readQuorum' | i18n}}</label>
+                        <input type="text" class="input-medium" ng-model="dbConfig.config.readQuorum">
+                        <br><br>
+                        <label class="checkbox">
+                            <input type="checkbox" ng-model="dbConfig.config.autoDeploy"> {{'cluster.autoDeploy' |
+                            i18n}}
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" ng-model="dbConfig.config.hotAlignment"> {{'cluster.hotAlignment' |
+                            i18n}}
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" ng-model="dbConfig.config.readYourWrites">
+                            {{'cluster.readYourWrites' | i18n}}
+                        </label>
+                        <label class="checkbox">
+                            <input type="checkbox" ng-model="dbConfig.config.failureAvailableNodesLessQuorum">
+                            {{'cluster.failureAvailableNodesLessQuorum' | i18n}}
+                        </label>
+
+                    </fieldset>
+                </form>
+            </div>
             <div class="btn-toolbar pull-right">
+
                 <button class="btn btn-small" ng-click="addCluster()"><i class="icon-plus-sign"> {{ 'cluster.add' | i18n
                     }}</i></button>
                 <button class="btn btn-small" ng-click="saveConfig()"><i class="icon-save"> {{ 'cluster.apply' | i18n

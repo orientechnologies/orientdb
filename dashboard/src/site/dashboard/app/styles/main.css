@@ -52,6 +52,10 @@ body {
     color: #FFFFFF;
 }
 
+.side-nav > li.hider > a:hover {
+    background-color: #222222 !important;
+}
+
 .side-nav > li.active > a {
     background-color: #A5360F !important;
     color: #FFFFFF;
@@ -71,6 +75,14 @@ body {
         margin-top: 5px !important;
         width: 225px;
 
+    }
+
+    .side-nav-small > li > a {
+        width: 15px !important;
+    }
+
+    .side-nav-small {
+        width: 45px;
     }
 
     .side-nav > li > a {
@@ -826,8 +838,27 @@ div.pagination span.disabled {
         padding-bottom: 0;
     }
 
-    #wrapper {
+    .wrapper {
         padding-left: 225px;
+    }
+
+    .wrapper-small {
+        padding-left: 40px;
+    }
+
+    .side-nav .tooltip {
+        display: none;
+    }
+
+    .side-nav-small .tooltip .tooltip-inner {
+
+    }
+
+    .side-nav-small .tooltip {
+        z-index: 10000;
+        position: fixed;
+        font-size: 15px;
+
     }
 }
 
@@ -1153,3 +1184,6 @@ ul.tcp-members {
 ul.tcp-members li {
     padding: 5px;
 }
+
+
+

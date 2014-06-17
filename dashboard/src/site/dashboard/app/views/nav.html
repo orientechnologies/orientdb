@@ -7,11 +7,18 @@
     <a class="navbar-brand" href="index.html">OrientDB Enterprise</a>
 </div>
 <div class="collapse nav-collapse navbar-collapse navbar-ex1-collapse">
-    <ul class="nav navbar-nav side-nav" ng-show="login.logged">
+    <ul class="" ng-class="hideClass" ng-show="login.logged">
+        <li class="hider">
+            <a href="javascript:void(0)" ng-click="hide(!hided)">
+                <i class="icon-align-justify"> </i>
+            </a>
+        </li>
         <li ng-repeat="menu in menus" ng-class="{ active : menu == selectedMenu }">
-            <a ng-click="navigate(menu)" href="javascript:void(0)">
+
+            <a ng-click="navigate(menu)" bs-tooltip="{{ menu.i18n | i18n }}" data-toggle="tooltip" data-original-title="{{ menu.i18n | i18n }}" data-placement="right"
+               href="javascript:void(0)">
                 <i class="{{ menu.icon }}"></i>
-                <span class="menuTitle"> {{ menu.i18n | i18n }}</span>
+                <span ng-show="!hided" class="menuTitle"> {{ menu.i18n | i18n }}</span>
                 <span ng-class="{ selected : menu == selectedMenu }"></span>
             </a>
         </li>
@@ -24,6 +31,7 @@
                 <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">
+
                 <li>
                     <a href="#/dashboard/settings">
                         <i class="icon-gear"> Settings</i>

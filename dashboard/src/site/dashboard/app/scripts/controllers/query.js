@@ -2,11 +2,12 @@
 
 var app = angular.module('MonitorApp');
 
-app.controller('QueryMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, $i18n, Spinner) {
+app.controller('QueryMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, $i18n, Spinner, ContextNotification) {
 
 
     $scope.rid = $routeParams.server;
     $scope.db = $routeParams.db;
+
 
     $scope.filterOptions = {filterText: '' };
 
@@ -50,6 +51,9 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
             $scope.commands = $scope.flatten(data.result, metricName);
             Spinner.stopSpinner();
 
+        }, function (error) {
+            Spinner.stopSpinner();
+            ContextNotification.push({content: error.data, error: true});
         });
     }
 
@@ -84,7 +88,8 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
     });
     $scope.findDatabases = function (server) {
         var params = {  server: server, type: 'realtime', kind: 'information', names: 'system.databases' };
-        Metric.get(params, function (data) {
+        var db = Metric.get(params);
+        db.$promise.then(function (data) {
             $scope.databases = data.result[0]['system.databases'].split(",");
             if ($scope.databases.length > 0) {
                 $scope.db = $scope.databases[0];
@@ -92,6 +97,8 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
             if ($scope.db) {
                 $scope.refresh();
             }
+        }, function (error) {
+            ContextNotification.push({content: error.data, error: true});
         });
     }
 

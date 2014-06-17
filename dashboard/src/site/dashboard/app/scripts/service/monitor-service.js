@@ -219,12 +219,12 @@ monitor.factory('Server', function ($http, $resource, Metric) {
 //                error(data);
             });
     }
-    resource.findDatabases = function (server, callback) {
+    resource.findDatabases = function (server, callback, error) {
         var params = {  server: server, type: 'realtime', kind: 'information', names: 'system.databases' };
         Metric.get(params, function (data) {
             var databases = data.result[0]['system.databases'].split(",");
             callback(databases)
-        });
+        }, error);
     }
     resource.findDatabasesOnSnapshot = function (server, callback) {
         var params = {  server: server, type: 'snapshot', kind: 'information', names: 'system.databases' };
@@ -414,4 +414,28 @@ monitor.factory('Cluster', function ($http, $resource, $q) {
         return deferred.promise;
     }
     return resource;
+});
+
+monitor.factory('ContextNotification', function () {
+
+    return {
+        notifications: new Array,
+        errors: new Array,
+
+        push: function (notification) {
+            this.notifications.splice(0, this.notifications.length);
+            this.errors.splice(0, this.errors.length);
+
+            if (notification.error) {
+                this.errors.push(notification);
+            } else {
+                this.notifications.push(notification);
+            }
+        },
+        clear: function () {
+            this.notifications.splice(0, this.notifications.length);
+            this.errors.splice(0, this.errors.length);
+        }
+
+    }
 });
