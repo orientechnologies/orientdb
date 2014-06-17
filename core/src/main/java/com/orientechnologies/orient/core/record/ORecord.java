@@ -123,29 +123,6 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
   public boolean isDirty();
 
   /**
-   * Checks if the record is pinned.
-   * 
-   * @return True if pinned, otherwise false
-   */
-  public Boolean isPinned();
-
-  /**
-   * Suggests to the engine to keep the record in cache. Use it for the most read records.
-   * 
-   * @see ORecord#unpin()
-   * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   */
-  public <RET extends ORecord<T>> RET pin();
-
-  /**
-   * Suggests to the engine to not keep the record in cache.
-   * 
-   * @see ORecord#pin()
-   * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   */
-  public <RET extends ORecord<T>> RET unpin();
-
-  /**
    * Loads the record content in memory. If the record is in cache will be returned a new instance, so pay attention to use the
    * returned. If the record is dirty, then it returns to the original content. If the record does not exist a
    * ORecordNotFoundException exception is thrown.
@@ -199,7 +176,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    */
   public <RET extends ORecord<T>> RET delete();
 
-	/**
+  /**
    * Fills the record parsing the content in JSON format.
    * 
    * @param iJson

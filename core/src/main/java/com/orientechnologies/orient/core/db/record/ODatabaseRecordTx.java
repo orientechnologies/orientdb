@@ -150,6 +150,8 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
         }
       // ROLLBACK TX AT DB LEVEL
       currentTx.rollback(false, 0);
+      getLocalCache().clear();
+
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : underlying.browseListeners())
         try {
@@ -167,7 +169,10 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
       } catch (Throwable t) {
         OLogManager
             .instance()
-            .debug(this, "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()", t, OTransactionBlockedException.class, listener.getClass());
+            .debug(
+                this,
+                "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
+                t, OTransactionBlockedException.class, listener.getClass());
       }
 
     return this;
@@ -216,6 +221,8 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
         }
     }
 
+    getLocalCache().clear();
+
     return this;
   }
 
@@ -244,8 +251,8 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
-    return (RET) currentTx.loadRecord(iRecordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+  public <RET extends ORecordInternal<?>> RET load(final ORID recordId) {
+    return (RET) currentTx.loadRecord(recordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @SuppressWarnings("unchecked")
@@ -336,14 +343,14 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
     return this;
   }
 
-	@Override
-	public boolean hide(ORID rid) {
-		if (currentTx.isActive())
-			throw new ODatabaseException("This operation can be executed only in non tx mode");
-		return super.hide(rid);
-	}
+  @Override
+  public boolean hide(ORID rid) {
+    if (currentTx.isActive())
+      throw new ODatabaseException("This operation can be executed only in non tx mode");
+    return super.hide(rid);
+  }
 
-	@Override
+  @Override
   public ODatabaseRecord delete(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
     currentTx.deleteRecord(iRecord, iMode);
     return this;

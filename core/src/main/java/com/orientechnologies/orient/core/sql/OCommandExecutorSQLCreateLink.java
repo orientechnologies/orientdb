@@ -204,8 +204,6 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
     try {
       // BROWSE ALL THE RECORDS OF THE SOURCE CLASS
       for (ODocument doc : db.browseClass(sourceClass.getName())) {
-        doc.unpin();
-
         value = doc.field(sourceField);
 
         if (value != null) {

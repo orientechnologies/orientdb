@@ -19,7 +19,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.ODefaultCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
@@ -164,27 +163,7 @@ public enum OGlobalConfiguration {
       Boolean.class, true),
 
   // CACHE
-  CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
-
-  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
-
-  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
-
-  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
-
-  CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
-      .getCanonicalName()),
-
-  CACHE_LEVEL2_STRATEGY("cache.level2.strategy",
-      "Strategy to use when a database requests a record: 0 = pop the record, 1 = copy the record", Integer.class, 0,
-      new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          // UPDATE ALL THE OPENED STORAGES SETTING THE NEW STRATEGY
-          // for (OStorage s : com.orientechnologies.orient.core.Orient.instance().getStorages()) {
-          // s.getCache().setStrategy((Integer) iNewValue);
-          // }
-        }
-      }),
+  CACHE_LOCAL_ENABLED("cache.local.enabled", "Use the local cache", Boolean.class, true),
 
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
