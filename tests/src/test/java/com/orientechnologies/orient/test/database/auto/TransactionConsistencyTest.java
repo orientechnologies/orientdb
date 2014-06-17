@@ -154,7 +154,6 @@ public class TransactionConsistencyTest {
     // Create docA.
     ODocument vDocA_db1 = database1.newInstance();
     vDocA_db1.field(NAME, "docA");
-    vDocA_db1.unpin();
     database1.save(vDocA_db1);
 
     // Keep the IDs.

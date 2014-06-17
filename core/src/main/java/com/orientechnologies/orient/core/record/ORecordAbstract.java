@@ -48,7 +48,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   protected int                                  _size;
   protected String                               _dataSegmentName;
   protected transient ORecordSerializer          _recordFormat;
-  protected Boolean                              _pinned                 = null;
   protected boolean                              _dirty                  = true;
   protected ORecordElement.STATUS                _status                 = ORecordElement.STATUS.LOADED;
   protected transient Set<ORecordListener>       _listeners              = null;
@@ -181,20 +180,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
   public boolean isDirty() {
     return _dirty;
-  }
-
-  public Boolean isPinned() {
-    return _pinned;
-  }
-
-  public ORecordAbstract<T> pin() {
-    _pinned = Boolean.TRUE;
-    return this;
-  }
-
-  public ORecordAbstract<T> unpin() {
-    _pinned = Boolean.FALSE;
-    return this;
   }
 
   public <RET extends ORecord<T>> RET fromJSON(final String iSource, final String iOptions) {
@@ -403,7 +388,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     cloned._size = _size;
     cloned._recordId = _recordId.copy();
     cloned._recordVersion = _recordVersion.copy();
-    cloned._pinned = _pinned;
     cloned._status = _status;
     cloned._recordFormat = _recordFormat;
     cloned._listeners = null;
