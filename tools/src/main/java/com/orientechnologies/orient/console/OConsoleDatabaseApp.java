@@ -1329,7 +1329,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           else
             for (int i = 0; i < cls.getClusterIds().length; ++i) {
               if (i > 0)
-                clusters.append(", ");
+                clusters.append(",");
               clusters.append(cls.getClusterIds()[i]);
             }
 
