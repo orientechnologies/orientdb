@@ -185,8 +185,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       }
     }, true);
 
-    // CLEAR THE CACHE MOVING GOOD RECORDS TO LEVEL-2 CACHE
-    database.getLevel1Cache().clear();
+    // CLEAR THE CACHE
+    database.getLocalCache().clear();
 
     // REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
     // EXECUTED
@@ -359,7 +359,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           iRecord.onAfterIdentityChanged(iRecord);
         } else
           // REMOVE FROM THE DB'S CACHE
-          database.getLevel1Cache().freeRecord(rid);
+          database.getLocalCache().freeRecord(rid);
 
         ORecordOperation txEntry = getRecordEntry(rid);
 

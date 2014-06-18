@@ -21,7 +21,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -148,10 +147,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     if (!dbCfg.isReplicationActive(null, dManager.getLocalNodeName()))
       // DON'T REPLICATE
       return wrapped.command(iCommand);
-
-    // if (dManager.getDatabaseStatus(dManager.getLocalNodeName(), getName()) != ODistributedServerManager.DB_STATUS.ONLINE)
-    // // NODE OFFLINE, DON'T DISTRIBUTE
-    // return wrapped.command(iCommand);
 
     final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 
@@ -554,11 +549,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   @Override
   public boolean isClosed() {
     return wrapped.isClosed();
-  }
-
-  @Override
-  public OLevel2RecordCache getLevel2Cache() {
-    return wrapped.getLevel2Cache();
   }
 
   @Override

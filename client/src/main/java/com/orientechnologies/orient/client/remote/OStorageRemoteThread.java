@@ -17,7 +17,6 @@ package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
@@ -271,8 +270,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode,
-																										 ORecordCallback<Boolean> callback) {
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
     pushSession();
     try {
       return delegate.hideRecord(recordId, mode, callback);
@@ -693,10 +691,6 @@ public class OStorageRemoteThread implements OStorageProxy {
   @Override
   public long getLastOperationId() {
     return 0;
-  }
-
-  public OLevel2RecordCache getLevel2Cache() {
-    return delegate.getLevel2Cache();
   }
 
   public boolean existsResource(final String iName) {

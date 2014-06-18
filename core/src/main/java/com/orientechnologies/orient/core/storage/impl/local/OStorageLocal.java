@@ -341,8 +341,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
       if (configuration != null)
         configuration.close();
 
-      level2Cache.shutdown();
-
       OMMapManagerLocator.getInstance().flush();
 
       super.close(iForce, onDelete);
@@ -864,8 +862,6 @@ public class OStorageLocal extends OStorageLocalAbstract {
       final OCluster cluster = clusters[clusterId];
       if (cluster == null)
         return false;
-
-      getLevel2Cache().freeCluster(clusterId);
 
       if (iTruncate)
         cluster.truncate();

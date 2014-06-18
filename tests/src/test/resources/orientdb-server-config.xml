@@ -59,10 +59,7 @@
         <user resources="connect,server.listDatabases" password="guest" name="guest"/>
     </users>
     <properties>
-        <entry name="cache.level2.enabled" value="false"/>
-        <entry name="cache.level2.size" value="0"/>
-        <entry name="cache.level1.enabled" value="false"/>
-        <entry name="cache.level1.size" value="0"/>
+        <entry name="cache.level1.enabled" value="true"/>
         <entry name="log.console.level" value="info"/>
         <entry name="log.file.level" value="fine"/>
     </properties>

@@ -6,7 +6,7 @@ import org.testng.annotations.Test;
 
 /**
  * Check the system as for memory leaks.
- *
+ * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class MemoryLeaksTest {
@@ -19,7 +19,8 @@ public class MemoryLeaksTest {
       ODocument vDoc = new ODocument();
       vDoc.field("test", new byte[100000]);
       vDoc.save();
-      if (i % 10 == 0) System.out.println("Records created:" + i + " cacheSize: " + vDb.getLevel1Cache().getSize());
+      if (i % 10 == 0)
+        System.out.println("Records created:" + i + " cacheSize: " + vDb.getLocalCache().getSize());
     }
   }
 }

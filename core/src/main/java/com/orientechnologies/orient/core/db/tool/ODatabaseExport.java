@@ -78,8 +78,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
     writer = new OJSONWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(fileName), 16384))); // 16KB
     writer.beginObject();
-    iDatabase.getLevel1Cache().setEnable(false);
-    iDatabase.getLevel2Cache().setEnable(false);
+    iDatabase.getLocalCache().setEnable(false);
   }
 
   public ODatabaseExport(final ODatabaseRecord iDatabase, final OutputStream iOutputStream, final OCommandOutputListener iListener)
@@ -88,8 +87,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
     writer = new OJSONWriter(new OutputStreamWriter(iOutputStream));
     writer.beginObject();
-    iDatabase.getLevel1Cache().setEnable(false);
-    iDatabase.getLevel2Cache().setEnable(false);
+    iDatabase.getLocalCache().setEnable(false);
   }
 
   @Override
@@ -102,8 +100,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     try {
       listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
 
-      database.getLevel1Cache().setEnable(false);
-      database.getLevel2Cache().setEnable(false);
+      database.getLocalCache().setEnable(false);
 
       long time = System.currentTimeMillis();
 
