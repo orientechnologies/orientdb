@@ -128,6 +128,12 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.query = function () {
 
         var queryBuffer = "" + $scope.queryText;
+        var selection = $scope.cm.getSelection();
+        if (selection && selection != "") {
+            console.log(selection);
+            queryBuffer = "" + selection;
+        }
+
         queryBuffer = queryBuffer.trim();
         queryBuffer = queryBuffer.replace(/\n/g, " ");
         Spinner.start(function () {
@@ -154,6 +160,10 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
                 var item = new Object;
                 item.query = $scope.queryText;
+                if (selection && selection != "") {
+                    item.query = selection;
+                }
+
                 item.language = $scope.language;
                 $scope.headers = Database.getPropertyTableFromResults(data.result);
                 if ($scope.headers.length == 00) {
