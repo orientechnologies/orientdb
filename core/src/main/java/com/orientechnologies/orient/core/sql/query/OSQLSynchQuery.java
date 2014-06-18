@@ -84,6 +84,8 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
         result.add((T) r);
     }
 
+    ((OResultSet) result).setCompleted();
+
     if (!result.isEmpty()) {
       previousQueryParams = new HashMap<Object, Object>(queryParams);
       final ORID lastRid = ((OIdentifiable) result.get(result.size() - 1)).getIdentity();
