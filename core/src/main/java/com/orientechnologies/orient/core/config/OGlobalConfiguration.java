@@ -163,7 +163,9 @@ public enum OGlobalConfiguration {
       Boolean.class, true),
 
   // CACHE
-  CACHE_LOCAL_ENABLED("cache.local.enabled", "Use the local cache", Boolean.class, true),
+  CACHE_LOCAL_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
+
+  CACHE_LOCAL_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
 
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),

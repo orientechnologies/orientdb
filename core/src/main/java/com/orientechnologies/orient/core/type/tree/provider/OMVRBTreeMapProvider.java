@@ -56,7 +56,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
   public OMVRBTreeMapProvider(final OStorage iStorage, final String iClusterName, final OBinarySerializer<K> iKeySerializer,
       final OStreamSerializer iValueSerializer) {
-    super(new ORecordBytesLazy(), iStorage, iClusterName);
+    super(new ORecordBytesLazy().unpin(), iStorage, iClusterName);
     ((ORecordBytesLazy) record).recycle(this);
     stream = new OMemoryStream();
     keySerializer = iKeySerializer;

@@ -44,6 +44,9 @@ public class ORecordBytesLazy extends ORecordBytes {
   @Override
   public ORecordBytesLazy copy() {
     final ORecordBytesLazy c = (ORecordBytesLazy) copyTo(new ORecordBytesLazy(serializableContent));
+    final Boolean pinned = isPinned();
+    if (pinned != null && !pinned)
+      c.unpin();
     return c;
   }
 
