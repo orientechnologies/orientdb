@@ -23,6 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocatorRemote;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -119,7 +120,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode, STATUS status) throws IOException {
-    super(iURL, iURL, iMode, 0); // NO TIMEOUT @SINCE 1.5
+    super(iURL, iURL, iMode, 0, new OCacheLevelTwoLocatorRemote()); // NO TIMEOUT @SINCE 1.5
     if (status != null)
       this.status = status;
 
@@ -270,6 +271,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       // CLOSE ALL THE CONNECTIONS
       engine.getConnectionManager().closePool(getCurrentServerURL());
 
+      level2Cache.shutdown();
       super.close(iForce, onDelete);
       status = STATUS.CLOSED;
 
@@ -469,7 +471,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
             if (database != null)
               // PUT IN THE CLIENT LOCAL CACHE
-              database.getLocalCache().updateRecord(record);
+              database.getLevel1Cache().updateRecord(record);
           }
           return new OStorageOperationResult<ORawBuffer>(buffer);
 
@@ -956,13 +958,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                   // PUT AS PART OF THE RESULT SET. INVOKE THE LISTENER
                   if (addNextRecord) {
                     addNextRecord = iCommand.getResultListener().result(record);
-                    database.getLocalCache().updateRecord(record);
+                    database.getLevel1Cache().updateRecord(record);
                   }
                   break;
 
                 case 2:
                   // PUT IN THE CLIENT LOCAL CACHE
-                  database.getLocalCache().updateRecord(record);
+                  database.getLevel1Cache().updateRecord(record);
                 }
               }
             } else {
@@ -975,7 +977,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               case 'r':
                 result = OChannelBinaryProtocol.readIdentifiable(network);
                 if (result instanceof ORecord<?>)
-                  database.getLocalCache().updateRecord((ORecordInternal<?>) result);
+                  database.getLevel1Cache().updateRecord((ORecordInternal<?>) result);
                 break;
 
               case 'l':
@@ -984,7 +986,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 for (int i = 0; i < tot; ++i) {
                   final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
                   if (resultItem instanceof ORecord<?>)
-                    database.getLocalCache().updateRecord((ORecordInternal<?>) resultItem);
+                    database.getLevel1Cache().updateRecord((ORecordInternal<?>) resultItem);
                   list.add(resultItem);
                 }
                 result = list;
@@ -1007,7 +1009,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                   final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
                   if (record != null && status == 2)
                     // PUT IN THE CLIENT LOCAL CACHE
-                    database.getLocalCache().updateRecord(record);
+                    database.getLevel1Cache().updateRecord(record);
                 }
               }
             }
@@ -1267,6 +1269,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (configuration.clusters.size() > iClusterId)
             configuration.dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
 
+          getLevel2Cache().freeCluster(iClusterId);
           return true;
         }
         return false;

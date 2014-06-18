@@ -150,8 +150,6 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
         }
       // ROLLBACK TX AT DB LEVEL
       currentTx.rollback(false, 0);
-      getLocalCache().clear();
-
       // WAKE UP ROLLBACK LISTENERS
       for (ODatabaseListener listener : underlying.browseListeners())
         try {
@@ -220,8 +218,6 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
           OLogManager.instance().error(this, "Error after tx rollback", t);
         }
     }
-
-    getLocalCache().clear();
 
     return this;
   }
