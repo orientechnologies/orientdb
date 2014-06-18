@@ -6,8 +6,8 @@ public class OVarIntSerializer {
 
   public static short write(BytesContainer bytes, long value) {
     value = signedToUnsigned(value);
-    short pos = bytes.alloc((short) bytesLength(value));
-    writeUnsignedVarLong(value, bytes.bytes, pos);
+    short pos = bytes.offset;
+    writeUnsignedVarLong(value, bytes);
     return pos;
 
   }
@@ -34,32 +34,6 @@ public class OVarIntSerializer {
   }
 
   /**
-   * Return the length in bytes of the given number when encoded
-   * 
-   * FIXME handled signed/unsigned properly
-   * 
-   * @param value
-   * @return
-   */
-  public static int bytesLength(long value) {
-    if (value < 0x80l) // 2^7
-      return 1;
-    if (value < 0x4000l) // 2^14
-      return 2;
-    if (value < 0x200000l) // 2^21
-      return 3;
-    if (value < 0x10000000l) // 2^28
-      return 4;
-    if (value < 0x1000000000l) // 2^35
-      return 5;
-    if (value < 0x40000000000l) // 2^42
-      return 6;
-    if (value < 0x2000000000000l) // 2^49
-      return 7;
-    return 8;
-  }
-
-  /**
    * Encodes a value using the variable-length encoding from <a
    * href="http://code.google.com/apis/protocolbuffers/docs/encoding.html"> Google Protocol Buffers</a>. Zig-zag is not used, so
    * input must not be negative. If values can be negative, use {@link #writeSignedVarLong(long, DataOutput)} instead. This method
@@ -73,18 +47,14 @@ public class OVarIntSerializer {
    * @throws IOException
    *           if {@link DataOutput} throws {@link IOException}
    */
-  public static int writeUnsignedVarLong(long value, byte[] bos, int pos) {
-    int size = 0;
+  public static void writeUnsignedVarLong(long value, BytesContainer bos) {
     while ((value & 0xFFFFFFFFFFFFFF80L) != 0L) {
       // out.writeByte(((int) value & 0x7F) | 0x80);
-      bos[pos + size] = (byte) (value & 0x7F | 0x80);
+      bos.bytes[bos.alloc((short) 1)] = (byte) (value & 0x7F | 0x80);
       value >>>= 7;
-      size++;
     }
     // out.writeByte((int) value & 0x7F);
-    bos[pos + size] = (byte) (value & 0x7F);
-    size++;
-    return size;
+    bos.bytes[bos.alloc((short) 1)] = (byte) (value & 0x7F);
   }
 
   /**

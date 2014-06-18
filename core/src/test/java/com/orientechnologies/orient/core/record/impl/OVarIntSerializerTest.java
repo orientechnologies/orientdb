@@ -48,4 +48,18 @@ public class OVarIntSerializerTest {
     assertEquals(OVarIntSerializer.read(bytes), 16238l);
   }
 
+  @Test
+  public void serializeMaxLong() {
+    BytesContainer bytes = new BytesContainer();
+    bytes.offset = OVarIntSerializer.write(bytes, Long.MAX_VALUE);
+    assertEquals(OVarIntSerializer.read(bytes), Long.MAX_VALUE);
+  }
+
+  @Test
+  public void serializeMinLong() {
+    BytesContainer bytes = new BytesContainer();
+    bytes.offset = OVarIntSerializer.write(bytes, Long.MIN_VALUE);
+    assertEquals(OVarIntSerializer.read(bytes), Long.MIN_VALUE);
+  }
+
 }

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.record.impl;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -16,6 +17,7 @@ import java.util.Set;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -45,6 +47,11 @@ public class ODocumentSchemalessBinarySerializationTest {
     document.field("character", 'C');
     document.field("alive", true);
     document.field("dateTime", new Date());
+    document.field("bigNumber", new BigDecimal("43989872423376487952454365232141525434.32146432321442534"));
+    ORidBag bag = new ORidBag();
+    bag.add(new ORecordId(1, new OClusterPositionLong(1)));
+    bag.add(new ORecordId(2, new OClusterPositionLong(2)));
+//    document.field("ridBag", bag);
     Calendar c = Calendar.getInstance();
     document.field("date", c.getTime(), OType.DATE);
     Calendar c1 = Calendar.getInstance();
@@ -86,6 +93,8 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(extr.field("bytes"), document.field("bytes"));
     assertEquals(extr.field("utf8String"), document.field("utf8String"));
     assertEquals(extr.field("recordId"), document.field("recordId"));
+    assertEquals(extr.field("bigNumber"), document.field("bigNumber"));
+//    assertEquals(extr.field("ridBag"), document.field("ridBag"));
 
   }
 

@@ -13,6 +13,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
@@ -132,8 +133,19 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       value = readEmbeddedMap(bytes);
       break;
     case DECIMAL:
+      value = ODecimalSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
+      bytes.read(ODecimalSerializer.INSTANCE.getObjectSize(bytes.bytes, bytes.offset));
       break;
-    default:
+    case LINKBAG:
+      ORidBag bag = new ORidBag();
+      bag.fromStream(bytes);
+      value = bag;
+      break;
+    case TRANSIENT:
+      break;
+    case CUSTOM:
+      break;
+    case ANY:
       break;
     }
     return value;
@@ -278,6 +290,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       pointer = writeEmbeddedCollection(bytes, (Collection<?>) value);
       break;
     case DECIMAL:
+      BigDecimal decimalValue = (BigDecimal) value;
+      pointer = bytes.alloc((short) ODecimalSerializer.INSTANCE.getObjectSize(decimalValue));
+      ODecimalSerializer.INSTANCE.serialize(decimalValue, bytes.bytes, pointer);
       break;
     case BINARY:
       byte[] valueBytes = (byte[]) (value);
@@ -300,7 +315,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       pointer = writeEmbeddedMap(bytes, (Map<Object, Object>) value);
       break;
     case LINKBAG:
-    default:
+      pointer = ((ORidBag) value).toStream(bytes);
+    case TRANSIENT:
+      break;
+    case CUSTOM:
+      break;
+    case ANY:
       break;
     }
     return pointer;
