@@ -25,22 +25,23 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
- * Local cache. it's one to one with record database instances. It is needed to avoid cases when several instances of the same
- * record will be loaded by user from the same database.
+ * Level1 cache. it's one to one with record database instances.
  * 
  * @author Luca Garulli
  */
-public class OLocalRecordCache extends OAbstractRecordCache {
-  private String CACHE_HIT;
-  private String CACHE_MISS;
+public class OLevel1RecordCache extends OAbstractRecordCache {
+  private OLevel2RecordCache secondary = null;
+  private String             CACHE_HIT;
+  private String             CACHE_MISS;
 
-  public OLocalRecordCache(OCacheLevelOneLocator cacheLocator) {
+  public OLevel1RecordCache(OCacheLevelOneLocator cacheLocator) {
     super(cacheLocator.threadLocalCache());
   }
 
   @Override
   public void startup() {
     ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    secondary = db.getLevel2Cache();
 
     profilerPrefix = "db." + db.getName() + ".cache.level1.";
     profilerMetadataPrefix = "db.*.cache.level1.";
@@ -51,7 +52,7 @@ public class OLocalRecordCache extends OAbstractRecordCache {
     excludedCluster = db.getClusterIdByName(CLUSTER_INDEX_NAME);
 
     super.startup();
-    setEnable(OGlobalConfiguration.CACHE_LOCAL_ENABLED.getValueAsBoolean());
+    setEnable(OGlobalConfiguration.CACHE_LEVEL1_ENABLED.getValueAsBoolean());
   }
 
   /**
@@ -63,9 +64,17 @@ public class OLocalRecordCache extends OAbstractRecordCache {
   public void updateRecord(final ORecordInternal<?> record) {
     if (isEnabled() && record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid()
         && !record.getRecordVersion().isTombstone()) {
-      if (underlying.get(record.getIdentity()) != record)
-        underlying.put(record);
+      underlying.lock(record.getIdentity());
+      try {
+        if (underlying.get(record.getIdentity()) != record)
+          underlying.put(record);
+      } finally {
+        underlying.unlock(record.getIdentity());
+      }
     }
+
+    if (record.getIdentity().getClusterId() != excludedCluster)
+      secondary.updateRecord(record);
   }
 
   /**
@@ -77,12 +86,29 @@ public class OLocalRecordCache extends OAbstractRecordCache {
    */
   public ORecordInternal<?> findRecord(final ORID rid) {
     if (!isEnabled()) {
-      return null;
+      if (rid.getClusterId() != excludedCluster)
+        return secondary.retrieveRecord(rid);
+      else
+        return null;
     }
     // DELEGATE TO THE 2nd LEVEL CACHE
 
     ORecordInternal<?> record;
-    record = underlying.get(rid);
+    underlying.lock(rid);
+    try {
+      record = underlying.get(rid);
+
+      if (record == null) {
+        // DELEGATE TO THE 2nd LEVEL CACHE
+        record = secondary.retrieveRecord(rid);
+
+        if (record != null)
+          // STORE IT LOCALLY
+          underlying.put(record);
+      }
+    } finally {
+      underlying.unlock(rid);
+    }
 
     if (record != null)
       Orient.instance().getProfiler().updateCounter(CACHE_HIT, "Record found in Level1 Cache", 1L, "db.*.cache.level1.cache.found");
@@ -101,15 +127,26 @@ public class OLocalRecordCache extends OAbstractRecordCache {
    */
   public void deleteRecord(final ORID rid) {
     super.deleteRecord(rid);
+    secondary.freeRecord(rid);
   }
 
   public void shutdown() {
     super.shutdown();
+    secondary = null;
   }
 
   @Override
   public void clear() {
+    moveRecordsToSecondaryCache();
     super.clear();
+  }
+
+  private void moveRecordsToSecondaryCache() {
+    if (secondary == null)
+      return;
+
+    for (ORID rid : underlying.keys())
+      secondary.updateRecord(underlying.get(rid));
   }
 
   /**

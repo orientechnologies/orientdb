@@ -49,6 +49,10 @@ public class OAsynchChannelServiceThread extends OSoftThread {
       Object obj = null;
 
       switch (request) {
+      case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
+        obj = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+        break;
+
       case OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG:
         obj = network.readBytes();
         break;

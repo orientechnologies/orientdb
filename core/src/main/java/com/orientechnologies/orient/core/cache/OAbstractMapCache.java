@@ -34,8 +34,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements OCache {
-  protected final T           cache;
-  private final AtomicBoolean enabled = new AtomicBoolean(false);
+  protected final OSharedResourceAdaptiveExternal lock    = new OSharedResourceAdaptiveExternal(
+                                                              OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), 0,
+                                                              true);
+  protected final T                               cache;
+  private final AtomicBoolean                     enabled = new AtomicBoolean(false);
 
   public OAbstractMapCache(T cache) {
     this.cache = cache;
@@ -72,16 +75,41 @@ public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements OCach
     if (!isEnabled())
       return;
 
-    cache.clear();
+    lock.acquireExclusiveLock();
+    try {
+      cache.clear();
+    } finally {
+      lock.releaseExclusiveLock();
+    }
   }
 
   @Override
   public int size() {
-    return cache.size();
+    lock.acquireSharedLock();
+    try {
+      return cache.size();
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 
   @Override
   public Collection<ORID> keys() {
-    return new ArrayList<ORID>(cache.keySet());
+    lock.acquireExclusiveLock();
+    try {
+      return new ArrayList<ORID>(cache.keySet());
+    } finally {
+      lock.releaseExclusiveLock();
+    }
+  }
+
+  @Override
+  public void lock(final ORID id) {
+    lock.acquireExclusiveLock();
+  }
+
+  @Override
+  public void unlock(final ORID id) {
+    lock.releaseExclusiveLock();
   }
 }

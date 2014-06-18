@@ -652,7 +652,7 @@ public class CRUDDocumentPhysicalTest {
     } catch (Exception e) {
     }
     // INVALIDATE L1 CACHE TO CHECK THE L2 CACHE
-    database.getLocalCache().invalidate();
+    database.getLevel1Cache().invalidate();
     try {
       // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
       doc = database.load(docRid, "invalid");
@@ -660,6 +660,7 @@ public class CRUDDocumentPhysicalTest {
     } catch (Exception e) {
     }
     // CLEAR THE L2 CACHE TO CHECK THE RAW READ
+    database.getLevel2Cache().clear();
     try {
       // LOAD DOCUMENT NOT IN ANY CACHE
       doc = database.load(docRid, "invalid");
@@ -688,14 +689,15 @@ public class CRUDDocumentPhysicalTest {
     } catch (Exception e) {
     }
     // CLEAR L1 CACHE, THIS WILL PUT IT IN L2 CACHE
-    database.getLocalCache().clear();
+    database.getLevel1Cache().clear();
     try {
       // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
       doc = database.load(docRid, "invalid");
       Assert.fail("Should throw IllegalArgumentException");
     } catch (Exception e) {
     }
-
+    // CLEAR THE L2 CACHE TO CHECK THE RAW READ
+    database.getLevel2Cache().clear();
     try {
       // LOAD DOCUMENT NOT IN ANY CACHE
       doc = database.load(docRid, "invalid");
@@ -710,6 +712,7 @@ public class CRUDDocumentPhysicalTest {
 
     ODocument doc = new ODocument();
     doc.field("test", s);
+    doc.unpin();
     doc.save();
 
     doc.reload(null, true);

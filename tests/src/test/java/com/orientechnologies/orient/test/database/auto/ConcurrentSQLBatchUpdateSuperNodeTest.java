@@ -41,7 +41,8 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest {
   private final static int MAX_RETRIES        = 100;
   private final AtomicLong counter            = new AtomicLong();
   protected String         url;
-  private boolean          localCacheEnabled;
+  private boolean          level1CacheEnabled;
+  private boolean          level2CacheEnabled;
   private boolean          mvccEnabled;
   private long             startedOn;
   private AtomicLong       totalRetries       = new AtomicLong();
@@ -130,11 +131,14 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest {
 
   @BeforeClass
   public void init() {
-    localCacheEnabled = OGlobalConfiguration.CACHE_LOCAL_ENABLED.getValueAsBoolean();
+    level1CacheEnabled = OGlobalConfiguration.CACHE_LEVEL1_ENABLED.getValueAsBoolean();
+    level2CacheEnabled = OGlobalConfiguration.CACHE_LEVEL2_ENABLED.getValueAsBoolean();
     mvccEnabled = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
 
-    if (localCacheEnabled)
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
+    if (level1CacheEnabled)
+      OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
+    if (level2CacheEnabled)
+      OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
     if (!mvccEnabled)
       OGlobalConfiguration.DB_MVCC.setValue(true);
 
@@ -145,7 +149,8 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest {
 
   @AfterClass
   public void deinit() {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(localCacheEnabled);
+    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(level1CacheEnabled);
+    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(level2CacheEnabled);
     OGlobalConfiguration.DB_MVCC.setValue(mvccEnabled);
   }
 

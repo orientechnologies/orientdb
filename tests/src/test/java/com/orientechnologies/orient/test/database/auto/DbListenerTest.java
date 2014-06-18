@@ -186,4 +186,31 @@ public class DbListenerTest {
     database.close();
     Assert.assertEquals(onClose, 1);
   }
+
+  @Test
+  public void testAsynchEventListeners() throws IOException {
+    if (!database.getURL().startsWith("remote:"))
+      return;
+
+    database.open("admin", "admin");
+
+    ((OStorageRemoteThread) database.getStorage()).setRemoteServerEventListener(new ORemoteServerEventListener() {
+
+      @Override
+      public void onRequest(byte iRequestCode, Object iObject) {
+        switch (iRequestCode) {
+        case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
+          onRecordPulled++;
+          break;
+
+        // case OBinaryProtocol.PUSH_NODE2CLIENT_DB_CONFIG:
+        // onClusterConfigurationChange++;
+        // break;
+
+        }
+      }
+    });
+
+    database.close();
+  }
 }

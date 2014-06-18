@@ -145,11 +145,11 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   /**
    * Loads the entity by the Record ID.
    * 
-   * @param recordId
+   * @param iRecordId
    *          The unique record id of the entity to load.
    * @return The loaded entity
    */
-  public <RET extends T> RET load(ORID recordId);
+  public <RET extends T> RET load(ORID iRecordId);
 
   /**
    * Loads the entity by the Record ID using a fetch plan.

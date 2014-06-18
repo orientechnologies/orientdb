@@ -247,8 +247,8 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal<?>> RET load(final ORID recordId) {
-    return (RET) currentTx.loadRecord(recordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+  public <RET extends ORecordInternal<?>> RET load(final ORID iRecordId) {
+    return (RET) currentTx.loadRecord(iRecordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @SuppressWarnings("unchecked")

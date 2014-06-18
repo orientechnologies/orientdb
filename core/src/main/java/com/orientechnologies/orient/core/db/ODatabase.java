@@ -21,7 +21,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -159,7 +160,14 @@ public interface ODatabase extends OBackupable, Closeable {
    * 
    * @return Current cache.
    */
-  public OLocalRecordCache getLocalCache();
+  public OLevel1RecordCache getLevel1Cache();
+
+  /**
+   * Returns the level1 cache. Cannot be null.
+   * 
+   * @return Current cache.
+   */
+  public OLevel2RecordCache getLevel2Cache();
 
   /**
    * Returns the data segment id by name.

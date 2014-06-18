@@ -21,7 +21,8 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -446,7 +447,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
    * 
    * @return
    */
-  public OLocalRecordCache getLocalCache() {
+  public OLevel1RecordCache getLevel1Cache() {
     return null;
   }
 
@@ -494,6 +495,10 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
   public Iterator<Entry<String, Object>> getProperties() {
     return properties.entrySet().iterator();
+  }
+
+  public OLevel2RecordCache getLevel2Cache() {
+    return storage.getLevel2Cache();
   }
 
   public void close() {

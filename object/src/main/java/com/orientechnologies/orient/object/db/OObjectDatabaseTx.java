@@ -308,8 +308,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     }
   }
 
-  public <RET> RET load(final ORID recordId) {
-    return (RET) load(recordId, null);
+  public <RET> RET load(final ORID iRecordId) {
+    return (RET) load(iRecordId, null);
   }
 
   public <RET> RET load(final ORID iRecordId, final String iFetchPlan) {

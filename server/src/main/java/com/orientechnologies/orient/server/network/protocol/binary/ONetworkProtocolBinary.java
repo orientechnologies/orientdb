@@ -196,7 +196,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection != null) {
       if (connection.database != null)
         if (!connection.database.isClosed())
-          connection.database.getLocalCache().clear();
+          connection.database.getLevel1Cache().clear();
 
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
       connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
@@ -1155,7 +1155,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     connection.data.commandDetail = command.getText();
 
     // ENABLES THE CACHE TO IMPROVE PERFORMANCE OF COMPLEX COMMANDS LIKE TRAVERSE
-    // connection.database.getLocalCache().setEnable(true);
+    // connection.database.getLevel1Cache().setEnable(true);
     beginResponse();
     try {
       final OAbstractCommandResultListener listener;

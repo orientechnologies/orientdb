@@ -842,6 +842,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         for (int id : clusterIds) {
           final OStorage storage = getDatabase().getStorage();
           storage.getClusterById(id).truncate();
+          storage.getLevel2Cache().freeCluster(id);
         }
 
         for (OIndex<?> index : getClassIndexes()) {

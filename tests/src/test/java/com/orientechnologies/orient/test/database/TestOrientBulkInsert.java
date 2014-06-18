@@ -32,7 +32,10 @@ public class TestOrientBulkInsert {
     // this.dbWrapper.setMassiveInserts();
     // wurde es besser aber immer noch nicht 100%
     //
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false); // Turn off cache
+    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false); // Turn off cache
+    OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0); // Turn off cache
+    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false); // Turn off cache
+    OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0); // Turn off cache
 
     OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.setValue(0); // Turn off cache
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(0);

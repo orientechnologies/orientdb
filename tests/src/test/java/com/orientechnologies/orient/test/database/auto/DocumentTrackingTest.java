@@ -247,9 +247,11 @@ public class DocumentTrackingTest {
   }
 
   public void testDocumentEmbeddedListTrackingAfterSaveCacheDisabled() {
-    database.getLocalCache().clear();
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
-    database.getLocalCache().setEnable(false);
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
     final ODocument document = new ODocument();
 
@@ -280,13 +282,17 @@ public class DocumentTrackingTest {
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
 
-    database.getLocalCache().setEnable(true);
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
+
   }
 
   public void testDocumentEmbeddedMapTrackingAfterSaveCacheDisabled() {
-    database.getLocalCache().clear();
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
-    database.getLocalCache().setEnable(false);
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
     final ODocument document = new ODocument();
 
@@ -317,13 +323,17 @@ public class DocumentTrackingTest {
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedmap" });
 
-    database.getLocalCache().setEnable(true);
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
+
   }
 
   public void testDocumentEmbeddedSetTrackingAfterSaveCacheDisabled() {
-    database.getLocalCache().clear();
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
-    database.getLocalCache().setEnable(false);
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
     final ODocument document = new ODocument();
 
@@ -354,13 +364,17 @@ public class DocumentTrackingTest {
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedset" });
 
-    database.getLocalCache().setEnable(true);
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
+
   }
 
   public void testDocumentLinkSetTrackingAfterSaveCacheDisabled() {
-    database.getLocalCache().clear();
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
-    database.getLocalCache().setEnable(false);
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
     final ODocument docOne = new ODocument();
     docOne.save();
@@ -390,13 +404,16 @@ public class DocumentTrackingTest {
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "linkset" });
 
-    database.getLocalCache().setEnable(true);
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
   }
 
   public void testDocumentLinkListTrackingAfterSaveCacheDisabled() {
-    database.getLocalCache().clear();
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
-    database.getLocalCache().setEnable(false);
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
     final ODocument docOne = new ODocument();
     docOne.save();
@@ -426,13 +443,17 @@ public class DocumentTrackingTest {
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "linklist" });
 
-    database.getLocalCache().setEnable(true);
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
+
   }
 
   public void testDocumentLinkMapTrackingAfterSaveCacheDisabled() {
-    database.getLocalCache().clear();
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
-    database.getLocalCache().setEnable(false);
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
     final ODocument docOne = new ODocument();
     docOne.save();
@@ -460,7 +481,8 @@ public class DocumentTrackingTest {
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "linkmap" });
 
-    database.getLocalCache().setEnable(true);
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
   }
 
   public void testDocumentEmbeddedListTrackingAfterSaveWitClass() {
@@ -955,7 +977,9 @@ public class DocumentTrackingTest {
 
     document.unsetDirty();
 
+    // Assert.assertEquals(document.getDirtyFields(), new String[]{});
     Assert.assertFalse(document.isDirty());
+    // Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
   }
 
   public void testReload() {

@@ -72,7 +72,7 @@ public class OrientGraphConfiguration implements GraphConfiguration {
       // force a transaction error like: Cannot update record #6:0 in storage 'orientdb-graph' because the
       // version is not the latest. Probably you are updating an old record or it has been modified by
       // another user (db=v2 your=v0)
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
+      OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
 
       // calling the open method opens the connection to graphdb. looks like the
       // implementation of shutdown will call the orientdb close method.

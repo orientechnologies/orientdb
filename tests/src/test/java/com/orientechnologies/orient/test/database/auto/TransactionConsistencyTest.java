@@ -25,6 +25,7 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache.STRATEGY;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -154,6 +155,7 @@ public class TransactionConsistencyTest {
     // Create docA.
     ODocument vDocA_db1 = database1.newInstance();
     vDocA_db1.field(NAME, "docA");
+    vDocA_db1.unpin();
     database1.save(vDocA_db1);
 
     // Keep the IDs.
@@ -203,6 +205,8 @@ public class TransactionConsistencyTest {
   public void test3RollbackWithCopyCacheStrategy() throws IOException {
     database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
     database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
+
+    database1.getLevel2Cache().setStrategy(STRATEGY.COPY_RECORD);
 
     // Create docA.
     ODocument vDocA_db1 = database1.newInstance();

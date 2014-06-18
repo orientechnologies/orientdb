@@ -67,6 +67,7 @@ public class SQLSelectByLinkedPropertyIndexReuseTest extends AbstractIndexReuseT
     database.command(new OCommandSQL("drop class lpirtGroup")).execute();
     database.command(new OCommandSQL("drop class lpirtCurator")).execute();
     database.getMetadata().getSchema().reload();
+    database.getLevel2Cache().clear();
 
     database.close();
     super.afterClass();

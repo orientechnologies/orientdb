@@ -24,8 +24,10 @@ public class OIntentMassiveInsert implements OIntent {
     currentUser = iDatabase.getDatabaseOwner().getUser();
     iDatabase.getDatabaseOwner().setUser(null);
 
-    previousLevel1CacheEnabled = iDatabase.getDatabaseOwner().getLocalCache().isEnabled();
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(false);
+    previousLevel1CacheEnabled = iDatabase.getDatabaseOwner().getLevel1Cache().isEnabled();
+    iDatabase.getDatabaseOwner().getLevel1Cache().setEnable(false);
+    previousLevel2CacheEnabled = iDatabase.getDatabaseOwner().getLevel2Cache().isEnabled();
+    iDatabase.getDatabaseOwner().getLevel2Cache().setEnable(false);
 
     ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
 
@@ -58,7 +60,9 @@ public class OIntentMassiveInsert implements OIntent {
       // RE-ENABLE CHECK OF SECURITY
       iDatabase.getDatabaseOwner().setUser(currentUser);
 
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(previousLevel1CacheEnabled);
+    iDatabase.getDatabaseOwner().getLevel1Cache().setEnable(previousLevel1CacheEnabled);
+    iDatabase.getDatabaseOwner().getLevel2Cache().setEnable(previousLevel2CacheEnabled);
+
     ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseRecord)

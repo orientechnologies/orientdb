@@ -199,7 +199,8 @@ public class BlueprintsConcurrentAddEdgeTest {
 
   private OrientGraphNoTx getGraph() {
     OrientGraphNoTx graph = new OrientGraphNoTx(DBURL);
-    graph.getRawGraph().getLocalCache().setEnable(false);
+    graph.getRawGraph().getLevel1Cache().setEnable(false);
+    graph.getRawGraph().getLevel2Cache().setEnable(false);
     return graph;
   }
 

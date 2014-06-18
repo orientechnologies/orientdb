@@ -36,7 +36,7 @@ import java.util.Collection;
  *   }
  * </pre>
  * 
- * As reference implementation used {@link com.orientechnologies.orient.core.cache.OUnboundedWeakCache}
+ * As reference implementation used {@link ODefaultCache}
  * 
  * @author Maxim Fedorov
  */
@@ -125,4 +125,20 @@ public interface OCache {
    * @return keys of records
    */
   Collection<ORID> keys();
+
+  /**
+   * Lock the item with given id, even if item does not exist all read/update operations for given item should be locked.
+   * 
+   * @param id
+   *          Item to lock.
+   */
+  void lock(ORID id);
+
+  /**
+   * Unlock item.
+   * 
+   * @param id
+   *          item to unlock;
+   */
+  void unlock(ORID id);
 }

@@ -82,7 +82,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
       if (rid.isValid())
-        database.getLocalCache().freeRecord(rid);
+        database.getLevel1Cache().freeRecord(rid);
 
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
@@ -97,7 +97,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
-      database.getLocalCache().freeRecord(rid);
+      database.getLevel1Cache().freeRecord(rid);
 
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
@@ -118,7 +118,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
       if (rid.isValid())
-        database.getLocalCache().freeRecord(rid);
+        database.getLevel1Cache().freeRecord(rid);
 
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;

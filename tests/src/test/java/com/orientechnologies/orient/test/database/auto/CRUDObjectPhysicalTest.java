@@ -562,7 +562,8 @@ public class CRUDObjectPhysicalTest {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
 
-      database.getLocalCache().invalidate();
+      database.getLevel1Cache().invalidate();
+      database.getLevel2Cache().clear();
 
       // BROWSE ALL THE OBJECTS
 
@@ -595,7 +596,8 @@ public class CRUDObjectPhysicalTest {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
 
-      database.getLocalCache().invalidate();
+      database.getLevel1Cache().invalidate();
+      database.getLevel2Cache().clear();
 
       // BROWSE ALL THE OBJECTS
       Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
@@ -628,7 +630,8 @@ public class CRUDObjectPhysicalTest {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
 
-      database.getLocalCache().invalidate();
+      database.getLevel1Cache().invalidate();
+      database.getLevel2Cache().clear();
       database.setLazyLoading(false);
 
       // BROWSE ALL THE OBJECTS

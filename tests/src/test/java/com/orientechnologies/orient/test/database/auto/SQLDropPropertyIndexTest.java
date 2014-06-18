@@ -61,6 +61,7 @@ public class SQLDropPropertyIndexTest {
   public void afterMethod() throws Exception {
     database.command(new OCommandSQL("drop class DropPropertyIndexTestClass")).execute();
     database.getMetadata().getSchema().reload();
+    database.getLevel2Cache().clear();
     database.close();
   }
 

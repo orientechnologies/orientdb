@@ -156,6 +156,7 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
 
     database.command(new OCommandSQL("drop class sqlSelectHashIndexReuseTestClass")).execute();
     database.getMetadata().getSchema().reload();
+    database.getLevel2Cache().clear();
 
     database.close();
     super.afterClass();

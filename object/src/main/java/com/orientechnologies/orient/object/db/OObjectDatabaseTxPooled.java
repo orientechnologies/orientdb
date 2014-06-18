@@ -115,7 +115,7 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
       OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }
 
-    getLocalCache().clear();
+    getLevel1Cache().clear();
 
     if (ownerPool != null) {
       final OObjectDatabasePool localCopy = ownerPool;

@@ -43,7 +43,7 @@ public class FetchPlanTest {
 
     final long times = Orient.instance().getProfiler().getCounter("Cache.reused");
 
-    database.getLocalCache().clear();
+    database.getLevel1Cache().clear();
     List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile"));
     Assert.assertEquals(Orient.instance().getProfiler().getCounter("Cache.reused"), times);
 
@@ -51,7 +51,7 @@ public class FetchPlanTest {
     for (ODocument d : resultset) {
       linked = ((ORID) d.field("location", ORID.class));
       if (linked != null)
-        Assert.assertNull(database.getLocalCache().findRecord(linked));
+        Assert.assertNull(database.getLevel1Cache().findRecord(linked));
     }
 
     database.close();
@@ -60,7 +60,7 @@ public class FetchPlanTest {
   @Test(dependsOnMethods = "queryNoFetchPlan")
   public void queryWithFetchPlan() {
     database.open("admin", "admin");
-    database.getLocalCache().setEnable(true);
+    database.getLevel1Cache().setEnable(true);
 
     final long times = Orient.instance().getProfiler().getCounter("Cache.reused");
     List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile").setFetchPlan("*:-1"));
@@ -70,7 +70,7 @@ public class FetchPlanTest {
     for (ODocument d : resultset) {
       linked = ((ODocument) d.field("location"));
       if (linked != null)
-        Assert.assertNotNull(database.getLocalCache().findRecord(linked.getIdentity()));
+        Assert.assertNotNull(database.getLevel1Cache().findRecord(linked.getIdentity()));
     }
 
     database.close();

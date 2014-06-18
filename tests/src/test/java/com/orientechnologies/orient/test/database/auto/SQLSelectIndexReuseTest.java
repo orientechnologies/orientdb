@@ -150,6 +150,7 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
 
     database.command(new OCommandSQL("drop class sqlSelectIndexReuseTestClass")).execute();
     database.getMetadata().getSchema().reload();
+    database.getLevel2Cache().clear();
 
     database.close();
     super.afterClass();

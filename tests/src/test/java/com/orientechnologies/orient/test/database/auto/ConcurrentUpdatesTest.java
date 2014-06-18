@@ -169,12 +169,14 @@ public class ConcurrentUpdatesTest {
 
   @BeforeClass
   public void init() {
-    level1CacheEnabled = OGlobalConfiguration.CACHE_LOCAL_ENABLED.getValueAsBoolean();
+    level1CacheEnabled = OGlobalConfiguration.CACHE_LEVEL1_ENABLED.getValueAsBoolean();
+    level2CacheEnabled = OGlobalConfiguration.CACHE_LEVEL2_ENABLED.getValueAsBoolean();
     mvccEnabled = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
 
     if (level1CacheEnabled)
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
+      OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
+    if (level2CacheEnabled)
+      OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
     if (!mvccEnabled)
       OGlobalConfiguration.DB_MVCC.setValue(true);
 
@@ -185,7 +187,8 @@ public class ConcurrentUpdatesTest {
 
   @AfterClass
   public void deinit() {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(level1CacheEnabled);
+    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(level1CacheEnabled);
+    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(level2CacheEnabled);
     OGlobalConfiguration.DB_MVCC.setValue(mvccEnabled);
   }
 

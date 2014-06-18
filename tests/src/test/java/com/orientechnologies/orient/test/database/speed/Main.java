@@ -68,7 +68,10 @@ public class Main {
 
     OGlobalConfiguration.ENVIRONMENT_CONCURRENT.setValue(false);
 
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
+    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
+    // OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(500);
+    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
+    // OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(1000);
 
     OGlobalConfiguration.DB_VALIDATION.setValue(false);
     OGlobalConfiguration.FILE_MMAP_LOCK_MEMORY.setValue(false);

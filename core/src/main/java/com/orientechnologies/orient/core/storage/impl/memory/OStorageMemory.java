@@ -172,6 +172,8 @@ public class OStorageMemory extends OStorageEmbedded {
           d.close();
       dataSegments.clear();
 
+      level2Cache.shutdown();
+
       status = STATUS.CLOSED;
 
     } finally {
@@ -250,6 +252,7 @@ public class OStorageMemory extends OStorageEmbedded {
           c.truncate();
         c.delete();
         clusters.set(iClusterId, null);
+        getLevel2Cache().freeCluster(iClusterId);
         clusterMap.remove(c.getName());
       }
 

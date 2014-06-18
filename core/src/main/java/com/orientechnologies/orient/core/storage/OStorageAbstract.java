@@ -20,7 +20,9 @@ import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocator;
+import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -43,9 +45,11 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
   protected String                                    name;
   protected AtomicLong                                version = new AtomicLong();
+  protected OLevel2RecordCache                        level2Cache;
   protected volatile STATUS                           status  = STATUS.CLOSED;
 
-  public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
+  public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout,
+      final OCacheLevelTwoLocator cacheLocator) {
     if (OStringSerializerHelper.contains(name, '/'))
       this.name = name.substring(name.lastIndexOf("/") + 1);
     else
@@ -53,6 +57,9 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
     if (OStringSerializerHelper.contains(name, ','))
       throw new IllegalArgumentException("Invalid character in storage name: " + this.name);
+
+    level2Cache = new OLevel2RecordCache(this, cacheLocator);
+    level2Cache.startup();
 
     url = iURL;
     this.mode = mode;
@@ -80,6 +87,15 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
   public String getName() {
     return name;
+  }
+
+  /**
+   * Returns the configured local Level-2 cache component. Cache component is always created even if not used.
+   * 
+   * @return
+   */
+  public OLevel2RecordCache getLevel2Cache() {
+    return level2Cache;
   }
 
   public String getURL() {
