@@ -14,7 +14,10 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
   }
 
   public void onRequest(final byte iRequestCode, final Object obj) {
-    if (iRequestCode == OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG) {
+    if (iRequestCode == OChannelBinaryProtocol.REQUEST_PUSH_RECORD)
+      // ASYNCHRONOUS PUSH INTO THE LEVEL2 CACHE
+      storage.getLevel2Cache().updateRecord((ORecordInternal<?>) obj);
+    else if (iRequestCode == OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG) {
       storage.updateClusterConfiguration((byte[]) obj);
 
       if (OLogManager.instance().isDebugEnabled()) {
