@@ -160,7 +160,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return delegate instanceof OEmbeddedRidBag;
   }
 
-  public short toStream(BytesContainer bytesContainer) throws OSerializationException {
+  public int toStream(BytesContainer bytesContainer) throws OSerializationException {
 
     final ORecordSerializationContext context = ORecordSerializationContext.getContext();
     if (context != null) {
@@ -204,7 +204,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     final int serializedSize = OByteSerializer.BYTE_SIZE + delegate.getSerializedSize()
         + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
-    short pointer = bytesContainer.alloc((short) serializedSize);
+    int pointer = bytesContainer.alloc((short) serializedSize);
     int offset = pointer;
     final byte[] stream = bytesContainer.bytes;
 

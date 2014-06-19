@@ -26,6 +26,16 @@ public class BytesContainerTest {
   }
 
   @Test
+  public void testBorderReallocSimple() {
+    BytesContainer bytesContainer = new BytesContainer();
+    bytesContainer.alloc((short) 1024);
+    int pos = bytesContainer.alloc((short) 1);
+    bytesContainer.bytes[pos] = 0;
+    assertTrue(bytesContainer.bytes.length >= 1025);
+    assertEquals(bytesContainer.offset, 1025);
+  }
+
+  @Test
   public void testReadSimple() {
     BytesContainer bytesContainer = new BytesContainer();
     bytesContainer.read((short) 100);

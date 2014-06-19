@@ -4,9 +4,9 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 
 public class OVarIntSerializer {
 
-  public static short write(BytesContainer bytes, long value) {
+  public static int write(BytesContainer bytes, long value) {
     value = signedToUnsigned(value);
-    short pos = bytes.offset;
+    int pos = bytes.offset;
     writeUnsignedVarLong(value, bytes);
     return pos;
 

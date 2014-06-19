@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 public class BytesContainer {
 
   public byte[] bytes;
-  public short  offset;
+  public int    offset;
 
   public BytesContainer(byte[] iSource) {
     bytes = iSource;
@@ -18,8 +18,8 @@ public class BytesContainer {
     this.offset = valuePos;
   }
 
-  public short alloc(short toAlloc) {
-    short cur = offset;
+  public int alloc(int toAlloc) {
+    int cur = offset;
     offset += toAlloc;
     if (bytes.length < offset)
       resize();

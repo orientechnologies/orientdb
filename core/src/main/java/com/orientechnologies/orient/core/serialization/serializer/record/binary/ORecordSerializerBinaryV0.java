@@ -18,7 +18,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
@@ -43,11 +42,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     int last = 0;
     String field;
     while ((field = readString(bytes)) != null) {
-      short valuePos = OShortSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
-      bytes.read(2);
+      int valuePos = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
+      bytes.read(OIntegerSerializer.INT_SIZE);
       OType type = readOType(bytes);
       if (valuePos != 0) {
-        short headerCursor = bytes.offset;
+        int headerCursor = bytes.offset;
         bytes.offset = valuePos;
         Object value = readSingleValue(bytes, type);
         if (bytes.offset > last)
@@ -58,7 +57,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         document.field(field, null, OType.ANY);
     }
     if (last > bytes.offset)
-      bytes.offset = (short) last;
+      bytes.offset = last;
   }
 
   private OType readOType(BytesContainer bytes) {
@@ -67,7 +66,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return type;
   }
 
-  private void writeOType(BytesContainer bytes, short pos, OType type) {
+  private void writeOType(BytesContainer bytes, int pos, OType type) {
     bytes.bytes[pos] = (byte) type.ordinal();
   }
 
@@ -179,10 +178,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     while ((size--) > 0) {
       OType keyType = readOType(bytes);
       Object key = readSingleValue(bytes, keyType);
-      short valuePos = OShortSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
-      bytes.read(2);
+      int valuePos = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
+      bytes.read(OIntegerSerializer.INT_SIZE);
       OType type = readOType(bytes);
-      short headerCursor = bytes.offset;
+      int headerCursor = bytes.offset;
       bytes.offset = valuePos;
       Object value = readSingleValue(bytes, type);
       bytes.offset = headerCursor;
@@ -201,9 +200,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private OIdentifiable readLink(BytesContainer bytes) {
     int cluster = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
-    bytes.read((short) OIntegerSerializer.INT_SIZE);
+    bytes.read(OIntegerSerializer.INT_SIZE);
     long record = OLongSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
-    bytes.read((short) OLongSerializer.LONG_SIZE);
+    bytes.read(OLongSerializer.LONG_SIZE);
     return new ORecordId(cluster, new OClusterPositionLong(record));
   }
 
@@ -230,19 +229,19 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   @SuppressWarnings("unchecked")
   @Override
   public void serialize(ODocument document, BytesContainer bytes) {
-    short[] pos = new short[document.fields()];
+    int[] pos = new int[document.fields()];
     int i = 0;
     Entry<String, ?> values[] = new Entry[document.fields()];
     for (Entry<String, Object> entry : document) {
       writeString(bytes, entry.getKey());
-      pos[i] = bytes.alloc((short) 3);
+      pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
       values[i] = entry;
       i++;
     }
     OVarIntSerializer.write(bytes, 0);
 
     for (i = 0; i < values.length; i++) {
-      short pointer = 0;
+      int pointer = 0;
       Object value = values[i].getValue();
       if (value != null) {
         OType type = getFieldType(document, values[i].getKey(), value);
@@ -250,16 +249,16 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         if (type == null)
           continue;
         pointer = writeSingleValue(bytes, value, type);
-        OShortSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
-        writeOType(bytes, (short) (pos[i] + 2), type);
+        OIntegerSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
+        writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
     }
 
   }
 
   @SuppressWarnings("unchecked")
-  private short writeSingleValue(BytesContainer bytes, Object value, OType type) {
-    short pointer = 0;
+  private int writeSingleValue(BytesContainer bytes, Object value, OType type) {
+    int pointer = 0;
     switch (type) {
     case INTEGER:
     case LONG:
@@ -271,20 +270,20 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     case DOUBLE:
       long dg = Double.doubleToLongBits((Double) value);
-      pointer = bytes.alloc((short) OLongSerializer.LONG_SIZE);
+      pointer = bytes.alloc(OLongSerializer.LONG_SIZE);
       OLongSerializer.INSTANCE.serialize(dg, bytes.bytes, pointer);
       break;
     case FLOAT:
       int fg = Float.floatToIntBits((Float) value);
-      pointer = bytes.alloc((short) OIntegerSerializer.INT_SIZE);
+      pointer = bytes.alloc(OIntegerSerializer.INT_SIZE);
       OIntegerSerializer.INSTANCE.serialize(fg, bytes.bytes, pointer);
       break;
     case BYTE:
-      pointer = bytes.alloc((short) 1);
+      pointer = bytes.alloc(1);
       bytes.bytes[pointer] = (Byte) value;
       break;
     case BOOLEAN:
-      pointer = bytes.alloc((short) 1);
+      pointer = bytes.alloc(1);
       bytes.bytes[pointer] = ((Boolean) value) ? (byte) 1 : (byte) 0;
       break;
     case DATETIME:
@@ -306,13 +305,13 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     case DECIMAL:
       BigDecimal decimalValue = (BigDecimal) value;
-      pointer = bytes.alloc((short) ODecimalSerializer.INSTANCE.getObjectSize(decimalValue));
+      pointer = bytes.alloc(ODecimalSerializer.INSTANCE.getObjectSize(decimalValue));
       ODecimalSerializer.INSTANCE.serialize(decimalValue, bytes.bytes, pointer);
       break;
     case BINARY:
       byte[] valueBytes = (byte[]) (value);
       pointer = OVarIntSerializer.write(bytes, valueBytes.length);
-      short start = bytes.alloc((short) valueBytes.length);
+      int start = bytes.alloc(valueBytes.length);
       System.arraycopy(valueBytes, 0, bytes.bytes, start, valueBytes.length);
       break;
     case LINKSET:
@@ -341,12 +340,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return pointer;
   }
 
-  private short writeLinkMap(BytesContainer bytes, Map<Object, OIdentifiable> map) {
-    short fullPos = OVarIntSerializer.write(bytes, map.size());
+  private int writeLinkMap(BytesContainer bytes, Map<Object, OIdentifiable> map) {
+    int fullPos = OVarIntSerializer.write(bytes, map.size());
     for (Entry<Object, OIdentifiable> entry : map.entrySet()) {
       // TODO:check skip of complex types
       OType type = getTypeFromValue(entry.getKey(), true);
-      writeOType(bytes, bytes.alloc((short) 1), type);
+      writeOType(bytes, bytes.alloc(1), type);
       writeSingleValue(bytes, entry.getKey(), type);
 
       writeOptimizedLink(bytes, entry.getValue());
@@ -355,66 +354,66 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   @SuppressWarnings("unchecked")
-  private short writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
-    short[] pos = new short[map.size()];
+  private int writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
+    int[] pos = new int[map.size()];
     int i = 0;
     Entry<Object, Object> values[] = new Entry[map.size()];
-    short fullPos = OVarIntSerializer.write(bytes, map.size());
+    int fullPos = OVarIntSerializer.write(bytes, map.size());
     for (Entry<Object, Object> entry : map.entrySet()) {
       // TODO:check skip of complex types
       OType type = getTypeFromValue(entry.getKey(), true);
-      writeOType(bytes, bytes.alloc((short) 1), type);
+      writeOType(bytes, bytes.alloc(1), type);
       writeSingleValue(bytes, entry.getKey(), type);
-      pos[i] = bytes.alloc((short) 3);
+      pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
       values[i] = entry;
       i++;
     }
 
     for (i = 0; i < values.length; i++) {
-      short pointer = 0;
+      int pointer = 0;
       Object value = values[i].getValue();
       OType type = getTypeFromValue(value, true);
       // temporary skip serialization of unknown types
       if (type == null)
         continue;
       pointer = writeSingleValue(bytes, value, type);
-      OShortSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
-      writeOType(bytes, (short) (pos[i] + 2), type);
+      OIntegerSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
+      writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
     }
     return fullPos;
   }
 
-  private short writeOptimizedLink(BytesContainer bytes, OIdentifiable link) {
-    short pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
+  private int writeOptimizedLink(BytesContainer bytes, OIdentifiable link) {
+    int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition().longValue());
     return pos;
   }
 
-  private short writeLink(BytesContainer bytes, OIdentifiable link) {
-    short pos = bytes.alloc((short) OIntegerSerializer.INT_SIZE);
+  private int writeLink(BytesContainer bytes, OIdentifiable link) {
+    int pos = bytes.alloc(OIntegerSerializer.INT_SIZE);
     OIntegerSerializer.INSTANCE.serialize(link.getIdentity().getClusterId(), bytes.bytes, pos);
-    short posR = bytes.alloc((short) OLongSerializer.LONG_SIZE);
+    int posR = bytes.alloc(OLongSerializer.LONG_SIZE);
     OLongSerializer.INSTANCE.serialize(link.getIdentity().getClusterPosition().longValue(), bytes.bytes, posR);
     return pos;
   }
 
-  private short writeLinkCollection(BytesContainer bytes, Collection<OIdentifiable> value) {
-    short pos = OVarIntSerializer.write(bytes, value.size());
+  private int writeLinkCollection(BytesContainer bytes, Collection<OIdentifiable> value) {
+    int pos = OVarIntSerializer.write(bytes, value.size());
     for (OIdentifiable itemValue : value) {
       writeLink(bytes, itemValue);
     }
     return pos;
   }
 
-  private short writeEmbeddedCollection(BytesContainer bytes, Collection<?> value) {
-    short pos = OVarIntSerializer.write(bytes, value.size());
+  private int writeEmbeddedCollection(BytesContainer bytes, Collection<?> value) {
+    int pos = OVarIntSerializer.write(bytes, value.size());
     // TODO manage embedded type from schema and autodeterminated.
-    writeOType(bytes, bytes.alloc((short) 1), OType.ANY);
+    writeOType(bytes, bytes.alloc(1), OType.ANY);
     for (Object itemValue : value) {
       // TODO:manage null entry;
       OType type = getTypeFromValue(itemValue, true);
       if (type != null) {
-        writeOType(bytes, bytes.alloc((short) 1), type);
+        writeOType(bytes, bytes.alloc(1), type);
         writeSingleValue(bytes, itemValue, type);
       }
     }
@@ -488,10 +487,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return res;
   }
 
-  private short writeString(BytesContainer bytes, String toWrite) {
+  private int writeString(BytesContainer bytes, String toWrite) {
     byte[] nameBytes = toWrite.getBytes(utf8);
-    short pointer = OVarIntSerializer.write(bytes, nameBytes.length);
-    short start = bytes.alloc((short) nameBytes.length);
+    int pointer = OVarIntSerializer.write(bytes, nameBytes.length);
+    int start = bytes.alloc(nameBytes.length);
     System.arraycopy(nameBytes, 0, bytes.bytes, start, nameBytes.length);
     return pointer;
   }
