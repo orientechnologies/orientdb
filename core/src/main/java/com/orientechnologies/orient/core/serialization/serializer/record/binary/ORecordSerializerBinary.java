@@ -40,7 +40,8 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   public byte[] toStream(ORecordInternal<?> iSource, boolean iOnlyDelta) {
     checkTypeODocument(iSource);
     BytesContainer container = new BytesContainer();
-    container.bytes[container.alloc((short) 1)] = LAST_RECORD_VERSION;
+    short pos = container.alloc((short) 1);
+    container.bytes[pos] = LAST_RECORD_VERSION;
     serializerByVersion[LAST_RECORD_VERSION].serialize((ODocument) iSource, container);
     return container.bytes;
   }

@@ -48,13 +48,16 @@ public class OVarIntSerializer {
    *           if {@link DataOutput} throws {@link IOException}
    */
   public static void writeUnsignedVarLong(long value, BytesContainer bos) {
+    int pos;
     while ((value & 0xFFFFFFFFFFFFFF80L) != 0L) {
       // out.writeByte(((int) value & 0x7F) | 0x80);
-      bos.bytes[bos.alloc((short) 1)] = (byte) (value & 0x7F | 0x80);
+      pos = bos.alloc((short) 1);
+      bos.bytes[pos] = (byte) (value & 0x7F | 0x80);
       value >>>= 7;
     }
     // out.writeByte((int) value & 0x7F);
-    bos.bytes[bos.alloc((short) 1)] = (byte) (value & 0x7F);
+    pos = bos.alloc((short) 1);
+    bos.bytes[pos] = (byte) (value & 0x7F);
   }
 
   /**
