@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
@@ -29,65 +30,66 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
  * 
  */
 public class ORecordSerializerFactory {
-	private static final ORecordSerializerFactory	instance				= new ORecordSerializerFactory();
+  private static final ORecordSerializerFactory instance        = new ORecordSerializerFactory();
 
-	private Map<String, ORecordSerializer>				implementations	= new HashMap<String, ORecordSerializer>();
-	private ORecordSerializer											defaultRecordFormat;
+  private Map<String, ORecordSerializer>        implementations = new HashMap<String, ORecordSerializer>();
+  private ORecordSerializer                     defaultRecordFormat;
 
-	public ORecordSerializerFactory() {
-		defaultRecordFormat = new ORecordSerializerRaw();
+  public ORecordSerializerFactory() {
+    defaultRecordFormat = new ORecordSerializerRaw();
 
-		register(ORecordSerializerSchemaAware2CSV.NAME, new ORecordSerializerSchemaAware2CSV());
-		register(ORecordSerializerJSON.NAME, new ORecordSerializerJSON());
-		register(ORecordSerializerRaw.NAME, defaultRecordFormat);
-	}
+    register(ORecordSerializerSchemaAware2CSV.NAME, new ORecordSerializerSchemaAware2CSV());
+    register(ORecordSerializerJSON.NAME, new ORecordSerializerJSON());
+    register(ORecordSerializerRaw.NAME, defaultRecordFormat);
+    register(ORecordSerializerBinary.NAME, new ORecordSerializerBinary());
+  }
 
-	/**
-	 * Registers record serializer implementation.
-	 * 
-	 * @param iName
-	 *          Name to register, use JSON to overwrite default JSON serializer
-	 * @param iInstance
-	 *          Serializer implementation
-	 */
-	public void register(final String iName, final ORecordSerializer iInstance) {
-		implementations.put(iName, iInstance);
-	}
+  /**
+   * Registers record serializer implementation.
+   * 
+   * @param iName
+   *          Name to register, use JSON to overwrite default JSON serializer
+   * @param iInstance
+   *          Serializer implementation
+   */
+  public void register(final String iName, final ORecordSerializer iInstance) {
+    implementations.put(iName, iInstance);
+  }
 
-	public Collection<ORecordSerializer> getFormats() {
-		return implementations.values();
-	}
+  public Collection<ORecordSerializer> getFormats() {
+    return implementations.values();
+  }
 
-	public ORecordSerializer getFormat(final String iFormatName) {
-		if (iFormatName == null)
-			return null;
+  public ORecordSerializer getFormat(final String iFormatName) {
+    if (iFormatName == null)
+      return null;
 
-		return implementations.get(iFormatName);
-	}
+    return implementations.get(iFormatName);
+  }
 
-	public ORecordSerializer getFormatForObject(final Object iObject, final String iFormatName) {
-		if (iObject == null)
-			return null;
+  public ORecordSerializer getFormatForObject(final Object iObject, final String iFormatName) {
+    if (iObject == null)
+      return null;
 
-		ORecordSerializer recordFormat = null;
-		if (iFormatName != null)
-			recordFormat = implementations.get(iObject.getClass().getSimpleName() + "2" + iFormatName);
+    ORecordSerializer recordFormat = null;
+    if (iFormatName != null)
+      recordFormat = implementations.get(iObject.getClass().getSimpleName() + "2" + iFormatName);
 
-		if (recordFormat == null)
-			recordFormat = defaultRecordFormat;
+    if (recordFormat == null)
+      recordFormat = defaultRecordFormat;
 
-		return recordFormat;
-	}
+    return recordFormat;
+  }
 
-	public ORecordSerializer getDefaultRecordFormat() {
-		return defaultRecordFormat;
-	}
+  public ORecordSerializer getDefaultRecordFormat() {
+    return defaultRecordFormat;
+  }
 
-	public void setDefaultRecordFormat(final ORecordSerializer iDefaultFormat) {
-		this.defaultRecordFormat = iDefaultFormat;
-	}
+  public void setDefaultRecordFormat(final ORecordSerializer iDefaultFormat) {
+    this.defaultRecordFormat = iDefaultFormat;
+  }
 
-	public static ORecordSerializerFactory instance() {
-		return instance;
-	}
+  public static ORecordSerializerFactory instance() {
+    return instance;
+  }
 }

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -38,17 +40,25 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   @Override
   public void deserialize(ODocument document, BytesContainer bytes) {
+    int last = 0;
     String field;
     while ((field = readString(bytes)) != null) {
       short valuePos = OShortSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
       bytes.read(2);
       OType type = readOType(bytes);
-      short headerCursor = bytes.offset;
-      bytes.offset = valuePos;
-      Object value = readSingleValue(bytes, type);
-      bytes.offset = headerCursor;
-      document.field(field, value, type);
+      if (valuePos != 0) {
+        short headerCursor = bytes.offset;
+        bytes.offset = valuePos;
+        Object value = readSingleValue(bytes, type);
+        if (bytes.offset > last)
+          last = bytes.offset;
+        bytes.offset = headerCursor;
+        document.field(field, value, type);
+      } else
+        document.field(field, null, OType.ANY);
     }
+    if (last > bytes.offset)
+      bytes.offset = (short) last;
   }
 
   private OType readOType(BytesContainer bytes) {
@@ -234,13 +244,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     for (i = 0; i < values.length; i++) {
       short pointer = 0;
       Object value = values[i].getValue();
-      OType type = getFieldType(document, values[i].getKey(), value);
-      // temporary skip serialization skip of unknown types
-      if (type == null)
-        continue;
-      pointer = writeSingleValue(bytes, value, type);
-      OShortSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
-      writeOType(bytes, (short) (pos[i] + 2), type);
+      if (value != null) {
+        OType type = getFieldType(document, values[i].getKey(), value);
+        // temporary skip serialization skip of unknown types
+        if (type == null)
+          continue;
+        pointer = writeSingleValue(bytes, value, type);
+        OShortSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
+        writeOType(bytes, (short) (pos[i] + 2), type);
+      }
     }
 
   }
@@ -287,7 +299,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     case EMBEDDEDSET:
     case EMBEDDEDLIST:
-      pointer = writeEmbeddedCollection(bytes, (Collection<?>) value);
+      if (value.getClass().isArray())
+        pointer = writeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)));
+      else
+        pointer = writeEmbeddedCollection(bytes, (Collection<?>) value);
       break;
     case DECIMAL:
       BigDecimal decimalValue = (BigDecimal) value;
@@ -359,7 +374,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       short pointer = 0;
       Object value = values[i].getValue();
       OType type = getTypeFromValue(value, true);
-      // temporary skip serialization skip of unknown types
+      // temporary skip serialization of unknown types
       if (type == null)
         continue;
       pointer = writeSingleValue(bytes, value, type);

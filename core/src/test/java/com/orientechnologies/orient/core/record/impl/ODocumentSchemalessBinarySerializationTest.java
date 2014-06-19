@@ -1,7 +1,9 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -44,6 +46,7 @@ public class ODocumentSchemalessBinarySerializationTest {
     document.field("heigth", 12.5f);
     document.field("bitHeigth", 12.5d);
     document.field("class", (byte) 'C');
+    document.field("nullField", (Object) null);
     document.field("character", 'C');
     document.field("alive", true);
     document.field("dateTime", new Date());
@@ -51,7 +54,7 @@ public class ODocumentSchemalessBinarySerializationTest {
     ORidBag bag = new ORidBag();
     bag.add(new ORecordId(1, new OClusterPositionLong(1)));
     bag.add(new ORecordId(2, new OClusterPositionLong(2)));
-//    document.field("ridBag", bag);
+    // document.field("ridBag", bag);
     Calendar c = Calendar.getInstance();
     document.field("date", c.getTime(), OType.DATE);
     Calendar c1 = Calendar.getInstance();
@@ -94,8 +97,104 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(extr.field("utf8String"), document.field("utf8String"));
     assertEquals(extr.field("recordId"), document.field("recordId"));
     assertEquals(extr.field("bigNumber"), document.field("bigNumber"));
-//    assertEquals(extr.field("ridBag"), document.field("ridBag"));
+    assertNull(extr.field("nullField"));
+    // assertEquals(extr.field("ridBag"), document.field("ridBag"));
 
+  }
+
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  @Test
+  public void testSimpleLiteralArray() {
+
+    ODocument document = new ODocument();
+    String[] strings = new String[3];
+    strings[0] = "a";
+    strings[1] = "b";
+    strings[2] = "c";
+    document.field("listStrings", strings);
+
+    Short[] shorts = new Short[3];
+    shorts[0] = (short) 1;
+    shorts[1] = (short) 2;
+    shorts[2] = (short) 3;
+    document.field("shorts", shorts);
+
+    Long[] longs = new Long[3];
+    longs[0] = (long) 1;
+    longs[1] = (long) 2;
+    longs[2] = (long) 3;
+    document.field("longs", longs);
+
+    Integer[] ints = new Integer[3];
+    ints[0] = 1;
+    ints[1] = 2;
+    ints[2] = 3;
+    document.field("integers", ints);
+
+    Float[] floats = new Float[3];
+    floats[0] = 1.1f;
+    floats[1] = 2.2f;
+    floats[2] = 3.3f;
+    document.field("floats", floats);
+
+    Double[] doubles = new Double[3];
+    doubles[0] = 1.1d;
+    doubles[1] = 2.2d;
+    doubles[2] = 3.3d;
+    document.field("doubles", doubles);
+
+    Date[] dates = new Date[3];
+    dates[0] = new Date();
+    dates[1] = new Date();
+    dates[2] = new Date();
+    document.field("dates", dates);
+
+    Byte[] bytes = new Byte[3];
+    bytes[0] = (byte) 0;
+    bytes[1] = (byte) 1;
+    bytes[2] = (byte) 3;
+    document.field("bytes", bytes);
+
+    // TODO: char not currently supported in orient.
+    Character[] chars = new Character[3];
+    chars[0] = 'A';
+    chars[1] = 'B';
+    chars[2] = 'C';
+    // document.field("chars", chars);
+
+    Boolean[] booleans = new Boolean[3];
+    booleans[0] = true;
+    booleans[1] = false;
+    booleans[2] = false;
+    document.field("booleans", booleans);
+
+    Object[] arrayNulls = new Object[3];
+    // document.field("arrayNulls", arrayNulls);
+
+    // Object[] listMixed = new ArrayList[9];
+    // listMixed[0] = new Boolean(true);
+    // listMixed[1] = 1;
+    // listMixed[2] = (long) 5;
+    // listMixed[3] = (short) 2;
+    // listMixed[4] = 4.0f;
+    // listMixed[5] = 7.0D;
+    // listMixed[6] = "hello";
+    // listMixed[7] = new Date();
+    // listMixed[8] = (byte) 10;
+    // document.field("listMixed", listMixed);
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+
+    assertEquals(extr.fields(), document.fields());
+    assertEquals(((List) extr.field("listStrings")).toArray(), document.field("listStrings"));
+    assertEquals(((List) extr.field("integers")).toArray(), document.field("integers"));
+    assertEquals(((List) extr.field("doubles")).toArray(), document.field("doubles"));
+    assertEquals(((List) extr.field("dates")).toArray(), document.field("dates"));
+    assertEquals(((List) extr.field("bytes")).toArray(), document.field("bytes"));
+    assertEquals(((List) extr.field("booleans")).toArray(), document.field("booleans"));
+    // assertEquals(((List) extr.field("arrayNulls")).toArray(), document.field("arrayNulls"));
+    // assertEquals(extr.field("listMixed"), document.field("listMixed"));
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -389,34 +488,92 @@ public class ODocumentSchemalessBinarySerializationTest {
     embeddedInList.field("name", "test");
     embeddedInList.field("surname", "something");
 
+    ODocument embeddedInList2 = new ODocument();
+    embeddedInList2.field("name", "test1");
+    embeddedInList2.field("surname", "something2");
+
     List<ODocument> embeddedList = new ArrayList<ODocument>();
     embeddedList.add(embeddedInList);
+    embeddedList.add(embeddedInList2);
+    embeddedList.add(new ODocument());
     document.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
 
     ODocument embeddedInSet = new ODocument();
-    embeddedInSet.field("name", "test1");
-    embeddedInSet.field("surname", "something2");
+    embeddedInSet.field("name", "test2");
+    embeddedInSet.field("surname", "something3");
+
+    ODocument embeddedInSet2 = new ODocument();
+    embeddedInSet2.field("name", "test5");
+    embeddedInSet2.field("surname", "something6");
 
     Set<ODocument> embeddedSet = new HashSet<ODocument>();
     embeddedSet.add(embeddedInSet);
+    embeddedSet.add(embeddedInSet2);
+    embeddedSet.add(new ODocument());
     document.field("embeddedSet", embeddedSet, OType.EMBEDDEDSET);
 
     byte[] res = serializer.toStream(document, false);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
     List<ODocument> ser = extr.field("embeddedList");
-    assertEquals(1, ser.size());
+    assertEquals(ser.size(), 3);
+    assertNotNull(ser.get(0));
+    assertNotNull(ser.get(1));
+    assertNotNull(ser.get(2));
     ODocument inList = ser.get(0);
     assertNotNull(inList);
     assertEquals(inList.field("name"), embeddedInList.field("name"));
     assertEquals(inList.field("surname"), embeddedInList.field("surname"));
 
     Set<ODocument> setEmb = extr.field("embeddedSet");
-    assertEquals(1, setEmb.size());
-    ODocument inSet = setEmb.iterator().next();
-    assertNotNull(inSet);
-    assertEquals(inSet.field("name"), embeddedInSet.field("name"));
-    assertEquals(inSet.field("surname"), embeddedInSet.field("surname"));
+    assertEquals(setEmb.size(), 3);
+    boolean ok = false;
+    for (ODocument inSet : setEmb) {
+      assertNotNull(inSet);
+      if (embeddedInSet.field("name").equals(inSet.field("name")) && embeddedInSet.field("surname").equals(inSet.field("surname")))
+        ok = true;
+    }
+    assertTrue(ok, "not found record in the set after serilize");
+  }
+
+  @Test
+  public void testlistOfList() {
+
+    ODocument document = new ODocument();
+    List<List<String>> list = new ArrayList<List<String>>();
+    List<String> ls = new ArrayList<String>();
+    ls.add("test1");
+    ls.add("test2");
+    list.add(ls);
+    document.field("complexList", list);
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    assertEquals(extr.fields(), document.fields());
+    assertEquals(extr.field("complexList"), document.field("complexList"));
+
+  }
+
+  @Test
+  public void testArrayOfArray() {
+
+    ODocument document = new ODocument();
+    String[][] array = new String[1][];
+    String[] ls = new String[2];
+    ls[0] = "test1";
+    ls[1] = "test2";
+    array[0] = ls;
+    document.field("complexArray", array);
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    assertEquals(extr.fields(), document.fields());
+    List<List<String>> savedValue = (List) extr.field("complexArray");
+    assertEquals(savedValue.size(), array.length);
+    assertEquals(savedValue.get(0).size(), array[0].length);
+    assertEquals(savedValue.get(0).get(0), array[0][0]);
+    assertEquals(savedValue.get(0).get(1), array[0][1]);
+
   }
 
   @Test
