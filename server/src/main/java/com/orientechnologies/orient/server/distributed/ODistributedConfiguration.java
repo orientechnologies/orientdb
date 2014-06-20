@@ -90,7 +90,7 @@ public class ODistributedConfiguration {
 
         return true;
         // TEMPORARY PATCH TO FIX OPTIMIZATION OF RUNNING AS SINGLE SERVER
-        //return otherServers > 0;
+        // return otherServers > 0;
       }
       return false;
     }

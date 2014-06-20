@@ -375,8 +375,8 @@ public class ODistributedResponseManager {
       Orient
           .instance()
           .getProfiler()
-          .stopChrono("distributed.synchResponses",
-              "Time to collect all the synchronous responses from distributed nodes", beginTime);
+          .stopChrono("distributed.synchResponses", "Time to collect all the synchronous responses from distributed nodes",
+              beginTime);
     }
   }
 
