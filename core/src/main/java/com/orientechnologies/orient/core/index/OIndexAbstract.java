@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -929,7 +930,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         final ODocument keyContainer = new ODocument();
         keyContainer.setLazyLoad(false);
 
-        keyContainer.fromString(serializedKey);
+        ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
 
         final Object storedKey = keyContainer.field("key");
         if (storedKey instanceof List)
