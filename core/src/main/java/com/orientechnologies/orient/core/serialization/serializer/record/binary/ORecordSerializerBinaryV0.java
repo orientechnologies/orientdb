@@ -181,11 +181,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       int valuePos = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
       bytes.read(OIntegerSerializer.INT_SIZE);
       OType type = readOType(bytes);
-      int headerCursor = bytes.offset;
-      bytes.offset = valuePos;
-      Object value = readSingleValue(bytes, type);
-      bytes.offset = headerCursor;
-      result.put(key, value);
+      if (valuePos != 0) {
+        int headerCursor = bytes.offset;
+        bytes.offset = valuePos;
+        Object value = readSingleValue(bytes, type);
+        bytes.offset = headerCursor;
+        result.put(key, value);
+      } else
+        result.put(key, null);
     }
     return result;
   }
@@ -372,13 +375,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     for (i = 0; i < values.length; i++) {
       int pointer = 0;
       Object value = values[i].getValue();
-      OType type = getTypeFromValue(value, true);
-      // temporary skip serialization of unknown types
-      if (type == null)
-        continue;
-      pointer = writeSingleValue(bytes, value, type);
-      OIntegerSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
-      writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
+      if (value != null) {
+        OType type = getTypeFromValue(value, true);
+        // temporary skip serialization of unknown types
+        if (type == null)
+          continue;
+        pointer = writeSingleValue(bytes, value, type);
+        OIntegerSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
+        writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
+      }
     }
     return fullPos;
   }

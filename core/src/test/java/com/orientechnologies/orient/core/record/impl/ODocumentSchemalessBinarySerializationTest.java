@@ -467,6 +467,11 @@ public class ODocumentSchemalessBinarySerializationTest {
     bytesMap.put("key", (byte) 10);
     bytesMap.put("key1", (byte) 11);
     document.field("bytesMap", bytesMap);
+    
+    Map<String, String> mapWithNulls = new HashMap<String, String>();
+    mapWithNulls.put("key", "dddd");
+    mapWithNulls.put("key1", null);
+    document.field("bytesMap", mapWithNulls);
 
     byte[] res = serializer.toStream(document, false);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
