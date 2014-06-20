@@ -18,6 +18,8 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
@@ -467,7 +469,7 @@ public class ODocumentSchemalessBinarySerializationTest {
     bytesMap.put("key", (byte) 10);
     bytesMap.put("key1", (byte) 11);
     document.field("bytesMap", bytesMap);
-    
+
     Map<String, String> mapWithNulls = new HashMap<String, String>();
     mapWithNulls.put("key", "dddd");
     mapWithNulls.put("key1", null);
@@ -618,6 +620,19 @@ public class ODocumentSchemalessBinarySerializationTest {
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(extr.fields(), document.fields());
     assertEquals(extr.field("map"), document.field("map"));
+  }
+
+  @Test
+  public void testDocumentWithClassName() {
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
+    ODocument document = new ODocument("TestClass");
+    document.field("test", "test");
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    assertEquals(extr.getClassName(), document.getClassName());
+    assertEquals(extr.fields(), document.fields());
+    assertEquals(extr.field("test"), document.field("test"));
+    db.drop();
   }
 
 }

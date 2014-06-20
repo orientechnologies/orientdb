@@ -39,6 +39,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   @Override
   public void deserialize(ODocument document, BytesContainer bytes) {
+    String className = readString(bytes);
+    if (className != null)
+      document.setClassName(className);
     int last = 0;
     String field;
     while ((field = readString(bytes)) != null) {
@@ -232,6 +235,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   @SuppressWarnings("unchecked")
   @Override
   public void serialize(ODocument document, BytesContainer bytes) {
+    if (document.getClassName() != null)
+      writeString(bytes, document.getClassName());
+    else
+      writeEmptyString(bytes);
     int[] pos = new int[document.fields()];
     int i = 0;
     Entry<String, ?> values[] = new Entry[document.fields()];
@@ -241,7 +248,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       values[i] = entry;
       i++;
     }
-    OVarIntSerializer.write(bytes, 0);
+    writeEmptyString(bytes);
 
     for (i = 0; i < values.length; i++) {
       int pointer = 0;
@@ -490,6 +497,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     String res = new String(bytes.bytes, bytes.offset, len, utf8);
     bytes.read(len);
     return res;
+  }
+
+  private int writeEmptyString(BytesContainer bytes) {
+    return OVarIntSerializer.write(bytes, 0);
   }
 
   private int writeString(BytesContainer bytes, String toWrite) {
