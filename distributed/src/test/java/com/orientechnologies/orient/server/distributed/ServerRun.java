@@ -57,7 +57,7 @@ public class ServerRun {
   }
 
   public String getBinaryProtocolAddress() {
-    return server.getListenerByProtocol(ONetworkProtocolBinary.class).getListeningAddress();
+    return server.getListenerByProtocol(ONetworkProtocolBinary.class).getListeningAddress(false);
   }
 
   public void deleteNode() {

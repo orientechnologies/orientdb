@@ -271,8 +271,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode,
-																										 ORecordCallback<Boolean> callback) {
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
     pushSession();
     try {
       return delegate.hideRecord(recordId, mode, callback);

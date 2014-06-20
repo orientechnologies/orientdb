@@ -167,7 +167,10 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
       } catch (Throwable t) {
         OLogManager
             .instance()
-            .debug(this, "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()", t, OTransactionBlockedException.class, listener.getClass());
+            .debug(
+                this,
+                "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
+                t, OTransactionBlockedException.class, listener.getClass());
       }
 
     return this;
@@ -336,14 +339,14 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
     return this;
   }
 
-	@Override
-	public boolean hide(ORID rid) {
-		if (currentTx.isActive())
-			throw new ODatabaseException("This operation can be executed only in non tx mode");
-		return super.hide(rid);
-	}
+  @Override
+  public boolean hide(ORID rid) {
+    if (currentTx.isActive())
+      throw new ODatabaseException("This operation can be executed only in non tx mode");
+    return super.hide(rid);
+  }
 
-	@Override
+  @Override
   public ODatabaseRecord delete(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
     currentTx.deleteRecord(iRecord, iMode);
     return this;

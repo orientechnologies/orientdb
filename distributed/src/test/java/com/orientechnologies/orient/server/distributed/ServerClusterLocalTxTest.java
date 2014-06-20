@@ -19,7 +19,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * Distributed TX test against "local" protocol.
+ * Distributed TX test against "plocal" protocol.
  */
 public class ServerClusterLocalTxTest extends AbstractServerClusterTxTest {
   @Test

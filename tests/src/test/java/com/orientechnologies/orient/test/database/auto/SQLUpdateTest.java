@@ -23,13 +23,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -42,23 +40,12 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  * be affected due to adding or removing cluster from storage.
  */
 @Test(groups = "sql-update", sequential = true)
-public class SQLUpdateTest {
-  private ODatabaseDocument database;
+public class SQLUpdateTest extends BaseTest {
   private int               updatedRecords;
 
   @Parameters(value = "url")
-  public SQLUpdateTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
-
-  @BeforeTest
-  private void before() {
-    database.open("admin", "admin");
-  }
-
-  @AfterTest
-  private void after() {
-    database.close();
+  public SQLUpdateTest(@Optional String iURL) {
+    super(iURL);
   }
 
   @Test
@@ -66,7 +53,7 @@ public class SQLUpdateTest {
 
     List<OClusterPosition> positions = getValidPositions(4);
 
-    Integer records = (Integer) database.command(
+    Integer records = database.command(
         new OCommandSQL("update Profile set salary = 120.30, location = 4:" + positions.get(2)
             + ", salary_cloned = salary where surname = 'Obama'")).execute();
 
@@ -82,7 +69,7 @@ public class SQLUpdateTest {
 
     Assert.assertEquals(result.size(), 3);
 
-    Integer records = (Integer) database.command(new OCommandSQL("update Profile set salary = 133.00 where @rid = ?")).execute(
+    Integer records = database.command(new OCommandSQL("update Profile set salary = 133.00 where @rid = ?")).execute(
         result.get(0).field("rid"));
 
     Assert.assertEquals(records.intValue(), 1);
@@ -105,18 +92,15 @@ public class SQLUpdateTest {
 
     @Test(dependsOnMethods = "updateWithWhereOperator")
   public void updateCollectionsAddWithWhereOperator() {
-
-    updatedRecords = (Integer) database.command(new OCommandSQL("update Account add addresses = #13:0")).execute();
-
+    updatedRecords = database.command(new OCommandSQL("update Account add addresses = #13:0")).execute();
   }
 
   @Test(dependsOnMethods = "updateCollectionsAddWithWhereOperator")
   public void updateCollectionsRemoveWithWhereOperator() {
 
-    final int records = (Integer) database.command(new OCommandSQL("update Account remove addresses = #13:0")).execute();
+    final int records = database.command(new OCommandSQL("update Account remove addresses = #13:0")).execute();
 
     Assert.assertEquals(records, updatedRecords);
-
   }
 
   @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
@@ -128,7 +112,7 @@ public class SQLUpdateTest {
 
     for (ODocument doc : docs) {
 
-      final int records = (Integer) database.command(
+      final int records = database.command(
           new OCommandSQL("update Account set addresses = [#13:" + positions.get(0) + ", #13:" + positions.get(1) + ",#13:"
               + positions.get(2) + "] where @rid = " + doc.getIdentity())).execute();
 
@@ -147,13 +131,13 @@ public class SQLUpdateTest {
   @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
   public void updateMapsWithSetOperator() {
 
-    ODocument doc = (ODocument) database
+    ODocument doc = database
         .command(
             new OCommandSQL(
                 "insert into cluster:default (equaledges, name, properties) values ('no', 'circleUpdate', {'round':'eeee', 'blaaa':'zigzag'} )"))
         .execute();
 
-    Integer records = (Integer) database.command(
+    Integer records = database.command(
         new OCommandSQL("update " + doc.getIdentity()
             + " set properties = {'roundOne':'ffff', 'bla':'zagzig','testTestTEST':'okOkOK'}")).execute();
 
@@ -164,7 +148,7 @@ public class SQLUpdateTest {
     Assert.assertTrue(loadedDoc.field("properties") instanceof Map);
 
     @SuppressWarnings("unchecked")
-    Map<Object, Object> entries = ((Map<Object, Object>) loadedDoc.field("properties"));
+    Map<Object, Object> entries = loadedDoc.field("properties");
     Assert.assertEquals(entries.size(), 3);
 
     Assert.assertNull(entries.get("round"));
@@ -179,12 +163,12 @@ public class SQLUpdateTest {
   @Test(dependsOnMethods = "updateCollectionsRemoveWithWhereOperator")
   public void updateMapsWithPutOperatorAndWhere() {
 
-    ODocument doc = (ODocument) database.command(
+    ODocument doc = database.command(
         new OCommandSQL(
             "insert into cluster:default (equaledges, name, properties) values ('no', 'updateMapsWithPutOperatorAndWhere', {} )"))
         .execute();
 
-    Integer records = (Integer) database.command(
+    Integer records = database.command(
         new OCommandSQL("update " + doc.getIdentity()
             + " put properties = 'one', 'two' where name = 'updateMapsWithPutOperatorAndWhere'")).execute();
 
@@ -195,7 +179,7 @@ public class SQLUpdateTest {
     Assert.assertTrue(loadedDoc.field("properties") instanceof Map);
 
     @SuppressWarnings("unchecked")
-    Map<Object, Object> entries = ((Map<Object, Object>) loadedDoc.field("properties"));
+    Map<Object, Object> entries = loadedDoc.field("properties");
     Assert.assertEquals(entries.size(), 1);
 
     Assert.assertNull(entries.get("round"));
@@ -210,7 +194,7 @@ public class SQLUpdateTest {
 
     Long total = database.countClass("Profile");
 
-    Integer records = (Integer) database.command(new OCommandSQL("update Profile set sex = 'male'")).execute();
+    Integer records = database.command(new OCommandSQL("update Profile set sex = 'male'")).execute();
 
     Assert.assertEquals(records.intValue(), total.intValue());
 
@@ -219,8 +203,7 @@ public class SQLUpdateTest {
   @Test
   public void updateWithWildcards() {
 
-    int updated = (Integer) database.command(new OCommandSQL("update Profile set sex = ? where sex = 'male' limit 1")).execute(
-        "male");
+    int updated = database.command(new OCommandSQL("update Profile set sex = ? where sex = 'male' limit 1")).execute(        "male");
 
     Assert.assertEquals(updated, 1);
 
@@ -324,8 +307,7 @@ public class SQLUpdateTest {
     List<ODocument> result1 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();
     Assert.assertFalse(result1.isEmpty());
 
-    updatedRecords = (Integer) database.command(new OCommandSQL("update Account increment salary = 10 where salary is defined"))
-        .execute();
+    updatedRecords = database.command(new OCommandSQL("update Account increment salary = 10 where salary is defined"))       .execute();
     Assert.assertTrue(updatedRecords > 0);
 
     List<ODocument> result2 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();
@@ -333,13 +315,12 @@ public class SQLUpdateTest {
     Assert.assertEquals(result2.size(), result1.size());
 
     for (int i = 0; i < result1.size(); ++i) {
-      float salary1 = (Float) result1.get(i).field("salary");
-      float salary2 = (Float) result2.get(i).field("salary");
-      Assert.assertEquals(salary2, salary1 + 10);
+      float salary1 = result1.get(i).field("salary");
+      float salary2 = result2.get(i).field("salary");
+   Assert.assertEquals(salary2, salary1 + 10);
     }
 
-    updatedRecords = (Integer) database.command(new OCommandSQL("update Account increment salary = -10 where salary is defined"))
-        .execute();
+    updatedRecords = database.command(new OCommandSQL("update Account increment salary = -10 where salary is defined"))  .execute();
     Assert.assertTrue(updatedRecords > 0);
 
     List<ODocument> result3 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();
@@ -347,8 +328,8 @@ public class SQLUpdateTest {
     Assert.assertEquals(result3.size(), result1.size());
 
     for (int i = 0; i < result1.size(); ++i) {
-      float salary1 = (Float) result1.get(i).field("salary");
-      float salary3 = (Float) result3.get(i).field("salary");
+      float salary1 = result1.get(i).field("salary");
+      float salary3 = result3.get(i).field("salary");
       Assert.assertEquals(salary3, salary1);
     }
 
@@ -359,7 +340,7 @@ public class SQLUpdateTest {
     List<ODocument> result1 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();
     Assert.assertFalse(result1.isEmpty());
 
-    updatedRecords = (Integer) database.command(
+    updatedRecords = database.command(
         new OCommandSQL("update Account set salary2 = salary, checkpoint = true where salary is defined")).execute();
     Assert.assertTrue(updatedRecords > 0);
 
@@ -368,8 +349,8 @@ public class SQLUpdateTest {
     Assert.assertEquals(result2.size(), result1.size());
 
     for (int i = 0; i < result1.size(); ++i) {
-      float salary1 = (Float) result1.get(i).field("salary");
-      float salary2 = (Float) result2.get(i).field("salary2");
+      float salary1 = result1.get(i).field("salary");
+      float salary2 = result2.get(i).field("salary2");
       Assert.assertEquals(salary2, salary1);
       Assert.assertEquals(result2.get(i).field("checkpoint"), true);
     }
@@ -378,8 +359,7 @@ public class SQLUpdateTest {
 
   public void updateAddMultipleFields() {
 
-    updatedRecords = (Integer) database.command(new OCommandSQL("update Account add myCollection = 1, myCollection = 2 limit 1"))
-        .execute();
+    updatedRecords = database.command(new OCommandSQL("update Account add myCollection = 1, myCollection = 2 limit 1")).execute();
     Assert.assertTrue(updatedRecords > 0);
 
     List<ODocument> result2 = database.command(new OCommandSQL("select from Account where myCollection is defined")).execute();
@@ -387,7 +367,7 @@ public class SQLUpdateTest {
 
     Collection<Object> myCollection = result2.iterator().next().field("myCollection");
 
-    Assert.assertTrue(myCollection.containsAll(Arrays.asList(new Integer[] { 1, 2 })));
+    Assert.assertTrue(myCollection.containsAll(Arrays.asList(1, 2)));
 
   }
 

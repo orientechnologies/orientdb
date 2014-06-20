@@ -58,21 +58,19 @@ import com.orientechnologies.orient.test.domain.schemageneration.TestSchemaGener
 
 @Test(groups = { "crud", "object", "schemafull", "inheritanceSchemaFull" })
 public class CRUDObjectInheritanceTestSchemaFull {
-  protected static final int TOT_RECORDS = 10;
-  public static final String EXPORT_DIR  = "target/objectSchemaTest/database.export.gz";
+  protected static final int TOT_RECORDS    = 10;
+
+  public static final String buildDirectory = System.getProperty("buildDirectory", ".");
+  public static final String EXPORT_DIR     = buildDirectory + File.separator + "objectSchemaTest/database.export.gz";
 
   protected long             startRecordNumber;
   private OObjectDatabaseTx  database;
-  private City               redmond     = new City(new Country("Washington"), "Redmond");
+  private City               redmond        = new City(new Country("Washington"), "Redmond");
   private String             url;
-  private String             testsRoot;
 
   @Parameters(value = { "url", "testPath" })
   public CRUDObjectInheritanceTestSchemaFull(String iURL, String iTestPath) {
     url = iURL;
-    testsRoot = iTestPath;
-    if (testsRoot != null && testsRoot.length() > 0)
-      testsRoot = testsRoot + "/";
   }
 
   @BeforeClass
@@ -90,13 +88,13 @@ public class CRUDObjectInheritanceTestSchemaFull {
 
         }
       };
-      ODatabaseExport export = new ODatabaseExport(exportDatabase, testsRoot + EXPORT_DIR, listener);
+      ODatabaseExport export = new ODatabaseExport(exportDatabase, EXPORT_DIR, listener);
       export.exportDatabase();
       export.close();
       exportDatabase.close();
       ODatabaseDocumentTx importDatabase = new ODatabaseDocumentTx(url + "_objectschema");
       importDatabase.open("admin", "admin");
-      ODatabaseImport impor = new ODatabaseImport(importDatabase, testsRoot + EXPORT_DIR, listener);
+      ODatabaseImport impor = new ODatabaseImport(importDatabase, EXPORT_DIR, listener);
 
       if (url.startsWith("local:") || url.startsWith("memory:"))
         impor.setPreserveClusterIDs(false);
@@ -111,7 +109,7 @@ public class CRUDObjectInheritanceTestSchemaFull {
       impor.close();
 
       importDatabase.close();
-      final File importDir = new File(testsRoot + EXPORT_DIR);
+      final File importDir = new File(EXPORT_DIR);
       importDir.delete();
     } catch (IOException e) {
       Assert.fail("Export import didn't go as expected", e);

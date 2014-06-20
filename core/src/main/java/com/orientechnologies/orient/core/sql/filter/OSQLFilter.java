@@ -21,10 +21,6 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Parsed query. It's built once a query is parsed.
  * 
@@ -65,13 +61,6 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
       return true;
 
     return rootCondition.evaluate(iRecord, iCurrentResult, iContext);
-  }
-
-  public List<String> getInvolvedFields() {
-    if (rootCondition != null)
-      return rootCondition.getInvolvedFields(new ArrayList<String>());
-
-    return Collections.EMPTY_LIST;
   }
 
   public OSQLFilterCondition getRootCondition() {

@@ -1043,7 +1043,7 @@ public class OWriteAheadLog {
 
       return new OLogSequenceNumber(segment, position);
     } catch (EOFException eofException) {
-      OLogManager.instance().warn(this, "Can not restore %d WAL master record for storage %s", index, storageName);
+      OLogManager.instance().debug(this, "Can not restore %d WAL master record for storage %s", index, storageName);
       return null;
     }
   }

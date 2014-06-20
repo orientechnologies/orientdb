@@ -77,11 +77,22 @@ public class ODistributedConfiguration {
    * @param iClusterName
    *          Cluster name, or null for *
    */
-  public boolean isReplicationActive(final String iClusterName) {
+  public boolean isReplicationActive(final String iClusterName, final String iLocalNode) {
     synchronized (configuration) {
       final ODocument cluster = getClusterConfiguration(iClusterName);
       final Collection<String> servers = cluster.field("servers");
-      return servers != null && !servers.isEmpty();
+      if (servers != null) {
+        int otherServers = 0;
+
+        for (String s : servers)
+          if (!s.equals(NEW_NODE_TAG) && !s.equals(iLocalNode))
+            otherServers++;
+
+        return true;
+        // TEMPORARY PATCH TO FIX OPTIMIZATION OF RUNNING AS SINGLE SERVER
+        //return otherServers > 0;
+      }
+      return false;
     }
   }
 
@@ -351,7 +362,7 @@ public class ODistributedConfiguration {
         // GET THE CLUSTER CFG
         cfg = clusters.field(iClusterName);
 
-      if( cfg == null )
+      if (cfg == null)
         return new ODocument();
 
       return cfg;

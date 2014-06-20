@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Manager of indexes.
@@ -187,7 +187,7 @@ public interface OIndexManager {
    * <p/>
    * All indexes sorted by their count of parameters in ascending order. If there are indexes for the given set of fields in super
    * class they will be taken into account.
-   *
+   * 
    * @param className
    *          name of class which is indexed.
    * @param fields
@@ -233,7 +233,7 @@ public interface OIndexManager {
   public boolean areIndexed(String className, String... fields);
 
   /**
-   * Get indexes for a specified class.
+   * Gets indexes for a specified class (excluding indexes for sub-classes).
    * 
    * @param className
    *          name of class which is indexed.
@@ -242,7 +242,17 @@ public interface OIndexManager {
   public Set<OIndex<?>> getClassIndexes(String className);
 
   /**
-   * Search for index for a specified class with specified name.
+   * Gets indexes for a specified class (excluding indexes for sub-classes).
+   * 
+   * @param className
+   *          name of class which is indexed.
+   * @param indexes
+   *          Collection of indexes where to add all the indexes
+   */
+  void getClassIndexes(String className, Collection<OIndex<?>> indexes);
+
+  /**
+   * Searches for index for a specified class with specified name.
    * 
    * @param className
    *          name of class which is indexed.
@@ -253,12 +263,12 @@ public interface OIndexManager {
   public OIndex<?> getClassIndex(String className, String indexName);
 
   /**
-   * Block current thread till indexes will be restored.
+   * Blocks current thread till indexes will be restored.
    */
   public void waitTillIndexRestore();
 
   /**
-   * Check if indexes should be automatically recreated.
+   * Checks if indexes should be automatically recreated.
    * 
    * IMPORTANT! Only for internal usage.
    * 
@@ -267,7 +277,7 @@ public interface OIndexManager {
   public boolean autoRecreateIndexesAfterCrash();
 
   /**
-   * Add a cluster to tracked cluster list of specified index.
+   * Adds a cluster to tracked cluster list of specified index.
    * 
    * IMPORTANT! Only for internal usage.
    * 
@@ -279,7 +289,7 @@ public interface OIndexManager {
   public void addClusterToIndex(String clusterName, String indexName);
 
   /**
-   * Remove a cluster from tracked cluster list of specified index.
+   * Removes a cluster from tracked cluster list of specified index.
    * 
    * IMPORTANT! Only for internal usage.
    * 
@@ -291,14 +301,14 @@ public interface OIndexManager {
   public void removeClusterFromIndex(String clusterName, String indexName);
 
   /**
-   * Save index manager data.
+   * Saves index manager data.
    * 
    * IMPORTANT! Only for internal usage.
    */
   public <RET extends ODocumentWrapper> RET save();
 
   /**
-   * Remove index from class-property map.
+   * Removes index from class-property map.
    * 
    * IMPORTANT! Only for internal usage.
    * 

@@ -126,7 +126,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
     if (!dbUrl.substring(dbUrl.indexOf(":") + 1).startsWith(dbDirectory))
-      // NOT OWN DB, SKIPT IT
+      // NOT OWN DB, SKIP IT
       return;
 
     synchronized (cachedDatabaseConfiguration) {
@@ -134,11 +134,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       if (cfg == null)
         return;
 
-      if (cfg.isReplicationActive(null)) {
-        if (iDatabase instanceof ODatabaseComplex<?> && !(iDatabase.getStorage() instanceof ODistributedStorage))
-          ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(serverInstance,
-              (OStorageEmbedded) ((ODatabaseComplex<?>) iDatabase).getStorage()));
-      }
+      if (iDatabase instanceof ODatabaseComplex<?> && !(iDatabase.getStorage() instanceof ODistributedStorage))
+        ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(serverInstance,
+            (OStorageEmbedded) ((ODatabaseComplex<?>) iDatabase).getStorage()));
     }
   }
 

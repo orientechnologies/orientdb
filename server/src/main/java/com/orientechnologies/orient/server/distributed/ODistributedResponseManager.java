@@ -93,22 +93,19 @@ public class ODistributedResponseManager {
           "received response for request %s from unexpected node. Expected are: %s", request, getExpectedNodes());
 
       Orient.instance().getProfiler()
-          .updateCounter("distributed.replication.unexpectedNodeResponse", "Number of responses from unexpected nodes", +1);
+          .updateCounter("distributed.node.unexpectedNodeResponse", "Number of responses from unexpected nodes", +1);
 
       return false;
     }
 
-    Orient
-        .instance()
-        .getProfiler()
-        .stopChrono("distributed.replication.responseTime", "Response time from replication messages", sentOn,
-            "distributed.replication.responseTime");
+    Orient.instance().getProfiler()
+        .stopChrono("distributed.node.latency", "Latency of distributed messages", sentOn, "distributed.node.latency");
 
     Orient
         .instance()
         .getProfiler()
-        .stopChrono("distributed.replication." + executorNode + ".responseTime", "Response time from replication messages", sentOn,
-            "distributed.replication.*.responseTime");
+        .stopChrono("distributed.node." + executorNode + ".latency", "Latency of distributed messages per node", sentOn,
+            "distributed.node.*.latency");
 
     boolean completed = false;
     synchronized (responseGroups) {
@@ -378,7 +375,7 @@ public class ODistributedResponseManager {
       Orient
           .instance()
           .getProfiler()
-          .stopChrono("distributed.replication.synchResponses",
+          .stopChrono("distributed.synchResponses",
               "Time to collect all the synchronous responses from distributed nodes", beginTime);
     }
   }

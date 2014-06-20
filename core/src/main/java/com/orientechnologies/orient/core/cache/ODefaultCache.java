@@ -144,7 +144,8 @@ public class ODefaultCache extends OAbstractMapCache<ODefaultCache.OLinkedHashMa
           return;
 
         if (freeMemoryPercentage < 10) {
-          OLogManager.instance().warn(this, "Low free heap memory (%d%%): clearing %d cached records", freeMemoryPercentage, size());
+          OLogManager.instance()
+              .warn(this, "Low free heap memory (%d%%): clearing %d cached records", freeMemoryPercentage, size());
           removeEldest(oldSize);
         } else {
           final int newSize = (int) (oldSize * 0.9f);

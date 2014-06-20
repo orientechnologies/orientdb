@@ -21,7 +21,6 @@ import com.hazelcast.core.*;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -287,7 +286,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       listeners.add(listenerCfg);
 
       listenerCfg.put("protocol", listener.getProtocolType().getSimpleName());
-      listenerCfg.put("listen", listener.getListeningAddress());
+      listenerCfg.put("listen", listener.getListeningAddress(true));
     }
     nodeCfg.field("databases", getManagedDatabases());
 
@@ -407,9 +406,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     for (String dbName : messageService.getDatabases()) {
       Map<String, Object> db = new HashMap<String, Object>();
       databases.put(dbName, db);
-      final OProfilerEntry chrono = Orient.instance().getProfiler().getChrono("distributed.replication." + dbName + ".resynch");
-      if (chrono != null)
-        db.put("resync", new ODocument().fromJSON(chrono.toJSON()));
     }
 
     for (Entry<String, QueueConfig> entry : hazelcastInstance.getConfig().getQueueConfigs().entrySet()) {
@@ -450,6 +446,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   public String getNodeName(final Member iMember) {
+    if (iMember == null)
+      return "?";
+
     final ODocument cfg = getNodeConfigurationById(iMember.getUuid());
     if (cfg != null)
       return cfg.field("name");
@@ -508,7 +507,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void entryAdded(EntryEvent<String, Object> iEvent) {
+  public void entryAdded(final EntryEvent<String, Object> iEvent) {
+    if (iEvent.getMember() == null)
+      // IGNORE IT
+      return;
+
     final String key = iEvent.getKey();
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
       if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
@@ -547,7 +550,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void entryUpdated(EntryEvent<String, Object> iEvent) {
+  public void entryUpdated(final EntryEvent<String, Object> iEvent) {
     final String key = iEvent.getKey();
     final String eventNodeName = getNodeName(iEvent.getMember());
 
@@ -582,7 +585,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void entryRemoved(EntryEvent<String, Object> iEvent) {
+  public void entryRemoved(final EntryEvent<String, Object> iEvent) {
     final String key = iEvent.getKey();
     if (key.startsWith(CONFIG_NODE_PREFIX)) {
       final String nName = getNodeName(iEvent.getMember());

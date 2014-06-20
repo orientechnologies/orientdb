@@ -50,11 +50,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void commit() {
   }
 
-	@Override
-	public void commit(boolean force) {
-	}
+  @Override
+  public void commit(boolean force) {
+  }
 
-	public void rollback() {
+  public void rollback() {
   }
 
   public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,

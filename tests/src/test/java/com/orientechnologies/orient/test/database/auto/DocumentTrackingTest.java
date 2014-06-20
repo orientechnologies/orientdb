@@ -25,1040 +25,1008 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-
 @Test
 public class DocumentTrackingTest {
-	private final ODatabaseDocumentTx database;
+  private final ODatabaseDocumentTx database;
 
-	@Parameters(value = "url")
-	public DocumentTrackingTest(final String iURL) {
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  @Parameters(value = "url")
+  public DocumentTrackingTest(final String iURL) {
+    database = new ODatabaseDocumentTx(iURL);
+  }
 
-	@BeforeClass
-	public void beforeClass() {
-		if (database.isClosed()) {
-			database.open("admin", "admin");
-		}
+  @BeforeClass
+  public void beforeClass() {
+    if (database.isClosed()) {
+      database.open("admin", "admin");
+    }
 
-		if (!database.getMetadata().getSchema().existsClass("DocumentTrackingTestClass")) {
-			final OClass trackedClass = database.getMetadata().getSchema().createClass("DocumentTrackingTestClass");
-			trackedClass.createProperty("embeddedlist", OType.EMBEDDEDLIST);
-			trackedClass.createProperty("embeddedmap", OType.EMBEDDEDMAP);
-			trackedClass.createProperty("embeddedset", OType.EMBEDDEDSET);
-			trackedClass.createProperty("linkset", OType.LINKSET);
-			trackedClass.createProperty("linklist", OType.LINKLIST);
-			trackedClass.createProperty("linkmap", OType.LINKMAP);
+    if (!database.getMetadata().getSchema().existsClass("DocumentTrackingTestClass")) {
+      final OClass trackedClass = database.getMetadata().getSchema().createClass("DocumentTrackingTestClass");
+      trackedClass.createProperty("embeddedlist", OType.EMBEDDEDLIST);
+      trackedClass.createProperty("embeddedmap", OType.EMBEDDEDMAP);
+      trackedClass.createProperty("embeddedset", OType.EMBEDDEDSET);
+      trackedClass.createProperty("linkset", OType.LINKSET);
+      trackedClass.createProperty("linklist", OType.LINKLIST);
+      trackedClass.createProperty("linkmap", OType.LINKMAP);
 
-			database.getMetadata().getSchema().save();
-		}
+      database.getMetadata().getSchema().save();
+    }
 
-		database.close();
-	}
+    database.close();
+  }
 
-	@BeforeMethod
-	public void beforeMethod() {
-		database.open("admin", "admin");
-	}
+  @BeforeMethod
+  public void beforeMethod() {
+    database.open("admin", "admin");
+  }
 
-	@AfterMethod
-	public void afterMethod() {
-		database.close();
-	}
+  @AfterMethod
+  public void afterMethod() {
+    database.close();
+  }
 
-	public void testDocumentEmbeddedListTrackingAfterSave() {
-		final ODocument document = new ODocument();
+  public void testDocumentEmbeddedListTrackingAfterSave() {
+    final ODocument document = new ODocument();
 
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		document.field("embeddedlist", list, OType.EMBEDDEDLIST);
-		document.field("val", 1);
-		document.save();
+    document.field("embeddedlist", list, OType.EMBEDDEDLIST);
+    document.field("val", 1);
+    document.save();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-		Assert.assertTrue(document.isDirty());
+    Assert.assertTrue(document.isDirty());
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
-		Assert.assertNotNull(timeLine);
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
+    Assert.assertNotNull(timeLine);
 
-		Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
+    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, "value2"));
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, "value2"));
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedlist"});
-	}
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
+  }
 
-	public void testDocumentEmbeddedMapTrackingAfterSave() {
-		final ODocument document = new ODocument();
+  public void testDocumentEmbeddedMapTrackingAfterSave() {
+    final ODocument document = new ODocument();
 
-		final Map<String, String> map = new HashMap<String, String>();
-		map.put("key1", "value1");
+    final Map<String, String> map = new HashMap<String, String>();
+    map.put("key1", "value1");
 
+    document.field("embeddedmap", map, OType.EMBEDDEDMAP);
+    document.field("val", 1);
+    document.save();
 
-		document.field("embeddedmap", map, OType.EMBEDDEDMAP);
-		document.field("val", 1);
-		document.save();
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    final Map<String, String> trackedMap = document.field("embeddedmap");
+    trackedMap.put("key2", "value2");
 
-		final Map<String, String> trackedMap = document.field("embeddedmap");
-		trackedMap.put("key2", "value2");
+    Assert.assertTrue(document.isDirty());
 
-		Assert.assertTrue(document.isDirty());
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedmap");
+    Assert.assertNotNull(timeLine);
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedmap");
-		Assert.assertNotNull(timeLine);
+    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
 
-		Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "key2", "value2"));
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "key2", "value2"));
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedmap" });
+  }
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedmap"});
-	}
+  public void testDocumentEmbeddedSetTrackingAfterSave() {
+    final ODocument document = new ODocument();
 
-	public void testDocumentEmbeddedSetTrackingAfterSave() {
-		final ODocument document = new ODocument();
+    final Set<String> set = new HashSet<String>();
+    set.add("value1");
 
-		final Set<String> set = new HashSet<String>();
-		set.add("value1");
+    document.field("embeddedset", set, OType.EMBEDDEDSET);
+    document.field("val", 1);
+    document.save();
 
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		document.field("embeddedset", set, OType.EMBEDDEDSET);
-		document.field("val", 1);
-		document.save();
+    final Set<String> trackedSet = document.field("embeddedset");
+    trackedSet.add("value2");
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    Assert.assertTrue(document.isDirty());
 
-		final Set<String> trackedSet = document.field("embeddedset");
-		trackedSet.add("value2");
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedset");
+    Assert.assertNotNull(timeLine);
 
-		Assert.assertTrue(document.isDirty());
+    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedset");
-		Assert.assertNotNull(timeLine);
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "value2", "value2"));
 
-		Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "value2", "value2"));
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedset" });
+  }
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+  public void testDocumentLinkSetTrackingAfterSave() {
+    final ODocument docOne = new ODocument();
+    docOne.save();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedset"});
-	}
+    final ODocument docTwo = new ODocument();
+    docTwo.save();
 
-	public void testDocumentLinkSetTrackingAfterSave() {
-		final ODocument docOne = new ODocument();
-		docOne.save();
+    final ODocument document = new ODocument();
 
-		final ODocument docTwo = new ODocument();
-		docTwo.save();
+    final Set<ORID> set = new HashSet<ORID>();
+    set.add(docOne.getIdentity());
 
-		final ODocument document = new ODocument();
+    document.field("linkset", set, OType.LINKSET);
+    document.field("val", 1);
+    document.save();
 
-		final Set<ORID> set = new HashSet<ORID>();
-		set.add(docOne.getIdentity());
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		document.field("linkset", set, OType.LINKSET);
-		document.field("val", 1);
-		document.save();
+    final Set<ORID> trackedSet = document.field("linkset");
+    trackedSet.add(docTwo.getIdentity());
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    Assert.assertTrue(document.isDirty());
 
-		final Set<ORID> trackedSet = document.field("linkset");
-		trackedSet.add(docTwo.getIdentity());
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkset");
+    Assert.assertNotNull(timeLine);
 
-		Assert.assertTrue(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "linkset" });
+  }
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkset");
-		Assert.assertNotNull(timeLine);
+  public void testDocumentLinkListTrackingAfterSave() {
+    final ODocument docOne = new ODocument();
+    docOne.save();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkset"});
-	}
+    final ODocument docTwo = new ODocument();
+    docTwo.save();
 
-	public void testDocumentLinkListTrackingAfterSave() {
-		final ODocument docOne = new ODocument();
-		docOne.save();
+    final ODocument document = new ODocument();
 
-		final ODocument docTwo = new ODocument();
-		docTwo.save();
+    final List<ORID> list = new ArrayList<ORID>();
+    list.add(docOne.getIdentity());
 
+    document.field("linklist", list, OType.LINKLIST);
+    document.field("val", 1);
+    document.save();
 
-		final ODocument document = new ODocument();
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		final List<ORID> list = new ArrayList<ORID>();
-		list.add(docOne.getIdentity());
+    final List<ORID> trackedList = document.field("linklist");
+    trackedList.add(docTwo.getIdentity());
 
+    Assert.assertTrue(document.isDirty());
 
-		document.field("linklist", list, OType.LINKLIST);
-		document.field("val", 1);
-		document.save();
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linklist");
+    Assert.assertNotNull(timeLine);
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "linklist" });
+  }
 
-		final List<ORID> trackedList = document.field("linklist");
-		trackedList.add(docTwo.getIdentity());
+  public void testDocumentLinkMapTrackingAfterSave() {
+    final ODocument docOne = new ODocument();
+    docOne.save();
 
-		Assert.assertTrue(document.isDirty());
+    final ODocument docTwo = new ODocument();
+    docTwo.save();
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linklist");
-		Assert.assertNotNull(timeLine);
+    final ODocument document = new ODocument();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"linklist"});
-	}
+    final Map<String, ORID> map = new HashMap<String, ORID>();
+    map.put("key1", docOne.getIdentity());
 
-	public void testDocumentLinkMapTrackingAfterSave() {
-		final ODocument docOne = new ODocument();
-		docOne.save();
+    document.field("linkmap", map, OType.LINKMAP);
+    document.field("val", 1);
+    document.save();
 
-		final ODocument docTwo = new ODocument();
-		docTwo.save();
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
+    final Map<String, ORID> trackedMap = document.field("linkmap");
+    trackedMap.put("key2", docTwo.getIdentity());
 
-		final ODocument document = new ODocument();
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkmap");
+    Assert.assertNotNull(timeLine);
 
-		final Map<String, ORID> map = new HashMap<String, ORID>();
-		map.put("key1", docOne.getIdentity());
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "linkmap" });
+  }
 
+  public void testDocumentEmbeddedListTrackingAfterSaveCacheDisabled() {
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
-		document.field("linkmap", map, OType.LINKMAP);
-		document.field("val", 1);
-		document.save();
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    final ODocument document = new ODocument();
 
-		final Map<String, ORID> trackedMap = document.field("linkmap");
-		trackedMap.put("key2", docTwo.getIdentity());
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkmap");
-		Assert.assertNotNull(timeLine);
+    document.field("embeddedlist", list, OType.EMBEDDEDLIST);
+    document.field("val", 1);
+    document.save();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkmap"});
-	}
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-	public void testDocumentEmbeddedListTrackingAfterSaveCacheDisabled() {
-		database.getLevel1Cache().clear();
-		database.getLevel2Cache().clear();
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-		database.getLevel1Cache().setEnable(false);
-		database.getLevel2Cache().setEnable(false);
+    Assert.assertTrue(document.isDirty());
 
-		final ODocument document = new ODocument();
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
+    Assert.assertNotNull(timeLine);
 
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
+    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
 
-		document.field("embeddedlist", list, OType.EMBEDDEDLIST);
-		document.field("val", 1);
-		document.save();
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, "value2"));
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
 
-		Assert.assertTrue(document.isDirty());
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
-		Assert.assertNotNull(timeLine);
+  }
 
-		Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
+  public void testDocumentEmbeddedMapTrackingAfterSaveCacheDisabled() {
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, "value2"));
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+    final ODocument document = new ODocument();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedlist"});
+    final Map<String, String> map = new HashMap<String, String>();
+    map.put("key1", "value1");
 
-		database.getLevel1Cache().setEnable(true);
-		database.getLevel2Cache().setEnable(true);
+    document.field("embeddedmap", map, OType.EMBEDDEDMAP);
+    document.field("val", 1);
+    document.save();
 
-	}
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-	public void testDocumentEmbeddedMapTrackingAfterSaveCacheDisabled() {
-		database.getLevel1Cache().clear();
-		database.getLevel2Cache().clear();
+    final Map<String, String> trackedMap = document.field("embeddedmap");
+    trackedMap.put("key2", "value2");
 
-		database.getLevel1Cache().setEnable(false);
-		database.getLevel2Cache().setEnable(false);
+    Assert.assertTrue(document.isDirty());
 
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedmap");
+    Assert.assertNotNull(timeLine);
 
-		final ODocument document = new ODocument();
+    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
 
-		final Map<String, String> map = new HashMap<String, String>();
-		map.put("key1", "value1");
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "key2", "value2"));
 
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
-		document.field("embeddedmap", map, OType.EMBEDDEDMAP);
-		document.field("val", 1);
-		document.save();
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedmap" });
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
 
-		final Map<String, String> trackedMap = document.field("embeddedmap");
-		trackedMap.put("key2", "value2");
+  }
 
-		Assert.assertTrue(document.isDirty());
+  public void testDocumentEmbeddedSetTrackingAfterSaveCacheDisabled() {
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedmap");
-		Assert.assertNotNull(timeLine);
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
-		Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
+    final ODocument document = new ODocument();
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "key2", "value2"));
+    final Set<String> set = new HashSet<String>();
+    set.add("value1");
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+    document.field("embeddedset", set, OType.EMBEDDEDSET);
+    document.field("val", 1);
+    document.save();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedmap"});
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		database.getLevel1Cache().setEnable(true);
-		database.getLevel2Cache().setEnable(true);
+    final Set<String> trackedSet = document.field("embeddedset");
+    trackedSet.add("value2");
 
-	}
+    Assert.assertTrue(document.isDirty());
 
-	public void testDocumentEmbeddedSetTrackingAfterSaveCacheDisabled() {
-		database.getLevel1Cache().clear();
-		database.getLevel2Cache().clear();
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedset");
+    Assert.assertNotNull(timeLine);
 
-		database.getLevel1Cache().setEnable(false);
-		database.getLevel2Cache().setEnable(false);
+    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
 
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "value2", "value2"));
 
-		final ODocument document = new ODocument();
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
-		final Set<String> set = new HashSet<String>();
-		set.add("value1");
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedset" });
 
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
 
-		document.field("embeddedset", set, OType.EMBEDDEDSET);
-		document.field("val", 1);
-		document.save();
+  }
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+  public void testDocumentLinkSetTrackingAfterSaveCacheDisabled() {
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
-		final Set<String> trackedSet = document.field("embeddedset");
-		trackedSet.add("value2");
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
-		Assert.assertTrue(document.isDirty());
+    final ODocument docOne = new ODocument();
+    docOne.save();
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedset");
-		Assert.assertNotNull(timeLine);
+    final ODocument docTwo = new ODocument();
+    docTwo.save();
 
-		Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
+    final ODocument document = new ODocument();
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "value2", "value2"));
+    final Set<ORID> set = new HashSet<ORID>();
+    set.add(docOne.getIdentity());
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+    document.field("linkset", set, OType.LINKSET);
+    document.field("val", 1);
+    document.save();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedset"});
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		database.getLevel1Cache().setEnable(true);
-		database.getLevel2Cache().setEnable(true);
+    final Set<ORID> trackedSet = document.field("linkset");
+    trackedSet.add(docTwo.getIdentity());
 
-	}
+    Assert.assertTrue(document.isDirty());
 
-	public void testDocumentLinkSetTrackingAfterSaveCacheDisabled() {
-		database.getLevel1Cache().clear();
-		database.getLevel2Cache().clear();
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkset");
+    Assert.assertNotNull(timeLine);
 
-		database.getLevel1Cache().setEnable(false);
-		database.getLevel2Cache().setEnable(false);
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "linkset" });
 
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
+  }
 
-		final ODocument docOne = new ODocument();
-		docOne.save();
+  public void testDocumentLinkListTrackingAfterSaveCacheDisabled() {
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
-		final ODocument docTwo = new ODocument();
-		docTwo.save();
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
+    final ODocument docOne = new ODocument();
+    docOne.save();
 
-		final ODocument document = new ODocument();
+    final ODocument docTwo = new ODocument();
+    docTwo.save();
 
-		final Set<ORID> set = new HashSet<ORID>();
-		set.add(docOne.getIdentity());
+    final ODocument document = new ODocument();
 
+    final List<ORID> list = new ArrayList<ORID>();
+    list.add(docOne.getIdentity());
 
-		document.field("linkset", set, OType.LINKSET);
-		document.field("val", 1);
-		document.save();
+    document.field("linklist", list, OType.LINKLIST);
+    document.field("val", 1);
+    document.save();
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		final Set<ORID> trackedSet = document.field("linkset");
-		trackedSet.add(docTwo.getIdentity());
+    final List<ORID> trackedList = document.field("linklist");
+    trackedList.add(docTwo.getIdentity());
 
-		Assert.assertTrue(document.isDirty());
+    Assert.assertTrue(document.isDirty());
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkset");
-		Assert.assertNotNull(timeLine);
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linklist");
+    Assert.assertNotNull(timeLine);
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkset"});
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "linklist" });
 
-		database.getLevel1Cache().setEnable(true);
-		database.getLevel2Cache().setEnable(true);
-	}
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
 
-	public void testDocumentLinkListTrackingAfterSaveCacheDisabled() {
-		database.getLevel1Cache().clear();
-		database.getLevel2Cache().clear();
+  }
 
-		database.getLevel1Cache().setEnable(false);
-		database.getLevel2Cache().setEnable(false);
+  public void testDocumentLinkMapTrackingAfterSaveCacheDisabled() {
+    database.getLevel1Cache().clear();
+    database.getLevel2Cache().clear();
 
+    database.getLevel1Cache().setEnable(false);
+    database.getLevel2Cache().setEnable(false);
 
-		final ODocument docOne = new ODocument();
-		docOne.save();
+    final ODocument docOne = new ODocument();
+    docOne.save();
 
-		final ODocument docTwo = new ODocument();
-		docTwo.save();
+    final ODocument docTwo = new ODocument();
+    docTwo.save();
 
+    final ODocument document = new ODocument();
 
-		final ODocument document = new ODocument();
+    final Map<String, ORID> map = new HashMap<String, ORID>();
+    map.put("key1", docOne.getIdentity());
 
-		final List<ORID> list = new ArrayList<ORID>();
-		list.add(docOne.getIdentity());
+    document.field("linkmap", map, OType.LINKMAP);
+    document.field("val", 1);
+    document.save();
 
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		document.field("linklist", list, OType.LINKLIST);
-		document.field("val", 1);
-		document.save();
+    final Map<String, ORID> trackedMap = document.field("linkmap");
+    trackedMap.put("key2", docTwo.getIdentity());
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkmap");
+    Assert.assertNotNull(timeLine);
 
-		final List<ORID> trackedList = document.field("linklist");
-		trackedList.add(docTwo.getIdentity());
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "linkmap" });
 
-		Assert.assertTrue(document.isDirty());
+    database.getLevel1Cache().setEnable(true);
+    database.getLevel2Cache().setEnable(true);
+  }
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linklist");
-		Assert.assertNotNull(timeLine);
+  public void testDocumentEmbeddedListTrackingAfterSaveWitClass() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"linklist"});
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		database.getLevel1Cache().setEnable(true);
-		database.getLevel2Cache().setEnable(true);
+    document.field("embeddedlist", list);
+    document.field("val", 1);
+    document.save();
 
-	}
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-	public void testDocumentLinkMapTrackingAfterSaveCacheDisabled() {
-		database.getLevel1Cache().clear();
-		database.getLevel2Cache().clear();
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-		database.getLevel1Cache().setEnable(false);
-		database.getLevel2Cache().setEnable(false);
+    Assert.assertTrue(document.isDirty());
 
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
+    Assert.assertNotNull(timeLine);
 
-		final ODocument docOne = new ODocument();
-		docOne.save();
+    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
 
-		final ODocument docTwo = new ODocument();
-		docTwo.save();
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, "value2"));
 
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
-		final ODocument document = new ODocument();
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
+  }
 
-		final Map<String, ORID> map = new HashMap<String, ORID>();
-		map.put("key1", docOne.getIdentity());
+  public void testDocumentEmbeddedMapTrackingAfterSaveWithClass() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
+    final Map<String, String> map = new HashMap<String, String>();
+    map.put("key1", "value1");
 
-		document.field("linkmap", map, OType.LINKMAP);
-		document.field("val", 1);
-		document.save();
+    document.field("embeddedmap", map);
+    document.field("val", 1);
+    document.save();
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		final Map<String, ORID> trackedMap = document.field("linkmap");
-		trackedMap.put("key2", docTwo.getIdentity());
+    final Map<String, String> trackedMap = document.field("embeddedmap");
+    trackedMap.put("key2", "value2");
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkmap");
-		Assert.assertNotNull(timeLine);
+    Assert.assertTrue(document.isDirty());
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkmap"});
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedmap");
+    Assert.assertNotNull(timeLine);
 
-		database.getLevel1Cache().setEnable(true);
-		database.getLevel2Cache().setEnable(true);
-	}
+    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
 
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "key2", "value2"));
 
-	public void testDocumentEmbeddedListTrackingAfterSaveWitClass() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedmap" });
+  }
 
-		document.field("embeddedlist", list);
-		document.field("val", 1);
-		document.save();
+  public void testDocumentEmbeddedSetTrackingAfterSaveWithClass() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    final Set<String> set = new HashSet<String>();
+    set.add("value1");
 
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
+    document.field("embeddedset", set);
+    document.field("val", 1);
+    document.save();
 
-		Assert.assertTrue(document.isDirty());
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
-		Assert.assertNotNull(timeLine);
+    final Set<String> trackedSet = document.field("embeddedset");
+    trackedSet.add("value2");
 
-		Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
+    Assert.assertTrue(document.isDirty());
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, "value2"));
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedset");
+    Assert.assertNotNull(timeLine);
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedlist"});
-	}
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "value2", "value2"));
 
-	public void testDocumentEmbeddedMapTrackingAfterSaveWithClass() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
-		final Map<String, String> map = new HashMap<String, String>();
-		map.put("key1", "value1");
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedset" });
+  }
 
+  public void testDocumentLinkSetTrackingAfterSaveWithClass() {
+    final ODocument docOne = new ODocument();
+    docOne.save();
 
-		document.field("embeddedmap", map);
-		document.field("val", 1);
-		document.save();
+    final ODocument docTwo = new ODocument();
+    docTwo.save();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		final Map<String, String> trackedMap = document.field("embeddedmap");
-		trackedMap.put("key2", "value2");
+    final Set<ORID> set = new HashSet<ORID>();
+    set.add(docOne.getIdentity());
 
-		Assert.assertTrue(document.isDirty());
+    document.field("linkset", set);
+    document.field("val", 1);
+    document.save();
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedmap");
-		Assert.assertNotNull(timeLine);
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
+    final Set<ORID> trackedSet = document.field("linkset");
+    trackedSet.add(docTwo.getIdentity());
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "key2", "value2"));
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkset");
+    Assert.assertNotNull(timeLine);
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "linkset" });
+  }
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedmap"});
-	}
+  public void testDocumentLinkListTrackingAfterSaveWithClass() {
+    final ODocument docOne = new ODocument();
+    docOne.save();
 
-	public void testDocumentEmbeddedSetTrackingAfterSaveWithClass() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    final ODocument docTwo = new ODocument();
+    docTwo.save();
 
-		final Set<String> set = new HashSet<String>();
-		set.add("value1");
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
+    final List<ORID> list = new ArrayList<ORID>();
+    list.add(docOne.getIdentity());
 
-		document.field("embeddedset", set);
-		document.field("val", 1);
-		document.save();
+    document.field("linklist", list);
+    document.field("val", 1);
+    document.save();
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		final Set<String> trackedSet = document.field("embeddedset");
-		trackedSet.add("value2");
+    final List<ORID> trackedList = document.field("linklist");
+    trackedList.add(docTwo.getIdentity());
 
-		Assert.assertTrue(document.isDirty());
+    Assert.assertTrue(document.isDirty());
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedset");
-		Assert.assertNotNull(timeLine);
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linklist");
+    Assert.assertNotNull(timeLine);
 
-		Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "linklist" });
+  }
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "value2", "value2"));
+  public void testDocumentLinkMapTrackingAfterSaveWithClass() {
+    final ODocument docOne = new ODocument();
+    docOne.save();
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+    final ODocument docTwo = new ODocument();
+    docTwo.save();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedset"});
-	}
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-	public void testDocumentLinkSetTrackingAfterSaveWithClass() {
-		final ODocument docOne = new ODocument();
-		docOne.save();
+    final Map<String, ORID> map = new HashMap<String, ORID>();
+    map.put("key1", docOne.getIdentity());
 
-		final ODocument docTwo = new ODocument();
-		docTwo.save();
+    document.field("linkmap", map);
+    document.field("val", 1);
+    document.save();
 
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    final Map<String, ORID> trackedMap = document.field("linkmap");
+    trackedMap.put("key2", docTwo.getIdentity());
 
-		final Set<ORID> set = new HashSet<ORID>();
-		set.add(docOne.getIdentity());
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkmap");
+    Assert.assertNotNull(timeLine);
 
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "linkmap" });
+  }
 
-		document.field("linkset", set);
-		document.field("val", 1);
-		document.save();
+  public void testDocumentEmbeddedListTrackingAfterConversion() {
+    final ODocument document = new ODocument();
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    final Set<String> set = new HashSet<String>();
+    set.add("value1");
 
-		final Set<ORID> trackedSet = document.field("linkset");
-		trackedSet.add(docTwo.getIdentity());
+    document.field("embeddedlist", set);
+    document.field("val", 1);
+    document.save();
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkset");
-		Assert.assertNotNull(timeLine);
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkset"});
-	}
+    final List<String> trackedList = document.field("embeddedlist", OType.EMBEDDEDLIST);
+    trackedList.add("value2");
 
-	public void testDocumentLinkListTrackingAfterSaveWithClass() {
-		final ODocument docOne = new ODocument();
-		docOne.save();
+    Assert.assertTrue(document.isDirty());
 
-		final ODocument docTwo = new ODocument();
-		docTwo.save();
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
+    Assert.assertNotNull(timeLine);
 
+    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
 
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, "value2"));
 
-		final List<ORID> list = new ArrayList<ORID>();
-		list.add(docOne.getIdentity());
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
+  }
 
-		document.field("linklist", list);
-		document.field("val", 1);
-		document.save();
+  public void testDocumentEmbeddedSetTrackingAfterConversion() {
+    final ODocument document = new ODocument();
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		final List<ORID> trackedList = document.field("linklist");
-		trackedList.add(docTwo.getIdentity());
+    document.field("embeddedset", list);
+    document.field("val", 1);
+    document.save();
 
-		Assert.assertTrue(document.isDirty());
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linklist");
-		Assert.assertNotNull(timeLine);
+    final Set<String> trackedSet = document.field("embeddedset", OType.EMBEDDEDSET);
+    trackedSet.add("value2");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"linklist"});
-	}
+    Assert.assertTrue(document.isDirty());
 
-	public void testDocumentLinkMapTrackingAfterSaveWithClass() {
-		final ODocument docOne = new ODocument();
-		docOne.save();
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedset");
+    Assert.assertNotNull(timeLine);
 
-		final ODocument docTwo = new ODocument();
-		docTwo.save();
+    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
 
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "value2", "value2"));
 
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
-		final Map<String, ORID> map = new HashMap<String, ORID>();
-		map.put("key1", docOne.getIdentity());
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedset" });
+  }
 
+  public void testDocumentEmbeddedListTrackingAfterReplace() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		document.field("linkmap", map);
-		document.field("val", 1);
-		document.save();
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    document.field("embeddedlist", list);
+    document.field("val", 1);
+    document.save();
 
-		final Map<String, ORID> trackedMap = document.field("linkmap");
-		trackedMap.put("key2", docTwo.getIdentity());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("linkmap");
-		Assert.assertNotNull(timeLine);
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"linkmap"});
-	}
+    final List<String> newTrackedList = new OTrackedList<String>(document);
+    document.field("embeddedlist", newTrackedList);
+    newTrackedList.add("value3");
 
-	public void testDocumentEmbeddedListTrackingAfterConversion() {
-		final ODocument document = new ODocument();
+    Assert.assertTrue(document.isDirty());
 
-		final Set<String> set = new HashSet<String>();
-		set.add("value1");
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
+    Assert.assertNull(timeLine);
 
-		document.field("embeddedlist", set);
-		document.field("val", 1);
-		document.save();
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
+  }
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+  public void testDocumentEmbeddedMapTrackingAfterReplace() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		final List<String> trackedList = document.field("embeddedlist", OType.EMBEDDEDLIST);
-		trackedList.add("value2");
+    final Map<String, String> map = new HashMap<String, String>();
+    map.put("key1", "value1");
 
-		Assert.assertTrue(document.isDirty());
+    document.field("embeddedmap", map);
+    document.field("val", 1);
+    document.save();
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
-		Assert.assertNotNull(timeLine);
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
+    final Map<String, String> trackedMap = document.field("embeddedmap");
+    trackedMap.put("key2", "value2");
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, "value2"));
+    final Map<Object, String> newTrackedMap = new OTrackedMap<String>(document);
+    document.field("embeddedmap", newTrackedMap);
+    newTrackedMap.put("key3", "value3");
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+    Assert.assertTrue(document.isDirty());
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedlist"});
-	}
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedmap");
+    Assert.assertNull(timeLine);
 
-	public void testDocumentEmbeddedSetTrackingAfterConversion() {
-		final ODocument document = new ODocument();
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedmap" });
+  }
 
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
+  public void testDocumentEmbeddedSetTrackingAfterReplace() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
+    final Set<String> set = new HashSet<String>();
+    set.add("value1");
 
-		document.field("embeddedset", list);
-		document.field("val", 1);
-		document.save();
+    document.field("embeddedset", set);
+    document.field("val", 1);
+    document.save();
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
 
-		final Set<String> trackedSet = document.field("embeddedset", OType.EMBEDDEDSET);
-		trackedSet.add("value2");
+    final Set<String> trackedSet = document.field("embeddedset");
+    trackedSet.add("value2");
 
-		Assert.assertTrue(document.isDirty());
+    final Set<String> newTrackedSet = new OTrackedSet<String>(document);
+    document.field("embeddedset", newTrackedSet);
+    newTrackedSet.add("value3");
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedset");
-		Assert.assertNotNull(timeLine);
+    Assert.assertTrue(document.isDirty());
 
-		Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
+    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedset");
+    Assert.assertNull(timeLine);
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "value2", "value2"));
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedset" });
+  }
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+  public void testRemoveField() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedset"});
-	}
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-	public void testDocumentEmbeddedListTrackingAfterReplace() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    document.field("embeddedlist", list);
+    document.field("val", 1);
+    document.save();
 
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		document.field("embeddedlist", list);
-		document.field("val", 1);
-		document.save();
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    document.removeField("embeddedlist");
 
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
+    Assert.assertTrue(document.isDirty());
+    Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
+  }
 
-		final List<String> newTrackedList = new OTrackedList<String>(document);
-		document.field("embeddedlist", newTrackedList);
-		newTrackedList.add("value3");
+  public void testTrackingChangesSwitchedOff() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		Assert.assertTrue(document.isDirty());
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
-		Assert.assertNull(timeLine);
+    document.field("embeddedlist", list);
+    document.field("val", 1);
+    document.save();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedlist"});
-	}
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-	public void testDocumentEmbeddedMapTrackingAfterReplace() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-		final Map<String, String> map = new HashMap<String, String>();
-		map.put("key1", "value1");
+    document.setTrackingChanges(false);
 
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertTrue(document.isDirty());
+    Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
+  }
 
-		document.field("embeddedmap", map);
-		document.field("val", 1);
-		document.save();
+  public void testTrackingChangesSwitchedOn() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		final Map<String, String> trackedMap = document.field("embeddedmap");
-		trackedMap.put("key2", "value2");
+    document.field("embeddedlist", list);
+    document.field("val", 1);
+    document.save();
 
-		final Map<Object, String> newTrackedMap = new OTrackedMap<String>(document);
-		document.field("embeddedmap", newTrackedMap);
-		newTrackedMap.put("key3", "value3");
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		Assert.assertTrue(document.isDirty());
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedmap");
-		Assert.assertNull(timeLine);
+    document.setTrackingChanges(false);
+    document.setTrackingChanges(true);
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedmap"});
-	}
+    trackedList.add("value3");
 
-	public void testDocumentEmbeddedSetTrackingAfterReplace() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
+    Assert.assertTrue(document.isDirty());
+    Assert.assertNotNull(document.getCollectionTimeLine("embeddedlist"));
 
-		final Set<String> set = new HashSet<String>();
-		set.add("value1");
+    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
+    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 2, "value3"));
 
+    OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
 
-		document.field("embeddedset", set);
-		document.field("val", 1);
-		document.save();
+    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
-		Assert.assertFalse(document.isDirty());
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
+  }
 
-		final Set<String> trackedSet = document.field("embeddedset");
-		trackedSet.add("value2");
+  public void testReset() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		final Set<String> newTrackedSet = new OTrackedSet<String>(document);
-		document.field("embeddedset", newTrackedSet);
-		newTrackedSet.add("value3");
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		Assert.assertTrue(document.isDirty());
+    document.field("embeddedlist", list);
+    document.field("val", 1);
+    document.save();
 
-		final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedset");
-		Assert.assertNull(timeLine);
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedset"});
-	}
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-	public void testRemoveField() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    document.reset();
 
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertTrue(document.isDirty());
+    Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
+  }
 
-		document.field("embeddedlist", list);
-		document.field("val", 1);
-		document.save();
+  public void testClear() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
+    document.field("embeddedlist", list);
+    document.field("val", 1);
+    document.save();
 
-		document.removeField("embeddedlist");
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedlist"});
-		Assert.assertTrue(document.isDirty());
-		Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
-	}
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-	public void testTrackingChangesSwitchedOff() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    document.clear();
 
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertTrue(document.isDirty());
+    Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
+  }
 
-		document.field("embeddedlist", list);
-		document.field("val", 1);
-		document.save();
+  public void testUnload() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
+    document.field("embeddedlist", list);
+    document.field("val", 1);
+    document.save();
 
-		document.setTrackingChanges(false);
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertTrue(document.isDirty());
-		Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
-	}
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-	public void testTrackingChangesSwitchedOn() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    document.unload();
 
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
+    Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
+  }
 
-		document.field("embeddedlist", list);
-		document.field("val", 1);
-		document.save();
+  public void testUnsetDirty() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
+    document.field("embeddedlist", list);
+    document.field("val", 1);
+    document.save();
 
-		document.setTrackingChanges(false);
-		document.setTrackingChanges(true);
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		trackedList.add("value3");
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedlist"});
-		Assert.assertTrue(document.isDirty());
-		Assert.assertNotNull(document.getCollectionTimeLine("embeddedlist"));
+    document.unsetDirty();
 
-		final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-		firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 2, "value3"));
+    // Assert.assertEquals(document.getDirtyFields(), new String[]{});
+    Assert.assertFalse(document.isDirty());
+    // Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
+  }
 
-		OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
+  public void testReload() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-	}
+    document.field("embeddedlist", list);
+    document.field("val", 1);
+    document.save();
 
-	public void testReset() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-		document.field("embeddedlist", list);
-		document.field("val", 1);
-		document.save();
+    document.reload();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
+    Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
+  }
 
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
+  public void testRemoveFieldUsingIterator() {
+    final ODocument document = new ODocument("DocumentTrackingTestClass");
 
-		document.reset();
+    final List<String> list = new ArrayList<String>();
+    list.add("value1");
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertTrue(document.isDirty());
-		Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
-	}
+    document.field("embeddedlist", list);
+    document.save();
 
-	public void testClear() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
+    Assert.assertEquals(document.getDirtyFields(), new String[] {});
+    Assert.assertFalse(document.isDirty());
 
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
+    final List<String> trackedList = document.field("embeddedlist");
+    trackedList.add("value2");
 
-		document.field("embeddedlist", list);
-		document.field("val", 1);
-		document.save();
+    final Iterator fieldIterator = document.iterator();
+    fieldIterator.next();
+    fieldIterator.remove();
 
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
-
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
-
-		document.clear();
-
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertTrue(document.isDirty());
-		Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
-	}
-
-	public void testUnload() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
-
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
-
-		document.field("embeddedlist", list);
-		document.field("val", 1);
-		document.save();
-
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
-
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
-
-		document.unload();
-
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
-		Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
-	}
-
-	public void testUnsetDirty() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
-
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
-
-		document.field("embeddedlist", list);
-		document.field("val", 1);
-		document.save();
-
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
-
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
-
-		document.unsetDirty();
-
-		//Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
-		//Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
-	}
-
-	public void testReload() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
-
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
-
-		document.field("embeddedlist", list);
-		document.field("val", 1);
-		document.save();
-
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
-
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
-
-		document.reload();
-
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
-		Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
-	}
-
-	public void testRemoveFieldUsingIterator() {
-		final ODocument document = new ODocument("DocumentTrackingTestClass");
-
-		final List<String> list = new ArrayList<String>();
-		list.add("value1");
-
-		document.field("embeddedlist", list);
-		document.save();
-
-		Assert.assertEquals(document.getDirtyFields(), new String[]{});
-		Assert.assertFalse(document.isDirty());
-
-		final List<String> trackedList = document.field("embeddedlist");
-		trackedList.add("value2");
-
-		final Iterator fieldIterator = document.iterator();
-		fieldIterator.next();
-		fieldIterator.remove();
-
-		Assert.assertEquals(document.getDirtyFields(), new String[]{"embeddedlist"});
-		Assert.assertTrue(document.isDirty());
-		Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
-	}
+    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
+    Assert.assertTrue(document.isDirty());
+    Assert.assertNull(document.getCollectionTimeLine("embeddedlist"));
+  }
 
 }

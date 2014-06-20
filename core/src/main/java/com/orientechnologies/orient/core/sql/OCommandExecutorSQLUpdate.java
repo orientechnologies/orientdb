@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -29,25 +38,12 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.query.OQuery;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
-import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 
 /**
  * SQL UPDATE command.
@@ -72,16 +68,14 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private Map<String, Number>                incrementEntries  = new LinkedHashMap<String, Number>();
   private ODocument                          merge             = null;
   private String                             lockStrategy      = "NONE";
-  private Object                             returnExpression = null;
-  private SQLUpdateReturnModeEnum            returnMode          = SQLUpdateReturnModeEnum.COUNT;
-  private List<ORecord<?>>                   allUpdatedRecords;
+  private OReturnHandler                     returnHandler     = new ORecordCountHandler();
   private OQuery<?>                          query;
   private OSQLFilter                         compiledFilter;
-  private int                                recordCount       = 0;
   private String                             subjectName;
   private OCommandParameters                 parameters;
   private boolean                            upsertMode        = false;
   private boolean                            isUpsertAllowed   = false;
+  private boolean                            updated           = false;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLUpdate parse(final OCommandRequest iRequest) {
@@ -98,7 +92,6 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     merge = null;
 
     query = null;
-    recordCount = 0;
 
     parserRequiredKeyword(KEYWORD_UPDATE);
 
@@ -140,7 +133,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       else if (word.equals(KEYWORD_UPSERT))
         upsertMode = true;
       else if (word.equals(KEYWORD_RETURN))
-        returnMode = parseReturn();
+        parseReturn();
       else if (word.equals(KEYWORD_RETRY))
         parseRetry();
       else
@@ -167,7 +160,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
           + parserText.substring(parserGetCurrentPosition()), this);
       isUpsertAllowed = (getDatabase().getMetadata().getSchema().getClass(subjectName) != null);
-    } else if (additionalStatement != null && !additionalStatement.isEmpty())
+    } else if (!additionalStatement.isEmpty())
       throwSyntaxErrorException("Invalid keyword " + additionalStatement);
     else
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName, this);
@@ -200,7 +193,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     query.setUseCache(false);
     query.setContext(context);
 
-    allUpdatedRecords = new ArrayList<ORecord<?>>();
+    returnHandler.reset();
 
     if (lockStrategy.equals("RECORD"))
       query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
@@ -221,50 +214,21 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         if (wait > 0)
           try {
             Thread.sleep(wait);
-          } catch (InterruptedException e1) {
+          } catch (InterruptedException ignored) {
           }
       }
     }
 
     // IF UPDATE DOES NOT PRODUCE RESULTS AND UPSERT MODE IS ENABLED, CREATE DOCUMENT AND APPLY SET/ADD/PUT/MERGE and so on
-    if (upsertMode && recordCount == 0) {
+    if (upsertMode && !updated) {
       final ODocument doc = subjectName != null ? new ODocument(subjectName) : new ODocument();
       final String suspendedLockStrategy = lockStrategy;
-      lockStrategy = "NONE";// New record hasn't been created under exlusive lock - just to avoid releasing locks by result(doc)
+      lockStrategy = "NONE";// New record hasn't been created under exclusive lock - just to avoid releasing locks by result(doc)
       result(doc);
       lockStrategy = suspendedLockStrategy;
     }
 
-    if (returnMode== SQLUpdateReturnModeEnum.COUNT)
-      // RETURNS ONLY THE COUNT
-      return recordCount;
-    else
-      if (returnExpression ==null)
-      {
-          return allUpdatedRecords;
-      }
-      else
-      {
-          List<Object> result = new ArrayList<Object>();
-          Object itemResult = null;
-          ODocument wrappingDoc = null;
-          for (ORecord o : allUpdatedRecords)
-          {
-            this.getContext().setVariable("current",o);
-            itemResult = OSQLHelper.getValue(returnExpression, (ODocument) ((OIdentifiable) o).getRecord(), this.getContext());
-            // WRAP WITH ODOCUMENT IF NEEDED
-            if (itemResult instanceof OIdentifiable)
-                    result.add(itemResult);
-            else
-            {
-               wrappingDoc =  new ODocument("result",itemResult);
-               wrappingDoc.field("rid",o.getIdentity());// passing record id.In many cases usable on client side
-               wrappingDoc.field("version",o.getVersion());// passing record version
-               result.add(wrappingDoc);
-            }
-          }
-          return result;
-      }
+    return returnHandler.ret();
   }
 
   /**
@@ -272,7 +236,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
    */
   @SuppressWarnings("unchecked")
   public boolean result(final Object iRecord) {
-    final ODocument record = (ODocument) ((OIdentifiable) iRecord).getRecord();
+    final ODocument record = ((OIdentifiable) iRecord).getRecord();
 
     if (compiledFilter != null) {
       // ADDITIONAL FILTERING
@@ -280,40 +244,64 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         return false;
     }
 
-    final Set<ODocument> updatedRecords = new HashSet<ODocument>();
-
     parameters.reset();
 
+    returnHandler.beforeUpdate(record);
 
-    if (returnMode == SQLUpdateReturnModeEnum.BEFORE)
-      allUpdatedRecords.add(record.copy());
-    else
-      allUpdatedRecords.add(record);
+    boolean updated = handleContent(record);
+    updated |= handleMerge(record);
+    updated |= handleSetEntries(record);
+    updated |= handleIncrementEnries(record);
+    updated |= handleAddEntries(record);
+    updated |= handlePutEntries(record);
+    updated |= handleRemoveEntries(record);
 
+    if (updated) {
+      record.setDirty();
+      record.save();
+      returnHandler.afterUpdate(record);
+      this.updated = true;
+    }
 
+    return true;
+  }
+
+  private boolean handleContent(ODocument record) {
+    boolean updated = false;
     if (content != null) {
       // REPLACE ALL THE CONTENT
       record.clear();
       record.merge(content, false, false);
-      updatedRecords.add(record);
+      updated = true;
     }
+    return updated;
+  }
 
+  private boolean handleMerge(ODocument record) {
+    boolean updated = false;
     if (merge != null) {
       // MERGE THE CONTENT
       record.merge(merge, true, false);
-      updatedRecords.add(record);
+      updated = true;
     }
+    return updated;
+  }
 
+  private boolean handleSetEntries(ODocument record) {
+    boolean updated = false;
     // BIND VALUES TO UPDATE
     if (!setEntries.isEmpty()) {
-      Set<ODocument> changedDocuments = OSQLHelper.bindParameters(record, setEntries, parameters, context);
-      if (changedDocuments != null)
-        updatedRecords.addAll(changedDocuments);
+      OSQLHelper.bindParameters(record, setEntries, parameters, context);
+      updated = true;
     }
+    return updated;
+  }
 
+  private boolean handleIncrementEnries(ODocument record) {
+    boolean updated = false;
     // BIND VALUES TO INCREMENT
     if (!incrementEntries.isEmpty()) {
-      for (Map.Entry<String, Number> entry : incrementEntries.entrySet()) {
+      for (Entry<String, Number> entry : incrementEntries.entrySet()) {
         final Number prevValue = record.field(entry.getKey());
 
         if (prevValue == null)
@@ -323,44 +311,43 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
           // COMPUTING INCREMENT
           record.field(entry.getKey(), OType.increment(prevValue, entry.getValue()));
       }
-      updatedRecords.add(record);
+      updated = true;
     }
+    return updated;
+  }
 
-    Object v;
-
+  private boolean handleAddEntries(ODocument record) {
+    boolean updated = false;
     // BIND VALUES TO ADD
-    Collection<Object> coll = null;
-    ORidBag bag = null;
     Object fieldValue;
     for (OPair<String, Object> entry : addEntries) {
-      coll = null;
+      Collection<Object> coll = null;
+      ORidBag bag = null;
       if (!record.containsField(entry.getKey())) {
         // GET THE TYPE IF ANY
         if (record.getSchemaClass() != null) {
           OProperty prop = record.getSchemaClass().getProperty(entry.getKey());
-            if (prop != null && prop.getType() == OType.LINKSET)
+          if (prop != null && prop.getType() == OType.LINKSET)
             // SET TYPE
             coll = new HashSet<Object>();
-            if (prop != null && prop.getType() == OType.LINKBAG)
-            {
-                // there is no ridbag value already but property type is defined as LINKBAG
-                bag = new ORidBag();
-                bag.setOwner(record);
-                record.field(entry.getKey(),bag);
-            }
+          if (prop != null && prop.getType() == OType.LINKBAG) {
+            // there is no ridbag value already but property type is defined as LINKBAG
+            bag = new ORidBag();
+            bag.setOwner(record);
+            record.field(entry.getKey(), bag);
+          }
         }
-         if (coll == null && bag==null)
+        if (coll == null && bag == null)
           // IN ALL OTHER CASES USE A LIST
           coll = new ArrayList<Object>();
-         if (coll!=null)
-         {
-            // containField's condition above does NOT check subdocument's fields so
-            Collection<Object> currColl = record.field(entry.getKey());
-            if (currColl == null)
-              record.field(entry.getKey(), coll);
-            else
-              coll = currColl;
-         }
+        if (coll != null) {
+          // containField's condition above does NOT check subdocument's fields so
+          Collection<Object> currColl = record.field(entry.getKey());
+          if (currColl == null)
+            record.field(entry.getKey(), coll);
+          else
+            coll = currColl;
+        }
 
       } else {
         fieldValue = record.field(entry.getKey());
@@ -373,40 +360,30 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
           continue;
       }
 
-      v = entry.getValue();
-
-      if (v instanceof OSQLFilterItem)
-        v = ((OSQLFilterItem) v).getValue(record, null, context);
-      else if (v instanceof OSQLFunctionRuntime)
-        v = ((OSQLFunctionRuntime) v).execute(record, record, null, context);
-      else if (v instanceof OCommandRequest)
-        v = ((OCommandRequest) v).execute(record, null, context);
-
-      if (v instanceof OIdentifiable)
-        // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
-        v = ((OIdentifiable) v).getIdentity();
+      final Object value = extractValue(record, entry);
 
       if (coll != null) {
-        if (v instanceof OIdentifiable)
-          coll.add(v);
+        if (value instanceof OIdentifiable)
+          coll.add(value);
         else
-          OMultiValue.add(coll, v);
+          OMultiValue.add(coll, value);
       } else {
-        if (!(v instanceof OIdentifiable))
+        if (!(value instanceof OIdentifiable))
           throw new OCommandExecutionException("Only links or records can be added to LINKBAG");
 
-        bag.add((OIdentifiable) v);
+        bag.add((OIdentifiable) value);
       }
-      updatedRecords.add(record);
+      updated = true;
     }
+    return updated;
+  }
 
-    Map<String, Object> map;
-    OPair<String, Object> pair;
-
+  private boolean handlePutEntries(ODocument record) {
+    boolean updated = false;
     if (!putEntries.isEmpty()) {
       // BIND VALUES TO PUT (AS MAP)
       for (Entry<String, OPair<String, Object>> entry : putEntries.entrySet()) {
-        fieldValue = record.field(entry.getKey());
+        Object fieldValue = record.field(entry.getKey());
 
         if (fieldValue == null) {
           if (record.getSchemaClass() != null) {
@@ -422,80 +399,67 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         }
 
         if (fieldValue instanceof Map<?, ?>) {
-          map = (Map<String, Object>) fieldValue;
+          Map<String, Object> map = (Map<String, Object>) fieldValue;
 
-          pair = entry.getValue();
+          OPair<String, Object> pair = entry.getValue();
 
-          v = pair.getValue();
+          Object value = extractValue(record, pair);
 
-          if (v instanceof OSQLFilterItem)
-            v = ((OSQLFilterItem) v).getValue(record, null, context);
-          else if (pair.getValue() instanceof OSQLFunctionRuntime)
-            v = ((OSQLFunctionRuntime) v).execute(record, record, null, context);
-          else if (v instanceof OCommandRequest)
-            v = ((OCommandRequest) v).execute(record, null, context);
-
-          if (v instanceof OIdentifiable)
-            // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
-            v = ((OIdentifiable) v).getIdentity();
-
-          map.put(pair.getKey(), v);
-          updatedRecords.add(record);
+          map.put(pair.getKey(), value);
+          updated = true;
         }
       }
     }
+    return updated;
+  }
 
+  private boolean handleRemoveEntries(ODocument record) {
+    boolean updated = false;
     if (!removeEntries.isEmpty()) {
       // REMOVE FIELD IF ANY
       for (OPair<String, Object> entry : removeEntries) {
-        v = entry.getValue();
+        Object value = extractValue(record, entry);
 
-        if (v instanceof OSQLFilterItem)
-          v = ((OSQLFilterItem) v).getValue(record, null, context);
-        else if (entry.getValue() instanceof OSQLFunctionRuntime)
-          v = ((OSQLFunctionRuntime) v).execute(record, record, null, context);
-        else if (v instanceof OCommandRequest)
-          v = ((OCommandRequest) v).execute(record, null, context);
-
-        if (v instanceof OIdentifiable)
-          // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
-          v = ((OIdentifiable) v).getIdentity();
-
-        if (v == EMPTY_VALUE) {
+        if (value == EMPTY_VALUE) {
           record.removeField(entry.getKey());
-          updatedRecords.add(record);
+          updated = true;
         } else {
-          fieldValue = record.field(entry.getKey());
+          final Object fieldValue = record.field(entry.getKey());
 
           if (fieldValue instanceof Collection<?>) {
-            coll = (Collection<Object>) fieldValue;
-            if (coll.remove(v))
-              updatedRecords.add(record);
+            if (((Collection<?>) fieldValue).remove(value))
+              updated = true;
           } else if (fieldValue instanceof Map<?, ?>) {
-            map = (Map<String, Object>) fieldValue;
-            if (map.remove(v) != null)
-              updatedRecords.add(record);
+            if (((Map<?, ?>) fieldValue).remove(value) != null)
+              updated = true;
           } else if (fieldValue instanceof ORidBag) {
-            bag = (ORidBag) fieldValue;
+            final ORidBag bag = (ORidBag) fieldValue;
 
-            if (!(v instanceof OIdentifiable))
+            if (!(value instanceof OIdentifiable))
               throw new OCommandExecutionException("Only links or records can be removed from LINKBAG");
 
-            bag.remove((OIdentifiable) v);
+            bag.remove((OIdentifiable) value);
             if (record.isDirty())
-              updatedRecords.add(record);
+              updated = true;
           }
         }
       }
     }
+    return updated;
+  }
 
-    for (ODocument d : updatedRecords) {
-      d.setDirty();
-      d.save();
-      recordCount++;
-    }
+  private Object extractValue(ODocument record, OPair<String, Object> entry) {
+    Object value = entry.getValue();
 
-    return true;
+    if (value instanceof OSQLFilterItem)
+      value = ((OSQLFilterItem) value).getValue(record, null, context);
+    else if (value instanceof OCommandRequest)
+      value = ((OCommandRequest) value).execute(record, null, context);
+
+    if (value instanceof OIdentifiable)
+      // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
+      value = ((OIdentifiable) value).getIdentity();
+    return value;
   }
 
   @Override
@@ -630,43 +594,38 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       throwSyntaxErrorException("Entries to increment <field> = <value> are missed. Example: salary = -100");
   }
 
-    /**
-     * Parses the returning keyword if found.
-     */
-    protected SQLUpdateReturnModeEnum parseReturn() throws OCommandSQLParsingException {
-        parserNextWord(false," ");
-        String returning = parserGetLastWord().trim();
-        String optionalExp = "";
+  /**
+   * Parses the returning keyword if found.
+   */
+  protected void parseReturn() throws OCommandSQLParsingException {
+    parserNextWord(false, " ");
+    String mode = parserGetLastWord().trim();
 
-        if (returning.equalsIgnoreCase("COUNT"))
-        {
-            returnMode = SQLUpdateReturnModeEnum.COUNT;
-            returnExpression = null;
-        }else
-        if (returning.equalsIgnoreCase("BEFORE") || returning.equalsIgnoreCase("AFTER"))
-        {
-            returnMode = (returning.equalsIgnoreCase("BEFORE"))? SQLUpdateReturnModeEnum.BEFORE : SQLUpdateReturnModeEnum.AFTER;
-            parserNextWord(false," ");
-            returning = parserGetLastWord().trim();
-            if (returning.equalsIgnoreCase(KEYWORD_WHERE) || returning.equalsIgnoreCase(KEYWORD_TIMEOUT) || returning.equalsIgnoreCase(KEYWORD_LIMIT)
-                    || returning.equalsIgnoreCase(KEYWORD_UPSERT) || returning.equalsIgnoreCase(KEYWORD_LOCK) || returning.length()==0)
-            {
-                returnExpression = null;
-                parserGoBack();
-            }
-            else
-            {
-                if (returning.startsWith("$") || returning.startsWith("@"))
-                    returnExpression = (returning.length()>0) ? OSQLHelper.parseValue(this, returning,this.getContext()) : null;
-                else
-                    throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
+    if (mode.equalsIgnoreCase("COUNT")) {
+      returnHandler = new ORecordCountHandler();
+    } else if (mode.equalsIgnoreCase("BEFORE") || mode.equalsIgnoreCase("AFTER")) {
 
-            }
-        }else
-            throwSyntaxErrorException(" COUNT | BEFORE | AFTER keywords expected");
+      parserNextWord(false, " ");
+      String returning = parserGetLastWord().trim();
+      Object returnExpression = null;
+      if (returning.equalsIgnoreCase(KEYWORD_WHERE) || returning.equalsIgnoreCase(KEYWORD_TIMEOUT)
+          || returning.equalsIgnoreCase(KEYWORD_LIMIT) || returning.equalsIgnoreCase(KEYWORD_UPSERT)
+          || returning.equalsIgnoreCase(KEYWORD_LOCK) || returning.length() == 0) {
+        parserGoBack();
+      } else {
+        if (returning.startsWith("$") || returning.startsWith("@"))
+          returnExpression = (returning.length() > 0) ? OSQLHelper.parseValue(this, returning, this.getContext()) : null;
+        else
+          throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
+      }
 
+      if (mode.equalsIgnoreCase("BEFORE"))
+        returnHandler = new OOriginalRecordsReturnHandler(returnExpression, getContext());
+      else
+        returnHandler = new OUpdatedRecordsReturnHandler(returnExpression, getContext());
 
-        return returnMode;
-    }
+    } else
+      throwSyntaxErrorException(" COUNT | BEFORE | AFTER keywords expected");
+  }
 
 }

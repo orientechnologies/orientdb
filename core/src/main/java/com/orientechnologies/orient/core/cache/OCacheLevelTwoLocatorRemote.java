@@ -23,8 +23,8 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CACH
  * @since 05.07.13
  */
 public class OCacheLevelTwoLocatorRemote implements OCacheLevelTwoLocator {
-	@Override
-	public OCache primaryCache(String storageName) {
-		return new OEmptyCache();
-	}
+  @Override
+  public OCache primaryCache(String storageName) {
+    return new OEmptyCache();
+  }
 }

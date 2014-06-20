@@ -491,7 +491,7 @@ public class TransactionConsistencyTest {
       graph.addVertex("class:Foo", "address", "test1");
       graph.addVertex("class:Foo", "address", "test2");
       graph.addVertex("class:Foo", "address", "test3");
-			graph.commit();
+      graph.commit();
 
       // just show what is there
       List<ODocument> result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select * from Foo"));
@@ -674,18 +674,20 @@ public class TransactionConsistencyTest {
 
   @Test
   public void testQueryIsolation() {
-		OrientGraph graph = new OrientGraph(url);
-		try {
+    OrientGraph graph = new OrientGraph(url);
+    try {
       graph.addVertex(null, "purpose", "testQueryIsolation");
 
       if (!url.startsWith("remote")) {
-        List<OIdentifiable> result = graph.getRawGraph().query(new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
+        List<OIdentifiable> result = graph.getRawGraph().query(
+            new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
         Assert.assertEquals(result.size(), 1);
       }
 
       graph.commit();
 
-      List<OIdentifiable> result = graph.getRawGraph().query(new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
+      List<OIdentifiable> result = graph.getRawGraph().query(
+          new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
       Assert.assertEquals(result.size(), 1);
 
     } finally {

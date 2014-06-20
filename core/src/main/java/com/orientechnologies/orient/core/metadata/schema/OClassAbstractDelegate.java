@@ -338,6 +338,11 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
+  public void getClassIndexes(final Collection<OIndex<?>> indexes) {
+    delegate.getClassIndexes(indexes);
+  }
+
+  @Override
   public Set<OIndex<?>> getIndexes() {
     return delegate.getIndexes();
   }
