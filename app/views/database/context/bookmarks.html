@@ -1,20 +1,18 @@
 <div ng-controller="BookmarkController" class="bookmarks-container">
-    <div ng-keydown="closeIfReturn($event)">
-        <span class="bookmarks-folder label label-warning" ng-click="click()">Bookmarks</span>
-
-        <div class="row-fluid">
+    <div class="container-fluid">
+        <div class="row">
             <form class="form-search search-bookmarks">
                 <input type="text" class="input-large search-query" ng-model="searchText"
                        placeholder="Search bookmarks">
             </form>
         </div>
-        <div class="row-fluid">
-
+        <div class="row">
             <ul class="nav nav-tabs nav-stacked bookmarks-list">
                 <li class="bookmarks-item" ng-mouseover="hover(bk)" ng-repeat="bk in bks | filter:searchText">
                     <div class="bookmarks-actions" ng-class="{ true : 'visible', false : 'invisible' }[bk == selected]">
                         <a href="javascript:void(0)" data-placement="right"
-                           bs-popover="'views/database/bookmarkEdit.html'"
+                           data-template="views/database/bookmarkEdit.html"
+                           bs-popover
                            data-title="Edit bookmark">
                             <i class="icon-edit icon-white"></i>
                         </a>

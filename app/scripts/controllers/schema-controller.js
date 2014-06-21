@@ -75,17 +75,16 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
         $location.path("/database/" + $scope.database.getName() + "/browse/create/" + className);
     }
     $scope.allIndexes = function () {
-        $location.path("/database/" + $scope.database.getName() + "/indexes");
+        $location.path("/database/" + $scope.database.getName() + "/schema/indexes");
     }
     $scope.createNewClass = function () {
         modalScope = $scope.$new(true);
         modalScope.db = database;
 
         modalScope.parentScope = $scope;
-        var modalPromise = $modal({template: 'views/database/newClass.html', scope: modalScope});
-        $q.when(modalPromise).then(function (modalEl) {
-            modalEl.modal('show');
-        });
+        var modalPromise = $modal({template: 'views/database/newClass.html', scope: modalScope, show: false});
+        modalPromise.$promise.then(modalPromise.show);
+
     }
     $scope.rebuildAllIndexes = function () {
         var sql = 'REBUILD INDEX *';
@@ -190,10 +189,9 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
         modalScope.classInject = clazz;
         modalScope.parentScope = $scope;
         modalScope.propertiesName = $scope.propertyNames;
-        var modalPromise = $modal({template: 'views/database/newIndex.html', scope: modalScope});
-        $q.when(modalPromise).then(function (modalEl) {
-            modalEl.modal('show');
-        });
+        var modalPromise = $modal({template: 'views/database/newIndex.html', scope: modalScope, show: false});
+        modalPromise.$promise.then(modalPromise.show);
+
     };
     $scope.refreshWindow = function () {
         $window.location.reload();
@@ -203,10 +201,8 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
         modalScope.db = database;
         modalScope.classInject = clazz;
         modalScope.parentScope = $scope;
-        var modalPromise = $modal({template: 'views/database/newProperty.html', scope: modalScope});
-        $q.when(modalPromise).then(function (modalEl) {
-            modalEl.modal('show');
-        });
+        var modalPromise = $modal({template: 'views/database/newProperty.html', scope: modalScope, show: true});
+
     };
     $scope.addProperties = function (prop) {
         $scope.property.push(prop);
@@ -449,7 +445,7 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
                         $scope.parentScope.indexes = Database.listIndexesForClass($scope.classInject);
                     });
                     Spinner.stopSpinnerPopup();
-                    $scope.hide();
+                    $scope.$hide();
                     Notification.push({content: "Property created."});
 
                 }
@@ -469,6 +465,7 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
             }
         }, function (error) {
             Spinner.stopSpinnerPopup();
+            $scope.$hide();
         });
 
 

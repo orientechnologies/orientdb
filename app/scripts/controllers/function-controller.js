@@ -1,5 +1,5 @@
 var schemaModule = angular.module('function.controller', ['database.services']);
-schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner, Notification) {
+schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', 'Notification', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner, Notification, Aside) {
 
     $scope.database = Database;
     $scope.listClasses = $scope.database.listClasses();
@@ -52,6 +52,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                     if (index != -1)
                         $scope.showInConsoleAfterSave($scope.functions[index]);
                 }
+                Aside.show({scope: $scope, template: 'views/database/function/functionAside.html', show: true});
             }
         });
 
@@ -167,6 +168,10 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
     }
 
+    $scope.selectFunction = function (selected) {
+        $scope.showInConsole(selected);
+        Aside.toggle();
+    }
     $scope.showInConsole = function (selectedFunction) {
 
         $scope.showInConsoleAfterSave(selectedFunction);

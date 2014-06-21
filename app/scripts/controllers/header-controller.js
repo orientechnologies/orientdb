@@ -1,4 +1,4 @@
-angular.module('header.controller', ['database.services']).controller("HeaderController", ['$scope', '$routeParams', '$http', '$location', '$modal', '$q', 'Database', function ($scope, $routeParams, $http, $location, $modal, $q, Database) {
+angular.module('header.controller', ['database.services']).controller("HeaderController", ['$scope', '$routeParams', '$http', '$location', '$modal', '$q', 'Database', 'Aside', function ($scope, $routeParams, $http, $location, $modal, $q, Database, Aside) {
     $scope.database = Database;
     $scope.selectedMenu = null;
     $scope.menus = [];
@@ -10,16 +10,19 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
         }
 
     });
+    $scope.toggleAside = function () {
+        Aside.toggle();
+    }
     $scope.$watch(Database.getName, function (data) {
 
         if (data != null) {
             $scope.setSelected();
             $scope.menus = [
-                { name: "browse", link: '#/database/' + data + '/browse', icon: "icon-eye-open", wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Query"},
-                { name: "schema", link: '#/database/' + data + '/schema', icon: "icon-tasks", wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Schema"},
-                { name: "security", link: '#/database/' + data + '/users', icon: 'icon-user', wiki: ""},
-                { name: "functions", link: '#/database/' + data + '/functions', icon: 'icon-signal', wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Functions"},
-                { name: "DB", link: '#/database/' + data + '/db', icon: 'icon-book'}
+                { name: "browse", link: '#/database/' + data + '/browse', icon: "fa fa-eye", wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Query"},
+                { name: "schema", link: '#/database/' + data + '/schema', icon: "fa fa-tasks", wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Schema"},
+                { name: "security", link: '#/database/' + data + '/users', icon: 'fa fa-user', wiki: ""},
+                { name: "functions", link: '#/database/' + data + '/functions', icon: 'fa fa-code', wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Functions"},
+                { name: "DB", link: '#/database/' + data + '/db', icon: 'fa fa-database'}
 
             ];
         }

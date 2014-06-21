@@ -1,54 +1,68 @@
-<div ng-controller="IndexController">
-	<div class="modal-header">
-		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-		<h3>Index:{{newIndex['name']}}</h3>
-	</div>
-	<div class="modal-body edge">
-		<div class="row-fluid">
-			<div class="span12">
-				<form class="form-horizontal" name="indexForm" novalidate>
-					<div class="control-group">
-						<label class="control-label" for="inputName">Name *</label>
-						<div class="controls">
-							<input type="text" id="inputName" required ng-model="nameIndexToShow" value="{{nameIndexToShow}}"/>
-						</div>
-					</div>
-                    <div id="spinner-container" class="">
-                        <div id="spinner-popup">
-                        </div>
+<div class="modal" ng-controller="IndexController" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
+                </button>
+                <h4 class="modal-title">Index:{{newIndex['name']}}</h4>
+            </div>
+            <div class="modal-body edge">
+                <div class="row-fluid">
+                    <div class="span12">
+                        <form class="form-horizontal" name="indexForm" novalidate>
+                            <div class="form-group">
+                                <label class="control-label col-md-2" for="inputName">Name *</label>
+
+                                <div class="col-md-10">
+                                    <input type="text" class="form-control" id="inputName" required
+                                           ng-model="nameIndexToShow"
+                                           value="{{nameIndexToShow}}"/>
+                                </div>
+                            </div>
+                            <div id="spinner-container" class="">
+                                <div id="spinner-popup">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-2">Type * </label>
+
+                                <div class="col-md-10">
+                                    <select ng-model="newIndex['type']" class="form-control" required
+                                            ng-options="p.toString() for p in listTypeIndex">
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" ng-show="namesProp">
+                                <label class="control-label col-md-2">Fields</label>
+
+                                <div class="col-md-10">
+                                    <div ng-repeat="zz in namesProp" class="checkbox-inline">
+                                        <input type='checkbox' ng-model="namesProp[zz]" value="{{zz}}"
+                                               ng-change="addedField(zz)"> {{zz}}<br/>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                        </form>
                     </div>
-					<div class="control-group">
-						<label class="control-label" >Type * </label>
-						<div class="controls">
-							<select ng-model="newIndex['type']" required ng-options="p.toString() for p in listTypeIndex">
-							</select>
-						</div>
-					</div>
-					<div class="control-group" ng-show="namesProp"> 
-						<label class="control-label" >Fields</label>
-						<div class="controls controls-row">
+                </div>
+            </div>
+            <div ng-class="testMsgClass" ng-show="testMsg">
+                <button type="button" class="close" onclick="$('.alert-setting').hide()">&times;</button>
+                {{ testMsg }}
+            </div>
+            <div class="modal-footer">
 
-							<div ng-repeat="zz in namesProp" class="span4">
-								<input type='checkbox' ng-model="namesProp[zz]" value="{{zz}}"  ng-change="addedField(zz)"> {{zz}}<br/>
-							</div>
-							
-						</div>
+                <button type="button" class="btn btn-sm btn-default" ng-click="$hide()">Close</button>
+                <button type="submit" class="btn btn-sm btn-primary" ng-disabled="indexForm.$invalid"
+                        ng-click="saveNewIndex()">Save
+                </button>
 
-					</div>
-					
-
-				</form>
-			</div>
-		</div>
-	</div>
-    <div ng-class="testMsgClass" ng-show="testMsg">
-        <button type="button" class="close" onclick="$('.alert-setting').hide()">&times;</button>
-        {{ testMsg }}
+            </div>
+        </div>
     </div>
-	<div class="modal-footer">
-
-        <button type="button" class="btn" ng-click="hide()">Close</button>
-        <button type="submit" class="btn btn-primary" ng-disabled="indexForm.$invalid" ng-click="saveNewIndex()">Save</button>
-
-	</div>
+</div>
 

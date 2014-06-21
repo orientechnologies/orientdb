@@ -1,5 +1,5 @@
 var dbModule = angular.module('database.controller', ['database.services', 'bookmarks.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification) {
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside) {
 
     $scope.database = Database;
     $scope.limit = 20;
@@ -10,6 +10,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         {name: "bookmarks", title: "Bookmarks"}
     ];
 
+    Aside.show({scope: $scope, template: 'views/database/context/bookmarksAside.html', show: true});
     $scope.item = {};
     $scope.queries = [];
     $scope.$watch("queryText", function (val) {
@@ -262,7 +263,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     if ($scope.item.rawData instanceof Object) {
         $scope.item.rawData = JSON.stringify($scope.item.rawData);
     }
-    $scope.bookIcon = 'icon-star';
+    $scope.bookIcon = 'fa fa-star';
     $scope.viewerOptions = {
         lineWrapping: true,
         lineNumbers: true,
@@ -399,7 +400,7 @@ dbModule.controller("BookmarkNewController", ['$scope', '$rootScope', 'Bookmarks
     $scope.addBookmark = function () {
         Bookmarks.addBookmark(Database.getName(), $scope.bookmark).then(function () {
             $rootScope.$broadcast('bookmarks:changed');
-            $scope.hide();
+            $scope.$hide();
         });
     }
 }]);

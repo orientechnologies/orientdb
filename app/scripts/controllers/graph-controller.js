@@ -1,4 +1,4 @@
-var GrapgController = angular.module('vertex.controller', ['ui.bootstrap']);
+var GrapgController = angular.module('vertex.controller',[]);
 GrapgController.controller("VertexCreateController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {
 
 

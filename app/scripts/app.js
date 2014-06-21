@@ -13,9 +13,10 @@ var deps = ['header.controller',
     'users.controller',
     'notification.controller',
     'configuration.controller',
-    '$strap.directives',
+    'mgcrea.ngStrap',
     'ui.codemirror',
     'LocalStorageModule',
+    'aside.services',
     'ngTable',
     'filters',
     'rendering',
@@ -49,7 +50,7 @@ App.config(function ($routeProvider) {
             controller: 'SchemaController',
             resolve: DatabaseResolve
         })
-        .when('/database/:database/indexes', {
+        .when('/database/:database/schema/indexes', {
             templateUrl: 'views/database/index/indexMain.html',
             controller: 'IndexesController',
             resolve: DatabaseResolve

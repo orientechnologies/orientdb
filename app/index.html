@@ -18,19 +18,22 @@
     <link rel="stylesheet" href="components/codemirror/theme/ambiance.css">
     <link rel="stylesheet" href="components/codemirror/lib/codemirror.css">
     <link rel="stylesheet" href="components/codemirror/addon/hint/show-hint.css">
-    <link rel="stylesheet" href="components/bootstrap/docs/assets/css/bootstrap-responsive.css">
-    <link rel="stylesheet" href="components/bootstrap/docs/assets/css/bootstrap.css">
-    <link rel="stylesheet" href="components/bootstrap/docs/assets/css/docs.css">
+    <link rel="stylesheet" href="components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="components/bootstrap/dist/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="components/bootstrap-datepicker/css/datepicker.css"/>
     <link rel="stylesheet" href="components/ng-table/ng-table.css"/>
     <link rel="stylesheet" href="components/select2/select2.css">
     <link rel="stylesheet" href="components/animate.css/animate.css">
+    <link rel="stylesheet" href="components/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="components/angular-motion/dist/angular-motion.min.css">
+    <link rel="stylesheet" href="components/bootstrap-additions/dist/bootstrap-additions.css">
 
 
     <!--<link rel="stylesheet" href="components/ng-grid/ng-grid.min.css"/>-->
     <link rel="stylesheet" href="components/bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css"/>
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/animation.css">
+    <link rel="stylesheet" href="styles/layout.css">
 
     <!-- endbuild -->
 </head>
@@ -61,7 +64,8 @@
     </div>
 </div>
 <div id="interrupter-container" class="circle-interrupt-stop">
-    <a id="interrupter" class="btn btn-danger" href="javascript:void(0)" data-placement="bottom" bs-tooltip="'Interrupt request'"></i>Interrupt</a>
+    <a id="interrupter" class="btn btn-danger" href="javascript:void(0)" data-placement="bottom"
+       bs-tooltip="'Interrupt request'"></i>Interrupt</a>
 </div>
 <div class="container-fluid container-notification">
     <div class="row-fluid">
@@ -73,7 +77,7 @@
 <!-- Add your site or application content here -->
 <div class="container-fluid container-studio">
 
-    <div class="row-fluid" ng-view>
+    <div class="container-fluid" ng-view>
 
     </div>
 
@@ -84,7 +88,7 @@
 <script type="text/javascript" src="components/angular-ui-select2/src/select2.js"></script> -->
 <!-- build:js scripts/scripts.js -->
 
-<script src="components/jquery/jquery.js"></script>
+<script src="components/jquery/dist/jquery.min.js"></script>
 <script src="components/angular/angular.js"></script>
 <script src="components/angular-cookies/angular-cookies.min.js"></script>
 <script src="components/angular-sanitize/angular-sanitize.js"></script>
@@ -96,8 +100,8 @@
 <script src="components/moment/moment.js"></script>
 <script src="components/moment-jdateformatparser/moment-jdateformatparser.js"></script>
 <script src="components/angular-strap/dist/angular-strap.js"></script>
-<script src="components/bootstrap/docs/assets/js/bootstrap.js"></script>
-<script src="components/bootstrap/docs/assets/js/bootstrap-tooltip.js"></script>
+<script src="components/angular-strap/dist/angular-strap.tpl.js"></script>
+<script src="components/bootstrap/dist/js/bootstrap.min.js"></script>
 <script src="components/bootstrap-datepicker/js/bootstrap-datepicker.js"></script>
 <script type="text/javascript" src="components/select2/select2.js"></script>
 <script type="text/javascript" src="components/angular-ui-select2/src/select2.js"></script>
@@ -109,8 +113,6 @@
 <script type="text/javascript" src="components/codemirror/addon/hint/show-hint.js"></script>
 <script src="scripts/util/orientdb-hint.js"></script>
 <script type="text/javascript" src="scripts/widgets/patch/ui-codemirror.js"></script>
-<script src="components/angular-ui-bootstrap-bower/ui-bootstrap.js"></script>
-<script src="components/angular-ui-bootstrap-bower/ui-bootstrap-tpls.js"></script>
 <script src="components/angular-scroll/angular-scroll.min.js"></script>
 <script src="components/ng-table/ng-table.js"></script>
 
@@ -139,6 +141,7 @@
 <script src="scripts/controllers/users-controller.js"></script>
 <script src="scripts/services/spinner-service.js"></script>
 <script src="scripts/services/bookmark-services.js"></script>
+<script src="scripts/services/aside-services.js"></script>
 <script src="scripts/filters/filter.js"></script>
 <script src="scripts/widgets/widget.js"></script>
 <script src="scripts/util/library.js"></script>

@@ -23,14 +23,16 @@ Utilities.confirm = function ($scope, $modal, $q, params) {
         var modalScope = $scope.$new(true);
         modalScope.title = params.title;
         modalScope.msg = params.body;
-        modalScope.confirm = function () {
-            params.success();
-            modalScope.hide();
-        }
+
 
         var modalPromise = $modal({template: 'views/modal/yesno.html', persist: true, show: false, backdrop: 'static', scope: modalScope, modalClass: ''});
-        $q.when(modalPromise).then(function (modalEl) {
-            modalEl.modal('show');
+
+        modalPromise.$promise.then(function () {
+            modalPromise.show();
+            modalScope.confirm = function () {
+                params.success();
+                modalPromise.hide();
+            }
         });
 
     }

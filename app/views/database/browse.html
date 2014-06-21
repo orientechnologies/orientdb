@@ -1,23 +1,12 @@
-<div class="bookmarks-box" ng-class="bookmarksClass">
-
-    <div class="row-fluid">
-
-        <div ng-include="'views/database/context/bookmarks.html'">
-
-        </div>
-
-    </div>
-
-</div>
-<div class="row-fluid browse-container">
+<div class="row browse-container">
     <div class="query-container master-query">
 
         <div class="query-actions" ng-show="hideSettings">
 
             <div class="btn-toolbar pull-right">
                 <div class="btn-group">
-                    <button ng-click="query()" ng-disabled="!queryText" class="btn btn-small btn-primary"><i
-                            class="icon-white icon-cog"></i>
+                    <button ng-click="query()" ng-disabled="!queryText" class="btn btn-sm btn-primary"><i
+                            class="fa fa-cog"></i>
                         Run
                     </button>
                 </div>
@@ -25,7 +14,8 @@
                     <a class="btn btn-trasparent btn-small" ng-controller="QueryConfigController"
                        data-placement="bottom"
                        data-title="Query configuration"
-                       bs-popover="'views/database/browseConfig.html'"
+                       data-template="views/database/browseConfig.html"
+                       bs-popover
                        data-toggle="dropdown"
                        href="javascript:void(0)">
                         <i class="icon-wrench"></i>
@@ -38,8 +28,9 @@
             <div class="query-bookmark bookmarks">
                 <a class="" href="javascript:void(0)" data-placement="bottom"
                    data-title="Add bookmark"
-                   bs-popover="'views/database/bookmark.html'">
-                    <i class="icon-star"></i>
+                   data-template="views/database/bookmark.html"
+                   bs-popover>
+                    <i class="fa fa-star"></i>
                 </a>
             </div>
 
@@ -80,27 +71,27 @@
 
     </div>
 
-    <!--<div class="context-navigator">-->
-    <!--<a href="javascript:void(0)" class="btn btn-warning pull-right" ng-click="nextPage()">{{nContext.title}} <i-->
-    <!--class="icon-forward icon-white"></i></a>-->
 
-    <!--</div>-->
-    <div class="row-fluid" ng-show="timeline.length >1">
-        <div class="span6">
+    <div class="row" ng-show="timeline.length >1">
+        <div class="col-md-6">
             <form class="form-search search-history">
-                <div class="input-append">
-                    <input type="text" class="input-xxlarge search-query" ng-model="search.query"
+                <div class="input-group">
+                    <input type="text" class="input-xxlarge form-control search-query" ng-model="search.query"
                            placeholder="Search history">
+                    <span class="input-group-btn">
                     <button type="submit" class="btn" ng-click="clear()">
-                        <i class="icon-trash"></i>
+                        <i class="fa fa-trash-o"></i>
                     </button>
+                        </span>
                 </div>
             </form>
         </div>
+        <div class="col-md-6">
+        </div>
     </div>
 
-    <div id="fixed" when-scrolled="loadMore()">
-        <div class="row-fluid history-item" ng-repeat="item in timeline | filter:search">
+    <div class="container-fluid" id="fixed" when-scrolled="loadMore()">
+        <div class="row history-item" ng-repeat="item in timeline | filter:search">
             <div ng-include="'views/database/query.html'"></div>
         </div>
     </div>

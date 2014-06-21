@@ -11,10 +11,6 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.07);
 }
 
-body div.container-studio {
-    padding-top: 0px
-}
-
 .pointer {
     cursor: pointer;
 }
@@ -137,14 +133,6 @@ div.document form.bs-docs-example:after {
     content: "Document";
 }
 
-div.properties .bs-docs-example:after {
-    content: "Properties";
-}
-
-div.indexes .bs-docs-example:after {
-    content: "Indexes";
-}
-
 div.vertex form.bs-docs-example:after {
     content: "Vertex";
 }
@@ -241,9 +229,10 @@ div.edge form.bs-docs-example:after {
 
 .query-container {
     background-color: #FFFFFF;
-    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 1px 2px rgba(0, 0, 0, 0.05);
+    /*box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);*/
     /*box-shadow: 0 1px 1px rgba(0,0,0,.05);*/
-    border: 1px solid #DDDDDD;
+    /*border: 1px solid #DDDDDD;*/
     margin: 15px 0;
     position: relative;
 }
@@ -501,12 +490,9 @@ ul.horizontallist, ol.horizontallist {
     min-height: 400px;
     max-height: 800px;
     overflow-y: scroll;
-    width: 90%;
 }
 
-.input_functions {
-    width: 105%;
-}
+
 
 .navbar.navbar-inverse .navbar-inner {
     background: none repeat scroll 0 0 #262626;
@@ -543,10 +529,6 @@ ul.horizontallist, ol.horizontallist {
     margin-bottom: 20px;
 }
 
-.console_class_functions {
-    margin-top: 20px;
-    margin-left: 0px !important;
-}
 
 .label-data {
     background-color: #F38630;
@@ -632,14 +614,6 @@ ul.horizontallist, ol.horizontallist {
     border-top-right-radius: 4px;
 }
 
-table.editClass_panel {
-    margin-left: 20px;
-}
-
-table.editClass_panel > tbody > tr > td a {
-    margin-left: 5px;
-}
-
 ul.arrayrid {
     list-style-type: none;
 }
@@ -668,26 +642,12 @@ ul.arrayrid > li {
 }
 
 .navbar .nav > li > a {
-    font-family: 'Open Sans', sans-serif !important;
-    font-weight: 300;
     color: #FFFFFF;
-    float: none;
-    padding: 7px 15px 10px;
-    text-decoration: none;
     font-size: 13px;
-}
-
-.navbar .nav {
-    margin-top: 4px;
 }
 
 .container-notification .alert {
     margin-bottom: 0px;
-}
-
-.class-body .btn-toolbar {
-    margin-bottom: 0px;
-    margin-top: 0px;
 }
 
 .ng-table th {
@@ -742,26 +702,7 @@ ul.arrayrid > li {
     right: -1px;
 }
 
-.bookmarks-box-container {
 
-}
-
-.bookmarks-box {
-    background-color: #222326;
-    height: 100%;
-    width: 260px;
-    position: fixed;
-    top: 0px;
-    padding-top: 70px;
-    left: 0px;
-    z-index: 1000;
-    border-right: 1px solid #222326;
-    box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.5);
-    -webkit-transform: translateX(-260px);
-    transform: translateX(-260px);
-    -ms-transform: translateX(-260px);
-
-}
 
 .show {
     -webkit-transform: translateX(0px);

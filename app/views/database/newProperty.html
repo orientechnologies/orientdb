@@ -1,94 +1,113 @@
-<div ng-controller="PropertyController">
-	<div class="modal-header">
-		<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-		<h3>Property: {{property['name']}}</h3>
-	</div>
-	<div class="modal-body edge">
-		<div class="row-fluid">
-			<div class="span12">
-				<form class="form-horizontal" name="propertyForm">
-					<div class="control-group">
-						<label class="control-label" for="inputName">Name *</label>
-						<div class="controls">
-							<input type="text" id="inputName" required ng-model="property['name']" />
-						</div>
-					</div>
-					<div class="control-group">
-						<label class="control-label" >Type * </label>
-						<div class="controls">
-							<select ng-model="property['type']" required ng-options="p for p in listTypes">
-							</select>
-						</div>
-					</div>
-                    <div id="spinner-container" class="">
-                        <div id="spinner-popup">
-                        </div>
+<div class="modal" ng-controller="PropertyController" tabindex="-1" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" ng-click="$hide()" aria-hidden="true">×</button>
+                <h4 class="modal-title">Property: {{property['name']}}</h4>
+            </div>
+            <div class="modal-body edge">
+                <div class="row">
+                    <div class="col-md-12">
+                        <form class="form-horizontal" name="propertyForm" role="form">
+                            <div class="form-group">
+                                <label class="control-label col-md-2" for="inputName">Name *</label>
+
+                                <div class="col-md-10">
+                                    <input type="text" id="inputName" class="form-control" required
+                                           ng-model="property['name']"/>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-2">Type * </label>
+
+                                <div class="col-md-10">
+                                    <select ng-model="property['type']" class="form-control" required
+                                            ng-options="p for p in listTypes">
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="spinner-container" class="">
+                                <div id="spinner-popup">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-2">Linked Type</label>
+
+                                <div class="col-md-10">
+                                    <select ng-model="property['linkedType']" class="form-control"
+                                            ng-options="p.toString() for p in listTypes"
+                                            ng-disabled="checkDisableLinkedType(property['type'])">
+                                        <option value=""></option>
+
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-2">Linked Class</label>
+
+                                <div class="col-md-10">
+                                    <select ng-model="property['linkedClass']" class="form-control"
+                                            ng-options="p.toString() for p in listClasses"
+                                            ng-disabled="checkDisableLinkedClass('linkedType')">1
+                                        <option value=""></option>
+
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-2">Min</label>
+
+                                <div class="col-md-10">
+                                    <input type="text" class="form-control"
+                                           ng-show="property['type'] != 'DATE' && property['type'] != 'DATETIME'">
+                                    <input type="text" bs-datepicker class="form-control" ng-model="result['max']"
+                                           ng-show="property['type'] == 'DATE' || property['type'] == 'DATETIME'">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-md-2">Max</label>
+
+                                <div class="col-md-10">
+                                    <input type="text" class="form-control"
+                                           ng-show="property['type'] != 'DATE' && property['type'] != 'DATETIME'">
+                                    <input type="text" bs-datepicker class="form-control" ng-model="result['min']"
+                                           ng-show="property['type'] == 'DATE' || property['type'] == 'DATETIME'">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-offset-2 col-sm-10">
+                                    <div class="checkbox-inline">
+                                        <label>
+                                            <input type="checkbox" ng-model="property['mandatory']"> Mandatory
+                                        </label>
+                                    </div>
+                                    <div class="checkbox-inline">
+                                        <label>
+                                            <input type="checkbox" ng-model="property['readOnly']"> Read Only
+                                        </label>
+                                    </div>
+                                    <div class="checkbox-inline">
+                                        <label>
+                                            <input type="checkbox" ng-model="property['notNull']"> Not Null
+                                        </label>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </form>
                     </div>
-					<div class="control-group">
-						<label class="control-label" >Linked Type</label>
-						<div class="controls">
-							<select ng-model="property['linkedType']" ng-options="p.toString() for p in listTypes" ng-disabled="checkDisableLinkedType(property['type'])">
-								<option value=""></option>
+                </div>
+            </div>
+            <div class="modal-footer">
 
-							</select>
-						</div>
-					</div>
-					<div class="control-group">
-						<label class="control-label" >Linked Class</label>
-						<div class="controls">
-							<select ng-model="property['linkedClass']" ng-options="p.toString() for p in listClasses" ng-disabled="checkDisableLinkedClass('linkedType')">1
-								<option value=""></option>
+                <button type="button" class="btn" ng-click="$hide()">Close</button>
+                <button type="submit" class="btn btn-primary" ng-disabled="propertyForm.$invalid"
+                        ng-click="salvaProperty()">Save
+                </button>
 
-							</select>
-						</div>
-					</div>
-					<div class="control-group">
-						<label class="control-label" >Mandatory</label>
-						<div class="controls">
-							<input type="checkbox" ng-model="property['mandatory']" >
-						</div>
-					</div>
-					<div class="control-group">
-						<label class="control-label" >Read Only</label>
-						<div class="controls">
-							<input type="checkbox" ng-model="property['readOnly']" >
-						</div>
-					</div>
-					<div class="control-group">
-						<label class="control-label" >Not Null</label>
-						<div class="controls">
-							<input type="checkbox" ng-model="property['notNull']" >
-						</div>
-					</div>
-					<div class="control-group">
-						<label class="control-label" >Min</label>
-						<div class="controls">
-							<input type="text"   ng-show="property['type'] != 'DATE' && property['type'] != 'DATETIME'">
-							<input type="text"   bs-datepicker  ng-show="property['type'] == 'DATE' || property['type'] == 'DATETIME'">
-						</div>
-					</div>
-					<div class="control-group">
-						<label class="control-label" >Max</label>
-						<div class="controls">
-							<input type="text"   ng-show="property['type'] != 'DATE' && property['type'] != 'DATETIME'">
-							<input type="text"   bs-datepicker ng-model="result['min']"  ng-show="property['type'] == 'DATE' || property['type'] == 'DATETIME'">
-						</div>
-					</div>
-					<div class="control-group">
-						<div class="controls">
-
-						</div>
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
-	<div class="modal-footer">
-
-        <button type="button" class="btn" ng-click="hide()">Close</button>
-        <button type="submit" class="btn btn-primary" ng-disabled="propertyForm.$invalid" ng-click="salvaProperty()">Save</button>
-
-	</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 

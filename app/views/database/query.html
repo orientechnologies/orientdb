@@ -6,11 +6,12 @@
 
         <a class="ng-binding" href="javascript:void(0)" data-placement="bottom"
            data-title="Add bookmark"
-           bs-popover="'views/database/bookmark.html'">
+           data-template="views/database/bookmark.html"
+           bs-popover>
             <i ng-class="bookIcon"></i>
         </a>
         <a class="ng-binding" href="javascript:void(0)" ng-click="removeItem(item)">
-            <i class="icon-trash"></i>
+            <i class="fa fa-trash-o"></i>
         </a>
     </div>
     <div class="query-body">
@@ -31,11 +32,7 @@
                 </tbody>
             </table>
         </div>
-        <!--<div ng-hide="table">-->
-        <!--<div class="row-fluid viewJson">-->
-        <!--<textarea jsontext ui-codemirror="viewerOptions" ng-model="rawData"></textarea>-->
-        <!--</div>-->
-        <!--</div>-->
+
         <div ng-hide="table" class="jsonView">
             <div class="row-fluid">
                 <div jsontext ui-codemirror="viewerOptions" ng-model="item.rawData"
@@ -54,9 +51,6 @@
                     <li ng-class="{active : table }">
                         <a href="javascript:void(0)" ng-click="table = true">Table</a>
                     </li>
-                    <!--<li>-->
-                    <!--<a href="javascript:void(0)">Graph</a>-->
-                    <!--</li>-->
                     <li ng-class="{active : !table }">
                         <a href="javascript:void(0)" ng-click="table = false">Raw</a>
                     </li>
