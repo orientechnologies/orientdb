@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
+import java.util.regex.Pattern;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -35,7 +37,7 @@ public class OQueryOperatorMatches extends OQueryOperatorEqualityNotNulls {
 	@Override
 	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight, OCommandContext iContext) {
-		return iLeft.toString().matches((String) iRight);
+		return this.matches(iLeft.toString(), (String) iRight, iContext);
 	}
 
 	@Override
@@ -43,13 +45,23 @@ public class OQueryOperatorMatches extends OQueryOperatorEqualityNotNulls {
 		return OIndexReuseType.NO_INDEX;
 	}
 
-  @Override
-  public ORID getBeginRidRange(Object iLeft, Object iRight) {
-    return null;
-  }
+	@Override
+	public ORID getBeginRidRange(Object iLeft, Object iRight) {
+		return null;
+	}
 
-  @Override
-  public ORID getEndRidRange(Object iLeft, Object iRight) {
-    return null;
-  }
+	@Override
+	public ORID getEndRidRange(Object iLeft, Object iRight) {
+		return null;
+	}
+
+	private boolean matches(String iValue, String iRegex, OCommandContext iContext) {
+		String key = "MATCHES_" + iRegex.hashCode();
+		Pattern p = (Pattern) iContext.getVariable(key);
+		if (p == null) {
+			p = Pattern.compile(iRegex);
+			iContext.setVariable(key, p);
+		}
+		return p.matcher(iValue).matches();
+	}
 }

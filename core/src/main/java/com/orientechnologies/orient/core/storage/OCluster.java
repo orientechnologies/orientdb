@@ -119,20 +119,6 @@ public interface OCluster {
 
   public OClusterPosition getLastPosition() throws IOException;
 
-  /**
-   * Lets to an external actor to lock the cluster in shared mode. Useful for range queries to avoid atomic locking.
-   * 
-   * @see #unlock();
-   */
-  public void lock();
-
-  /**
-   * Lets to an external actor to unlock the shared mode lock acquired by the lock().
-   * 
-   * @see #lock();
-   */
-  public void unlock();
-
   public int getId();
 
   public void synch() throws IOException;
@@ -169,4 +155,18 @@ public interface OCluster {
   public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException;
 
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException;
+
+  /**
+   * Hides records content by putting tombstone on the records position but does not delete record itself.
+   * 
+   * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method.
+   * 
+   * @param position
+   *          Position of record in cluster
+   * @throws java.lang.UnsupportedOperationException
+   *           In case current version of cluster does not support given operation.
+   * 
+   * @return false if record does not exist.
+   */
+  public boolean hideRecord(OClusterPosition position) throws IOException;
 }

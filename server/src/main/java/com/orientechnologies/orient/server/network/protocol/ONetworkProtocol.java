@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.List;
-
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.thread.OSoftThread;
@@ -26,6 +22,10 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.IOException;
+import java.net.Socket;
 
 public abstract class ONetworkProtocol extends OSoftThread {
   private static final int MAX_RETRIES = 20;
@@ -35,8 +35,8 @@ public abstract class ONetworkProtocol extends OSoftThread {
     super(group, name);
   }
 
-  public abstract void config(OServer iServer, Socket iSocket, OContextConfiguration iConfiguration, List<?> statelessCommands,
-      List<?> statefulCommands) throws IOException;
+  public abstract void config(OServerNetworkListener iListener, OServer iServer, Socket iSocket,
+      OContextConfiguration iConfiguration) throws IOException;
 
   public abstract String getType();
 
@@ -63,7 +63,7 @@ public abstract class ONetworkProtocol extends OSoftThread {
         if (mgr != null && mgr.isOffline()) {
           // NODE NOT ONLINE YET, REFUSE THE CONNECTION
           OLogManager.instance().info(this, "Node is not online yet (status=%s), blocking the command until it's online %d/%d",
-              mgr.getStatus(), retry + 1, MAX_RETRIES);
+              mgr.getNodeStatus(), retry + 1, MAX_RETRIES);
           pauseCurrentThread(300);
         } else
           // OK, RETURN
@@ -71,7 +71,7 @@ public abstract class ONetworkProtocol extends OSoftThread {
       }
 
       // TIMEOUT
-      throw new OTimeoutException("Cannot execute operation while the node is not online (status=" + mgr.getStatus() + ")");
+      throw new OTimeoutException("Cannot execute operation while the node is not online (status=" + mgr.getNodeStatus() + ")");
     }
   }
 }

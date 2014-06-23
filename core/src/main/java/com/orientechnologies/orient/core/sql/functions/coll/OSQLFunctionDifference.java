@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,9 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * This operator can work as aggregate or inline. If only one argument is passed than aggregates, otherwise executes, and returns,
@@ -42,15 +42,31 @@ public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<O
     super(NAME, 1, -1);
   }
 
+  private static void addItemToResult(Object o, Set<Object> accepted, Set<Object> rejected) {
+    if (!accepted.contains(o) && !rejected.contains(o)) {
+      accepted.add(o);
+    } else {
+      accepted.remove(o);
+      rejected.add(o);
+    }
+  }
+
+  private static void addItemsToResult(Collection<Object> co, Set<Object> accepted, Set<Object> rejected) {
+    for (Object o : co) {
+      addItemToResult(o, accepted, rejected);
+    }
+  }
+
   @SuppressWarnings("unchecked")
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    if (iParameters[0] == null)
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
+    if (iParams[0] == null)
       return null;
 
-    Object value = iParameters[0];
+    Object value = iParams[0];
 
-    if (iParameters.length == 1) {
-      // AGGREGATION MODE (STATEFULL)
+    if (iParams.length == 1) {
+      // AGGREGATION MODE (STATEFUL)
       if (context == null) {
         context = new HashSet<Object>();
         rejected = new HashSet<Object>();
@@ -64,14 +80,14 @@ public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<O
       return null;
     } else {
       // IN-LINE MODE (STATELESS)
-      final Set<Object> result = new HashSet<Object>((Collection<?>) value);
+      final Set<Object> result = new HashSet<Object>();
       final Set<Object> rejected = new HashSet<Object>();
 
-      for (Object iParameter : iParameters) {
+      for (Object iParameter : iParams) {
         if (iParameter instanceof Collection<?>) {
           addItemsToResult((Collection<Object>) value, result, rejected);
         } else {
-          addItemToResult(value, result, rejected);
+          addItemToResult(iParameter, result, rejected);
         }
       }
 
@@ -91,23 +107,8 @@ public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<O
     }
   }
 
-  private static void addItemToResult(Object o, Set<Object> accepted, Set<Object> rejected) {
-    if (!accepted.contains(o) && !rejected.contains(o)) {
-      accepted.add(o);
-    } else {
-      accepted.remove(o);
-      rejected.add(o);
-    }
-  }
-
-  private static void addItemsToResult(Collection<Object> co, Set<Object> accepted, Set<Object> rejected) {
-    for (Object o : co) {
-      addItemToResult(o, accepted, rejected);
-    }
-  }
-
   public String getSyntax() {
-    return "Syntax error: difference(<field>*)";
+    return "difference(<field>*)";
   }
 
   @Override

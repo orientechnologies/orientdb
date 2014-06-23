@@ -50,10 +50,7 @@ public class LocalPaginatedStorageUpdateCrashRestore {
 
   @BeforeClass
   public void beforeClass() throws Exception {
-    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
-    OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
-    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-    OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
+    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageUpdateCrashRestore";
@@ -78,10 +75,7 @@ public class LocalPaginatedStorageUpdateCrashRestore {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-      OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
-      OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
-      OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-      OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
+      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
 
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class
@@ -97,6 +91,7 @@ public class LocalPaginatedStorageUpdateCrashRestore {
     testDocumentTx.drop();
     baseDocumentTx.drop();
 
+    Assert.assertTrue(new File(buildDir, "plugins").delete());
     Assert.assertTrue(buildDir.delete());
   }
 
@@ -134,7 +129,12 @@ public class LocalPaginatedStorageUpdateCrashRestore {
     Thread.sleep(150000);
 
     long lastTs = System.currentTimeMillis();
-    process.destroy();
+    System.out.println("Wait for process to destroy");
+    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
+    p.waitFor();
+
+    process.waitFor();
+    System.out.println("Process was destroyed");
 
     for (Future future : futures) {
       try {
@@ -148,7 +148,12 @@ public class LocalPaginatedStorageUpdateCrashRestore {
 
     testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath()
         + "/testLocalPaginatedStorageUpdateCrashRestore");
+
+    long startRestoreTime = System.currentTimeMillis();
     testDocumentTx.open("admin", "admin");
+    long endRestoreTime = System.currentTimeMillis();
+
+    System.out.println("Restore time : " + (endRestoreTime - startRestoreTime));
     testDocumentTx.close();
 
     testDocumentTx.open("admin", "admin");

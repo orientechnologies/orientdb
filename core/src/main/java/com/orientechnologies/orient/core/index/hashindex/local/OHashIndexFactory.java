@@ -19,20 +19,18 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.OIndexDictionary;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexFactory;
-import com.orientechnologies.orient.core.index.OIndexFullText;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexNotUnique;
-import com.orientechnologies.orient.core.index.OIndexUnique;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OMemoryHashMapIndexEngine;
 import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -41,7 +39,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OHashIndexFactory implements OIndexFactory {
+
   private static final Set<String> TYPES;
+  public static final String       SBTREE_ALGORITHM   = "SBTREE";
+  public static final String       MVRBTREE_ALGORITHM = "MVRBTREE";
+  private static final Set<String> ALGORITHMS;
   static {
     final Set<String> types = new HashSet<String>();
     types.add(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString());
@@ -49,6 +51,12 @@ public class OHashIndexFactory implements OIndexFactory {
     types.add(OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString());
     types.add(OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString());
     TYPES = Collections.unmodifiableSet(types);
+  }
+  static {
+    final Set<String> algorithms = new HashSet<String>();
+    algorithms.add(SBTREE_ALGORITHM);
+    algorithms.add(MVRBTREE_ALGORITHM);
+    ALGORITHMS = Collections.unmodifiableSet(algorithms);
   }
 
   /**
@@ -64,7 +72,35 @@ public class OHashIndexFactory implements OIndexFactory {
     return TYPES;
   }
 
-  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm) throws OConfigurationException {
+  public Set<String> getAlgorithms() {
+    return ALGORITHMS;
+  }
+
+  public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm,
+      String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
+    if (valueContainerAlgorithm == null) {
+      if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)
+          || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType)
+          || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType)
+          || OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType))
+        valueContainerAlgorithm = ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER;
+      else
+        valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
+    }
+
+    if ((database.getStorage().getType().equals(OEngineLocalPaginated.NAME) || database.getStorage().getType()
+        .equals(OEngineLocal.NAME))
+        && valueContainerAlgorithm.equals(ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER)
+        && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
+      OLogManager
+          .instance()
+          .warn(
+              this,
+              "Index was created using %s as values container. "
+                  + "This container is deprecated and is not supported any more. To avoid this message please drop and recreate indexes or perform DB export/import.",
+              valueContainerAlgorithm);
+    }
+
     OStorage storage = database.getStorage();
     OIndexEngine indexEngine;
 
@@ -82,13 +118,13 @@ public class OHashIndexFactory implements OIndexFactory {
       throw new OIndexException("Unsupported storage type : " + storageType);
 
     if (OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexUnique(indexType, algorithm, indexEngine);
+      return new OIndexUnique(indexType, algorithm, indexEngine, valueContainerAlgorithm);
     else if (OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType))
-      return new OIndexNotUnique(indexType, algorithm, indexEngine);
+      return new OIndexNotUnique(indexType, algorithm, indexEngine, valueContainerAlgorithm);
     else if (OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType))
-      return new OIndexFullText(indexType, algorithm, indexEngine);
+      return new OIndexFullText(indexType, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     else if (OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.toString().equals(indexType))
-      return new OIndexDictionary(indexType, algorithm, indexEngine);
+      return new OIndexDictionary(indexType, algorithm, indexEngine, valueContainerAlgorithm);
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }

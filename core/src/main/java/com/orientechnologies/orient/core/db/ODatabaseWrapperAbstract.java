@@ -25,8 +25,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -42,11 +42,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   public ODatabaseWrapperAbstract(final DB iDatabase) {
     underlying = iDatabase;
     databaseOwner = (ODatabaseComplex<?>) this;
-  }
-
-  @Override
-  public void finalize() {
-    // close();
   }
 
   public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
@@ -70,13 +65,15 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
-    underlying.backup(out, options);
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+    underlying.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options) throws IOException {
-    underlying.restore(in, options);
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
+      throws IOException {
+    underlying.restore(in, options, callable, iListener);
   }
 
   public void close() {
@@ -114,12 +111,8 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.getStorage();
   }
 
-  public OLevel1RecordCache getLevel1Cache() {
-    return underlying.getLevel1Cache();
-  }
-
-  public OLevel2RecordCache getLevel2Cache() {
-    return getStorage().getLevel2Cache();
+  public OLocalRecordCache getLocalCache() {
+    return underlying.getLocalCache();
   }
 
   public boolean isClosed() {
@@ -227,12 +220,12 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
-    getLevel1Cache().freeCluster(getClusterIdByName(iClusterName));
+    getLocalCache().freeCluster(getClusterIdByName(iClusterName));
     return underlying.dropCluster(iClusterName, true);
   }
 
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
-    getLevel1Cache().freeCluster(iClusterId);
+    getLocalCache().freeCluster(iClusterId);
     return underlying.dropCluster(iClusterId, true);
   }
 
@@ -325,11 +318,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.getSize();
   }
 
-  protected void checkOpeness() {
-    if (isClosed())
-      throw new ODatabaseException("Database '" + getURL() + "' is closed");
-  }
-
   public void freeze(boolean throwException) {
     underlying.freeze(throwException);
   }
@@ -355,5 +343,10 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   @Override
   public void releaseCluster(int iClusterId) {
     underlying.releaseCluster(iClusterId);
+  }
+
+  protected void checkOpeness() {
+    if (isClosed())
+      throw new ODatabaseException("Database '" + getURL() + "' is closed");
   }
 }

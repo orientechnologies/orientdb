@@ -18,13 +18,13 @@ package com.orientechnologies.nio;
 import java.util.Arrays;
 import java.util.Random;
 
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.directmemory.ODirectMemory;
 import com.orientechnologies.common.serialization.types.OCharSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -88,19 +88,6 @@ public class JNADirectMemoryTest {
     directMemory.free(pointer);
   }
 
-  public void testAllocateBytes() {
-    final Random rnd = new Random();
-    ODirectMemory directMemory = new OJNADirectMemory();
-
-    byte[] value = new byte[256];
-    rnd.nextBytes(value);
-
-    long pointer = directMemory.allocate(value);
-
-    Assert.assertEquals(directMemory.get(pointer, value.length), value);
-
-    directMemory.free(pointer);
-  }
 
   public void testBytesWithoutOffset() {
     final Random rnd = new Random();
@@ -151,7 +138,7 @@ public class JNADirectMemoryTest {
     long pointer = directMemory.allocate(value.length);
     directMemory.set(pointer, value, 0, value.length);
 
-    directMemory.copyData(pointer, pointer + value.length / 2, value.length / 2);
+    directMemory.moveData(pointer, pointer + value.length / 2, value.length / 2);
 
     System.arraycopy(value, 0, value, value.length / 2, value.length / 2);
 
@@ -170,7 +157,7 @@ public class JNADirectMemoryTest {
     long pointer = directMemory.allocate(value.length);
     directMemory.set(pointer, value, 0, value.length);
 
-    directMemory.copyData(pointer, pointer + 1, value.length / 3);
+    directMemory.moveData(pointer, pointer + 1, value.length / 3);
 
     System.arraycopy(value, 0, value, 1, value.length / 3);
 
@@ -189,7 +176,7 @@ public class JNADirectMemoryTest {
     long pointer = directMemory.allocate(value.length);
     directMemory.set(pointer, value, 0, value.length);
 
-    directMemory.copyData(pointer + 2, pointer + 5, value.length / 3);
+    directMemory.moveData(pointer + 2, pointer + 5, value.length / 3);
 
     System.arraycopy(value, 2, value, 5, value.length / 3);
 

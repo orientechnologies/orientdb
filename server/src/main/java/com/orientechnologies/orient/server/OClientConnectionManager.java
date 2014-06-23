@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.server;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -28,19 +41,6 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
-import com.orientechnologies.common.profiler.OProfiler.OProfilerHookValue;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynch;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 public class OClientConnectionManager {
   protected ConcurrentMap<Integer, OClientConnection> connections      = new ConcurrentHashMap<Integer, OClientConnection>();
@@ -71,6 +71,7 @@ public class OClientConnectionManager {
             try {
               entry.getValue().close();
             } catch (Exception e) {
+              OLogManager.instance().error(this, "Error during close of connection for close channel", e);
             }
             iterator.remove();
           }
@@ -117,14 +118,13 @@ public class OClientConnectionManager {
    *          id of connection
    * @return The connection if any, otherwise null
    */
-  public OClientConnection getConnection(final int iChannelId) {
+  public OClientConnection getConnection(final int iChannelId, ONetworkProtocol protocol) {
     // SEARCH THE CONNECTION BY ID
-    return connections.get(iChannelId);
+    OClientConnection connection = connections.get(iChannelId);
+    if (connection != null)
+      connection.protocol = protocol;
 
-    // COMMENTED TO USE SOCKET POOL: THINK TO ANOTHER WAY TO IMPROVE SECURITY
-    // if (conn != null && conn.getChannel().socket != socket)
-    // throw new IllegalStateException("Requested sessionId " + iChannelId + " by connection " + socket
-    // + " while it's tied to connection " + conn.getChannel().socket);
+    return connection;
   }
 
   /**
@@ -163,7 +163,7 @@ public class OClientConnectionManager {
       final ONetworkProtocol protocol = connection.protocol;
       disconnect(connection);
 
-      // KILL THE NEWTORK MANAGER TOO
+      // KILL THE NETWORK MANAGER TOO
       protocol.sendShutdown();
     }
   }
@@ -287,45 +287,5 @@ public class OClientConnectionManager {
         disconnect(c);
       }
     }
-  }
-
-  /**
-   * Pushes the record to all the connected clients with the same database.
-   * 
-   * @param iRecord
-   *          Record to broadcast
-   * @param iExcludeConnection
-   *          Connection to exclude if any, usually the current where the change has been just applied
-   */
-  public void pushRecord2Clients(final ORecordInternal<?> iRecord, final OClientConnection iExcludeConnection)
-      throws InterruptedException, IOException {
-    final String dbName = iRecord.getDatabase().getName();
-
-    for (OClientConnection c : connections.values()) {
-      if (c != iExcludeConnection) {
-        final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
-        final OChannelBinaryAsynch channel = (OChannelBinaryAsynch) p.getChannel();
-
-        if (c.database != null && c.database.getName().equals(dbName))
-          synchronized (c) {
-            try {
-              channel.acquireWriteLock();
-              try {
-                channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-                channel.writeInt(Integer.MIN_VALUE);
-                channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_RECORD);
-                p.writeIdentifiable(iRecord);
-              } finally {
-                channel.releaseWriteLock();
-              }
-            } catch (IOException e) {
-              OLogManager.instance().warn(this, "Cannot push record to the client %s", c.getRemoteAddress());
-            }
-
-          }
-
-      }
-    }
-
   }
 }

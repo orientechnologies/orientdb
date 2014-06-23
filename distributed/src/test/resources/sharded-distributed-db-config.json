@@ -1,0 +1,27 @@
+{
+    "autoDeploy": true,
+    "hotAlignment": false,
+    "offlineMsgQueueSize" : 0,
+    "readQuorum": 1,
+    "writeQuorum": 2,
+    "failureAvailableNodesLessQuorum": false,
+    "readYourWrites": true,
+    "clusters": {
+        "internal": {
+        },
+        "index": {
+        },
+        "client_0": {
+            "servers" : [ "europe", "usa" ]
+        },
+        "client_1": {
+            "servers" : [ "usa" ]
+        },
+        "client_2": {
+            "servers" : [ "asia", "europe", "usa" ]
+        },
+        "*": {
+            "servers" : [ "<NEW_NODE>" ]
+        }
+    }
+}

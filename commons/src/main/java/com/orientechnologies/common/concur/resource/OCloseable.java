@@ -16,5 +16,5 @@
 package com.orientechnologies.common.concur.resource;
 
 public interface OCloseable {
-	public void close();
+  public void close(boolean onDelete);
 }

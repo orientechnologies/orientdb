@@ -67,7 +67,7 @@ public class OJMXPlugin extends OServerPluginAbstract {
       if (onProfiler != null)
         if (mBeanServer.isRegistered(onProfiler))
           mBeanServer.unregisterMBean(onProfiler);
-      
+
       if (onServer != null)
         if (mBeanServer.isRegistered(onServer))
           mBeanServer.unregisterMBean(onServer);

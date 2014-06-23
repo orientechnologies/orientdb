@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import java.io.IOException;
-import java.util.*;
-
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
@@ -11,6 +13,15 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.Future;
 
 /**
  * @author Andrey Lomakin
@@ -27,6 +38,7 @@ public class OReadWriteDiskCache implements ODiskCache {
   private LRUList                                     a1in;
 
   private final OWOWCache                             writeCache;
+  private final int                                   pageSize;
 
   /**
    * Contains all pages in cache for given file.
@@ -37,9 +49,28 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   private final NavigableMap<PinnedPage, OCacheEntry> pinnedPages    = new TreeMap<PinnedPage, OCacheEntry>();
 
-  public OReadWriteDiskCache(long readCacheMaxMemory, long writeCacheMaxMemory, int pageSize, long writeGroupTTL,
-      int pageFlushInterval, OStorageLocalAbstract storageLocal, OWriteAheadLog writeAheadLog, boolean syncOnPageFlush,
-      boolean checkMinSize) {
+  private final String                                storageName;
+
+  private static String                               METRIC_HITS;
+  private static String                               METRIC_HITS_METADATA;
+  private static String                               METRIC_MISSED;
+  private static String                               METRIC_MISSED_METADATA;
+
+  public OReadWriteDiskCache(final long readCacheMaxMemory, final long writeCacheMaxMemory, final int pageSize,
+      final long writeGroupTTL, final int pageFlushInterval, final OStorageLocalAbstract storageLocal,
+      final OWriteAheadLog writeAheadLog, final boolean syncOnPageFlush, final boolean checkMinSize) {
+    this(null, readCacheMaxMemory, writeCacheMaxMemory, pageSize, writeGroupTTL, pageFlushInterval, storageLocal, writeAheadLog,
+        syncOnPageFlush, checkMinSize);
+  }
+
+  public OReadWriteDiskCache(final String storageName, final long readCacheMaxMemory, final long writeCacheMaxMemory,
+      final int pageSize, final long writeGroupTTL, final int pageFlushInterval, final OStorageLocalAbstract storageLocal,
+      final OWriteAheadLog writeAheadLog, final boolean syncOnPageFlush, final boolean checkMinSize) {
+    this.storageName = storageName;
+    this.pageSize = pageSize;
+
+    initProfiler();
+
     this.filePages = new HashMap<Long, Set<Long>>();
 
     maxSize = normalizeMemory(readCacheMaxMemory, pageSize);
@@ -72,9 +103,13 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
-  public long openFile(String fileName) throws IOException {
+  public long openFile(final String fileName) throws IOException {
     synchronized (syncObject) {
-      final long fileId = writeCache.openFile(fileName);
+      long fileId = writeCache.isOpen(fileName);
+      if (fileId >= 0)
+        return fileId;
+
+      fileId = writeCache.openFile(fileName);
       filePages.put(fileId, new HashSet<Long>());
 
       return fileId;
@@ -82,22 +117,58 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
-  public void openFile(long fileId) throws IOException {
+  public void openFile(final long fileId) throws IOException {
     synchronized (syncObject) {
+      if (writeCache.isOpen(fileId))
+        return;
+
       writeCache.openFile(fileId);
       filePages.put(fileId, new HashSet<Long>());
     }
   }
 
   @Override
-  public boolean exists(String fileName) {
+  public void openFile(String fileName, long fileId) throws IOException {
+    synchronized (syncObject) {
+      long existingFileId = writeCache.isOpen(fileName);
+
+      if (fileId == existingFileId)
+        return;
+      else if (existingFileId >= 0)
+        throw new OStorageException("File with given name already exists but has different id " + existingFileId + " vs. proposed "
+            + fileId);
+
+      writeCache.openFile(fileName, fileId);
+      filePages.put(fileId, new HashSet<Long>());
+    }
+  }
+
+  @Override
+  public boolean exists(final String fileName) {
     synchronized (syncObject) {
       return writeCache.exists(fileName);
     }
   }
 
   @Override
-  public void pinPage(OCacheEntry cacheEntry) throws IOException {
+  public String fileNameById(long fileId) {
+    synchronized (syncObject) {
+      return writeCache.fileNameById(fileId);
+    }
+  }
+
+  @Override
+  public void lock() throws IOException {
+    writeCache.lock();
+  }
+
+  @Override
+  public void unlock() throws IOException {
+    writeCache.unlock();
+  }
+
+  @Override
+  public void pinPage(final OCacheEntry cacheEntry) throws IOException {
     synchronized (syncObject) {
       remove(cacheEntry.fileId, cacheEntry.pageIndex);
       pinnedPages.put(new PinnedPage(cacheEntry.fileId, cacheEntry.pageIndex), cacheEntry);
@@ -105,14 +176,14 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
-  public void loadPinnedPage(OCacheEntry cacheEntry) throws IOException {
+  public void loadPinnedPage(final OCacheEntry cacheEntry) throws IOException {
     synchronized (syncObject) {
       cacheEntry.usagesCount++;
     }
   }
 
   @Override
-  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages) throws IOException {
+  public OCacheEntry load(final long fileId, final long pageIndex, final boolean checkPinnedPages) throws IOException {
     synchronized (syncObject) {
       OCacheEntry cacheEntry = null;
       if (checkPinnedPages)
@@ -127,7 +198,7 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
-  public OCacheEntry allocateNewPage(long fileId) throws IOException {
+  public OCacheEntry allocateNewPage(final long fileId) throws IOException {
     synchronized (syncObject) {
       final long filledUpTo = getFilledUpTo(fileId);
       return load(fileId, filledUpTo, false);
@@ -136,6 +207,7 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public void release(OCacheEntry cacheEntry) {
+    Future<?> flushFuture = null;
     synchronized (syncObject) {
       if (cacheEntry != null)
         cacheEntry.usagesCount--;
@@ -143,8 +215,19 @@ public class OReadWriteDiskCache implements ODiskCache {
         throw new IllegalStateException("record should be released is already free!");
 
       if (cacheEntry.usagesCount == 0 && cacheEntry.isDirty) {
-        writeCache.store(cacheEntry.fileId, cacheEntry.pageIndex, cacheEntry.dataPointer);
+        flushFuture = writeCache.store(cacheEntry.fileId, cacheEntry.pageIndex, cacheEntry.dataPointer);
         cacheEntry.isDirty = false;
+      }
+    }
+
+    if (flushFuture != null) {
+      try {
+        flushFuture.get();
+      } catch (InterruptedException e) {
+        Thread.interrupted();
+        throw new OException("File flush was interrupted", e);
+      } catch (Exception e) {
+        throw new OException("File flush was abnormally terminated", e);
       }
     }
   }
@@ -158,9 +241,7 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public void flushFile(long fileId) throws IOException {
-    synchronized (syncObject) {
-      writeCache.flush(fileId);
-    }
+    writeCache.flush(fileId);
   }
 
   @Override
@@ -254,16 +335,14 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public void flushBuffer() throws IOException {
-    synchronized (syncObject) {
-      writeCache.flush();
-    }
+    writeCache.flush();
   }
 
   @Override
   public void clear() throws IOException {
-    synchronized (syncObject) {
-      writeCache.flush();
+    writeCache.flush();
 
+    synchronized (syncObject) {
       clearCacheContent();
     }
   }
@@ -335,20 +414,36 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+    synchronized (syncObject) {
+      writeCache.setSoftlyClosed(softlyClosed);
+    }
+  }
+
+  @Override
   public boolean isOpen(long fileId) {
     synchronized (syncObject) {
       return writeCache.isOpen(fileId);
     }
   }
 
-  private OCacheEntry updateCache(long fileId, long pageIndex) throws IOException {
+  private OCacheEntry updateCache(final long fileId, final long pageIndex) throws IOException {
+    final OProfilerMBean profiler = storageName != null ? Orient.instance().getProfiler() : null;
+    final long startTime = storageName != null ? System.currentTimeMillis() : 0;
+
     OCacheEntry cacheEntry = am.get(fileId, pageIndex);
 
     if (cacheEntry != null) {
       am.putToMRU(cacheEntry);
 
+      if (profiler != null && profiler.isRecording())
+        profiler.stopChrono(METRIC_HITS, "Requested item was found in Disk Cache", startTime, METRIC_HITS_METADATA);
+
       return cacheEntry;
     }
+
+    if (profiler != null && profiler.isRecording())
+      profiler.stopChrono(METRIC_MISSED, "Requested item was not found in Disk Cache", startTime, METRIC_MISSED_METADATA);
 
     cacheEntry = a1out.remove(fileId, pageIndex);
     if (cacheEntry != null) {
@@ -571,6 +666,33 @@ public class OReadWriteDiskCache implements ODiskCache {
         return -1;
 
       return 0;
+    }
+  }
+
+  public void initProfiler() {
+    if (storageName != null) {
+      final OProfilerMBean profiler = Orient.instance().getProfiler();
+
+      METRIC_HITS = profiler.getDatabaseMetric(storageName, "diskCache.hits");
+      METRIC_HITS_METADATA = profiler.getDatabaseMetric(null, "diskCache.hits");
+      METRIC_MISSED = profiler.getDatabaseMetric(storageName, "diskCache.missed");
+      METRIC_MISSED_METADATA = profiler.getDatabaseMetric(null, "diskCache.missed");
+
+      profiler.registerHookValue(profiler.getDatabaseMetric(storageName, "diskCache.totalMemory"),
+          "Total memory used by Disk Cache", METRIC_TYPE.SIZE, new OProfilerHookValue() {
+            @Override
+            public Object getValue() {
+              return (am.size() + a1in.size()) * pageSize;
+            }
+          }, profiler.getDatabaseMetric(null, "diskCache.totalMemory"));
+
+      profiler.registerHookValue(profiler.getDatabaseMetric(storageName, "diskCache.maxMemory"),
+          "Maximum memory used by Disk Cache", METRIC_TYPE.SIZE, new OProfilerHookValue() {
+            @Override
+            public Object getValue() {
+              return maxSize * pageSize;
+            }
+          }, profiler.getDatabaseMetric(null, "diskCache.maxMemory"));
     }
   }
 }

@@ -16,34 +16,34 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import java.nio.ByteOrder;
-
-import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 
+import java.nio.ByteOrder;
+
 /**
  * Serializer for {@link Long} type.
- * 
+ *
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 18.01.12
  */
 public class OLongSerializer implements OBinarySerializer<Long> {
   private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
 
-  public static OLongSerializer         INSTANCE  = new OLongSerializer();
-  public static final byte              ID        = 10;
+  public static OLongSerializer INSTANCE = new OLongSerializer();
+  public static final byte ID = 10;
 
   /**
    * size of long value in bytes
    */
-  public static final int               LONG_SIZE = 8;
+  public static final int LONG_SIZE = 8;
 
-  public int getObjectSize(Long object) {
+  public int getObjectSize(Long object, Object... hints) {
     return LONG_SIZE;
   }
 
-  public void serialize(Long object, byte[] stream, int startPosition) {
+  public void serialize(Long object, byte[] stream, int startPosition, Object... hints) {
     final long value = object;
     stream[startPosition] = (byte) ((value >>> 56) & 0xFF);
     stream[startPosition + 1] = (byte) ((value >>> 48) & 0xFF);
@@ -73,7 +73,7 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return LONG_SIZE;
   }
 
-  public void serializeNative(Long object, byte[] stream, int startPosition) {
+  public void serializeNative(Long object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putLong(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
@@ -82,17 +82,17 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   }
 
   @Override
-  public void serializeInDirectMemory(Long object, ODirectMemory memory, long pointer) {
-    memory.setLong(pointer, object);
+  public void serializeInDirectMemory(Long object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    pointer.setLong(offset, object);
   }
 
   @Override
-  public Long deserializeFromDirectMemory(ODirectMemory memory, long pointer) {
-    return memory.getLong(pointer);
+  public Long deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    return pointer.getLong(offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemory memory, long pointer) {
+  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return LONG_SIZE;
   }
 
@@ -102,5 +102,10 @@ public class OLongSerializer implements OBinarySerializer<Long> {
 
   public int getFixedLength() {
     return LONG_SIZE;
+  }
+
+  @Override
+  public Long preprocess(Long value, Object... hints) {
+    return value;
   }
 }

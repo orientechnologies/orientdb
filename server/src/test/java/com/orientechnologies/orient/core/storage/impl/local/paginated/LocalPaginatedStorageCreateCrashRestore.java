@@ -48,10 +48,7 @@ public class LocalPaginatedStorageCreateCrashRestore {
 
   @BeforeClass
   public void beforeClass() throws Exception {
-    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
-    OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
-    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-    OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
+    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageCreateCrashRestore";
@@ -79,6 +76,7 @@ public class LocalPaginatedStorageCreateCrashRestore {
     testDocumentTx.drop();
     baseDocumentTx.drop();
 
+    Assert.assertTrue(new File(buildDir, "plugins").delete());
     Assert.assertTrue(buildDir.delete());
   }
 
@@ -108,7 +106,13 @@ public class LocalPaginatedStorageCreateCrashRestore {
     Thread.sleep(150000);
 
     long lastTs = System.currentTimeMillis();
-    process.destroy();
+
+    System.out.println("Wait for process to destroy");
+    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
+    p.waitFor();
+
+    process.waitFor();
+    System.out.println("Process was destroyed");
 
     for (Future future : futures) {
       try {
@@ -191,10 +195,7 @@ public class LocalPaginatedStorageCreateCrashRestore {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-      OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
-      OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0);
-      OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
-      OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0);
+      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
 
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class

@@ -15,18 +15,15 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.io.IOException;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * SQL TRUNCATE CLUSTER command: Truncates an entire record cluster.
@@ -41,11 +38,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLTruncateCluster parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     StringBuilder word = new StringBuilder();
 
@@ -66,6 +59,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
 
     clusterName = word.toString();
 
+    final ODatabaseRecord database = getDatabase();
     if (database.getClusterIdByName(clusterName) == -1)
       throw new OCommandSQLParsingException("Cluster '" + clusterName + "' not found", parserText, oldPos);
     return this;
@@ -78,7 +72,7 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
     if (clusterName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OCluster cluster = ((OStorageEmbedded) getDatabase().getStorage()).getClusterByName(clusterName);
+    final OCluster cluster = getDatabase().getStorage().getClusterByName(clusterName);
 
     final long recs = cluster.getEntries();
 

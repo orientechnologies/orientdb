@@ -15,12 +15,22 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import org.junit.Ignore;
+import org.junit.Test;
+
 /**
  * Distributed TX test against "local" protocol.
  */
 public class ServerClusterLocalTxTest extends AbstractServerClusterTxTest {
+  @Test
+  @Ignore
+  public void test() throws Exception {
+    init(3);
+    prepare(false);
+    execute();
+  }
 
   protected String getDatabaseURL(final ServerRun server) {
-    return "local:" + server.getDatabasePath(getDatabaseName());
+    return "plocal:" + server.getDatabasePath(getDatabaseName());
   }
 }

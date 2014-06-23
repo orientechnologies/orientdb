@@ -25,9 +25,10 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import com.orientechnologies.common.collection.OLimitedMap;
-import com.orientechnologies.common.collection.OMVRBTree;
-import com.orientechnologies.common.collection.OMVRBTreeEntry;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -36,7 +37,6 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
@@ -62,7 +62,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   protected float                                          optimizeEntryPointsFactor;
   private final TreeMap<K, OMVRBTreeEntryPersistent<K, V>> entryPoints;
   private final Map<ORID, OMVRBTreeEntryPersistent<K, V>>  cache;
-  protected static final OJVMProfiler                      PROFILER           = Orient.instance().getProfiler();
+  protected static final OProfilerMBean                    PROFILER           = Orient.instance().getProfiler();
 
   private static final int                                 OPTIMIZE_MAX_RETRY = 10;
 
@@ -811,7 +811,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
    * empty.
    */
   @Override
-  protected OMVRBTreeEntry<K, V> getLastEntry() {
+  public OMVRBTreeEntry<K, V> getLastEntry() {
     if (!entryPoints.isEmpty()) {
       // FIND THE LAST ELEMENT STARTING FROM THE FIRST ENTRY-POINT IN MEMORY
       final Map.Entry<K, OMVRBTreeEntryPersistent<K, V>> entry = entryPoints.lastEntry();

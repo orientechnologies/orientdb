@@ -16,10 +16,6 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
@@ -28,6 +24,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * 
@@ -39,42 +39,48 @@ public class OSQLMethodField extends OAbstractSQLMethod {
   public static final String NAME = "field";
 
   public OSQLMethodField() {
-    super(NAME, 0, 1);
+    super(NAME, 1, 1);
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, final OCommandContext iContext, Object ioResult,
-      final Object[] iMethodParams) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext, Object ioResult,
+      final Object[] iParams) {
+    if (iParams[0] == null)
+      return null;
 
-    if (ioResult != null)
-      if (ioResult instanceof String)
+    if (ioResult != null) {
+      if (ioResult instanceof String) {
         try {
           ioResult = new ODocument(new ORecordId((String) ioResult));
         } catch (Exception e) {
           OLogManager.instance().error(this, "Error on reading rid with value '%s'", null, ioResult);
           ioResult = null;
         }
-
-      else if (ioResult instanceof OIdentifiable)
+      } else if (ioResult instanceof OIdentifiable) {
         ioResult = ((OIdentifiable) ioResult).getRecord();
-
-      else if (ioResult instanceof Collection<?> || ioResult instanceof OMultiCollectionIterator<?>
+      } else if (ioResult instanceof Collection<?> || ioResult instanceof OMultiCollectionIterator<?>
           || ioResult.getClass().isArray()) {
         final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(ioResult));
         for (Object o : OMultiValue.getMultiValueIterable(ioResult)) {
-          result.add(ODocumentHelper.getFieldValue(o, iMethodParams[0].toString()));
+          result.add(ODocumentHelper.getFieldValue(o, iParams[0].toString()));
         }
         return result;
       }
+    }
 
     if (ioResult != null) {
       if (ioResult instanceof OCommandContext) {
-        ioResult = ((OCommandContext) ioResult).getVariable(iMethodParams[0].toString());
+        ioResult = ((OCommandContext) ioResult).getVariable(iParams[0].toString());
       } else {
-        ioResult = ODocumentHelper.getFieldValue(ioResult, iMethodParams[0].toString(), iContext);
+        ioResult = ODocumentHelper.getFieldValue(ioResult, iParams[0].toString(), iContext);
       }
     }
 
     return ioResult;
+  }
+
+  @Override
+  public boolean evaluateParameters() {
+    return false;
   }
 }

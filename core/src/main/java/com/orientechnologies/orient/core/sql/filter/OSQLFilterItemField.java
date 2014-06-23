@@ -15,17 +15,18 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.util.Set;
-
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
-import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
+import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
+
+import java.util.Set;
 
 /**
  * Represent an object field as value in the query condition.
@@ -37,12 +38,13 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   protected Set<String> preLoadedFields;
   protected String[]    preLoadedFieldsArray;
   protected String      name;
+  protected OCollate    collate;
 
   public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName) {
     super(iQueryToParse, iName);
   }
 
-  public Object getValue(final OIdentifiable iRecord, OCommandContext iContext) {
+  public Object getValue(final OIdentifiable iRecord, final Object iCurrentResult, final OCommandContext iContext) {
     if (iRecord == null)
       throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved");
 
@@ -55,10 +57,17 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
 
     // UNMARSHALL THE SINGLE FIELD
-    if (doc.deserializeFields(preLoadedFieldsArray))
-      // FIELD FOUND
-      return transformValue(iRecord, iContext,  ODocumentHelper.getFieldValue(doc, name));
+    if (doc.deserializeFields(preLoadedFieldsArray)) {
+      Object v = ODocumentHelper.getFieldValue(doc, name);
 
+      if (v == null && iCurrentResult != null)
+        // SEARCH IN CURRENT RESULT FIRST
+        v = ODocumentHelper.getFieldValue(iCurrentResult, name);
+
+      collate = getCollateForField(doc, name);
+
+      return transformValue(iRecord, iContext, v);
+    }
     return null;
   }
 
@@ -82,8 +91,8 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
       return true;
     }
 
-    for (OPair<OSQLMethod, Object[]> pair : operationsChain) {
-      if (!pair.getKey().getName().equals(OSQLMethodField.NAME)) {
+    for (OPair<OSQLMethodRuntime, Object[]> pair : operationsChain) {
+      if (!pair.getKey().getMethod().getName().equals(OSQLMethodField.NAME)) {
         return false;
       }
     }
@@ -104,6 +113,14 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
 
     return new FieldChain();
+  }
+
+  public void setPreLoadedFields(final Set<String> iPrefetchedFieldList) {
+    this.preLoadedFields = iPrefetchedFieldList;
+  }
+
+  public OCollate getCollate() {
+    return collate;
   }
 
   /**
@@ -137,9 +154,5 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     public boolean isLong() {
       return operationsChain != null && operationsChain.size() > 0;
     }
-  }
-
-  public void setPreLoadedFields(final Set<String> iPrefetchedFieldList) {
-    this.preLoadedFields = iPrefetchedFieldList;
   }
 }

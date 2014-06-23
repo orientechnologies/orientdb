@@ -5,8 +5,7 @@ import java.util.Random;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 @Test
 public class PageChangesTest {
@@ -14,17 +13,15 @@ public class PageChangesTest {
     OPageChanges pageChanges = new OPageChanges();
     pageChanges.addChanges(10, new byte[] { 0, 1, 2, 3 }, new byte[] { 3, 2, 1, 0 });
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
-    long pointer = directMemory.allocate(20);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(20);
     pageChanges.applyChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer + 10, 4), new byte[] { 0, 1, 2, 3 });
+    Assert.assertEquals(pointer.get(10, 4), new byte[] { 0, 1, 2, 3 });
 
     pageChanges.revertChanges(pointer);
-    Assert.assertEquals(directMemory.get(pointer + 10, 4), new byte[] { 3, 2, 1, 0 });
+    Assert.assertEquals(pointer.get(10, 4), new byte[] { 3, 2, 1, 0 });
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
   public void testMultipleNotIntersectValues() {
@@ -33,21 +30,19 @@ public class PageChangesTest {
     pageChanges.addChanges(20, new byte[] { 4, 5, 6, 7 }, new byte[] { 7, 6, 5, 4 });
     pageChanges.addChanges(30, new byte[] { 8, 9, 10, 11 }, new byte[] { 11, 10, 9, 8 });
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
-    long pointer = directMemory.allocate(1024);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     pageChanges.applyChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer + 10, 4), new byte[] { 0, 1, 2, 3 });
-    Assert.assertEquals(directMemory.get(pointer + 20, 4), new byte[] { 4, 5, 6, 7 });
-    Assert.assertEquals(directMemory.get(pointer + 30, 4), new byte[] { 8, 9, 10, 11 });
+    Assert.assertEquals(pointer.get(10, 4), new byte[] { 0, 1, 2, 3 });
+    Assert.assertEquals(pointer.get(20, 4), new byte[] { 4, 5, 6, 7 });
+    Assert.assertEquals(pointer.get(30, 4), new byte[] { 8, 9, 10, 11 });
 
     pageChanges.revertChanges(pointer);
-    Assert.assertEquals(directMemory.get(pointer + 10, 4), new byte[] { 3, 2, 1, 0 });
-    Assert.assertEquals(directMemory.get(pointer + 20, 4), new byte[] { 7, 6, 5, 4 });
-    Assert.assertEquals(directMemory.get(pointer + 30, 4), new byte[] { 11, 10, 9, 8 });
+    Assert.assertEquals(pointer.get(10, 4), new byte[] { 3, 2, 1, 0 });
+    Assert.assertEquals(pointer.get(20, 4), new byte[] { 7, 6, 5, 4 });
+    Assert.assertEquals(pointer.get(30, 4), new byte[] { 11, 10, 9, 8 });
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
   public void testMultipleIntersectValues() {
@@ -67,19 +62,17 @@ public class PageChangesTest {
     pageChanges.addChanges(21, new byte[] { 12, 13, 14, 15 }, new byte[] { 9, 10, 11, 20 });
     // 8, 12, 13, 14, 15
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
-    long pointer = directMemory.allocate(1024);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     pageChanges.applyChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer + 10, 5), new byte[] { 0, 4, 5, 6, 7 });
-    Assert.assertEquals(directMemory.get(pointer + 20, 5), new byte[] { 8, 12, 13, 14, 15 });
+    Assert.assertEquals(pointer.get(10, 5), new byte[] { 0, 4, 5, 6, 7 });
+    Assert.assertEquals(pointer.get(20, 5), new byte[] { 8, 12, 13, 14, 15 });
 
     pageChanges.revertChanges(pointer);
-    Assert.assertEquals(directMemory.get(pointer + 10, 5), new byte[] { 3, 2, 1, 0, 10 });
-    Assert.assertEquals(directMemory.get(pointer + 20, 5), new byte[] { 11, 10, 9, 8, 20 });
+    Assert.assertEquals(pointer.get(10, 5), new byte[] { 3, 2, 1, 0, 10 });
+    Assert.assertEquals(pointer.get(20, 5), new byte[] { 11, 10, 9, 8, 20 });
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
   public void testMultipleAdjacentValues() {
@@ -88,17 +81,15 @@ public class PageChangesTest {
     pageChanges.addChanges(14, new byte[] { 4, 5, 6, 7 }, new byte[] { 7, 6, 5, 4 });
     pageChanges.addChanges(18, new byte[] { 8, 9, 10, 11 }, new byte[] { 11, 10, 9, 8 });
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
-    long pointer = directMemory.allocate(1024);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     pageChanges.applyChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer + 10, 12), new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
+    Assert.assertEquals(pointer.get(10, 12), new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
 
     pageChanges.revertChanges(pointer);
-    Assert.assertEquals(directMemory.get(pointer + 10, 12), new byte[] { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8 });
+    Assert.assertEquals(pointer.get(10, 12), new byte[] { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8 });
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
   public void testMultipleAdjacentValuesUpdateMixedOrder() {
@@ -108,17 +99,15 @@ public class PageChangesTest {
     pageChanges.addChanges(18, new byte[] { 8, 9, 10, 11 }, new byte[] { 11, 10, 9, 8 });
     pageChanges.addChanges(14, new byte[] { 4, 5, 6, 7 }, new byte[] { 7, 6, 5, 4 });
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
-    long pointer = directMemory.allocate(1024);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     pageChanges.applyChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer + 10, 16), new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
+    Assert.assertEquals(pointer.get(10, 16), new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
 
     pageChanges.revertChanges(pointer);
-    Assert.assertEquals(directMemory.get(pointer + 10, 16), new byte[] { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12 });
+    Assert.assertEquals(pointer.get(10, 16), new byte[] { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12 });
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
   public void testMultipleAdjacentValuesAndOneInTheMiddle() {
@@ -137,17 +126,15 @@ public class PageChangesTest {
 
     // 0, 1, 2, 23, 24, 25, 6, 7,8, 9, 10, 11, 12, 13, 14, 15
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
-    long pointer = directMemory.allocate(1024);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     pageChanges.applyChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer + 10, 16), new byte[] { 0, 1, 2, 23, 24, 25, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
+    Assert.assertEquals(pointer.get(10, 16), new byte[] { 0, 1, 2, 23, 24, 25, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 });
 
     pageChanges.revertChanges(pointer);
-    Assert.assertEquals(directMemory.get(pointer + 10, 16), new byte[] { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12 });
+    Assert.assertEquals(pointer.get(10, 16), new byte[] { 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12 });
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
   public void testMultipleAdjacentValuesAndOneBeforeThem() {
@@ -162,18 +149,15 @@ public class PageChangesTest {
     pageChanges.addChanges(8, new byte[] { 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111 }, new byte[] { -2,
         -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 });
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
-    long pointer = directMemory.allocate(1024);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     pageChanges.applyChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer + 8, 14), new byte[] { 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
-        110, 111 });
+    Assert.assertEquals(pointer.get(8, 14), new byte[] { 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111 });
 
     pageChanges.revertChanges(pointer);
-    Assert.assertEquals(directMemory.get(pointer + 8, 14), new byte[] { -2, -1, 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8 });
+    Assert.assertEquals(pointer.get(8, 14), new byte[] { -2, -1, 3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8 });
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
   public void testMultipleNotIntersectValuesAndOneBeforeThem() {
@@ -192,27 +176,25 @@ public class PageChangesTest {
     pageChanges.addChanges(9, new byte[] { 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114 }, new byte[] {
         -1, 0, 1, 2, 3, -2, 4, 5, 6, 7, -3, 8, 9, 10, 11 });
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
-    long pointer = directMemory.allocate(1024);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     pageChanges.applyChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer + 9, 15), new byte[] { 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111,
-        112, 113, 114 });
+    Assert.assertEquals(pointer.get(9, 15),
+        new byte[] { 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114 });
 
     for (byte i = 3; i < 17; i++) {
-      Assert.assertEquals(directMemory.get(pointer + i * 10, 4), new byte[] { i, (byte) (i + 1), (byte) (i + 2), (byte) (i + 3) });
+      Assert.assertEquals(pointer.get(i * 10, 4), new byte[] { i, (byte) (i + 1), (byte) (i + 2), (byte) (i + 3) });
     }
 
     pageChanges.revertChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer + 9, 15), new byte[] { -1, 3, 2, 1, 0, -2, 7, 6, 5, 4, -3, 11, 10, 9, 8 });
+    Assert.assertEquals(pointer.get(9, 15), new byte[] { -1, 3, 2, 1, 0, -2, 7, 6, 5, 4, -3, 11, 10, 9, 8 });
 
     for (byte i = 3; i < 17; i++) {
-      Assert.assertEquals(directMemory.get(pointer + i * 10, 4), new byte[] { (byte) (i + 3), (byte) (i + 2), (byte) (i + 1), i });
+      Assert.assertEquals(pointer.get(i * 10, 4), new byte[] { (byte) (i + 3), (byte) (i + 2), (byte) (i + 1), i });
     }
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
   public void testAddOverlappedChangesInReverseOrder() {
@@ -229,19 +211,16 @@ public class PageChangesTest {
 
     // 10, 11, 0, 1, 2, 3, 36, 37, 38, 29, 30, 31
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
-    long pointer = directMemory.allocate(1024);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     pageChanges.applyChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer + 12, 10), new byte[] { 0, 1, 2, 3, 36, 37, 38, 29, 30, 31 });
+    Assert.assertEquals(pointer.get(12, 10), new byte[] { 0, 1, 2, 3, 36, 37, 38, 29, 30, 31 });
 
     pageChanges.revertChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer + 12, 10), new byte[] { 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 });
+    Assert.assertEquals(pointer.get(12, 10), new byte[] { 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 });
 
-    directMemory.free(pointer);
-
+    pointer.free();
   }
 
   public void testMultipleNotIntersectValuesReverseOrder() {
@@ -252,22 +231,20 @@ public class PageChangesTest {
           (byte) (i + 2), (byte) (i + 1), i });
     }
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
-    long pointer = directMemory.allocate(1024);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(1024);
     pageChanges.applyChanges(pointer);
 
     for (byte i = 0; i < 17; i++) {
-      Assert.assertEquals(directMemory.get(pointer + i * 10, 4), new byte[] { i, (byte) (i + 1), (byte) (i + 2), (byte) (i + 3) });
+      Assert.assertEquals(pointer.get(i * 10, 4), new byte[] { i, (byte) (i + 1), (byte) (i + 2), (byte) (i + 3) });
     }
 
     pageChanges.revertChanges(pointer);
 
     for (byte i = 0; i < 17; i++) {
-      Assert.assertEquals(directMemory.get(pointer + i * 10, 4), new byte[] { (byte) (i + 3), (byte) (i + 2), (byte) (i + 1), i });
+      Assert.assertEquals(pointer.get(i * 10, 4), new byte[] { (byte) (i + 3), (byte) (i + 2), (byte) (i + 1), i });
     }
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
   public void testSerialization() {
@@ -296,67 +273,63 @@ public class PageChangesTest {
     OPageChanges deserializedPageChanges = new OPageChanges();
     Assert.assertEquals(deserializedPageChanges.fromStream(content, 10), content.length);
 
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
-    long pointer = directMemory.allocate(128000);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(128000);
 
     deserializedPageChanges.applyChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer, 120), firstChange);
-    Assert.assertEquals(directMemory.get(pointer + 125, 16000), secondChange);
-    Assert.assertEquals(directMemory.get(pointer + 17000, 65000), thirdChange);
+    Assert.assertEquals(pointer.get(0, 120), firstChange);
+    Assert.assertEquals(pointer.get(125, 16000), secondChange);
+    Assert.assertEquals(pointer.get(17000, 65000), thirdChange);
 
     deserializedPageChanges.revertChanges(pointer);
 
-    Assert.assertEquals(directMemory.get(pointer, 120), new byte[120]);
-    Assert.assertEquals(directMemory.get(pointer + 125, 16000), new byte[16000]);
-    Assert.assertEquals(directMemory.get(pointer + 17000, 65000), new byte[65000]);
+    Assert.assertEquals(pointer.get(0, 120), new byte[120]);
+    Assert.assertEquals(pointer.get(125, 16000), new byte[16000]);
+    Assert.assertEquals(pointer.get(17000, 65000), new byte[65000]);
 
-    directMemory.free(pointer);
+    pointer.free();
   }
 
-	public void testSerializationBorderValues() {
-		Random random = new Random();
+  public void testSerializationBorderValues() {
+    Random random = new Random();
 
-		byte[] firstChange = new byte[127];
-		random.nextBytes(firstChange);
+    byte[] firstChange = new byte[127];
+    random.nextBytes(firstChange);
 
-		byte[] secondChange = new byte[16383];
-		random.nextBytes(secondChange);
+    byte[] secondChange = new byte[16383];
+    random.nextBytes(secondChange);
 
-		byte[] thirdChange = new byte[2097151];
-		random.nextBytes(thirdChange);
+    byte[] thirdChange = new byte[2097151];
+    random.nextBytes(thirdChange);
 
-		OPageChanges pageChanges = new OPageChanges();
+    OPageChanges pageChanges = new OPageChanges();
 
-		pageChanges.addChanges(0, firstChange, new byte[127]);
-		pageChanges.addChanges(130, secondChange, new byte[16383]);
-		pageChanges.addChanges(17000, thirdChange, new byte[2097151]);
+    pageChanges.addChanges(0, firstChange, new byte[127]);
+    pageChanges.addChanges(130, secondChange, new byte[16383]);
+    pageChanges.addChanges(17000, thirdChange, new byte[2097151]);
 
-		int contentSize = pageChanges.serializedSize();
-		byte[] content = new byte[contentSize + 10];
+    int contentSize = pageChanges.serializedSize();
+    byte[] content = new byte[contentSize + 10];
 
-		Assert.assertEquals(pageChanges.toStream(content, 10), content.length);
+    Assert.assertEquals(pageChanges.toStream(content, 10), content.length);
 
-		OPageChanges deserializedPageChanges = new OPageChanges();
-		Assert.assertEquals(deserializedPageChanges.fromStream(content, 10), content.length);
+    OPageChanges deserializedPageChanges = new OPageChanges();
+    Assert.assertEquals(deserializedPageChanges.fromStream(content, 10), content.length);
 
-		ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(4000000);
 
-		long pointer = directMemory.allocate(4000000);
+    deserializedPageChanges.applyChanges(pointer);
 
-		deserializedPageChanges.applyChanges(pointer);
+    Assert.assertEquals(pointer.get(0, 127), firstChange);
+    Assert.assertEquals(pointer.get(130, 16383), secondChange);
+    Assert.assertEquals(pointer.get(17000, 2097151), thirdChange);
 
-		Assert.assertEquals(directMemory.get(pointer, 127), firstChange);
-		Assert.assertEquals(directMemory.get(pointer + 130, 16383), secondChange);
-		Assert.assertEquals(directMemory.get(pointer + 17000, 2097151), thirdChange);
+    deserializedPageChanges.revertChanges(pointer);
 
-		deserializedPageChanges.revertChanges(pointer);
+    Assert.assertEquals(pointer.get(0, 127), new byte[127]);
+    Assert.assertEquals(pointer.get(130, 16383), new byte[16383]);
+    Assert.assertEquals(pointer.get(17000, 2097151), new byte[2097151]);
 
-		Assert.assertEquals(directMemory.get(pointer, 127), new byte[127]);
-		Assert.assertEquals(directMemory.get(pointer + 130, 16383), new byte[16383]);
-		Assert.assertEquals(directMemory.get(pointer + 17000, 2097151), new byte[2097151]);
-
-		directMemory.free(pointer);
-	}
+    pointer.free();
+  }
 }

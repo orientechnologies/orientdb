@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
@@ -26,26 +28,24 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  */
 public class OIndexDictionary extends OIndexOneValue {
 
-  public OIndexDictionary(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine) {
-    super(typeId, algorithm, engine);
+  public OIndexDictionary(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm) {
+    super(typeId, algorithm, engine, valueContainerAlgorithm);
   }
 
-  public OIndexOneValue put(final Object key, final OIdentifiable iSingleValue) {
+  public OIndexOneValue put(Object key, final OIdentifiable value) {
     modificationLock.requestModificationLock();
 
+    key = getCollatingValue(key);
+
     try {
-      acquireExclusiveLock();
+      checkForKeyType(key);
+      acquireSharedLock();
       try {
-        checkForKeyType(key);
-        final OIdentifiable value = indexEngine.get(key);
-
-        if (value == null || !value.equals(iSingleValue))
-          indexEngine.put(key, iSingleValue);
-
+        indexEngine.put(key, value);
         return this;
 
       } finally {
-        releaseExclusiveLock();
+        releaseSharedLock();
       }
     } finally {
       modificationLock.releaseModificationLock();
@@ -65,5 +65,31 @@ public class OIndexDictionary extends OIndexOneValue {
 
   public boolean supportsOrderedIterations() {
     return false;
+  }
+
+  @Override
+  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+    snapshot.put(key, value.getIdentity());
+  }
+
+  @Override
+  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+    snapshot.put(key, RemovedValue.INSTANCE);
+  }
+
+  @Override
+  protected void commitSnapshot(Map<Object, Object> snapshot) {
+    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+      Object key = snapshotEntry.getKey();
+      checkForKeyType(key);
+
+      Object snapshotValue = snapshotEntry.getValue();
+      if (snapshotValue.equals(RemovedValue.INSTANCE))
+        indexEngine.remove(key);
+      else
+        indexEngine.put(key, (OIdentifiable) snapshotValue);
+    }
   }
 }

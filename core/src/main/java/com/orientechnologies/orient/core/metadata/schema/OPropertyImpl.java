@@ -15,12 +15,11 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.text.ParseException;
-import java.util.*;
-
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
+import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -34,8 +33,12 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.text.ParseException;
+import java.util.*;
 
 /**
  * Contains the description of a persistent class property.
@@ -60,6 +63,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private String              regexp;
   private boolean             readonly;
   private Map<String, String> customFields;
+  private OCollate            collate = new ODefaultCollate();
 
   /**
    * Constructor used in unmarshalling.
@@ -480,6 +484,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       return getRegexp();
     case TYPE:
       return getType();
+    case COLLATE:
+      return getCollate();
     }
 
     throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
@@ -522,6 +528,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       break;
     case TYPE:
       setTypeInternal(isNull ? null : OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
+      break;
+    case COLLATE:
+      setCollateInternal(stringValue);
       break;
     case CUSTOM:
       if (iValue.toString().indexOf("=") == -1) {
@@ -581,6 +590,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     case TYPE:
       setType(OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
       break;
+    case COLLATE:
+      setCollate(stringValue);
+      break;
     case CUSTOM:
       if (iValue.toString().indexOf("=") == -1) {
         if (iValue.toString().equalsIgnoreCase("clear")) {
@@ -593,6 +605,36 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       }
       break;
     }
+  }
+
+  public OCollate getCollate() {
+    return collate;
+  }
+
+  public OProperty setCollate(final OCollate collate) {
+    if (collate == null)
+      throw new IllegalArgumentException("COLLATE cannot be null");
+    this.collate = collate;
+    return this;
+  }
+
+  public OProperty setCollate(String iCollate) {
+    if (iCollate == null)
+      iCollate = ODefaultCollate.NAME;
+
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    final String cmd = String.format("alter property %s collate %s", getFullName(), iCollate);
+    getDatabase().command(new OCommandSQL(cmd)).execute();
+    setCollateInternal(iCollate);
+    return this;
+  }
+
+  public OProperty setCollateInternal(String iCollate) {
+    if (iCollate == null)
+      iCollate = ODefaultCollate.NAME;
+
+    collate = OSQLEngine.getCollate(iCollate);
+    return this;
   }
 
   @Override
@@ -614,13 +656,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       return true;
     if (!super.equals(obj))
       return false;
-    if (getClass() != obj.getClass())
+    if (!OProperty.class.isAssignableFrom(obj.getClass()))
       return false;
-    OPropertyImpl other = (OPropertyImpl) obj;
+    OProperty other = (OProperty) obj;
     if (owner == null) {
-      if (other.owner != null)
+      if (other.getOwnerClass() != null)
         return false;
-    } else if (!owner.equals(other.owner))
+    } else if (!owner.equals(other.getOwnerClass()))
       return false;
     return true;
   }
@@ -635,6 +677,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     mandatory = document.containsField("mandatory") ? (Boolean) document.field("mandatory") : false;
     readonly = document.containsField("readonly") ? (Boolean) document.field("readonly") : false;
     notNull = document.containsField("notNull") ? (Boolean) document.field("notNull") : false;
+    if (document.containsField("collate"))
+      setCollateInternal((String) document.field("collate"));
 
     min = (String) (document.containsField("min") ? document.field("min") : null);
     max = (String) (document.containsField("max") ? document.field("max") : null);
@@ -679,6 +723,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         document.field("linkedClass", linkedClass != null ? linkedClass.getName() : linkedClassName);
 
       document.field("customFields", customFields != null && customFields.size() > 0 ? customFields : null, OType.EMBEDDEDMAP);
+      document.field("collate", collate.getName());
 
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);

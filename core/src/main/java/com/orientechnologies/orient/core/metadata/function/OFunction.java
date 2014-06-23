@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 
 /**
  * Stored function. It contains language and code to execute as a function. The execute() takes parameters. The function is
@@ -47,7 +46,7 @@ public class OFunction {
    */
   public OFunction() {
     document = new ODocument(CLASS_NAME);
-    setLanguage("SQL");
+    document.field("language", "SQL");
   }
 
   /**
@@ -76,6 +75,7 @@ public class OFunction {
 
   public OFunction setName(final String iName) {
     document.field("name", iName);
+    saveChanges();
     return this;
   }
 
@@ -95,6 +95,7 @@ public class OFunction {
 
   public OFunction setLanguage(final String iLanguage) {
     document.field("language", iLanguage);
+    saveChanges();
     return this;
   }
 
@@ -104,6 +105,7 @@ public class OFunction {
 
   public OFunction setParameters(final List<String> iParameters) {
     document.field("parameters", iParameters);
+    saveChanges();
     return this;
   }
 
@@ -137,7 +139,7 @@ public class OFunction {
         // final Object argValue = ORecordSerializerStringAbstract.getTypeValue(iArgs[i].toString());
         final Object argValue = iArgs[i];
 
-        if (i < params.size())
+        if (params != null && i < params.size())
           args.put(params.get(i), argValue);
         else
           args.put("param" + i, argValue);

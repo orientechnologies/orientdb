@@ -15,9 +15,12 @@
  */
 package com.orientechnologies.orient.server.plugin;
 
+import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.orientechnologies.common.log.OLogManager;
 
 /**
  * Server plugin information
@@ -51,14 +54,19 @@ public class OServerPluginInfo {
   public void shutdown() {
     if (instance != null)
       instance.sendShutdown();
-    
-// JAVA7 ONLY!
-//    if (pluginClassLoader != null)
-//      try {
-//        pluginClassLoader.close();
-//      } catch (IOException e) {
-//        OLogManager.instance().error(this, "Error during shutdown of plugin '%s'", e, name);
-//      }
+
+    if (pluginClassLoader != null) {
+      // JAVA7 ONLY
+      Method m;
+      try {
+        m = pluginClassLoader.getClass().getMethod("close");
+        if (m != null)
+          m.invoke(pluginClassLoader);
+      } catch (NoSuchMethodException e) {
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on closing plugin classloader", e);
+      }
+    }
   }
 
   public boolean isDynamic() {

@@ -3,11 +3,11 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import java.io.IOException;
 import java.util.*;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -20,10 +20,9 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 @Test
 public class ClusterPageTest {
   private static final int SYSTEM_OFFSET = 24;
-  private ODirectMemory    directMemory  = ODirectMemoryFactory.INSTANCE.directMemory();
 
   public void testAddOneRecord() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
       int freeSpace = localPage.getFreeSpace();
@@ -40,17 +39,16 @@ public class ClusterPageTest {
       Assert.assertFalse(localPage.isDeleted(0));
       Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
-      int pageOffset = localPage.getRecordPageOffset(0);
-      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(0, 0, 11), new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testAddTreeRecords() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
       int freeSpace = localPage.getFreeSpace();
@@ -74,29 +72,26 @@ public class ClusterPageTest {
       Assert.assertFalse(localPage.isDeleted(1));
       Assert.assertFalse(localPage.isDeleted(2));
 
-      int pageOffset = localPage.getRecordPageOffset(0);
-      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(0, 0, 11), new byte[] { 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1 });
       Assert.assertEquals(localPage.getRecordSize(0), 11);
       Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
-      pageOffset = localPage.getRecordPageOffset(1);
-      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(1, 0, 11), new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
       Assert.assertEquals(localPage.getRecordSize(0), 11);
       Assert.assertEquals(localPage.getRecordVersion(1), recordVersion);
 
-      pageOffset = localPage.getRecordPageOffset(2);
-      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 3, 2, 3, 4, 5, 6, 5, 4, 3, 2, 3 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(2, 0, 11), new byte[] { 3, 2, 3, 4, 5, 6, 5, 4, 3, 2, 3 });
       Assert.assertEquals(localPage.getRecordSize(0), 11);
       Assert.assertEquals(localPage.getRecordVersion(2), recordVersion);
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testAddFullPage() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
 
@@ -123,9 +118,7 @@ public class ClusterPageTest {
 
       counter = 0;
       for (int position : positions) {
-        int pageOffset = localPage.getRecordPageOffset(position);
-
-        Assert.assertEquals(localPage.getBinaryValue(pageOffset, 3), new byte[] { counter, counter, counter });
+        Assert.assertEquals(localPage.getRecordBinaryValue(position, 0, 3), new byte[] { counter, counter, counter });
         Assert.assertEquals(localPage.getRecordSize(position), 3);
         Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
         counter++;
@@ -133,12 +126,12 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testDeleteAddLowerVersion() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
 
@@ -155,22 +148,21 @@ public class ClusterPageTest {
       Assert
           .assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, false), position);
 
-      int recordPageOffset = localPage.getRecordPageOffset(position);
       int recordSize = localPage.getRecordSize(position);
       Assert.assertEquals(recordSize, 11);
 
       recordVersion.increment();
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
-      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(position, 0, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testDeleteAddLowerVersionKeepTombstoneVersion() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
 
@@ -186,21 +178,20 @@ public class ClusterPageTest {
 
       Assert.assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, true), position);
 
-      int recordPageOffset = localPage.getRecordPageOffset(position);
       int recordSize = localPage.getRecordSize(position);
       Assert.assertEquals(recordSize, 11);
 
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
-      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(position, 0, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testDeleteAddBiggerVersion() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
 
@@ -221,21 +212,20 @@ public class ClusterPageTest {
       Assert
           .assertEquals(localPage.appendRecord(newRecordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, false), position);
 
-      int recordPageOffset = localPage.getRecordPageOffset(position);
       int recordSize = localPage.getRecordSize(position);
       Assert.assertEquals(recordSize, 11);
 
       Assert.assertEquals(localPage.getRecordVersion(position), newRecordVersion);
-      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(position, 0, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testDeleteAddEqualVersion() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
 
@@ -249,22 +239,21 @@ public class ClusterPageTest {
 
       Assert.assertEquals(localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, false), position);
 
-      int recordPageOffset = localPage.getRecordPageOffset(position);
       int recordSize = localPage.getRecordSize(position);
       Assert.assertEquals(recordSize, 11);
 
       recordVersion.increment();
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
-      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(position, 0, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testDeleteAddEqualVersionKeepTombstoneVersion() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
 
@@ -278,21 +267,20 @@ public class ClusterPageTest {
 
       Assert.assertEquals(localPage.appendRecord(recordVersion, new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 }, true), position);
 
-      int recordPageOffset = localPage.getRecordPageOffset(position);
       int recordSize = localPage.getRecordSize(position);
       Assert.assertEquals(recordSize, 11);
 
       Assert.assertEquals(localPage.getRecordVersion(position), recordVersion);
-      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(position, 0, recordSize), new byte[] { 2, 2, 2, 4, 5, 6, 5, 4, 2, 2, 2 });
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testDeleteTwoOutOfFour() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
 
@@ -327,23 +315,19 @@ public class ClusterPageTest {
       Assert.assertEquals(localPage.findFirstDeletedRecord(1), 2);
       Assert.assertEquals(localPage.findFirstDeletedRecord(3), -1);
 
-      int pageOffset = localPage.getRecordPageOffset(0);
-      Assert.assertEquals(pageOffset, -1);
+      Assert.assertTrue(localPage.isDeleted(0));
       Assert.assertEquals(localPage.getRecordSize(0), -1);
       Assert.assertEquals(localPage.getRecordVersion(0), recordVersion);
 
-      pageOffset = localPage.getRecordPageOffset(1);
-      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(1, 0, 11), new byte[] { 2, 2, 3, 4, 5, 6, 5, 4, 3, 2, 2 });
       Assert.assertEquals(localPage.getRecordSize(1), 11);
       Assert.assertEquals(localPage.getRecordVersion(1), recordVersion);
 
-      pageOffset = localPage.getRecordPageOffset(2);
-      Assert.assertEquals(pageOffset, -1);
+      Assert.assertTrue(localPage.isDeleted(2));
       Assert.assertEquals(localPage.getRecordSize(2), -1);
       Assert.assertEquals(localPage.getRecordVersion(2), recordVersion);
 
-      pageOffset = localPage.getRecordPageOffset(3);
-      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 4, 2, 3, 4, 5, 6, 5, 4, 3, 2, 4 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(3, 0, 11), new byte[] { 4, 2, 3, 4, 5, 6, 5, 4, 3, 2, 4 });
       Assert.assertEquals(localPage.getRecordSize(3), 11);
       Assert.assertEquals(localPage.getRecordVersion(3), recordVersion);
 
@@ -352,12 +336,12 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testAddFullPageDeleteAndAddAgain() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
 
@@ -410,10 +394,8 @@ public class ClusterPageTest {
 
       Assert.assertEquals(localPage.getRecordsCount(), filledRecordsCount);
       for (Map.Entry<Integer, Byte> entry : positionCounter.entrySet()) {
-        int pageOffset = localPage.getRecordPageOffset(entry.getKey());
-
-        Assert.assertEquals(localPage.getBinaryValue(pageOffset, 3),
-            new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
+        Assert.assertEquals(localPage.getRecordBinaryValue(entry.getKey(), 0, 3), new byte[] { entry.getValue(), entry.getValue(),
+            entry.getValue() });
         Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
 
         if (deletedPositions.contains(entry.getKey()))
@@ -425,12 +407,12 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testAddFullPageDeleteAndAddAgainWithoutDefragmentation() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
 
@@ -483,10 +465,8 @@ public class ClusterPageTest {
 
       Assert.assertEquals(localPage.getRecordsCount(), filledRecordsCount);
       for (Map.Entry<Integer, Byte> entry : positionCounter.entrySet()) {
-        int pageOffset = localPage.getRecordPageOffset(entry.getKey());
-
-        Assert.assertEquals(localPage.getBinaryValue(pageOffset, 3),
-            new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
+        Assert.assertEquals(localPage.getRecordBinaryValue(entry.getKey(), 0, 3), new byte[] { entry.getValue(), entry.getValue(),
+            entry.getValue() });
         Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
 
         if (deletedPositions.contains(entry.getKey()))
@@ -498,12 +478,12 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testAddBigRecordDeleteAndAddSmallRecords() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
 
@@ -544,22 +524,20 @@ public class ClusterPageTest {
 
       Assert.assertEquals(localPage.getRecordsCount(), positionCounter.size());
       for (Map.Entry<Integer, Byte> entry : positionCounter.entrySet()) {
-        int pageOffset = localPage.getRecordPageOffset(entry.getKey());
-
-        Assert.assertEquals(localPage.getBinaryValue(pageOffset, 3),
-            new byte[] { entry.getValue(), entry.getValue(), entry.getValue() });
+        Assert.assertEquals(localPage.getRecordBinaryValue(entry.getKey(), 0, 3), new byte[] { entry.getValue(), entry.getValue(),
+            entry.getValue() });
         Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
         Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
       }
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testFindFirstRecord() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     final MersenneTwisterFast mersenneTwister = new MersenneTwisterFast();
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
@@ -617,13 +595,12 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
-
   }
 
   public void testFindLastRecord() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     final MersenneTwisterFast mersenneTwister = new MersenneTwisterFast();
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
@@ -678,12 +655,12 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testSetGetNextPage() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
       localPage.setNextPage(1034);
@@ -691,12 +668,12 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testSetGetPrevPage() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
       localPage.setPrevPage(1034);
@@ -704,12 +681,12 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testReplaceOneRecordWithBiggerSize() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
@@ -730,19 +707,18 @@ public class ClusterPageTest {
 
       Assert.assertEquals(localPage.getRecordSize(index), 11);
 
-      int pageOffset = localPage.getRecordPageOffset(index);
-      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(index, 0, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
 
       Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testReplaceOneRecordWithEqualSize() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
@@ -763,19 +739,18 @@ public class ClusterPageTest {
 
       Assert.assertEquals(localPage.getRecordSize(index), 11);
 
-      int recordPageOffset = localPage.getRecordPageOffset(index);
-      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(index, 0, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
 
       Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testReplaceOneRecordWithSmallerSize() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
@@ -796,19 +771,18 @@ public class ClusterPageTest {
 
       Assert.assertEquals(localPage.getRecordSize(index), 6);
 
-      int pageOffset = localPage.getRecordPageOffset(index);
-      Assert.assertEquals(localPage.getBinaryValue(pageOffset, 6), new byte[] { 5, 2, 3, 4, 5, 11 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(index, 0, 6), new byte[] { 5, 2, 3, 4, 5, 11 });
 
       Assert.assertEquals(localPage.getRecordVersion(index), newRecordVersion);
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testReplaceOneRecordNoVersionUpdate() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
@@ -829,19 +803,18 @@ public class ClusterPageTest {
 
       Assert.assertEquals(localPage.getRecordSize(index), 11);
 
-      int recordPageOffset = localPage.getRecordPageOffset(index);
-      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(index, 0, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
 
       Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
   public void testReplaceOneRecordLowerVersion() throws Exception {
-    long pagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+    ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
@@ -860,35 +833,33 @@ public class ClusterPageTest {
       Assert.assertEquals(written, 11);
 
       Assert.assertEquals(localPage.getRecordSize(index), 11);
-
-      int recordPageOffset = localPage.getRecordPageOffset(index);
-      Assert.assertEquals(localPage.getBinaryValue(recordPageOffset, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
+      Assert.assertEquals(localPage.getRecordBinaryValue(index, 0, 11), new byte[] { 5, 2, 3, 4, 5, 11, 5, 4, 3, 2, 1 });
 
       Assert.assertEquals(localPage.getRecordVersion(index), recordVersion);
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      directMemory.free(pagePointer);
+      pagePointer.free();
     }
   }
 
-  private void assertChangesTracking(OClusterPage localPage, long pagePointer) throws IOException {
-    long restoredPagePointer = directMemory.allocate(new byte[OClusterPage.PAGE_SIZE]);
+  private void assertChangesTracking(OClusterPage localPage, ODirectMemoryPointer pagePointer) throws IOException {
+    ODirectMemoryPointer restoredPagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
     try {
       OClusterPage restoredPage = new OClusterPage(restoredPagePointer, false, ODurablePage.TrackMode.FULL);
 
       OPageChanges changes = localPage.getPageChanges();
       restoredPage.restoreChanges(changes);
 
-      Assert.assertEquals(directMemory.get(restoredPagePointer + SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET),
-          directMemory.get(pagePointer + SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET));
+      Assert.assertEquals(restoredPagePointer.get(SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET),
+          pagePointer.get(SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET));
 
       restoredPage.revertChanges(changes);
 
-      Assert.assertEquals(directMemory.get(restoredPagePointer + SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET),
+      Assert.assertEquals(restoredPagePointer.get(SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET),
           new byte[OClusterPage.PAGE_SIZE - SYSTEM_OFFSET]);
     } finally {
-      directMemory.free(restoredPagePointer);
+      restoredPagePointer.free();
     }
   }
 }

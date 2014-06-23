@@ -15,20 +15,27 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
@@ -37,7 +44,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
  * 
  */
 @SuppressWarnings("unchecked")
-public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest{
+public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest {
   public static final String KEYWORD_ALTER = "ALTER";
   public static final String KEYWORD_CLASS = "CLASS";
 
@@ -47,7 +54,6 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
 
   public OCommandExecutorSQLAlterClass parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
     init((OCommandRequestText) iRequest);
 
@@ -87,7 +93,8 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     value = parserText.substring(pos + 1).trim();
 
     if (value.length() == 0)
-      throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", parserText, oldPos);
+      throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", parserText,
+          oldPos);
 
     if (value.equalsIgnoreCase("null"))
       value = null;
@@ -99,16 +106,63 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
    * Execute the ALTER CLASS.
    */
   public Object execute(final Map<Object, Object> iArgs) {
+    final ODatabaseRecord database = getDatabase();
+
     if (attribute == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OClassImpl cls = (OClassImpl) getDatabase().getMetadata().getSchema().getClass(className);
+    final OClassImpl cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
     if (cls == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
 
-    cls.setInternalAndSave(attribute, value);
+    final Object result = cls.setInternalAndSave(attribute, value);
+
+    if (OClass.ATTRIBUTES.NAME.equals(attribute))
+      renameClass(database, cls);
+
     renameCluster();
-    return null;
+
+    return result;
+  }
+
+  public String getSyntax() {
+    return "ALTER CLASS <class> <attribute-name> <attribute-value>";
+  }
+
+  protected void renameClass(ODatabaseRecord database, OClassImpl cls) {
+    final OStorage storage = database.getStorage();
+
+    for (int clusterId : cls.getClusterIds()) {
+      OClusterPosition[] range = storage.getClusterDataRange(clusterId);
+
+      OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(range[0]));
+      do {
+        for (OPhysicalPosition position : positions) {
+          final ORecordId identity = new ORecordId(clusterId, position.clusterPosition);
+          final ORawBuffer record = storage.readRecord(identity, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+              .getResult();
+
+          if (!database.getStorageVersions().classesAreDetectedByClusterId() && record.recordType == ODocument.RECORD_TYPE) {
+            final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
+                .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
+
+            if (serializer.getClassName(OBinaryProtocol.bytes2string(record.buffer)).equalsIgnoreCase(className)) {
+              final ODocument document = new ODocument();
+              document.setLazyLoad(false);
+              document.fromStream(record.buffer);
+              document.getRecordVersion().copyFrom(record.version);
+              document.setIdentity(identity);
+              document.setClassName(cls.getName());
+              document.setDirty();
+              document.save();
+            }
+          }
+
+          if (positions.length > 0)
+            positions = storage.higherPhysicalPositions(clusterId, positions[positions.length - 1]);
+        }
+      } while (positions.length > 0);
+    }
   }
 
   private void renameCluster() {
@@ -127,9 +181,5 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
         return false;
     }
     return true;
-  }
-
-  public String getSyntax() {
-    return "ALTER CLASS <class> <attribute-name> <attribute-value>";
   }
 }

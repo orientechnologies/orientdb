@@ -15,13 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -83,17 +79,13 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
     if (endDeepLevel > -1 && iLevel > endDeepLevel)
       return false;
 
-    if (iTarget instanceof ORID) {
-      if (iEvaluatedRecords.contains(iTarget))
+    if (iTarget instanceof OIdentifiable) {
+      if (iEvaluatedRecords.contains(((OIdentifiable) iTarget).getIdentity()))
         // ALREADY EVALUATED
         return false;
 
       // TRANSFORM THE ORID IN ODOCUMENT
-      iTarget = new ODocument((ORID) iTarget);
-    } else if (iTarget instanceof ODocument) {
-      if (iEvaluatedRecords.contains(((ODocument) iTarget).getIdentity()))
-        // ALREADY EVALUATED
-        return false;
+      iTarget = ((OIdentifiable) iTarget).getRecord();
     }
 
     if (iTarget instanceof ODocument) {
@@ -135,14 +127,7 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
     } else if (iTarget instanceof OQueryRuntimeValueMulti) {
 
       final OQueryRuntimeValueMulti multi = (OQueryRuntimeValueMulti) iTarget;
-      for (final Object o : multi.values) {
-        if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
-          return true;
-      }
-    } else if (iTarget instanceof Collection<?>) {
-
-      final Collection<Object> collection = (Collection<Object>) iTarget;
-      for (final Object o : collection) {
+      for (final Object o : multi.getValues()) {
         if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
           return true;
       }
@@ -151,6 +136,18 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
       final Map<Object, Object> map = (Map<Object, Object>) iTarget;
       for (final Object o : map.values()) {
         if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
+          return true;
+      }
+    } else if (OMultiValue.isMultiValue(iTarget)) {
+      final Iterable<Object> collection = OMultiValue.getMultiValueIterable(iTarget);
+      for (final Object o : collection) {
+        if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
+          return true;
+      }
+    } else if (iTarget instanceof Iterator) {
+      final Iterator iterator = (Iterator) iTarget;
+      while (iterator.hasNext()) {
+        if (traverse(iterator.next(), iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
           return true;
       }
     }

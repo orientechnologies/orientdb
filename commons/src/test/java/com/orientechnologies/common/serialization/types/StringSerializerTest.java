@@ -22,8 +22,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
@@ -41,38 +40,36 @@ public class StringSerializerTest {
     stringSerializer = new OStringSerializer();
     Random random = new Random();
     StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < random.nextInt(20) + 5; i++) {
       sb.append((char) random.nextInt());
     }
     OBJECT = sb.toString();
-    FIELD_SIZE = OBJECT.length() * 2 + 4;
+    FIELD_SIZE = OBJECT.length() * 2 + 4 + 7;
     stream = new byte[FIELD_SIZE];
   }
 
   public void testFieldSize() {
-    Assert.assertEquals(stringSerializer.getObjectSize(OBJECT), FIELD_SIZE);
+    Assert.assertEquals(stringSerializer.getObjectSize(OBJECT), FIELD_SIZE - 7);
   }
 
   public void testSerialize() {
-    stringSerializer.serialize(OBJECT, stream, 0);
-    Assert.assertEquals(stringSerializer.deserialize(stream, 0), OBJECT);
+    stringSerializer.serialize(OBJECT, stream, 7);
+    Assert.assertEquals(stringSerializer.deserialize(stream, 7), OBJECT);
   }
 
   public void testSerializeNative() {
-    stringSerializer.serializeNative(OBJECT, stream, 0);
-    Assert.assertEquals(stringSerializer.deserializeNative(stream, 0), OBJECT);
+    stringSerializer.serializeNative(OBJECT, stream, 7);
+    Assert.assertEquals(stringSerializer.deserializeNative(stream, 7), OBJECT);
   }
 
   public void testNativeDirectMemoryCompatibility() {
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
+    stringSerializer.serializeNative(OBJECT, stream, 7);
 
-    stringSerializer.serializeNative(OBJECT, stream, 0);
-
-    long pointer = directMemory.allocate(stream);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(stringSerializer.deserializeFromDirectMemory(directMemory, pointer), OBJECT);
+      Assert.assertEquals(stringSerializer.deserializeFromDirectMemory(pointer, 7), OBJECT);
     } finally {
-      directMemory.free(pointer);
+      pointer.free();
     }
   }
 }

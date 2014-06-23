@@ -29,7 +29,7 @@ public class OSQLFunctionBothV extends OSQLFunctionMove {
   public static final String NAME = "bothV";
 
   public OSQLFunctionBothV() {
-    super(NAME, 0, 1);
+    super(NAME, 0, -1);
   }
 
   @Override

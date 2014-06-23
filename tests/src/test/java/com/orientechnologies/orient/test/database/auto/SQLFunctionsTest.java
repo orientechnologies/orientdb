@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -36,11 +22,27 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = "sql-select")
 public class SQLFunctionsTest {
@@ -144,7 +146,7 @@ public class SQLFunctionsTest {
 
     Set<String> cities = new HashSet<String>();
     for (ODocument city : result) {
-      String cityName = (String) city.field("name");
+      String cityName = city.field("name");
       Assert.assertFalse(cities.contains(cityName));
       cities.add(cityName);
     }
@@ -162,23 +164,22 @@ public class SQLFunctionsTest {
 
   @SuppressWarnings("unchecked")
   @Test
-  public void queryUnionAsAggregationNotRemoveDuplicates() {
+  public void queryUnionAllAsAggregationNotRemoveDuplicates() {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from City")).execute();
     int count = result.size();
 
-    result = database.command(new OSQLSynchQuery<ODocument>("select union(name) as name from City")).execute();
-    Collection<Object> citiesFound = (Collection<Object>) result.get(0).field("name");
+    result = database.command(new OSQLSynchQuery<ODocument>("select unionAll(name) as name from City")).execute();
+    Collection<Object> citiesFound = result.get(0).field("name");
     Assert.assertEquals(citiesFound.size(), count);
   }
 
-  @SuppressWarnings("unchecked")
   @Test
   public void querySetNotDuplicates() {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select set(name) as name from City")).execute();
 
     Assert.assertTrue(result.size() == 1);
 
-    Collection<Object> citiesFound = (Collection<Object>) result.get(0).field("name");
+    Collection<Object> citiesFound = result.get(0).field("name");
     Assert.assertTrue(citiesFound.size() > 1);
 
     Set<String> cities = new HashSet<String>();
@@ -226,8 +227,8 @@ public class SQLFunctionsTest {
   }
 
   @Test
-  public void queryUnionAsInline() {
-    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select union(out, in) as edges from V")).execute();
+  public void queryUnionAllAsInline() {
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select unionAll(out, in) as edges from V")).execute();
 
     Assert.assertTrue(result.size() > 1);
     for (ODocument d : result) {
@@ -252,9 +253,8 @@ public class SQLFunctionsTest {
 
       Assert.assertTrue(((Number) d.field("max")).longValue() > ((Number) d.field("average")).longValue());
       Assert.assertTrue(((Number) d.field("average")).longValue() >= ((Number) d.field("min")).longValue());
-      if (!database.getStorage().isHashClustersAreUsed())
-        Assert.assertTrue(((Number) d.field("total")).longValue() >= ((Number) d.field("max")).longValue(),
-            "Total " + d.field("total") + " max " + d.field("max"));
+      Assert.assertTrue(((Number) d.field("total")).longValue() >= ((Number) d.field("max")).longValue(),
+          "Total " + d.field("total") + " max " + d.field("max"));
     }
   }
 
@@ -332,23 +332,25 @@ public class SQLFunctionsTest {
   @Test
   public void queryCustomFunction() {
     OSQLEngine.getInstance().registerFunction("bigger", new OSQLFunctionAbstract("bigger", 2, 2) {
+      @Override
       public String getSyntax() {
         return "bigger(<first>, <second>)";
       }
 
-      public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+      @Override
+      public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
           OCommandContext iContext) {
-        if (iParameters[0] == null || iParameters[1] == null)
+        if (iParams[0] == null || iParams[1] == null)
           // CHECK BOTH EXPECTED PARAMETERS
           return null;
 
-        if (!(iParameters[0] instanceof Number) || !(iParameters[1] instanceof Number))
+        if (!(iParams[0] instanceof Number) || !(iParams[1] instanceof Number))
           // EXCLUDE IT FROM THE RESULT SET
           return null;
 
         // USE DOUBLE TO AVOID LOSS OF PRECISION
-        final double v1 = ((Number) iParameters[0]).doubleValue();
-        final double v2 = ((Number) iParameters[1]).doubleValue();
+        final double v1 = ((Number) iParams[0]).doubleValue();
+        final double v2 = ((Number) iParams[1]).doubleValue();
 
         return Math.max(v1, v2);
       }
@@ -377,6 +379,20 @@ public class SQLFunctionsTest {
       Assert.assertNotNull(d.field("value"));
       Assert.assertTrue(d.field("value") instanceof Long);
       Assert.assertEquals(moreThanInteger, d.field("value"));
+    }
+  }
+
+  @Test
+  public void testHashMethod() throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select name, name.hash() as n256, name.hash('sha-512') as n512 from OUser")).execute();
+
+    Assert.assertFalse(result.isEmpty());
+    for (ODocument d : result) {
+      final String name = d.field("name");
+
+      Assert.assertEquals(OSecurityManager.digest2String(name, "SHA-256"), d.field("n256"));
+      Assert.assertEquals(OSecurityManager.digest2String(name, "SHA-512"), d.field("n512"));
     }
   }
 

@@ -21,8 +21,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
@@ -55,7 +55,7 @@ public interface ODatabase extends OBackupable, Closeable {
   }
 
   public static enum ATTRIBUTES {
-    TYPE, STATUS, DEFAULTCLUSTERID, DATEFORMAT, DATETIMEFORMAT, TIMEZONE, LOCALECOUNTRY, LOCALELANGUAGE, CHARSET, CUSTOM
+    TYPE, STATUS, DEFAULTCLUSTERID, DATEFORMAT, DATETIMEFORMAT, TIMEZONE, LOCALECOUNTRY, LOCALELANGUAGE, CHARSET, CUSTOM, CLUSTERSELECTION, MINIMUMCLUSTERS
   }
 
   /**
@@ -84,6 +84,8 @@ public interface ODatabase extends OBackupable, Closeable {
   /**
    * Drops a database.
    * 
+   * @throws ODatabaseException
+   *           if database is closed.
    */
   public void drop();
 
@@ -113,14 +115,14 @@ public interface ODatabase extends OBackupable, Closeable {
   public STATUS getStatus();
 
   /**
-   * Returns the total size of database as the real used space.
-   */
-  public long getSize();
-
-  /**
    * Returns the current status of database.
    */
   public <DB extends ODatabase> DB setStatus(STATUS iStatus);
+
+  /**
+   * Returns the total size of database as the real used space.
+   */
+  public long getSize();
 
   /**
    * Returns the database name.
@@ -157,14 +159,7 @@ public interface ODatabase extends OBackupable, Closeable {
    * 
    * @return Current cache.
    */
-  public OLevel1RecordCache getLevel1Cache();
-
-  /**
-   * Returns the level1 cache. Cannot be null.
-   * 
-   * @return Current cache.
-   */
-  public OLevel2RecordCache getLevel2Cache();
+  public OLocalRecordCache getLocalCache();
 
   /**
    * Returns the data segment id by name.
@@ -339,11 +334,11 @@ public interface ODatabase extends OBackupable, Closeable {
       Object... iParameters);
 
   /**
-   * 
    * Drops a cluster by its name. Physical clusters will be completely deleted
    * 
    * @param iClusterName
-   * @return
+   *          the name of the cluster
+   * @return true if has been removed, otherwise false
    */
   public boolean dropCluster(String iClusterName, final boolean iTruncate);
 
@@ -351,6 +346,7 @@ public interface ODatabase extends OBackupable, Closeable {
    * Drops a cluster by its id. Physical clusters will be completely deleted.
    * 
    * @param iClusterId
+   *          id of cluster to delete
    * @return true if has been removed, otherwise false
    */
   public boolean dropCluster(int iClusterId, final boolean iTruncate);
@@ -411,7 +407,7 @@ public interface ODatabase extends OBackupable, Closeable {
    *          Attributes between #ATTRIBUTES enum
    * @param iValue
    *          Value to set
-   * @return
+   * @return underlying
    */
   public <DB extends ODatabase> DB set(ATTRIBUTES iAttribute, Object iValue);
 
@@ -419,6 +415,7 @@ public interface ODatabase extends OBackupable, Closeable {
    * Registers a listener to the database events.
    * 
    * @param iListener
+   *          the listener to register
    */
   public void registerListener(ODatabaseListener iListener);
 
@@ -426,6 +423,7 @@ public interface ODatabase extends OBackupable, Closeable {
    * Unregisters a listener to the database events.
    * 
    * @param iListener
+   *          the listener to unregister
    */
   public void unregisterListener(ODatabaseListener iListener);
 
@@ -438,17 +436,21 @@ public interface ODatabase extends OBackupable, Closeable {
   /**
    * Flush cached storage content to the disk.
    * 
-   * After this call users can perform only select queries. All write-related commands will queued till {@link #release()} command
-   * will be called.
+   * After this call users can perform only idempotent calls like read records and select/traverse queries. All write-related
+   * operations will queued till {@link #release()} command will be called.
    * 
    * Given command waits till all on going modifications in indexes or DB will be finished.
    * 
    * IMPORTANT: This command is not reentrant.
+   * 
+   * @see #release()
    */
   public void freeze();
 
   /**
    * Allows to execute write-related commands on DB. Called after {@link #freeze()} command.
+   * 
+   * @see #freeze()
    */
   public void release();
 

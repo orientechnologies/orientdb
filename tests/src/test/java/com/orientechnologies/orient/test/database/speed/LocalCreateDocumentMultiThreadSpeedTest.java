@@ -20,6 +20,7 @@ import java.util.Date;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -30,81 +31,85 @@ import com.orientechnologies.orient.test.database.base.OrientThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTest {
-	private ODatabaseDocument	database;
-	private long							foundObjects;
+  private ODatabaseDocument database;
+  private long              foundObjects;
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		// System.setProperty("url", "memory:test");
-		LocalCreateDocumentMultiThreadSpeedTest test = new LocalCreateDocumentMultiThreadSpeedTest();
-		test.data.go(test);
-	}
+  @Test(enabled = false)
+  public static class CreateObjectsThread extends OrientThreadTest {
+    private ODatabaseDocument database;
+    private ODocument         record;
+    private Date              date = new Date();
 
-	public LocalCreateDocumentMultiThreadSpeedTest() {
-		super(1000000, 200, CreateObjectsThread.class);
-	}
+    public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
+      super(parent, threadId);
+    }
 
-	@Override
-	public void init() {
-		database = new ODatabaseDocumentTx(System.getProperty("url"));
-		if (database.exists())
-			// database.open("admin", "admin");
-			// else
-			database.drop();
-		
-		database.create();
+    @Override
+    public void init() {
+      database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+      record = database.newInstance();
+      database.declareIntent(new OIntentMassiveInsert());
+      database.begin(TXTYPE.NOTX);
+    }
 
-		foundObjects = 0;//database.countClusterElements("Account");
+    public void cycle() {
+      record.reset();
 
-		System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
-	}
+      record.setClassName("Account");
+      record.field("id", data.getCyclesDone());
+      record.field("name", "Luca");
+      record.field("surname", "Garulli");
+      record.field("birthDate", date);
+      record.field("salary", 3000f + data.getCyclesDone());
 
-	@Test(enabled = false)
-	public static class CreateObjectsThread extends OrientThreadTest {
-		private ODatabaseDocument	database;
-		private ODocument					record;
-		private Date							date	= new Date();
+      record.save();
 
-		@Override
-		public void init() {
-			database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
-			record = database.newInstance();
-			database.declareIntent(new OIntentMassiveInsert());
-			database.begin(TXTYPE.NOTX);
-		}
+      if (data.getCyclesDone() == data.getCycles() - 1)
+        database.commit();
+    }
 
-		public void cycle() {
-			record.reset();
+    @Override
+    public void deinit() throws Exception {
+      if (database != null)
+        database.close();
+      super.deinit();
+    }
+  }
 
-			record.setClassName("Account");
-			record.field("id", data.getCyclesDone());
-			record.field("name", "Luca");
-			record.field("surname", "Garulli");
-			record.field("birthDate", date);
-			record.field("salary", 3000f + data.getCyclesDone());
+  public LocalCreateDocumentMultiThreadSpeedTest() {
+    super(1000000, 20, CreateObjectsThread.class);
+  }
 
-			record.save();
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    // System.setProperty("url", "memory:test");
+    LocalCreateDocumentMultiThreadSpeedTest test = new LocalCreateDocumentMultiThreadSpeedTest();
+    test.data.go(test);
+  }
 
-			if (data.getCyclesDone() == data.getCycles() - 1)
-				database.commit();
-		}
+  @Override
+  public void init() {
+    database = new ODatabaseDocumentTx(System.getProperty("url"));
+    if (database.exists())
+      // database.open("admin", "admin");
+      // else
+      database.drop();
 
-		@Override
-		public void deinit() throws Exception {
-			if (database != null)
-				database.close();
-			super.deinit();
-		}
-	}
+    database.create();
 
-	@Override
-	public void deinit() {
-		long total = database.countClusterElements("Account");
+    foundObjects = 0;// database.countClusterElements("Account");
 
-		System.out.println("\nTotal objects in Account cluster after the test: " + total);
-		System.out.println("Created " + (total - foundObjects));
-		Assert.assertEquals(total - foundObjects, threadCycles);
+    System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
+  }
 
-		if (database != null)
-			database.close();
-	}
+  @Override
+  public void deinit() {
+    long total = database.countClusterElements("Account");
+
+    System.out.println("\nTotal objects in Account cluster after the test: " + total);
+    System.out.println("Created " + (total - foundObjects));
+    Assert.assertEquals(total - foundObjects, threadCycles);
+
+    if (database != null)
+      database.close();
+  }
 }

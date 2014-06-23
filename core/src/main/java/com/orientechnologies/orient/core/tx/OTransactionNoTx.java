@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -29,8 +26,12 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * No operation transaction.
@@ -49,18 +50,19 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void commit() {
   }
 
+  @Override
+  public void commit(boolean force) {
+  }
+
   public void rollback() {
   }
 
-  public void close() {
-  }
-
   public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,
-      boolean ignonreCache, boolean loadTombstone) {
+      final boolean ignonreCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     if (iRid.isNew())
       return null;
 
-    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignonreCache, loadTombstone);
+    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignonreCache, loadTombstone, iLockingStrategy);
   }
 
   /**
@@ -74,13 +76,13 @@ public class OTransactionNoTx extends OTransactionAbstract {
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     try {
-      database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), iRecord.getRecordType(), true, iMode,
-          iForceCreate, iRecordCreatedCallback, null);
+      database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
+          iRecordCreatedCallback, null);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
       if (rid.isValid())
-        database.getLevel1Cache().freeRecord(rid);
+        database.getLocalCache().freeRecord(rid);
 
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
@@ -95,7 +97,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
-      database.getLevel1Cache().freeRecord(rid);
+      database.getLocalCache().freeRecord(rid);
 
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
@@ -116,7 +118,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
       if (rid.isValid())
-        database.getLevel1Cache().freeRecord(rid);
+        database.getLocalCache().freeRecord(rid);
 
       if (e instanceof RuntimeException)
         throw (RuntimeException) e;
@@ -170,22 +172,20 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public void addIndexEntry(final OIndex<?> delegate, final String iIndexName, final OPERATION iStatus, final Object iKey,
-      final OIdentifiable iValue) {
-    switch (iStatus) {
+  public void addIndexEntry(final OIndex<?> delegate, final String indexName, final OPERATION status, final Object key,
+      final OIdentifiable value) {
+    switch (status) {
     case CLEAR:
       delegate.clear();
       break;
 
     case PUT:
-      delegate.put(iKey, iValue);
+      delegate.put(key, value);
       break;
 
     case REMOVE:
-      if (iKey == null)
-        delegate.remove(iValue);
-      else
-        delegate.remove(iKey, iValue);
+      assert key != null;
+      delegate.remove(key, value);
       break;
     }
   }
@@ -206,5 +206,14 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   public void updateIdentityAfterCommit(ORID oldRid, ORID newRid) {
+  }
+
+  @Override
+  public int amountOfNestedTxs() {
+    return 0;
+  }
+
+  @Override
+  public void rollback(boolean force, int commitLevelDiff) {
   }
 }

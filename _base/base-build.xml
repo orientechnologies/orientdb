@@ -13,6 +13,9 @@
     <property name="project.debug-level" value="lines,vars,source"/>
     <property name="project.target-comp" value="1.6"/>
     <property name="project.source-comp" value="1.6"/>
+    <property name="ant.build.javac.source" value="1.6"/>
+    <property name="ant.build.javac.target" value="1.6"/>
+
     <property name="build.sysclasspath" value="ignore"/>
 
     <path id="project.classpath">
@@ -38,7 +41,7 @@
         <mkdir dir="${project.lib}"/>
         <javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}"
                target="${project.target-comp}" source="${project.source-comp}" verbose="false"
-               includeAntRuntime="false">
+               includeAntRuntime="false" encoding="UTF-8">
             <src path="${project.src}"/>
             <src path="${project.src2}"/>
             <classpath refid="project.classpath"/>

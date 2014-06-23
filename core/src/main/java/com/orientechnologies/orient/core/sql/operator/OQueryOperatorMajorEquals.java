@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -26,6 +24,8 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+
+import java.util.List;
 
 /**
  * MAJOR EQUALS operator.
@@ -57,15 +57,14 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, int fetchLimit) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
+    OIndexCursor cursor;
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
 
-    final Object result;
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
       if (indexDefinition instanceof OIndexDefinitionMultiValue)
@@ -76,12 +75,7 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.count(key, true, null, false, fetchLimit);
-      else if (fetchLimit > -1)
-        result = index.getValuesMajor(key, true, fetchLimit);
-      else
-        result = index.getValuesMajor(key, true);
+      cursor = index.iterateEntriesMajor(key, true, ascSortOrder);
     } else {
       // if we have situation like "field1 = 1 AND field2 >= 2"
       // then we fetch collection which left included boundary is the smallest composite key in the
@@ -100,16 +94,11 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.count(keyOne, true, keyTwo, true, fetchLimit);
-      else if (fetchLimit > -1)
-        result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-      else
-        result = index.getValuesBetween(keyOne, true, keyTwo, true);
+      cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return result;
+    return cursor;
   }
 
   @Override
@@ -118,8 +107,9 @@ public class OQueryOperatorMajorEquals extends OQueryOperatorEqualityNotNulls {
       if (iRight instanceof ORID)
         return (ORID) iRight;
       else {
-        if (iRight instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) iRight).getValue(null, null) instanceof ORID)
-          return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null);
+        if (iRight instanceof OSQLFilterItemParameter
+            && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID)
+          return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null);
       }
 
     return null;

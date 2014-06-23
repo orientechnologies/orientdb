@@ -15,13 +15,10 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocatorLocal;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -31,6 +28,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+
+import java.io.IOException;
 
 /**
  * Interface for embedded storage.
@@ -46,7 +45,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   protected final String             PROFILER_DELETE_RECORD;
 
   public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
-    super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger(), new OCacheLevelTwoLocatorLocal());
+    super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
     lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger());
 
     PROFILER_CREATE_RECORD = "db." + name + ".createRecord";
@@ -55,19 +54,17 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     PROFILER_DELETE_RECORD = "db." + name + ".deleteRecord";
   }
 
-  public abstract OCluster getClusterByName(final String iClusterName);
-
   protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock,
-      boolean loadTombstones);
+      boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy);
 
   /**
    * Closes the storage freeing the lock manager first.
    */
   @Override
-  public void close(final boolean iForce) {
+  public void close(final boolean iForce, boolean onDelete) {
     if (checkForClose(iForce))
       lockManager.clear();
-    super.close(iForce);
+    super.close(iForce, onDelete);
   }
 
   /**
@@ -93,11 +90,10 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
     try {
 
-      final Object result = executor.execute(iCommand.getParameters());
-      return result;
+      return executor.execute(iCommand.getParameters());
 
     } catch (OException e) {
-      // PASS THROUGHT
+      // PASS THROUGH
       throw e;
     } catch (Exception e) {
       throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
@@ -200,6 +196,10 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
   public void releaseReadLock(final ORID iRid) {
     lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
+  }
+
+  public void releaseAllLocksOfCurrentThread() {
+    lockManager.releaseAllLocksOfRequester(Thread.currentThread());
   }
 
   @Override

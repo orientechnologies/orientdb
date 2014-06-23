@@ -15,11 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -28,17 +24,17 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+
+import java.util.*;
 
 /**
  * SQL UPDATE command.
@@ -55,6 +51,9 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   private OSQLQuery<ODocument> query;
   private String               indexName       = null;
   private int                  recordCount     = 0;
+  private String               lockStrategy    = "NONE";
+  private String               returning       = "COUNT";
+  private List<ORecord<?>>     allDeletedRecords;
 
   private OSQLFilter           compiledFilter;
 
@@ -64,7 +63,6 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDelete parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
     init((OCommandRequestText) iRequest);
 
@@ -83,11 +81,20 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
 
       if (!parserIsEnded()) {
-        parserNextWord(true);
+        while (!parserIsEnded()) {
+          final String word = parserGetLastWord();
 
-        if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE))
-          compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(),
-              KEYWORD_WHERE);
+          if (word.equals(KEYWORD_LOCK))
+            lockStrategy = parseLock();
+          else if (word.equals(KEYWORD_RETURN))
+            returning = parseReturn();
+          else if (word.equalsIgnoreCase(KEYWORD_WHERE))
+            compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()),
+                getContext(), KEYWORD_WHERE);
+
+          parserNextWord(true);
+        }
+
       } else
         parserSetCurrentPosition(-1);
 
@@ -96,6 +103,23 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this));
 
     } else {
+      parserNextWord(true);
+
+      while (!parserIsEnded()) {
+        final String word = parserGetLastWord();
+
+        if (word.equals(KEYWORD_LOCK))
+          lockStrategy = parseLock();
+        else if (word.equals(KEYWORD_RETURN))
+          returning = parseReturn();
+        else {
+          parserGoBack();
+          break;
+        }
+
+        parserNextWord(true);
+      }
+
       final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
       query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + condition, this));
     }
@@ -107,17 +131,29 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     if (query == null && indexName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
+    if (!returning.equalsIgnoreCase("COUNT"))
+      allDeletedRecords = new ArrayList<ORecord<?>>();
+
     if (query != null) {
       // AGAINST CLUSTERS AND CLASSES
+      if (lockStrategy.equals("RECORD"))
+        query.getContext().setVariable("$locking", OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK);
+
       query.execute(iArgs);
-      return recordCount;
+
+      if (returning.equalsIgnoreCase("COUNT"))
+        // RETURNS ONLY THE COUNT
+        return recordCount;
+      else
+        // RETURNS ALL THE DELETED RECORDS
+        return allDeletedRecords;
+
     } else {
       // AGAINST INDEXES
-
       if (compiledFilter != null)
         compiledFilter.bindParameters(iArgs);
 
-      final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+      final OIndex index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
       if (index == null)
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
@@ -125,9 +161,28 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       Object value = VALUE_NOT_FOUND;
 
       if (compiledFilter == null || compiledFilter.getRootCondition() == null) {
-        final long total = index.getSize();
-        index.clear();
-        return total;
+        if (returning.equalsIgnoreCase("COUNT")) {
+          // RETURNS ONLY THE COUNT
+          final long total = index.getSize();
+          index.clear();
+          return total;
+        } else {
+          // RETURNS ALL THE DELETED RECORDS
+          OIndexCursor cursor = index.cursor();
+          Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
+
+          while (entry != null) {
+            OIdentifiable rec = entry.getValue();
+            rec = rec.getRecord();
+            if (rec != null)
+              allDeletedRecords.add((ORecord<?>) rec);
+          }
+
+          index.clear();
+
+          return allDeletedRecords;
+        }
+
       } else {
         if (KEYWORD_KEY.equalsIgnoreCase(compiledFilter.getRootCondition().getLeft().toString()))
           // FOUND KEY ONLY
@@ -150,15 +205,17 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
         }
 
         final boolean result;
-        if (value != VALUE_NOT_FOUND)
-          if (key != null)
-            result = index.remove(key, (OIdentifiable) value);
-          else
-            return index.remove((OIdentifiable) value);
-        else
+        if (value != VALUE_NOT_FOUND) {
+          assert key != null;
+          result = index.remove(key, (OIdentifiable) value);
+        } else
           result = index.remove(key);
 
-        return result ? 1 : 0;
+        if (returning.equalsIgnoreCase("COUNT"))
+          return result ? 1 : 0;
+        else
+          // TODO: REFACTOR INDEX TO RETURN DELETED ITEMS
+          throw new UnsupportedOperationException();
       }
     }
   }
@@ -169,14 +226,22 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   public boolean result(final Object iRecord) {
     final ORecordAbstract<?> record = (ORecordAbstract<?>) iRecord;
 
-    if (record.getIdentity().isValid()) {
-      // RESET VERSION TO DISABLE MVCC AVOIDING THE CONCURRENT EXCEPTION IF LOCAL CACHE IS NOT UPDATED
-      record.getRecordVersion().disable();
-      record.delete();
-      recordCount++;
-      return true;
+    try {
+      if (record.getIdentity().isValid()) {
+        if (returning.equalsIgnoreCase("BEFORE"))
+          allDeletedRecords.add(record);
+
+        // RESET VERSION TO DISABLE MVCC AVOIDING THE CONCURRENT EXCEPTION IF LOCAL CACHE IS NOT UPDATED
+        record.getRecordVersion().disable();
+        record.delete();
+        recordCount++;
+        return true;
+      }
+      return false;
+    } finally {
+      if (lockStrategy.equalsIgnoreCase("RECORD"))
+        ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
     }
-    return false;
   }
 
   public boolean isReplicated() {
@@ -184,7 +249,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   }
 
   public String getSyntax() {
-    return "DELETE FROM <Class>|RID|cluster:<cluster> [WHERE <condition>*]";
+    return "DELETE FROM <Class>|RID|cluster:<cluster> [LOCK <NONE|RECORD>] [RETURNING <COUNT|BEFORE>] [WHERE <condition>*]";
   }
 
   private Object getIndexKey(final OIndexDefinition indexDefinition, Object value) {
@@ -209,6 +274,22 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       return OSQLHelper.getValue(value);
     }
   }
+
+    /**
+     * Parses the returning keyword if found.
+     */
+    protected String parseReturn() throws OCommandSQLParsingException {
+        parserNextWord(true);
+        final String returning = parserGetLastWord();
+
+        if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
+            throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
+                    + "' but it should be COUNT (default), BEFORE. Example: " + KEYWORD_RETURN + " BEFORE");
+
+        return returning;
+    }
+
+
 
   @Override
   public void end() {

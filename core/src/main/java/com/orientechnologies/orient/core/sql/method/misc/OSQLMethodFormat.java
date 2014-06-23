@@ -16,13 +16,13 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * 
@@ -38,16 +38,23 @@ public class OSQLMethodFormat extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(OIdentifiable iRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+  public Object execute(final Object iThis, final OIdentifiable iRecord, final OCommandContext iContext, Object ioResult,
+      final Object[] iParams) {
 
-    final Object v = getParameterValue(iRecord, iMethodParams[0].toString());
+    // TRY TO RESOLVE AS DYNAMIC VALUE
+    Object v = getParameterValue(iRecord, iParams[0].toString());
+    if (v == null)
+      // USE STATIC ONE
+      v = iParams[0].toString();
+
     if (v != null) {
       if (ioResult instanceof Date) {
         final SimpleDateFormat format = new SimpleDateFormat(v.toString());
-        if (iMethodParams.length > 1)
-          format.setTimeZone(TimeZone.getTimeZone(iMethodParams[1].toString()));
-        else
+        if (iParams.length > 1) {
+          format.setTimeZone(TimeZone.getTimeZone(iParams[1].toString()));
+        } else {
           format.setTimeZone(ODateHelper.getDatabaseTimeZone());
+        }
         ioResult = format.format(ioResult);
       } else {
         ioResult = ioResult != null ? String.format(v.toString(), ioResult) : null;

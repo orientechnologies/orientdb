@@ -15,20 +15,20 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * Abstract class to find paths between nodes.
@@ -36,60 +36,83 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OSQLFunctionPathFinder<T extends Comparable<T>> extends OSQLFunctionMathAbstract {
-  protected OrientBaseGraph     db;
-  protected Set<Vertex>         settledNodes;
-  protected Set<Vertex>         unSettledNodes;
-  protected Map<Vertex, Vertex> predecessors;
-  protected Map<Vertex, T>      distance;
+public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
+  protected OrientBaseGraph         db;
+  protected Set<OrientVertex>       unSettledNodes;
+  protected Map<ORID, OrientVertex> predecessors;
+  protected Map<ORID, Float>        distance;
 
-  protected Vertex              paramSourceVertex;
-  protected Vertex              paramDestinationVertex;
-  protected Direction           paramDirection = Direction.OUT;
+  protected OrientVertex            paramSourceVertex;
+  protected OrientVertex            paramDestinationVertex;
+  protected Direction               paramDirection = Direction.OUT;
+  protected OCommandContext         context;
+
+  protected static final float      MIN            = 0f;
 
   public OSQLFunctionPathFinder(final String iName, final int iMinParams, final int iMaxParams) {
     super(iName, iMinParams, iMaxParams);
   }
 
-  protected abstract T getDistance(Vertex node, Vertex target);
-
-  protected abstract T getShortestDistance(Vertex destination);
-
-  protected abstract T getMinimumDistance();
-
-  protected abstract T sumDistances(T iDistance1, T iDistance2);
-
-  public Object execute(final Object[] iParameters, final OCommandContext iContext) {
-    settledNodes = new HashSet<Vertex>();
-    unSettledNodes = new HashSet<Vertex>();
-    distance = new HashMap<Vertex, T>();
-    predecessors = new HashMap<Vertex, Vertex>();
-    distance.put(paramSourceVertex, getMinimumDistance());
+  protected LinkedList<OrientVertex> execute(final OCommandContext iContext) {
+    context = iContext;
+    unSettledNodes = new HashSet<OrientVertex>();
+    distance = new HashMap<ORID, Float>();
+    predecessors = new HashMap<ORID, OrientVertex>();
+    distance.put(paramSourceVertex.getIdentity(), MIN);
     unSettledNodes.add(paramSourceVertex);
 
+    int maxDistances = 0;
+    int maxSettled = 0;
+    int maxUnSettled = 0;
+    int maxPredecessors = 0;
+
     while (continueTraversing()) {
-      final Vertex node = getMinimum(unSettledNodes);
-      settledNodes.add(node);
+      final OrientVertex node = getMinimum(unSettledNodes);
       unSettledNodes.remove(node);
       findMinimalDistances(node);
+
+      if (distance.size() > maxDistances)
+        maxDistances = distance.size();
+      if (unSettledNodes.size() > maxUnSettled)
+        maxUnSettled = unSettledNodes.size();
+      if (predecessors.size() > maxPredecessors)
+        maxPredecessors = predecessors.size();
+
+      if (!isVariableEdgeWeight() && distance.containsKey(paramDestinationVertex.getIdentity()))
+        // FOUND
+        break;
+
+      if (!context.checkTimeout())
+        break;
     }
 
+    context.setVariable("maxDistances", maxDistances);
+    context.setVariable("maxSettled", maxSettled);
+    context.setVariable("maxUnSettled", maxUnSettled);
+    context.setVariable("maxPredecessors", maxPredecessors);
+
+    distance = null;
+
     return getPath();
+  }
+
+  protected boolean isVariableEdgeWeight() {
+    return false;
   }
 
   /*
    * This method returns the path from the source to the selected target and NULL if no path exists
    */
-  public LinkedList<Vertex> getPath() {
-    final LinkedList<Vertex> path = new LinkedList<Vertex>();
-    Vertex step = paramDestinationVertex;
+  public LinkedList<OrientVertex> getPath() {
+    final LinkedList<OrientVertex> path = new LinkedList<OrientVertex>();
+    OrientVertex step = paramDestinationVertex;
     // Check if a path exists
-    if (predecessors.get(step) == null)
+    if (predecessors.get(step.getIdentity()) == null)
       return null;
 
     path.add(step);
-    while (predecessors.get(step) != null) {
-      step = predecessors.get(step);
+    while (predecessors.get(step.getIdentity()) != null) {
+      step = predecessors.get(step.getIdentity());
       path.add(step);
     }
     // Put it into the correct order
@@ -106,44 +129,64 @@ public abstract class OSQLFunctionPathFinder<T extends Comparable<T>> extends OS
     return getPath();
   }
 
-  protected void findMinimalDistances(final Vertex node) {
-    final List<Vertex> adjacentNodes = getNeighbors(node);
-    for (Vertex target : adjacentNodes) {
-      final T d = sumDistances(getShortestDistance(node), getDistance(node, target));
+  protected void findMinimalDistances(final OrientVertex node) {
+    for (OrientVertex neighbor : getNeighbors(node)) {
+      final float d = sumDistances(getShortestDistance(node), getDistance(node, neighbor));
 
-      if (getShortestDistance(target).compareTo(d) > 0) {
-        distance.put(target, d);
-        predecessors.put(target, node);
-        unSettledNodes.add(target);
+      if (getShortestDistance(neighbor) > d) {
+        distance.put(neighbor.getIdentity(), d);
+        predecessors.put(neighbor.getIdentity(), node);
+        unSettledNodes.add(neighbor);
       }
     }
 
   }
 
-  protected List<Vertex> getNeighbors(final Vertex node) {
-    final List<Vertex> neighbors = new ArrayList<Vertex>();
+  protected Set<OrientVertex> getNeighbors(final Vertex node) {
+    context.incrementVariable("getNeighbors");
+
+    final Set<OrientVertex> neighbors = new HashSet<OrientVertex>();
     if (node != null) {
-      for (Vertex v : node.getVertices(paramDirection))
-        if (v != null && !isSettled(v))
-          neighbors.add(v);
+      for (Vertex v : node.getVertices(paramDirection)) {
+        final OrientVertex ov = (OrientVertex) v;
+        if (ov != null && isNotSettled(ov))
+          neighbors.add(ov);
+      }
     }
     return neighbors;
   }
 
-  protected Vertex getMinimum(final Set<Vertex> vertexes) {
-    Vertex minimum = null;
-    for (Vertex vertex : vertexes) {
-      if (minimum == null || getShortestDistance(vertex).compareTo(getShortestDistance(minimum)) < 0)
+  protected OrientVertex getMinimum(final Set<OrientVertex> vertexes) {
+    OrientVertex minimum = null;
+    Float minimumDistance = null;
+    for (OrientVertex vertex : vertexes) {
+      if (minimum == null || getShortestDistance(vertex) < minimumDistance) {
         minimum = vertex;
+        minimumDistance = getShortestDistance(minimum);
+      }
     }
     return minimum;
   }
 
-  protected boolean isSettled(final Vertex vertex) {
-    return settledNodes.contains(vertex.getId());
+  protected boolean isNotSettled(final OrientVertex vertex) {
+    return unSettledNodes.contains(vertex) || !distance.containsKey(vertex.getIdentity());
   }
 
   protected boolean continueTraversing() {
     return unSettledNodes.size() > 0;
   }
+
+  protected float getShortestDistance(final OrientVertex destination) {
+    if (destination == null)
+      return Float.MAX_VALUE;
+
+    final Float d = distance.get(destination.getIdentity());
+    return d == null ? Float.MAX_VALUE : d;
+  }
+
+  protected float sumDistances(final float iDistance1, final float iDistance2) {
+    return iDistance1 + iDistance2;
+  }
+
+  protected abstract float getDistance(final OrientVertex node, final OrientVertex target);
 }

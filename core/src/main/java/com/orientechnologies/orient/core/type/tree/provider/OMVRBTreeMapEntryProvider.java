@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBooleanSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -27,7 +28,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -39,16 +39,16 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
    * Current version of serialization format for single MVRBTree node. Versions have negative numbers for backward compatibility
    * with previous format that does not have version number, but first value in serialized content was non-negative integer.
    */
-  private static final int          CURRENT_VERSION  = -1;
-  private static final OJVMProfiler PROFILER         = Orient.instance().getProfiler();
+  private static final int            CURRENT_VERSION  = -1;
+  private static final OProfilerMBean PROFILER         = Orient.instance().getProfiler();
 
-  private static final long         serialVersionUID = 1L;
-  protected K[]                     keys;
-  protected V[]                     values;
-  protected int[]                   serializedKeys;
-  protected int[]                   serializedValues;
+  private static final long           serialVersionUID = 1L;
+  protected K[]                       keys;
+  protected V[]                       values;
+  protected int[]                     serializedKeys;
+  protected int[]                     serializedValues;
 
-  private byte[]                    buffer;
+  private byte[]                      buffer;
 
   public OMVRBTreeMapEntryProvider(final OMVRBTreeMapProvider<K, V> iTreeDataProvider) {
     super(iTreeDataProvider, OMemoryStream.DEF_SIZE);

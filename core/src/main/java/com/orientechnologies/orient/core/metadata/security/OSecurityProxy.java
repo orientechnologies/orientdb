@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.metadata.security.ORole.ALLOW_MODES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Proxy class for user management
@@ -74,9 +74,9 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
     delegate.load();
   }
 
-  public void close() {
+  public void close(boolean onDelete) {
     if (delegate != null)
-      delegate.close();
+      delegate.close(false);
   }
 
   public OUser authenticate(final String iUsername, final String iUserPassword) {
@@ -134,8 +134,13 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
   public boolean dropRole(final String iRoleName) {
     return delegate.dropRole(iRoleName);
   }
-  
+
   public void createClassTrigger() {
     delegate.createClassTrigger();
+  }
+
+  @Override
+  public OSecurity getUnderlying() {
+    return delegate;
   }
 }

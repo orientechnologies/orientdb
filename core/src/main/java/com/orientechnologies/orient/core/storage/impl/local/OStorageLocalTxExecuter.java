@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
@@ -31,17 +26,23 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OStorageLocalTxExecuter {
   private final OStorageLocal storage;
@@ -114,7 +115,7 @@ public class OStorageLocalTxExecuter {
       final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType) {
     try {
       // READ CURRENT RECORD CONTENT
-      final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true, false);
+      final ORawBuffer buffer = storage.readRecord(iClusterSegment, iRid, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
 
       if (buffer == null)
         if (OFastConcurrentModificationException.enabled())
@@ -146,7 +147,7 @@ public class OStorageLocalTxExecuter {
       final ORecordId rid = new ORecordId(iClusterSegment.getId(), iPosition);
 
       // READ CURRENT RECORD CONTENT
-      final ORawBuffer buffer = storage.readRecord(iClusterSegment, rid, true, false);
+      final ORawBuffer buffer = storage.readRecord(iClusterSegment, rid, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
 
       if (buffer != null) {
         // SAVE INTO THE LOG THE OLD RECORD
@@ -212,7 +213,9 @@ public class OStorageLocalTxExecuter {
     if (rid.clusterId == ORID.CLUSTER_ID_INVALID && txEntry.getRecord() instanceof ODocument
         && ((ODocument) txEntry.getRecord()).getSchemaClass() != null) {
       // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
-      rid.clusterId = ((ODocument) txEntry.getRecord()).getSchemaClass().getDefaultClusterId();
+      final OClass schemaClass = ((ODocument) txEntry.getRecord()).getSchemaClass();
+
+      rid.clusterId = schemaClass.getClusterForNewInstance();
     }
 
     final OCluster cluster = storage.getClusterById(rid.clusterId);
@@ -223,7 +226,7 @@ public class OStorageLocalTxExecuter {
       // AVOID TO COMMIT INDEX STUFF
       return;
 
-    if (!(cluster instanceof OClusterLocal || cluster instanceof OClusterLocalEH))
+    if (!(cluster instanceof OClusterLocal))
       // ONLY LOCAL CLUSTER ARE INVOLVED IN TX
       return;
 

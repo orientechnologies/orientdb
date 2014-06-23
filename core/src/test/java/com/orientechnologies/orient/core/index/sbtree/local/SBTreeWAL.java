@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.*;
@@ -27,7 +28,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
@@ -59,6 +60,8 @@ public class SBTreeWAL extends SBTreeTest {
   private OStorageConfiguration           expectedStorageConfiguration;
   private OStorageConfiguration           actualStorageConfiguration;
 
+  private OAtomicOperationsManager        actualAtomicOperationsManager;
+
   @BeforeClass
   @Override
   public void beforeClass() {
@@ -88,6 +91,8 @@ public class SBTreeWAL extends SBTreeTest {
   @AfterMethod
   @Override
   public void afterMethod() throws Exception {
+    Assert.assertNull(actualAtomicOperationsManager.getCurrentOperation());
+
     sbTree.delete();
     expectedSBTree.delete();
 
@@ -121,20 +126,22 @@ public class SBTreeWAL extends SBTreeTest {
 
     actualDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, actualStorage, null, false, false);
+    actualAtomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(actualStorageDir);
 
     when(actualStorage.getStorageTransaction()).thenReturn(null);
     when(actualStorage.getDiskCache()).thenReturn(actualDiskCache);
     when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
+    when(actualStorage.getAtomicOperationsManager()).thenReturn(actualAtomicOperationsManager);
     when(actualStorage.getVariableParser()).thenReturn(variableParser);
     when(actualStorage.getConfiguration()).thenReturn(actualStorageConfiguration);
     when(actualStorage.getMode()).thenReturn("rw");
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, actualStorage);
+    sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true, ".nbt");
+    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, actualStorage, false);
   }
 
   private void createExpectedSBTree() {
@@ -157,18 +164,20 @@ public class SBTreeWAL extends SBTreeTest {
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, expectedStorage, null, false, false);
 
     OStorageVariableParser variableParser = new OStorageVariableParser(expectedStorageDir);
+    OAtomicOperationsManager atomicOperationsManager = new OAtomicOperationsManager(null);
 
     when(expectedStorage.getStorageTransaction()).thenReturn(null);
     when(expectedStorage.getDiskCache()).thenReturn(expectedDiskCache);
     when(expectedStorage.getWALInstance()).thenReturn(null);
+    when(expectedStorage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
     when(expectedStorage.getVariableParser()).thenReturn(variableParser);
     when(expectedStorage.getConfiguration()).thenReturn(expectedStorageConfiguration);
     when(expectedStorage.getMode()).thenReturn("rw");
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, expectedStorage);
+    expectedSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, true, ".nbt");
+    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, expectedStorage, false);
   }
 
   @Override
@@ -220,22 +229,43 @@ public class SBTreeWAL extends SBTreeTest {
     assertFileRestoreFromWAL();
   }
 
-  @Test(enabled = false)
   @Override
-  public void testValuesMajor() {
-    super.testValuesMajor();
+  public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
+    super.testAddKeyValuesInTwoBucketsAndMakeFirstEmpty();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
+    super.testAddKeyValuesInTwoBucketsAndMakeLastEmpty();
+
+    assertFileRestoreFromWAL();
+  }
+
+  @Override
+  public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
+    super.testAddKeyValuesAndRemoveFirstMiddleAndLastPages();
+
+    assertFileRestoreFromWAL();
   }
 
   @Test(enabled = false)
   @Override
-  public void testValuesMinor() {
-    super.testValuesMinor();
+  public void testIterateEntriesMajor() {
+    super.testIterateEntriesMajor();
   }
 
   @Test(enabled = false)
   @Override
-  public void testValuesBetween() {
-    super.testValuesBetween();
+  public void testIterateEntriesMinor() {
+    super.testIterateEntriesMinor();
+  }
+
+  @Test(enabled = false)
+  @Override
+  public void testIterateEntriesBetween() {
+    super.testIterateEntriesBetween();
   }
 
   private void assertFileRestoreFromWAL() throws IOException {

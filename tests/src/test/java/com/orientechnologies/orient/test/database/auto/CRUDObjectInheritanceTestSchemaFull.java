@@ -59,15 +59,20 @@ import com.orientechnologies.orient.test.domain.schemageneration.TestSchemaGener
 @Test(groups = { "crud", "object", "schemafull", "inheritanceSchemaFull" })
 public class CRUDObjectInheritanceTestSchemaFull {
   protected static final int TOT_RECORDS = 10;
+  public static final String EXPORT_DIR  = "target/objectSchemaTest/database.export.gz";
+
   protected long             startRecordNumber;
   private OObjectDatabaseTx  database;
   private City               redmond     = new City(new Country("Washington"), "Redmond");
   private String             url;
+  private String             testsRoot;
 
-  @Parameters(value = "url")
-  public CRUDObjectInheritanceTestSchemaFull(String iURL) {
+  @Parameters(value = { "url", "testPath" })
+  public CRUDObjectInheritanceTestSchemaFull(String iURL, String iTestPath) {
     url = iURL;
-
+    testsRoot = iTestPath;
+    if (testsRoot != null && testsRoot.length() > 0)
+      testsRoot = testsRoot + "/";
   }
 
   @BeforeClass
@@ -85,16 +90,19 @@ public class CRUDObjectInheritanceTestSchemaFull {
 
         }
       };
-      ODatabaseExport export = new ODatabaseExport(exportDatabase, "objectSchemaTest/target/database.export.gz", listener);
+      ODatabaseExport export = new ODatabaseExport(exportDatabase, testsRoot + EXPORT_DIR, listener);
       export.exportDatabase();
       export.close();
       exportDatabase.close();
       ODatabaseDocumentTx importDatabase = new ODatabaseDocumentTx(url + "_objectschema");
       importDatabase.open("admin", "admin");
-      ODatabaseImport impor = new ODatabaseImport(importDatabase, "objectSchemaTest/target/database.export.gz", listener);
+      ODatabaseImport impor = new ODatabaseImport(importDatabase, testsRoot + EXPORT_DIR, listener);
+
+      if (url.startsWith("local:") || url.startsWith("memory:"))
+        impor.setPreserveClusterIDs(false);
 
       // UNREGISTER ALL THE HOOKS
-      for (ORecordHook hook : new ArrayList<ORecordHook>(importDatabase.getHooks())) {
+      for (ORecordHook hook : new ArrayList<ORecordHook>(importDatabase.getHooks().keySet())) {
         importDatabase.unregisterHook(hook);
       }
 
@@ -103,7 +111,7 @@ public class CRUDObjectInheritanceTestSchemaFull {
       impor.close();
 
       importDatabase.close();
-      final File importDir = new File("objectSchemaTest/target/database.export.gz");
+      final File importDir = new File(testsRoot + EXPORT_DIR);
       importDir.delete();
     } catch (IOException e) {
       Assert.fail("Export import didn't go as expected", e);
@@ -238,6 +246,10 @@ public class CRUDObjectInheritanceTestSchemaFull {
     OClass abstractClass = database.getMetadata().getSchema().getClass(InheritanceTestAbstractClass.class);
     OClass baseClass = database.getMetadata().getSchema().getClass(InheritanceTestBaseClass.class);
     OClass testClass = database.getMetadata().getSchema().getClass(InheritanceTestClass.class);
+    Assert.assertTrue(abstractClass.isAbstract());
+    Assert.assertEquals(abstractClass.getDefaultClusterId(), -1);
+    Assert.assertEquals(abstractClass.getClusterIds().length, 1);
+    Assert.assertEquals(abstractClass.getClusterIds()[0], -1);
     Assert.assertEquals(baseClass.getSuperClass(), abstractClass);
     Assert.assertEquals(baseClass.getSuperClass().getName(), abstractClass.getName());
     Assert.assertEquals(testClass.getSuperClass(), baseClass);
@@ -355,6 +367,14 @@ public class CRUDObjectInheritanceTestSchemaFull {
     checkProperty(testSchemaClass, "embeddedChildren", OType.EMBEDDEDMAP, childClass);
     checkProperty(testSchemaClass, "embeddedChild", OType.EMBEDDED, childClass);
     checkProperty(testSchemaClass, "embeddedList", OType.EMBEDDEDLIST, childClass);
+
+    // Test transientFields
+    checkNotExistsProperty(testSchemaClass, "tranisentText");
+    checkNotExistsProperty(testSchemaClass, "transientList ");
+    checkNotExistsProperty(testSchemaClass, "transientSet");
+    checkNotExistsProperty(testSchemaClass, "transientChildren");
+    checkNotExistsProperty(testSchemaClass, "transientDocument ");
+    checkNotExistsProperty(testSchemaClass, "transientDateField");
 
     database.setAutomaticSchemaGeneration(false);
     database.close();

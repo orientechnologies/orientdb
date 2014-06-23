@@ -305,10 +305,16 @@ public abstract class OAbstractFile implements OFile {
     try {
       close();
       if (osFile != null) {
-        boolean deleted = osFile.delete();
+        boolean deleted = OFileUtils.delete(osFile);
+        int retryCount = 0;
+
         while (!deleted) {
           OMemoryWatchDog.freeMemoryForResourceCleanup(100);
-          deleted = osFile.delete();
+          deleted = OFileUtils.delete(osFile);
+          retryCount++;
+
+          if (retryCount > 10)
+            throw new IOException("Can not delete file. Retry limit exceeded.");
         }
       }
     } finally {
@@ -359,7 +365,7 @@ public abstract class OAbstractFile implements OFile {
     try {
       for (int i = 0; i < LOCK_MAX_RETRIES; ++i) {
         try {
-          fileLock = channel.tryLock(0, 1, true);
+          fileLock = channel.tryLock();
           if (fileLock != null)
             break;
         } catch (OverlappingFileLockException e) {
@@ -810,10 +816,18 @@ public abstract class OAbstractFile implements OFile {
     }
   }
 
-  public boolean renameTo(final File newFile) {
+  public boolean renameTo(final File newFile) throws IOException {
     acquireWriteLock();
     try {
-      return osFile.renameTo(newFile);
+      close();
+
+      final boolean renamed = OFileUtils.renameFile(osFile, newFile);
+      if (renamed)
+        osFile = newFile;
+
+      open();
+
+      return renamed;
     } finally {
       releaseWriteLock();
     }

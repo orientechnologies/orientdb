@@ -551,7 +551,7 @@ public class OMultiFileSegment extends OSegment {
     }
   }
 
-  public void rename(String iOldName, String iNewName) {
+  public void rename(String iOldName, String iNewName) throws IOException {
     readWriteLock.writeLock().lock();
     try {
       for (OFile file : files) {

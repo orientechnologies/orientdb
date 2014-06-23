@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandRequestAsynch;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 
+import java.util.Map;
+
 /**
- * SQL asynchronous query. When executed the caller does not wait the the execution, rather the listener will be called for each
+ * SQL asynchronous query. When executed the caller does not wait for the execution, rather the listener will be called for each
  * item found in the query. OSQLAsynchQuery has been built on top of this. NOTE: if you're working with remote databases don't
  * execute any remote call inside the callback function because the network channel is locked until the query command has finished.
  * 
@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
  */
 public class OSQLAsynchQuery<T extends Object> extends OSQLQuery<T> implements OCommandRequestAsynch {
   private static final long serialVersionUID = 1L;
-  protected int             resultCount      = 0;
 
   /**
    * Empty constructor for unmarshalling.

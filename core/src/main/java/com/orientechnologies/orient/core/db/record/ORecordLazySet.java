@@ -58,6 +58,11 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
     delegate = new ORecordLazyList(iSourceRecord).setListener(this);
   }
 
+  @Override
+  public ORecordElement getOwner() {
+    return delegate.getOwner();
+  }
+
   public ORecordLazySet(final ODocument iSourceRecord, final ORecordLazySet iSource) {
     delegate = iSource.delegate.copy(iSourceRecord).setListener(this);
     sorted = iSource.sorted;

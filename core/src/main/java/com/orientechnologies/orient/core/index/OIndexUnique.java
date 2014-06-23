@@ -19,6 +19,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Index implementation that allows only one value for a key.
  * 
@@ -26,18 +31,21 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
  * 
  */
 public class OIndexUnique extends OIndexOneValue {
-  public OIndexUnique(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine) {
-    super(typeId, algorithm, engine);
+  public OIndexUnique(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm) {
+    super(typeId, algorithm, engine, valueContainerAlgorithm);
   }
 
-  public OIndexOneValue put(final Object key, final OIdentifiable iSingleValue) {
+  @Override
+  public OIndexOneValue put(Object key, final OIdentifiable iSingleValue) {
     checkForRebuild();
+
+    key = getCollatingValue(key);
 
     modificationLock.requestModificationLock();
     try {
+      checkForKeyType(key);
       acquireExclusiveLock();
       try {
-        checkForKeyType(key);
         final OIdentifiable value = indexEngine.get(key);
 
         if (value != null) {
@@ -64,6 +72,81 @@ public class OIndexUnique extends OIndexOneValue {
     }
   }
 
+  @Override
+  protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+
+    Object snapshotValue = snapshot.get(key);
+    if (snapshotValue == null) {
+      final OIdentifiable storedValue = indexEngine.get(key);
+
+      final Set<OIdentifiable> values = new LinkedHashSet<OIdentifiable>();
+
+      if (storedValue != null)
+        values.add(storedValue.getIdentity());
+
+      values.add(value.getIdentity());
+
+      snapshot.put(key, values);
+    } else if (snapshotValue instanceof Set) {
+      final Set<OIdentifiable> values = (Set<OIdentifiable>) snapshotValue;
+
+      values.add(value.getIdentity());
+    } else {
+      final Set<OIdentifiable> values = new LinkedHashSet<OIdentifiable>();
+
+      values.add(value);
+      snapshot.put(key, values);
+    }
+  }
+
+  @Override
+  protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+    key = getCollatingValue(key);
+
+    Object snapshotValue = snapshot.get(key);
+
+    if (snapshotValue instanceof Set) {
+      final Set<OIdentifiable> values = (Set<OIdentifiable>) snapshotValue;
+      if (values.isEmpty())
+        snapshot.put(key, RemovedValue.INSTANCE);
+      else
+        values.remove(value);
+    } else
+      snapshot.put(key, RemovedValue.INSTANCE);
+  }
+
+  @Override
+  protected void commitSnapshot(Map<Object, Object> snapshot) {
+    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+      Object key = snapshotEntry.getKey();
+      checkForKeyType(key);
+
+      Object snapshotValue = snapshotEntry.getValue();
+      if (snapshotValue instanceof Set) {
+        Set<OIdentifiable> values = (Set<OIdentifiable>) snapshotValue;
+        if (values.isEmpty())
+          continue;
+
+        final Iterator<OIdentifiable> valuesIterator = values.iterator();
+        if (values.size() > 1) {
+          final OIdentifiable valueOne = valuesIterator.next();
+          final OIdentifiable valueTwo = valuesIterator.next();
+          throw new ORecordDuplicatedException(String.format(
+              "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+              valueTwo.getIdentity(), key, getName(), valueOne.getIdentity()), valueOne.getIdentity());
+        }
+
+        final OIdentifiable value = valuesIterator.next();
+        indexEngine.put(key, value.getIdentity());
+      } else if (snapshotValue.equals(RemovedValue.INSTANCE))
+        indexEngine.remove(key);
+      else
+        assert false : "Provided value can not be committed";
+    }
+  }
+
+  @Override
   public boolean canBeUsedInEqualityOperators() {
     return true;
   }

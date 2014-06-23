@@ -27,12 +27,12 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OAsynchChannelServiceThread extends OSoftThread {
-  private OChannelBinaryClient       network;
+  private OChannelBinaryAsynchClient network;
   private int                        sessionId;
   private ORemoteServerEventListener remoteServerEventListener;
 
   public OAsynchChannelServiceThread(final ORemoteServerEventListener iRemoteServerEventListener,
-      final OChannelBinaryClient iChannel) {
+      final OChannelBinaryAsynchClient iChannel) {
     super(Orient.instance().getThreadGroup(), "OrientDB <- Asynch Client (" + iChannel.socket.getRemoteSocketAddress() + ")");
     sessionId = Integer.MIN_VALUE;
     remoteServerEventListener = iRemoteServerEventListener;
@@ -49,10 +49,6 @@ public class OAsynchChannelServiceThread extends OSoftThread {
       Object obj = null;
 
       switch (request) {
-      case OChannelBinaryProtocol.REQUEST_PUSH_RECORD:
-        obj = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
-        break;
-
       case OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG:
         obj = network.readBytes();
         break;
@@ -65,7 +61,7 @@ public class OAsynchChannelServiceThread extends OSoftThread {
       // EXCEPTION RECEIVED (THE SOCKET HAS BEEN CLOSED?) ASSURE TO UNLOCK THE READ AND EXIT THIS THREAD
       sendShutdown();
       if (network != null) {
-        final OChannelBinaryClient n = network;
+        final OChannelBinaryAsynchClient n = network;
         network = null;
         n.close();
       }

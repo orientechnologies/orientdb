@@ -35,9 +35,10 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
     super(iURL);
   }
 
+  @Override
   @BeforeClass
-  public void setUp() throws Exception {
-    super.setUp();
+  public void beforeClass() throws Exception {
+    super.beforeClass();
 
     if (database.isClosed())
       database.open("admin", "admin");
@@ -50,13 +51,14 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
   }
 
   @AfterClass
-  public void tearDown() {
+  public void afterClass() throws Exception {
     if (database.isClosed())
       database.open("admin", "admin");
 
     database.getMetadata().getSchema().dropClass(TEST_CLASS);
 
     database.close();
+    super.afterClass();
   }
 
   @Test

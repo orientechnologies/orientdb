@@ -18,15 +18,12 @@ package com.orientechnologies.orient.core.storage;
 import java.util.Arrays;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageMemoryClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageMemoryLinearHashingClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
-import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterLocalEH;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryArrayList;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryHashing;
@@ -34,13 +31,11 @@ import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryHashi
 public class ODefaultClusterFactory implements OClusterFactory {
   protected static final String[] TYPES = { OClusterLocal.TYPE, OClusterMemory.TYPE };
 
-  public OCluster createCluster(final String iType, boolean forceListBasedCluster) {
+  public OCluster createCluster(final String iType) {
     if (iType.equalsIgnoreCase(OClusterLocal.TYPE))
-      return OGlobalConfiguration.USE_LHPEPS_CLUSTER.getValueAsBoolean() && !forceListBasedCluster ? new OClusterLocalEH()
-          : new OClusterLocal();
+      return new OClusterLocal();
     else if (iType.equalsIgnoreCase(OClusterMemory.TYPE))
-      return OGlobalConfiguration.USE_LHPEPS_MEMORY_CLUSTER.getValueAsBoolean() && !forceListBasedCluster ? new OClusterMemoryHashing()
-          : new OClusterMemoryArrayList();
+      return new OClusterMemoryArrayList();
     else
       OLogManager.instance().exception(
           "Cluster type '" + iType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
@@ -51,8 +46,6 @@ public class ODefaultClusterFactory implements OClusterFactory {
   public OCluster createCluster(final OStorageClusterConfiguration iConfig) {
     if (iConfig instanceof OStoragePhysicalClusterConfigurationLocal)
       return new OClusterLocal();
-    else if (iConfig instanceof OStorageEHClusterConfiguration)
-      return new OClusterLocalEH();
     else if (iConfig instanceof OStorageMemoryClusterConfiguration)
       return new OClusterMemoryArrayList();
     else if (iConfig instanceof OStorageMemoryLinearHashingClusterConfiguration)

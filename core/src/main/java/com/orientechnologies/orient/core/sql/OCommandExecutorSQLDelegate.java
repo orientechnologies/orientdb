@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Locale;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * SQL UPDATE command.
@@ -38,6 +38,9 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
     if (iCommand instanceof OCommandRequestText) {
       final OCommandRequestText textRequest = (OCommandRequestText) iCommand;
       final String text = textRequest.getText();
+      if (text == null)
+        throw new IllegalArgumentException("Command text is null");
+
       final String textUpperCase = text.toUpperCase(Locale.ENGLISH);
 
       delegate = (OCommandExecutorSQLAbstract) OSQLEngine.getInstance().getCommand(textUpperCase);

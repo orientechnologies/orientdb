@@ -18,10 +18,12 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.Collection;
 import java.util.List;
 
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -29,6 +31,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 @Test(groups = "sql-select")
@@ -178,7 +181,7 @@ public class SQLSelectProjectionsTest {
     database.open("admin", "admin");
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("select max(name.append('.')).prefix('Mr. ') as name from Profile where name is not null"))
+        new OSQLSynchQuery<ODocument>("select name.append('.').prefix('Mr. ') as name from Profile where name is not null"))
         .execute();
 
     Assert.assertTrue(result.size() != 0);
@@ -261,8 +264,7 @@ public class SQLSelectProjectionsTest {
     database.open("admin", "admin");
 
     List<ODocument> result = database.command(
-        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out ) FROM V WHERE out TRAVERSE(1,1) (@class = 'E')"))
-        .execute();
+        new OSQLSynchQuery<ODocument>("SELECT FLATTEN( outE() ) FROM V WHERE outE() TRAVERSE(1,1) (@class = 'E')")).execute();
 
     Assert.assertTrue(result.size() != 0);
 
@@ -274,15 +276,19 @@ public class SQLSelectProjectionsTest {
     database.close();
   }
 
-  @Test(expectedExceptions = OCommandSQLParsingException.class)
+  @Test
   public void queryProjectionFlattenError() {
     database.open("admin", "admin");
 
     try {
-      database.command(
-          new OSQLSynchQuery<ODocument>(
-              "SELECT FLATTEN( out ), in FROM V WHERE out TRAVERSE(1,1) (@class = 'E')")).execute();
+      database.command(new OSQLSynchQuery<ODocument>("SELECT FLATTEN( out_ ), in_ FROM V WHERE out_ TRAVERSE(1,1) (@class = 'E')"))
+          .execute();
 
+      Assert.fail();
+    } catch (OCommandSQLParsingException e) {
+
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OCommandSQLParsingException);
     } finally {
       database.close();
     }
@@ -346,13 +352,17 @@ public class SQLSelectProjectionsTest {
 
     try {
       List<ODocument> result = database.command(
-          new OSQLSynchQuery<ODocument>("select $a[0] as a0, $a as a from V let $a = out where out.size() > 0")).execute();
+          new OSQLSynchQuery<ODocument>("select $a[0] as a0, $a as a from V let $a = outE() where outE().size() > 0")).execute();
       Assert.assertFalse(result.isEmpty());
 
       for (ODocument d : result) {
         Assert.assertTrue(d.containsField("a"));
         Assert.assertTrue(d.containsField("a0"));
-        Assert.assertEquals(d.field("a0"), ((Collection<OIdentifiable>) d.field("a")).iterator().next());
+
+        final ODocument a0doc = d.field("a0");
+        final ODocument firstADoc = (ODocument) d.<Iterable<OIdentifiable>> field("a").iterator().next();
+
+        Assert.assertTrue(ODocumentHelper.hasSameContentOf(a0doc, database, firstADoc, database, null));
       }
 
     } finally {
@@ -376,6 +386,34 @@ public class SQLSelectProjectionsTest {
       Assert.assertFalse(result.isEmpty());
       Assert.assertEquals(result.get(0).field("ifnull"), "b");
 
+    } finally {
+      database.close();
+    }
+  }
+
+  public void filteringArrayInChain() {
+    database.open("admin", "admin");
+
+    try {
+      List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0-1] as set from OUser")).execute();
+      Assert.assertEquals(result.size(), 1);
+      for (ODocument d : result) {
+        Assert.assertTrue(OMultiValue.isMultiValue(d.field("set")));
+        Assert.assertTrue(OMultiValue.getSize(d.field("set")) <= 2);
+      }
+
+      result = database.command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0,1] as set from OUser")).execute();
+      Assert.assertEquals(result.size(), 1);
+      for (ODocument d : result) {
+        Assert.assertTrue(OMultiValue.isMultiValue(d.field("set")));
+        Assert.assertTrue(OMultiValue.getSize(d.field("set")) <= 2);
+      }
+
+      result = database.command(new OSQLSynchQuery<ODocument>("SELECT set(name)[0] as unique from OUser")).execute();
+      Assert.assertEquals(result.size(), 1);
+      for (ODocument d : result) {
+        Assert.assertFalse(OMultiValue.isMultiValue(d.field("unique")));
+      }
     } finally {
       database.close();
     }

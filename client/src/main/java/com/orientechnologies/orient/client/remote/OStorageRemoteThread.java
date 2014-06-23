@@ -15,20 +15,13 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -45,8 +38,17 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryClient;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
@@ -85,6 +87,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.isDistributed();
   }
 
+  @Override
+  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
+    return delegate.getCollectionManagerClass();
+  }
+
   public void create(final Map<String, Object> iOptions) {
     pushSession();
     try {
@@ -94,10 +101,10 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public void close(boolean iForce) {
+  public void close(boolean iForce, boolean onDelete) {
     pushSession();
     try {
-      delegate.close(iForce);
+      delegate.close(iForce, false);
       Orient.instance().unregisterStorage(this);
     } finally {
       popSession();
@@ -177,6 +184,8 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       delegate.close();
+
+      Orient.instance().unregisterStorage(this);
     } finally {
       popSession();
     }
@@ -207,12 +216,14 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options) throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
     throw new UnsupportedOperationException("restore");
   }
 
@@ -222,17 +233,17 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       return delegate.createRecord(iDataSegmentId, iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode,
-          iCallback);
+							iCallback);
     } finally {
       popSession();
     }
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     pushSession();
     try {
-      return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones);
+      return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones, LOCKING_STRATEGY.DEFAULT);
     } finally {
       popSession();
     }
@@ -256,6 +267,21 @@ public class OStorageRemoteThread implements OStorageProxy {
     } finally {
       popSession();
     }
+  }
+
+  @Override
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
+ pushSession();
+    try {
+      return delegate.hideRecord(recordId, mode, callback);
+    } finally {
+      popSession();
+    }
+  }
+
+  @Override
+  public OCluster getClusterByName(String clusterName) {
+    return delegate.getClusterByName(clusterName);
   }
 
   @Override
@@ -644,21 +670,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  @Override
-  public boolean isHashClustersAreUsed() {
-    pushSession();
-    try {
-      return delegate.isHashClustersAreUsed();
-    } finally {
-      popSession();
-    }
-  }
-
   public String getURL() {
     return delegate.getURL();
   }
 
-  public void beginResponse(final OChannelBinaryClient iNetwork) throws IOException {
+  public void beginResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
     pushSession();
     try {
       delegate.beginResponse(iNetwork);
@@ -667,8 +683,14 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public OLevel2RecordCache getLevel2Cache() {
-    return delegate.getLevel2Cache();
+  @Override
+  public OCurrentStorageComponentsFactory getComponentsFactory() {
+    return delegate.getComponentsFactory();
+  }
+
+  @Override
+  public long getLastOperationId() {
+    return 0;
   }
 
   public boolean existsResource(final String iName) {
@@ -687,7 +709,7 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.getClusterConfiguration();
   }
 
-  protected void handleException(final OChannelBinaryClient iNetwork, final String iMessage, final Exception iException) {
+  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String iMessage, final Exception iException) {
     delegate.handleException(iNetwork, iMessage, iException);
   }
 
@@ -727,7 +749,13 @@ public class OStorageRemoteThread implements OStorageProxy {
 
   @Override
   public boolean equals(final Object iOther) {
-    return iOther == this || iOther == delegate;
+    if (iOther instanceof OStorageRemoteThread)
+      return iOther == this;
+
+    if (iOther instanceof OStorageRemote)
+      return iOther == delegate;
+
+    return false;
   }
 
   protected void pushSession() {

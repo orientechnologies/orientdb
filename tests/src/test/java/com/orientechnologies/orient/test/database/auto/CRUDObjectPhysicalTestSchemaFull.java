@@ -17,17 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.ConcurrentModificationException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -36,12 +26,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -53,28 +38,13 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabasePool;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
-import com.orientechnologies.orient.test.domain.base.Agenda;
-import com.orientechnologies.orient.test.domain.base.EmbeddedChild;
-import com.orientechnologies.orient.test.domain.base.EnumTest;
-import com.orientechnologies.orient.test.domain.base.Event;
-import com.orientechnologies.orient.test.domain.base.JavaComplexTestClass;
-import com.orientechnologies.orient.test.domain.base.JavaNoGenericCollectionsTestClass;
-import com.orientechnologies.orient.test.domain.base.JavaSimpleArraysTestClass;
-import com.orientechnologies.orient.test.domain.base.JavaSimpleTestClass;
-import com.orientechnologies.orient.test.domain.base.JavaTestInterface;
-import com.orientechnologies.orient.test.domain.base.Media;
-import com.orientechnologies.orient.test.domain.base.Parent;
-import com.orientechnologies.orient.test.domain.base.PersonTest;
-import com.orientechnologies.orient.test.domain.business.Account;
-import com.orientechnologies.orient.test.domain.business.Address;
-import com.orientechnologies.orient.test.domain.business.Child;
-import com.orientechnologies.orient.test.domain.business.City;
-import com.orientechnologies.orient.test.domain.business.Company;
-import com.orientechnologies.orient.test.domain.business.Country;
+import com.orientechnologies.orient.test.domain.base.*;
+import com.orientechnologies.orient.test.domain.business.*;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "crud", "object", "schemafull", "physicalSchemaFull" }, dependsOnGroups = "inheritanceSchemaFull")
@@ -179,6 +149,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
       loadedJavaObj.setEnumeration(EnumTest.ENUM2);
       loadedJavaObj.setTestAnonymous(new JavaTestInterface() {
 
+        @Override
         public int getNumber() {
           return 0;
         }
@@ -222,9 +193,9 @@ public class CRUDObjectPhysicalTestSchemaFull {
       for (int i = 0; i < 10; i++) {
         textArray[i] = i + "";
         intArray[i] = i;
-        longArray[i] = (long) i;
-        doubleArray[i] = (double) i;
-        floatArray[i] = (float) i;
+        longArray[i] = i;
+        doubleArray[i] = i;
+        floatArray[i] = i;
         byteArray[i] = (byte) i;
         booleanArray[i] = (i % 2 == 0);
         enumerationArray[i] = (i % 2 == 0) ? EnumTest.ENUM2 : ((i % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
@@ -282,7 +253,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
       for (int i = 0; i < 10; i++) {
         Assert.assertEquals(loadedJavaObj.getText()[i], i + "");
         Assert.assertEquals(loadedJavaObj.getNumberSimple()[i], i);
-        Assert.assertEquals(loadedJavaObj.getLongSimple()[i], (long) i);
+        Assert.assertEquals(loadedJavaObj.getLongSimple()[i], i);
         Assert.assertEquals(loadedJavaObj.getDoubleSimple()[i], (double) i);
         Assert.assertEquals(loadedJavaObj.getFloatSimple()[i], (float) i);
         Assert.assertEquals(loadedJavaObj.getByteSimple()[i], (byte) i);
@@ -297,9 +268,9 @@ public class CRUDObjectPhysicalTestSchemaFull {
         int j = i + 10;
         textArray[i] = j + "";
         intArray[i] = j;
-        longArray[i] = (long) j;
-        doubleArray[i] = (double) j;
-        floatArray[i] = (float) j;
+        longArray[i] = j;
+        doubleArray[i] = j;
+        floatArray[i] = j;
         byteArray[i] = (byte) j;
         booleanArray[i] = (j % 2 == 0);
         enumerationArray[i] = (j % 2 == 0) ? EnumTest.ENUM2 : ((j % 3 == 0) ? EnumTest.ENUM3 : EnumTest.ENUM1);
@@ -357,7 +328,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
         int j = i + 10;
         Assert.assertEquals(loadedJavaObj.getText()[i], j + "");
         Assert.assertEquals(loadedJavaObj.getNumberSimple()[i], j);
-        Assert.assertEquals(loadedJavaObj.getLongSimple()[i], (long) j);
+        Assert.assertEquals(loadedJavaObj.getLongSimple()[i], j);
         Assert.assertEquals(loadedJavaObj.getDoubleSimple()[i], (double) j);
         Assert.assertEquals(loadedJavaObj.getFloatSimple()[i], (float) j);
         Assert.assertEquals(loadedJavaObj.getByteSimple()[i], (byte) j);
@@ -555,8 +526,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
 
-      database.getLevel1Cache().invalidate();
-      database.getLevel2Cache().clear();
+      database.getLocalCache().invalidate();
 
       // BROWSE ALL THE OBJECTS
 
@@ -591,8 +561,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
 
-      database.getLevel1Cache().invalidate();
-      database.getLevel2Cache().clear();
+      database.getLocalCache().invalidate();
 
       // BROWSE ALL THE OBJECTS
       Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
@@ -627,8 +596,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
 
-      database.getLevel1Cache().invalidate();
-      database.getLevel2Cache().clear();
+      database.getLocalCache().invalidate();
       database.setLazyLoading(false);
 
       // BROWSE ALL THE OBJECTS
@@ -640,6 +608,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
       for (Account a : result) {
         if (Company.class.isAssignableFrom(a.getClass()))
           continue;
+
         int id = a.getId();
         Assert.assertTrue(ids.remove(id));
 
@@ -2614,7 +2583,7 @@ public class CRUDObjectPhysicalTestSchemaFull {
     }
   }
 
-  @Test(dependsOnMethods = "createLinked", expectedExceptions = OQueryParsingException.class)
+  @Test(dependsOnMethods = "createLinked")
   public void commandWithWrongNamedParameters() {
     database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
     try {
@@ -2629,8 +2598,12 @@ public class CRUDObjectPhysicalTestSchemaFull {
       params.put("surname", "Obama");
 
       List<Profile> result = database.command(query).execute(params);
-      Assert.assertTrue(result.size() != 0);
+      Assert.fail();
 
+    } catch (OQueryParsingException e) {
+      Assert.assertTrue(true);
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof OQueryParsingException);
     } finally {
       database.close();
     }
@@ -2850,12 +2823,6 @@ public class CRUDObjectPhysicalTestSchemaFull {
       byte[] b = aa.getThumbnail();
       for (int i = 0; i < 10; ++i)
         Assert.assertEquals(b[i], i);
-
-      // TO REFACTOR OR DELETE SINCE SERIALIZATION AND DESERIALIZATION DON'T APPLY ANYMORE
-      // Assert.assertNotNull(aa.getPhoto());
-      // b = aa.getPhoto();
-      // for (int i = 0; i < 10; ++i)
-      // Assert.assertEquals(b[i], i);
 
     } finally {
       database.close();

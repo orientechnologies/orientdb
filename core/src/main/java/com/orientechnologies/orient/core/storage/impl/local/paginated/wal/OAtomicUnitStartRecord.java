@@ -22,15 +22,13 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
  * @author Andrey Lomakin
  * @since 24.05.13
  */
-public class OAtomicUnitStartRecord extends OOperationUnitRecord implements OWALRecord {
-  private OLogSequenceNumber lsn;
-
-  private boolean            isRollbackSupported;
+public class OAtomicUnitStartRecord extends OOperationUnitRecord {
+  private boolean isRollbackSupported;
 
   public OAtomicUnitStartRecord() {
   }
 
-  public OAtomicUnitStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) {
+  public OAtomicUnitStartRecord(final boolean isRollbackSupported, final OOperationUnitId unitId) {
     super(unitId);
     this.isRollbackSupported = isRollbackSupported;
   }
@@ -40,7 +38,7 @@ public class OAtomicUnitStartRecord extends OOperationUnitRecord implements OWAL
   }
 
   @Override
-  public int toStream(byte[] content, int offset) {
+  public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
     content[offset] = isRollbackSupported ? (byte) 1 : 0;
@@ -51,7 +49,7 @@ public class OAtomicUnitStartRecord extends OOperationUnitRecord implements OWAL
   }
 
   @Override
-  public int fromStream(byte[] content, int offset) {
+  public int fromStream(final byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
     isRollbackSupported = content[offset] > 0;
@@ -71,17 +69,7 @@ public class OAtomicUnitStartRecord extends OOperationUnitRecord implements OWAL
   }
 
   @Override
-  public OLogSequenceNumber getLsn() {
-    return lsn;
-  }
-
-  @Override
-  public void setLsn(OLogSequenceNumber lsn) {
-    this.lsn = lsn;
-  }
-
-  @Override
   public String toString() {
-    return "OAtomicUnitStartRecord{" + "lsn=" + lsn + ", isRollbackSupported=" + isRollbackSupported + '}';
+    return toString("isRollbackSupported=" + isRollbackSupported);
   }
 }

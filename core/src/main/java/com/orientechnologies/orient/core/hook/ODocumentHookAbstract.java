@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.hook;
 
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -354,14 +355,14 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
     if (includeClasses == null && excludeClasses == null)
       return true;
 
-    final String clazz = iDocument.getClassName();
+    final OClass clazz = iDocument.getSchemaClass();
     if (clazz == null)
       return false;
 
     if (includeClasses != null) {
       // FILTER BY CLASSES
       for (String cls : includeClasses)
-        if (cls.equals(clazz))
+        if (clazz.isSubClassOf(cls))
           return true;
       return false;
     }
@@ -369,7 +370,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
     if (excludeClasses != null) {
       // FILTER BY CLASSES
       for (String cls : excludeClasses)
-        if (cls.equals(clazz))
+        if (clazz.isSubClassOf(cls))
           return false;
     }
 

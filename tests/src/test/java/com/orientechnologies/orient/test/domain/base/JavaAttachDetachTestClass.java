@@ -36,27 +36,180 @@ import com.orientechnologies.orient.test.domain.business.Child;
  * 
  */
 public class JavaAttachDetachTestClass {
-	public static final String		testStatic		= "10";
-	@Transient
-	public String									testTransient;
-	@Id
-	public Object									id;
-	@Version
-	public Object									version;
-	public ODocument							embeddedDocument;
-	public ODocument							document;
-	public ORecordBytes						byteArray;
-	public String									name;
-	public Map<String, Child>			children			= new HashMap<String, Child>();
-	public List<EnumTest>					enumList			= new ArrayList<EnumTest>();
-	public Set<EnumTest>					enumSet				= new HashSet<EnumTest>();
-	public Map<String, EnumTest>	enumMap				= new HashMap<String, EnumTest>();
-	public String									text					= "initTest";
-	public EnumTest								enumeration;
-	public int										numberSimple	= 0;
-	public long										longSimple		= 0l;
-	public double									doubleSimple	= 0d;
-	public float									floatSimple		= 0f;
-	public byte										byteSimple		= 0;
-	public boolean								flagSimple		= false;
+  public static final String   testStatic   = "10";
+  @Transient
+  public String                testTransient;
+  @Id
+  public Object                id;
+  @Version
+  public Object                version;
+  public ODocument             embeddedDocument;
+  public ODocument             document;
+  public ORecordBytes          byteArray;
+  public String                name;
+  public Map<String, Child>    children     = new HashMap<String, Child>();
+  public List<EnumTest>        enumList     = new ArrayList<EnumTest>();
+  public Set<EnumTest>         enumSet      = new HashSet<EnumTest>();
+  public Map<String, EnumTest> enumMap      = new HashMap<String, EnumTest>();
+  public String                text         = "initTest";
+  public EnumTest              enumeration;
+  public int                   numberSimple = 0;
+  public long                  longSimple   = 0l;
+  public double                doubleSimple = 0d;
+  public float                 floatSimple  = 0f;
+  public byte                  byteSimple   = 0;
+  public boolean               flagSimple   = false;
+
+  public String getTestTransient() {
+    return testTransient;
+  }
+
+  public void setTestTransient(String testTransient) {
+    this.testTransient = testTransient;
+  }
+
+  public Object getId() {
+    return id;
+  }
+
+  public void setId(Object id) {
+    this.id = id;
+  }
+
+  public Object getVersion() {
+    return version;
+  }
+
+  public void setVersion(Object version) {
+    this.version = version;
+  }
+
+  public ODocument getEmbeddedDocument() {
+    return embeddedDocument;
+  }
+
+  public void setEmbeddedDocument(ODocument embeddedDocument) {
+    this.embeddedDocument = embeddedDocument;
+  }
+
+  public ODocument getDocument() {
+    return document;
+  }
+
+  public void setDocument(ODocument document) {
+    this.document = document;
+  }
+
+  public ORecordBytes getByteArray() {
+    return byteArray;
+  }
+
+  public void setByteArray(ORecordBytes byteArray) {
+    this.byteArray = byteArray;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public Map<String, Child> getChildren() {
+    return children;
+  }
+
+  public void setChildren(Map<String, Child> children) {
+    this.children = children;
+  }
+
+  public List<EnumTest> getEnumList() {
+    return enumList;
+  }
+
+  public void setEnumList(List<EnumTest> enumList) {
+    this.enumList = enumList;
+  }
+
+  public Set<EnumTest> getEnumSet() {
+    return enumSet;
+  }
+
+  public void setEnumSet(Set<EnumTest> enumSet) {
+    this.enumSet = enumSet;
+  }
+
+  public Map<String, EnumTest> getEnumMap() {
+    return enumMap;
+  }
+
+  public void setEnumMap(Map<String, EnumTest> enumMap) {
+    this.enumMap = enumMap;
+  }
+
+  public String getText() {
+    return text;
+  }
+
+  public void setText(String text) {
+    this.text = text;
+  }
+
+  public EnumTest getEnumeration() {
+    return enumeration;
+  }
+
+  public void setEnumeration(EnumTest enumeration) {
+    this.enumeration = enumeration;
+  }
+
+  public int getNumberSimple() {
+    return numberSimple;
+  }
+
+  public void setNumberSimple(int numberSimple) {
+    this.numberSimple = numberSimple;
+  }
+
+  public long getLongSimple() {
+    return longSimple;
+  }
+
+  public void setLongSimple(long longSimple) {
+    this.longSimple = longSimple;
+  }
+
+  public double getDoubleSimple() {
+    return doubleSimple;
+  }
+
+  public void setDoubleSimple(double doubleSimple) {
+    this.doubleSimple = doubleSimple;
+  }
+
+  public float getFloatSimple() {
+    return floatSimple;
+  }
+
+  public void setFloatSimple(float floatSimple) {
+    this.floatSimple = floatSimple;
+  }
+
+  public byte getByteSimple() {
+    return byteSimple;
+  }
+
+  public void setByteSimple(byte byteSimple) {
+    this.byteSimple = byteSimple;
+  }
+
+  public boolean isFlagSimple() {
+    return flagSimple;
+  }
+
+  public void setFlagSimple(boolean flagSimple) {
+    this.flagSimple = flagSimple;
+  }
+
 }

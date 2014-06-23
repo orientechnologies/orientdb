@@ -29,18 +29,17 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * 
  */
 public abstract class OAbstractRemoteTask implements Externalizable {
-  private static final long serialVersionUID = 1L;
+  private static final long   serialVersionUID = 1L;
+  protected transient boolean inheritedDatabase;
+  protected transient String  nodeSource;
 
   public enum RESULT_STRATEGY {
-    ANY, MERGE, UNION
+    ANY, UNION
   }
 
   public enum QUORUM_TYPE {
     NONE, READ, WRITE, ALL
   }
-
-  protected transient boolean inheritedDatabase;
-  protected transient String  nodeSource;
 
   /**
    * Constructor used from unmarshalling.
@@ -89,5 +88,13 @@ public abstract class OAbstractRemoteTask implements Externalizable {
 
   public boolean isRequireNodeOnline() {
     return true;
+  }
+
+  public boolean isRequiredOpenDatabase() {
+    return true;
+  }
+
+  public boolean isIdempotent() {
+    return false;
   }
 }

@@ -15,13 +15,11 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -91,11 +89,11 @@ public class TruncateTest {
 
     Assert.assertEquals(index.getSize(), 6);
 
-    for (Object o : index.keys()) {
-      if (o instanceof ODocument) {
-        o = ((ODocument) o).field("key");
-      }
-      Assert.assertTrue(set.contains(o));
+    OIndexCursor cursor = index.cursor();
+    Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
+    while (entry != null) {
+      Assert.assertTrue(set.contains((Integer) entry.getKey()));
+      entry = cursor.nextEntry();
     }
 
     schema.dropClass("test_class");

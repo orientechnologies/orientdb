@@ -19,6 +19,9 @@ import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEG
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
+import java.util.Collections;
+import java.util.Set;
+
 /**
  * SQL abstract Command Executor implementation.
  * 
@@ -32,7 +35,10 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   public static final String KEYWORD_WHERE     = "WHERE";
   public static final String KEYWORD_LIMIT     = "LIMIT";
   public static final String KEYWORD_SKIP      = "SKIP";
+  public static final String KEYWORD_OFFSET    = "OFFSET";
   public static final String KEYWORD_TIMEOUT   = "TIMEOUT";
+  public static final String KEYWORD_LOCK      = "LOCK";
+  public static final String KEYWORD_RETURN    = "RETURN";
   public static final String KEYWORD_KEY       = "key";
   public static final String KEYWORD_RID       = "rid";
   public static final String CLUSTER_PREFIX    = "CLUSTER:";
@@ -46,14 +52,6 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   protected long             timeoutMs         = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
   protected TIMEOUT_STRATEGY timeoutStrategy   = TIMEOUT_STRATEGY.EXCEPTION;
 
-  protected void throwSyntaxErrorException(final String iText) {
-    throw new OCommandSQLParsingException(iText + ". Use " + getSyntax(), parserText, parserGetPreviousPosition());
-  }
-
-  protected void throwParsingException(final String iText) {
-    throw new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition());
-  }
-
   /**
    * The command is replicated
    * 
@@ -65,6 +63,19 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   public boolean isIdempotent() {
     return false;
+  }
+
+  @Override
+  public Set<String> getInvolvedClusters() {
+    return Collections.EMPTY_SET;
+  }
+
+  protected void throwSyntaxErrorException(final String iText) {
+    throw new OCommandSQLParsingException(iText + ". Use " + getSyntax(), parserText, parserGetPreviousPosition());
+  }
+
+  protected void throwParsingException(final String iText) {
+    throw new OCommandSQLParsingException(iText, parserText, parserGetPreviousPosition());
   }
 
   /**
@@ -80,12 +91,12 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     try {
       timeoutMs = Long.parseLong(word);
     } catch (Exception e) {
-      throwParsingException("Invalid " + KEYWORD_TIMEOUT + " value setted to '" + word
-          + "' but it should be a valid long. Example: " + KEYWORD_TIMEOUT + " 3000");
+      throwParsingException("Invalid " + KEYWORD_TIMEOUT + " value set to '" + word + "' but it should be a valid long. Example: "
+          + KEYWORD_TIMEOUT + " 3000");
     }
 
     if (timeoutMs < 0)
-      throwParsingException("Invalid " + KEYWORD_TIMEOUT + ": value setted to less than ZERO. Example: " + timeoutMs + " 10");
+      throwParsingException("Invalid " + KEYWORD_TIMEOUT + ": value set minor than ZERO. Example: " + timeoutMs + " 10000");
 
     parserNextWord(true);
     word = parserGetLastWord();
@@ -99,4 +110,20 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
     return true;
   }
+
+  /**
+   * Parses the lock keyword if found.
+   */
+  protected String parseLock() throws OCommandSQLParsingException {
+    parserNextWord(true);
+    final String lockStrategy = parserGetLastWord();
+
+    if (!lockStrategy.equalsIgnoreCase("DEFAULT") && !lockStrategy.equalsIgnoreCase("NONE") && !lockStrategy.equalsIgnoreCase("RECORD"))
+      throwParsingException("Invalid " + KEYWORD_LOCK + " value set to '" + lockStrategy
+          + "' but it should be NONE (default) or RECORD. Example: " + KEYWORD_LOCK + " RECORD");
+
+    return lockStrategy;
+  }
+
+
 }

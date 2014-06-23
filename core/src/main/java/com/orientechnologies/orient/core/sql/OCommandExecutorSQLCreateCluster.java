@@ -15,17 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
+
+import java.util.Map;
 
 /**
  * SQL CREATE CLUSTER command: Creates a new cluster.
@@ -51,10 +50,8 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
 
   public OCommandExecutorSQLCreateCluster parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
 
-        init((OCommandRequestText) iRequest);
-
+    init((OCommandRequestText) iRequest);
 
     parserRequiredKeyword(KEYWORD_CREATE);
     parserRequiredKeyword(KEYWORD_CLUSTER);
@@ -91,7 +88,7 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     if (clusterId > -1)
       throw new OCommandSQLParsingException("Cluster '" + clusterName + "' already exists");
 
-    if (!(database.getStorage() instanceof OLocalPaginatedStorage)) {
+    if (database.getStorage() instanceof OStorageLocal || database.getStorage() instanceof OStorageMemory) {
       final int dataId = database.getStorage().getDataSegmentIdByName(dataSegmentName);
       if (dataId == -1)
         throw new OCommandSQLParsingException("Data segment '" + dataSegmentName + "' does not exists");
@@ -113,9 +110,9 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     final ODatabaseRecord database = getDatabase();
 
     if (requestedId == -1) {
-        return database.addCluster(clusterType, clusterName, location, dataSegmentName);
+      return database.addCluster(clusterType, clusterName, location, dataSegmentName);
     } else {
-        return database.addCluster(clusterType, clusterName, requestedId, location, dataSegmentName);
+      return database.addCluster(clusterType, clusterName, requestedId, location, dataSegmentName);
     }
   }
 

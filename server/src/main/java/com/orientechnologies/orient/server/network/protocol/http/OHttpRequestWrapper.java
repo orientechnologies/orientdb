@@ -52,7 +52,7 @@ public class OHttpRequestWrapper {
    * @return The user name in form of String
    */
   public String getUser() {
-    return request.authorization != null ? request.authorization.substring(0, request.authorization.indexOf(":")) : null;
+    return request.getUser();
   }
 
   /**
@@ -167,5 +167,9 @@ public class OHttpRequestWrapper {
    */
   public String getURL() {
     return request.url;
+  }
+
+  public String getRemoteAddress() {
+    return request.getRemoteAddress();
   }
 }

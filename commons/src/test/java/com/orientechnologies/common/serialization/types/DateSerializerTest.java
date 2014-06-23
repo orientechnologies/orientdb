@@ -23,8 +23,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
@@ -69,8 +68,6 @@ public class DateSerializerTest {
   }
 
   public void testNativeDirectMemoryCompatibility() {
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
     dateSerializer.serializeNative(OBJECT, stream, 0);
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(OBJECT);
@@ -79,11 +76,11 @@ public class DateSerializerTest {
     calendar.set(Calendar.SECOND, 0);
     calendar.set(Calendar.MILLISECOND, 0);
 
-    long pointer = directMemory.allocate(stream);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(dateSerializer.deserializeFromDirectMemory(directMemory, pointer), calendar.getTime());
+      Assert.assertEquals(dateSerializer.deserializeFromDirectMemory(pointer, 0), calendar.getTime());
     } finally {
-      directMemory.free(pointer);
+      pointer.free();
     }
   }
 }

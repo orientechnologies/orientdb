@@ -1,23 +1,50 @@
 package com.orientechnologies.common.log;
 
+import com.orientechnologies.common.exception.OException;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
-import java.util.logging.*;
-
-import com.orientechnologies.common.exception.OException;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class OLogManager {
+  private static final String      DEFAULT_LOG  = "com.orientechnologies";
+  private static final OLogManager instance     = new OLogManager();
   private boolean                  debug        = true;
   private boolean                  info         = true;
   private boolean                  warn         = true;
   private boolean                  error        = true;
   private Level                    minimumLevel = Level.SEVERE;
-  private static final String      DEFAULT_LOG  = "com.orientechnologies";
-
-  private static final OLogManager instance     = new OLogManager();
 
   protected OLogManager() {
+  }
+
+  public static OLogManager instance() {
+    return instance;
+  }
+
+  public static void installCustomFormatter() {
+    try {
+      // ASSURE TO HAVE THE ORIENT LOG FORMATTER TO THE CONSOLE EVEN IF NO CONFIGURATION FILE IS TAKEN
+      final Logger log = Logger.getLogger("");
+      if (log.getHandlers().length == 0) {
+        // SET DEFAULT LOG FORMATTER
+        final Handler h = new ConsoleHandler();
+        h.setFormatter(new OLogFormatter());
+        log.addHandler(h);
+      } else {
+        for (Handler h : log.getHandlers()) {
+          if (h instanceof ConsoleHandler && !h.getFormatter().getClass().equals(OLogFormatter.class))
+            h.setFormatter(new OLogFormatter());
+        }
+      }
+    } catch (Exception e) {
+      System.err.println("Error while installing custom formatter. Logging could be disabled. Cause: " + e.toString());
+    }
   }
 
   public void setConsoleLevel(final String iLevel) {
@@ -186,22 +213,6 @@ public class OLogManager {
     return warn;
   }
 
-  public void setWarnEnabled(boolean warn) {
-    this.warn = warn;
-  }
-
-  public void setInfoEnabled(boolean info) {
-    this.info = info;
-  }
-
-  public void setDebugEnabled(boolean debug) {
-    this.debug = debug;
-  }
-
-  public void setErrorEnabled(boolean error) {
-    this.error = error;
-  }
-
   public boolean isLevelEnabled(final Level level) {
     if (level.equals(Level.FINER) || level.equals(Level.FINE) || level.equals(Level.FINEST))
       return debug;
@@ -218,20 +229,32 @@ public class OLogManager {
     return debug;
   }
 
+  public void setDebugEnabled(boolean debug) {
+    this.debug = debug;
+  }
+
   public boolean isInfoEnabled() {
     return info;
+  }
+
+  public void setInfoEnabled(boolean info) {
+    this.info = info;
   }
 
   public boolean isWarnEnabled() {
     return warn;
   }
 
+  public void setWarnEnabled(boolean warn) {
+    this.warn = warn;
+  }
+
   public boolean isErrorEnabled() {
     return error;
   }
 
-  public static OLogManager instance() {
-    return instance;
+  public void setErrorEnabled(boolean error) {
+    this.error = error;
   }
 
   public Level setLevel(final String iLevel, final Class<? extends Handler> iHandler) {
@@ -266,23 +289,8 @@ public class OLogManager {
     return level;
   }
 
-  public static void installCustomFormatter() {
-    try {
-      // ASSURE TO HAVE THE ORIENT LOG FORMATTER TO THE CONSOLE EVEN IF NO CONFIGURATION FILE IS TAKEN
-      final Logger log = Logger.getLogger("");
-      if (log.getHandlers().length == 0) {
-        // SET DEFAULT LOG FORMATTER
-        final Handler h = new ConsoleHandler();
-        h.setFormatter(new OLogFormatter());
-        log.addHandler(h);
-      } else {
-        for (Handler h : log.getHandlers()) {
-          if (h instanceof ConsoleHandler && !h.getFormatter().getClass().equals(OLogFormatter.class))
-            h.setFormatter(new OLogFormatter());
-        }
-      }
-    } catch (Exception e) {
-      System.err.println("Error while installing custom formatter. Logging could be disabled. Cause: " + e.toString());
-    }
+  public void flush() {
+    for (Handler h : Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).getHandlers())
+      h.flush();
   }
 }

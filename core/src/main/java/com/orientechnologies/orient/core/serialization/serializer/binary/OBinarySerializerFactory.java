@@ -20,13 +20,32 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.*;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
+import com.orientechnologies.common.serialization.types.OBooleanSerializer;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OCharSerializer;
+import com.orientechnologies.common.serialization.types.ODateSerializer;
+import com.orientechnologies.common.serialization.types.ODateTimeSerializer;
+import com.orientechnologies.common.serialization.types.ODecimalSerializer;
+import com.orientechnologies.common.serialization.types.ODoubleSerializer;
+import com.orientechnologies.common.serialization.types.OFloatSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.ONullSerializer;
+import com.orientechnologies.common.serialization.types.OShortSerializer;
+import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.common.serialization.types.legacy.OStringSerializer_1_5_1;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerOldRIDContainer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OClusterPositionSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.eh.OPhysicalPositionSerializer;
 
@@ -43,43 +62,11 @@ public class OBinarySerializerFactory {
   private final Map<OType, OBinarySerializer<?>>                 serializerTypeMap      = new HashMap<OType, OBinarySerializer<?>>();
 
   /**
-   * Instance of the factory
-   */
-  public static final OBinarySerializerFactory                   INSTANCE               = new OBinarySerializerFactory();
-  /**
    * Size of the type identifier block size
    */
   public static final int                                        TYPE_IDENTIFIER_SIZE   = 1;
 
   private OBinarySerializerFactory() {
-
-    // STATELESS SERIALIER
-    registerSerializer(new ONullSerializer(), null);
-
-    registerSerializer(OBooleanSerializer.INSTANCE, OType.BOOLEAN);
-    registerSerializer(OIntegerSerializer.INSTANCE, OType.INTEGER);
-    registerSerializer(OShortSerializer.INSTANCE, OType.SHORT);
-    registerSerializer(OLongSerializer.INSTANCE, OType.LONG);
-    registerSerializer(OFloatSerializer.INSTANCE, OType.FLOAT);
-    registerSerializer(ODoubleSerializer.INSTANCE, OType.DOUBLE);
-    registerSerializer(ODateTimeSerializer.INSTANCE, OType.DATETIME);
-    registerSerializer(OCharSerializer.INSTANCE, null);
-    registerSerializer(OStringSerializer.INSTANCE, OType.STRING);
-    registerSerializer(OByteSerializer.INSTANCE, OType.BYTE);
-    registerSerializer(ODateSerializer.INSTANCE, OType.DATE);
-    registerSerializer(OLinkSerializer.INSTANCE, OType.LINK);
-    registerSerializer(OCompositeKeySerializer.INSTANCE, null);
-    registerSerializer(OStreamSerializerRID.INSTANCE, null);
-    registerSerializer(OBinaryTypeSerializer.INSTANCE, OType.BINARY);
-    registerSerializer(ODecimalSerializer.INSTANCE, OType.DECIMAL);
-
-    registerSerializer(OStreamSerializerListRID.INSTANCE, null);
-
-    registerSerializer(OPhysicalPositionSerializer.INSTANCE, null);
-    registerSerializer(OClusterPositionSerializer.INSTANCE, null);
-
-    // STATEFUL SERIALIER
-    registerSerializer(OSimpleKeySerializer.ID, OSimpleKeySerializer.class);
   }
 
   public void registerSerializer(final OBinarySerializer<?> iInstance, final OType iType) {
@@ -127,7 +114,56 @@ public class OBinarySerializerFactory {
    *          is the OType to obtain serializer algorithm for
    * @return OBinarySerializer instance
    */
-  public OBinarySerializer<?> getObjectSerializer(final OType type) {
-    return serializerTypeMap.get(type);
+  @SuppressWarnings("unchecked")
+  public <T> OBinarySerializer<T> getObjectSerializer(final OType type) {
+    return (OBinarySerializer<T>) serializerTypeMap.get(type);
+  }
+
+  public static OBinarySerializerFactory create(int binaryFormatVersion) {
+    final OBinarySerializerFactory factory = new OBinarySerializerFactory();
+
+    // STATELESS SERIALIER
+    factory.registerSerializer(new ONullSerializer(), null);
+
+    factory.registerSerializer(OBooleanSerializer.INSTANCE, OType.BOOLEAN);
+    factory.registerSerializer(OIntegerSerializer.INSTANCE, OType.INTEGER);
+    factory.registerSerializer(OShortSerializer.INSTANCE, OType.SHORT);
+    factory.registerSerializer(OLongSerializer.INSTANCE, OType.LONG);
+    factory.registerSerializer(OFloatSerializer.INSTANCE, OType.FLOAT);
+    factory.registerSerializer(ODoubleSerializer.INSTANCE, OType.DOUBLE);
+    factory.registerSerializer(ODateTimeSerializer.INSTANCE, OType.DATETIME);
+    factory.registerSerializer(OCharSerializer.INSTANCE, null);
+    if (binaryFormatVersion <= 8)
+      factory.registerSerializer(OStringSerializer_1_5_1.INSTANCE, OType.STRING);
+    else
+      factory.registerSerializer(OStringSerializer.INSTANCE, OType.STRING);
+
+    factory.registerSerializer(OByteSerializer.INSTANCE, OType.BYTE);
+    factory.registerSerializer(ODateSerializer.INSTANCE, OType.DATE);
+    factory.registerSerializer(OLinkSerializer.INSTANCE, OType.LINK);
+    factory.registerSerializer(OCompositeKeySerializer.INSTANCE, null);
+    factory.registerSerializer(OStreamSerializerRID.INSTANCE, null);
+    factory.registerSerializer(OBinaryTypeSerializer.INSTANCE, OType.BINARY);
+    factory.registerSerializer(ODecimalSerializer.INSTANCE, OType.DECIMAL);
+
+    factory.registerSerializer(OStreamSerializerListRID.INSTANCE, null);
+    factory.registerSerializer(OStreamSerializerOldRIDContainer.INSTANCE, null);
+    factory.registerSerializer(OStreamSerializerSBTreeIndexRIDContainer.INSTANCE, null);
+
+    factory.registerSerializer(OPhysicalPositionSerializer.INSTANCE, null);
+    factory.registerSerializer(OClusterPositionSerializer.INSTANCE, null);
+
+    // STATEFUL SERIALIER
+    factory.registerSerializer(OSimpleKeySerializer.ID, OSimpleKeySerializer.class);
+
+    return factory;
+  }
+
+  public static OBinarySerializerFactory getInstance() {
+    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (database != null)
+      return database.getSerializerFactory();
+    else
+      return OBinarySerializerFactory.create(Integer.MAX_VALUE);
   }
 }

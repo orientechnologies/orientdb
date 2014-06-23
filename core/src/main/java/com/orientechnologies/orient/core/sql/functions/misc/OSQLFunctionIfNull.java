@@ -63,18 +63,17 @@ public class OSQLFunctionIfNull extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iFuncParams,
-      final OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams, final OCommandContext iContext) {
     /*
      * iFuncParams [0] field/value to check for null [1] return value if [0] is null [2] optional return value if [0] is not null
      */
-    if (iFuncParams[0] != null) {
-      if (iFuncParams.length == 3) {
-        return iFuncParams[2];
+    if (iParams[0] != null) {
+      if (iParams.length == 3) {
+        return iParams[2];
       }
-      return iFuncParams[0];
+      return iParams[0];
     }
-    return iFuncParams[1];
+    return iParams[1];
   }
 
   @Override

@@ -15,19 +15,23 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
-
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -36,174 +40,471 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  * @author Luca Garulli
  * 
  */
-public class OIndexTxAwareMultiValue extends OIndexTxAware<Collection<OIdentifiable>> {
-  public OIndexTxAwareMultiValue(final ODatabaseRecord iDatabase, final OIndex<Collection<OIdentifiable>> iDelegate) {
-    super(iDatabase, iDelegate);
-  }
+public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
+  private class PureTxBetweenIndexForwardCursor extends OIndexAbstractCursor {
+    private final OTransactionIndexChanges indexChanges;
+    private Object                         firstKey;
+    private Object                         lastKey;
 
-  @Override
-  public Collection<OIdentifiable> get(final Object iKey) {
+    private Object                         nextKey;
 
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    private Iterator<OIdentifiable>        valuesIterator = new OEmptyIterator<OIdentifiable>();
+    private Object                         key;
 
-    final Set<OIdentifiable> result = new TreeSet<OIdentifiable>();
-    if (indexChanges == null || !indexChanges.cleared) {
-      // BEGIN FROM THE UNDERLYING RESULT SET
-      final Collection<OIdentifiable> subResult = super.get(iKey);
-      if (subResult != null)
-        for (OIdentifiable oid : subResult)
-          if (oid != null)
-            result.add(oid);
+    public PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+        OTransactionIndexChanges indexChanges) {
+      this.indexChanges = indexChanges;
+
+      fromKey = enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
+      toKey = enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
+
+      if (toInclusive)
+        firstKey = indexChanges.getCeilingKey(fromKey);
+      else
+        firstKey = indexChanges.getHigherKey(fromKey);
+
+      if (fromInclusive)
+        lastKey = indexChanges.getFloorKey(toKey);
+      else
+        lastKey = indexChanges.getLowerKey(toKey);
+
+      nextKey = firstKey;
     }
 
-    return filterIndexChanges(indexChanges, iKey, result);
-  }
+    @Override
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
+      if (valuesIterator.hasNext())
+        return nextEntryInternal();
 
-  @Override
-  public boolean contains(final Object iKey) {
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+      if (nextKey == null)
+        return null;
 
-    Set<OIdentifiable> result = new TreeSet<OIdentifiable>();
-    if (indexChanges == null || !indexChanges.cleared) {
-      // BEGIN FROM THE UNDERLYING RESULT SET
-      final Collection<OIdentifiable> subResult = super.get(iKey);
-      if (subResult != null)
-        for (OIdentifiable oid : subResult)
-          if (oid != null)
-            result.add(oid);
+      Set<OIdentifiable> result;
+      do {
+        result = calculateTxValue(nextKey, indexChanges);
+        key = nextKey;
+
+        nextKey = indexChanges.getHigherKey(nextKey);
+
+        if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, lastKey) > 0)
+          nextKey = null;
+      } while ((result == null || result.isEmpty()) && nextKey != null);
+
+      if (result == null || result.isEmpty())
+        return null;
+
+      valuesIterator = result.iterator();
+      return nextEntryInternal();
     }
 
-    filterIndexChanges(indexChanges, iKey, result);
-    return !result.isEmpty();
+    Map.Entry<Object, OIdentifiable> nextEntryInternal() {
+      final OIdentifiable identifiable = valuesIterator.next();
+      return new Map.Entry<Object, OIdentifiable>() {
+        @Override
+        public Object getKey() {
+          return key;
+        }
+
+        @Override
+        public OIdentifiable getValue() {
+          return identifiable;
+        }
+
+        @Override
+        public OIdentifiable setValue(OIdentifiable value) {
+          throw new UnsupportedOperationException("setValue");
+        }
+      };
+    }
   }
 
-  @Override
-  public Collection<OIdentifiable> getValues(final Collection<?> iKeys) {
-    final Collection<?> keys = new ArrayList<Object>(iKeys);
+  private class PureTxBetweenIndexBackwardCursor extends OIndexAbstractCursor {
+    private final OTransactionIndexChanges indexChanges;
+    private Object                         firstKey;
+    private Object                         lastKey;
 
-    final Set<OIdentifiable> result = new TreeSet<OIdentifiable>();
+    private Object                         nextKey;
 
-    final Set<Object> keysToRemove = new TreeSet<Object>();
-    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    private Iterator<OIdentifiable>        valuesIterator = new OEmptyIterator<OIdentifiable>();
+    private Object                         key;
 
-    if (indexChanges == null) {
-      result.addAll(super.getValues(keys));
+    public PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+        OTransactionIndexChanges indexChanges) {
+      this.indexChanges = indexChanges;
+
+      fromKey = enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
+      toKey = enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
+
+      if (toInclusive)
+        firstKey = indexChanges.getCeilingKey(fromKey);
+      else
+        firstKey = indexChanges.getHigherKey(fromKey);
+
+      if (fromInclusive)
+        lastKey = indexChanges.getFloorKey(toKey);
+      else
+        lastKey = indexChanges.getLowerKey(toKey);
+
+      nextKey = lastKey;
+    }
+
+    @Override
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
+      if (valuesIterator.hasNext())
+        return nextEntryInternal();
+
+      if (nextKey == null)
+        return null;
+
+      Set<OIdentifiable> result;
+      do {
+        result = calculateTxValue(nextKey, indexChanges);
+        key = nextKey;
+
+        nextKey = indexChanges.getLowerKey(nextKey);
+
+        if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, firstKey) < 0)
+          nextKey = null;
+      } while ((result == null || result.isEmpty()) && nextKey != null);
+
+      if (result == null || result.isEmpty())
+        return null;
+
+      valuesIterator = result.iterator();
+      return nextEntryInternal();
+    }
+
+    private Map.Entry<Object, OIdentifiable> nextEntryInternal() {
+      final OIdentifiable identifiable = valuesIterator.next();
+      return new Map.Entry<Object, OIdentifiable>() {
+        @Override
+        public Object getKey() {
+          return key;
+        }
+
+        @Override
+        public OIdentifiable getValue() {
+          return identifiable;
+        }
+
+        @Override
+        public OIdentifiable setValue(OIdentifiable value) {
+          throw new UnsupportedOperationException("setValue");
+        }
+      };
+    }
+  }
+
+  private class OIndexTxCursor extends OIndexAbstractCursor {
+
+    private final OIndexCursor               backedCursor;
+    private final boolean                    ascOrder;
+    private final OTransactionIndexChanges   indexChanges;
+    private OIndexCursor                     txBetweenIndexCursor;
+
+    private Map.Entry<Object, OIdentifiable> nextTxEntry;
+    private Map.Entry<Object, OIdentifiable> nextBackedEntry;
+
+    private boolean                          firstTime;
+
+    public OIndexTxCursor(OIndexCursor txCursor, OIndexCursor backedCursor, boolean ascOrder, OTransactionIndexChanges indexChanges) {
+      this.backedCursor = backedCursor;
+      this.ascOrder = ascOrder;
+      this.indexChanges = indexChanges;
+      txBetweenIndexCursor = txCursor;
+      firstTime = true;
+    }
+
+    @Override
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
+      if (firstTime) {
+        nextTxEntry = txBetweenIndexCursor.nextEntry();
+        nextBackedEntry = backedCursor.nextEntry();
+        firstTime = false;
+      }
+
+      Map.Entry<Object, OIdentifiable> result = null;
+
+      while (result == null && (nextTxEntry != null || nextBackedEntry != null)) {
+        if (nextTxEntry == null && nextBackedEntry != null) {
+          result = nextBackedEntry(getPrefetchSize());
+        } else if (nextBackedEntry == null && nextTxEntry != null) {
+          result = nextTxEntry(getPrefetchSize());
+        } else if (nextTxEntry != null && nextBackedEntry != null) {
+          if (ascOrder) {
+            if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.getKey(), nextTxEntry.getKey()) <= 0) {
+              result = nextBackedEntry(getPrefetchSize());
+            } else {
+              result = nextTxEntry(getPrefetchSize());
+            }
+          } else {
+            if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.getKey(), nextTxEntry.getKey()) >= 0) {
+              result = nextBackedEntry(getPrefetchSize());
+            } else {
+              result = nextTxEntry(getPrefetchSize());
+            }
+          }
+        }
+      }
+
       return result;
     }
 
-    for (final Object key : keys) {
-      final Set<OIdentifiable> keyResult;
-      if (!indexChanges.cleared)
-        if (indexChanges.containsChangesPerKey(key))
-          // BEGIN FROM THE UNDERLYING RESULT SET
-          keyResult = new TreeSet<OIdentifiable>(super.get(key));
-        else
-          continue;
-      else
-        // BEGIN FROM EMPTY RESULT SET
-        keyResult = new TreeSet<OIdentifiable>();
-
-      keysToRemove.add(key);
-      filterIndexChanges(indexChanges, key, keyResult);
-      result.addAll(keyResult);
+    private Map.Entry<Object, OIdentifiable> nextTxEntry(int prefetchSize) {
+      Map.Entry<Object, OIdentifiable> result = nextTxEntry;
+      nextTxEntry = txBetweenIndexCursor.nextEntry();
+      return result;
     }
 
-    keys.removeAll(keysToRemove);
+    private Map.Entry<Object, OIdentifiable> nextBackedEntry(int prefetchSize) {
+      Map.Entry<Object, OIdentifiable> result;
+      result = calculateTxIndexEntry(nextBackedEntry.getKey(), nextBackedEntry.getValue(), indexChanges);
+      nextBackedEntry = backedCursor.nextEntry();
+      return result;
+    }
+  }
 
-    if (!keys.isEmpty())
-      result.addAll(super.getValues(keys));
-    return result;
+  public OIndexTxAwareMultiValue(final ODatabaseRecord database, final OIndex<Set<OIdentifiable>> delegate) {
+    super(database, delegate);
   }
 
   @Override
-  public Collection<ODocument> getEntries(final Collection<?> iKeys) {
-    final Collection<?> keys = new ArrayList<Object>(iKeys);
-
-    final Set<ODocument> result = new ODocumentFieldsHashSet();
-
-    final Set<Object> keysToRemove = new HashSet<Object>();
+  public Set<OIdentifiable> get(final Object key) {
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    if (indexChanges == null)
+      return super.get(key);
 
-    if (indexChanges == null) {
-      return super.getEntries(keys);
+    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
+    if (!indexChanges.cleared) {
+      // BEGIN FROM THE UNDERLYING RESULT SET
+      final Collection<OIdentifiable> subResult = super.get(key);
+      if (subResult != null)
+        for (OIdentifiable oid : subResult)
+          result.add(oid);
     }
 
-    for (final Object key : keys) {
-      final Set<OIdentifiable> keyResult;
-      if (!indexChanges.cleared)
-        if (indexChanges.containsChangesPerKey(key))
-          // BEGIN FROM THE UNDERLYING RESULT SET
-          keyResult = new TreeSet<OIdentifiable>(super.get(key));
-        else
-          continue;
-      else
-        // BEGIN FROM EMPTY RESULT SET
-        keyResult = new TreeSet<OIdentifiable>();
-
-      keysToRemove.add(key);
-
-      filterIndexChanges(indexChanges, key, keyResult);
-
-      for (final OIdentifiable id : keyResult) {
-        final ODocument document = new ODocument();
-        document.field("key", key);
-        document.field("rid", id.getIdentity());
-        document.unsetDirty();
-        result.add(document);
-      }
+    final Set<OIdentifiable> processed = new HashSet<OIdentifiable>();
+    for (OIdentifiable identifiable : result) {
+      Map.Entry<Object, OIdentifiable> entry = calculateTxIndexEntry(key, identifiable, indexChanges);
+      if (entry != null)
+        processed.add(entry.getValue());
     }
 
-    keys.removeAll(keysToRemove);
+    Set<OIdentifiable> txChanges = calculateTxValue(key, indexChanges);
+    if (txChanges != null)
+      processed.addAll(txChanges);
 
-    if (!keys.isEmpty())
-      result.addAll(super.getEntries(keys));
-    return result;
+    if (!processed.isEmpty())
+      return processed;
+
+    return null;
   }
 
-  protected Collection<OIdentifiable> filterIndexChanges(final OTransactionIndexChanges indexChanges, final Object key,
-      final Collection<OIdentifiable> keyResult) {
+  @Override
+  public boolean contains(final Object key) {
+    return get(key) != null;
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesBetween(final Object fromKey, final boolean fromInclusive, final Object toKey,
+      final boolean toInclusive, final boolean ascOrder) {
+
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
     if (indexChanges == null)
-      return keyResult;
+      return super.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
 
-    if (indexChanges.containsChangesPerKey(key)) {
-      final OTransactionIndexChangesPerKey value = indexChanges.getChangesPerKey(key);
-      if (value != null) {
-        for (final OTransactionIndexEntry entry : value.entries) {
-          if (entry.operation == OPERATION.REMOVE) {
-            if (entry.value == null) {
-              // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
-              keyResult.clear();
-              break;
-            } else
-              // REMOVE ONLY THIS RID
-              keyResult.remove(entry.value);
-          } else if (entry.operation == OPERATION.PUT) {
-            // ADD ALSO THIS RID
-            keyResult.add(entry.value);
-          }
+    final OIndexCursor txCursor;
+    if (ascOrder)
+      txCursor = new PureTxBetweenIndexForwardCursor(fromKey, fromInclusive, toKey, toInclusive, indexChanges);
+    else
+      txCursor = new PureTxBetweenIndexBackwardCursor(fromKey, fromInclusive, toKey, toInclusive, indexChanges);
+
+    if (indexChanges.cleared)
+      return txCursor;
+
+    final OIndexCursor backedCursor = super.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder);
+
+    return new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges);
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    if (indexChanges == null)
+      return super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
+
+    final OIndexCursor txCursor;
+
+    final Object lastKey = indexChanges.getLastKey();
+    if (ascOrder)
+      txCursor = new PureTxBetweenIndexForwardCursor(fromKey, fromInclusive, lastKey, true, indexChanges);
+    else
+      txCursor = new PureTxBetweenIndexBackwardCursor(fromKey, fromInclusive, lastKey, true, indexChanges);
+
+    if (indexChanges.cleared)
+      return txCursor;
+
+    final OIndexCursor backedCursor = super.iterateEntriesMajor(fromKey, fromInclusive, ascOrder);
+
+    return new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges);
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    if (indexChanges == null)
+      return super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
+
+    final OIndexCursor txCursor;
+
+    final Object firstKey = indexChanges.getFirstKey();
+    if (ascOrder)
+      txCursor = new PureTxBetweenIndexForwardCursor(firstKey, true, toKey, toInclusive, indexChanges);
+    else
+      txCursor = new PureTxBetweenIndexBackwardCursor(firstKey, true, toKey, toInclusive, indexChanges);
+
+    if (indexChanges.cleared)
+      return txCursor;
+
+    final OIndexCursor backedCursor = super.iterateEntriesMinor(toKey, toInclusive, ascOrder);
+    return new OIndexTxCursor(txCursor, backedCursor, ascOrder, indexChanges);
+  }
+
+  @Override
+  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
+    final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
+    if (indexChanges == null)
+      return super.iterateEntries(keys, ascSortOrder);
+
+    final List<Object> sortedKeys = new ArrayList<Object>(keys);
+    if (ascSortOrder)
+      Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
+    else
+      Collections.sort(sortedKeys, Collections.reverseOrder(ODefaultComparator.INSTANCE));
+
+    final OIndexCursor txCursor = new OIndexAbstractCursor() {
+      private Iterator<Object>        keysIterator   = sortedKeys.iterator();
+
+      private Iterator<OIdentifiable> valuesIterator = new OEmptyIterator<OIdentifiable>();
+      private Object                  key;
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
+        if (valuesIterator.hasNext())
+          return nextEntryInternal();
+
+        if (keysIterator == null)
+          return null;
+
+        Set<OIdentifiable> result = null;
+
+        while (result == null && keysIterator.hasNext()) {
+          key = keysIterator.next();
+          result = calculateTxValue(key, indexChanges);
+
+          if (result != null && result.isEmpty())
+            result = null;
         }
+
+        if (result == null) {
+          keysIterator = null;
+          return null;
+        }
+
+        valuesIterator = result.iterator();
+        return nextEntryInternal();
+      }
+
+      private Map.Entry<Object, OIdentifiable> nextEntryInternal() {
+        final OIdentifiable identifiable = valuesIterator.next();
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return key;
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return identifiable;
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException("setValue");
+          }
+        };
+      }
+    };
+
+    if (indexChanges.cleared)
+      return txCursor;
+
+    final OIndexCursor backedCursor = super.iterateEntries(keys, ascSortOrder);
+    return new OIndexTxCursor(txCursor, backedCursor, ascSortOrder, indexChanges);
+  }
+
+  private Map.Entry<Object, OIdentifiable> calculateTxIndexEntry(final Object key, final OIdentifiable backendValue,
+      OTransactionIndexChanges indexChanges) {
+    final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
+    if (changesPerKey.entries.isEmpty())
+      return createMapEntry(key, backendValue);
+
+    int putCounter = 1;
+    for (OTransactionIndexEntry entry : changesPerKey.entries) {
+      if (entry.operation == OPERATION.PUT && entry.value.equals(backendValue))
+        putCounter++;
+      else if (entry.operation == OPERATION.REMOVE) {
+        if (entry.value == null)
+          putCounter = 0;
+        else if (entry.value.equals(backendValue) && putCounter > 0)
+          putCounter--;
       }
     }
 
-    if (indexChanges.containsChangesCrossKey()) {
-      final OTransactionIndexChangesPerKey value = indexChanges.getChangesCrossKey();
-      if (value != null) {
-        for (final OTransactionIndexEntry entry : value.entries) {
-          if (entry.operation == OPERATION.REMOVE) {
-            if (entry.value == null) {
-              // REMOVE THE ENTIRE KEY, SO RESULT SET IS EMPTY
-              keyResult.clear();
-              break;
-            } else
-              // REMOVE ONLY THIS RID
-              keyResult.remove(entry.value);
-          } else if (entry.operation == OPERATION.PUT) {
-            // ADD ALSO THIS RID
-            keyResult.add(entry.value);
-          }
-        }
+    if (putCounter <= 0)
+      return null;
+
+    return createMapEntry(key, backendValue);
+  }
+
+  private Map.Entry<Object, OIdentifiable> createMapEntry(final Object key, final OIdentifiable backendValue) {
+    return new Map.Entry<Object, OIdentifiable>() {
+      @Override
+      public Object getKey() {
+        return key;
       }
+
+      @Override
+      public OIdentifiable getValue() {
+        return backendValue;
+      }
+
+      @Override
+      public OIdentifiable setValue(OIdentifiable value) {
+        throw new UnsupportedOperationException("setValue");
+      }
+    };
+  }
+
+  private Set<OIdentifiable> calculateTxValue(final Object key, OTransactionIndexChanges indexChanges) {
+    final OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(key);
+    if (changesPerKey.entries.isEmpty())
+      return null;
+
+    final List<OIdentifiable> result = new ArrayList<OIdentifiable>();
+    for (OTransactionIndexEntry entry : changesPerKey.entries) {
+      if (entry.operation == OPERATION.REMOVE) {
+        if (entry.value == null)
+          result.clear();
+        else
+          result.remove(entry.value);
+      } else
+        result.add(entry.value);
     }
-    return keyResult;
+
+    if (result.isEmpty())
+      return null;
+
+    return new HashSet<OIdentifiable>(result);
   }
 }

@@ -49,6 +49,9 @@ public final class ODistributedVersion implements ORecordVersion {
   private long                         timestamp;
   private long                         macAddress;
 
+  /**
+   * Internal constructor needed for serialization.
+   */
   public ODistributedVersion() {
   }
 

@@ -15,20 +15,19 @@
  */
 package com.orientechnologies.orient.core.security;
 
-import java.io.UnsupportedEncodingException;
-import java.security.Key;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
+import java.io.UnsupportedEncodingException;
+import java.security.Key;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class OSecurityManager {
 
@@ -45,6 +44,35 @@ public class OSecurityManager {
     } catch (NoSuchAlgorithmException e) {
       OLogManager.instance().error(this, "Cannot use OSecurityManager", e);
     }
+  }
+
+  public static String digest2String(final String iInput, String iAlgorithm) throws NoSuchAlgorithmException,
+      UnsupportedEncodingException {
+    if (iAlgorithm == null)
+      iAlgorithm = ALGORITHM;
+
+    final MessageDigest msgDigest = MessageDigest.getInstance(iAlgorithm);
+
+    return byteArrayToHexStr(msgDigest.digest(iInput.getBytes("UTF-8")));
+  }
+
+  public static OSecurityManager instance() {
+    return instance;
+  }
+
+  private static String byteArrayToHexStr(final byte[] data) {
+    if (data == null)
+      return null;
+
+    final char[] chars = new char[data.length * 2];
+    for (int i = 0; i < data.length; i++) {
+      final byte current = data[i];
+      final int hi = (current & 0xF0) >> 4;
+      final int lo = current & 0x0F;
+      chars[2 * i] = (char) (hi < 10 ? ('0' + hi) : ('A' + hi - 10));
+      chars[2 * i + 1] = (char) (lo < 10 ? ('0' + lo) : ('A' + lo - 10));
+    }
+    return new String(chars);
   }
 
   public boolean check(final byte[] iInput1, final byte[] iInput2) {
@@ -139,24 +167,5 @@ public class OSecurityManager {
     } catch (Exception e) {
       throw new OSecurityException("Error on decrypting data", e);
     }
-  }
-
-  public static OSecurityManager instance() {
-    return instance;
-  }
-
-  private static String byteArrayToHexStr(final byte[] data) {
-    if (data == null)
-      return null;
-
-    final char[] chars = new char[data.length * 2];
-    for (int i = 0; i < data.length; i++) {
-      final byte current = data[i];
-      final int hi = (current & 0xF0) >> 4;
-      final int lo = current & 0x0F;
-      chars[2 * i] = (char) (hi < 10 ? ('0' + hi) : ('A' + hi - 10));
-      chars[2 * i + 1] = (char) (lo < 10 ? ('0' + lo) : ('A' + lo - 10));
-    }
-    return new String(chars);
   }
 }

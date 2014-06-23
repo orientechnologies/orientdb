@@ -15,17 +15,17 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Contains the user settings about security and permissions roles.<br/>
@@ -40,17 +40,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  */
 @SuppressWarnings("unchecked")
 public class ORole extends ODocumentWrapper {
-  private static final long  serialVersionUID = 1L;
-
-  public static final String ADMIN            = "admin";
-  public static final String CLASS_NAME       = "ORole";
-
-  public enum ALLOW_MODES {
-    DENY_ALL_BUT, ALLOW_ALL_BUT
-  }
-
-  // CRUD OPERATIONS
-  private static Map<Integer, String> PERMISSION_BIT_NAMES;
+  public static final String          ADMIN             = "admin";
+  public static final String          CLASS_NAME        = "ORole";
   public final static int             PERMISSION_NONE   = 0;
   public final static int             PERMISSION_CREATE = registerPermissionBit(0, "Create");
   public final static int             PERMISSION_READ   = registerPermissionBit(1, "Read");
@@ -58,13 +49,18 @@ public class ORole extends ODocumentWrapper {
   public final static int             PERMISSION_DELETE = registerPermissionBit(3, "Delete");
   public final static int             PERMISSION_ALL    = PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
                                                             + PERMISSION_DELETE;
-
   protected final static byte         STREAM_DENY       = 0;
   protected final static byte         STREAM_ALLOW      = 1;
-
+  private static final long           serialVersionUID  = 1L;
+  // CRUD OPERATIONS
+  private static Map<Integer, String> PERMISSION_BIT_NAMES;
   protected ALLOW_MODES               mode              = ALLOW_MODES.DENY_ALL_BUT;
   protected ORole                     parentRole;
   protected Map<String, Byte>         rules             = new LinkedHashMap<String, Byte>();
+
+  public enum ALLOW_MODES {
+    DENY_ALL_BUT, ALLOW_ALL_BUT
+  }
 
   /**
    * Constructor used in unmarshalling.
@@ -76,7 +72,7 @@ public class ORole extends ODocumentWrapper {
     super(CLASS_NAME);
     document.field("name", iName);
     parentRole = iParent;
-    document.field("inheritedRole", parentRole != null ? parentRole.getName() : null);
+    document.field("inheritedRole", iParent != null ? iParent.getDocument() : null);
     setMode(iAllowMode);
     document.field("rules", new HashMap<String, Number>());
   }
@@ -86,145 +82,6 @@ public class ORole extends ODocumentWrapper {
    */
   public ORole(final ODocument iSource) {
     fromStream(iSource);
-  }
-
-  @Override
-  @OBeforeDeserialization
-  public void fromStream(final ODocument iSource) {
-    if (document != null)
-      return;
-
-    document = iSource;
-
-    try {
-      mode = ((Number) document.field("mode")).byteValue() == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT : ALLOW_MODES.DENY_ALL_BUT;
-    } catch (Exception ex) {
-      OLogManager.instance().error(this, "illegal mode " + ex.getMessage());
-      mode = ALLOW_MODES.DENY_ALL_BUT;
-    }
-
-    final OIdentifiable role = document.field("inheritedRole");
-    parentRole = role != null ? document.getDatabase().getMetadata().getSecurity().getRole(role) : null;
-
-    final Map<String, Number> storedRules = document.field("rules");
-    if (storedRules != null)
-      for (Entry<String, Number> a : storedRules.entrySet()) {
-        rules.put(a.getKey().toLowerCase(), a.getValue().byteValue());
-      }
-
-    if (getName().equals("admin") && !hasRule(ODatabaseSecurityResources.BYPASS_RESTRICTED))
-      // FIX 1.5.1 TO ASSIGN database.bypassRestricted rule to the role
-      addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL).save();
-  }
-
-  public boolean allow(final String iResource, final int iCRUDOperation) {
-    // CHECK FOR SECURITY AS DIRECT RESOURCE
-    final Byte access = rules.get(iResource);
-    if (access != null) {
-      final byte mask = (byte) iCRUDOperation;
-
-      return (access.byteValue() & mask) == mask;
-    } else if (parentRole != null)
-      // DELEGATE TO THE PARENT ROLE IF ANY
-      return parentRole.allow(iResource, iCRUDOperation);
-
-    return mode == ALLOW_MODES.ALLOW_ALL_BUT;
-  }
-
-  public boolean hasRule(final String iResource) {
-    return rules.containsKey(iResource.toLowerCase());
-  }
-
-  public ORole addRule(final String iResource, final int iOperation) {
-    rules.put(iResource.toLowerCase(), (byte) iOperation);
-    document.field("rules", rules);
-    return this;
-  }
-
-  /**
-   * Grant a permission to the resource.
-   * 
-   * @param iResource
-   *          Requested resource
-   * @param iOperation
-   *          Permission to grant/add
-   * @return
-   */
-  public ORole grant(final String iResource, final int iOperation) {
-    final Byte current = rules.get(iResource);
-    byte currentValue = current == null ? PERMISSION_NONE : current.byteValue();
-
-    currentValue |= (byte) iOperation;
-
-    rules.put(iResource.toLowerCase(), currentValue);
-    document.field("rules", rules);
-    return this;
-  }
-
-  /**
-   * Revoke a permission to the resource.
-   * 
-   * @param iResource
-   *          Requested resource
-   * @param iOperation
-   *          Permission to grant/remove
-   */
-  public ORole revoke(final String iResource, final int iOperation) {
-    if (iOperation == PERMISSION_NONE)
-      return this;
-
-    final Byte current = rules.get(iResource);
-
-    byte currentValue;
-    if (current == null)
-      currentValue = PERMISSION_NONE;
-    else {
-      currentValue = current.byteValue();
-      currentValue &= ~(byte) iOperation;
-    }
-
-    rules.put(iResource.toLowerCase(), currentValue);
-    document.field("rules", rules);
-    return this;
-  }
-
-  public String getName() {
-    return document.field("name");
-  }
-
-  public ALLOW_MODES getMode() {
-    return mode;
-  }
-
-  public ORole setMode(final ALLOW_MODES iMode) {
-    this.mode = iMode;
-    document.field("mode", mode == ALLOW_MODES.ALLOW_ALL_BUT ? STREAM_ALLOW : STREAM_DENY);
-    return this;
-  }
-
-  public ORole getParentRole() {
-    return parentRole;
-  }
-
-  public ORole setParentRole(final ORole iParent) {
-    this.parentRole = iParent;
-    document.field("inheritedRole", parentRole != null ? parentRole.getName() : null);
-    return this;
-  }
-
-  @Override
-  public ORole save() {
-    document.save(ORole.class.getSimpleName());
-    return this;
-  }
-
-  public Map<String, Byte> getRules() {
-    return Collections.unmodifiableMap(rules);
-  }
-
-  @Override
-  public String toString() {
-    return getName();
   }
 
   /**
@@ -268,5 +125,146 @@ public class ORole extends ODocumentWrapper {
 
     PERMISSION_BIT_NAMES.put(value, iName);
     return value;
+  }
+
+  @Override
+  @OBeforeDeserialization
+  public void fromStream(final ODocument iSource) {
+    if (document != null)
+      return;
+
+    document = iSource;
+
+    try {
+      final Number modeField = document.field("mode");
+      mode = modeField == null ? ALLOW_MODES.DENY_ALL_BUT : modeField.byteValue() == STREAM_ALLOW ? ALLOW_MODES.ALLOW_ALL_BUT
+          : ALLOW_MODES.DENY_ALL_BUT;
+    } catch (Exception ex) {
+      OLogManager.instance().error(this, "illegal mode " + ex.getMessage());
+      mode = ALLOW_MODES.DENY_ALL_BUT;
+    }
+
+    final OIdentifiable role = document.field("inheritedRole");
+    parentRole = role != null ? document.getDatabase().getMetadata().getSecurity().getRole(role) : null;
+
+    final Map<String, Number> storedRules = document.field("rules");
+    if (storedRules != null)
+      for (Entry<String, Number> a : storedRules.entrySet()) {
+        rules.put(a.getKey().toLowerCase(), a.getValue().byteValue());
+      }
+
+    if (getName().equals("admin") && !hasRule(ODatabaseSecurityResources.BYPASS_RESTRICTED))
+      // FIX 1.5.1 TO ASSIGN database.bypassRestricted rule to the role
+      addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL).save();
+  }
+
+  public boolean allow(final String iResource, final int iCRUDOperation) {
+    // CHECK FOR SECURITY AS DIRECT RESOURCE
+    final Byte access = rules.get(iResource.toLowerCase());
+    if (access != null) {
+      final byte mask = (byte) iCRUDOperation;
+
+      return (access.byteValue() & mask) == mask;
+    } else if (parentRole != null)
+      // DELEGATE TO THE PARENT ROLE IF ANY
+      return parentRole.allow(iResource, iCRUDOperation);
+
+    return mode == ALLOW_MODES.ALLOW_ALL_BUT;
+  }
+
+  public boolean hasRule(final String iResource) {
+    return rules.containsKey(iResource.toLowerCase());
+  }
+
+  public ORole addRule(final String iResource, final int iOperation) {
+    rules.put(iResource.toLowerCase(), (byte) iOperation);
+    document.field("rules", rules);
+    return this;
+  }
+
+  /**
+   * Grant a permission to the resource.
+   * 
+   * @param iResource
+   *          Requested resource
+   * @param iOperation
+   *          Permission to grant/add
+   * @return
+   */
+  public ORole grant(final String iResource, final int iOperation) {
+    final Byte current = rules.get(iResource.toLowerCase());
+    byte currentValue = current == null ? PERMISSION_NONE : current.byteValue();
+
+    currentValue |= (byte) iOperation;
+
+    rules.put(iResource.toLowerCase(), currentValue);
+    document.field("rules", rules);
+    return this;
+  }
+
+  /**
+   * Revoke a permission to the resource.
+   * 
+   * @param iResource
+   *          Requested resource
+   * @param iOperation
+   *          Permission to grant/remove
+   */
+  public ORole revoke(final String iResource, final int iOperation) {
+    if (iOperation == PERMISSION_NONE)
+      return this;
+
+    final Byte current = rules.get(iResource.toLowerCase());
+
+    byte currentValue;
+    if (current == null)
+      currentValue = PERMISSION_NONE;
+    else {
+      currentValue = current.byteValue();
+      currentValue &= ~(byte) iOperation;
+    }
+
+    rules.put(iResource.toLowerCase(), currentValue);
+    document.field("rules", rules);
+    return this;
+  }
+
+  public String getName() {
+    return document.field("name");
+  }
+
+  public ALLOW_MODES getMode() {
+    return mode;
+  }
+
+  public ORole setMode(final ALLOW_MODES iMode) {
+    this.mode = iMode;
+    document.field("mode", mode == ALLOW_MODES.ALLOW_ALL_BUT ? STREAM_ALLOW : STREAM_DENY);
+    return this;
+  }
+
+  public ORole getParentRole() {
+    return parentRole;
+  }
+
+  public ORole setParentRole(final ORole iParent) {
+    this.parentRole = iParent;
+    document.field("inheritedRole", parentRole != null ? parentRole.getDocument() : null);
+    return this;
+  }
+
+  @Override
+  public ORole save() {
+    document.save(ORole.class.getSimpleName());
+    return this;
+  }
+
+  public Map<String, Byte> getRules() {
+    return Collections.unmodifiableMap(rules);
+  }
+
+  @Override
+  public String toString() {
+    return getName();
   }
 }

@@ -15,20 +15,26 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.concur.resource.OSharedResourceIterator;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.engine.local.OEngineLocal;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
 /**
  * Abstract Index implementation that allows only one value for a key.
@@ -37,12 +43,14 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  * 
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
-  public OIndexOneValue(final String type, String algorithm, OIndexEngine<OIdentifiable> engine) {
-    super(type, algorithm, engine);
+  public OIndexOneValue(final String type, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm) {
+    super(type, algorithm, engine, valueContainerAlgorithm);
   }
 
-  public OIdentifiable get(final Object iKey) {
+  public OIdentifiable get(Object iKey) {
     checkForRebuild();
+
+    iKey = getCollatingValue(iKey);
 
     acquireSharedLock();
     try {
@@ -52,34 +60,41 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public long count(final Object key) {
+  public long count(Object iKey) {
     checkForRebuild();
+
+    iKey = getCollatingValue(iKey);
 
     acquireSharedLock();
     try {
-      return indexEngine.contains(key) ? 1 : 0;
+      return indexEngine.contains(iKey) ? 1 : 0;
     } finally {
       releaseSharedLock();
     }
   }
 
   @Override
-  public void checkEntry(final OIdentifiable iRecord, final Object key) {
+  public void checkEntry(final OIdentifiable iRecord, Object key) {
     checkForRebuild();
+
+    key = getCollatingValue(key);
 
     // CHECK IF ALREADY EXIST
     final OIdentifiable indexedRID = get(key);
     if (indexedRID != null && !indexedRID.getIdentity().equals(iRecord.getIdentity())) {
       // CHECK IF IN THE SAME TX THE ENTRY WAS DELETED
-      final OTransactionIndexChanges indexChanges = ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-          .getIndexChanges(getName());
-      if (indexChanges != null) {
-        final OTransactionIndexChangesPerKey keyChanges = indexChanges.getChangesPerKey(key);
-        if (keyChanges != null) {
-          for (OTransactionIndexEntry entry : keyChanges.entries) {
-            if (entry.operation == OPERATION.REMOVE)
-              // WAS DELETED, OK!
-              return;
+      String storageType = getDatabase().getStorage().getType();
+      if (storageType.equals(OEngineMemory.NAME) || storageType.equals(OEngineLocal.NAME)) {
+        final OTransactionIndexChanges indexChanges = ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
+            .getIndexChanges(getName());
+        if (indexChanges != null) {
+          final OTransactionIndexChangesPerKey keyChanges = indexChanges.getChangesPerKey(key);
+          if (keyChanges != null) {
+            for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry : keyChanges.entries) {
+              if (entry.operation == OTransactionIndexChanges.OPERATION.REMOVE)
+                // WAS DELETED, OK!
+                return;
+            }
           }
         }
       }
@@ -93,133 +108,105 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   public OIndexOneValue create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
       final Set<String> clustersToIndex, boolean rebuild, final OProgressListener progressListener) {
     return (OIndexOneValue) super.create(name, indexDefinition, clusterIndexName, clustersToIndex, rebuild, progressListener,
-        OStreamSerializerRID.INSTANCE);
+        determineValueSerializer());
   }
 
-  public Collection<OIdentifiable> getValuesBetween(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo,
-      final boolean iToInclusive, final int maxValuesToFetch) {
-    checkForRebuild();
-
-    if (iRangeFrom.getClass() != iRangeTo.getClass())
-      throw new IllegalArgumentException("Range from-to parameters are of different types");
-
-    acquireSharedLock();
-    try {
-      return indexEngine.getValuesBetween(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, maxValuesToFetch, null);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public Collection<OIdentifiable> getValuesMajor(final Object fromKey, final boolean isInclusive, final int maxValuesToFetch) {
-    checkForRebuild();
-
-    acquireSharedLock();
-    try {
-      return indexEngine.getValuesMajor(fromKey, isInclusive, maxValuesToFetch, null);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public Collection<OIdentifiable> getValuesMinor(final Object toKey, final boolean isInclusive, final int maxValuesToFetch) {
-    checkForRebuild();
-
-    acquireSharedLock();
-    try {
-      return indexEngine.getValuesMinor(toKey, isInclusive, maxValuesToFetch, null);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public Collection<OIdentifiable> getValues(final Collection<?> keys, final int maxValuesToSearch) {
+  @Override
+  public OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder) {
     checkForRebuild();
 
     final List<Object> sortedKeys = new ArrayList<Object>(keys);
-    Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
+    final Comparator<Object> comparator;
 
-    acquireSharedLock();
-    final Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-    try {
-      for (final Object key : sortedKeys) {
-        if (maxValuesToSearch > -1 && result.size() == maxValuesToSearch)
-          return result;
+    if (ascSortOrder)
+      comparator = ODefaultComparator.INSTANCE;
+    else
+      comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
 
-        final OIdentifiable val = indexEngine.get(key);
-        if (val != null) {
-          result.add(val);
+    Collections.sort(sortedKeys, comparator);
+
+    return new OIndexAbstractCursor() {
+      private Iterator<?> keysIterator = sortedKeys.iterator();
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
+        OIdentifiable result = null;
+        Object key = null;
+        while (keysIterator.hasNext() && result == null) {
+          key = keysIterator.next();
+          key = getCollatingValue(key);
+
+          acquireSharedLock();
+          try {
+            result = indexEngine.get(key);
+          } finally {
+            releaseSharedLock();
+          }
         }
+
+        if (result == null)
+          return null;
+
+        final Object resultKey = key;
+        final OIdentifiable resultValue = result;
+
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return resultKey;
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return resultValue;
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException("setValue");
+          }
+        };
       }
+    };
+  }
 
-      return result;
+  @Override
+  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+      boolean ascOrder) {
+    checkForRebuild();
+
+    fromKey = getCollatingValue(fromKey);
+    toKey = getCollatingValue(toKey);
+
+    acquireSharedLock();
+    try {
+      return indexEngine.iterateEntriesBetween(fromKey, fromInclusive, toKey, toInclusive, ascOrder, null);
     } finally {
       releaseSharedLock();
     }
   }
 
-  public Collection<ODocument> getEntriesMajor(final Object fromKey, final boolean isInclusive, final int maxEntriesToFetch) {
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder) {
     checkForRebuild();
 
+    fromKey = getCollatingValue(fromKey);
     acquireSharedLock();
     try {
-      return indexEngine.getEntriesMajor(fromKey, isInclusive, maxEntriesToFetch, null);
+      return indexEngine.iterateEntriesMajor(fromKey, fromInclusive, ascOrder, null);
     } finally {
       releaseSharedLock();
     }
   }
 
-  public Collection<ODocument> getEntriesMinor(final Object toKey, final boolean isInclusive, final int maxEntriesToFetch) {
+  @Override
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder) {
     checkForRebuild();
 
+    toKey = getCollatingValue(toKey);
     acquireSharedLock();
     try {
-      return indexEngine.getEntriesMinor(toKey, isInclusive, maxEntriesToFetch, null);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public Collection<ODocument> getEntriesBetween(final Object rangeFrom, final Object rangeTo, final boolean inclusive,
-      final int maxEntriesToFetch) {
-    checkForRebuild();
-
-    if (rangeFrom.getClass() != rangeTo.getClass())
-      throw new IllegalArgumentException("Range from-to parameters are of different types");
-
-    acquireSharedLock();
-    try {
-      return indexEngine.getEntriesBetween(rangeFrom, rangeTo, inclusive, maxEntriesToFetch, null);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public Collection<ODocument> getEntries(final Collection<?> keys, final int maxEntriesToFetch) {
-    checkForRebuild();
-
-    final List<Object> sortedKeys = new ArrayList<Object>(keys);
-    Collections.sort(sortedKeys, ODefaultComparator.INSTANCE);
-
-    acquireSharedLock();
-    final Set<ODocument> result = new ODocumentFieldsHashSet();
-    try {
-      for (final Object key : sortedKeys) {
-        if (maxEntriesToFetch > -1 && result.size() == maxEntriesToFetch)
-          return result;
-
-        final OIdentifiable val = indexEngine.get(key);
-        if (val != null) {
-          final ODocument document = new ODocument();
-          document.field("key", key);
-          document.field("rid", val.getIdentity());
-          document.unsetDirty();
-
-          result.add(document);
-        }
-      }
-
-      return result;
+      return indexEngine.iterateEntriesMinor(toKey, toInclusive, ascOrder, null);
     } finally {
       releaseSharedLock();
     }
@@ -236,21 +223,6 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public long count(final Object iRangeFrom, final boolean iFromInclusive, final Object iRangeTo, final boolean iToInclusive,
-      final int maxValuesToFetch) {
-    checkForRebuild();
-
-    if (iRangeFrom != null && iRangeTo != null && iRangeFrom.getClass() != iRangeTo.getClass())
-      throw new IllegalArgumentException("Range from-to parameters are of different types");
-
-    acquireSharedLock();
-    try {
-      return indexEngine.count(iRangeFrom, iFromInclusive, iRangeTo, iToInclusive, maxValuesToFetch, null);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   public long getKeySize() {
     checkForRebuild();
 
@@ -262,27 +234,20 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     }
   }
 
-  public Iterator<OIdentifiable> valuesIterator() {
+  @Override
+  public OIndexCursor cursor() {
     checkForRebuild();
 
     acquireSharedLock();
     try {
-      return new OSharedResourceIterator<OIdentifiable>(this, indexEngine.valuesIterator());
+      return indexEngine.cursor(null);
     } finally {
       releaseSharedLock();
     }
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
-  public Iterator<OIdentifiable> valuesInverseIterator() {
-    checkForRebuild();
-
-    acquireSharedLock();
-    try {
-      return new OSharedResourceIterator<OIdentifiable>(this, indexEngine.inverseValuesIterator());
-    } finally {
-      releaseSharedLock();
-    }
+  @Override
+  protected OStreamSerializer determineValueSerializer() {
+    return OStreamSerializerRID.INSTANCE;
   }
-
 }

@@ -4,12 +4,15 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeMemory;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 @Test
 public class OMVRBTreeNonCompositeTest {
-	protected OMVRBTree<Double, Double>	tree;
+	protected OMVRBTree<Double, Double> tree;
 
 	@BeforeMethod
 	public void beforeMethod() throws Exception {

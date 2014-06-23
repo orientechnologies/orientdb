@@ -24,10 +24,15 @@ public abstract class OrientConsole extends OConsoleApplication {
   }
 
   @Override
+  public void help() {
+    super.help();
+  }
+
+  @Override
   protected void onException(Throwable e) {
     Throwable current = e;
     while (current != null) {
-      err.print("\nError: " + current.toString());
+      err.print("\nError: " + current.toString() + "\n");
       current = current.getCause();
     }
   }
@@ -43,11 +48,6 @@ public abstract class OrientConsole extends OConsoleApplication {
   @Override
   protected void onAfter() {
     out.println();
-  }
-
-  @Override
-  public void help() {
-    super.help();
   }
 
   protected String format(final String iValue, final int iMaxSize) {

@@ -44,5 +44,10 @@ public enum OIndexReuseType {
 	 * Result of execution of this operator can be replaced by call to one of
 	 * {@link com.orientechnologies.orient.core.index.OIndex} methods.
 	 */
-	INDEX_METHOD
+	INDEX_METHOD,
+    /**
+     * Result of execution of this operator can be replaced by call to one of
+     * {@link com.orientechnologies.orient.core.index.OIndex} methods depending on user implementation.
+     */
+    INDEX_OPERATOR
 }

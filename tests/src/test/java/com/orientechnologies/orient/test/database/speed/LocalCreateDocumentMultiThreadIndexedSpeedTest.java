@@ -15,11 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Date;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
+import com.orientechnologies.common.test.SpeedTestMultiThreads;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -31,116 +27,124 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.util.Date;
 
 @Test(enabled = false)
 public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiThreadTest {
-	private ODatabaseDocument	database;
-	private long							foundObjects;
+  private ODatabaseDocument database;
+  private long              foundObjects;
 
-	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-		// System.setProperty("url", "remote:localhost/demo");
+  @Test(enabled = false)
+  public static class CreateObjectsThread extends OrientThreadTest {
+    private ODatabaseDocument database;
+    private ODocument         record;
+    private Date              date = new Date();
 
-		if (iArgs.length > 0)
-			System.setProperty("url", iArgs[0]);
+    public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
+      super(parent, threadId);
+    }
 
-		int tot = iArgs.length > 1 ? Integer.parseInt(iArgs[1]) : 1000000;
-		int threads = iArgs.length > 2 ? Integer.parseInt(iArgs[2]) : 5;
+    @Override
+    public void init() {
+      database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+      record = database.newInstance();
+      database.declareIntent(new OIntentMassiveInsert());
+      database.begin(TXTYPE.NOTX);
+    }
 
-		LocalCreateDocumentMultiThreadIndexedSpeedTest test = new LocalCreateDocumentMultiThreadIndexedSpeedTest(tot, threads);
-		test.data.go(test);
-	}
+    public void cycle() {
+      record.reset();
 
-	public LocalCreateDocumentMultiThreadIndexedSpeedTest(int tot, int threads) {
-		super(tot, threads, CreateObjectsThread.class);
+      record.setClassName("Account");
+      record.field("id", data.getCyclesDone());
+      record.field("name", "Luca");
+      record.field("surname", "Garulli");
+      record.field("birthDate", date);
+      record.field("salary", 3000f + data.getCyclesDone());
 
-		Orient.instance().getProfiler().startRecording();
-	}
+      record.save();
 
-	@Override
-	public void init() {
-		database = new ODatabaseDocumentTx(System.getProperty("url"));
-		database.setProperty("minPool", 2);
-		database.setProperty("maxPool", 3);
+      if (data.getCyclesDone() == data.getCycles() - 1)
+        database.commit();
+    }
 
-		if (database.getURL().startsWith("remote:"))
-			database.open("admin", "admin");
-		else {
-			if (database.exists())
-				database.drop();
+    @Override
+    public void deinit() throws Exception {
+      if (database != null)
+        database.close();
+      super.deinit();
+    }
+  }
 
-			database.create();
-		}
+  public LocalCreateDocumentMultiThreadIndexedSpeedTest(int tot, int threads) {
+    super(tot, threads, CreateObjectsThread.class);
 
-		foundObjects = 0;// database.countClusterElements("Account");
+    Orient.instance().getProfiler().startRecording();
+  }
 
-		synchronized (LocalCreateDocumentMultiThreadIndexedSpeedTest.class) {
-			// database.command(new OCommandSQL("truncate class account")).execute();
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    // System.setProperty("url", "remote:localhost/demo");
 
-			OClass c = database.getMetadata().getSchema().getClass("Account");
-			if (c == null)
-				c = database.getMetadata().getSchema().createClass("Account");
+    if (iArgs.length > 0)
+      System.setProperty("url", iArgs[0]);
 
-			OProperty p = database.getMetadata().getSchema().getClass("Account").getProperty("id");
-			if (p == null)
-				p = database.getMetadata().getSchema().getClass("Account").createProperty("id", OType.INTEGER);
+    int tot = iArgs.length > 1 ? Integer.parseInt(iArgs[1]) : 1000000;
+    int threads = iArgs.length > 2 ? Integer.parseInt(iArgs[2]) : 5;
 
-			if (!p.isIndexed())
-				p.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-		}
+    LocalCreateDocumentMultiThreadIndexedSpeedTest test = new LocalCreateDocumentMultiThreadIndexedSpeedTest(tot, threads);
+    test.data.go(test);
+  }
 
-		System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
-	}
+  @Override
+  public void init() {
+    database = new ODatabaseDocumentTx(System.getProperty("url"));
+    database.setProperty("minPool", 2);
+    database.setProperty("maxPool", 3);
 
-	@Test(enabled = false)
-	public static class CreateObjectsThread extends OrientThreadTest {
-		private ODatabaseDocument	database;
-		private ODocument					record;
-		private Date							date	= new Date();
+    if (database.getURL().startsWith("remote:"))
+      database.open("admin", "admin");
+    else {
+      if (database.exists())
+        database.drop();
 
-		@Override
-		public void init() {
-			database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
-			record = database.newInstance();
-			database.declareIntent(new OIntentMassiveInsert());
-			database.begin(TXTYPE.NOTX);
-		}
+      database.create();
+    }
 
-		public void cycle() {
-			record.reset();
+    foundObjects = 0;// database.countClusterElements("Account");
 
-			record.setClassName("Account");
-			record.field("id", data.getCyclesDone());
-			record.field("name", "Luca");
-			record.field("surname", "Garulli");
-			record.field("birthDate", date);
-			record.field("salary", 3000f + data.getCyclesDone());
+    synchronized (LocalCreateDocumentMultiThreadIndexedSpeedTest.class) {
+      // database.command(new OCommandSQL("truncate class account")).execute();
 
-			record.save();
+      OClass c = database.getMetadata().getSchema().getClass("Account");
+      if (c == null)
+        c = database.getMetadata().getSchema().createClass("Account");
 
-			if (data.getCyclesDone() == data.getCycles() - 1)
-				database.commit();
-		}
+      OProperty p = database.getMetadata().getSchema().getClass("Account").getProperty("id");
+      if (p == null)
+        p = database.getMetadata().getSchema().getClass("Account").createProperty("id", OType.INTEGER);
 
-		@Override
-		public void deinit() throws Exception {
-			if (database != null)
-				database.close();
-			super.deinit();
-		}
-	}
+      if (!p.isIndexed())
+        p.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    }
 
-	@Override
-	public void deinit() {
-		long total = database.countClusterElements("Account");
+    System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
+  }
 
-		System.out.println("\nTotal objects in Account cluster after the test: " + total);
-		System.out.println("Created " + (total - foundObjects));
-		Assert.assertEquals(total - foundObjects, threadCycles);
+  @Override
+  public void deinit() {
+    long total = database.countClusterElements("Account");
 
-		if (database != null)
-			database.close();
+    System.out.println("\nTotal objects in Account cluster after the test: " + total);
+    System.out.println("Created " + (total - foundObjects));
+    Assert.assertEquals(total - foundObjects, threadCycles);
 
-		System.out.println(Orient.instance().getProfiler().dump());
+    if (database != null)
+      database.close();
 
-	}
+    System.out.println(Orient.instance().getProfiler().dump());
+
+  }
 }

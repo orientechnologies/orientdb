@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.type.tree.provider;
 
 import java.lang.ref.WeakReference;
 
-import com.orientechnologies.common.collection.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
@@ -62,7 +62,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
     leftRid = new ORecordId();
     rightRid = new ORecordId();
 
-    record = (ORecordBytesLazy) new ORecordBytesLazy(this).unpin();
+    record = (ORecordBytesLazy) new ORecordBytesLazy(this);
     if (iRID != null) {
       record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
       if (treeDataProvider.storage == null)
@@ -88,7 +88,8 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
   }
 
   protected void load(final OStorage iStorage) {
-    final ORawBuffer raw = iStorage.readRecord((ORecordId) record.getIdentity(), null, false, null, false).getResult();
+    final ORawBuffer raw = iStorage.readRecord((ORecordId) record.getIdentity(), null, false, null, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
     record.fill((ORecordId) record.getIdentity(), raw.version, raw.buffer, false);
     fromStream(raw.buffer);
   }

@@ -15,20 +15,12 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -36,16 +28,26 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 @Test
 public class JSONTest {
   private String url;
 
-//  public static final void  main(String[] args) throws Exception {
-//    JSONTest test = new JSONTest("memory:test");
-//    test.testList();
-//  }
+  // public static void main(String[] args) throws Exception {
+  // JSONTest test = new JSONTest("memory:test");
+  // test.testEmbeddedList();
+  // }
 
   @Parameters(value = "url")
   public JSONTest(final String iURL) {
@@ -556,7 +558,7 @@ public class JSONTest {
       database.command(new OCommandSQL("insert into device (resource_id, domainset) VALUES (1, { 'domain' : 'eee' })")).execute();
 
       List<ODocument> result = database
-          .query(new OSQLSynchQuery<Object>("select from device where domainset.domain[name] in 'eee'"));
+          .query(new OSQLSynchQuery<Object>("select from device where domainset.domain in 'eee'"));
       Assert.assertTrue(result.size() > 0);
 
     } finally {
@@ -616,7 +618,7 @@ public class JSONTest {
 
   @Test
   public void shouldDeserializeFieldWithCurlyBraces() {
-    ODatabaseDocumentTx tx = new ODatabaseDocumentTx("memory:test").create();
+    ODatabaseDocumentTx tx = new ODatabaseDocumentTx("memory:testshouldDeserializeFieldWithCurlyBraces").create();
 
     String json = "{\"a\":\"{dd}\",\"bl\":{\"b\":\"c\",\"a\":\"d\"}}";
     ODocument in = (ODocument) ORecordSerializerJSON.INSTANCE.fromString(json, tx.newInstance(), new String[] {});
@@ -629,7 +631,7 @@ public class JSONTest {
 
   @Test
   public void mapTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:test");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:mapTest");
     db.create();
 
     ODocument doc = new ODocument("TestModel");
@@ -710,4 +712,18 @@ public class JSONTest {
     Assert.assertEquals(list.get(0), "string");
     Assert.assertEquals(list.get(1), 42);
   }
+
+    @Test
+    public void testEmbeddedRIDBagDeserialisationWhenFieldTypeIsProvided() throws Exception {
+        ODocument documentSource = new ODocument();
+        documentSource.fromJSON("{FirstName:\"Student A 0\",in_EHasGoodStudents:[#57:0],@fieldTypes:\"in_EHasGoodStudents=g\"}");
+
+        ORidBag bag = documentSource.field("in_EHasGoodStudents");
+        Assert.assertEquals(bag.size(),1);
+        OIdentifiable rid = bag.rawIterator().next();
+        Assert.assertTrue(rid.getIdentity().getClusterId()==57);
+        Assert.assertTrue(rid.getIdentity().getClusterPosition().intValue()==0);
+
+    }
+
 }

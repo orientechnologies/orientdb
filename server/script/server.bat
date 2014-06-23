@@ -1,32 +1,32 @@
 @echo off
 rem
-rem Copyright (c) 1999-2012 Luca Garulli @www.orientechnologies.com
+rem Copyright (c) 1999-2013 Luca Garulli @www.orientechnologies.com
 rem
 
-echo           .
-echo          .`        `
-echo          ,      `:.
-echo         `,`    ,:`
-echo         .,.   :,,
-echo         .,,  ,,,
-echo    .    .,.:::::  ````
-echo    ,`   .::,,,,::.,,,,,,`;;                      .:
-echo    `,.  ::,,,,,,,:.,,.`  `                       .:
-echo     ,,:,:,,,,,,,,::.   `        `         ``     .:
-echo      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::
-echo       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:
-echo        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:
-echo  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:
-echo  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:
-echo    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:
-echo      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:
-echo           ,::::,,,. `:   ,,   :::::    :     :   .:
-echo           ,,:` `,,.
-echo          ,,,    .,`
-echo         ,,.     `,                D B   S E R V E R
-echo       ``        `.
-echo                 ``
-echo                 `
+echo            .                                          
+echo           .`        `                                 
+echo           ,      `:.                                  
+echo          `,`    ,:`                                   
+echo          .,.   :,,                                    
+echo          .,,  ,,,                                     
+echo     .    .,.:::::  ````                                 :::::::::     :::::::::
+echo     ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::
+echo     `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::
+echo      ,,:,:,,,,,,,,::.   `        `         ``     .:    :::      :::  :::     :::
+echo       ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::   :::      :::  :::    :::
+echo        ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::
+echo         :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::
+echo   `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     :::
+echo   `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     :::
+echo     .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::
+echo       ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::
+echo            ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::
+echo            ,,:` `,,.                                  
+echo           ,,,    .,`                                  
+echo          ,,.     `,                                          GRAPH DATABASE
+echo        ``        `.                                         
+echo                  ``                                         www.orientdb.org
+echo                  `                                    
 
 rem Guess ORIENTDB_HOME if not defined
 set CURRENT_DIR=%cd%
@@ -67,12 +67,10 @@ goto setArgs
 if NOT exist "%CONFIG_FILE%" set CONFIG_FILE=%ORIENTDB_HOME%/config/orientdb-server-config.xml
 
 set LOG_FILE=%ORIENTDB_HOME%/config/orientdb-server-log.properties
-set LOG_CONSOLE_LEVEL=info
-set LOG_FILE_LEVEL=fine
 set WWW_PATH=%ORIENTDB_HOME%/www
-set ORIENTDB_SETTINGS=-Dprofiler.enabled=true -Dcache.level1.enabled=false -Dcache.level2.enabled=false -Dcache.level2.size=0
-set JAVA_OPTS_SCRIPT=-XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true
+set ORIENTDB_SETTINGS=-Dprofiler.enabled=true
+set JAVA_OPTS_SCRIPT=-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9
 
-call %JAVA% -server %JAVA_OPTS% %JAVA_OPTS_SCRIPT% %ORIENTDB_SETTINGS% -Dfile.encoding=UTF8 -Djava.util.logging.config.file="%LOG_FILE%" -Dorientdb.config.file="%CONFIG_FILE%" -Dorientdb.www.path="%WWW_PATH%" -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.server.OServerMain %CMD_LINE_ARGS%
+call %JAVA% -server %JAVA_OPTS% %JAVA_OPTS_SCRIPT% %ORIENTDB_SETTINGS% -Djava.util.logging.config.file="%LOG_FILE%" -Dorientdb.config.file="%CONFIG_FILE%" -Dorientdb.www.path="%WWW_PATH%" -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" com.orientechnologies.orient.server.OServerMain %CMD_LINE_ARGS%
 
 :end

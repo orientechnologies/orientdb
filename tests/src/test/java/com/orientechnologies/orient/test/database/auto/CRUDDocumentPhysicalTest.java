@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -39,14 +25,30 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest {
@@ -333,6 +335,25 @@ public class CRUDDocumentPhysicalTest {
     }
   }
 
+  public void testLazyLoadingByLink() {
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    try {
+      ODocument coreDoc = new ODocument();
+      ODocument linkDoc = new ODocument();
+
+      coreDoc.field("link", linkDoc);
+      coreDoc.save();
+
+      ODocument coreDocCopy = database.load(coreDoc.getIdentity(), "*:-1", true);
+      Assert.assertNotSame(coreDocCopy, coreDoc);
+
+      Assert.assertTrue(coreDocCopy.field("link", OType.LINK) instanceof ORecordId);
+      Assert.assertTrue(coreDocCopy.field("link", (OType) null) instanceof ODocument);
+    } finally {
+      database.close();
+    }
+  }
+
   @SuppressWarnings("unchecked")
   @Test
   public void testDbCacheUpdated() {
@@ -405,24 +426,29 @@ public class CRUDDocumentPhysicalTest {
 
     final ORecordId rid = (ORecordId) newDoc.save().getIdentity();
 
-    final ODocument loadedDoc = database.load(rid);
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    try {
+      final ODocument loadedDoc = database.load(rid);
 
-    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+      Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
 
-    Assert.assertTrue(loadedDoc.containsField("map1"));
-    Assert.assertTrue(loadedDoc.field("map1") instanceof Map<?, ?>);
-    final Map<String, ODocument> loadedMap1 = loadedDoc.field("map1");
-    Assert.assertEquals(loadedMap1.size(), 1);
+      Assert.assertTrue(loadedDoc.containsField("map1"));
+      Assert.assertTrue(loadedDoc.field("map1") instanceof Map<?, ?>);
+      final Map<String, ODocument> loadedMap1 = loadedDoc.field("map1");
+      Assert.assertEquals(loadedMap1.size(), 1);
 
-    Assert.assertTrue(loadedMap1.containsKey("map2"));
-    Assert.assertTrue(loadedMap1.get("map2") instanceof Map<?, ?>);
-    final Map<String, ODocument> loadedMap2 = (Map<String, ODocument>) loadedMap1.get("map2");
-    Assert.assertEquals(loadedMap2.size(), 1);
+      Assert.assertTrue(loadedMap1.containsKey("map2"));
+      Assert.assertTrue(loadedMap1.get("map2") instanceof Map<?, ?>);
+      final Map<String, ODocument> loadedMap2 = (Map<String, ODocument>) loadedMap1.get("map2");
+      Assert.assertEquals(loadedMap2.size(), 1);
 
-    Assert.assertTrue(loadedMap2.containsKey("map3"));
-    Assert.assertTrue(loadedMap2.get("map3") instanceof Map<?, ?>);
-    final Map<String, ODocument> loadedMap3 = (Map<String, ODocument>) loadedMap2.get("map3");
-    Assert.assertEquals(loadedMap3.size(), 0);
+      Assert.assertTrue(loadedMap2.containsKey("map3"));
+      Assert.assertTrue(loadedMap2.get("map3") instanceof Map<?, ?>);
+      final Map<String, ODocument> loadedMap3 = (Map<String, ODocument>) loadedMap2.get("map3");
+      Assert.assertEquals(loadedMap3.size(), 0);
+    } finally {
+      database.close();
+    }
   }
 
   @Test
@@ -626,7 +652,7 @@ public class CRUDDocumentPhysicalTest {
     } catch (Exception e) {
     }
     // INVALIDATE L1 CACHE TO CHECK THE L2 CACHE
-    database.getLevel1Cache().invalidate();
+    database.getLocalCache().invalidate();
     try {
       // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
       doc = database.load(docRid, "invalid");
@@ -634,7 +660,6 @@ public class CRUDDocumentPhysicalTest {
     } catch (Exception e) {
     }
     // CLEAR THE L2 CACHE TO CHECK THE RAW READ
-    database.getLevel2Cache().clear();
     try {
       // LOAD DOCUMENT NOT IN ANY CACHE
       doc = database.load(docRid, "invalid");
@@ -663,15 +688,14 @@ public class CRUDDocumentPhysicalTest {
     } catch (Exception e) {
     }
     // CLEAR L1 CACHE, THIS WILL PUT IT IN L2 CACHE
-    database.getLevel1Cache().clear();
+    database.getLocalCache().clear();
     try {
       // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
       doc = database.load(docRid, "invalid");
       Assert.fail("Should throw IllegalArgumentException");
     } catch (Exception e) {
     }
-    // CLEAR THE L2 CACHE TO CHECK THE RAW READ
-    database.getLevel2Cache().clear();
+
     try {
       // LOAD DOCUMENT NOT IN ANY CACHE
       doc = database.load(docRid, "invalid");
@@ -686,7 +710,6 @@ public class CRUDDocumentPhysicalTest {
 
     ODocument doc = new ODocument();
     doc.field("test", s);
-    doc.unpin();
     doc.save();
 
     doc.reload(null, true);
@@ -798,6 +821,7 @@ public class CRUDDocumentPhysicalTest {
 
         database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<OClusterPosition>() {
 
+          @Override
           public void call(ORecordId iRID, OClusterPosition iParameter) {
             callBackCalled.incrementAndGet();
           }
@@ -827,7 +851,7 @@ public class CRUDDocumentPhysicalTest {
       }
       db.close();
 
-      while (database.countClusterElements("Account") > 0)
+      if (database.countClusterElements("Account") > 0)
         for (ODocument d : database.browseClass("Account")) {
           if (d.field("name").equals("Asynch insertion test"))
             d.delete();
@@ -968,6 +992,38 @@ public class CRUDDocumentPhysicalTest {
       doc.reload();
       Assert.assertEquals(doc.getVersion(), oldVersion);
       Assert.assertEquals(doc.field("name"), "modified");
+    } finally {
+      database.close();
+    }
+  }
+
+  public void testCreateEmbddedClassDocument() {
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    try {
+      final OSchema schema = database.getMetadata().getSchema();
+      final String SUFFIX = "TESTCLUSTER1";
+
+      OClass testClass1 = schema.createClass("testCreateEmbddedClass1");
+      OClass testClass2 = schema.createClass("testCreateEmbddedClass2");
+      testClass2.createProperty("testClass1Property", OType.EMBEDDED, testClass1);
+
+      int clusterId = database.addCluster("testCreateEmbddedClass2" + SUFFIX, OStorage.CLUSTER_TYPE.PHYSICAL);
+      schema.getClass("testCreateEmbddedClass2").addClusterId(clusterId);
+
+      testClass1 = schema.getClass("testCreateEmbddedClass1");
+      testClass2 = schema.getClass("testCreateEmbddedClass2");
+
+      ODocument testClass2Document = new ODocument(testClass2);
+      testClass2Document.field("testClass1Property", new ODocument(testClass1));
+      testClass2Document.save("testCreateEmbddedClass2" + SUFFIX);
+
+      testClass2Document = database.load(testClass2Document.getIdentity(), "*:-1", true);
+      Assert.assertNotNull(testClass2Document);
+
+      Assert.assertEquals(testClass2Document.getSchemaClass(), testClass2);
+
+      ODocument embeddedDoc = testClass2Document.field("testClass1Property");
+      Assert.assertEquals(embeddedDoc.getSchemaClass(), testClass1);
     } finally {
       database.close();
     }

@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -35,22 +27,34 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
+
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
-  protected ORecordId                      _recordId;
-  protected ORecordVersion                 _recordVersion = OVersionFactory.instance().createVersion();
+  protected ORecordId                            _recordId;
+  protected ORecordVersion                       _recordVersion          = OVersionFactory.instance().createVersion();
 
-  protected byte[]                         _source;
-  protected int                            _size;
-  protected String                         _dataSegmentName;
-  protected transient ORecordSerializer    _recordFormat;
-  protected Boolean                        _pinned        = null;
-  protected boolean                        _dirty         = true;
-  protected ORecordElement.STATUS          _status        = ORecordElement.STATUS.LOADED;
-  protected transient Set<ORecordListener> _listeners     = null;
+  protected byte[]                               _source;
+  protected int                                  _size;
+  protected String                               _dataSegmentName;
+  protected transient ORecordSerializer          _recordFormat;
+  protected boolean                              _dirty                  = true;
+  protected ORecordElement.STATUS                _status                 = ORecordElement.STATUS.LOADED;
+  protected transient Set<ORecordListener>       _listeners              = null;
+
+  private ORID                                   prevRid                 = null;
+  private transient Set<OIdentityChangeListener> identityChangeListeners = Collections
+                                                                             .newSetFromMap(new WeakHashMap<OIdentityChangeListener, Boolean>());
 
   public ORecordAbstract() {
   }
@@ -78,6 +82,16 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _recordId;
   }
 
+  public ORecordAbstract<?> setIdentity(final ORecordId iIdentity) {
+    _recordId = iIdentity;
+    return this;
+  }
+
+  @Override
+  public ORecordElement getOwner() {
+    return null;
+  }
+
   public ORecord<?> getRecord() {
     return this;
   }
@@ -89,11 +103,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
       _recordId.clusterId = iClusterId;
       _recordId.clusterPosition = iClusterPosition;
     }
-    return this;
-  }
-
-  public ORecordAbstract<?> setIdentity(final ORecordId iIdentity) {
-    _recordId = iIdentity;
     return this;
   }
 
@@ -155,34 +164,28 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public void onBeforeIdentityChanged(final ORID iRID) {
+    prevRid = _recordId.copy();
   }
 
   public void onAfterIdentityChanged(final ORecord<?> iRecord) {
     invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
+
+    if (!prevRid.equals(this._recordId)) {
+      for (OIdentityChangeListener changeListener : identityChangeListeners)
+        changeListener.onIdentityChanged(prevRid, this);
+    }
+
+    prevRid = null;
   }
 
   public boolean isDirty() {
     return _dirty;
   }
 
-  public Boolean isPinned() {
-    return _pinned;
-  }
-
-  public ORecordAbstract<T> pin() {
-    _pinned = Boolean.TRUE;
-    return this;
-  }
-
-  public ORecordAbstract<T> unpin() {
-    _pinned = Boolean.FALSE;
-    return this;
-  }
-
   public <RET extends ORecord<T>> RET fromJSON(final String iSource, final String iOptions) {
     // ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions);
     ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions, false); // Add new parameter to accommodate new API,
-                                                                                     // noting change
+                                                                                     // nothing change
     return (RET) this;
   }
 
@@ -271,6 +274,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
+  public ODatabaseRecord getDatabaseIfDefined() {
+    return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+  }
+
   public ORecordInternal<T> reload() {
     return reload(null);
   }
@@ -323,9 +330,15 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _size;
   }
 
-  protected void setup() {
-    if (_recordId == null)
-      _recordId = new ORecordId();
+  @Override
+  public void lock(final boolean iExclusive) {
+    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
+        .lockRecord(this, iExclusive ? OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK : OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK);
+  }
+
+  @Override
+  public void unlock() {
+    ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().unlockRecord(this);
   }
 
   @Override
@@ -375,7 +388,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     cloned._size = _size;
     cloned._recordId = _recordId.copy();
     cloned._recordVersion = _recordVersion.copy();
-    cloned._pinned = _pinned;
     cloned._status = _status;
     cloned._recordFormat = _recordFormat;
     cloned._listeners = null;
@@ -411,15 +423,30 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     }
   }
 
+  public <RET extends ORecord<T>> RET flatCopy() {
+    return (RET) copy();
+  }
+
+  @Override
+  public void addIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
+    identityChangeListeners.add(identityChangeListener);
+  }
+
+  @Override
+  public void removeIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
+    identityChangeListeners.remove(identityChangeListener);
+  }
+
+  protected void setup() {
+    if (_recordId == null)
+      _recordId = new ORecordId();
+  }
+
   protected void invokeListenerEvent(final ORecordListener.EVENT iEvent) {
     if (_listeners != null)
       for (final ORecordListener listener : _listeners)
         if (listener != null)
           listener.onEvent(this, iEvent);
-  }
-
-  public <RET extends ORecord<T>> RET flatCopy() {
-    return (RET) copy();
   }
 
   protected void checkForLoading() {

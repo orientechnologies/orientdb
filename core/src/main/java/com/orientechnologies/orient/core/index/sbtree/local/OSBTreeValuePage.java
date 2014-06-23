@@ -2,9 +2,10 @@ package com.orientechnologies.orient.core.index.sbtree.local;
 
 import java.io.IOException;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
  * This page will contain value if it exceeds value limit for SBTree. Value is stored as list of linked pages. Following format is
@@ -17,7 +18,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePa
  * <li>Serialized value presentation.</li>
  * </ol>
  * 
- * !!! This functionality should be removed after new sbtree based ridset will be implemented, because it doest not make any sense
+ * !!! This functionality should be removed after new sbtree based ridbag will be implemented, because it doest not make any sense
  * to keep it, it will provide performance degradation only !!!!!!
  * 
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
@@ -32,7 +33,7 @@ public class OSBTreeValuePage extends ODurablePage {
 
   public static final int  MAX_BINARY_VALUE_SIZE      = MAX_PAGE_SIZE_BYTES - BINARY_CONTENT_OFFSET;
 
-  public OSBTreeValuePage(long pagePointer, TrackMode trackMode, boolean isNew) throws IOException {
+  public OSBTreeValuePage(ODirectMemoryPointer pagePointer, TrackMode trackMode, boolean isNew) throws IOException {
     super(pagePointer, trackMode);
 
     if (isNew) {

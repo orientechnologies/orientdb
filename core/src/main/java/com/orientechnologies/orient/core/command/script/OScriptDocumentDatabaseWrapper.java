@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -46,10 +40,17 @@ import com.orientechnologies.orient.core.processor.OProcessorManager;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Document Database wrapper class to use from scripts.
@@ -73,12 +74,22 @@ public class OScriptDocumentDatabaseWrapper {
     this.database = new ODatabaseDocumentTx(iURL);
   }
 
+  public void switchUser(final String iUserName, final String iUserPassword) {
+    if (!database.isClosed())
+      database.close();
+    database.open(iUserName, iUserPassword);
+  }
+
   public OIdentifiable[] query(final String iText) {
     return query(iText, (Object[]) null);
   }
 
   public OIdentifiable[] query(final String iText, final Object... iParameters) {
-    final List<OIdentifiable> res = database.query(new OSQLSynchQuery<Object>(iText), convertParameters(iParameters));
+    return query(new OSQLSynchQuery<Object>(iText), iParameters);
+  }
+
+  public OIdentifiable[] query(final OSQLQuery iQuery, final Object... iParameters) {
+    final List<OIdentifiable> res = database.query(iQuery, convertParameters(iParameters));
     if (res == null)
       return new OIdentifiable[] {};
     return res.toArray(new OIdentifiable[res.size()]);

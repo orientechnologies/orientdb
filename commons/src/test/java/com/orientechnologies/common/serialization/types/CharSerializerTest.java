@@ -22,8 +22,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemory;
-import com.orientechnologies.common.directmemory.ODirectMemoryFactory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
@@ -56,14 +55,12 @@ public class CharSerializerTest {
   }
 
   public void testNativeDirectMemoryCompatibility() {
-    ODirectMemory directMemory = ODirectMemoryFactory.INSTANCE.directMemory();
-
     charSerializer.serializeNative(OBJECT, stream, 0);
-    long pointer = directMemory.allocate(stream);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(charSerializer.deserializeFromDirectMemory(directMemory, pointer), OBJECT);
+      Assert.assertEquals(charSerializer.deserializeFromDirectMemory(pointer, 0), OBJECT);
     } finally {
-      directMemory.free(pointer);
+      pointer.free();
     }
 
   }

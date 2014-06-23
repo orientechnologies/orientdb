@@ -31,7 +31,7 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("local:" + buildDirectory + "/uniqueHashIndexTest");
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/uniqueHashIndexTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
@@ -40,14 +40,16 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
     databaseDocumentTx.create();
 
     hashIndex = databaseDocumentTx.getMetadata().getIndexManager()
-        .createIndex("hashIndex", "UNIQUE_HASH_INDEX", new OSimpleKeyIndexDefinition(OType.STRING), new int[0], null);
+        .createIndex("hashIndex", "UNIQUE_HASH_INDEX", new OSimpleKeyIndexDefinition(OType.STRING), new int[0], null, null);
   }
 
   @Override
   @Test(enabled = false)
   public void cycle() throws Exception {
+    databaseDocumentTx.begin();
     String key = "bsadfasfas" + random.nextInt();
     hashIndex.put(key, new ORecordId(0, new OClusterPositionLong(0)));
+    databaseDocumentTx.commit();
   }
 
   @Override

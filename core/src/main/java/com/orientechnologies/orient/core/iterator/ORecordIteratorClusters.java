@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import java.util.Arrays;
-import java.util.NoSuchElementException;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -25,6 +22,10 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 /**
  * Iterator to browse multiple clusters forward and backward. Once browsed in a direction, the iterator cannot change it. This
@@ -43,21 +44,21 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
   protected ORID       endRange;
 
   public ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final int[] iClusterIds,
-      final boolean iUseCache, final boolean iterateThroughTombstones) {
-    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
+      final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
     clusterIds = iClusterIds;
     config();
   }
 
   protected ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase,
-      final boolean iUseCache, final boolean iterateThroughTombstones) {
-    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
+      final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
   }
 
   public ORecordIteratorClusters<REC> setRange(final ORID iBegin, final ORID iEnd) {
     beginRange = iBegin;
     endRange = iEnd;
-    if (currentRecord != null && outsideOfTheRange(currentRecord.getIdentity().getClusterPosition())) {
+    if (currentRecord != null && outsideOfTheRange(currentRecord.getIdentity())) {
       currentRecord = null;
     }
     return this;
@@ -132,8 +133,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     // ITERATE UNTIL THE NEXT GOOD RECORD
     while (currentClusterIdx < clusterIds.length) {
       while (nextPosition()) {
-        final OClusterPosition currentPosition = currentPosition();
-        if (outsideOfTheRange(currentPosition))
+        if (outsideOfTheRange(current))
           continue;
 
         currentRecord = readCurrentRecord(record, 0);
@@ -160,11 +160,11 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     return false;
   }
 
-  private boolean outsideOfTheRange(OClusterPosition currentPosition) {
-    if (beginRange != null && currentPosition.compareTo(beginRange.getClusterPosition()) < 0)
+  private boolean outsideOfTheRange(ORID orid) {
+    if (beginRange != null && orid.compareTo(beginRange) < 0)
       return true;
 
-    if (endRange != null && currentPosition.compareTo(endRange.getClusterPosition()) > 0)
+    if (endRange != null && orid.compareTo(endRange) > 0)
       return true;
 
     return false;
@@ -283,8 +283,13 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     resetCurrentPosition();
     nextPosition();
 
-    ORecordInternal<?> record = getRecord();
+    final ORecordInternal<?> record = getRecord();
     currentRecord = readCurrentRecord(record, 0);
+
+    if (currentRecord != null && !include(currentRecord)) {
+      currentRecord = null;
+      hasNext();
+    }
 
     return this;
   }
@@ -305,8 +310,13 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     resetCurrentPosition();
     prevPosition();
 
-    ORecordInternal<?> record = getRecord();
+    final ORecordInternal<?> record = getRecord();
     currentRecord = readCurrentRecord(record, 0);
+
+    if (currentRecord != null && !include(currentRecord)) {
+      currentRecord = null;
+      hasPrevious();
+    }
 
     return this;
   }

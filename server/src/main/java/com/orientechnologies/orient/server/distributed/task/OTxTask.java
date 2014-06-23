@@ -15,23 +15,23 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OPlaceholder;
+import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
-
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
 /**
  * Distributed create record task used for synchronization.
@@ -62,16 +62,44 @@ public class OTxTask extends OAbstractReplicatedTask {
     try {
       database.begin();
 
-      for (OAbstractRecordReplicatedTask task : tasks) {
-        task.execute(iServer, iManager, database);
-      }
+      final List<Object> results = new ArrayList<Object>();
+
+      for (OAbstractRecordReplicatedTask task : tasks)
+        results.add(task.execute(iServer, iManager, database));
 
       database.commit();
 
+      // SEND BACK CHANGED VALUE TO UPDATE
+      for (int i = 0; i < results.size(); ++i) {
+        final Object o = results.get(i);
+
+        final OAbstractRecordReplicatedTask task = tasks.get(i);
+
+        if (task instanceof OCreateRecordTask) {
+          // SEND RID + VERSION
+          final OCreateRecordTask t = (OCreateRecordTask) task;
+          results.set(i, new OPlaceholder(task.getRid(), task.getVersion()));
+
+        } else if (task instanceof OUpdateRecordTask) {
+          // SEND VERSION ONLY
+          final OUpdateRecordTask t = (OUpdateRecordTask) task;
+          results.set(i, task.getVersion());
+
+        } else if (task instanceof ODeleteRecordTask) {
+
+        }
+      }
+
+      return results;
+
+    } catch (ONeedRetryException e) {
+      return e;
+    } catch (OTransactionException e) {
+      return e;
     } catch (Exception e) {
-      return Boolean.FALSE;
+      OLogManager.instance().error(this, "Error on distributed transaction commit", e);
+      return e;
     }
-    return Boolean.TRUE;
   }
 
   @Override
@@ -80,23 +108,49 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public OFixTxTask getFixTask(final ODistributedRequest iRequest, final ODistributedResponse iBadResponse,
-      final ODistributedResponse iGoodResponse) {
-    final OFixTxTask fixTask = new OFixTxTask();
-
-    for (OAbstractRecordReplicatedTask t : tasks) {
-      final ORecordId rid = t.getRid();
-
-      final ORecordInternal<?> rec = rid.getRecord();
-      if (rec == null)
-        fixTask.add(new ODeleteRecordTask(rid, null));
-      else {
-        final ORecordVersion v = rec.getRecordVersion();
-        v.setRollbackMode();
-        fixTask.add(new OUpdateRecordTask(rid, rec.toStream(), v, rec.getRecordType()));
-      }
+  public OFixTxTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
+    if (!(iBadResponse instanceof List)) {
+      // TODO: MANAGE ERROR ON LOCAL NODE
+      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
+          "error on creating fix-task for request: '%s' because bad response is not expected type: %s", iRequest, iBadResponse);
+      return null;
     }
 
+    if (!(iGoodResponse instanceof List)) {
+      // TODO: MANAGE ERROR ON LOCAL NODE
+      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
+          "error on creating fix-task for request: '%s' because good response is not expected type: %s", iRequest, iBadResponse);
+      return null;
+    }
+
+    final OFixTxTask fixTask = new OFixTxTask();
+
+    for (int i = 0; i < tasks.size(); ++i) {
+      final OAbstractRecordReplicatedTask t = tasks.get(i);
+      OAbstractRemoteTask task = t
+          .getFixTask(iRequest, ((List<Object>) iBadResponse).get(i), ((List<Object>) iGoodResponse).get(i));
+
+      if (task != null)
+        fixTask.add(task);
+    }
+    return fixTask;
+  }
+
+  @Override
+  public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+    if (!(iBadResponse instanceof List)) {
+      // TODO: MANAGE ERROR ON LOCAL NODE!
+      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
+          "error on creating undo-task for request: '%s' because bad response is not expected type: %s", iRequest, iBadResponse);
+      return null;
+    }
+
+    final OFixTxTask fixTask = new OFixTxTask();
+
+    for (int i = 0; i < tasks.size(); ++i) {
+      final OAbstractRecordReplicatedTask t = tasks.get(i);
+      fixTask.add(t.getUndoTask(iRequest, ((List<Object>) iBadResponse).get(i)));
+    }
     return fixTask;
   }
 
@@ -122,5 +176,9 @@ public class OTxTask extends OAbstractReplicatedTask {
   @Override
   public String getPayload() {
     return null;
+  }
+
+  public List<OAbstractRecordReplicatedTask> getTasks() {
+    return tasks;
   }
 }

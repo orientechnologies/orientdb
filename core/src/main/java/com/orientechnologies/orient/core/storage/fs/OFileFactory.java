@@ -15,44 +15,38 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
-import java.io.IOException;
-
-import com.orientechnologies.common.factory.ODynamicFactory;
+import com.orientechnologies.common.factory.OConfigurableStatefulFactory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+
+import java.io.IOException;
 
 /**
  * OFile factory. To register 3rd party implementations use: OFileFactory.instance().register(<name>, <class>);
  * 
- * @author Luca
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OFileFactory extends ODynamicFactory<String, Class<? extends OFile>> {
-	public static final String					MMAP			= "mmap";
-	public static final String					CLASSIC		= "classic";
+public class OFileFactory extends OConfigurableStatefulFactory<String, OFile> {
+  protected static final OFileFactory instance = new OFileFactory();
 
-	protected static final OFileFactory	instance	= new OFileFactory();
+  public OFileFactory() {
+    register(OFileMMap.NAME, OFileMMap.class);
+    register(OFileClassic.NAME, OFileClassic.class);
+  }
 
-	public OFileFactory() {
-		register(MMAP, OFileMMap.class);
-		register(CLASSIC, OFileClassic.class);
-	}
+  public static OFileFactory instance() {
+    return instance;
+  }
 
-	public OFile create(final String iType, final String iFileName, final String iOpenMode) throws IOException {
-		final Class<? extends OFile> fileClass = registry.get(iType);
+  public OFile create(final String iType, final String iFileName, final String iOpenMode) throws IOException {
+    final Class<? extends OFile> fileClass = registry.get(iType);
 
-		if (fileClass == null)
-			throw new OConfigurationException("File type '" + iType + "' is not configured");
-
-		try {
-			final OFile f = fileClass.newInstance();
-			f.init(iFileName, iOpenMode);
-			return f;
-		} catch (final Exception e) {
-			throw new OConfigurationException("Cannot create file of type '" + iType + "'", e);
-		}
-	}
-
-	public static OFileFactory instance() {
-		return instance;
-	}
+    try {
+      final OFile f = newInstance(iType);
+      f.init(iFileName, iOpenMode);
+      return f;
+    } catch (final Exception e) {
+      throw new OConfigurationException("Cannot create file of type '" + iType + "'", e);
+    }
+  }
 }

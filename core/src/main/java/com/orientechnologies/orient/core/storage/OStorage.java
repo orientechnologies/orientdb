@@ -15,23 +15,24 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
@@ -40,6 +41,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @see com.orientechnologies.orient.core.storage.impl.local.OStorageLocal
  * @see com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory
  */
+
 public interface OStorage extends OBackupable, OSharedContainer {
   public static final String DATA_DEFAULT_NAME    = "default";
   public static final String CLUSTER_DEFAULT_NAME = "default";
@@ -53,7 +55,11 @@ public interface OStorage extends OBackupable, OSharedContainer {
   }
 
   public enum STATUS {
-    CLOSED, OPEN, CLOSING
+    CLOSED, OPEN, CLOSING, OPENING
+  }
+
+  public enum LOCKING_STRATEGY {
+    NONE, DEFAULT, KEEP_SHARED_LOCK, KEEP_EXCLUSIVE_LOCK
   }
 
   public void open(String iUserName, String iUserPassword, final Map<String, Object> iProperties);
@@ -68,16 +74,9 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   public void close();
 
-  public void close(boolean iForce);
+  public void close(boolean iForce, boolean onDelete);
 
   public boolean isClosed();
-
-  /**
-   * Returns the level1 cache. Cannot be null.
-   * 
-   * @return Current cache.
-   */
-  public OLevel2RecordCache getLevel2Cache();
 
   public OSharedResourceAdaptiveExternal getLock();
 
@@ -86,7 +85,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
       ORecordVersion iRecordVersion, byte iRecordType, int iMode, ORecordCallback<OClusterPosition> iCallback);
 
   public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones);
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy);
 
   public OStorageOperationResult<ORecordVersion> updateRecord(ORecordId iRecordId, byte[] iContent, ORecordVersion iVersion,
       byte iRecordType, int iMode, ORecordCallback<ORecordVersion> iCallback);
@@ -162,6 +161,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * Drops a cluster.
    * 
    * @param iId
+   *          id of the cluster to delete
    * @return true if has been removed, otherwise false
    */
   public boolean dropCluster(int iId, final boolean iTruncate);
@@ -257,11 +257,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public STATUS getStatus();
 
   /**
-   * @return <code>true</code> in case storage uses clusters are based on linear hashing algorithm.
-   */
-  public boolean isHashClustersAreUsed();
-
-  /**
    * Returns the storage's type.
    * 
    * @return
@@ -273,4 +268,14 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public OStorage getUnderlying();
 
   public boolean isDistributed();
+
+  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass();
+
+  public OCurrentStorageComponentsFactory getComponentsFactory();
+
+  public long getLastOperationId();
+
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback);
+
+  public OCluster getClusterByName(String clusterName);
 }

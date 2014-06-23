@@ -15,13 +15,17 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 
 /**
  * Abstract implementation of Executor Command interface.
@@ -36,7 +40,12 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   protected Map<Object, Object> parameters;
   protected OCommandContext     context;
 
+  public static ODatabaseRecord getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
   public OCommandExecutorAbstract init(final OCommandRequestText iRequest) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
     parserText = iRequest.getText().trim();
     parserTextUpperCase = parserText.toUpperCase(Locale.ENGLISH);
     return this;
@@ -51,7 +60,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     return progressListener;
   }
 
-  public <RET extends OCommandExecutor> RET setProgressListener(OProgressListener progressListener) {
+  public <RET extends OCommandExecutor> RET setProgressListener(final OProgressListener progressListener) {
     this.progressListener = progressListener;
     return (RET) this;
   }
@@ -68,7 +77,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   public Map<Object, Object> getParameters() {
     return parameters;
   }
-  
+
   @Override
   public String getFetchPlan() {
     return null;
@@ -84,7 +93,8 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     context = iContext;
   }
 
-  public static ODatabaseRecord getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  @Override
+  public Set<String> getInvolvedClusters() {
+    return Collections.EMPTY_SET;
   }
 }

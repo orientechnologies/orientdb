@@ -98,10 +98,10 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
         try {
           if (iLockType == LOCK.SHARED) {
             if (!lock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException("Timeout on acquiring resource '" + iResourceId + "' because is locked from another thread");
+              throw new OLockException("Timeout ("+iTimeout+"ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
           } else {
             if (!lock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException("Timeout on acquiring resource '" + iResourceId + "' because is locked from another thread");
+              throw new OLockException("Timeout ("+iTimeout+"ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
@@ -183,7 +183,32 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
       lock.readLock().unlock();
     else
       lock.writeLock().unlock();
+  }
 
+  public void modifyLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iCurrentLockType,
+      final LOCK iNewLockType) throws OLockException {
+    if (!enabled || iNewLockType == iCurrentLockType)
+      return;
+
+    final CountableLock lock;
+    final Object internalLock = internalLock(iResourceId);
+    synchronized (internalLock) {
+      lock = map.get(iResourceId);
+      if (lock == null)
+        throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
+            + "' against the resource: '" + iResourceId + "'");
+
+      if (iCurrentLockType == LOCK.SHARED)
+        lock.readLock().unlock();
+      else
+        lock.writeLock().unlock();
+
+      // RE-ACQUIRE IT
+      if (iNewLockType == LOCK.SHARED)
+        lock.readLock().lock();
+      else
+        lock.writeLock().lock();
+    }
   }
 
   public void clear() {
@@ -193,6 +218,9 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   // For tests purposes.
   public int getCountCurrentLocks() {
     return map.size();
+  }
+
+  public void releaseAllLocksOfRequester(REQUESTER_TYPE iRequester) {
   }
 
   protected RESOURCE_TYPE getImmutableResourceId(final RESOURCE_TYPE iResourceId) {

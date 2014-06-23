@@ -18,24 +18,22 @@ package com.orientechnologies.orient.core.index;
 import java.util.Collections;
 import java.util.List;
 
+import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
  * Index implementation bound to one schema class property.
  * 
  */
-public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements OIndexDefinition {
+public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   protected String className;
   protected String field;
   protected OType  keyType;
 
   public OPropertyIndexDefinition(final String iClassName, final String iField, final OType iType) {
-    super(new ODocument());
-
     className = iClassName;
     field = iField;
     keyType = iType;
@@ -56,7 +54,10 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
   }
 
   public List<String> getFieldsToIndex() {
-    return Collections.singletonList(field);
+    if (collate == null || collate.getName().equals(ODefaultCollate.NAME))
+      return Collections.singletonList(field);
+
+    return Collections.singletonList(field + " collate " + collate.getName());
   }
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {
@@ -77,6 +78,9 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
     if (o == null || getClass() != o.getClass())
       return false;
 
+    if (!super.equals(o))
+      return false;
+
     final OPropertyIndexDefinition that = (OPropertyIndexDefinition) o;
 
     if (!className.equals(that.className))
@@ -91,7 +95,8 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
 
   @Override
   public int hashCode() {
-    int result = className.hashCode();
+    int result = super.hashCode();
+    result = 31 * result + className.hashCode();
     result = 31 * result + field.hashCode();
     result = 31 * result + keyType.hashCode();
     return result;
@@ -100,7 +105,7 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
   @Override
   public String toString() {
     return "OPropertyIndexDefinition{" + "className='" + className + '\'' + ", field='" + field + '\'' + ", keyType=" + keyType
-        + '}';
+        + ", collate=" + collate + ", null values ignored = " + isNullValuesIgnored() + '}';
   }
 
   public Object createValue(final List<?> params) {
@@ -144,6 +149,8 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
     document.field("className", className);
     document.field("field", field);
     document.field("keyType", keyType.toString());
+    document.field("collate", collate.getName());
+    document.field("nullValuesIgnored", isNullValuesIgnored());
   }
 
   protected void serializeFromStream() {
@@ -152,6 +159,9 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
 
     final String keyTypeStr = document.field("keyType");
     keyType = OType.valueOf(keyTypeStr);
+
+    setCollate((String) document.field("collate"));
+    setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
   }
 
   /**
@@ -178,7 +188,12 @@ public class OPropertyIndexDefinition extends ODocumentWrapperNoClass implements
       ddl.append(shortName).append(" ");
     } else {
       ddl.append(indexName).append(" on ");
-      ddl.append(className).append(" ( ").append(field).append(" ) ");
+      ddl.append(className).append(" ( ").append(field);
+
+      if (!collate.getName().equals(ODefaultCollate.NAME))
+        ddl.append(" collate ").append(collate.getName());
+
+      ddl.append(" ) ");
     }
     ddl.append(indexType);
 

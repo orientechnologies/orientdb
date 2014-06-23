@@ -15,8 +15,7 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,9 +25,8 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
@@ -63,7 +61,12 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
+  public void deleteWithoutLoad(String indexName) {
+  }
+
+  @Override
+  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
+      boolean isAutomatic) {
   }
 
   @Override
@@ -87,28 +90,75 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public Iterator<Map.Entry<Object, V>> iterator() {
-    return concurrentHashMap.entrySet().iterator();
+  public OIndexCursor cursor(final ValuesTransformer<V> valuesTransformer) {
+    return new OIndexAbstractCursor() {
+      private Iterator<Map.Entry<Object, V>> entryIterator   = concurrentHashMap.entrySet().iterator();
+
+      private Object                         currentKey;
+      private Iterator<OIdentifiable>        currentIterator = new OEmptyIterator<OIdentifiable>();
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
+        if (currentIterator == null)
+          return null;
+
+        if (currentIterator.hasNext())
+          return nextCursorValue();
+
+        while (currentIterator != null && !currentIterator.hasNext()) {
+          final Map.Entry<Object, V> entry = entryIterator.next();
+          currentKey = entry.getKey();
+
+          final V value = entry.getValue();
+          if (valuesTransformer == null)
+            currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+          else
+            currentIterator = valuesTransformer.transformFromValue(value).iterator();
+        }
+
+        if (currentIterator != null && currentIterator.hasNext())
+          return nextCursorValue();
+
+        currentIterator = null;
+        return null;
+      }
+
+      private Map.Entry<Object, OIdentifiable> nextCursorValue() {
+        final OIdentifiable identifiable = currentIterator.next();
+
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return currentKey;
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return identifiable;
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+    };
   }
 
   @Override
-  public Iterator<Map.Entry<Object, V>> inverseIterator() {
-    throw new UnsupportedOperationException("inverseIterator");
-  }
+  public OIndexKeyCursor keyCursor() {
+    return new OIndexKeyCursor() {
+      private Iterator<Object> keysIterator = concurrentHashMap.keySet().iterator();
 
-  @Override
-  public Iterator<V> valuesIterator() {
-    throw new UnsupportedOperationException("valuesIterator");
-  }
+      @Override
+      public Object next(int prefetchSize) {
+        if (!keysIterator.hasNext())
+          return null;
 
-  @Override
-  public Iterator<V> inverseValuesIterator() {
-    throw new UnsupportedOperationException("inverseValuesIterator");
-  }
-
-  @Override
-  public Iterable<Object> keys() {
-    return concurrentHashMap.keySet();
+        return keysIterator.next();
+      }
+    };
   }
 
   @Override
@@ -154,67 +204,30 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
-  public int removeValue(OIdentifiable valueToRemove, ValuesTransformer<V> transformer) {
-    Map<Object, V> entriesToUpdate = new HashMap<Object, V>();
-
-    for (Map.Entry<Object, V> entry : concurrentHashMap.entrySet()) {
-      if (transformer != null) {
-        Collection<OIdentifiable> rids = transformer.transformFromValue(entry.getValue());
-        if (rids.remove(valueToRemove))
-          entriesToUpdate.put(entry.getKey(), transformer.transformToValue(rids));
-      } else if (entry.getValue().equals(valueToRemove))
-        entriesToUpdate.put(entry.getKey(), entry.getValue());
-    }
-
-    for (Map.Entry<Object, V> entry : entriesToUpdate.entrySet()) {
-      V value = entry.getValue();
-      if (value instanceof Collection) {
-        Collection col = (Collection) value;
-        if (col.isEmpty())
-          concurrentHashMap.remove(entry.getKey());
-        else
-          concurrentHashMap.put(entry.getKey(), value);
-      } else
-        concurrentHashMap.remove(entry.getKey());
-    }
-
-    return entriesToUpdate.size();
+  public Object getFirstKey() {
+    throw new UnsupportedOperationException("getFirstKey");
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      int maxValuesToFetch, ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getValuesBetween");
+  public Object getLastKey() {
+    throw new UnsupportedOperationException("getLastKey");
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive, int maxValuesToFetch,
+  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer<V> transformer) {
+    throw new UnsupportedOperationException("iterateEntriesBetween");
+  }
+
+  @Override
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
       ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getValuesMajor");
+    throw new UnsupportedOperationException("iterateEntriesMajor");
   }
 
   @Override
-  public Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getValuesMinor");
-  }
-
-  @Override
-  public Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getEntriesMajor");
-  }
-
-  @Override
-  public Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getEntriesMinor");
-  }
-
-  @Override
-  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, int maxEntriesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("getEntriesBetween");
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
+    throw new UnsupportedOperationException("iterateEntriesMinor");
   }
 
   @Override
@@ -228,12 +241,6 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
       }
       return counter;
     }
-  }
-
-  @Override
-  public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    throw new UnsupportedOperationException("count");
   }
 
   @Override

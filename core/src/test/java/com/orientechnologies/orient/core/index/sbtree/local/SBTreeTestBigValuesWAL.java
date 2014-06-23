@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteD
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
@@ -132,8 +132,8 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, byte[]>(".sbt", 1, true);
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, actualStorage);
+    sbTree = new OSBTree<Integer, byte[]>(".sbt", 1, true, ".nbt");
+    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, actualStorage, false);
   }
 
   private void createExpectedSBTree() {
@@ -166,8 +166,9 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", 1, true);
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, expectedStorage);
+    expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", 1, true, ".nbt");
+    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, expectedStorage,
+        false);
   }
 
   @Override

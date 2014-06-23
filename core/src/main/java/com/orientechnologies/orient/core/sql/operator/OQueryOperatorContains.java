@@ -15,13 +15,24 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.*;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
+import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * CONTAINS operator.
@@ -58,8 +69,14 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
           if (o instanceof OIdentifiable)
             id = (OIdentifiable) o;
           else if (o instanceof Map<?, ?>) {
-            final Iterator<OIdentifiable> iter = ((Map<?, OIdentifiable>) o).values().iterator();
-            id = iter.hasNext() ? iter.next() : null;
+            final Iterator<Object> iter = ((Map<?, Object>) o).values().iterator();
+            final Object v = iter.hasNext() ? iter.next() : null;
+            if (v instanceof OIdentifiable)
+              id = (OIdentifiable) v;
+            else
+              // TRANSFORM THE ENTIRE MAP IN A DOCUMENT. PROBABLY HAS BEEN IMPORTED FROM JSON
+              id = new ODocument((Map) o);
+
           } else if (o instanceof Iterable<?>) {
             final Iterator<OIdentifiable> iter = ((Iterable<OIdentifiable>) o).iterator();
             id = iter.hasNext() ? iter.next() : null;
@@ -105,17 +122,14 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
     return OIndexReuseType.NO_INDEX;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, int fetchLimit) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
+    OIndexCursor cursor;
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators())
       return null;
-
-    final Object result;
 
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
@@ -128,16 +142,13 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
         return null;
 
       final Object indexResult;
-      if (iOperationType == INDEX_OPERATION_TYPE.GET)
-        indexResult = index.get(key);
-      else {
-        if (internalIndex.hasRangeQuerySupport())
-          return index.count(key);
-        else
-          return null;
-      }
 
-      result = convertIndexResult(indexResult);
+      indexResult = index.get(key);
+
+      if (indexResult == null || indexResult instanceof OIdentifiable)
+        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+      else
+        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -151,42 +162,24 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
       if (internalIndex.hasRangeQuerySupport()) {
-        if (fetchLimit > -1)
-          result = index.getValuesBetween(keyOne, true, keyTwo, true, fetchLimit);
-        else
-          result = index.getValuesBetween(keyOne, true, keyTwo, true);
+        cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
       } else {
         int indexParamCount = indexDefinition.getParamCount();
         if (indexParamCount == keyParams.size()) {
           final Object indexResult;
-          if (iOperationType == INDEX_OPERATION_TYPE.GET)
-            indexResult = index.get(keyOne);
-          else {
-            if (internalIndex.hasRangeQuerySupport())
-              return index.count(keyOne);
-            else
-              return null;
-          }
+          indexResult = index.get(keyOne);
 
-          result = convertIndexResult(indexResult);
+          if (indexResult == null || indexResult instanceof OIdentifiable)
+            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+          else
+            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
         } else
           return null;
       }
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return result;
-  }
-
-  private Object convertIndexResult(Object indexResult) {
-    Object result;
-    if (indexResult instanceof Collection)
-      result = (Collection<OIdentifiable>) indexResult;
-    else if (indexResult == null)
-      result = Collections.emptyList();
-    else
-      result = Collections.singletonList((OIdentifiable) indexResult);
-    return result;
+    return cursor;
   }
 
   @Override

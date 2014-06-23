@@ -111,7 +111,7 @@ public class OSingleFileSegment {
     return wasSoftlyClosedAtPreviousTime;
   }
 
-  public void rename(String iOldName, String iNewName) {
+  public void rename(String iOldName, String iNewName) throws IOException {
     final String osFileName = file.getName();
     if (osFileName.startsWith(iOldName)) {
       final File newFile = new File(storage.getStoragePath() + "/" + iNewName

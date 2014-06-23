@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -31,6 +27,10 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
  * it.
@@ -38,43 +38,46 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Luca Garulli
  */
 public abstract class OIdentifiableIterator<REC extends OIdentifiable> implements Iterator<REC>, Iterable<REC> {
-  protected final ODatabaseRecord  database;
-  private final ODatabaseRecord    lowLevelDatabase;
-  private final OStorage           dbStorage;
+  protected final ODatabaseRecord     database;
+  private final ODatabaseRecord       lowLevelDatabase;
+  private final OStorage              dbStorage;
 
-  protected boolean                liveUpdated            = false;
-  protected long                   limit                  = -1;
-  protected long                   browsedRecords         = 0;
+  protected boolean                   liveUpdated            = false;
+  protected long                      limit                  = -1;
+  protected long                      browsedRecords         = 0;
 
-  private String                   fetchPlan;
-  private ORecordInternal<?>       reusedRecord           = null;                                          // DEFAULT = NOT
-                                                                                                            // REUSE IT
-  private Boolean                  directionForward;
+  private String                      fetchPlan;
+  private ORecordInternal<?>          reusedRecord           = null;                                          // DEFAULT = NOT
+  // REUSE IT
+  private Boolean                     directionForward;
 
-  protected final ORecordId        current                = new ORecordId();
+  protected final ORecordId           current                = new ORecordId();
 
-  protected long                   totalAvailableRecords;
-  protected List<ORecordOperation> txEntries;
+  protected OStorage.LOCKING_STRATEGY lockingStrategy        = OStorage.LOCKING_STRATEGY.DEFAULT;
 
-  protected int                    currentTxEntryPosition = -1;
+  protected long                      totalAvailableRecords;
+  protected List<ORecordOperation>    txEntries;
 
-  protected OClusterPosition       firstClusterEntry      = OClusterPositionFactory.INSTANCE.valueOf(0);
-  protected OClusterPosition       lastClusterEntry       = OClusterPositionFactory.INSTANCE.getMaxValue();
+  protected int                       currentTxEntryPosition = -1;
 
-  private OClusterPosition         currentEntry           = OClusterPosition.INVALID_POSITION;
+  protected OClusterPosition          firstClusterEntry      = OClusterPositionFactory.INSTANCE.valueOf(0);
+  protected OClusterPosition          lastClusterEntry       = OClusterPositionFactory.INSTANCE.getMaxValue();
 
-  private int                      currentEntryPosition   = -1;
-  private OPhysicalPosition[]      positionsToProcess     = null;
+  private OClusterPosition            currentEntry           = OClusterPosition.INVALID_POSITION;
 
-  private final boolean            useCache;
-  private final boolean            iterateThroughTombstones;
+  private int                         currentEntryPosition   = -1;
+  private OPhysicalPosition[]         positionsToProcess     = null;
+
+  private final boolean               useCache;
+  private final boolean               iterateThroughTombstones;
 
   public OIdentifiableIterator(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final boolean useCache,
-      final boolean iterateThroughTombstones) {
+      final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     database = iDatabase;
     lowLevelDatabase = iLowLevelDatabase;
     this.iterateThroughTombstones = iterateThroughTombstones;
     this.useCache = useCache;
+    lockingStrategy = iLockingStrategy;
 
     dbStorage = lowLevelDatabase.getStorage();
 
@@ -277,9 +280,9 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       try {
         if (iRecord != null) {
           iRecord.setIdentity(new ORecordId(current.clusterId, current.clusterPosition));
-          iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, iterateThroughTombstones);
+          iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, iterateThroughTombstones, lockingStrategy);
         } else
-          iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones);
+          iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones, lockingStrategy);
       } catch (ODatabaseException e) {
         if (Thread.interrupted())
           // THREAD INTERRUPTED: RETURN

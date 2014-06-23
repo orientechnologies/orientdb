@@ -15,15 +15,8 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.regex.Pattern;
-
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -40,6 +33,16 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Run-time query condition evaluator.
@@ -75,7 +78,9 @@ public class OSQLFilterCondition {
     Object l = evaluate(iCurrentRecord, iCurrentResult, left, iContext);
     Object r = evaluate(iCurrentRecord, iCurrentResult, right, iContext);
 
-    final Object[] convertedValues = checkForConversion(iCurrentRecord, l, r);
+    final OCollate collate = getCollate();
+
+    final Object[] convertedValues = checkForConversion(iCurrentRecord, l, r, collate);
     if (convertedValues != null) {
       l = convertedValues[0];
       r = convertedValues[1];
@@ -100,6 +105,14 @@ public class OSQLFilterCondition {
     return result;
   }
 
+  public OCollate getCollate() {
+    if (left instanceof OSQLFilterItemField)
+      return ((OSQLFilterItemField) left).getCollate();
+    else if (right instanceof OSQLFilterItemField)
+      return ((OSQLFilterItemField) right).getCollate();
+    return null;
+  }
+
   public ORID getBeginRidRange() {
     if (operator == null)
       if (left instanceof OSQLFilterCondition)
@@ -120,8 +133,203 @@ public class OSQLFilterCondition {
     return operator.getEndRidRange(left, right);
   }
 
-  private Object[] checkForConversion(final OIdentifiable o, final Object l, final Object r) {
+  public List<String> getInvolvedFields(final List<String> list) {
+    final Object left = getLeft();
+
+    if (left != null)
+      if (left instanceof OSQLFilterItemField) {
+        if (((OSQLFilterItemField) left).isFieldChain())
+          list.add(((OSQLFilterItemField) left).getFieldChain().getItemName(
+              ((OSQLFilterItemField) left).getFieldChain().getItemCount() - 1));
+      } else if (left instanceof OSQLFilterCondition)
+        ((OSQLFilterCondition) left).getInvolvedFields(list);
+
+    final Object right = getRight();
+    if (right != null)
+      if (right instanceof OSQLFilterItemField) {
+        if (((OSQLFilterItemField) right).isFieldChain())
+          list.add(((OSQLFilterItemField) right).getFieldChain().getItemName(
+              ((OSQLFilterItemField) right).getFieldChain().getItemCount() - 1));
+      } else if (right instanceof OSQLFilterCondition)
+        ((OSQLFilterCondition) right).getInvolvedFields(list);
+
+    return list;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder buffer = new StringBuilder();
+
+    buffer.append('(');
+    buffer.append(left);
+    if (operator != null) {
+      buffer.append(' ');
+      buffer.append(operator);
+      buffer.append(' ');
+      if (right instanceof String)
+        buffer.append('\'');
+      buffer.append(right);
+      if (right instanceof String)
+        buffer.append('\'');
+      buffer.append(')');
+    }
+
+    return buffer.toString();
+  }
+
+  public Object getLeft() {
+    return left;
+  }
+
+  public void setLeft(final Object iValue) {
+    left = iValue;
+  }
+
+  public Object getRight() {
+    return right;
+  }
+
+  public void setRight(final Object iValue) {
+    right = iValue;
+  }
+
+  public OQueryOperator getOperator() {
+    return operator;
+  }
+
+  protected Integer getInteger(Object iValue) {
+    if (iValue == null)
+      return null;
+
+    final String stringValue = iValue.toString();
+
+    if (NULL_VALUE.equals(stringValue))
+      return null;
+    if (OSQLHelper.DEFINED.equals(stringValue))
+      return null;
+
+    if (OStringSerializerHelper.contains(stringValue, '.') || OStringSerializerHelper.contains(stringValue, ','))
+      return (int) Float.parseFloat(stringValue);
+    else
+      return stringValue.length() > 0 ? new Integer(stringValue) : new Integer(0);
+  }
+
+  protected Float getFloat(final Object iValue) {
+    if (iValue == null)
+      return null;
+
+    final String stringValue = iValue.toString();
+
+    if (NULL_VALUE.equals(stringValue))
+      return null;
+
+    return stringValue.length() > 0 ? new Float(stringValue) : new Float(0);
+  }
+
+  protected Date getDate(final Object value) {
+    if (value == null)
+      return null;
+
+    final OStorageConfiguration config = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration();
+
+    if (value instanceof Long) {
+      Calendar calendar = Calendar.getInstance(config.getTimeZone());
+      calendar.setTimeInMillis(((Long) value));
+      return calendar.getTime();
+    }
+
+    String stringValue = value.toString();
+
+    if (NULL_VALUE.equals(stringValue))
+      return null;
+
+    if (stringValue.length() <= 0)
+      return null;
+
+    if (Pattern.matches("^\\d+$", stringValue))
+      return new Date(Long.valueOf(stringValue).longValue());
+
+    SimpleDateFormat formatter = config.getDateFormatInstance();
+
+    if (stringValue.length() > config.dateFormat.length())
+      // ASSUMES YOU'RE USING THE DATE-TIME FORMATTE
+      formatter = config.getDateTimeFormatInstance();
+
+    try {
+      return formatter.parse(stringValue);
+    } catch (ParseException pe) {
+      try {
+        return new Date(new Double(stringValue).longValue());
+      } catch (Exception pe2) {
+        throw new OQueryParsingException("Error on conversion of date '" + stringValue + "' using the format: "
+            + formatter.toPattern());
+      }
+    }
+  }
+
+  protected Object evaluate(OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final Object iValue,
+      final OCommandContext iContext) {
+    if (iCurrentRecord != null && iCurrentRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+      try {
+        iCurrentRecord = iCurrentRecord.getRecord().load();
+      } catch (ORecordNotFoundException e) {
+        return null;
+      }
+    }
+
+    if (iValue instanceof OSQLFilterItem) {
+      if (iCurrentResult != null) {
+        final Object v = ((OSQLFilterItem) iValue).getValue(iCurrentResult, iCurrentResult, iContext);
+        if (v != null)
+          return v;
+      }
+
+      return ((OSQLFilterItem) iValue).getValue(iCurrentRecord, iCurrentResult, iContext);
+    }
+
+    if (iValue instanceof OSQLFilterCondition)
+      // NESTED CONDITION: EVALUATE IT RECURSIVELY
+      return ((OSQLFilterCondition) iValue).evaluate(iCurrentRecord, iCurrentResult, iContext);
+
+    if (iValue instanceof OSQLFunctionRuntime) {
+      // STATELESS FUNCTION: EXECUTE IT
+      final OSQLFunctionRuntime f = (OSQLFunctionRuntime) iValue;
+      return f.execute(iCurrentRecord, iCurrentRecord, iCurrentResult, iContext);
+    }
+
+    final Iterable<?> multiValue = OMultiValue.getMultiValueIterable(iValue);
+
+    if (multiValue != null) {
+      // MULTI VALUE: RETURN A COPY
+      final ArrayList<Object> result = new ArrayList<Object>(OMultiValue.getSize(iValue));
+
+      for (final Object value : multiValue) {
+        if (value instanceof OSQLFilterItem)
+          result.add(((OSQLFilterItem) value).getValue(iCurrentRecord, iCurrentResult, iContext));
+        else
+          result.add(value);
+      }
+      return result;
+    }
+
+    // SIMPLE VALUE: JUST RETURN IT
+    return iValue;
+  }
+
+  private Object[] checkForConversion(final OIdentifiable o, Object l, Object r, final OCollate collate) {
     Object[] result = null;
+
+    if (collate != null) {
+      final Object oldL = l;
+      final Object oldR = r;
+
+      l = collate.transform(l);
+      r = collate.transform(r);
+
+      if (l != oldL || r != oldR)
+        // CHANGED
+        result = new Object[] { l, r };
+    }
 
     try {
       // DEFINED OPERATOR
@@ -177,163 +385,7 @@ public class OSQLFilterCondition {
     } catch (Exception e) {
       // JUST IGNORE CONVERSION ERRORS
     }
+
     return result;
-  }
-
-  protected Integer getInteger(Object iValue) {
-    if (iValue == null)
-      return null;
-
-    final String stringValue = iValue.toString();
-
-    if (NULL_VALUE.equals(stringValue))
-      return null;
-    if (OSQLHelper.DEFINED.equals(stringValue))
-      return null;
-
-    if (OStringSerializerHelper.contains(stringValue, '.') || OStringSerializerHelper.contains(stringValue, ','))
-      return (int) Float.parseFloat(stringValue);
-    else
-      return stringValue.length() > 0 ? new Integer(stringValue) : new Integer(0);
-  }
-
-  protected Float getFloat(final Object iValue) {
-    if (iValue == null)
-      return null;
-
-    final String stringValue = iValue.toString();
-
-    if (NULL_VALUE.equals(stringValue))
-      return null;
-
-    return stringValue.length() > 0 ? new Float(stringValue) : new Float(0);
-  }
-
-  protected Date getDate(final Object iValue) {
-    if (iValue == null)
-      return null;
-
-    if (iValue instanceof Long)
-      return new Date(((Long) iValue).longValue());
-
-    String stringValue = iValue.toString();
-
-    if (NULL_VALUE.equals(stringValue))
-      return null;
-
-    if (stringValue.length() <= 0)
-      return null;
-
-    if (Pattern.matches("^\\d+$", stringValue))
-      return new Date(Long.valueOf(stringValue).longValue());
-
-    final OStorageConfiguration config = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration();
-
-    SimpleDateFormat formatter = config.getDateFormatInstance();
-
-    if (stringValue.length() > config.dateFormat.length())
-      // ASSUMES YOU'RE USING THE DATE-TIME FORMATTE
-      formatter = config.getDateTimeFormatInstance();
-
-    try {
-      return formatter.parse(stringValue);
-    } catch (ParseException pe) {
-      try {
-        return new Date(new Double(stringValue).longValue());
-      } catch (Exception pe2) {
-        throw new OQueryParsingException("Error on conversion of date '" + stringValue + "' using the format: "
-            + formatter.toPattern());
-      }
-    }
-  }
-
-  protected Object evaluate(OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final Object iValue,
-      final OCommandContext iContext) {
-    if (iCurrentRecord != null && iCurrentRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-      try {
-        iCurrentRecord = iCurrentRecord.getRecord().load();
-      } catch (ORecordNotFoundException e) {
-        return null;
-      }
-    }
-
-    if (iValue instanceof OSQLFilterItem) {
-      if (iCurrentResult != null) {
-        final Object v = ((OSQLFilterItem) iValue).getValue(iCurrentResult, iContext);
-        if (v != null)
-          return v;
-      }
-
-      return ((OSQLFilterItem) iValue).getValue(iCurrentRecord, iContext);
-    }
-
-    if (iValue instanceof OSQLFilterCondition)
-      // NESTED CONDITION: EVALUATE IT RECURSIVELY
-      return ((OSQLFilterCondition) iValue).evaluate(iCurrentRecord, iCurrentResult, iContext);
-
-    if (iValue instanceof OSQLFunctionRuntime) {
-      // STATELESS FUNCTION: EXECUTE IT
-      final OSQLFunctionRuntime f = (OSQLFunctionRuntime) iValue;
-      return f.execute(iCurrentRecord, iCurrentResult, iContext);
-    }
-
-    final Iterable<?> multiValue = OMultiValue.getMultiValueIterable(iValue);
-
-    if (multiValue != null) {
-      // MULTI VALUE: RETURN A COPY
-      final ArrayList<Object> result = new ArrayList<Object>(OMultiValue.getSize(iValue));
-
-      for (final Object value : multiValue) {
-        if (value instanceof OSQLFilterItem)
-          result.add(((OSQLFilterItem) value).getValue(iCurrentRecord, iContext));
-        else
-          result.add(value);
-      }
-      return result;
-    }
-
-    // SIMPLE VALUE: JUST RETURN IT
-    return iValue;
-  }
-
-  @Override
-  public String toString() {
-    StringBuilder buffer = new StringBuilder();
-
-    buffer.append('(');
-    buffer.append(left);
-    if (operator != null) {
-      buffer.append(' ');
-      buffer.append(operator);
-      buffer.append(' ');
-      if (right instanceof String)
-        buffer.append('\'');
-      buffer.append(right);
-      if (right instanceof String)
-        buffer.append('\'');
-      buffer.append(')');
-    }
-
-    return buffer.toString();
-  }
-
-  public Object getLeft() {
-    return left;
-  }
-
-  public Object getRight() {
-    return right;
-  }
-
-  public OQueryOperator getOperator() {
-    return operator;
-  }
-
-  public void setLeft(final Object iValue) {
-    left = iValue;
-  }
-
-  public void setRight(final Object iValue) {
-    right = iValue;
   }
 }

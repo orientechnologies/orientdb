@@ -15,14 +15,7 @@
  */
 package com.orientechnologies.orient.core.entity;
 
-import com.orientechnologies.orient.core.config.OStorageClusterHoleConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
-import com.orientechnologies.orient.core.config.OStorageDataHoleConfiguration;
-import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
+import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -66,8 +59,6 @@ public class OClassDictionary {
       return OStorageSegmentConfiguration.class;
     case 'd':
       return OStorageFileConfiguration.class;
-    case 'e':
-      return OStorageEHClusterConfiguration.class;
     case 'f':
       return OStoragePhysicalClusterConfigurationLocal.class;
 
@@ -107,8 +98,6 @@ public class OClassDictionary {
       return 'c';
     if (iClass.equals(OStorageFileConfiguration.class))
       return 'd';
-    if (iClass.equals(OStorageEHClusterConfiguration.class))
-      return 'e';
     if (iClass.equals(OStoragePhysicalClusterConfigurationLocal.class))
       return 'f';
 

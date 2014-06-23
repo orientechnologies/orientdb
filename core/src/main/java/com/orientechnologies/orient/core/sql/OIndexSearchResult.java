@@ -1,16 +1,16 @@
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContains;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsKey;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorContainsValue;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Presents query subset in form of field1 = "field1 value" AND field2 = "field2 value" ... AND fieldN anyOpetator "fieldN value"
@@ -28,11 +28,19 @@ public class OIndexSearchResult {
   final OQueryOperator                 lastOperator;
   final OSQLFilterItemField.FieldChain lastField;
   final Object                         lastValue;
+  boolean                              containsNullValues;
 
-  OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
+  public OIndexSearchResult(final OQueryOperator lastOperator, final OSQLFilterItemField.FieldChain field, final Object value) {
     this.lastOperator = lastOperator;
     lastField = field;
     lastValue = value;
+
+    containsNullValues = value == null;
+  }
+
+  public static boolean isIndexEqualityOperator(OQueryOperator queryOperator) {
+    return queryOperator instanceof OQueryOperatorEquals || queryOperator instanceof OQueryOperatorContains
+        || queryOperator instanceof OQueryOperatorContainsKey || queryOperator instanceof OQueryOperatorContainsValue;
   }
 
   /**
@@ -43,7 +51,7 @@ public class OIndexSearchResult {
    *          Query subset to merge.
    * @return New instance that presents merged query.
    */
-  OIndexSearchResult merge(final OIndexSearchResult searchResult) {
+  public OIndexSearchResult merge(final OIndexSearchResult searchResult) {
     final OQueryOperator operator;
     final OIndexSearchResult result;
 
@@ -59,6 +67,8 @@ public class OIndexSearchResult {
       result.fieldValuePairs.putAll(fieldValuePairs);
       result.fieldValuePairs.put(lastField.getItemName(0), lastValue);
     }
+
+    result.containsNullValues = searchResult.containsNullValues || this.containsNullValues;
     return result;
   }
 
@@ -74,7 +84,7 @@ public class OIndexSearchResult {
     return isIndexEqualityOperator(lastOperator) || isIndexEqualityOperator(searchResult.lastOperator);
   }
 
-  List<String> fields() {
+  public List<String> fields() {
     final List<String> result = new ArrayList<String>(fieldValuePairs.size() + 1);
     result.addAll(fieldValuePairs.keySet());
     result.add(lastField.getItemName(0));
@@ -85,8 +95,15 @@ public class OIndexSearchResult {
     return fieldValuePairs.size() + 1;
   }
 
-  public static boolean isIndexEqualityOperator(OQueryOperator queryOperator) {
-    return queryOperator instanceof OQueryOperatorEquals || queryOperator instanceof OQueryOperatorContains
-        || queryOperator instanceof OQueryOperatorContainsKey || queryOperator instanceof OQueryOperatorContainsValue;
+  public List<String> getInvolvedFields() {
+    final List<String> list = new ArrayList<String>();
+    list.add(lastField.getItemName(lastField.getItemCount() - 1));
+    for (String f : fieldValuePairs.keySet())
+      list.add(f);
+    return list;
+  }
+
+  public OSQLFilterItemField.FieldChain getLastField() {
+    return lastField;
   }
 }

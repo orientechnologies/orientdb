@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
+
+import java.util.List;
 
 /**
  * Count the record that contains a field. Use * to indicate the record instead of the field. Uses the context to save the counter
@@ -37,8 +37,9 @@ public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
     super(NAME, 1, 1);
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    if (iParameters[0] != null)
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
+    if (iParams[0] != null)
       total++;
 
     return total;
@@ -49,7 +50,7 @@ public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: count(<field>|*)";
+    return "count(<field>|*)";
   }
 
   @Override

@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.common.concur.resource;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.concur.lock.OLockException;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Queue;
@@ -22,31 +25,39 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import com.orientechnologies.common.concur.lock.OLockException;
-
+/**
+ * Generic non reentrant implementation about pool of resources. It pre-allocates a semaphore of maxResources. Resources are lazily
+ * created by invoking the listener.
+ * 
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @param <K>
+ *          Resource's Key
+ * @param <V>
+ *          Resource Object
+ */
 public class OResourcePool<K, V> {
-  private final Semaphore             sem;
-  private final Queue<V>              resources = new ConcurrentLinkedQueue<V>();
-  private final Collection<V>         unmodifiableresources;
-  private OResourcePoolListener<K, V> listener;
+  protected final Semaphore             sem;
+  protected final Queue<V>              resources = new ConcurrentLinkedQueue<V>();
+  protected final Collection<V>         unmodifiableresources;
+  protected OResourcePoolListener<K, V> listener;
 
-  public OResourcePool(final int iMaxResources, final OResourcePoolListener<K, V> iListener) {
-    if (iMaxResources < 1)
+  public OResourcePool(final int maxResources, final OResourcePoolListener<K, V> listener) {
+    if (maxResources < 1)
       throw new IllegalArgumentException("iMaxResource must be major than 0");
-    listener = iListener;
-    sem = new Semaphore(iMaxResources + 1, true);
+
+    this.listener = listener;
+    sem = new Semaphore(maxResources, true);
     unmodifiableresources = Collections.unmodifiableCollection(resources);
   }
 
-  public V getResource(K iKey, final long iMaxWaitMillis, Object... iAdditionalArgs) throws OLockException {
-
+  public V getResource(K key, final long maxWaitMillis, Object... additionalArgs) throws OLockException {
     // First, get permission to take or create a resource
     try {
-      if (!sem.tryAcquire(iMaxWaitMillis, TimeUnit.MILLISECONDS))
-        throw new OLockException("Not more resources available in pool. Requested resource: " + iKey);
+      if (!sem.tryAcquire(maxWaitMillis, TimeUnit.MILLISECONDS))
+        throw new OLockException("No more resources available in pool. Requested resource: " + key);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-      throw new OLockException("Not more resources available in pool. Requested resource: " + iKey, e);
+      throw new OInterruptedException(e);
     }
 
     V res;
@@ -55,9 +66,11 @@ public class OResourcePool<K, V> {
       res = resources.poll();
       if (res != null) {
         // TRY TO REUSE IT
-        if (listener.reuseResource(iKey, iAdditionalArgs, res))
+        if (listener.reuseResource(key, additionalArgs, res)) {
           // OK: REUSE IT
-          return res;
+          break;
+        } else
+          res = null;
 
         // UNABLE TO REUSE IT: THE RESOURE WILL BE DISCARDED AND TRY WITH THE NEXT ONE, IF ANY
       }
@@ -65,7 +78,9 @@ public class OResourcePool<K, V> {
 
     // NO AVAILABLE RESOURCES: CREATE A NEW ONE
     try {
-      res = listener.createNewResource(iKey, iAdditionalArgs);
+      if (res == null)
+        res = listener.createNewResource(key, additionalArgs);
+
       return res;
     } catch (RuntimeException e) {
       sem.release();
@@ -73,13 +88,23 @@ public class OResourcePool<K, V> {
       throw e;
     } catch (Exception e) {
       sem.release();
+
       throw new OLockException("Error on creation of the new resource in the pool", e);
     }
   }
 
-  public void returnResource(final V res) {
+  public int getMaxResources() {
+    return sem.availablePermits();
+  }
+
+  public int getAvailableResources() {
+    return resources.size();
+  }
+
+  public boolean returnResource(final V res) {
     resources.add(res);
     sem.release();
+    return true;
   }
 
   public Collection<V> getResources() {
@@ -88,5 +113,10 @@ public class OResourcePool<K, V> {
 
   public void close() {
     sem.drainPermits();
+  }
+
+  public void remove(final V res) {
+    this.resources.remove(res);
+    sem.release();
   }
 }

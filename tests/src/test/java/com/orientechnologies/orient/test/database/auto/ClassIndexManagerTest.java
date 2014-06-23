@@ -1,33 +1,22 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = { "index" })
 public class ClassIndexManagerTest {
@@ -109,7 +98,7 @@ public class ClassIndexManagerTest {
     database.command(new OCommandSQL("drop class classIndexManagerTestClassTwo")).execute();
     database.command(new OCommandSQL("drop class classIndexManagerTestSuperClass")).execute();
     database.getMetadata().getSchema().reload();
-    database.getLevel2Cache().clear();
+
     database.close();
   }
 
@@ -124,7 +113,10 @@ public class ClassIndexManagerTest {
     try {
       docTwo.field("prop1", "a");
       docTwo.save();
-    } catch (OIndexException e) {
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
+      exceptionThrown = true;
+    } catch (ORecordDuplicatedException e) {
       exceptionThrown = true;
     }
     Assert.assertTrue(exceptionThrown);
@@ -165,7 +157,10 @@ public class ClassIndexManagerTest {
     try {
       docTwo.field("prop0", "a");
       docTwo.save();
-    } catch (OIndexException e) {
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
+      exceptionThrown = true;
+    } catch (ORecordDuplicatedException e) {
       exceptionThrown = true;
     }
     Assert.assertTrue(exceptionThrown);
@@ -185,7 +180,10 @@ public class ClassIndexManagerTest {
     try {
       docTwo.field("prop1", "a");
       docTwo.save();
-    } catch (OIndexException e) {
+    } catch (OResponseProcessingException e) {
+      Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
+      exceptionThrown = true;
+    } catch (ORecordDuplicatedException e) {
       exceptionThrown = true;
     }
     Assert.assertTrue(exceptionThrown);

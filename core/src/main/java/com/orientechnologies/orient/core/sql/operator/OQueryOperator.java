@@ -17,20 +17,19 @@ package com.orientechnologies.orient.core.sql.operator;
 
 import java.util.List;
 
+import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.profiler.OJVMProfiler;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorDivide;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMinus;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMod;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorMultiply;
-import com.orientechnologies.orient.core.sql.operator.math.OQueryOperatorPlus;
+import com.orientechnologies.orient.core.sql.operator.math.*;
 
 /**
  * Query Operators. Remember to handle the operator in OQueryItemCondition.
@@ -56,10 +55,6 @@ public abstract class OQueryOperator {
      * Used when this operator is equal the other one
      */
     EQUAL
-  }
-
-  public static enum INDEX_OPERATION_TYPE {
-    GET, COUNT
   }
 
   /**
@@ -99,8 +94,8 @@ public abstract class OQueryOperator {
     expectsParameters = iExpectsParameters;
   }
 
-  public abstract Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
-      final Object iLeft, final Object iRight, OCommandContext iContext);
+  public abstract Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult,
+      final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight, OCommandContext iContext);
 
   /**
    * Returns hint how index can be used to calculate result of operator execution.
@@ -113,8 +108,16 @@ public abstract class OQueryOperator {
    */
   public abstract OIndexReuseType getIndexReuseType(Object iLeft, Object iRight);
 
+  public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
+      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
+
+    return null;
+  }
+
   /**
-   * Performs index query to calculate result of execution of given operator.
+   * Performs index query and returns index cursor which presents subset of index data which corresponds to result of execution of
+   * given operator.
+   * 
    * <p/>
    * Query that should be executed can be presented like: [[property0 = keyParam0] and [property1 = keyParam1] and] propertyN
    * operator keyParamN.
@@ -124,21 +127,18 @@ public abstract class OQueryOperator {
    * <p/>
    * Multiple parameters are passed in to implement composite indexes support.
    * 
+   * 
    * @param iContext
-   *          TODO
    * @param index
    *          Instance of index that will be used to calculate result of operator execution.
-   * @param iOperationType
-   *          TODO
    * @param keyParams
    *          Parameters of query is used to calculate query result.
-   * @param fetchLimit
-   *          Maximum amount of items to be fetched, corresponds to LIMIT operator in SQL query.
-   * 
-   * @return Result of execution of given operator or {@code null} if given index can not be used to calculate operator result.
+   * @param ascSortOrder
+   *          Data returned by cursors should be sorted in ascending or descending order.
+   * @return Cursor instance if index can be used to evaluate result of execution of given operator and <code>null</code> otherwise.
    */
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      final List<Object> keyParams, final int fetchLimit) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
+      boolean ascSortOrder) {
     return null;
   }
 
@@ -211,7 +211,7 @@ public abstract class OQueryOperator {
     if (iContext.isRecordingMetrics())
       iContext.updateMetric("compositeIndexUsed", +1);
 
-    final OJVMProfiler profiler = Orient.instance().getProfiler();
+    final OProfilerMBean profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {
       profiler.updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", +1);
 

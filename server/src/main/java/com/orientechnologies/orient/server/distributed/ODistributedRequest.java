@@ -29,15 +29,13 @@ public interface ODistributedRequest {
 
   long getId();
 
+  void setId(long iId);
+
   EXECUTION_MODE getExecutionMode();
 
   String getDatabaseName();
 
   ODistributedRequest setDatabaseName(final String databaseName);
-
-  String getClusterName();
-
-  ODistributedRequest setClusterName(final String clusterName);
 
   String getSenderNodeName();
 

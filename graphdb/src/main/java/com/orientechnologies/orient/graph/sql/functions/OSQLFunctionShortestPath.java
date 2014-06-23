@@ -22,8 +22,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * Shortest path algorithm to find the shortest path from one node to another node in a directed graph.
@@ -31,67 +31,49 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder<Integer> {
+public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder {
   public static final String   NAME     = "shortestPath";
-  private static final Integer MIN      = new Integer(0);
-  private static final Integer DISTANCE = new Integer(1);
+
+  protected static final float DISTANCE = 1f;
 
   public OSQLFunctionShortestPath() {
     super(NAME, 2, 3);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
     final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
 
-    Object source = iParameters[0];
+    Object source = iParams[0];
     if (OMultiValue.isMultiValue(source)) {
       if (OMultiValue.getSize(source) > 1)
         throw new IllegalArgumentException("Only one sourceVertex is allowed");
       source = OMultiValue.getFirstValue(source);
     }
-    paramSourceVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(source, record, iContext));
+    paramSourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
 
-    Object dest = iParameters[1];
+    Object dest = iParams[1];
     if (OMultiValue.isMultiValue(dest)) {
       if (OMultiValue.getSize(dest) > 1)
         throw new IllegalArgumentException("Only one destinationVertex is allowed");
       dest = OMultiValue.getFirstValue(dest);
     }
-    paramDestinationVertex = graph.getVertex((OIdentifiable) OSQLHelper.getValue(dest, record, iContext));
+    paramDestinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
 
-    if (iParameters.length > 2)
-      paramDirection = Direction.valueOf(iParameters[2].toString().toUpperCase());
+    if (iParams.length > 2)
+      paramDirection = Direction.valueOf(iParams[2].toString().toUpperCase());
 
-    return super.execute(iParameters, iContext);
-  }
-
-  public String getSyntax() {
-    return "Syntax error: shortestPath(<sourceVertex>, <destinationVertex>, [<direction>])";
+    return super.execute(iContext);
   }
 
   @Override
-  protected Integer getShortestDistance(final Vertex destination) {
-    if (destination == null)
-      return Integer.MAX_VALUE;
-
-    final Integer d = distance.get(destination);
-    return d == null ? Integer.MAX_VALUE : d;
-  }
-
-  @Override
-  protected Integer getMinimumDistance() {
-    return MIN;
-  }
-
-  protected Integer getDistance(final Vertex node, final Vertex target) {
+  protected float getDistance(final OrientVertex node, final OrientVertex target) {
     return DISTANCE;
   }
 
-  @Override
-  protected Integer sumDistances(final Integer iDistance1, final Integer iDistance2) {
-    return iDistance1.intValue() + iDistance2.intValue();
+  public String getSyntax() {
+    return "shortestPath(<sourceVertex>, <destinationVertex>, [<direction>])";
   }
 }

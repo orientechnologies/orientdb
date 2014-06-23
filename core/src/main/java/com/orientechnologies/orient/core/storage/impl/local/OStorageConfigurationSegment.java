@@ -17,11 +17,13 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 
 /**
@@ -29,8 +31,8 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  */
 @SuppressWarnings("serial")
 public class OStorageConfigurationSegment extends OStorageConfiguration {
-  private static final int   START_SIZE = 10000;
-  private OSingleFileSegment segment;
+  private static final int         START_SIZE = 10000;
+  private final OSingleFileSegment segment;
 
   public OStorageConfigurationSegment(final OStorageLocalAbstract iStorage) throws IOException {
     super(iStorage);
@@ -45,6 +47,10 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   public void create() throws IOException {
     segment.create(START_SIZE);
     super.create();
+
+    final OFile f = segment.getFile();
+    if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean())
+      f.synch();
   }
 
   @Override
@@ -57,7 +63,8 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
         // @COMPATIBILITY0.9.25
         // CHECK FOR OLD VERSION OF DATABASE
-        final ORawBuffer rawRecord = storage.readRecord(CONFIG_RID, null, false, null, false).getResult();
+        final ORawBuffer rawRecord = storage.readRecord(CONFIG_RID, null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+            .getResult();
         if (rawRecord != null)
           fromStream(rawRecord.buffer);
 
@@ -77,6 +84,18 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   }
 
   @Override
+  public void lock() throws IOException {
+    if (segment != null)
+      segment.getFile().lock();
+  }
+
+  @Override
+  public void unlock() throws IOException {
+    if (segment != null)
+      segment.getFile().unlock();
+  }
+
+  @Override
   public void update() throws OSerializationException {
     try {
       final OFile f = segment.getFile();
@@ -93,6 +112,9 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
       f.writeInt(0, buffer.length);
       f.write(OBinaryProtocol.SIZE_INT, buffer);
+      if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean())
+        f.synch();
+
     } catch (Exception e) {
       throw new OSerializationException("Error on update storage configuration", e);
     }

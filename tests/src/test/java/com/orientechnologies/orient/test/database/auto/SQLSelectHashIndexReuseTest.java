@@ -1,6 +1,11 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -28,6 +33,7 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
 
   @BeforeClass
   public void beforeClass() throws Exception {
+    super.beforeClass();
     if (database.isClosed())
       database.open("admin", "admin");
 
@@ -150,9 +156,9 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
 
     database.command(new OCommandSQL("drop class sqlSelectHashIndexReuseTestClass")).execute();
     database.getMetadata().getSchema().reload();
-    database.getLevel2Cache().clear();
 
     database.close();
+    super.afterClass();
   }
 
   @Test

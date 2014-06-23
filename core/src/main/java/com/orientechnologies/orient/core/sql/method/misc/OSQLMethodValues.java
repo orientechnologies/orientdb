@@ -34,7 +34,7 @@ public class OSQLMethodValues extends OAbstractSQLMethod {
     }
 
     @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+    public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
         ioResult = ioResult != null && ioResult instanceof Map<?, ?> ? ((Map<?, ?>) ioResult).values() : null;
         return ioResult;
     }

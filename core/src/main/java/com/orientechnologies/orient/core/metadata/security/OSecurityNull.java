@@ -15,12 +15,12 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.security.ORole.ALLOW_MODES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Dummy security implementation.
@@ -82,7 +82,7 @@ public class OSecurityNull implements OSecurity {
     return null;
   }
 
-  public void close() {
+  public void close(boolean onDelete) {
   }
 
   public OUser repair() {
@@ -126,8 +126,13 @@ public class OSecurityNull implements OSecurity {
   public OIdentifiable disallowIdentity(ODocument iDocument, String iAllowFieldName, OIdentifiable iId) {
     return null;
   }
-  
+
   @Override
   public void createClassTrigger() {
+  }
+
+  @Override
+  public OSecurity getUnderlying() {
+    return null;
   }
 }

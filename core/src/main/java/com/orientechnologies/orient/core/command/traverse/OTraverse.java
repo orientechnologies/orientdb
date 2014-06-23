@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.command.traverse;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,7 +32,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
  * @author Luca Garulli
  */
 public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OIdentifiable> {
-  private OTraverseContext                  context     = new OTraverseContext();
   private OCommandPredicate                 predicate;
   private Iterator<? extends OIdentifiable> target;
   private List<Object>                      fields      = new ArrayList<Object>();
@@ -39,10 +39,11 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   private long                              limit       = 0;
   private OIdentifiable                     lastTraversed;
   private STRATEGY                          strategy    = STRATEGY.DEPTH_FIRST;
+  private OTraverseContext                  context     = new OTraverseContext();
 
   public enum STRATEGY {
     DEPTH_FIRST, BREADTH_FIRST
-  };
+  }
 
   /*
    * Executes a traverse collecting all the result in the returning List<OIdentifiable>. This could be memory expensive because for
@@ -57,8 +58,8 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     return result;
   }
 
-  public OTraverseAbstractProcess<?> currentProcess() {
-    return (OTraverseAbstractProcess<?>) context.peek();
+  public OTraverseAbstractProcess<?> nextProcess() {
+    return context.next();
   }
 
   public boolean hasNext() {
@@ -69,7 +70,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
       // GET THE NEXT
       lastTraversed = next();
 
-    if (lastTraversed == null && context.peek() != null)
+    if (lastTraversed == null && !context.isEmpty())
       throw new IllegalStateException("Traverse ended abnormally");
 
     if (!context.checkTimeout())
@@ -96,8 +97,8 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
     OIdentifiable result;
     OTraverseAbstractProcess<?> toProcess;
     // RESUME THE LAST PROCESS
-    while ((toProcess = currentProcess()) != null) {
-      result = (OIdentifiable) toProcess.process();
+    while ((toProcess = nextProcess()) != null) {
+      result = toProcess.process();
       if (result != null) {
         resultCount++;
         return result;
@@ -125,8 +126,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
 
   public OTraverse target(final OIdentifiable... iRecords) {
     final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
-    for (OIdentifiable id : iRecords)
-      list.add(id);
+    Collections.addAll(list, iRecords);
     return target(list.iterator());
   }
 
@@ -134,7 +134,7 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   public OTraverse target(final Iterator<? extends OIdentifiable> iTarget) {
     target = iTarget;
     context.reset();
-    new OTraverseRecordSetProcess(this, (Iterator<OIdentifiable>) target);
+    new OTraverseRecordSetProcess(this, (Iterator<OIdentifiable>) target, OTraversePath.empty());
     return this;
   }
 
@@ -203,5 +203,6 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
 
   public void setStrategy(STRATEGY strategy) {
     this.strategy = strategy;
+    context.setStrategy(strategy);
   }
 }

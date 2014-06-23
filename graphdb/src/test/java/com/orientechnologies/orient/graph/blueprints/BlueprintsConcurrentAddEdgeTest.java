@@ -1,15 +1,5 @@
 package com.orientechnologies.orient.graph.blueprints;
 
-import java.util.Date;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -17,6 +7,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import java.util.Date;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BlueprintsConcurrentAddEdgeTest {
   private static final int                        THREADS     = 20;
@@ -36,6 +36,7 @@ public class BlueprintsConcurrentAddEdgeTest {
   }
 
   @Test
+  @Ignore
   public void test() {
     createGraph();
     try {
@@ -175,8 +176,8 @@ public class BlueprintsConcurrentAddEdgeTest {
 
             } catch (OConcurrentModificationException e) {
               if (retry > 2)
-                System.out.println("Managing concurrent exception (key #" + current + "/" + total + ") adding edge " + keyFrom + "->"
-                    + keyTo + ", retry " + retry + " Thread:" + Thread.currentThread().getName());
+                System.out.println("Managing concurrent exception (key #" + current + "/" + total + ") adding edge " + keyFrom
+                    + "->" + keyTo + ", retry " + retry + " Thread:" + Thread.currentThread().getName());
             } catch (Exception e) {
               System.err.println("Exception (key #" + current + "/" + total + ") adding edge " + keyFrom + "->" + keyTo
                   + ", retry " + retry + " Thread:" + Thread.currentThread().getName());
@@ -198,8 +199,7 @@ public class BlueprintsConcurrentAddEdgeTest {
 
   private OrientGraphNoTx getGraph() {
     OrientGraphNoTx graph = new OrientGraphNoTx(DBURL);
-    graph.getRawGraph().getLevel1Cache().setEnable(false);
-    graph.getRawGraph().getLevel2Cache().setEnable(false);
+    graph.getRawGraph().getLocalCache().setEnable(false);
     return graph;
   }
 
