@@ -45,6 +45,10 @@ circle.node {
     stroke-width: 2.5px;
 }
 
+text.node {
+    cursor: pointer;
+}
+
 rect.rectdb {
     stroke-width: 1.5px;
     cursor: pointer;
@@ -57,12 +61,12 @@ rect.rectdb.reflexive {
 
 text {
     font: 12px sans-serif;
-    pointer-events: none;
 }
 
 text.id {
     text-anchor: middle;
     font-weight: bold;
+    cursor: pointer;
 }
 
 .graph-server, .graph-db {
@@ -106,6 +110,7 @@ svg {
 div.graph-db {
     max-height: 600px;
 }
+
 .graph-db svg {
     width: 100%;
     max-height: 600px;
@@ -128,9 +133,138 @@ circle.server-online {
     stroke: black;
     stroke-width: 1.5px;
 }
+
 circle.server-offline {
     fill: #B94A48;
     stroke: black;
     stroke-width: 1.5px;
 }
+
+.circle-container {
+    position: absolute;
+    top: 40%;
+    left: 45%;
+    z-index: 1100;
+}
+
+.circle {
+    background-color: rgba(0, 0, 0, 0);
+    border: 5px solid #FF6600;
+    opacity: .9;
+    border-right: 5px solid rgba(0, 0, 0, 0);
+    border-left: 5px solid rgba(0, 0, 0, 0);
+    border-radius: 50px;
+    box-shadow: 0 0 35px #FF5500;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    -moz-animation: spinPulse 1s infinite ease-in-out;
+    -webkit-animation: spinPulse 1s infinite linear;
+}
+
+.circle-interrupt {
+    position: fixed;
+    top: 55%;
+    left: 45.5%;
+    opacity: 1;
+    z-index: 9999;
+}
+
+.circle-interrupt-stop {
+    display: none;
+}
+
+
+.circle1 {
+    background-color: rgba(0, 0, 0, 0);
+    border: 5px solid #FF6600;
+    opacity: .9;
+    border-left: 5px solid rgba(0, 0, 0, 0);
+    border-right: 5px solid rgba(0, 0, 0, 0);
+    border-radius: 50px;
+    box-shadow: 0 0 15px #ff5500;
+    width: 50px;
+    height: 50px;
+    margin: 0 auto;
+    position: relative;
+    top: -75px;
+    -moz-animation: spinoffPulse 1s infinite linear;
+    -webkit-animation: spinoffPulse 1s infinite linear;
+}
+
+@-moz-keyframes spinPulse {
+    0% {
+        -moz-transform: rotate(160deg);
+        opacity: 0;
+        box-shadow: 0 0 1px #ff5500;
+    }
+    50% {
+        -moz-transform: rotate(145deg);
+        opacity: 1;
+    }
+    100% {
+        -moz-transform: rotate(-320deg);
+        opacity: 0;
+    }
+}
+
+@-moz-keyframes spinoffPulse {
+    0% {
+        -moz-transform: rotate(0deg);
+    }
+    100% {
+        -moz-transform: rotate(360deg);
+    }
+}
+
+@-webkit-keyframes spinPulse {
+    0% {
+        -webkit-transform: rotate(160deg);
+        opacity: 0;
+        box-shadow: 0 0 1px #ff5500;
+    }
+    50% {
+        -webkit-transform: rotate(145deg);
+        opacity: 1;
+    }
+    100% {
+        -webkit-transform: rotate(-320deg);
+        opacity: 0;
+    }
+}
+
+@-webkit-keyframes spinoffPulse {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
+}
+
+.circle-start {
+    text-align: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.92);
+    opacity: .6;
+}
+
+.circle-stop {
+    display: none;
+}
+
+.visible {
+    display: block;
+}
+
+.invisible {
+    display: none;
+}
+
+
 

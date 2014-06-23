@@ -27,6 +27,7 @@ public class OWorkbenchHazelcastTask extends TimerTask {
     final List<ODocument> response = this.handler.getDb().query(osqlQuery);
     for (ODocument cluster : response) {
       String clusterName = cluster.field("name");
+      String status = cluster.field("status");
       if (!handler.hasCluster(clusterName)) {
         try {
           OMonitoredCluster monitoredCluster = new OMonitoredCluster(handler, cluster);

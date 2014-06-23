@@ -4,18 +4,21 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
     </button>
-    <a class="navbar-brand" href="index.html">OrientDB Enterprise</a>
+    <a class="navbar-brand" href="index.html">
+        <img src="img/orient_db.png" alt="logo"/>
+    </a>
 </div>
 <div class="collapse nav-collapse navbar-collapse navbar-ex1-collapse">
     <ul class="" ng-class="hideClass" ng-show="login.logged">
         <li class="hider">
-            <a href="javascript:void(0)" ng-click="hide(!hided)">
+            <button class="pull-right btn-small" href="javascript:void(0)" ng-click="hide(!hided)">
                 <i class="icon-align-justify"> </i>
-            </a>
+            </button>
         </li>
         <li ng-repeat="menu in menus" ng-class="{ active : menu == selectedMenu }">
 
-            <a ng-click="navigate(menu)" bs-tooltip="{{ menu.i18n | i18n }}" data-toggle="tooltip" data-original-title="{{ menu.i18n | i18n }}" data-placement="right"
+            <a ng-click="navigate(menu)" bs-tooltip="{{ menu.i18n | i18n }}" data-toggle="tooltip"
+               data-original-title="{{ menu.i18n | i18n }}" data-placement="right"
                href="javascript:void(0)">
                 <i class="{{ menu.icon }}"></i>
                 <span ng-show="!hided" class="menuTitle"> {{ menu.i18n | i18n }}</span>

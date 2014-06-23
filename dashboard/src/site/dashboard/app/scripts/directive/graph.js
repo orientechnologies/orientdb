@@ -6,7 +6,8 @@ Widget.directive('servergraph', function () {
     var m = [40, 240, 40, 240]
     var drawGrap = function (scope, element, attrs, model) {
 
-        var dbHeight = 80;
+        var dbHeight = 95;
+        var serverHeight = 85;
 
         element.empty();
         var width = 960,
@@ -56,7 +57,7 @@ Widget.directive('servergraph', function () {
             .links(links)
             .size([width, height])
             .charge(-500)
-            .linkDistance(200)
+            .linkDistance(300)
             .on('tick', tick);
 
 
@@ -83,58 +84,60 @@ Widget.directive('servergraph', function () {
 
         var g = circle.enter().append('svg:g');
         g.call(force.drag);
-        g.on("click", function (d) {
-            scope.$broadcast('dbselected', d);
-        });
+
         g.each(function (el) {
             var thisGroup = d3.select(this);
 
             function appendDB() {
-                thisGroup.append('svg:rect')
-                    .attr('class', 'rectdb')
-                    .attr('width', dbHeight)
-                    .attr('height', dbHeight)
-                    .style('fill', function (d) {
-                        return '#c5c5c5';
-                    })
-                    .style('stroke', function (d) {
-                        return d3.rgb(colors(d.id)).darker().toString();
-                    })
-                    .classed('reflexive', function (d) {
-                        return d.reflexive;
-                    });
 
-                thisGroup.append('svg:text')
-                    .attr('x', dbHeight / 2)
-                    .attr('y', dbHeight / 2)
-                    .attr('class', 'id')
-                    .text(function (d) {
-                        return d.el.name;
-                    });
+                d3.xml("img/database.svg", "image/svg+xml", function (error, documentFragment) {
+                    if (error) {
+                        console.log(error);
+                        return;
+                    }
+                    var svgNode = documentFragment
+                        .getElementsByTagName("svg")[0];
+                    svgNode.children[0].children[0].setAttribute("transform", "scale(2.5,2.5)");
+                    thisGroup.node().appendChild(svgNode.children[0]);
+                    thisGroup.append('svg:text')
+                        .attr('x', dbHeight / 2)
+                        .attr('y', dbHeight)
+                        .attr('class', 'id')
+                        .text(function (d) {
+                            return d.el.name;
+                        }).on("click", function (d) {
+                            scope.$broadcast('dbselected', d);
+                        });
+                    ;
+                });
+
+
             }
 
             function appendServer() {
-                thisGroup.append('svg:circle')
-                    .attr('class', 'node')
-                    .attr('r', 40)
-                    .attr("fixed", true)
-                    .style('fill', function (d) {
 
-                        return (d.el.status === "ONLINE") ? "#468847" : "#B94A48";
-                    })
-                    .style('stroke', function (d) {
-                        return (d.el.status === "ONLINE") ? "#468847" : "#B94A48";
-                    })
-                    .classed('reflexive', function (d) {
-                        return d.reflexive;
-                    });
-                thisGroup.append('svg:text')
-                    .attr('x', 0)
-                    .attr('y', 4)
-                    .attr('class', 'id')
-                    .text(function (d) {
-                        return d.el.name;
-                    });
+                d3.xml("img/server.svg", "image/svg+xml", function (error, documentFragment) {
+                    if (error) {
+                        console.log(error);
+                        return;
+                    }
+                    var svgNode = documentFragment
+                        .getElementsByTagName("svg")[0];
+                    svgNode.children[0].setAttribute("transform", "scale(3,3)");
+                    thisGroup.append('svg:g').node().appendChild(svgNode.children[0]);
+                    thisGroup.append('svg:text')
+                        .attr('x', (serverHeight / 2) - 12.5)
+                        .attr('y', serverHeight)
+                        .attr('class', 'id')
+                        .text(function (d) {
+                            return d.el.name + " (" + d.el.status + ") ";
+                        }).on("click", function (d) {
+                            scope.$broadcast('dbselected', d);
+                        });
+                    ;
+                });
+
+
             }
 
             if (!el.el.db) {
@@ -171,7 +174,10 @@ Widget.directive('servergraph', function () {
                 });
 
             circle.attr('transform', function (d) {
-                return 'translate(' + d.x + ',' + d.y + ')';
+
+                var x = d.el.db ? d.x : d.x - 30;
+                var y = d.el.db ? d.y : d.y - 45;
+                return 'translate(' + x + ',' + y + ')';
             });
         }
 
@@ -206,6 +212,10 @@ Widget.directive('dbgraph', function () {
     var drawDbGraph = function (scope, element, attrs, model) {
         element.empty();
 
+        var dbHeight = 95;
+        var serverHeight = 85;
+        var clusterHeight = 85;
+
         var m = [20, 120, 20, 40]
         var margin = {top: 20, right: 120, bottom: 20, left: 40},
             width = 400 - margin.right - margin.left,
@@ -226,14 +236,14 @@ Widget.directive('dbgraph', function () {
                     var servChild = [];
                     var serv = model.config.clusters[val].servers;
                     serv.forEach(function (val) {
-                        servChild.push({ name: val, clazz: "server-" + status[val] });
+                        servChild.push({ name: val, offsetX: 40, offsetY: 10, server: true, clazz: "server-" + status[val] });
                     });
 
                 }
-                children.push({name: val, children: servChild, clazz: "cluster"});
+                children.push({name: val, children: servChild, cluster: true, offsetX: 40, offsetY: 30, clazz: "cluster"});
             }
         });
-        var root = {name: model.name, children: children, clazz: "db"};
+        var root = {name: model.name, children: children, db: true, offsetX: 40, offsetY: 60, clazz: "db"};
 
 
         var masterSVG = d3.select(element[0]).append('svg');
@@ -267,22 +277,86 @@ Widget.directive('dbgraph', function () {
             .enter().append("svg:g")
             .attr("class", "node")
             .attr("transform", function (d) {
-                return "translate(" + d.y + "," + d.x + ")";
+                return "translate(" + (d.y - d.offsetY) + "," + (d.x - d.offsetX) + ")";
             });
 
-        node.append("svg:circle")
-            .attr("r", 30)
-            .attr("class", function (d) {
-                return d.clazz ? d.clazz : "node"
-            });
+        node.each(function (el) {
+            var thisGroup = d3.select(this);
+            if (el.db) {
+                d3.xml("img/database.svg", "image/svg+xml", function (error, documentFragment) {
+                    if (error) {
+                        console.log(error);
+                        return;
+                    }
+                    var svgNode = documentFragment
+                        .getElementsByTagName("svg")[0];
+                    svgNode.children[0].children[0].setAttribute("transform", "scale(2.2,2.2)");
+                    thisGroup.node().appendChild(svgNode.children[0]);
+                    thisGroup.append('svg:text')
+                        .attr('x', dbHeight / 2)
+                        .attr('y', dbHeight)
+                        .attr('class', 'id')
+                        .text(function (d) {
+                            return d.name;
+                        });
 
-        node.append("svg:text")
-            .attr("x", 0)
-            .attr("y", 4)
-            .attr('class', 'id')
-            .text(function (d) {
-                return d.name;
-            });
+                });
+            }
+            if (el.server) {
+                d3.xml("img/server.svg", "image/svg+xml", function (error, documentFragment) {
+                    if (error) {
+                        console.log(error);
+                        return;
+                    }
+                    var svgNode = documentFragment
+                        .getElementsByTagName("svg")[0];
+                    svgNode.children[0].setAttribute("transform", "scale(3,3)");
+                    thisGroup.append('svg:g').node().appendChild(svgNode.children[0]);
+                    thisGroup.append('svg:text')
+                        .attr('x', (serverHeight / 2) - 12.5)
+                        .attr('y', serverHeight)
+                        .attr('class', 'id')
+                        .text(function (d) {
+                            return d.name + " (" + status[d.name] + ") ";
+                        })
+                    ;
+                });
+            }
+            if (el.cluster) {
+                d3.xml("img/cluster.svg", "image/svg+xml", function (error, documentFragment) {
+                    if (error) {
+                        console.log(error);
+                        return;
+                    }
+                    var svgNode = documentFragment
+                        .getElementsByTagName("svg")[0];
+                    svgNode.children[0].setAttribute("transform", "scale(0.8,0.8)");
+                    thisGroup.append('svg:g').node().appendChild(svgNode.children[0]);
+                    thisGroup.append('svg:text')
+                        .attr('x', (clusterHeight / 2))
+                        .attr('y', clusterHeight)
+                        .attr('class', 'id')
+                        .text(function (d) {
+                            return d.name;
+                        })
+                    ;
+                });
+            }
+
+        })
+//        node.append("svg:circle")
+//            .attr("r", 30)
+//            .attr("class", function (d) {
+//                return d.clazz ? d.clazz : "node"
+//            });
+//
+//        node.append("svg:text")
+//            .attr("x", 0)
+//            .attr("y", 4)
+//            .attr('class', 'id')
+//            .text(function (d) {
+//                return d.name;
+//            });
 
 
         masterSVG.call(d3.behavior.zoom()

@@ -66,6 +66,8 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
 
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String[] urlParts) throws InterruptedException, IOException {
     String type = urlParts[2];
+    ODatabaseDocumentTx databaseDocumentTx = getProfiledDatabaseInstance(iRequest);
+    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
     if ("configuration".equals(type)) {
       List<ODocument> docs = new ArrayList<ODocument>();
       for (OMonitoredCluster cluster : monitor.getClustersList()) {
@@ -75,8 +77,6 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
     } else if ("dbconfig".equals(type)) {
       String cluster = urlParts[3];
       String db = urlParts[4];
-      ODatabaseDocumentTx databaseDocumentTx = getProfiledDatabaseInstance(iRequest);
-      ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTx);
       OMonitoredCluster c = monitor.getClusterByName(cluster);
       IMap<String, Object> config = c.getConfigurationMap();
 
@@ -98,6 +98,37 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
       }
 
       iResponse.writeResult(dbConf);
+    } else if ("deploy".equals(type)) {
+      String cluster = urlParts[3];
+      String server = urlParts[4];
+      String db = urlParts[5];
+
+      OMonitoredCluster c = monitor.getClusterByName(cluster);
+
+      OMonitoredServer s = monitor.getMonitoredServer(server);
+      ODocument serverCfg = s.getConfiguration();
+
+      try {
+        final URL remoteUrl = new URL("http://" + serverCfg.field("url") + "/deployDb/" + db);
+        String response = OWorkbenchUtils.fetchFromRemoteServer(serverCfg, remoteUrl);
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, response, null);
+      } catch (Exception e) {
+
+      }
+    } else if ("disconnect".equals(type)) {
+      String cluster = urlParts[3];
+      OMonitoredCluster c = monitor.getClusterByName(cluster);
+      if (c != null) {
+
+        c.shutdownDistributed();
+      }
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, null, null);
+    } else if ("connect".equals(type)) {
+      String cluster = urlParts[3];
+      OMonitoredCluster c = monitor.getClusterByName(cluster);
+
+      c.reInit();
+      iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, null, null);
     }
   }
 
@@ -116,6 +147,10 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
         } catch (Exception e) {
           e.printStackTrace();
         }
+      }
+      String status = doc.field("status");
+      if (status == null) {
+        doc.field("status", "ONLINE");
       }
       ODocument res = doc.save();
       if (c != null) {

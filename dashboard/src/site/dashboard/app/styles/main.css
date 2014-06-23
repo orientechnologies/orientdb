@@ -56,6 +56,21 @@ body {
     background-color: #222222 !important;
 }
 
+li.hider {
+    width: 100%;
+    padding: 5px;
+}
+
+li.hider button {
+
+    background-color: #303030;
+    color: #FFFFFF;
+    margin-right: 15px;
+}
+li.hider button:hover {
+    background-color: #000000;
+}
+
 .side-nav > li.active > a {
     background-color: #A5360F !important;
     color: #FFFFFF;
@@ -71,8 +86,8 @@ body {
         margin-left: -225px;
         overflow-y: auto;
         position: fixed !important;
-        top: 50px;
-        margin-top: 5px !important;
+        top: 47px;
+        margin-top: 3px !important;
         width: 225px;
 
     }
@@ -106,7 +121,7 @@ body {
 
 .navbar.navbar-inverse .navbar-inner {
     background: none repeat scroll 0 0 #333333;
-    border-bottom: 5px solid #A5360F;
+    border-bottom: 3px solid #A5360F;
     box-shadow: none !important;
     text-shadow: 0 1px 0 #CE4213;
 }
@@ -125,8 +140,13 @@ button.btn-primary, .btn.btn-primary {
     width: 100%;
 }
 
+.shadow-continer {
+    /*box-shadow: -10px 0 10px -10px #262626;*/
+    /*box-shadow: -10px 0 10px 1px #262626;*/
+}
+
 .monitor-app {
-    margin: 30px auto 0;
+    margin: 20px auto 0;
     min-height: 100%;
 }
 
@@ -262,7 +282,7 @@ button.btn-inverse:hover, .btn.btn-inverse:hover {
 }
 
 .mainSection {
-    /*box-shadow: -10px 0 10px 1px #262626;*/
+
     margin-left: 0 !important;
     padding-left: 10px;
 }
@@ -903,7 +923,7 @@ div.pagination span.disabled {
     float: left;
     font-size: 18px;
     line-height: 20px;
-    padding: 15px;
+    padding: 2px 10px;
 }
 
 @media (min-width: 768px) {
@@ -928,7 +948,7 @@ div.pagination span.disabled {
 .navbar-inverse {
     background-color: #222222;
     border-color: #080808;
-    border-bottom: 5px solid #FF6600;
+    border-bottom: 3px solid #FF6600;
 }
 
 .navbar-right {

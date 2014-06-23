@@ -38,13 +38,17 @@ spinner.factory('Spinner', function () {
 //        spinner.stop();
 //    })
     spinner.start = function () {
-        var target = document.getElementById('spinner');
-        spinner.spin(target);
-        $("#spinner-container").addClass('spinner-start')
+//        var target = document.getElementById('spinner');
+//        spinner.spin(target);
+//        $("#spinner-container").addClass('spinner-start')
+        $("#spinner-circle").removeClass("circle-stop")
+        $("#spinner-circle").addClass("circle-start")
     }
     spinner.stopSpinner = function () {
-        spinner.stop();
-        $("#spinner-container").removeClass('spinner-start');
+//        spinner.stop();
+//        $("#spinner-container").removeClass('spinner-start');
+        $("#spinner-circle").removeClass("circle-start")
+        $("#spinner-circle").addClass("circle-stop")
 
     }
     spinner.startSpinnerPopup = function () {

@@ -40,7 +40,7 @@ module.controller('ClusterChangeController', function ($scope, Cluster) {
 
 
 });
-module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $modal, $q, Server, $odialog, $routeParams, $location) {
+module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $modal, $q, Server, $odialog, $routeParams, $location, $filter, Spinner) {
 
 
     if ($routeParams.db) {
@@ -91,13 +91,24 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
                 $scope.servers = servers;
                 $scope.nodes = new Array;
                 $scope.servers.forEach(function (s, idx, arr) {
-                    Server.findDatabasesOnSnapshot(s.name, function (data) {
-                        s.databases = [];
-                        data.forEach(function (db, idx, arr) {
-                            s.databases.push(db);
+                    if (s.status == 'ONLINE') {
+                        Server.findDatabases(s.name, function (data) {
+                            s.databases = [];
+                            data.forEach(function (db, idx, arr) {
+                                s.databases.push(db);
+                            });
+                            $scope.nodes = $scope.nodes.concat(s);
                         });
-                        $scope.nodes = $scope.nodes.concat(s);
-                    });
+                    } else {
+                        Server.findDatabasesOnSnapshot(s.name, function (data) {
+                            s.databases = [];
+                            data.forEach(function (db, idx, arr) {
+                                s.databases.push(db);
+                            });
+                            $scope.nodes = $scope.nodes.concat(s);
+                        });
+                    }
+
                 });
                 $scope.servers.push({name: "<NEW_NODE>"})
             });
@@ -155,10 +166,36 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
         }
 
     }
+    $scope.connect = function () {
+        Spinner.start();
+        Cluster.connect($scope.cluster.name).then(function () {
+            $scope.cluster.status = 'ONLINE';
+            Spinner.stopSpinner();
+        });
+    }
+    $scope.disconnect = function () {
+        Spinner.start();
+        Cluster.disconnect($scope.cluster.name).then(function () {
+            $scope.cluster.status = 'OFFLINE';
+            Spinner.stopSpinner();
+        });
+    }
+    $scope.deployDb = function (s) {
+        $odialog.confirm({
+            title: 'Warning!',
+            body: "You are deploying the DB " + $scope.currentDb + " to the server  " + s.name + ". This operation will overwrite the existing DB, if any. Are you sure?",
+            success: function () {
+                Cluster.deployDb($scope.cluster.name, s.name, $scope.currentDb).then(function (data) {
+
+                });
+            }
+        });
+    }
     $scope.$on("dbselected", function (event, data) {
 
-        $location.path("dashboard/cluster/" + $scope.cluster.name + "/" + data.el.name, false);
+
         if (data.el.db) {
+            $scope.currentDb = data.el.name;
             var db = data.el.name;
             Cluster.getClusterDbInfo($scope.cluster.name, data.el.name).then(function (data) {
                 $scope.dbConfig = {name: db, config: data.result[0], servers: $scope.servers }
@@ -171,6 +208,7 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
                         clusters.push({name: v});
                     }
                 });
+
                 $scope.clusters = clusters;
                 $scope.db = true;
                 $scope.matrix = [];
@@ -182,6 +220,13 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
                         });
                     }
                 });
+
+                $location.path("dashboard/cluster/" + $scope.cluster.name + "/" + db, false);
+            });
+        } else {
+            var path = "dashboard/general/" + $filter('nopound')(data.el['@rid']);
+            $scope.$apply(function () {
+                $location.path(path);
             });
         }
     });

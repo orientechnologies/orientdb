@@ -136,6 +136,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     listener.registerStatelessCommand(new OServerCommandGetLog());
     listener.registerStatelessCommand(new OServerCommandConfiguration());
     listener.registerStatelessCommand(new OServerCommandPostBackupDatabase());
+    listener.registerStatelessCommand(new OServerCommandGetDeployDb());
   }
 
   private void uninstallCommands() {
@@ -148,6 +149,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     listener.unregisterStatelessCommand(OServerCommandGetLog.class);
     listener.unregisterStatelessCommand(OServerCommandConfiguration.class);
     listener.unregisterStatelessCommand(OServerCommandPostBackupDatabase.class);
+    listener.unregisterStatelessCommand(OServerCommandGetDeployDb.class);
   }
 
   private void installProfiler() {
@@ -170,9 +172,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
 
   private boolean checkLicense() {
     try {
-      if (!OConstants.ORIENT_VERSION.startsWith(ORIENDB_ENTERPRISE_VERSION))
-        throw new OLicenseException("enterprise license v." + ORIENDB_ENTERPRISE_VERSION
-            + " is different than linked jars with OrientDB v." + OConstants.ORIENT_VERSION);
+      // if (!OConstants.ORIENT_VERSION.startsWith(ORIENDB_ENTERPRISE_VERSION))
+      // throw new OLicenseException("enterprise license v." + ORIENDB_ENTERPRISE_VERSION
+      // + " is different than linked jars with OrientDB v." + OConstants.ORIENT_VERSION);
 
       final int dayLeft = OL.checkDate(license);
 
@@ -211,7 +213,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     } catch (OL.OLicenseException e) {
       OLogManager.instance().warn(null, "Error on validating Enterprise License (%s): enterprise features will be disabled",
           e.getMessage());
-      return false;
     }
     return true;
   }

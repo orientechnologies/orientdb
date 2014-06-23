@@ -10,17 +10,35 @@
 
 
     <div class="row-fluid well" style="width: 96%">
-        <div class="span3">
+        <div class="span4">
             <form class="form-inline">
                 <label for="cluster">{{ 'cluster.cluster' | i18n }}:</label>
                 <select id="cluster" ng-model="cluster" class="span6 nomargin" ng-options="s.name for s in nodeClusters"
                         data-placeholder="Pick a Cluster"></select>
-                <button class="btn btn-small" ng-click="editCluster()"><i class="icon-edit"></i></button>
-                <button class="btn btn-small" ng-click="removeCluster()"><i class="icon-remove"></i></button>
+
+                <button class="btn btn-small" ng-click="connect()" bs-tooltip="Connect"
+                        data-toggle="tooltip"
+                        data-original-title="Connect" data-placement="top"
+                        ng-show="cluster.status == 'OFFLINE'"><i
+                        class="icon-ok-circle"></i></button>
+                <button class="btn btn-small" ng-click="disconnect()" bs-tooltip="Disconnect"
+                        data-toggle="tooltip"
+                        data-original-title="Disconnect" data-placement="top"
+                        ng-show="cluster.status == 'ONLINE'"><i
+                        class="icon-off"></i></button>
+                <button class="btn btn-small" bs-tooltip="Edit" data-toggle="tooltip"
+                        data-original-title="Edit" data-placement="top" ng-click="editCluster()"><i
+                        class="icon-edit"></i></button>
+                <button class="btn btn-small" bs-tooltip="Delete" data-toggle="tooltip"
+                        data-original-title="Delete" data-placement="top"
+                        ng-click="removeCluster()"><i class="icon-remove"></i></button>
             </form>
         </div>
-        <div class="span9">
+        <div class="span8">
             <div class="span12">
+                <div>
+                    <i class="icon-angle-right"></i> {{ 'cluster.status' | i18n }}: <b>{{cluster.status}}</b>
+                </div>
                 <div>
                     <i class="icon-angle-right"></i> {{ 'cluster.port' | i18n }}: <b>{{cluster.port}}</b>
                 </div>
@@ -97,6 +115,16 @@
                             ng-change="changeServerConfig(cluster.name,s.name,serverChecked)" ng-model="serverChecked"
                             ng-checked="matrix[cluster.name][s.name]"
                             type="checkbox">
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td ng-repeat="s in servers">
+                        <button class="btn btn-small" ng-disabled="dbConfig.config.autoDeploy" ng-click="deployDb(s)"><i
+                                class="icon-save"> {{
+                            'cluster.db.deploy' | i18n
+                            }}</i></button>
+                        </button>
                     </td>
                 </tr>
                 </tbody>

@@ -222,6 +222,16 @@ public class OMonitoredCluster {
   }
 
   public void shutdownDistributed() {
+    ODatabaseRecordThreadLocal.INSTANCE.set(handler.getDb());
+    clusterConfig.reload();
+    clusterConfig.field("status", "OFFLINE");
+    clusterConfig = handler.getDb().save(clusterConfig);
     hazelcast.shutdown();
+  }
+
+  public void reInit() {
+    clusterConfig.reload();
+    clusterConfig = clusterConfig.field("status", "ONLINE").save();
+    init();
   }
 }

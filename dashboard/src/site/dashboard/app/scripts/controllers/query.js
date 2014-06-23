@@ -17,14 +17,14 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
         totalServerItems: 'total',
         filterOptions: $scope.filterOptions,
         columnDefs: [
-            {field: 'name', displayName: $i18n.get('queryprofiler.type'), cellFilter: 'ctype', width: 'auto'},
+            {field: 'name', displayName: $i18n.get('queryprofiler.type'), cellFilter: 'ctype'},
             {field: 'name', displayName: $i18n.get('queryprofiler.command'), cellFilter: 'cname'},
-            {field: 'entries', displayName: $i18n.get('queryprofiler.entries'), width: 'auto'},
-            {field: 'average', displayName: $i18n.get('queryprofiler.average'), width: 'auto'},
-            {field: 'total', displayName: $i18n.get('queryprofiler.total'), width: 'auto'},
-            {field: 'max', displayName: $i18n.get('queryprofiler.max'), width: 'auto'},
-            {field: 'min', displayName: $i18n.get('queryprofiler.min'), width: 'auto'},
-            {field: 'last', displayName: $i18n.get('queryprofiler.last'), width: 'auto'}
+            {field: 'entries', displayName: $i18n.get('queryprofiler.entries')},
+            {field: 'average', displayName: $i18n.get('queryprofiler.average')},
+            {field: 'total', displayName: $i18n.get('queryprofiler.total')},
+            {field: 'max', displayName: $i18n.get('queryprofiler.max')},
+            {field: 'min', displayName: $i18n.get('queryprofiler.min')},
+            {field: 'last', displayName: $i18n.get('queryprofiler.last')}
         ]
     };
     Monitor.getServers(function (data) {

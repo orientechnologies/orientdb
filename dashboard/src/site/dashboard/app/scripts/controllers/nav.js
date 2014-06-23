@@ -79,6 +79,10 @@ app.controller('NavController', function ($scope, $routeParams, $location, Login
         $location.path("/gettingstarted");
     }
 
+    $scope.$watch("login.logged", function (data) {
+        $scope.hide(data);
+    })
+
 
 });
 
