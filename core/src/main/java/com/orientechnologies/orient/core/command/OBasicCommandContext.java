@@ -34,6 +34,7 @@ public class OBasicCommandContext implements OCommandContext {
   public static final String                                                         EXECUTION_BEGUN  = "EXECUTION_BEGUN";
   public static final String                                                         TIMEOUT_MS       = "TIMEOUT_MS";
   public static final String                                                         TIMEOUT_STRATEGY = "TIMEOUT_STARTEGY";
+  public static final String                                                         INVALID_COMPARE_COUNT = "INVALID_COMPARE_COUNT";
 
   protected boolean                                                                  recordMetrics    = false;
   protected OCommandContext                                                          parent;

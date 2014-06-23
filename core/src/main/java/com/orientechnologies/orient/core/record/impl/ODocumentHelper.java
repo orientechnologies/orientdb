@@ -65,9 +65,9 @@ public class ODocumentHelper {
   public static final String ATTRIBUTE_FIELDS             = "@fields";
   public static final String ATTRIBUTE_RAW                = "@raw";
 
-  public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria) {
+  public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria, OCommandContext context) {
     if (ioResultSet != null)
-      Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria));
+      Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria, context));
   }
 
   @SuppressWarnings("unchecked")

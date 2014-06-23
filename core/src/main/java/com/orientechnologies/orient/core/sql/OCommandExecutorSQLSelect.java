@@ -1229,7 +1229,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         tempResult = list;
       }
 
-      ODocumentHelper.sort((List<? extends OIdentifiable>) tempResult, orderedFields);
+      ODocumentHelper.sort((List<? extends OIdentifiable>) tempResult, orderedFields, context);
       orderedFields.clear();
 
     } finally {
