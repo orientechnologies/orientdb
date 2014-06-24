@@ -22,7 +22,8 @@ var app = angular.module('MonitorApp',
         'spinner.controller',
         'spinner.services',
         'ngRoute',
-        'ngAnimate'
+        'ngAnimate',
+        'angularLocalStorage'
     ]
 );
 app.config(function ($routeProvider) {
@@ -91,11 +92,18 @@ app.config(function ($routeProvider) {
 ;
 
 app.config(function ($httpProvider) {
-    $httpProvider.interceptors.push(function ($rootScope, $location, $q) {
+    $httpProvider.interceptors.push(function ($rootScope, $location, $q, storage) {
         return {
             'request': function (request) {
                 // if we're not logged-in to the AngularJS app, redirect to login page
 
+
+                if (!$rootScope.loggedIn) {
+                    var logged = JSON.parse(storage.get("login"));
+                    if (logged) {
+                        $rootScope.loggedIn = logged;
+                    }
+                }
                 if (!$rootScope.loggedIn && $location.path() != '/login') {
                     $location.path('/login');
                 }

@@ -418,7 +418,9 @@ monitor.factory('Cluster', function ($http, $resource, $q) {
         url = S(url).template({cluster: cluster, db: db}).s;
         $http.get(url).success(function (data) {
             deferred.resolve(data);
-        });
+        }).error(function (data) {
+                deferred.reject(data);
+            });
         return deferred.promise;
     }
     resource.saveClusterDbInfo = function (cluster, db, config) {
@@ -436,13 +438,42 @@ monitor.factory('Cluster', function ($http, $resource, $q) {
         url = S(url).template({cluster: cluster, server: server, db: db}).s;
         $http.get(url).success(function (data) {
             deferred.resolve(data);
-        });
+        }).error(function (data) {
+                deferred.reject(data);
+            });
         return deferred.promise;
     }
     return resource;
 });
 
-monitor.factory('ContextNotification', function () {
+monitor.factory('ContextNotification', function ($timeout) {
+
+    return {
+        notifications: new Array,
+        errors: new Array,
+
+        push: function (notification) {
+            this.notifications.splice(0, this.notifications.length);
+            this.errors.splice(0, this.errors.length);
+
+            if (notification.error) {
+                this.errors.push(notification);
+            } else {
+                this.notifications.push(notification);
+            }
+            var that = this;
+            $timeout(function () {
+                that.clear();
+            }, 5000);
+        },
+        clear: function () {
+            this.notifications.splice(0, this.notifications.length);
+            this.errors.splice(0, this.errors.length);
+        }
+
+    }
+});
+monitor.factory('StickyNotification', function ($timeout) {
 
     return {
         notifications: new Array,

@@ -83,6 +83,10 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
       Collection<OMonitoredServer> servers = monitor.getServersByClusterName(cluster);
       ODocument dbConf = (ODocument) config.get("database." + db);
       Iterator<OMonitoredServer> iterator = servers.iterator();
+
+      if (dbConf == null) {
+        throw new RuntimeException("Cannot find database config in the cluster. Please check your configuration.");
+      }
       while (iterator.hasNext()) {
         ODocument server = iterator.next().getConfiguration();
         try {
@@ -112,8 +116,8 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
         final URL remoteUrl = new URL("http://" + serverCfg.field("url") + "/deployDb/" + db);
         String response = OWorkbenchUtils.fetchFromRemoteServer(serverCfg, remoteUrl);
         iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, response, null);
-      } catch (Exception e) {
-
+      } catch (IOException e) {
+        throw e;
       }
     } else if ("disconnect".equals(type)) {
       String cluster = urlParts[3];
@@ -150,7 +154,7 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
       }
       String status = doc.field("status");
       if (status == null) {
-        doc.field("status", "ONLINE");
+        doc.field("status", "CONNECTED");
       }
       ODocument res = doc.save();
       if (c != null) {

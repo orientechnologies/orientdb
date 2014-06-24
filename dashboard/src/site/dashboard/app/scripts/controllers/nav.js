@@ -1,15 +1,18 @@
 'use strict';
 
 var app = angular.module('MonitorApp');
-app.controller('NavController', function ($scope, $routeParams, $location, Login, Message, $modal, $q) {
+app.controller('NavController', function ($scope, $routeParams, $location, Login, Message, $modal, $q, $rootScope, storage) {
 
 
     $scope.login = Login;
 
     $scope.hided = false;
+    $scope.logged = false;
+
+    storage.bind($scope, "username");
 
     $scope.hideClass = "nav navbar-nav side-nav";
-    //Login.current();
+
     $scope.menus = [
         {name: 'dashboard', i18n: 'dashboard', link: '#/dashboard/', icon: 'icon-dashboard' },
         {name: 'settings', i18n: 'dashboard.settings', link: '#/dashboard/settings/', icon: 'icon-gear' },
@@ -26,8 +29,10 @@ app.controller('NavController', function ($scope, $routeParams, $location, Login
 
     ]
 
+
     $scope.hide = function (data) {
         $scope.hided = data;
+        $scope.logged = data;
         $scope.$emit("menu:visibility", data);
     }
     $scope.$watch("hided", function (data) {
@@ -79,7 +84,7 @@ app.controller('NavController', function ($scope, $routeParams, $location, Login
         $location.path("/gettingstarted");
     }
 
-    $scope.$watch("login.logged", function (data) {
+    $rootScope.$watch("loggedIn", function (data) {
         $scope.hide(data);
     })
 

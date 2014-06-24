@@ -36,11 +36,14 @@ module.controller('ClusterEditController', function ($scope, Cluster) {
 });
 module.controller('ClusterChangeController', function ($scope, Cluster) {
 
-    $scope.dimension = Object.keys($scope.dirty);
+    $scope.dim = Object.keys($scope.dirty);
+    $scope.dim1 = Object.keys($scope.dirtyConfig);
+    console.log($scope.oldConfig);
+    $scope.dimension = $scope.dim + $scope.dim1;
 
 
 });
-module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $modal, $q, Server, $odialog, $routeParams, $location, $filter, Spinner) {
+module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $modal, $q, Server, $odialog, $routeParams, $location, $filter, Spinner, $window, ContextNotification) {
 
 
     if ($routeParams.db) {
@@ -121,12 +124,15 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
     $scope.saveConfig = function () {
 
         var modalScope = $scope.$new(true);
+        modalScope.oldConfig = $scope.oldVal;
+        modalScope.dirtyConfig = $scope.newVal;
         modalScope.dirty = $scope.dirty;
         modalScope.ok = function () {
             var meta = $scope.dbConfig.config.metadata;
             delete $scope.dbConfig.config.metadata;
             Cluster.saveClusterDbInfo($scope.cluster.name, $scope.dbConfig.name, $scope.dbConfig.config).then(function (data) {
                 $scope.dbConfig.config.metadata = meta;
+                $scope.reload();
             });
         }
         modalScope.cluster = $scope.cluster;
@@ -169,14 +175,14 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
     $scope.connect = function () {
         Spinner.start();
         Cluster.connect($scope.cluster.name).then(function () {
-            $scope.cluster.status = 'ONLINE';
+            $scope.cluster.status = 'CONNECTED';
             Spinner.stopSpinner();
         });
     }
     $scope.disconnect = function () {
         Spinner.start();
         Cluster.disconnect($scope.cluster.name).then(function () {
-            $scope.cluster.status = 'OFFLINE';
+            $scope.cluster.status = 'DISCONNECTED';
             Spinner.stopSpinner();
         });
     }
@@ -185,7 +191,12 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
             title: 'Warning!',
             body: "You are deploying the DB " + $scope.currentDb + " to the server  " + s.name + ". This operation will overwrite the existing DB, if any. Are you sure?",
             success: function () {
+                Spinner.start();
                 Cluster.deployDb($scope.cluster.name, s.name, $scope.currentDb).then(function (data) {
+                    Spinner.stopSpinner();
+                }, function (err) {
+                    Spinner.stopSpinner();
+                    ContextNotification.push({content: err, error: true});
 
                 });
             }
@@ -199,6 +210,17 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
             var db = data.el.name;
             Cluster.getClusterDbInfo($scope.cluster.name, data.el.name).then(function (data) {
                 $scope.dbConfig = {name: db, config: data.result[0], servers: $scope.servers }
+
+                $scope.oldVal = {};
+                $scope.newVal = {};
+                $scope.autoDeploy = $scope.dbConfig.config.autoDeploy;
+                $scope.oldVal['autoDeploy'] = $scope.autoDeploy;
+                $scope.oldVal['writeQuorum'] = $scope.dbConfig.config.writeQuorum;
+                $scope.oldVal['readQuorum'] = $scope.dbConfig.config.readQuorum;
+                $scope.oldVal['hotAlignment'] = $scope.dbConfig.config.hotAlignment;
+                $scope.oldVal['readYourWrites'] = $scope.dbConfig.config.readYourWrites;
+                $scope.oldVal['failureAvailableNodesLessQuorum'] = $scope.dbConfig.config.failureAvailableNodesLessQuorum;
+
                 $scope.phisicalCluster = $scope.dbConfig.config.metadata.clusters;
                 $scope.phisicalCluster.push({name: '*'});
                 var clusters = [];
@@ -222,6 +244,8 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
                 });
 
                 $location.path("dashboard/cluster/" + $scope.cluster.name + "/" + db, false);
+            }, function (err) {
+                ContextNotification.push({content: err, error: true});
             });
         } else {
             var path = "dashboard/general/" + $filter('nopound')(data.el['@rid']);
@@ -230,6 +254,21 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
             });
         }
     });
+
+    $scope.change = function (val) {
+        $scope.newVal[val] = $scope.dbConfig.config[val];
+    }
+    $scope.reload = function () {
+        $window.location.reload();
+    }
+    $scope.$watch("autoDeploy", function (data) {
+        $scope.deploy = data && !$scope.cluster.status == 'DISCONNECTED';
+    });
+    $scope.$watch("cluster.status", function (data) {
+        $scope.deploy = $scope.autoDeploy && data;
+    });
+
+
 })
 ;
 

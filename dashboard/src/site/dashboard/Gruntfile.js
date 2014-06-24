@@ -266,10 +266,10 @@ module.exports = function (grunt) {
                             '*.{ico,txt}',
                             '.htaccess',
                             'components/**/*',
-                            'images/{,*/}*.{gif,webp,png,jpeg,jpg}',
+                            'images/{,*/}*.{gif,webp,png,jpeg,jpg,svg}',
                             'views/server/asciidoc/*.png',
                             'views/server/asciidoc/images/icons/*.png',
-                            'img/{,*/}*.{gif,webp,png,jpeg,jpg}',
+                            'img/{,*/}*.{gif,webp,png,jpeg,jpg,svg}',
                             'styles/fonts/*',
                             'font/*',
                             'i18n/*'

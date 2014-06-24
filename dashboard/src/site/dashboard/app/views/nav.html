@@ -9,7 +9,7 @@
     </a>
 </div>
 <div class="collapse nav-collapse navbar-collapse navbar-ex1-collapse">
-    <ul class="" ng-class="hideClass" ng-show="login.logged">
+    <ul class="" ng-class="hideClass" ng-show="logged">
         <li class="hider">
             <button class="pull-right btn-small" href="javascript:void(0)" ng-click="hide(!hided)">
                 <i class="icon-align-justify"> </i>
@@ -27,10 +27,10 @@
         </li>
     </ul>
     <ul class="nav navbar-nav navbar-right navbar-user">
-        <li class="dropdown user-dropdown" ng-show="login.logged">
+        <li class="dropdown user-dropdown" ng-show="logged">
             <a class="dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)">
                 <i class="icon-user"></i>
-                {{ login.username }}
+                {{ username }}
                 <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">

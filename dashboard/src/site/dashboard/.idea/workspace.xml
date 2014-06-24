@@ -26,94 +26,94 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="monitor-service.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="370" column="23" selection-start="12756" selection-end="12756" vertical-scroll-proportion="-13.076923" vertical-offset="5210" max-vertical-offset="7080">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="index.html" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/index.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="67" column="10" selection-start="2823" selection-end="2823" vertical-scroll-proportion="-17.5" vertical-offset="585" max-vertical-offset="2520">
+            <state line="68" column="49" selection-start="2873" selection-end="2873" vertical-scroll-proportion="-20.625" vertical-offset="525" max-vertical-offset="2535">
               <folding>
-                <marker date="1403100851000" expanded="true" signature="1758:1995" placeholder="..." />
-                <marker date="1403100851000" expanded="true" signature="1827:1861" placeholder="..." />
+                <marker date="1403625536000" expanded="true" signature="1758:1995" placeholder="..." />
+                <marker date="1403625536000" expanded="true" signature="1827:1861" placeholder="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="nav.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/nav.html">
+      <file leaf-file-name="gettstart.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/gettstart.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="21" column="41" selection-start="1030" selection-end="1030" vertical-scroll-proportion="-13.125" vertical-offset="0" max-vertical-offset="1650">
+            <state line="0" column="0" selection-start="0" selection-end="75" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="90">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="cluster.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/cluster.html">
+      <file leaf-file-name="gettstartcluster.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/gettstartcluster.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="32" column="51" selection-start="1798" selection-end="1798" vertical-scroll-proportion="-11.25" vertical-offset="210" max-vertical-offset="2100">
+            <state line="0" column="61" selection-start="61" selection-end="61" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="90">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="en.json" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
+      <file leaf-file-name="gettingstartedcluster.txt" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/gettingstartedcluster.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="90" column="29" selection-start="3787" selection-end="3787" vertical-scroll-proportion="2.3519163" vertical-offset="0" max-vertical-offset="2025">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="750">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="cluster.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/cluster.js">
+      <file leaf-file-name="gettingstarted.txt" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/gettingstarted.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="176" column="24" selection-start="6054" selection-end="6054" vertical-scroll-proportion="0.0" vertical-offset="2424" max-vertical-offset="3615">
+            <state line="64" column="32" selection-start="2017" selection-end="2033" vertical-scroll-proportion="0.0" vertical-offset="394" max-vertical-offset="1095">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="spinner-service.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/service/spinner-service.js">
+      <file leaf-file-name="clustermgmt.txt" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/clustermgmt.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="50" column="52" selection-start="1950" selection-end="1950" vertical-scroll-proportion="0.0" vertical-offset="126" max-vertical-offset="1005">
+            <state line="16" column="0" selection-start="255" selection-end="255" vertical-scroll-proportion="0.39408866" vertical-offset="0" max-vertical-offset="609">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="query.html" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/views/server/query.html">
+      <file leaf-file-name="servermanagement.txt" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/servermanagement.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="13" column="14" selection-start="401" selection-end="506" vertical-scroll-proportion="-0.625" vertical-offset="180" max-vertical-offset="945">
+            <state line="68" column="3" selection-start="1548" selection-end="1548" vertical-scroll-proportion="0.0" vertical-offset="861" max-vertical-offset="1470">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="query.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/controllers/query.js">
+      <file leaf-file-name="help.conf" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/help.conf">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="54" column="34" selection-start="2103" selection-end="2125" vertical-scroll-proportion="0.0" vertical-offset="555" max-vertical-offset="1665">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="23.4" vertical-offset="585" max-vertical-offset="6000">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="graph.js" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/app/scripts/directive/graph.js">
+      <file leaf-file-name="help.html" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/help.html">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="245" column="92" selection-start="7695" selection-end="7695" vertical-scroll-proportion="0.0" vertical-offset="3765" max-vertical-offset="6075">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="90">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="introduction.txt" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/introduction.txt">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="13" column="46" selection-start="280" selection-end="323" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="675">
               <folding />
             </state>
           </provider>
@@ -129,48 +129,57 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/app/views/server/asciidoc/stylesheets/asciidoc.css" />
-        <option value="$PROJECT_DIR$/bower.json" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/events.js" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/spinner-controller.js" />
-        <option value="$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/logs.js" />
         <option value="$PROJECT_DIR$/app/views/cluster/newCluster.html" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/monitor.js" />
         <option value="$PROJECT_DIR$/app/views/cluster/editCluster.html" />
-        <option value="$PROJECT_DIR$/app/views/server/settings.html" />
         <option value="$PROJECT_DIR$/app/views/server/distributed/distributed.html" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/settings.js" />
         <option value="$PROJECT_DIR$/app/views/server/metric/singleMetric.html" />
         <option value="$PROJECT_DIR$/app/components/d3/d3.js" />
         <option value="$PROJECT_DIR$/app/views/server/general/overview.html" />
         <option value="$PROJECT_DIR$/app/scripts/directive/custom.js" />
-        <option value="$PROJECT_DIR$/app/views/server/dashboard.html" />
-        <option value="$PROJECT_DIR$/app/views/cluster/changeCluster.html" />
         <option value="$PROJECT_DIR$/app/scripts/filters/filter.js" />
         <option value="$PROJECT_DIR$/app/views/cluster/baseEditCluster.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/header.js" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/metrics.js" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/messages-controller.js" />
         <option value="$PROJECT_DIR$/app/views/notification.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/query.js" />
-        <option value="$PROJECT_DIR$/app/views/server/query.html" />
         <option value="$PROJECT_DIR$/app/scripts/controllers/server.js" />
-        <option value="$PROJECT_DIR$/app/views/server/general.html" />
-        <option value="$PROJECT_DIR$/app/views/nav.html" />
         <option value="$PROJECT_DIR$/app/styles/main.css" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/nav.js" />
         <option value="$PROJECT_DIR$/app/img/data3.svg" />
         <option value="$PROJECT_DIR$/app/img/database.svg" />
-        <option value="$PROJECT_DIR$/app/scripts/app.js" />
-        <option value="$PROJECT_DIR$/app/index.html" />
         <option value="$PROJECT_DIR$/app/scripts/service/spinner-service.js" />
         <option value="$PROJECT_DIR$/app/styles/graph.css" />
-        <option value="$PROJECT_DIR$/app/scripts/directive/graph.js" />
-        <option value="$PROJECT_DIR$/app/views/server/cluster.html" />
-        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
-        <option value="$PROJECT_DIR$/app/scripts/controllers/cluster.js" />
         <option value="$PROJECT_DIR$/app/i18n/en.json" />
+        <option value="$PROJECT_DIR$/Gruntfile.js" />
+        <option value="$PROJECT_DIR$/app/scripts/directive/graph.js" />
+        <option value="$PROJECT_DIR$/app/views/nav.html" />
+        <option value="$PROJECT_DIR$/bower.json" />
+        <option value="$PROJECT_DIR$/app/scripts/app.js" />
+        <option value="$PROJECT_DIR$/app/scripts/service/login-service.js" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/nav.js" />
+        <option value="$PROJECT_DIR$/app/views/server/asciidoc/asciidoc.sh" />
+        <option value="$PROJECT_DIR$/app/views/server/asciidoc/servermanagement.txt" />
+        <option value="$PROJECT_DIR$/app/views/server/asciidoc/clustermgmt.txt" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/cluster.js" />
+        <option value="$PROJECT_DIR$/app/views/cluster/changeCluster.html" />
+        <option value="$PROJECT_DIR$/app/scripts/service/monitor-service.js" />
+        <option value="$PROJECT_DIR$/app/views/stikynotification.html" />
+        <option value="$PROJECT_DIR$/app/views/server/license.html" />
+        <option value="$PROJECT_DIR$/app/index.html" />
+        <option value="$PROJECT_DIR$/app/views/server/dashboard.html" />
+        <option value="$PROJECT_DIR$/app/views/server/general.html" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/monitor.js" />
+        <option value="$PROJECT_DIR$/app/views/server/cluster.html" />
+        <option value="$PROJECT_DIR$/app/views/server/query.html" />
+        <option value="$PROJECT_DIR$/app/views/server/metrics.html" />
+        <option value="$PROJECT_DIR$/app/views/server/logjava.html" />
+        <option value="$PROJECT_DIR$/app/views/server/events.html" />
+        <option value="$PROJECT_DIR$/app/views/server/messages.html" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/messages-controller.js" />
+        <option value="$PROJECT_DIR$/app/scripts/controllers/settings.js" />
+        <option value="$PROJECT_DIR$/app/views/server/settings.html" />
+        <option value="$PROJECT_DIR$/app/views/server/asciidoc/introduction.txt" />
+        <option value="$PROJECT_DIR$/app/views/server/gettstartcluster.html" />
+        <option value="$PROJECT_DIR$/app/views/server/asciidoc/gettingstarted.txt" />
       </list>
     </option>
   </component>
@@ -214,6 +223,96 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="studioee" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dashboard" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="studioee" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dashboard" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="app" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="studioee" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dashboard" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="app" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="views" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="studioee" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dashboard" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="app" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="views" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="server" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="studioee" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dashboard" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="app" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="views" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="server" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="asciidoc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
       <pane id="Scope" />
@@ -229,16 +328,18 @@
     <property name="GoToClass.includeJavaFiles" value="false" />
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="options.searchVisible" value="true" />
+    <property name="FullScreen" value="false" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/views/server/asciidoc" />
+      <recent name="$PROJECT_DIR$/app/views/server" />
+      <recent name="$PROJECT_DIR$/app/views" />
       <recent name="$PROJECT_DIR$/app/img" />
       <recent name="$PROJECT_DIR$/app/views/cluster" />
-      <recent name="$PROJECT_DIR$/app/scripts/controllers" />
-      <recent name="$PROJECT_DIR$/app/scripts/service" />
-      <recent name="$PROJECT_DIR$/app/views/server/asciidoc" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/views/server/asciidoc" />
       <recent name="$PROJECT_DIR$/app/views/server" />
       <recent name="$PROJECT_DIR$/app/asciidoc-8.6.9" />
       <recent name="$PROJECT_DIR$/app/views/metrics" />
@@ -391,261 +492,9 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/app/components/codemirror/mode/d/d.js">
+    <entry file="file://$PROJECT_DIR$/Gruntfile.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="187" column="94" selection-start="6166" selection-end="6166" vertical-scroll-proportion="0.0" vertical-offset="2540" max-vertical-offset="3165" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/components/ng-grid/src/i18n/en.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="634" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/cluster/changeCluster.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="10" column="26" selection-start="561" selection-end="561" vertical-scroll-proportion="-6.25" vertical-offset="0" max-vertical-offset="510" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/filters/moment-filters.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="611" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/cluster/editCluster.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="12" column="10" selection-start="533" selection-end="533" vertical-scroll-proportion="-7.5" vertical-offset="0" max-vertical-offset="300" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="62" column="105" selection-start="3319" selection-end="3331" vertical-scroll-proportion="-9.0" vertical-offset="480" max-vertical-offset="2025" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/cluster/baseEditCluster.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="57" column="64" selection-start="2457" selection-end="2457" vertical-scroll-proportion="0.0" vertical-offset="600" max-vertical-offset="1440" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/settings/newModal.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="707" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="315" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="114" column="184" selection-start="4108" selection-end="4108" vertical-scroll-proportion="0.0" vertical-offset="1710" max-vertical-offset="3825">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/databasemanagement.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/general/overview.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="58" selection-start="58" selection-end="108" vertical-scroll-proportion="-1.875" vertical-offset="0" max-vertical-offset="180" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/general/db.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="609" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/directive/angularjs.nvd3.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="5" column="23" selection-start="110" selection-end="111" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="3360">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/metric/singleMetric.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="60" selection-start="38" selection-end="60" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="705" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="17" column="0" selection-start="672" selection-end="672" vertical-scroll-proportion="0.0" vertical-offset="39" max-vertical-offset="5205" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/header.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="47" selection-start="1126" selection-end="1126" vertical-scroll-proportion="-15.0" vertical-offset="0" max-vertical-offset="675" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/components/bootstrap/docs/assets/js/bootstrap.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="1371" column="10" selection-start="37958" selection-end="37964" vertical-scroll-proportion="-7.3076925" vertical-offset="20375" max-vertical-offset="34275" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/components/angular-strap/dist/angular-strap.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="922" column="57" selection-start="36991" selection-end="36997" vertical-scroll-proportion="-7.3076925" vertical-offset="13640" max-vertical-offset="15480" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/general/configuration.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="609" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="12" column="10" selection-start="420" selection-end="598" vertical-scroll-proportion="-7.5" vertical-offset="0" max-vertical-offset="5625" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="132" column="67" selection-start="4428" selection-end="4520" vertical-scroll-proportion="0.0" vertical-offset="1684" max-vertical-offset="3285" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/header.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="32" column="29" selection-start="907" selection-end="1331" vertical-scroll-proportion="0.0" vertical-offset="197" max-vertical-offset="795" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/message-service.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="11" column="24" selection-start="231" selection-end="238" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="555" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/notification.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="49" selection-start="49" selection-end="49" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="585" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/messages-controller.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="202" column="50" selection-start="7366" selection-end="7395" vertical-scroll-proportion="0.0" vertical-offset="2584" max-vertical-offset="3195" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="18" column="25" selection-start="502" selection-end="502" vertical-scroll-proportion="0.0" vertical-offset="139" max-vertical-offset="1845" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="63" column="27" selection-start="2402" selection-end="2402" vertical-scroll-proportion="-16.333334" vertical-offset="553" max-vertical-offset="1125" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/components/jquery/test/data/name.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="609" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/styles/main.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="88" column="15" selection-start="1523" selection-end="1523" vertical-scroll-proportion="-15.961538" vertical-offset="905" max-vertical-offset="18225">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/login-service.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="41" column="8" selection-start="1100" selection-end="1100" vertical-scroll-proportion="0.0" vertical-offset="321" max-vertical-offset="930" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="82" column="26" selection-start="3182" selection-end="3182" vertical-scroll-proportion="0.0" vertical-offset="819" max-vertical-offset="1515" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/img/server.svg">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="609" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/img/database.svg">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="5" column="14" selection-start="478" selection-end="478" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="360" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/filters/filter.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="1" column="23" selection-start="61" selection-end="68" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="660" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/util/library.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="915" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="144" column="6" selection-start="4346" selection-end="4724" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="2265" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/odirective.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="30" selection-start="97" selection-end="105" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="645">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/directive/custom.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="81" column="50" selection-start="2768" selection-end="2768" vertical-scroll-proportion="0.0" vertical-offset="999" max-vertical-offset="3450">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/monitor.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="21" selection-start="61" selection-end="65" vertical-scroll-proportion="0.0" vertical-offset="1125" max-vertical-offset="1800">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/styles/graph.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="175" column="0" selection-start="2571" selection-end="2571" vertical-scroll-proportion="0.0" vertical-offset="2331" max-vertical-offset="4140">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/img/cluster.svg">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="609">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/directive/graph.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="245" column="92" selection-start="7695" selection-end="7695" vertical-scroll-proportion="0.0" vertical-offset="3765" max-vertical-offset="6075">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/index.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="67" column="10" selection-start="2823" selection-end="2823" vertical-scroll-proportion="-17.5" vertical-offset="585" max-vertical-offset="2520">
-          <folding>
-            <marker date="1403100851000" expanded="true" signature="1758:1995" placeholder="..." />
-            <marker date="1403100851000" expanded="true" signature="1827:1861" placeholder="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/nav.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="21" column="41" selection-start="1030" selection-end="1030" vertical-scroll-proportion="-13.125" vertical-offset="0" max-vertical-offset="1650">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="370" column="23" selection-start="12756" selection-end="12756" vertical-scroll-proportion="-13.076923" vertical-offset="5210" max-vertical-offset="7080">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/cluster.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="32" column="51" selection-start="1798" selection-end="1798" vertical-scroll-proportion="-11.25" vertical-offset="210" max-vertical-offset="2100">
+        <state line="268" column="69" selection-start="8436" selection-end="8436" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="4935">
           <folding />
         </state>
       </provider>
@@ -657,30 +506,353 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/views/server/query.html">
+    <entry file="file://$PROJECT_DIR$/app/scripts/directive/graph.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="13" column="14" selection-start="401" selection-end="506" vertical-scroll-proportion="-0.625" vertical-offset="180" max-vertical-offset="945">
+        <state line="219" column="63" selection-start="6586" selection-end="6586" vertical-scroll-proportion="0.0" vertical-offset="3060" max-vertical-offset="6075">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/cluster.js">
+    <entry file="file://$PROJECT_DIR$/app/views/nav.html">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="176" column="24" selection-start="6054" selection-end="6054" vertical-scroll-proportion="0.0" vertical-offset="2424" max-vertical-offset="3615">
+        <state line="32" column="27" selection-start="1555" selection-end="1555" vertical-scroll-proportion="-8.75" vertical-offset="270" max-vertical-offset="1650">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/query.js">
+    <entry file="file://$PROJECT_DIR$/bower.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="54" column="34" selection-start="2103" selection-end="2125" vertical-scroll-proportion="0.0" vertical-offset="555" max-vertical-offset="1665">
+        <state line="29" column="4" selection-start="784" selection-end="784" vertical-scroll-proportion="-18.125" vertical-offset="0" max-vertical-offset="720">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/app.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="25" column="28" selection-start="654" selection-end="654" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="2385">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/login-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="24" column="0" selection-start="719" selection-end="719" vertical-scroll-proportion="-7.5" vertical-offset="165" max-vertical-offset="1080">
+          <folding>
+            <marker date="1403602680000" expanded="true" signature="-1:-1" placeholder="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/a2x.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="14520">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/install-sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-2.4876847" vertical-offset="1515" max-vertical-offset="7995">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/main.aap">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1245">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/asciidoc.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="3" column="31" selection-start="148" selection-end="148" vertical-scroll-proportion="-1.8" vertical-offset="0" max-vertical-offset="255">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/app/i18n/en.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="90" column="29" selection-start="3787" selection-end="3787" vertical-scroll-proportion="2.3519163" vertical-offset="0" max-vertical-offset="2025">
+        <state line="91" column="12" selection-start="3795" selection-end="3802" vertical-scroll-proportion="-3.64" vertical-offset="1183" max-vertical-offset="2025">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/cluster/changeCluster.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="10" column="43" selection-start="572" selection-end="572" vertical-scroll-proportion="-6.25" vertical-offset="0" max-vertical-offset="585">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/metrics.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="17" column="0" selection-start="672" selection-end="672" vertical-scroll-proportion="0.0" vertical-offset="39" max-vertical-offset="5205">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/logs.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="4680">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/cluster.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="216" column="64" selection-start="7763" selection-end="7763" vertical-scroll-proportion="0.0" vertical-offset="3094" max-vertical-offset="4200">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="18" column="25" selection-start="502" selection-end="502" vertical-scroll-proportion="0.0" vertical-offset="1249" max-vertical-offset="1845">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/events.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="5430">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/header.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="32" column="29" selection-start="907" selection-end="1331" vertical-scroll-proportion="0.0" vertical-offset="199" max-vertical-offset="795">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/login.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="609">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/nav.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="31" column="0" selection-start="1546" selection-end="1546" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1590">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/stickynotification.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="48" selection-start="20" selection-end="48" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="165">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/message-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="11" column="24" selection-start="231" selection-end="238" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="555">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/query.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="55" column="73" selection-start="2138" selection-end="2199" vertical-scroll-proportion="0.0" vertical-offset="619" max-vertical-offset="1665">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="437" column="29" selection-start="15316" selection-end="15331" vertical-scroll-proportion="0.0" vertical-offset="6154" max-vertical-offset="7545">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/license.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="3" column="10" selection-start="159" selection-end="159" vertical-scroll-proportion="-1.875" vertical-offset="0" max-vertical-offset="150">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/general.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="11" column="1" selection-start="388" selection-end="490" vertical-scroll-proportion="-6.875" vertical-offset="0" max-vertical-offset="1170">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/monitor.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="6" column="0" selection-start="209" selection-end="209" vertical-scroll-proportion="-3.4615386" vertical-offset="0" max-vertical-offset="1890">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/dashboard.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="16" column="0" selection-start="654" selection-end="757" vertical-scroll-proportion="-10.0" vertical-offset="0" max-vertical-offset="2070">
+          <folding>
+            <marker date="1403625541000" expanded="true" signature="-1:-1" placeholder="..." />
+            <marker date="1403625541000" expanded="true" signature="-1:-1" placeholder="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/cluster.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="12" column="10" selection-start="461" selection-end="461" vertical-scroll-proportion="-7.5" vertical-offset="0" max-vertical-offset="2310">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/query.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="12" column="10" selection-start="447" selection-end="447" vertical-scroll-proportion="-7.5" vertical-offset="0" max-vertical-offset="990">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/metrics.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="15" column="10" selection-start="669" selection-end="669" vertical-scroll-proportion="-9.375" vertical-offset="0" max-vertical-offset="2115">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/notification.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="4" column="10" selection-start="294" selection-end="294" vertical-scroll-proportion="-2.5" vertical-offset="0" max-vertical-offset="165">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/logjava.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="14" column="10" selection-start="441" selection-end="441" vertical-scroll-proportion="-8.75" vertical-offset="0" max-vertical-offset="2220">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/components/jquery/speed/event.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="960">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/events.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="13" column="10" selection-start="568" selection-end="568" vertical-scroll-proportion="-8.125" vertical-offset="0" max-vertical-offset="1830">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/messages.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="13" column="10" selection-start="569" selection-end="569" vertical-scroll-proportion="-8.125" vertical-offset="0" max-vertical-offset="1695">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/messages-controller.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="222" column="248" selection-start="8423" selection-end="8423" vertical-scroll-proportion="0.0" vertical-offset="2884" max-vertical-offset="3525">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/scripts/controllers/settings.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="47" column="32" selection-start="1593" selection-end="1593" vertical-scroll-proportion="0.0" vertical-offset="619" max-vertical-offset="3300">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/gettingstarted.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="15330">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/settings.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="28" column="28" selection-start="1395" selection-end="1395" vertical-scroll-proportion="-16.875" vertical-offset="15" max-vertical-offset="4500">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/help.conf">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="23.4" vertical-offset="585" max-vertical-offset="6000">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/help.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="609">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/gettstart.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="75" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="90">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/gettstartcluster.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="61" selection-start="61" selection-end="61" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="585">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/introduction.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="13" column="46" selection-start="280" selection-end="323" vertical-scroll-proportion="0.0" vertical-offset="66" max-vertical-offset="675">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/gettingstartedcluster.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="750">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/servermanagement.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="68" column="3" selection-start="1548" selection-end="1548" vertical-scroll-proportion="0.0" vertical-offset="861" max-vertical-offset="1470">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/index.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="68" column="49" selection-start="2873" selection-end="2873" vertical-scroll-proportion="-20.625" vertical-offset="525" max-vertical-offset="2535">
+          <folding>
+            <marker date="1403625536000" expanded="true" signature="1758:1995" placeholder="..." />
+            <marker date="1403625536000" expanded="true" signature="1827:1861" placeholder="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/gettingstarted.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="64" column="32" selection-start="2017" selection-end="2033" vertical-scroll-proportion="0.0" vertical-offset="394" max-vertical-offset="1095">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/app/views/server/asciidoc/clustermgmt.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="16" column="0" selection-start="255" selection-end="255" vertical-scroll-proportion="0.39408866" vertical-offset="0" max-vertical-offset="609">
           <folding />
         </state>
       </provider>

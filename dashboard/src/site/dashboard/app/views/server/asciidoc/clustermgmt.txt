@@ -1,0 +1,16 @@
+:icons:
+:icondir: views/server/asciidoc/
+
+
+link:#/dashboard/help[<<Back to index]
+
+Cluster Management
+-----------------
+
+In Server Management panel there are 4 tabs:
+
+- [BOLD]*Overview*
+- [BOLD]*Database Management*
+- [BOLD]*Log*
+- [BOLD]*Configuration*
+

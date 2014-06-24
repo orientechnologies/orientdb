@@ -167,7 +167,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
         System.out
             .printf(
                 "\nTo open the Web Console open your browser to the URL: http://%s and use 'admin' as user and password to log in, unless you already changed it.\n\n",
-                l.getListeningAddress());
+                l.getListeningAddress(true));
         break;
       }
     }
@@ -564,8 +564,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     List<OMonitoredServer> srvs = new ArrayList<OMonitoredServer>();
     for (OMonitoredServer s : servers.values()) {
       ODocument doc = s.getConfiguration().field("cluster");
-      String name = doc.field("name");
-      if (doc != null && cluster.equals(name)) {
+      if (doc != null && cluster.equals(doc.field("name"))) {
         srvs.add(s);
       }
     }

@@ -35,29 +35,6 @@ When popup open, just fill the form and test your server connection. If it's ok 
 .Server Configuration
 image::{icondir}popup_server.png[width="30%"]
 
-Join Cluster
-------------
-If you are using OrientDB Distributed you can easily join the cluster and Workbench will automatically start monitoring all
-the server configured in the cluster.
-
-In the dashboard panel click to "Join Cluster"
-
-.Server Configuration
-image::{icondir}add_cluster.png[width="30%"]
-
-Cluster Configuration
----------------------
-To Join a cluster just fill information such as Group name and password, and the connection type (Multicast or Tcp/Ip)
-and the click "Save changes".
-
-Workbench will join the cluster and will get all the information off the servers needed for monitoring.
-
-.Server Configuration
-image::{icondir}popup_cluster.png[width="30%"]
-
-NOTE: Pay attention to the configuration. If you write a wrong group name or network configuration. Workbench will not give any error.
-It will create another cluster with only it self as cluster member.
-
 Dashboard overview
 ------------------
 

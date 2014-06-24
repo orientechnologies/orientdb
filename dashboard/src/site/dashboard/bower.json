@@ -26,7 +26,8 @@
     "ng-grid": "2.0.7",
     "angular-ui-codemirror": "~0.0.5",
     "gritter": "1.8.0",
-    "spin.js": "latest"
+    "spin.js": "latest",
+    "angularLocalStorage": "0.1.7"
   },
   "devDependencies": {
     "angular-mocks": "~1.0.5",

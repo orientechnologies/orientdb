@@ -6,9 +6,9 @@
     <div class="modal-body">
         <div class="row-fluid">
             <p ng-show="dimension== 0"><b>{{ 'settings.server.cluster.title.unchanged' | i18n }}</b></p>
-            <ul class="dirtyList" ng-hide="dimension == 0">
+            <ul class="dirtyList" ng-hide="dim == 0">
                 <li ng-repeat="(key, value)  in dirty">
-                    <h4>{{key}}</h4>
+                    <h5>{{ 'cluster.cluster' | i18n }}: {{key}}</h5>
                     <ul>
                         <li ng-repeat="(k, v) in value">
                             <div ng-show="v">Added to the Server <b>{{k}}</b></div>
@@ -16,6 +16,11 @@
                         </li>
 
                     </ul>
+                </li>
+            </ul>
+            <ul class="" ng-hide="dim1 == 0">
+                <li ng-repeat="(key, value)  in dirtyConfig">
+                    <h5>{{key}} : {{oldConfig[key]}} -> {{dirtyConfig[key]}}</h5>
                 </li>
             </ul>
         </div>

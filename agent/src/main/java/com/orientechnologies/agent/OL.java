@@ -19,6 +19,7 @@ package com.orientechnologies.agent;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +32,7 @@ import sun.misc.BASE64Encoder;
 @SuppressWarnings("restriction")
 public class OL {
 
+  public static final int      DELAY    = 60;
   public static final String   AES      = "AES";
   private static SecretKeySpec key;
   private static final byte[]  keyValue = new byte[] { 'T', 'h', 'e', 'B', 'e', 's', 't', 'S', 'e', 'c', 'r', 'e', 't', 'K', 'e',
@@ -52,10 +54,14 @@ public class OL {
     final String key = "@Ld" + "ks#2" + "" + "3dsLvc" + (35 - 12 * 2) + "a!Po" + "weRr";
     try {
       final Date now = new Date();
+
       final Date d = new SimpleDateFormat("yyyyMMdd").parse(OCry.decrypt(iLicense, key).substring(12));
-      if (!d.after(now))
+      Calendar c = Calendar.getInstance();
+      c.setTime(d);
+      c.add(Calendar.DATE, DELAY);
+      if (!c.getTime().after(now))
         throw new OLicenseException("license expired on: " + d);
-      return getDateDiff(d, now);
+      return getDateDiff(now, d);
     } catch (Exception e) {
       throw new OLicenseException("license not valid");
     }
