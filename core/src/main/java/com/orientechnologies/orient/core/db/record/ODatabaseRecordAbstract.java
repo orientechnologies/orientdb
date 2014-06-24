@@ -989,7 +989,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       if (record == null && !iIgnoreCache)
         // SEARCH INTO THE CACHE
-        record = getLocalCache().findRecord(iRid);
+        record = getLocalCache().findRecord(rid);
 
       if (record != null) {
         if (iRecord != null) {

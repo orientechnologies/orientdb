@@ -554,8 +554,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (cluster == null)
         return false;
 
-      getLevel2Cache().freeCluster(iClusterId);
-
       if (iTruncate)
         cluster.truncate();
       cluster.delete();
