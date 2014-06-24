@@ -4,7 +4,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -18,9 +20,14 @@ public class SuperNodeInsertSpeedTest {
   private static final int   TEST_COUNT    = 50000;
   private static final int   THREAD_COUNT  = 1;
   private static OrientGraph graph;
+  private static final AtomicInteger retryCount    = new AtomicInteger();
 
   private static void setUp() {
-    graph = new OrientGraph("plocal:target/SuperNodeInsertSpeedTest");
+    graph = openGraph();
+  }
+
+  private static OrientGraph openGraph() {
+    return new OrientGraph("plocal:target/SuperNodeInsertSpeedTest");
   }
 
   private static void tearDown() {
@@ -46,7 +53,7 @@ public class SuperNodeInsertSpeedTest {
     final ORID superNodeId = superNode.getIdentity();
 
     // warm up
-    createLinks(WARM_UP_COUNT, superNode);
+    createLinks(WARM_UP_COUNT, superNode, graph);
 
     final CountDownLatch startLatch = new CountDownLatch(THREAD_COUNT);
     final CountDownLatch endLatch = new CountDownLatch(THREAD_COUNT);
@@ -56,12 +63,17 @@ public class SuperNodeInsertSpeedTest {
       executorService.submit(new Callable<Long>() {
         @Override
         public Long call() throws Exception {
+          final OrientGraph graph = openGraph();
+          OrientVertex superNode = graph.getVertex(superNodeId);
+
           startLatch.countDown();
           startLatch.await();
 
-          long time = doTest(superNodeId);
+          long time = doTest(superNode, graph);
 
           endLatch.countDown();
+
+          graph.shutdown();
 
           return time;
         }
@@ -74,14 +86,14 @@ public class SuperNodeInsertSpeedTest {
     endLatch.await();
     final long time = System.currentTimeMillis() - startTime;
 
+    executorService.shutdown();
+
     return time;
   }
 
-  private static long doTest(ORID superNodeId) {
-    OrientVertex superNode = graph.getVertex(superNodeId);
-
+  private static long doTest(OrientVertex superNode, OrientGraph graph) {
     final long startTime = System.currentTimeMillis();
-    createLinks(TEST_COUNT / THREAD_COUNT, superNode);
+    createLinks(TEST_COUNT / THREAD_COUNT, superNode, graph);
     return System.currentTimeMillis() - startTime;
   }
 
@@ -91,14 +103,22 @@ public class SuperNodeInsertSpeedTest {
     System.out.println("Thread count: " + THREAD_COUNT);
     System.out.println("Time:         " + time + "ms");
     System.out.println("Bandwidth:    " + ((double) TEST_COUNT) / time * 1000 + " it/sec");
+    System.out.println("Retries:      " + retryCount.get());
   }
 
-  private static void createLinks(int vertexNumber, OrientVertex superNode) {
+  private static void createLinks(int vertexNumber, OrientVertex superNode, OrientGraph graph) {
     for (int i = 0; i < vertexNumber; i++) {
-      final OrientVertex v = graph.addVertex("");
-      v.addEdge("link", superNode);
-      v.save();
-      graph.commit();
+      while (true)
+        try {
+          final OrientVertex v = graph.addVertex("");
+          v.addEdge("link", superNode);
+          v.save();
+          graph.commit();
+          break;
+        } catch (OConcurrentModificationException e) {
+          superNode.getRecord().reload();
+          retryCount.incrementAndGet();
+ }
     }
   }
 }
