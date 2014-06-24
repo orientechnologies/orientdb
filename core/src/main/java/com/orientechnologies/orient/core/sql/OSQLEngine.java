@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
@@ -37,17 +49,6 @@ import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
-import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
 public class OSQLEngine {
 
@@ -443,14 +444,15 @@ public class OSQLEngine {
     return new OSQLTarget(iText, iContext, iFilterKeyword);
   }
 
-  public Set<OIdentifiable> parseRIDTarget(final ODatabaseRecord database, String iTarget, final OCommandContext iContext) {
+  public Set<OIdentifiable> parseRIDTarget(final ODatabaseRecord database, String iTarget, final OCommandContext iContext,
+      Map<Object, Object> iArgs) {
     final Set<OIdentifiable> ids;
     if (iTarget.startsWith("(")) {
       // SUB-QUERY
       final OSQLSynchQuery<Object> query = new OSQLSynchQuery<Object>(iTarget.substring(1, iTarget.length() - 1));
       query.setContext(iContext);
 
-      final List<OIdentifiable> result = database.query(query);
+      final List<OIdentifiable> result = database.query(query, iArgs);
       if (result == null || result.isEmpty())
         ids = Collections.emptySet();
       else {
