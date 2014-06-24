@@ -490,6 +490,7 @@ public class DocumentTrackingTest {
     firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, "value2"));
 
     Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
+    Assert.assertTrue(document.isDirty());
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
   }

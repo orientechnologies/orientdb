@@ -798,15 +798,15 @@ public class OStorageLocal extends OStorageLocalAbstract {
   /**
    * Add a new cluster into the storage. Type can be: "physical" or "logical".
    */
-  public int addCluster(final String iClusterType, String iClusterName, final String iLocation, final String iDataSegmentName,
+  public int addCluster(final String clusterType, String clusterName, final String iLocation, final String iDataSegmentName,
       boolean forceListBased, final Object... iParameters) {
     checkOpeness();
 
     lock.acquireExclusiveLock();
     try {
       final OCluster cluster;
-      if (iClusterName != null) {
-        iClusterName = iClusterName.toLowerCase();
+      if (clusterName != null) {
+        clusterName = clusterName.toLowerCase();
 
         // FIND THE FIRST AVAILABLE CLUSTER ID
         int clusterPos = clusters.length;
@@ -816,8 +816,8 @@ public class OStorageLocal extends OStorageLocalAbstract {
             break;
           }
 
-        cluster = Orient.instance().getClusterFactory().createCluster(iClusterType);
-        cluster.configure(this, clusterPos, iClusterName, iLocation, getDataSegmentIdByName(iDataSegmentName), iParameters);
+        cluster = Orient.instance().getClusterFactory().createCluster(clusterType);
+        cluster.configure(this, clusterPos, clusterName, iLocation, getDataSegmentIdByName(iDataSegmentName), iParameters);
       } else
         cluster = null;
 
@@ -831,13 +831,10 @@ public class OStorageLocal extends OStorageLocalAbstract {
       return clusterId;
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Error in creation of new cluster '" + iClusterName + "' of type: " + iClusterType, e,
-          OStorageException.class);
+      throw new OStorageException("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e);
     } finally {
       lock.releaseExclusiveLock();
     }
-
-    return -1;
   }
 
   public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
@@ -854,44 +851,44 @@ public class OStorageLocal extends OStorageLocalAbstract {
     return txManager;
   }
 
-  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
+  public boolean dropCluster(final int clusterId, final boolean iTruncate) {
     lock.acquireExclusiveLock();
     try {
 
-      if (iClusterId < 0 || iClusterId >= clusters.length)
-        throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is outside the of range of configured clusters (0-"
+      if (clusterId < 0 || clusterId >= clusters.length)
+        throw new IllegalArgumentException("Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-"
             + (clusters.length - 1) + ") in database '" + name + "'");
 
-      final OCluster cluster = clusters[iClusterId];
+      final OCluster cluster = clusters[clusterId];
       if (cluster == null)
         return false;
+
+      getLevel2Cache().freeCluster(iClusterId);
 
       if (iTruncate)
         cluster.truncate();
       cluster.delete();
 
       clusterMap.remove(cluster.getName());
-      clusters[iClusterId] = null;
+      clusters[clusterId] = null;
 
       // UPDATE CONFIGURATION
-      configuration.dropCluster(iClusterId);
+      configuration.dropCluster(clusterId);
 
       return true;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error while removing cluster '" + iClusterId + "'", e, OStorageException.class);
+      throw new OStorageException("Error while removing cluster '" + clusterId + "'", e);
 
     } finally {
       lock.releaseExclusiveLock();
     }
-
-    return false;
   }
 
-  public boolean dropDataSegment(final String iName) {
+  public boolean dropDataSegment(final String name) {
     lock.acquireExclusiveLock();
     try {
 
-      final int id = getDataSegmentIdByName(iName);
+      final int id = getDataSegmentIdByName(name);
       final ODataLocal data = dataSegments[id];
       if (data == null)
         return false;
@@ -905,13 +902,11 @@ public class OStorageLocal extends OStorageLocalAbstract {
 
       return true;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error while removing data segment '" + iName + "'", e, OStorageException.class);
+      throw new OStorageException("Error while removing data segment '" + name + "'", e);
 
     } finally {
       lock.releaseExclusiveLock();
     }
-
-    return false;
   }
 
   public long count(final int[] iClusterIds) {

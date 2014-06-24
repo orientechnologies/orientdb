@@ -556,8 +556,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
         saveTreeNode();
 
     } catch (IOException e) {
-      OLogManager.instance().exception("Error on saving the tree", e, OStorageException.class);
-
+      throw new OStorageException("Error on saving the tree", e);
     } finally {
 
       PROFILER.stopChrono(PROFILER.getProcessMetric("mvrbtree.commitChanges"), "Commit pending changes to a MVRBTree", timer);

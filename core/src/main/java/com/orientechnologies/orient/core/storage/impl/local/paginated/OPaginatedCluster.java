@@ -140,13 +140,13 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
     final OWriteAheadLog writeAheadLog = storage.getWALInstance();
 
-    init(atomicOperationsManager, writeAheadLog);
+    init(storage);
 
     diskCache = storageLocal.getDiskCache();
     name = config.getName();
     this.id = config.getId();
 
-    clusterPositionMap = new OClusterPositionMap(diskCache, name, writeAheadLog, atomicOperationsManager, this.config.useWal);
+    clusterPositionMap = new OClusterPositionMap(storage, diskCache, name, this.config.useWal);
   }
 
   public boolean exists() {

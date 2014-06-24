@@ -28,7 +28,12 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.Socket;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OChannel extends OListenerManger<OChannelListener> {
@@ -75,6 +80,27 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
     socket = iSocket;
     socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
     socket.setTcpNoDelay(true);
+  }
+
+  public static String getLocalIpAddress(final boolean iFavoriteIp4) throws SocketException {
+    String bestAddress = null;
+    final Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+    while (interfaces.hasMoreElements()) {
+      final NetworkInterface current = interfaces.nextElement();
+      if (!current.isUp() || current.isLoopback() || current.isVirtual())
+        continue;
+      Enumeration<InetAddress> addresses = current.getInetAddresses();
+      while (addresses.hasMoreElements()) {
+        final InetAddress current_addr = addresses.nextElement();
+        if (current_addr.isLoopbackAddress())
+          continue;
+
+        if (bestAddress == null || (iFavoriteIp4 && current_addr instanceof Inet4Address))
+          // FAVORITE IP4 ADDRESS
+          bestAddress = current_addr.getHostAddress();
+      }
+    }
+    return bestAddress;
   }
 
   public void acquireWriteLock() {

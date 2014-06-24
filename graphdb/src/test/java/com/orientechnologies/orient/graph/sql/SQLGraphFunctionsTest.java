@@ -15,17 +15,23 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Collection;
-
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+
+import java.util.List;
 
 @RunWith(JUnit4.class)
 public class SQLGraphFunctionsTest {
@@ -38,7 +44,7 @@ public class SQLGraphFunctionsTest {
     OrientVertex v1 = graph.addVertex(null, "name", "A");
     OrientVertex v2 = graph.addVertex(null, "name", "B");
     OrientVertex v3 = graph.addVertex(null, "name", "C");
-    OrientVertex v4 = graph.addVertex(null, "name", "D");
+    OrientVertex v4 = graph.addVertex(null, "name", "D-D");
     OrientVertex v5 = graph.addVertex(null, "name", "E");
     OrientVertex v6 = graph.addVertex(null, "name", "F");
 
@@ -59,8 +65,54 @@ public class SQLGraphFunctionsTest {
     Assert.assertTrue(result.iterator().hasNext());
 
     for (OrientVertex d : result) {
-      System.out.println("Shortest path from " + ((ODocument) d.getProperty("$current")).field("name") + " and "
-          + ((Collection<ODocument>) d.getProperty("$target")).iterator().next().field("name") + " is: " + d.getProperty("path"));
+      System.out.println("Shortest path from " + ((OrientVertex) d.getProperty("$current")).getProperty("name") + " and "
+          + ((Iterable<OrientVertex>) d.getProperty("$target")).iterator().next().getProperty("name") + " is: "
+          + d.getProperty("path"));
     }
+  }
+
+  @Test
+  public void checkMinusInString() {
+    Iterable<OrientVertex> result = graph.command(new OCommandSQL("select expand( out()[name='D-D'] ) from V")).execute();
+    Assert.assertTrue(result.iterator().hasNext());
+  }
+
+  @Test
+  public void testGremlinTraversal() {
+    OGremlinHelper.global().create();
+
+    graph.setAutoStartTx(false);
+    graph.commit();
+
+    graph.command(new OCommandSQL("create class tc1 extends V")).execute();
+    graph.command(new OCommandSQL("create class edge1 extends E")).execute();
+
+    graph.setAutoStartTx(true);
+
+    graph.command(new OCommandSQL("create vertex tc1 SET id='1', name='name1'")).execute();
+    graph.command(new OCommandSQL("create vertex tc1 SET id='2', name='name2'")).execute();
+
+    graph.commit();
+
+    int tc1Id = graph.getRawGraph().getClusterIdByName("tc1");
+    int edge1Id = graph.getRawGraph().getClusterIdByName("edge1");
+
+    graph.command(new OCommandSQL("create edge edge1 from #" + tc1Id + ":0 to #" + tc1Id + ":1 set f='fieldValue';")).execute();
+    graph.commit();
+
+    List<ODocument> result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select gremlin('current.outE') from tc1"));
+
+    Assert.assertEquals(2, result.size());
+
+    ODocument firstItem = result.get(0);
+    List<OrientEdge> firstResult = firstItem.field("gremlin");
+
+    Assert.assertEquals(1, firstResult.size());
+    OrientEdge edge = firstResult.get(0);
+    Assert.assertEquals(new ORecordId(edge1Id, OClusterPositionFactory.INSTANCE.valueOf(0)), (ORID) edge.getId());
+
+    ODocument secondItem = result.get(1);
+    List<OrientEdge> secondResult = secondItem.field("gremlin");
+    Assert.assertTrue(secondResult.isEmpty());
   }
 }

@@ -946,11 +946,35 @@ public class OWriteAheadLog {
     return log(new OFullCheckpointStartRecord(lastCheckpoint));
   }
 
-  public void logFullCheckpointEnd() throws IOException {
+  public OLogSequenceNumber logFullCheckpointEnd() throws IOException {
     synchronized (syncObject) {
       checkForClose();
 
-      log(new OCheckpointEndRecord());
+      return log(new OCheckpointEndRecord());
+    }
+  }
+
+  public void cutTill(OLogSequenceNumber lsn) throws IOException {
+    synchronized (syncObject) {
+      checkForClose();
+
+      flush();
+
+      int lastTruncateIndex = -1;
+
+      for (int i = 0; i < logSegments.size(); i++) {
+        final LogSegment logSegment = logSegments.get(i);
+
+        if (logSegment.end().compareTo(lsn) < 0)
+          lastTruncateIndex = i;
+        else
+          break;
+      }
+
+      for (int i = 0; i <= lastTruncateIndex; i++) {
+        final LogSegment logSegment = logSegments.remove(0);
+        logSegment.delete(false);
+      }
     }
   }
 
@@ -1019,7 +1043,7 @@ public class OWriteAheadLog {
 
       return new OLogSequenceNumber(segment, position);
     } catch (EOFException eofException) {
-      OLogManager.instance().warn(this, "Can not restore %d WAL master record for storage %s", index, storageName);
+      OLogManager.instance().debug(this, "Can not restore %d WAL master record for storage %s", index, storageName);
       return null;
     }
   }

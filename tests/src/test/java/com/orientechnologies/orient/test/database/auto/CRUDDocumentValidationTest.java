@@ -26,6 +26,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -207,7 +208,7 @@ public class CRUDDocumentValidationTest {
     ODocument doc2 = new ODocument().field("testField", (Object) null);
 
     ODocumentComparator comparator = new ODocumentComparator(
-        Collections.singletonList(new OPair<String, String>("testField", "asc")));
+        Collections.singletonList(new OPair<String, String>("testField", "asc")), new OBasicCommandContext());
 
     Assert.assertEquals(comparator.compare(doc1, doc2), 0);
   }

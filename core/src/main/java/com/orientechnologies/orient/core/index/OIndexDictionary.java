@@ -56,7 +56,7 @@ public class OIndexDictionary extends OIndexOneValue {
    * Disables check of entries.
    */
   @Override
-  public void checkEntry(final OIdentifiable iRecord, final Object key) {
+  public void checkEntry(final OIdentifiable record, final Object key) {
   }
 
   public boolean canBeUsedInEqualityOperators() {

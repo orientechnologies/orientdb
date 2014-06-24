@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.server;
 
+import com.orientechnologies.orient.core.storage.fs.OFile;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -7,6 +8,8 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+
+import java.io.File;
 
 public class OServerTest {
 
@@ -16,7 +19,9 @@ public class OServerTest {
   @Test
   public void testRestart() throws Exception {
     // set ORIENTDB_HOME
-    System.setProperty("ORIENTDB_HOME", Orient.getTempPath());
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    System.setProperty("ORIENTDB_HOME", buildDirectory + File.separator + OServerTest.class.getSimpleName());
+
     OLogManager.instance().info(this, "ORIENTDB_HOME: " + System.getProperty("ORIENTDB_HOME"));
 
     // loop for start & stop server

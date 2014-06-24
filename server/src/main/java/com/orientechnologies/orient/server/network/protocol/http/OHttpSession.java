@@ -24,20 +24,22 @@ import java.util.Map;
  * @author Luca Garulli
  */
 public class OHttpSession {
-  private String              id;
   private final long          createdOn;
-  private long                lastUpdatedOn;
   private final String        databaseName;
   private final String        userName;
+  private final String        userPassword;
+  private String              id;
+  private long                lastUpdatedOn;
   private Map<Object, Object> parameters;
 
-  protected OHttpSession(final String iId, final String iDatabaseName, final String iUserName) {
+  protected OHttpSession(final String iId, final String iDatabaseName, final String iUserName, String iUserPassword) {
     id = iId;
     createdOn = System.currentTimeMillis();
     lastUpdatedOn = createdOn;
 
     databaseName = iDatabaseName;
     userName = iUserName;
+    userPassword = iUserPassword;
   }
 
   public long getCreatedOn() {
@@ -84,6 +86,10 @@ public class OHttpSession {
 
   public String getUserName() {
     return userName;
+  }
+
+  public String getUserPassword() {
+    return userPassword;
   }
 
   public String getId() {

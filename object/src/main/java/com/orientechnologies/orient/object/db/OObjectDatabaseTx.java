@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.object.db;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -57,13 +64,6 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.metadata.OMetadataObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx that handles conversion between ODocument instances and
@@ -513,6 +513,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   public long countClass(final String iClassName) {
     checkOpeness();
     return underlying.countClass(iClassName);
+  }
+
+  public long countClass(final String iClassName, final boolean iPolymorphic) {
+    checkOpeness();
+    return underlying.countClass(iClassName, iPolymorphic);
   }
 
   public long countClass(final Class<?> iClass) {

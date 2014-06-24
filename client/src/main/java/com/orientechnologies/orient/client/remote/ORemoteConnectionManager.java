@@ -56,7 +56,7 @@ public class ORemoteConnectionManager implements OChannelListener {
     connections.clear();
   }
 
-  public OChannelBinaryAsynchClient acquire(final String iServerURL, final OContextConfiguration clientConfiguration,
+  public OChannelBinaryAsynchClient acquire(String iServerURL, final OContextConfiguration clientConfiguration,
       final Map<String, Object> iConfiguration, final ORemoteServerEventListener iListener) {
     OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(iServerURL);
     if (pool == null) {
@@ -89,7 +89,15 @@ public class ORemoteConnectionManager implements OChannelListener {
       }
     }
 
-    return pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration, iListener);
+    try {
+      // RETURN THE RESOURCE
+      return pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration, iListener);
+    } catch (Exception e) {
+      // ERROR ON RETRIEVING THE INSTANCE FROM THE POOL
+      OLogManager.instance().error(this, "Error on retrieving the connection from pool: " + iServerURL, e);
+      connections.remove(iServerURL);
+    }
+    return null;
   }
 
   public void release(final OChannelBinaryAsynchClient conn) {

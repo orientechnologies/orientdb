@@ -48,7 +48,7 @@ public class OHashTableDirectory extends ODurableComponent {
     this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
 
-    init(storage.getAtomicOperationsManager(), storage.getWALInstance());
+    init(storage);
   }
 
   public void create() throws IOException {

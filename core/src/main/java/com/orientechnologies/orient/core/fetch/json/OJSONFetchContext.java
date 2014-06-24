@@ -16,12 +16,6 @@
  */
 package com.orientechnologies.orient.core.fetch.json;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.Set;
-import java.util.Stack;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -34,6 +28,12 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON.FormatSettings;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.Set;
+import java.util.Stack;
 
 /**
  * @author luca.molino
@@ -174,6 +174,11 @@ public class OJSONFetchContext implements OFetchContext {
   }
 
   public void writeSignature(final OJSONWriter json, final ORecordInternal<?> record) throws IOException {
+    if( record == null ) {
+      json.write("null");
+      return;
+    }
+
     boolean firstAttribute = true;
 
     if (settings.includeType) {

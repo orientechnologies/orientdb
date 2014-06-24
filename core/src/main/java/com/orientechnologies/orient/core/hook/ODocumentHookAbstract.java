@@ -34,6 +34,10 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   protected ODocumentHookAbstract() {
   }
 
+  @Override
+  public void onUnregister() {
+  }
+
   /**
    * It's called just before to create the new document.
    * 

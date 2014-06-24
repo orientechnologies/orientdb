@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -227,7 +226,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
   public boolean addAll(Collection<? extends TYPE> c) {
     boolean dirty = false;
     for (TYPE element : c) {
-      dirty = add(element) || dirty;
+      dirty |= add(element);
     }
     if (dirty)
       setDirty();

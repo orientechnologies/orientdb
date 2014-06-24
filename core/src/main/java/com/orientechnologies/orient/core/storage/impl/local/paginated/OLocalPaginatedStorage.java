@@ -48,7 +48,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -110,26 +109,6 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -225,8 +204,14 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           dirtyFlag.create();
           dirtyFlag.makeDirty();
         }
-      } else
-        dirtyFlag.create();
+      } else {
+        if (dirtyFlag.exits())
+          dirtyFlag.open();
+        else {
+          dirtyFlag.create();
+          dirtyFlag.clearDirty();
+        }
+      }
 
       // OPEN BASIC SEGMENTS
       int pos;
@@ -528,13 +513,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       return doAddCluster(clusterName, location, true, parameters);
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
-          OStorageException.class);
+      throw new OStorageException("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e);
     } finally {
       lock.releaseExclusiveLock();
     }
-
-    return -1;
   }
 
   public int addCluster(String clusterType, String clusterName, int requestedId, String location, String dataSegmentName,
@@ -554,26 +536,25 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       return addClusterInternal(clusterName, requestedId, location, true, parameters);
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e,
-          OStorageException.class);
+      throw new OStorageException("Error in creation of new cluster '" + clusterName + "' of type: " + clusterType, e);
     } finally {
       lock.releaseExclusiveLock();
     }
-
-    return -1;
   }
 
-  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
+  public boolean dropCluster(final int clusterId, final boolean iTruncate) {
     lock.acquireExclusiveLock();
     try {
 
-      if (iClusterId < 0 || iClusterId >= clusters.size())
-        throw new IllegalArgumentException("Cluster id '" + iClusterId + "' is outside the of range of configured clusters (0-"
+      if (clusterId < 0 || clusterId >= clusters.size())
+        throw new IllegalArgumentException("Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-"
             + (clusters.size() - 1) + ") in database '" + name + "'");
 
-      final OCluster cluster = clusters.get(iClusterId);
+      final OCluster cluster = clusters.get(clusterId);
       if (cluster == null)
         return false;
+
+      getLevel2Cache().freeCluster(iClusterId);
 
       if (iTruncate)
         cluster.truncate();
@@ -581,21 +562,19 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       dirtyFlag.makeDirty();
       clusterMap.remove(cluster.getName().toLowerCase());
-      clusters.set(iClusterId, null);
+      clusters.set(clusterId, null);
 
       // UPDATE CONFIGURATION
-      configuration.dropCluster(iClusterId);
+      configuration.dropCluster(clusterId);
 
       makeFullCheckpoint();
       return true;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error while removing cluster '" + iClusterId + "'", e, OStorageException.class);
+      throw new OStorageException("Error while removing cluster '" + clusterId + "'", e);
 
     } finally {
       lock.releaseExclusiveLock();
     }
-
-    return false;
   }
 
   public boolean dropDataSegment(final String iName) {
@@ -1369,13 +1348,14 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         if (configuration != null)
           configuration.synch();
 
-        writeAheadLog.logFullCheckpointStart();
+        final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
 
         diskCache.flushBuffer();
 
         writeAheadLog.logFullCheckpointEnd();
         writeAheadLog.flush();
 
+        writeAheadLog.cutTill(lastLSN);
         dirtyFlag.clearDirty();
       } catch (IOException ioe) {
         throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
@@ -1853,9 +1833,17 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       } else if (walRecord instanceof OOperationUnitRecord) {
         OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
         OOperationUnitId unitId = operationUnitRecord.getOperationUnitId();
-        List<OLogSequenceNumber> records = operationUnits.get(unitId);
+
+        final List<OLogSequenceNumber> records = operationUnits.get(unitId);
 
         assert records != null;
+
+        if (records == null) {
+          OLogManager.instance().warn(this,
+              "Record with lsn %s  which indication of start of atomic operation was truncated will be skipped.",
+              walRecord.getLsn());
+          continue;
+        }
 
         records.add(lsn);
 
@@ -1979,7 +1967,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       else
         diskCache.delete();
 
-      if (writeAheadLog != null)
+      if (writeAheadLog != null && onDelete)
         writeAheadLog.delete();
 
       if (onDelete)

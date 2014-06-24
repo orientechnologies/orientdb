@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
@@ -38,15 +45,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * SQL Helper class
@@ -272,12 +270,10 @@ public class OSQLHelper {
     return iFieldValue;
   }
 
-  public static Set<ODocument> bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
+  public static ODocument bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
       final OCommandParameters iArguments, final OCommandContext iContext) {
     if (iFields == null)
       return null;
-
-    Set<ODocument> changedDocuments = null;
 
     // BIND VALUES
     for (Entry<String, Object> field : iFields.entrySet()) {
@@ -338,13 +334,8 @@ public class OSQLHelper {
         }
       }
 
-      final ODocument doc = iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments, iContext));
-      if (doc != null) {
-        if (changedDocuments == null)
-          changedDocuments = new HashSet<ODocument>();
-        changedDocuments.add(doc);
-      }
+      iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments, iContext));
     }
-    return changedDocuments;
+    return iDocument;
   }
 }

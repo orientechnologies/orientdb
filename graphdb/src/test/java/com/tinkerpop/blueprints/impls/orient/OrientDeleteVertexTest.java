@@ -1,21 +1,18 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import static org.junit.Assert.*;
-
-import java.util.Iterator;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
+import java.util.Iterator;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 @RunWith(JUnit4.class)
 public class OrientDeleteVertexTest {
@@ -48,7 +45,7 @@ public class OrientDeleteVertexTest {
     // the v1 out_edgeType1 property should not contain a reference to
     // deleted node v2
     // OK INSIDE THE TRANSACTION
-    ORidBag out_edge = g.getVertex(v1.getId()).getProperty("out_edgeType1");
+    Iterable<OrientEdge> out_edge = g.getVertex(v1.getId()).getProperty("out_edgeType1");
 
     boolean contains = false;
     for (OIdentifiable id : out_edge)

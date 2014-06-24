@@ -262,11 +262,11 @@ public class OStorageMemory extends OStorageEmbedded {
     return false;
   }
 
-  public boolean dropDataSegment(final String iName) {
+  public boolean dropDataSegment(final String name) {
     lock.acquireExclusiveLock();
     try {
 
-      final int id = getDataSegmentIdByName(iName);
+      final int id = getDataSegmentIdByName(name);
       final ODataSegment data = dataSegments.get(id);
       if (data == null)
         return false;
@@ -280,13 +280,10 @@ public class OStorageMemory extends OStorageEmbedded {
 
       return true;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error while removing data segment '" + iName + '\'', e, OStorageException.class);
-
+      throw new OStorageException("Error while removing data segment '" + name + '\'', e);
     } finally {
       lock.releaseExclusiveLock();
     }
-
-    return false;
   }
 
   @Override

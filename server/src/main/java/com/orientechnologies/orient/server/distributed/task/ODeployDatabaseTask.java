@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -53,6 +54,8 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
       throws Exception {
 
     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
+      if (database == null)
+        throw new ODistributedException("Database instance is null");
 
       final String databaseName = database.getName();
 

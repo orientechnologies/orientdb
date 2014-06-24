@@ -211,7 +211,12 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.beginCollection("clusters");
         OCluster cluster;
         for (String clusterName : db.getClusterNames()) {
-          cluster = db.getStorage().getClusterById(db.getClusterIdByName(clusterName));
+          try {
+            cluster = db.getStorage().getClusterById(db.getClusterIdByName(clusterName));
+          } catch (IllegalArgumentException e) {
+            OLogManager.instance().error(this, "Cluster '%s' does not exist in database", clusterName);
+            continue;
+          }
 
           try {
             json.beginObject();

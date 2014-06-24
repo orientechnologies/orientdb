@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -24,10 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -530,7 +528,42 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       setTypeInternal(isNull ? null : OType.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
       break;
     case COLLATE:
+      final OCollate oldCollate = this.collate;
+
       setCollateInternal(stringValue);
+
+      if ((this.collate != null && !this.collate.equals(oldCollate)) || (this.collate == null && oldCollate != null)) {
+        final Set<OIndex<?>> indexes = owner.getClassIndexes();
+        final List<OIndex<?>> indexesToRecreate = new ArrayList<OIndex<?>>();
+
+        for (OIndex<?> index : indexes) {
+          OIndexDefinition definition = index.getDefinition();
+
+          final List<String> fields = definition.getFields();
+          if (fields.contains(getName()))
+            indexesToRecreate.add(index);
+        }
+
+        if (!indexesToRecreate.isEmpty()) {
+          OLogManager.instance().info(this, "Collate value was changed, following indexes will be rebuilt %s", indexesToRecreate);
+
+          final ODatabaseRecord database = getDatabase();
+          final OIndexManager indexManager = database.getMetadata().getIndexManager();
+
+          for (OIndex<?> indexToRecreate : indexesToRecreate) {
+            final OIndexInternal.IndexMetadata indexMetadata = indexToRecreate.getInternal().loadMetadata(
+                indexToRecreate.getConfiguration());
+
+            final ODocument metadata = indexToRecreate.getMetadata();
+            final List<String> fields = indexMetadata.getIndexDefinition().getFields();
+            final String[] fieldsToIndex = fields.toArray(new String[fields.size()]);
+
+            indexManager.dropIndex(indexMetadata.getName());
+            owner.createIndex(indexMetadata.getName(), indexMetadata.getType(), null, metadata, indexMetadata.getAlgorithm(),
+                fieldsToIndex);
+          }
+        }
+      }
       break;
     case CUSTOM:
       if (iValue.toString().indexOf("=") == -1) {

@@ -144,13 +144,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       return wrapped.command(iCommand);
 
     final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-    if (!dbCfg.isReplicationActive(null))
+    if (!dbCfg.isReplicationActive(null, dManager.getLocalNodeName()))
       // DON'T REPLICATE
       return wrapped.command(iCommand);
-
-    // if (dManager.getDatabaseStatus(dManager.getLocalNodeName(), getName()) != ODistributedServerManager.DB_STATUS.ONLINE)
-    // // NODE OFFLINE, DON'T DISTRIBUTE
-    // return wrapped.command(iCommand);
 
     final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
 
@@ -308,7 +304,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-      if (!dbCfg.isReplicationActive(clusterName) && dbCfg.getServers(clusterName) == null)
+      if (!dbCfg.isReplicationActive(clusterName, dManager.getLocalNodeName()) && dbCfg.getServers(clusterName) == null)
         // DON'T REPLICATE OR DISTRIBUTE
         return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
@@ -355,7 +351,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
       final Collection<String> serverList = dbCfg.getServers(clusterName);
-      if (!dbCfg.isReplicationActive(clusterName) && serverList == null)
+      if (!dbCfg.isReplicationActive(clusterName, dManager.getLocalNodeName()) && serverList == null)
         // DON'T REPLICATE
         return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
@@ -400,7 +396,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-      if (!dbCfg.isReplicationActive(clusterName) && dbCfg.getServers(clusterName) == null)
+      if (!dbCfg.isReplicationActive(clusterName, dManager.getLocalNodeName()) && dbCfg.getServers(clusterName) == null)
         // DON'T REPLICATE OR DISTRIBUTE
         return wrapped.updateRecord(iRecordId, iContent, iVersion, iRecordType, iMode, iCallback);
 
@@ -443,7 +439,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-      if (!dbCfg.isReplicationActive(clusterName) && dbCfg.getServers(clusterName) == null)
+      if (!dbCfg.isReplicationActive(clusterName, dManager.getLocalNodeName()) && dbCfg.getServers(clusterName) == null)
         // DON'T REPLICATE OR DISTRIBUTE
         return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
@@ -563,7 +559,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     else {
       try {
         final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-        if (!dbCfg.isReplicationActive(null))
+        if (!dbCfg.isReplicationActive(null, dManager.getLocalNodeName()))
           // DON'T REPLICATE
           wrapped.commit(iTx, callback);
         else {

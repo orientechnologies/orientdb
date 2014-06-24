@@ -263,7 +263,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         clusterIds[0] = database.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClassName, null, null);
       else
         for (int i = 0; i < minimumClusters; ++i) {
-          clusterIds[i] = database.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClassName + "_" + i, null, null);
+          clusterIds[i] = database.getClusterIdByName(iClassName + "_" + i);
+          if (clusterIds[i] == -1)
+            clusterIds[i] = database.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), iClassName + "_" + i, null, null);
         }
     } else
       clusterIds = iClusterIds;

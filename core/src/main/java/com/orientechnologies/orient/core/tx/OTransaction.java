@@ -99,6 +99,15 @@ public interface OTransaction {
 
   public boolean isUsingLog();
 
+  /**
+   * If you set this flag to false, you are unable to
+   * <ol>
+   * <li>Rollback data changes in case of exception</li>
+   * <li>Restore data in case of server crash</li>
+   * </ol>
+   * 
+   * So you practically unable to work in multithreaded environment and keep data consistent.
+   */
   public void setUsingLog(boolean useLog);
 
   public void close();

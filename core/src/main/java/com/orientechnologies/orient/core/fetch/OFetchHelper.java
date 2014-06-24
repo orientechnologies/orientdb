@@ -298,6 +298,9 @@ public class OFetchHelper {
       final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext, final String iFormat)
       throws IOException {
 
+    if (record == null)
+      return;
+
     Object fieldValue;
 
     iContext.onBeforeFetch(record);
@@ -363,7 +366,6 @@ public class OFetchHelper {
           }
 
         } catch (Exception e) {
-          e.printStackTrace();
           OLogManager.instance().error(null, "Fetching error on record %s", e, record.getIdentity());
         }
       }
@@ -531,7 +533,9 @@ public class OFetchHelper {
             removeParsedFromMap(parsedRecords, d);
             d = d.getRecord();
 
-            if (!(d instanceof ODocument)) {
+            if (d == null)
+              iListener.processStandardField(null, d, null, iContext, iUserObject, "");
+            else if (!(d instanceof ODocument)) {
               iListener.processStandardField(null, d, fieldName, iContext, iUserObject, "");
             } else {
               iContext.onBeforeDocument(iRootRecord, (ODocument) d, fieldName, iUserObject);
