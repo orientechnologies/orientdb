@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -36,11 +41,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * SQL DELETE EDGE command.
@@ -161,10 +161,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
               public Object call(OrientBaseGraph graph) {
                 Set<OIdentifiable> fromIds = null;
                 if (fromExpr != null)
-                  fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), fromExpr, context);
+                  fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), fromExpr, context, iArgs);
                 Set<OIdentifiable> toIds = null;
                 if (toExpr != null)
-                  toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr, context);
+                  toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr, context, iArgs);
 
                 if (fromIds != null && toIds != null) {
                   // REMOVE ALL THE EDGES BETWEEN VERTICES
