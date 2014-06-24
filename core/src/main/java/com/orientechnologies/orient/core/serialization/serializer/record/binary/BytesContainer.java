@@ -39,4 +39,10 @@ public class BytesContainer {
     offset += read;
   }
 
+  public byte[] fitBytes() {
+    byte[] fitted = new byte[offset];
+    System.arraycopy(bytes, 0, fitted, 0, offset);
+    return fitted;
+  }
+
 }

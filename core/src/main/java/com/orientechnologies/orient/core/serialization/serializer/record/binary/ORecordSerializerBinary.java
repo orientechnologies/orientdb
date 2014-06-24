@@ -43,7 +43,8 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     int pos = container.alloc(1);
     container.bytes[pos] = LAST_RECORD_VERSION;
     serializerByVersion[LAST_RECORD_VERSION].serialize((ODocument) iSource, container);
-    return container.bytes;
+    
+    return container.fitBytes();
   }
 
 }
