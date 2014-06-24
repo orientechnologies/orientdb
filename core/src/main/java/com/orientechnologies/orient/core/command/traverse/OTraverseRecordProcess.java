@@ -103,6 +103,9 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
 
     processFields(fields.iterator());
 
+    if (target.isEmbedded())
+      return null;
+
     return target;
   }
 
