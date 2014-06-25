@@ -62,7 +62,7 @@ public class LocalPaginatedClusterTest {
                                                                    + OLongSerializer.LONG_SIZE;
   public OPaginatedCluster           paginatedCluster;
   protected String                   buildDirectory;
-  protected ODiskCache               diskCache;
+  protected OReadWriteDiskCache               diskCache;
   protected OAtomicOperationsManager atomicOperationsManager;
 
   @BeforeClass

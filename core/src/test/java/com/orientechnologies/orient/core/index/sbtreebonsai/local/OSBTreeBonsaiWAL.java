@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -33,13 +34,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPa
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 
 /**
  * @author Andrey Lomakin
@@ -51,10 +46,10 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
   private String                                     actualStorageDir;
   private String                                     expectedStorageDir;
 
-  private OWriteAheadLog                             writeAheadLog;
+  private ODiskWriteAheadLog                         writeAheadLog;
 
-  private ODiskCache                                 actualDiskCache;
-  private ODiskCache                                 expectedDiskCache;
+  private OReadWriteDiskCache                        actualDiskCache;
+  private OReadWriteDiskCache                        expectedDiskCache;
 
   private OLocalPaginatedStorage                     actualStorage;
 
@@ -118,7 +113,7 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     if (!actualStorageDirFile.exists())
       actualStorageDirFile.mkdirs();
 
-    writeAheadLog = new OWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, actualStorage);
+    writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, actualStorage);
     actualAtomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
     actualDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
@@ -281,7 +276,8 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
   }
 
   private void restoreDataFromWAL() throws IOException {
-    OWriteAheadLog log = new OWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, actualStorage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024,
+        actualStorage);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();

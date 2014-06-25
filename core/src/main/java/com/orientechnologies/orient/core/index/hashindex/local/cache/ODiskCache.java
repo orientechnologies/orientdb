@@ -98,8 +98,6 @@ public interface ODiskCache {
 
   void flushBuffer() throws IOException;
 
-  void clear() throws IOException;
-
   void close() throws IOException;
 
   void delete() throws IOException;

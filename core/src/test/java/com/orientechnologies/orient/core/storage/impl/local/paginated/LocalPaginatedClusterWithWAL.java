@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
  */
 @Test
 public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
-  private OWriteAheadLog         writeAheadLog;
+  private ODiskWriteAheadLog writeAheadLog;
 
   private OPaginatedCluster      testCluster;
   private ODiskCache             testDiskCache;
@@ -75,7 +75,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     if (!storageDirOneFile.exists())
       storageDirOneFile.mkdirs();
 
-    writeAheadLog = new OWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, storage);
+    writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, storage);
 
     diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
@@ -373,7 +373,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   }
 
   private void restoreClusterFromWAL() throws IOException {
-    OWriteAheadLog log = new OWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, storage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, storage);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();
