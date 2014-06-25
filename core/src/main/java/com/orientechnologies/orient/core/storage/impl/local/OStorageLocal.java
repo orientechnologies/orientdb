@@ -62,6 +62,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -81,7 +82,7 @@ import java.util.concurrent.Callable;
 
 public class OStorageLocal extends OStorageLocalAbstract {
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
-      ".oef", ".oem", OWriteAheadLog.MASTER_RECORD_EXTENSION, OWriteAheadLog.WAL_SEGMENT_EXTENSION,
+      ".oef", ".oem", ODiskWriteAheadLog.MASTER_RECORD_EXTENSION, ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION,
       OLocalHashTableIndexEngine.BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.METADATA_FILE_EXTENSION,
       OLocalHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION, OLocalHashTableIndexEngine.TREE_FILE_EXTENSION,
       OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION, OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION };
@@ -212,7 +213,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       }
 
       if (OGlobalConfiguration.USE_WAL.getValueAsBoolean())
-        writeAheadLog = new OWriteAheadLog(this);
+        writeAheadLog = new ODiskWriteAheadLog(this);
       atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
       txManager.open();
@@ -284,7 +285,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
       // ADD THE DEFAULT CLUSTER
       defaultClusterId = addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), CLUSTER_DEFAULT_NAME, null, null, false);
 
-      writeAheadLog = new OWriteAheadLog(this);
+      writeAheadLog = new ODiskWriteAheadLog(this);
       atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
       txManager.create();

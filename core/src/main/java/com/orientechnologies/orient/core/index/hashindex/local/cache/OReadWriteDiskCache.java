@@ -338,7 +338,6 @@ public class OReadWriteDiskCache implements ODiskCache {
     writeCache.flush();
   }
 
-  @Override
   public void clear() throws IOException {
     writeCache.flush();
 
