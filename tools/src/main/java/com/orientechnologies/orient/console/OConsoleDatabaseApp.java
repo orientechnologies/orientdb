@@ -55,6 +55,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -1451,6 +1452,82 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
+  @ConsoleCommand(description = "Repair database structure")
+  public void repairDatabase(@ConsoleParameter(name = "options", description = "Options: -v", optional = true) final String iOptions)
+      throws IOException {
+    checkForDatabase();
+
+    message("\nRepairing database...");
+
+    boolean verbose = iOptions != null && iOptions.contains("-v");
+
+    long fixedLinks = 0l;
+    long modifiedDocuments = 0l;
+    long errors = 0l;
+
+    message("\n- Fixing dirty links...");
+    try {
+      for (String clusterName : currentDatabase.getClusterNames()) {
+        for (ORecord<?> rec : currentDatabase.browseCluster(clusterName)) {
+          try {
+            if (rec instanceof ODocument) {
+              boolean changed = false;
+
+              final ODocument doc = (ODocument) rec;
+              for (String fieldName : doc.fieldNames()) {
+                final Object fieldValue = doc.rawField(fieldName);
+
+                if (fieldValue instanceof OIdentifiable) {
+                  if (fixLink(fieldValue)) {
+                    doc.field(fieldName, (OIdentifiable) null);
+                    fixedLinks++;
+                    changed = true;
+                    if (verbose)
+                      message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName
+                          + "' (rid=" + doc.getIdentity() + ")");
+                  }
+                } else if (fieldValue instanceof Collection<?>) {
+                  final Iterator<Object> it = ((Collection) fieldValue).iterator();
+                  for (int i = 0; it.hasNext(); ++i) {
+                    final Object v = it.next();
+                    if (fixLink(v)) {
+                      it.remove();
+                      fixedLinks++;
+                      changed = true;
+                      if (verbose)
+                        message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as " + i
+                            + " item in collection in field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
+                    }
+                  }
+                }
+              }
+
+              if (changed) {
+                modifiedDocuments++;
+                doc.save();
+
+                if (verbose)
+                  message("\n-- updated document " + doc.getIdentity());
+              }
+            }
+          } catch (Exception e) {
+            errors++;
+          }
+        }
+      }
+
+      if (verbose)
+        message("\n");
+
+      message("Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
+
+      message("\nRepair database complete (" + errors + " errors)");
+
+    } catch (Exception e) {
+      printError(e);
+    }
+  }
+
   @ConsoleCommand(description = "Compare two databases")
   public void compareDatabases(
       @ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
@@ -1935,6 +2012,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         message(" Error!");
     else
       message(iSucceed ? "] Done." : " Error!");
+  }
+
+  protected boolean fixLink(final Object fieldValue) {
+    if (fieldValue instanceof OIdentifiable) {
+      if (((OIdentifiable) fieldValue).getIdentity().isValid()) {
+        final ORecord<?> connected = ((OIdentifiable) fieldValue).getRecord();
+        if (connected == null)
+          return true;
+      }
+    }
+    return false;
   }
 
   protected void dumpDistributedConfiguration(final boolean iForce) {
