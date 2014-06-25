@@ -22,9 +22,12 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
@@ -607,19 +610,19 @@ public class ODocumentSchemalessBinarySerializationTest {
 
   @Test
   public void testMapOfLink() {
-
+    // needs a database because of the lazy loading
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
     ODocument document = new ODocument();
 
     Map<String, OIdentifiable> map = new HashMap<String, OIdentifiable>();
-    map.put("link", new ORecordId(10, new OClusterPositionLong(20)));
-    map.put("link1", new ORecordId(11, new OClusterPositionLong(20)));
-    map.put("link2", new ODocument(new ORecordId(12, new OClusterPositionLong(20))));
+    map.put("link", new ORecordId(0, new OClusterPositionLong(0)));
     document.field("map", map, OType.LINKMAP);
 
     byte[] res = serializer.toStream(document, false);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(extr.fields(), document.fields());
     assertEquals(extr.field("map"), document.field("map"));
+    db.drop();
   }
 
   @Test
@@ -633,6 +636,76 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(extr.fields(), document.fields());
     assertEquals(extr.field("test"), document.field("test"));
     db.drop();
+  }
+
+  public static class Custom implements OSerializableStream {
+    byte[] bytes = new byte[10];
+
+    @Override
+    public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+      bytes = iStream;
+      return this;
+    }
+
+    @Override
+    public byte[] toStream() throws OSerializationException {
+      for (int i = 0; i < bytes.length; i++) {
+        bytes[i] = (byte) i;
+      }
+      return bytes;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return Arrays.equals(bytes, ((Custom) obj).bytes);
+    }
+  }
+
+  @Test
+  public void testDocumentWithCostum() {
+    ODocument document = new ODocument();
+    document.field("test", "test");
+    document.field("custom", new Custom());
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    assertEquals(extr.getClassName(), document.getClassName());
+    assertEquals(extr.fields(), document.fields());
+    assertEquals(extr.field("test"), document.field("test"));
+    assertEquals(extr.field("custom"), document.field("custom"));
+  }
+
+  public static class CustomDocument implements ODocumentSerializable {
+    private ODocument document;
+
+    @Override
+    public void fromDocument(ODocument document) {
+      this.document = document;
+    }
+
+    @Override
+    public ODocument toDocument() {
+      document = new ODocument();
+      document.field("test", "some strange content");
+      return document;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return document.field("test").equals(((CustomDocument) obj).document.field("test"));
+    }
+  }
+
+  @Test
+  public void testDocumentWithCostumDocument() {
+    ODocument document = new ODocument();
+    document.field("test", "test");
+    document.field("custom", new CustomDocument());
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    assertEquals(extr.getClassName(), document.getClassName());
+    assertEquals(extr.fields(), document.fields());
+    assertEquals(extr.field("test"), document.field("test"));
+    assertEquals(extr.field("custom"), document.field("custom"));
   }
 
 }
