@@ -110,7 +110,7 @@ public class OScheduleHandler extends OServerPluginAbstract {
       String url = OSystemVariableResolver.resolveSystemVariables(OFileUtils.getPath(new File(BASEPATH + this.databaseName)
           .getPath()));
       if (this.exists(url)) {
-        db = new ODatabaseDocumentTx("local:" + url).open(this.user, this.pass);
+        db = new ODatabaseDocumentTx("plocal:" + url).open(this.user, this.pass);
       } else {
         db = null;
         OLogManager.instance().error(this, "database " + this.databaseName + " does not exist");

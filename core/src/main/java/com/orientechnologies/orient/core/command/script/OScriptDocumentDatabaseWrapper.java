@@ -266,10 +266,6 @@ public class OScriptDocumentDatabaseWrapper {
     return database.begin();
   }
 
-  public String getDataSegmentNameById(int iDataSegmentId) {
-    return database.getDataSegmentNameById(iDataSegmentId);
-  }
-
   public int getClusterIdByName(String iClusterName) {
     return database.getClusterIdByName(iClusterName);
   }

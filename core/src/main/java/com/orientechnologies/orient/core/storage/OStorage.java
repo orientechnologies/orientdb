@@ -38,7 +38,6 @@ import java.util.concurrent.Callable;
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
  * 
  * @author Luca Garulli
- * @see com.orientechnologies.orient.core.storage.impl.local.OStorageLocal
  * @see com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory
  */
 
@@ -234,8 +233,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
   public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock);
-
-  public ODataSegment getDataSegmentById(int iDataSegmentId);
 
   public int getDataSegmentIdByName(String iDataSegmentName);
 

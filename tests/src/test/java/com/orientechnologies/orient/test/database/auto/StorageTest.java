@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
@@ -56,12 +55,6 @@ public class StorageTest {
     tempDir.deleteOnExit();
 
     final int segmentId = database.addDataSegment("binary", tempDir.toString());
-    Assert.assertEquals(database.getStorage().getDataSegmentById(segmentId).getSize(), 0);
-
-    if (database.getStorage() instanceof OStorageLocal) {
-      Assert.assertTrue(new File(tempDir.toString() + "/binary.0.oda").exists());
-      Assert.assertTrue(new File(tempDir.toString() + "/binary.odh").exists());
-    }
 
     database.setDataSegmentStrategy(new ODataSegmentStrategy() {
 
@@ -73,7 +66,6 @@ public class StorageTest {
 
     ODocument record = database.newInstance().field("name", "data-segment-test").save();
     Assert.assertNotNull(record);
-    Assert.assertTrue(database.getStorage().getDataSegmentById(1).getSize() > 0);
 
     record.delete();
 

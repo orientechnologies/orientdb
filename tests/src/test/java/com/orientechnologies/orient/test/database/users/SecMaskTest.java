@@ -18,7 +18,7 @@ public class SecMaskTest {
 
 	@Test
 	public static void main(String[] args) {
-		database = new ODatabaseDocumentTx("local:/tmp/secmask/secmask");
+		database = new ODatabaseDocumentTx("plocal:/tmp/secmask/secmask");
 		if (database.exists())
 			database.open("admin", "admin");
 		else {

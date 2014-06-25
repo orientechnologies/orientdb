@@ -19,7 +19,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -35,10 +34,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
-import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.storage.impl.local.OTxSegment;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -92,7 +87,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
 
   protected String getStoragePath(final String databaseName, final String storageMode) {
     final String path;
-    if (storageMode.equals(OEngineLocal.NAME) || storageMode.equals(OEngineLocalPaginated.NAME)) {
+    if (storageMode.equals(OEngineLocalPaginated.NAME)) {
       path = storageMode + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + databaseName;
     } else if (storageMode.equals(OEngineMemory.NAME)) {
       path = storageMode + ":" + databaseName;
@@ -123,21 +118,6 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       json.endCollection(1, true);
     }
 
-    if (db.getStorage() instanceof OStorageLocal) {
-      json.beginCollection(1, false, "dataSegments");
-      for (ODataLocal data : ((OStorageLocal) db.getStorage()).getDataSegments()) {
-        json.beginObject(2, true, null);
-        json.writeAttribute(3, false, "id", data.getId());
-        json.writeAttribute(3, false, "name", data.getName());
-        json.writeAttribute(3, false, "size", data.getSize());
-        json.writeAttribute(3, false, "filled", data.getFilledUpTo());
-        json.writeAttribute(3, false, "maxSize", data.getConfig().maxSize);
-        json.writeAttribute(3, false, "files", Arrays.toString(data.getConfig().infoFiles));
-        json.endObject(2, false);
-      }
-      json.endCollection(1, true);
-    }
-
     if (db.getClusterNames() != null) {
       json.beginCollection(1, false, "clusters");
       OCluster cluster;
@@ -150,34 +130,15 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
           json.writeAttribute(3, false, "name", clusterName);
           json.writeAttribute(3, false, "type", cluster.getType());
           json.writeAttribute(3, false, "records", cluster.getEntries() - cluster.getTombstonesCount());
-          if (cluster instanceof OClusterLocal) {
-            json.writeAttribute(3, false, "size", ((OClusterLocal) cluster).getSize());
-            json.writeAttribute(3, false, "filled", ((OClusterLocal) cluster).getFilledUpTo());
-            json.writeAttribute(3, false, "maxSize", ((OClusterLocal) cluster).getConfig().getMaxSize());
-            json.writeAttribute(3, false, "files", Arrays.toString(((OClusterLocal) cluster).getConfig().getInfoFiles()));
-          } else {
-            json.writeAttribute(3, false, "size", "-");
-            json.writeAttribute(3, false, "filled", "-");
-            json.writeAttribute(3, false, "maxSize", "-");
-            json.writeAttribute(3, false, "files", "-");
-          }
+          json.writeAttribute(3, false, "size", "-");
+          json.writeAttribute(3, false, "filled", "-");
+          json.writeAttribute(3, false, "maxSize", "-");
+          json.writeAttribute(3, false, "files", "-");
         } catch (Exception e) {
           json.writeAttribute(3, false, "records", "? (Unauthorized)");
         }
         json.endObject(2, false);
       }
-      json.endCollection(1, true);
-    }
-
-    if (db.getStorage() instanceof OStorageLocal) {
-      json.beginCollection(1, false, "txSegment");
-      final OTxSegment txSegment = ((OStorageLocal) db.getStorage()).getTxManager().getTxSegment();
-      json.beginObject(2, true, null);
-      json.writeAttribute(3, false, "size", txSegment.getSize());
-      json.writeAttribute(3, false, "filled", txSegment.getFilledUpTo());
-      json.writeAttribute(3, false, "maxSize", txSegment.getConfig().maxSize);
-      json.writeAttribute(3, false, "file", txSegment.getConfig().path);
-      json.endObject(2, false);
       json.endCollection(1, true);
     }
 

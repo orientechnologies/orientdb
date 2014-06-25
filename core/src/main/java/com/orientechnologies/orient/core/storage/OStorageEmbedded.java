@@ -35,7 +35,6 @@ import java.io.IOException;
  * Interface for embedded storage.
  * 
  * @author Luca Garulli
- * @see com.orientechnologies.orient.core.storage.impl.local.OStorageLocal, OStorageMemory
  */
 public abstract class OStorageEmbedded extends OStorageAbstract {
   protected final ORecordLockManager lockManager;

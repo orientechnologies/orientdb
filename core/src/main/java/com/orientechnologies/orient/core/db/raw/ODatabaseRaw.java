@@ -363,10 +363,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return storage.getDataSegmentIdByName(iDataSegmentName);
   }
 
-  public String getDataSegmentNameById(final int dataSegmentId) {
-    return storage.getDataSegmentById(dataSegmentId).getName();
-  }
-
   public int getClusters() {
     return storage.getClusters();
   }

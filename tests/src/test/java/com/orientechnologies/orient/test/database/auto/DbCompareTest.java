@@ -37,11 +37,7 @@ public class DbCompareTest implements OCommandOutputListener {
 
   @Test
   public void testCompareDatabases() throws IOException {
-    String urlPrefix;
-    if (url.startsWith("local:"))
-      urlPrefix = "local:";
-    else
-      urlPrefix = "plocal:";
+    String urlPrefix = "plocal:";
 
     final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportTest.NEW_DB_URL,
         "admin", "admin", this);

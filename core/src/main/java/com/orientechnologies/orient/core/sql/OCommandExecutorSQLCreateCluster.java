@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 
 import java.util.Map;
@@ -88,7 +87,7 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     if (clusterId > -1)
       throw new OCommandSQLParsingException("Cluster '" + clusterName + "' already exists");
 
-    if (database.getStorage() instanceof OStorageLocal || database.getStorage() instanceof OStorageMemory) {
+    if (database.getStorage() instanceof OStorageMemory) {
       final int dataId = database.getStorage().getDataSegmentIdByName(dataSegmentName);
       if (dataId == -1)
         throw new OCommandSQLParsingException("Data segment '" + dataSegmentName + "' does not exists");

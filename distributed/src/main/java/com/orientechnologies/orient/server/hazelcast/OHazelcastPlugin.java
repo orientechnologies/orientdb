@@ -913,7 +913,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       File f = new File(iDatabaseCompressedFile);
 
       new File(dbPath).mkdirs();
-      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
+      final ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath);
 
       final FileInputStream in = new FileInputStream(f);
       try {

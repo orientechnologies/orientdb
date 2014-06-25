@@ -48,7 +48,7 @@ public class TestOrientBulkInsert {
 
     OGlobalConfiguration.setConfiguration(defaultsMap);
 
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:/temp/databases/bulktest");
+    ODatabaseDocumentTx database = new ODatabaseDocumentTx("plocal:/temp/databases/bulktest");
     if (database.exists())
       database.open("admin", "admin").drop();
 

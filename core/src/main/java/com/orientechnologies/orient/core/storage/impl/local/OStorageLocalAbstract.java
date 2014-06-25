@@ -68,8 +68,8 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
   protected abstract OPhysicalPosition updateRecord(OCluster cluster, ORecordId rid, byte[] recordContent,
       ORecordVersion recordVersion, byte recordType);
 
-  protected abstract OPhysicalPosition createRecord(ODataLocal dataSegment, OCluster cluster, byte[] recordContent,
-      byte recordType, ORecordId rid, ORecordVersion recordVersion);
+  protected abstract OPhysicalPosition createRecord(OCluster cluster, byte[] recordContent,
+																										byte recordType, ORecordId rid, ORecordVersion recordVersion);
 
   public abstract ODiskCache getDiskCache();
 

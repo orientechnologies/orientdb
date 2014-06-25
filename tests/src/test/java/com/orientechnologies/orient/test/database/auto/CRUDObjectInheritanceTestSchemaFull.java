@@ -96,7 +96,7 @@ public class CRUDObjectInheritanceTestSchemaFull {
       importDatabase.open("admin", "admin");
       ODatabaseImport impor = new ODatabaseImport(importDatabase, EXPORT_DIR, listener);
 
-      if (url.startsWith("local:") || url.startsWith("memory:"))
+      if (url.startsWith("memory:"))
         impor.setPreserveClusterIDs(false);
 
       // UNREGISTER ALL THE HOOKS

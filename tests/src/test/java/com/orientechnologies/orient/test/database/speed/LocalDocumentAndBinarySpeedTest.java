@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class LocalDocumentAndBinarySpeedTest {
 
-	private static final String	DEFAULT_DB_URL			= "local:database/binarytest";
+	private static final String	DEFAULT_DB_URL			= "plocal:database/binarytest";
 	private static final String	DEFAULT_DB_USER			= "admin";
 	private static final String	DEFAULT_DB_PASSWORD	= "admin";
 	private static final int		size								= 64000;

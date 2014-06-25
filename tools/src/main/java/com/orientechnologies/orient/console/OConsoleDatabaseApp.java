@@ -69,8 +69,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 import java.io.BufferedReader;
@@ -379,35 +377,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void alterCluster(@ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
     sqlCommand("alter", iCommandText, "\nCluster updated successfully\n", false);
     updateDatabaseInfo();
-  }
-
-  @ConsoleCommand(description = "Shows the holes in current storage")
-  public void showHoles() throws IOException {
-    checkForDatabase();
-
-    if (!(currentDatabase.getStorage() instanceof OStorageLocal)) {
-      message("\nError: cannot show holes in databases different by local");
-      return;
-    }
-
-    final OStorageLocal storage = (OStorageLocal) currentDatabase.getStorage();
-
-    final List<ODataHoleInfo> result = storage.getHolesList();
-
-    message("\nFound " + result.size() + " holes in database " + currentDatabaseName + ":");
-
-    message("\n+----------------------+----------------------+");
-    message("\n| Position             | Size (in bytes)      |");
-    message("\n+----------------------+----------------------+");
-
-    long size = 0;
-    for (ODataHoleInfo ppos : result) {
-      message("\n| %20d | %20d |", ppos.dataOffset, ppos.size);
-      size += ppos.size;
-    }
-    message("\n+----------------------+----------------------+");
-    message("\n| %20s | %20s |", "Total hole size", OFileUtils.getSizeAsString(size));
-    message("\n+----------------------+----------------------+");
   }
 
   @ConsoleCommand(description = "Begins a transaction. All the changes will remain local")
@@ -1076,13 +1045,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       if (stg instanceof OStorageRemoteThread) {
         dumpDistributedConfiguration(true);
-      } else if (stg instanceof OStorageLocal) {
-        final OStorageLocal localStorage = (OStorageLocal) stg;
-
-        long holeSize = localStorage.getHoleSize();
-
-        message("\nFragmented at " + (holeSize * 100f / localStorage.getSize()) + "%%");
-        message("\n (" + localStorage.getHoles() + " holes, total size of holes: " + OFileUtils.getSizeAsString(holeSize) + ")");
       }
 
       listProperties();

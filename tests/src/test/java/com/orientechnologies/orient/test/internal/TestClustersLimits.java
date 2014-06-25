@@ -18,7 +18,7 @@ public class TestClustersLimits {
 
   @Test
   public void testLocal() throws IOException {
-    executeTest("local:C:/temp/hugeclusterdb", CLUSTER_TYPE.PHYSICAL);
+    executeTest("plocal:C:/temp/hugeclusterdb", CLUSTER_TYPE.PHYSICAL);
   }
 
   @Test

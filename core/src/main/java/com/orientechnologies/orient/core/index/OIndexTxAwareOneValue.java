@@ -20,7 +20,6 @@ import java.util.*;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -44,7 +43,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
     // CHECK IF ALREADY EXISTS IN TX
     String storageType = database.getStorage().getType();
-    if (storageType.equals(OEngineMemory.NAME) || storageType.equals(OEngineLocal.NAME) || !database.getTransaction().isActive()) {
+    if (storageType.equals(OEngineMemory.NAME) || !database.getTransaction().isActive()) {
       final OIdentifiable previousRecord = get(iKey);
       if (previousRecord != null && !previousRecord.equals(iRecord))
         throw new ORecordDuplicatedException(String.format(

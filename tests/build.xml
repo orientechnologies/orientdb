@@ -47,15 +47,6 @@
         </copy>
 
         <replace dir="${project.build}/com/orientechnologies/orient/test/database/auto">
-            <include name="*-test-db-from-scratch.xml"/>
-            <exclude name="paginated-local-test-db-from-scratch.xml"/>
-
-            <replacefilter token="@PATH@" value="${test.path}"/>
-            <replacefilter token="@URL@" value="local:${test.path}"/>
-            <replacefilter token="@TESTPATH@" value="${project.root.dir}"/>
-        </replace>
-
-        <replace dir="${project.build}/com/orientechnologies/orient/test/database/auto">
             <include name="paginated-local-test-db-from-scratch.xml"/>
 
             <replacefilter token="@PATH@" value="${test.path}"/>
@@ -84,26 +75,6 @@
     </target>
 
 
-    <target name="test-local" depends="test-init">
-        <echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo</echo>
-        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Xmx2G"/>
-            <jvmarg value="-XX:+HeapDumpOnOutOfMemoryError"/>
-            <jvmarg value="-Dstorage.lockTimeout=60000"/>
-            <!-- debug mode -->
-            <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>-->
-
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="local-test-db-from-scratch.xml"/>
-        </testng>
-    </target>
-
     <target name="test-plocal" depends="test-init">
         <echo>EXECUTING TESTS USING PAGINATED LOCAL DATABASE: plocal:${orient.path}/databases/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
@@ -129,25 +100,6 @@
                         includes="paginated-local-test-db-from-scratch.xml"/>
         </testng>
     </target>
-
-
-    <target name="test-local-lh" depends="test-init">
-        <echo>EXECUTING TESTS USING LOCAL DATABASE and LH data cluster: local:${orient.path}/databases/demo</echo>
-        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Xmx2G"/>
-            <jvmarg value="-XX:+HeapDumpOnOutOfMemoryError"/>
-            <jvmarg value="-Dfile.cluster.useLHPEPS=true"/>
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="local-test-db-from-scratch.xml"/>
-        </testng>
-    </target>
-
 
     <target name="test-remote" depends="test-init">
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
@@ -207,7 +159,7 @@
                     <include name="*.jar"/>
                 </fileset>
             </classpath>
-            <sysproperty key="url" value="local:../${orient.path}/databases/demo"/>
+            <sysproperty key="url" value="plocal:../${orient.path}/databases/demo"/>
             <jvmarg value="-server"/>
         </java>
 
@@ -219,7 +171,7 @@
                     <include name="*.jar"/>
                 </fileset>
             </classpath>
-            <sysproperty key="url" value="local:../${orient.path}/databases/demo"/>
+            <sysproperty key="url" value="plocal:../${orient.path}/databases/demo"/>
             <jvmarg value="-server"/>
         </java>
 
@@ -231,7 +183,7 @@
                     <include name="*.jar"/>
                 </fileset>
             </classpath>
-            <sysproperty key="url" value="local:../${orient.path}/databases/demo"/>
+            <sysproperty key="url" value="plocal:../${orient.path}/databases/demo"/>
             <jvmarg value="-server"/>
         </java>
 

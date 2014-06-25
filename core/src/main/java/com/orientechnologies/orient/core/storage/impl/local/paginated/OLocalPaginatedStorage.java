@@ -78,7 +78,6 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
@@ -420,14 +419,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     } finally {
       lock.releaseExclusiveLock();
     }
-  }
-
-  public ODataLocal getDataSegmentById(final int dataSegmentId) {
-    OLogManager.instance().error(
-        this,
-        "getDataSegmentById: Local paginated storage does not support data segments. "
-            + "null will be returned for data segment %d.", dataSegmentId);
-    return null;
   }
 
   public int getDataSegmentIdByName(final String dataSegmentName) {
@@ -1495,8 +1486,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   @Override
-  protected OPhysicalPosition createRecord(ODataLocal dataSegment, OCluster cluster, byte[] recordContent, byte recordType,
-      ORecordId rid, ORecordVersion recordVersion) {
+  protected OPhysicalPosition createRecord(OCluster cluster, byte[] recordContent, byte recordType,
+																					 ORecordId rid, ORecordVersion recordVersion) {
     throw new UnsupportedOperationException("createRecord");
   }
 

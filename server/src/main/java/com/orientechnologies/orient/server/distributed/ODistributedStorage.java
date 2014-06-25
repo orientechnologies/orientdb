@@ -825,10 +825,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return wrapped.callInRecordLock(iCallable, rid, iExclusiveLock);
   }
 
-  public ODataSegment getDataSegmentById(final int iDataSegmentId) {
-    return wrapped.getDataSegmentById(iDataSegmentId);
-  }
-
   public int getDataSegmentIdByName(final String iDataSegmentName) {
     return wrapped.getDataSegmentIdByName(iDataSegmentName);
   }

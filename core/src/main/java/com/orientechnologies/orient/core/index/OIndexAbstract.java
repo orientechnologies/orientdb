@@ -55,7 +55,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
 /**
@@ -514,8 +514,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
         if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
           final OStorage storage = getDatabase().getStorage();
-          if (storage instanceof OStorageLocal) {
-            final ODiskCache diskCache = ((OStorageLocal) storage).getDiskCache();
+          if (storage instanceof OLocalPaginatedStorage) {
+            final ODiskCache diskCache = ((OLocalPaginatedStorage) storage).getDiskCache();
             try {
               final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
               if (diskCache.exists(fileName)) {

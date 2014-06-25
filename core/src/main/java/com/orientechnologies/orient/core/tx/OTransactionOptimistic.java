@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -460,7 +459,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
         final String storageType = database.getStorage().getType();
 
-        if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME))
+        if (storageType.equals(OEngineLocalPaginated.NAME))
           database.getStorage().commit(OTransactionOptimistic.this, callback);
         else if (storageType.equals(OEngineMemory.NAME)) {
           database.getStorage().commit(OTransactionOptimistic.this, null);

@@ -34,7 +34,7 @@ public class SBTreeCompositeKeyTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("local:" + buildDirectory + "/localSBTreeCompositeKeyTest");
+    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeCompositeKeyTest");
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();

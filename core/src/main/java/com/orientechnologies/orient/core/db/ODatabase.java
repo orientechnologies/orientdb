@@ -170,8 +170,6 @@ public interface ODatabase extends OBackupable, Closeable {
    */
   public int getDataSegmentIdByName(String iDataSegmentName);
 
-  public String getDataSegmentNameById(int dataSegmentId);
-
   /**
    * Returns the default cluster id. If not specified all the new entities will be stored in the default cluster.
    * 
