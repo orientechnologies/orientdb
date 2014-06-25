@@ -1349,13 +1349,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           configuration.synch();
 
         final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
-
         diskCache.flushBuffer();
-
         writeAheadLog.logFullCheckpointEnd();
         writeAheadLog.flush();
 
         writeAheadLog.cutTill(lastLSN);
+
         dirtyFlag.clearDirty();
       } catch (IOException ioe) {
         throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
