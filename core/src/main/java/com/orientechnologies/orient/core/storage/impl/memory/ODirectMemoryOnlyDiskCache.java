@@ -151,7 +151,21 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
   @Override
   public void renameFile(long fileId, String oldFileName, String newFileName) throws IOException {
+    metadataLock.lock();
+    try {
+      String fileName = fileIdNameMap.get(fileId);
+      if (fileName == null)
+        return;
 
+      fileNameIdMap.remove(fileName);
+
+      fileName = newFileName + fileName.substring(fileName.lastIndexOf(oldFileName) + fileName.length());
+
+      fileIdNameMap.put(fileId, fileName);
+      fileNameIdMap.put(fileName, fileId);
+    } finally {
+      metadataLock.unlock();
+    }
   }
 
   @Override
