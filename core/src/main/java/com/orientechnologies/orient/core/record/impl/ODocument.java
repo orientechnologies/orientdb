@@ -969,7 +969,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       setFieldType(f, null);
 
       // RAW SET/REPLACE
-      field(f, iOther.get(f));
+      final Object value = field(f);
+      final Object otherValue = iOther.get(f);
+
+      if ((value != null && !value.equals(otherValue)) || (value == null && otherValue != null))
+        field(f, iOther.get(f));
     }
 
     if (!iUpdateOnlyMode) {
