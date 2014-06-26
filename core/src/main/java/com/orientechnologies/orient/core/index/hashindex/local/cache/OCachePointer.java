@@ -54,11 +54,11 @@ public class OCachePointer {
     this.lastFlushedLsn = lastFlushedLsn;
   }
 
-  void incrementReferrer() {
+  public void incrementReferrer() {
     referrersCount.incrementAndGet();
   }
 
-  void decrementReferrer() {
+  public void decrementReferrer() {
     if (referrersCount.decrementAndGet() == 0) {
       dataPointer.free();
     }

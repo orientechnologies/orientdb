@@ -5,6 +5,7 @@ import java.io.IOException;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 
 /**
  * <p>
@@ -32,8 +33,8 @@ public class OSysBucket extends OBonsaiBucketAbstract {
    */
   private static final byte SYS_MAGIC               = (byte) 41;
 
-  public OSysBucket(ODirectMemoryPointer pagePointer, TrackMode trackMode) {
-    super(pagePointer, trackMode);
+  public OSysBucket(OCacheEntry cacheEntry, TrackMode trackMode) {
+    super(cacheEntry, trackMode);
   }
 
   public void init() throws IOException {

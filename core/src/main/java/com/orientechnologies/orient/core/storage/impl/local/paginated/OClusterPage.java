@@ -25,6 +25,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -56,8 +57,8 @@ public class OClusterPage extends ODurablePage {
 
   public static final int  MAX_RECORD_SIZE            = MAX_ENTRY_SIZE - 3 * OIntegerSerializer.INT_SIZE;
 
-  public OClusterPage(ODirectMemoryPointer pagePointer, boolean newPage, TrackMode trackMode) throws IOException {
-    super(pagePointer, trackMode);
+  public OClusterPage(OCacheEntry cacheEntry, boolean newPage, TrackMode trackMode) throws IOException {
+    super(cacheEntry, trackMode);
 
     if (newPage) {
       setLongValue(NEXT_PAGE_OFFSET, -1);
