@@ -362,6 +362,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return OType.EMBEDDEDSET;
     else if (iCharType == 'g')
       return OType.LINKBAG;
+    else if (iCharType == 'z')
+      return OType.LINKLIST;
+    else if (iCharType == 'x')
+      return OType.LINK;
+    else if (iCharType == 'n')
+      return OType.LINKSET;
 
     return OType.STRING;
   }

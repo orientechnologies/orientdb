@@ -15,21 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -75,6 +60,11 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -980,7 +970,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         if (OLogManager.instance().isDebugEnabled())
           if (processed % (total / 10) == 0)
-            OLogManager.instance().debug(this, "Executed %d/%d", processed, total);
+            OLogManager.instance().debug(this, "Executed parallel query %d/%d", processed, total);
       }
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on executing parallel query: %s", e, parserText);

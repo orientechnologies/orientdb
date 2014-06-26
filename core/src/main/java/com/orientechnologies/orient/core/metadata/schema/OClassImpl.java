@@ -642,6 +642,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         k++;
       }
       clusterIds = newClusterIds;
+
+      removePolymorphicClusterId(iId);
     }
 
     if (defaultClusterId == iId)
