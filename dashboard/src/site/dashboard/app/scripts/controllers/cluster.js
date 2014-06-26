@@ -38,8 +38,8 @@ module.controller('ClusterChangeController', function ($scope, Cluster) {
 
     $scope.dim = Object.keys($scope.dirty);
     $scope.dim1 = Object.keys($scope.dirtyConfig);
-    console.log($scope.oldConfig);
-    $scope.dimension = $scope.dim + $scope.dim1;
+    $scope.dimC = $scope.removedCluster.lenght;
+    $scope.dimension = $scope.dim + $scope.dim1 + $scope.dimC;
 
 
 });
@@ -59,6 +59,7 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
     });
 
     $scope.dirty = {};
+    $scope.removedCluster = [];
     $scope.db = false;
     $scope.editCluster = function () {
 
@@ -98,7 +99,8 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
                         Server.findDatabases(s.name, function (data) {
                             s.databases = [];
                             data.forEach(function (db, idx, arr) {
-                                s.databases.push(db);
+                                if (db != '')
+                                    s.databases.push(db);
                             });
                             $scope.nodes = $scope.nodes.concat(s);
                         });
@@ -108,6 +110,7 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
                             data.forEach(function (db, idx, arr) {
                                 s.databases.push(db);
                             });
+
                             $scope.nodes = $scope.nodes.concat(s);
                         });
                     }
@@ -127,6 +130,7 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
         modalScope.oldConfig = $scope.oldVal;
         modalScope.dirtyConfig = $scope.newVal;
         modalScope.dirty = $scope.dirty;
+        modalScope.removedCluster = $scope.removedCluster;
         modalScope.ok = function () {
             var meta = $scope.dbConfig.config.metadata;
             delete $scope.dbConfig.config.metadata;
@@ -255,6 +259,12 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
         }
     });
 
+    $scope.removeCluster = function (index, cluster) {
+        $scope.clusters.splice(index, 1);
+        delete $scope.dbConfig.config.clusters[cluster.name];
+        $scope.removedCluster.push(cluster);
+
+    }
     $scope.change = function (val) {
         $scope.newVal[val] = $scope.dbConfig.config[val];
     }
@@ -262,10 +272,18 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
         $window.location.reload();
     }
     $scope.$watch("autoDeploy", function (data) {
-        $scope.deploy = data && !$scope.cluster.status == 'DISCONNECTED';
+
+        if (data != undefined) {
+            $scope.deploy = !data && $scope.cluster.status == 'CONNECTED';
+        }
     });
     $scope.$watch("cluster.status", function (data) {
-        $scope.deploy = $scope.autoDeploy && data;
+
+
+        if (data) {
+            $scope.deploy = !$scope.autoDeploy && data == 'CONNECTED';
+        }
+
     });
 
 

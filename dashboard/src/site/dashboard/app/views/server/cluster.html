@@ -109,7 +109,7 @@
                         class="icon-save"> {{ 'cluster.apply' | i18n
                     }}</i></button>
             </div>
-            <table class=" table table-striped  table-hover table-condensed ">
+            <table class="clusterConfig table table-striped  table-hover table-condensed ">
                 <thead>
                 <tr>
                     <th>#</th>
@@ -124,17 +124,21 @@
                         <option ng-repeat="c in phisicalCluster" ng-selected="isSelectedCluster(cluster,c)"
                                 value="{{c.name}}">{{c.name}}
                         </option>
-                    </select></td>
+                    </select>
+                        <button class="btn btn-small" ng-click="removeCluster($index,cluster)"><i
+                                class="icon-remove-circle"></i></button>
+                    </td>
                     <td ng-repeat="s in servers"><input
                             ng-change="changeServerConfig(cluster.name,s.name,serverChecked)" ng-model="serverChecked"
                             ng-checked="matrix[cluster.name][s.name]"
                             type="checkbox">
                     </td>
+
                 </tr>
                 <tr>
                     <td></td>
                     <td ng-repeat="s in servers">
-                        <button class="btn btn-small" ng-disabled="deploy" ng-click="deployDb(s)"><i
+                        <button class="btn btn-small" ng-disabled="!deploy" ng-click="deployDb(s)"><i
                                 class="icon-save"> {{
                             'cluster.db.deploy' | i18n
                             }}</i></button>

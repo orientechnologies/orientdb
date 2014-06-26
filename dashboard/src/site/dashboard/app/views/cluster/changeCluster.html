@@ -23,6 +23,11 @@
                     <h5>{{key}} : {{oldConfig[key]}} -> {{dirtyConfig[key]}}</h5>
                 </li>
             </ul>
+            <ul class="" ng-hide="dimC == 0">
+                <li ng-repeat="c  in removedCluster">
+                    <h5>Removed cluster <b>{{c.name}}</b></h5>
+                </li>
+            </ul>
         </div>
     </div>
     <div class="modal-footer">

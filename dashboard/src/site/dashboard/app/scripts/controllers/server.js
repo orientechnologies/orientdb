@@ -10,7 +10,7 @@ app.controller('ServerMonitorController', function ($scope, $location, $routePar
 
 });
 
-app.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server, MetricConfig, $i18n, ContextNotification) {
+app.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server, MetricConfig, $i18n, ContextNotification, $odialog) {
 
 
     $scope.rid = $routeParams.server;
@@ -40,8 +40,18 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
     };
 
     $scope.saveConfig = function () {
-        Server.saveConfiguration($scope.server, $scope.configuration, function (data) {
+
+        $odialog.confirm({
+            title: 'Warning!',
+            body: "You are changing the Configuration for the server " + $scope.server.name + " . The changes will take effect after server restart. Are you sure?",
+            success: function () {
+                Spinner.start();
+                Server.saveConfiguration($scope.server, $scope.configuration, function (data) {
+                    Spinner.stop();
+                });
+            }
         });
+
     }
     $scope.getServerMetrics = function () {
 

@@ -217,13 +217,12 @@ Widget.directive('dbgraph', function () {
         var clusterHeight = 85;
 
         var m = [20, 120, 20, 40]
-        var margin = {top: 20, right: 120, bottom: 20, left: 60},
-            width = 400 - margin.right - margin.left,
-            height = ( 600) - margin.top - margin.bottom;
 
 
         var children = [];
+        console.log(model.config.clusters);
         var keys = Object.keys(model.config.clusters);
+
 
         var status = []
         model.servers.forEach(function (elem) {
@@ -245,6 +244,9 @@ Widget.directive('dbgraph', function () {
         });
         var root = {name: model.name, children: children, db: true, offsetX: 40, offsetY: 60, clazz: "db"};
 
+        var margin = {top: 20, right: 120, bottom: 20, left: 60 },
+            width = 400 - margin.right - margin.left,
+            height = ( 600) - margin.top - margin.bottom + (50 * (children.length + model.servers.length));
 
         var masterSVG = d3.select(element[0]).append('svg');
         var svg = masterSVG.attr("width", width)

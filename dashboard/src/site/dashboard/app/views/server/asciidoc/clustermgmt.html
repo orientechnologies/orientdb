@@ -921,36 +921,141 @@ asciidoc.install();
 <div class="sect1">
 <h2 id="_cluster_management">Cluster Management</h2>
 <div class="sectionbody">
-<div class="paragraph"><p>In Server Management panel there are 4 tabs:</p></div>
+<div class="paragraph"><p>In Cluster Management you can select the cluster that you want to manage.</p></div>
+<div class="paragraph"><p>When a cluster is selected Workbench will show some information about the cluster
+configuration:</p></div>
 <div class="ulist"><ul>
 <li>
 <p>
-<strong><span class="BOLD">Overview</span></strong>
+<strong><span class="BOLD">Status</span></strong>
 </p>
 </li>
 <li>
 <p>
-<strong><span class="BOLD">Database Management</span></strong>
+<strong><span class="BOLD">Port</span></strong>
 </p>
 </li>
 <li>
 <p>
-<strong><span class="BOLD">Log</span></strong>
+<strong><span class="BOLD">Multicast</span></strong>
 </p>
 </li>
 <li>
 <p>
-<strong><span class="BOLD">Configuration</span></strong>
+<strong><span class="BOLD">Tcp/ip</span></strong>
 </p>
 </li>
 </ul></div>
+<div class="paragraph"><p>Here you can edit the cluster configuration and remove a monitored cluster.
+You can also disconnect the Workbench from the monitored cluster.</p></div>
+<div class="paragraph"><p>With this action Workbench will continue to monitor the single servers of the cluster,
+but will not be able to retrieve runtime configuration of the databases.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="views/server/asciidoc/clustermgmt.png" alt="views/server/asciidoc/clustermgmt.png" height="20%" />
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_cluster_overview">Cluster Overview</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Above the cluster management there is the cluster layout. Here you can see
+which nodes are in the cluster, their status (ONLINE/OFFLINE)</p></div>
+<div class="paragraph"><p>and the relation between nodes and databases. From here you can:</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong><span class="BOLD">Click</span></strong> on the node label and you will be redirected to the server management UI.
+</p>
+</li>
+<li>
+<p>
+<strong><span class="BOLD">Click</span></strong> on the database label and you will enter the single database configuration for the cluster
+</p>
+</li>
+</ul></div>
+<div class="imageblock">
+<div class="content">
+<img src="views/server/asciidoc/clusterlayout.png" alt="views/server/asciidoc/clusterlayout.png" width="80%" />
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_distributed_database_configuration">Distributed Database Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>In this section you can view how your database is distributed across the nodes of the cluster.</p></div>
+<div class="paragraph"><p>You can also modify the JSON file that contains the configuration of the distributed database and allow to change them</p></div>
+<div class="paragraph"><p>at runtime without restarting any nodes.</p></div>
+<div class="paragraph"><p>The configuration parameters are :</p></div>
+<div class="ulist"><ul>
+<li>
+<p>
+<strong><span class="BOLD">Write Quorum</span></strong>
+</p>
+</li>
+<li>
+<p>
+<strong><span class="BOLD">Read Quorum</span></strong>
+</p>
+</li>
+<li>
+<p>
+<strong><span class="BOLD">Auto Deploy</span></strong>
+</p>
+</li>
+<li>
+<p>
+<strong><span class="BOLD">Hot Alignment</span></strong>
+</p>
+</li>
+<li>
+<p>
+<strong><span class="BOLD">Read Your Write</span></strong>
+</p>
+</li>
+<li>
+<p>
+<strong><span class="BOLD">Failure available node less quorum</span></strong>
+</p>
+</li>
+<li>
+<p>
+<strong><span class="BOLD">Clusters Distribution</span></strong>
+</p>
+</li>
+</ul></div>
+<div class="paragraph"><p>See here for <a href="https://github.com/orientechnologies/orientdb/wiki/Distributed-Configuration">Distributed Configuration</a></p></div>
+<div class="imageblock">
+<div class="content">
+<img src="views/server/asciidoc/dbconfig.png" alt="views/server/asciidoc/dbconfig.png" width="80%" />
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_cluster_distribution_configuration">Cluster Distribution Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>Along with the graphical representation, there is a table view that allow to modify the current cluster distribution.</p></div>
+<div class="paragraph"><p>You can click to <em>add cluster</em> and Workbench will let decide which clusters you want to add in the distributed database</p></div>
+<div class="paragraph"><p>configuration and let you assign each cluster to one or more servers.</p></div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="views/server/asciidoc/images/icons/note.png" alt="Note" />
+</td>
+<td class="content">If you are using autoDeploy configuration you can use Workbench to deploy databases in a single
+server.</td>
+</tr></table>
+</div>
 </div>
 </div>
 </div>
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2014-06-24 13:11:25 CEST
+Last updated 2014-06-25 17:31:25 CEST
 </div>
 </div>
 </body>

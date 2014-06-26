@@ -67,6 +67,7 @@ li.hider button {
     color: #FFFFFF;
     margin-right: 15px;
 }
+
 li.hider button:hover {
     background-color: #000000;
 }
@@ -1203,6 +1204,10 @@ ul.tcp-members {
 
 ul.tcp-members li {
     padding: 5px;
+}
+
+.clusterConfig select {
+    margin-bottom: 0px;
 }
 
 

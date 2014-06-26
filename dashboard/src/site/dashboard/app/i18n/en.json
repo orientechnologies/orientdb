@@ -68,6 +68,7 @@
     "general.overview": "Overview",
     "general.logs": "Log",
     "db.operations": "CRUD Operations",
+    "db.configuration": "Configuration",
     "general.configuration": "Configuration",
     "general.lastMsg": "Server last message",
     "server.db.operations": "DB operations",

@@ -157,7 +157,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     System.out.printf("\n\n************************************************");
     System.out.printf("\n*   ORIENTDB WORKBENCH -  ENTERPRISE EDITION   *");
     System.out.printf("\n*                                              *");
-    System.out.printf("\n* Copyrights (c) 2013 Orient Technologies LTD  *");
+    System.out.printf("\n* Copyrights (c) 2014 Orient Technologies LTD  *");
     System.out.printf("\n************************************************");
     System.out.printf("\n* Version...: %-32s *", VERSION);
     System.out.printf("\n************************************************\n");

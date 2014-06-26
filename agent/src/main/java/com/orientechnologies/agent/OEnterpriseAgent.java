@@ -47,7 +47,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
   private String              license;
   private String              version;
   private boolean             enabled                    = false;
-  private static final String ORIENDB_ENTERPRISE_VERSION = "1.7.3"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH
+  private static final String ORIENDB_ENTERPRISE_VERSION = "1.7.4"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH
                                                                     // THIS
 
   public OEnterpriseAgent() {

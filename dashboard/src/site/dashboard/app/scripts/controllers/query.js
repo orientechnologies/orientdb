@@ -13,18 +13,19 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
 
     $scope.gridOptions = { data: 'commands',
         enablePaging: true,
+        enableColumnResize: true,
         pagingOptions: $scope.pagingOptions,
         totalServerItems: 'total',
         filterOptions: $scope.filterOptions,
         columnDefs: [
-            {field: 'name', displayName: $i18n.get('queryprofiler.type'), cellFilter: 'ctype'},
-            {field: 'name', displayName: $i18n.get('queryprofiler.command'), cellFilter: 'cname'},
-            {field: 'entries', displayName: $i18n.get('queryprofiler.entries')},
-            {field: 'average', displayName: $i18n.get('queryprofiler.average')},
-            {field: 'total', displayName: $i18n.get('queryprofiler.total')},
-            {field: 'max', displayName: $i18n.get('queryprofiler.max')},
-            {field: 'min', displayName: $i18n.get('queryprofiler.min')},
-            {field: 'last', displayName: $i18n.get('queryprofiler.last')}
+            {field: 'name', displayName: $i18n.get('queryprofiler.type'), cellFilter: 'ctype', width: "5%", resizable: true},
+            {field: 'name', displayName: $i18n.get('queryprofiler.command'), cellFilter: 'cname', width: "50%", resizable: true},
+            {field: 'entries', displayName: $i18n.get('queryprofiler.entries'), width: "10%", resizable: true},
+            {field: 'average', displayName: $i18n.get('queryprofiler.average'), width: "10%", resizable: true},
+            {field: 'total', displayName: $i18n.get('queryprofiler.total'), width: "10%", resizable: true},
+            {field: 'max', displayName: $i18n.get('queryprofiler.max'), width: "10%", resizable: true},
+            {field: 'min', displayName: $i18n.get('queryprofiler.min'), width: "10%", resizable: true},
+            {field: 'last', displayName: $i18n.get('queryprofiler.last'), width: "10%", resizable: true}
         ]
     };
     Monitor.getServers(function (data) {

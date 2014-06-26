@@ -55,11 +55,6 @@ angular.module('MonitorApp')
                 $scope.servers = data.result;
                 $scope.healthData = new Array;
                 $scope.servers.forEach(function (elem, idx, arr) {
-                    if (elem.configuration.dayLeft < 0) {
-                        var msgTpl = "License for server {{name}} is expired. Enterprise features will be disabled in {{days}} days. Please contact Orient Technologies at: info@orientechnologies.com."
-                        var msg = S(msgTpl).template({name: elem.name, days: $scope.delay + elem.configuration.dayLeft}).s
-                        StickyNotification.push({content: msg, error: true});
-                    }
                     $scope.healthData.push({ label: elem.name, value: 100});
                 });
             });
