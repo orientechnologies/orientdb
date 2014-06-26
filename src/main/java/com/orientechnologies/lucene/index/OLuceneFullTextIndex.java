@@ -152,7 +152,7 @@ public class OLuceneFullTextIndex extends OIndexMultiValues implements OLuceneIn
 
   @Override
   public boolean canBeUsedInEqualityOperators() {
-    return true;
+    return false;
   }
 
   @Override

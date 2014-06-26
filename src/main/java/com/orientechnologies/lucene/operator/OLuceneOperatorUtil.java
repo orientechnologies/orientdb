@@ -35,16 +35,16 @@ public class OLuceneOperatorUtil {
     if (!iSchemaClass.areIndexed(result.fields()))
       return false;
 
-    if (result.getLastField().isLong()) {
-      final int fieldCount = result.getLastField().getItemCount();
-      OClass cls = iSchemaClass.getProperty(result.getLastField().getItemName(0)).getLinkedClass();
+    if (result.lastField.isLong()) {
+      final int fieldCount = result.lastField.getItemCount();
+      OClass cls = iSchemaClass.getProperty(result.lastField.getItemName(0)).getLinkedClass();
 
       for (int i = 1; i < fieldCount; i++) {
-        if (cls == null || !cls.areIndexed(result.getLastField().getItemName(i))) {
+        if (cls == null || !cls.areIndexed(result.lastField.getItemName(i))) {
           return false;
         }
 
-        cls = cls.getProperty(result.getLastField().getItemName(i)).getLinkedClass();
+        cls = cls.getProperty(result.lastField.getItemName(i)).getLinkedClass();
       }
     }
     return true;
