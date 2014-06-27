@@ -60,12 +60,12 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
-		storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
+    storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
 
     storageDir = buildDirectory + "/localPaginatedClusterWithWALTestOne";
     when(storage.getStoragePath()).thenReturn(storageDir);
     when(storage.getName()).thenReturn("localPaginatedClusterWithWALTestOne");
-		when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
+    when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
 
     File buildDir = new File(buildDirectory);
     if (!buildDir.exists())
@@ -103,11 +103,11 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
-		storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
+    storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
 
     testStorageDir = buildDirectory + "/localPaginatedClusterWithWALTestTwo";
     when(testStorage.getStoragePath()).thenReturn(testStorageDir);
-		when(testStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
+    when(testStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
 
     when(testStorage.getName()).thenReturn("localPaginatedClusterWithWALTestTwo");
 
@@ -292,35 +292,35 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     assertFileRestoreFromWAL();
   }
 
-	@Override
-	public void testHideHalfSmallRecords() throws IOException {
-		super.testHideHalfSmallRecords();
+  @Override
+  public void testHideHalfSmallRecords() throws IOException {
+    super.testHideHalfSmallRecords();
 
-		assertFileRestoreFromWAL();
-	}
+    assertFileRestoreFromWAL();
+  }
 
-	@Override
-	public void testHideHalfBigRecords() throws IOException {
-		super.testHideHalfBigRecords();
+  @Override
+  public void testHideHalfBigRecords() throws IOException {
+    super.testHideHalfBigRecords();
 
-		assertFileRestoreFromWAL();
-	}
+    assertFileRestoreFromWAL();
+  }
 
-	@Override
-	public void testHideHalfRecords() throws IOException {
-		super.testHideHalfRecords();
+  @Override
+  public void testHideHalfRecords() throws IOException {
+    super.testHideHalfRecords();
 
-		assertFileRestoreFromWAL();
-	}
+    assertFileRestoreFromWAL();
+  }
 
-	@Override
-	public void testHideHalfRecordsAndAddAnotherHalfAgain() throws IOException {
-		super.testHideHalfRecordsAndAddAnotherHalfAgain();
+  @Override
+  public void testHideHalfRecordsAndAddAnotherHalfAgain() throws IOException {
+    super.testHideHalfRecordsAndAddAnotherHalfAgain();
 
-		assertFileRestoreFromWAL();
-	}
+    assertFileRestoreFromWAL();
+  }
 
-	@Override
+  @Override
   @Test(enabled = false)
   public void testForwardIteration() throws IOException {
     super.testForwardIteration();
@@ -402,16 +402,15 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
             testDiskCache.openFile(fileId);
 
           final OCacheEntry cacheEntry = testDiskCache.load(fileId, pageIndex, true);
-          final OCachePointer cachePointer = cacheEntry.getCachePointer();
-          cachePointer.acquireExclusiveLock();
+          cacheEntry.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
+            ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(updatePageRecord.getLsn());
 
             cacheEntry.markDirty();
           } finally {
-            cachePointer.releaseExclusiveLock();
+            cacheEntry.releaseExclusiveLock();
             testDiskCache.release(cacheEntry);
           }
         }

@@ -27,6 +27,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
@@ -64,9 +65,9 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   private final Comparator<? super K> comparator              = ODefaultComparator.INSTANCE;
 
-  public OSBTreeBucket(ODirectMemoryPointer cachePointer, boolean isLeaf, OBinarySerializer<K> keySerializer, OType[] keyTypes,
+  public OSBTreeBucket(OCacheEntry cacheEntry, boolean isLeaf, OBinarySerializer<K> keySerializer, OType[] keyTypes,
       OBinarySerializer<V> valueSerializer, TrackMode trackMode) throws IOException {
-    super(cachePointer, trackMode);
+    super(cacheEntry, trackMode);
 
     this.isLeaf = isLeaf;
     this.keySerializer = keySerializer;
@@ -87,9 +88,9 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     setByteValue(VALUE_SERIALIZER_OFFSET, this.valueSerializer.getId());
   }
 
-  public OSBTreeBucket(ODirectMemoryPointer cachePointer, OBinarySerializer<K> keySerializer, OType[] keyTypes,
+  public OSBTreeBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OType[] keyTypes,
       OBinarySerializer<V> valueSerializer, TrackMode trackMode) {
-    super(cachePointer, trackMode);
+    super(cacheEntry, trackMode);
     this.keyTypes = keyTypes;
 
     this.isLeaf = getByteValue(IS_LEAF_OFFSET) > 0;

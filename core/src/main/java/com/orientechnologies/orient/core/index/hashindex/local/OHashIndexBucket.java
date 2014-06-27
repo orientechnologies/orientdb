@@ -27,6 +27,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -51,9 +52,9 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
   private final OType[]              keyTypes;
   private final Comparator           keyComparator              = ODefaultComparator.INSTANCE;
 
-  public OHashIndexBucket(int depth, ODirectMemoryPointer bufferPointer, OBinarySerializer<K> keySerializer,
+  public OHashIndexBucket(int depth, OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer,
       OBinarySerializer<V> valueSerializer, OType[] keyTypes, TrackMode trackMode) throws IOException {
-    super(bufferPointer, trackMode);
+    super(cacheEntry, trackMode);
 
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
@@ -63,9 +64,9 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
     setIntValue(FREE_POINTER_OFFSET, MAX_BUCKET_SIZE_BYTES);
   }
 
-  public OHashIndexBucket(ODirectMemoryPointer bufferPointer, OBinarySerializer<K> keySerializer,
-      OBinarySerializer<V> valueSerializer, OType[] keyTypes, TrackMode trackMode) {
-    super(bufferPointer, trackMode);
+  public OHashIndexBucket(OCacheEntry cacheEntry, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
+      OType[] keyTypes, TrackMode trackMode) {
+    super(cacheEntry, trackMode);
 
     this.keySerializer = keySerializer;
     this.valueSerializer = valueSerializer;
