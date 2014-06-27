@@ -1,12 +1,42 @@
 
-                   Copyright 1999-2013 (c) Orient Technologies
+                  Copyright 2014 (c) Orient Technologies LTD
 
-                      Orient Technologies Commercial License
-                           Version 1.0, November 2013
-                    http://www.orientechnologies.com/license.txt
+                    Orient Technologies Commercial License
+                http://www.orientechnologies.com/ee-license.txt
 
    TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
 
-   …
+LIMITATION OF USE
 
-   Copyright [2013] [Orient Technologies LTD]
+Client shall not decompile, disassemble or otherwise reverse engineer any
+portion of the Software. Client shall not permit the removal of any existing
+copyright notice or other restrictive or proprietary legend from any Software.
+No Software may be used by, or pledged or delivered to, any third party.
+
+LICENSE
+
+Orient Technologies LTD hereby grants to Client a non-exclusive, non-
+transferable and non- assignable annual license to use the Software solely by
+and for the benefit of Client (the “License”). The License shall be for a term
+of one (1) year.
+
+LICENSOR'S PROPERTY
+
+Client agrees that all Software shall be and remain the exclusive property of
+Orient Technologies LTD.
+
+LIMITATION OF LIABILITY
+
+NO WARRANTY, WHETHER WRITTEN OR ORAL IS EXPRESSED OR IMPLIED. CLIENT
+SPECIFICALLY DISCLAIMS THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE. ALL SOFTWARE IS PROVIDED BY VENDOR “AS IS” AND THE ENTIRE
+RISK AS TO THE QUALITY AND PERFORMANCE OF SUCH SOFTWARE MATERIAL IS UPON CLIENT.
+IN NO EVENT WILL VENDOR BE LIABLE TO CLIENT OR TO ANY THIRD PARTY FOR, WITHOUT
+LIMITATION, LOST ACTUAL OR ANTICIPATED PROFITS, LOST DATA, LOST SAVINGS OR OTHER
+CONSEQUENTIAL OR INCIDENTAL DAMAGES ARISING OUT OF CLIENT’S USE OR INABILITY TO
+USE THE SOFTWARE, OR OF ANY NATURE WHATSOEVER, EVENT IF VENDOR HAS BEEN ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGES. SOME JURISDICTIONS DO NOT ALLOW THE
+EXCLUSION OF IMPLIED WARRANTIES OR THE LIMITATION OR EXCLUSION OF INCIDENTAL OR
+CONSEQUENTIAL DAMAGES SO THE FOREGOING EXCLUSIONS MAY NOT APPLY TO CLIENT.
+CLIENT MAY HAVE OTHER RIGHTS WHICH VARY FROM JURISDICTION TO JURISDICTION.
+
