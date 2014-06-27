@@ -205,7 +205,7 @@ public abstract class OStorageLocalAbstract extends OStorageEmbedded implements 
         OCachePointer cachePointer = cacheEntry.getCachePointer();
         cachePointer.acquireExclusiveLock();
         try {
-          ODurablePage durablePage = new ODurablePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
+          ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
 
           OPageChanges pageChanges = updatePageRecord.getChanges();
           durablePage.revertChanges(pageChanges);

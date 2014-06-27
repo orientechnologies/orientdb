@@ -30,11 +30,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -602,10 +598,23 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   private Object getValueAsRecord(ODocument iRecord, String iFieldValue, OType iType, String iOptions, String[] fields) {
-    boolean shouldReload = new ORecordId(OStringSerializerHelper.getStringContent(getFieldValue("@rid", fields))).isTemporary();
-    final ORecordInternal<?> recordInternal = fromString(iFieldValue, new ODocument(), null, iOptions, shouldReload);
+    ORID rid = new ORecordId(OStringSerializerHelper.getStringContent(getFieldValue("@rid", fields)));
+    boolean shouldReload = rid.isTemporary();
+
+    final ODocument recordInternal = (ODocument) fromString(iFieldValue, new ODocument(), null, iOptions, shouldReload);
+
     if (shouldBeDeserializedAsEmbedded(recordInternal, iType))
-      ((ODocument) recordInternal).addOwner(iRecord);
+      recordInternal.addOwner(iRecord);
+    else {
+      ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+      if (rid.isPersistent() && database != null) {
+        ODocument documentToMerge = database.load(rid);
+        documentToMerge.merge(recordInternal, false, false);
+        return documentToMerge;
+      }
+    }
+
     return recordInternal;
   }
 

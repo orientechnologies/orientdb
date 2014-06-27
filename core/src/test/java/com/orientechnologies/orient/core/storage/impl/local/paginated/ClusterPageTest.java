@@ -3,7 +3,10 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import java.io.IOException;
 import java.util.*;
 
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -23,8 +26,13 @@ public class ClusterPageTest {
 
   public void testAddOneRecord() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
+
       int freeSpace = localPage.getFreeSpace();
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
@@ -43,14 +51,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testAddTreeRecords() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
       int freeSpace = localPage.getFreeSpace();
 
       Assert.assertEquals(localPage.getRecordsCount(), 0);
@@ -86,14 +98,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testAddFullPage() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -126,14 +142,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testDeleteAddLowerVersion() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -157,14 +177,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testDeleteAddLowerVersionKeepTombstoneVersion() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -186,14 +210,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testDeleteAddBiggerVersion() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -220,14 +248,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testDeleteAddEqualVersion() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -248,14 +280,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testDeleteAddEqualVersionKeepTombstoneVersion() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -275,14 +311,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testDeleteTwoOutOfFour() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -336,14 +376,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testAddFullPageDeleteAndAddAgain() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       Map<Integer, Byte> positionCounter = new HashMap<Integer, Byte>();
       Set<Integer> deletedPositions = new HashSet<Integer>();
@@ -407,14 +451,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testAddFullPageDeleteAndAddAgainWithoutDefragmentation() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       Map<Integer, Byte> positionCounter = new HashMap<Integer, Byte>();
       Set<Integer> deletedPositions = new HashSet<Integer>();
@@ -478,14 +526,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testAddBigRecordDeleteAndAddSmallRecords() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
       recordVersion.increment();
@@ -532,15 +584,19 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testFindFirstRecord() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     final MersenneTwisterFast mersenneTwister = new MersenneTwisterFast();
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       Set<Integer> positions = new HashSet<Integer>();
 
@@ -595,15 +651,19 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testFindLastRecord() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     final MersenneTwisterFast mersenneTwister = new MersenneTwisterFast();
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
 
       Set<Integer> positions = new HashSet<Integer>();
 
@@ -655,40 +715,52 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testSetGetNextPage() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
       localPage.setNextPage(1034);
       Assert.assertEquals(localPage.getNextPage(), 1034);
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testSetGetPrevPage() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
       localPage.setPrevPage(1034);
       Assert.assertEquals(localPage.getPrevPage(), 1034);
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testReplaceOneRecordWithBiggerSize() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -713,14 +785,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testReplaceOneRecordWithEqualSize() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -745,14 +821,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testReplaceOneRecordWithSmallerSize() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -777,14 +857,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testReplaceOneRecordNoVersionUpdate() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -809,14 +893,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   public void testReplaceOneRecordLowerVersion() throws Exception {
     ODirectMemoryPointer pagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(pagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage localPage = new OClusterPage(pagePointer, true, ODurablePage.TrackMode.FULL);
+      OClusterPage localPage = new OClusterPage(cacheEntry, true, ODurablePage.TrackMode.FULL);
       Assert.assertEquals(localPage.getRecordsCount(), 0);
 
       ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
@@ -839,14 +927,18 @@ public class ClusterPageTest {
 
       assertChangesTracking(localPage, pagePointer);
     } finally {
-      pagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 
   private void assertChangesTracking(OClusterPage localPage, ODirectMemoryPointer pagePointer) throws IOException {
     ODirectMemoryPointer restoredPagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE]);
+    OCachePointer cachePointer = new OCachePointer(restoredPagePointer, new OLogSequenceNumber(0, 0));
+    cachePointer.incrementReferrer();
+
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
     try {
-      OClusterPage restoredPage = new OClusterPage(restoredPagePointer, false, ODurablePage.TrackMode.FULL);
+      OClusterPage restoredPage = new OClusterPage(cacheEntry, false, ODurablePage.TrackMode.FULL);
 
       OPageChanges changes = localPage.getPageChanges();
       restoredPage.restoreChanges(changes);
@@ -859,7 +951,7 @@ public class ClusterPageTest {
       Assert.assertEquals(restoredPagePointer.get(SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET),
           new byte[OClusterPage.PAGE_SIZE - SYSTEM_OFFSET]);
     } finally {
-      restoredPagePointer.free();
+      cachePointer.decrementReferrer();
     }
   }
 }

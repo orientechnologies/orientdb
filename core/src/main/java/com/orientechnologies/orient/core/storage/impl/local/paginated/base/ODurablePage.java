@@ -19,10 +19,13 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 import java.io.IOException;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
 
@@ -51,22 +54,28 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageC
  * @since 16.08.13
  */
 public class ODurablePage {
-  protected static final int           MAGIC_NUMBER_OFFSET = 0;
-  protected static final int           CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  protected static final int         MAGIC_NUMBER_OFFSET = 0;
+  protected static final int         CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public static final int              WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
-  public static final int              WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
-  public static final int              MAX_PAGE_SIZE_BYTES = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  public static final int            WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int            WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
+  public static final int            MAX_PAGE_SIZE_BYTES = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
-  protected static final int           NEXT_FREE_POSITION  = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+  protected static final int         NEXT_FREE_POSITION  = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  protected OPageChanges               pageChanges         = new OPageChanges();
+  protected OPageChanges             pageChanges         = new OPageChanges();
 
-  protected final ODirectMemoryPointer pagePointer;
-  protected final TrackMode            trackMode;
+  private final OCacheEntry          cacheEntry;
+	private final ODirectMemoryPointer pagePointer;
 
-  public ODurablePage(ODirectMemoryPointer pagePointer, TrackMode trackMode) {
-    this.pagePointer = pagePointer;
+  protected final TrackMode          trackMode;
+
+  public ODurablePage(OCacheEntry cacheEntry, TrackMode trackMode) {
+    this.cacheEntry = cacheEntry;
+
+		final OCachePointer cachePointer = cacheEntry.getCachePointer();
+    this.pagePointer = cachePointer.getDataPointer();
+
     this.trackMode = trackMode;
   }
 
@@ -93,6 +102,14 @@ public class ODurablePage {
     return pagePointer.get(pageOffset, valLen);
   }
 
+  protected int getObjectSizeInDirectMemory(OBinarySerializer binarySerializer, long offset) {
+    return binarySerializer.getObjectSizeInDirectMemory(pagePointer, offset);
+  }
+
+  protected <T> T deserializeFromDirectMemory(OBinarySerializer<T> binarySerializer, long offset) {
+    return binarySerializer.deserializeFromDirectMemory(pagePointer, offset);
+  }
+
   protected byte getByteValue(int pageOffset) {
     return pagePointer.getByte(pageOffset);
   }
@@ -111,6 +128,9 @@ public class ODurablePage {
       pageChanges.addChanges(pageOffset, null, oldValues);
     } else
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset);
+
+    cacheEntry.markDirty();
+
     return OIntegerSerializer.INT_SIZE;
 
   }
@@ -129,6 +149,9 @@ public class ODurablePage {
       pageChanges.addChanges(pageOffset, null, oldValues);
     } else
       pagePointer.setByte(pageOffset, value);
+
+    cacheEntry.markDirty();
+
     return OByteSerializer.BYTE_SIZE;
   }
 
@@ -146,6 +169,9 @@ public class ODurablePage {
       pageChanges.addChanges(pageOffset, null, oldValues);
     } else
       OLongSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset);
+
+    cacheEntry.markDirty();
+
     return OLongSerializer.LONG_SIZE;
   }
 
@@ -165,6 +191,9 @@ public class ODurablePage {
       pageChanges.addChanges(pageOffset, null, oldValues);
     } else
       pagePointer.set(pageOffset, value, 0, value.length);
+
+    cacheEntry.markDirty();
+
     return value.length;
   }
 
@@ -188,6 +217,8 @@ public class ODurablePage {
 
     } else
       pagePointer.moveData(from, pagePointer, to, len);
+
+    cacheEntry.markDirty();
   }
 
   public OPageChanges getPageChanges() {
@@ -196,10 +227,12 @@ public class ODurablePage {
 
   public void restoreChanges(OPageChanges pageChanges) {
     pageChanges.applyChanges(pagePointer);
+    cacheEntry.markDirty();
   }
 
   public void revertChanges(OPageChanges pageChanges) {
     pageChanges.revertChanges(pagePointer);
+    cacheEntry.markDirty();
   }
 
   public OLogSequenceNumber getLsn() {
@@ -212,5 +245,7 @@ public class ODurablePage {
   public void setLsn(OLogSequenceNumber lsn) {
     OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getSegment(), pagePointer, WAL_SEGMENT_OFFSET);
     OLongSerializer.INSTANCE.serializeInDirectMemory(lsn.getPosition(), pagePointer, WAL_POSITION_OFFSET);
+
+    cacheEntry.markDirty();
   }
 }

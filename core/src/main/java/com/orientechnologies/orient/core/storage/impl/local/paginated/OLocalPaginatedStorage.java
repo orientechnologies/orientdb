@@ -1349,13 +1349,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           configuration.synch();
 
         final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
-
         diskCache.flushBuffer();
-
         writeAheadLog.logFullCheckpointEnd();
         writeAheadLog.flush();
 
         writeAheadLog.cutTill(lastLSN);
+
         dirtyFlag.clearDirty();
       } catch (IOException ioe) {
         throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
@@ -1860,7 +1859,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           final OCachePointer cachePointer = cacheEntry.getCachePointer();
           cachePointer.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
+            ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(lsn);
 

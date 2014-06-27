@@ -37,6 +37,22 @@ public class OCacheEntry {
     return pageIndex;
   }
 
+	public void acquireExclusiveLock() {
+		dataPointer.acquireExclusiveLock();
+	}
+
+	public void releaseExclusiveLock() {
+		dataPointer.releaseExclusiveLock();
+	}
+
+	public void acquireSharedLock() {
+		dataPointer.acquireSharedLock();
+	}
+
+	public void releaseSharedLock() {
+		dataPointer.releaseSharedLock();
+	}
+
   @Override
   public boolean equals(Object o) {
     if (this == o)

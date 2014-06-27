@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.serialization.serializer.binary;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -57,14 +59,14 @@ import com.orientechnologies.orient.core.storage.impl.local.eh.OPhysicalPosition
  */
 public class OBinarySerializerFactory {
 
-  private final Map<Byte, OBinarySerializer<?>>                  serializerIdMap        = new HashMap<Byte, OBinarySerializer<?>>();
-  private final Map<Byte, Class<? extends OBinarySerializer<?>>> serializerClassesIdMap = new HashMap<Byte, Class<? extends OBinarySerializer<?>>>();
-  private final Map<OType, OBinarySerializer<?>>                 serializerTypeMap      = new HashMap<OType, OBinarySerializer<?>>();
+  private final ConcurrentMap<Byte, OBinarySerializer<?>>                  serializerIdMap        = new ConcurrentHashMap<Byte, OBinarySerializer<?>>();
+  private final ConcurrentMap<Byte, Class<? extends OBinarySerializer<?>>> serializerClassesIdMap = new ConcurrentHashMap<Byte, Class<? extends OBinarySerializer<?>>>();
+  private final ConcurrentMap<OType, OBinarySerializer<?>>                 serializerTypeMap      = new ConcurrentHashMap<OType, OBinarySerializer<?>>();
 
   /**
    * Size of the type identifier block size
    */
-  public static final int                                        TYPE_IDENTIFIER_SIZE   = 1;
+  public static final int                                                  TYPE_IDENTIFIER_SIZE   = 1;
 
   private OBinarySerializerFactory() {
   }
