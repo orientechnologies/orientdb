@@ -1087,7 +1087,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
 
     final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy((ODatabaseRecordTx) connection.database.getUnderlying(),
-        channel);
+        channel, connection.data.protocolVersion);
 
     try {
       connection.database.begin(tx);
@@ -1335,12 +1335,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
 
     final ORecordId rid = channel.readRID();
+    boolean updateContent = true;
+    if (connection.data.protocolVersion >= 22)
+      updateContent = channel.readBoolean();
     final byte[] buffer = channel.readBytes();
     final ORecordVersion version = channel.readVersion();
     final byte recordType = channel.readByte();
     final byte mode = channel.readByte();
 
-    final ORecordVersion newVersion = updateRecord(connection.database, rid, buffer, version, recordType);
+    final ORecordVersion newVersion = updateRecord(connection.database, rid, buffer, version, recordType, updateContent);
 
     if (mode < 2) {
       beginResponse();

@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import java.io.IOException;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -27,11 +36,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.IOException;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.*;
 
 /**
  * Versions:
@@ -112,8 +116,8 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void update() throws OSerializationException {
     final byte[] record = toStream();
-    storage
-        .updateRecord(CONFIG_RID, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE, 0, null);
+    storage.updateRecord(CONFIG_RID, true, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE,
+        0, null);
   }
 
   public boolean isEmpty() {

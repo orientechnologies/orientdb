@@ -1,5 +1,20 @@
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -10,10 +25,6 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import java.util.*;
 
 @Test
 public class ORidBagAtomicUpdateTest {
@@ -551,6 +562,10 @@ public class ORidBagAtomicUpdateTest {
     Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
+  /**
+   * This test is no longer useful
+   */
+  @Test(enabled = false)
   public void testAddTwoSavedDocumentsWithoutTx() {
     ODocument docOne = new ODocument();
     ODocument docTwo = new ODocument();
@@ -582,6 +597,10 @@ public class ORidBagAtomicUpdateTest {
     Assert.assertEquals(ridBag.size(), 0);
   }
 
+  /**
+   * This test is no longer useful
+   */
+  @Test(enabled = false)
   public void testAddOneSavedDocumentsAndDeleteOneWithoutTx() {
     ODocument docOne = new ODocument();
     docOne.save();
@@ -681,27 +700,22 @@ public class ORidBagAtomicUpdateTest {
         docToAdd.save();
 
         staleRidBag.add(docToAdd);
+        addedDocuments.add(docToAdd);
       }
 
-      Assert.assertEquals(addedDocuments.size() - amountOfDeletedDocs + amountOfAddedDocsAfterSave, staleRidBag.size());
+      Assert.assertEquals(staleRidBag.size(), addedDocuments.size() - amountOfDeletedDocs);
 
       document.setDirty();
       document.save();
-      try {
-        staleDocument.save();
-        Assert.fail();
-      } catch (OConcurrentModificationException e) {
-      }
+      staleDocument.save();
 
       document = db.load(document.getIdentity());
       ridBag = document.field("ridBag");
 
-      Assert.assertEquals(ridBag.size(), addedDocuments.size());
+      Assert.assertEquals(ridBag.size(), addedDocuments.size() - amountOfDeletedDocs);
       iterator = ridBag.iterator();
       while (iterator.hasNext())
-        Assert.assertTrue(addedDocuments.remove(iterator.next()));
-
-      Assert.assertEquals(addedDocuments.size(), 0);
+        Assert.assertTrue(addedDocuments.contains(iterator.next()));
     }
   }
 
@@ -1126,6 +1140,10 @@ public class ORidBagAtomicUpdateTest {
     Assert.assertTrue(docsToAdd.isEmpty());
   }
 
+  /**
+   * This test is no longer useful
+   */
+  @Test(enabled = false)
   public void testFromSBTreeToEmbeddedWithCME() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(7);

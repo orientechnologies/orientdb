@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.server.tx;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -39,26 +48,20 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final Map<ORID, ORecordOperation>        tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
   private final Map<ORecordId, ORecordInternal<?>> createdRecords = new HashMap<ORecordId, ORecordInternal<?>>();
   private final Map<ORecordId, ORecordInternal<?>> updatedRecords = new HashMap<ORecordId, ORecordInternal<?>>();
   private final int                                clientTxId;
   private final OChannelBinary                     channel;
+  private final short                              protocolVersion;
 
-  public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
+  public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel, short protocolVersion)
+      throws IOException {
     super(iDatabase);
     channel = iChannel;
     clientTxId = iChannel.readInt();
+    this.protocolVersion = protocolVersion;
   }
 
   @Override
@@ -88,7 +91,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         case ORecordOperation.UPDATED:
           entry.getRecord().fill(rid, channel.readVersion(), channel.readBytes(), true);
-
+          if (protocolVersion >= 22)
+            entry.getRecord().setContentChanged(channel.readBoolean());
           break;
 
         case ORecordOperation.DELETED:

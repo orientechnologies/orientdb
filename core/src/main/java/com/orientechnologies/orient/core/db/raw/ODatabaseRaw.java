@@ -16,6 +16,21 @@
 
 package com.orientechnologies.orient.core.db.raw;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TimeZone;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.concur.lock.ONoLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -49,13 +64,6 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 
 /**
  * Lower level ODatabase implementation. It's extended or wrapped by all the others.
@@ -254,8 +262,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public OStorageOperationResult<ORecordVersion> save(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
+  public OStorageOperationResult<ORecordVersion> save(final int iDataSegmentId, final ORecordId iRid, boolean updateContent,
+      final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
 
     // CHECK IF RECORD TYPE IS SUPPORTED
@@ -270,7 +278,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
       } else {
         // UPDATE
-        return storage.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, iRecordUpdatedCallback);
+        return storage.updateRecord(iRid, updateContent, iContent, iVersion, iRecordType, iMode, iRecordUpdatedCallback);
       }
     } catch (OException e) {
       // PASS THROUGH

@@ -50,7 +50,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   protected transient ORecordSerializer          _recordFormat;
   protected Boolean                              _pinned                 = null;
   protected boolean                              _dirty                  = true;
-  protected boolean                              _updateContent          = true;
+  protected boolean                              _contentChanged         = true;
   protected ORecordElement.STATUS                _status                 = ORecordElement.STATUS.LOADED;
   protected transient Set<ORecordListener>       _listeners              = null;
 
@@ -74,8 +74,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     _status = ORecordElement.STATUS.LOADED;
     _source = iBuffer;
     _size = iBuffer != null ? iBuffer.length : 0;
-    if (_source != null && _source.length > 0)
+    if (_source != null && _source.length > 0) {
       _dirty = iDirty;
+      _contentChanged = iDirty;
+    }
 
     return this;
   }
@@ -143,6 +145,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
   public ORecordAbstract<T> fromStream(final byte[] iRecordBuffer) {
     _dirty = false;
+    _contentChanged = false;
     _source = iRecordBuffer;
     _size = iRecordBuffer != null ? iRecordBuffer.length : 0;
     _status = ORecordElement.STATUS.LOADED;
@@ -153,7 +156,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public void unsetDirty() {
-    _updateContent = false;
+    _contentChanged = false;
     _dirty = false;
   }
 
@@ -161,9 +164,9 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     if (!_dirty && _status != STATUS.UNMARSHALLING) {
       _dirty = true;
       _source = null;
-
-      _updateContent = true;
     }
+
+    _contentChanged = true;
     return this;
   }
 
@@ -411,7 +414,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     cloned._recordFormat = _recordFormat;
     cloned._listeners = null;
     cloned._dirty = false;
-    cloned._updateContent = _updateContent;
+    cloned._contentChanged = false;
     return cloned;
   }
 
@@ -471,5 +474,15 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   protected void checkForLoading() {
     if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
       reload(null, true);
+  }
+
+  @Override
+  public boolean isContentChanged() {
+    return _contentChanged;
+  }
+
+  @Override
+  public void setContentChanged(boolean contentChanged) {
+    _contentChanged = contentChanged;
   }
 }

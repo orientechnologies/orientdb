@@ -15,6 +15,20 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -84,9 +98,6 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.util.*;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -1052,6 +1063,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       final ORecordVersion iVersion, boolean iCallTriggers, final OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
+    setCurrentDatabaseinThreadLocal();
 
     if (!record.isDirty())
       return (RET) record;
@@ -1062,15 +1074,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       throw new ODatabaseException(
           "Cannot create record because it has no identity. Probably is not a regular record or contains projections of fields rather than a full record");
 
-    setCurrentDatabaseinThreadLocal();
-
     final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
-    record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
+    record.setInternalStatus(ORecordElement.STATUS.MARSHALLING);
     try {
       if (record instanceof ODocument)
         acquireIndexModificationLock((ODocument) record, lockedIndexes);
 
       final boolean wasNew = iForceCreate || rid.isNew();
+
       if (wasNew && rid.clusterId == -1)
         // ASSIGN THE CLUSTER ID
         rid.clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
@@ -1099,14 +1110,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
         checkRecordClass(record, iClusterName, rid, isNew);
 
-        final int permission;
-
-        if (wasNew)
-          permission = ORole.PERMISSION_CREATE;
-        else
-          permission = ORole.PERMISSION_UPDATE;
-
-        checkSecurity(ODatabaseSecurityResources.CLUSTER, permission, iClusterName);
+        checkSecurity(ODatabaseSecurityResources.CLUSTER, wasNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, iClusterName);
 
         if (stream != null && stream.length > 0) {
           if (iCallTriggers) {
@@ -1130,8 +1134,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(this, record);
         try {
           // SAVE IT
-          operationResult = underlying.save(dataSegmentId, rid, stream == null ? new byte[0] : stream, realVersion,
-              record.getRecordType(), iMode.ordinal(), iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+          operationResult = underlying.save(dataSegmentId, rid, record.isContentChanged(), stream == null ? new byte[0] : stream,
+              realVersion, record.getRecordType(), iMode.ordinal(), iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
           final ORecordVersion version = operationResult.getResult();
 
@@ -1145,16 +1149,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
           record.fill(rid, version, stream, stream == null || stream.length == 0);
 
-          if (iCallTriggers && stream != null && stream.length > 0) {
-            if (!operationResult.isMoved()) {
-              callbackHooks(wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE, record);
-            } else {
-              callbackHooks(wasNew ? TYPE.CREATE_REPLICATED : TYPE.UPDATE_REPLICATED, record);
-            }
-          }
+          callbackHookSuccess(record, iCallTriggers, wasNew, stream, operationResult);
         } catch (Throwable t) {
-          if (iCallTriggers && stream != null && stream.length > 0)
-            callbackHooks(wasNew ? TYPE.CREATE_FAILED : TYPE.UPDATE_FAILED, record);
+          callbackHookFailure(record, iCallTriggers, wasNew, stream);
           throw t;
         }
       } finally {
@@ -1164,18 +1161,34 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       if (stream != null && stream.length > 0 && !operationResult.isMoved())
         // ADD/UPDATE IT IN CACHE IF IT'S ACTIVE
         getLevel1Cache().updateRecord(record);
-    } catch (OException e) {
-      // RE-THROW THE EXCEPTION
-      throw e;
 
+    } catch (OException e) {
+      throw e;
     } catch (Throwable t) {
-      // WRAP IT AS ODATABASE EXCEPTION
       throw new ODatabaseException("Error on saving record in cluster #" + record.getIdentity().getClusterId(), t);
     } finally {
       releaseIndexModificationLock(lockedIndexes);
-      record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
+      record.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
     return (RET) record;
+  }
+
+  private void callbackHookFailure(ORecordInternal<?> record, boolean iCallTriggers, boolean wasNew, byte[] stream) {
+    if (iCallTriggers && stream != null && stream.length > 0)
+      callbackHooks(wasNew ? TYPE.CREATE_FAILED : TYPE.UPDATE_FAILED, record);
+  }
+
+  private void callbackHookSuccess(ORecordInternal<?> record, boolean iCallTriggers, boolean wasNew, byte[] stream,
+      OStorageOperationResult<ORecordVersion> operationResult) {
+    if (iCallTriggers && stream != null && stream.length > 0) {
+      final TYPE hookType;
+      if (!operationResult.isMoved()) {
+        hookType = wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE;
+      } else {
+        hookType = wasNew ? TYPE.CREATE_REPLICATED : TYPE.UPDATE_REPLICATED;
+      }
+      callbackHooks(hookType, record);
+    }
   }
 
   public boolean executeUpdateReplica(final ORecordInternal<?> record) {

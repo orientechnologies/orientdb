@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -16,13 +17,15 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  */
 public class SuperNodeInsertSpeedTest {
 
-  private static final int   WARM_UP_COUNT = 30000;
-  private static final int   TEST_COUNT    = 50000;
-  private static final int   THREAD_COUNT  = 1;
-  private static OrientGraph graph;
+  private static final int           WARM_UP_COUNT = 300;
+  private static final int           TEST_COUNT    = 5000;
+  private static final int           THREAD_COUNT  = 5;
+  private static OrientGraph         graph;
   private static final AtomicInteger retryCount    = new AtomicInteger();
 
   private static void setUp() {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
+
     graph = openGraph();
   }
 
@@ -118,7 +121,7 @@ public class SuperNodeInsertSpeedTest {
         } catch (OConcurrentModificationException e) {
           superNode.getRecord().reload();
           retryCount.incrementAndGet();
- }
+        }
     }
   }
 }

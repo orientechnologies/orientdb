@@ -16,6 +16,11 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
@@ -36,11 +41,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * A collection that contain links to {@link OIdentifiable}. Bag is similar to set but can contain several entering of the same
@@ -163,7 +163,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   public OStringBuilderSerializable toStream(StringBuilder output) throws OSerializationException {
     final ORecordSerializationContext context = ORecordSerializationContext.getContext();
     if (context != null) {
-      if (delegate.size() >= topThreshold && isEmbedded() && ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager() != null  ) {
+      if (delegate.size() >= topThreshold && isEmbedded()
+          && ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager() != null) {
         ORidBagDelegate oldDelegate = delegate;
         delegate = new OSBTreeRidBag();
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
@@ -172,7 +173,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         for (OIdentifiable identifiable : oldDelegate)
           delegate.add(identifiable);
 
-        delegate.setOwner(oldDelegate.getOwner());
+        final ORecord<?> owner = oldDelegate.getOwner();
+        delegate.setOwner(owner);
+        owner.setDirty();
+
         oldDelegate.setAutoConvertToRecord(oldAutoConvert);
         oldDelegate.requestDelete();
 
@@ -185,7 +189,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         for (OIdentifiable identifiable : oldDelegate)
           delegate.add(identifiable);
 
-        delegate.setOwner(oldDelegate.getOwner());
+        final ORecord<?> owner = oldDelegate.getOwner();
+        delegate.setOwner(owner);
+        owner.setDirty();
+
         oldDelegate.setAutoConvertToRecord(oldAutoConvert);
         oldDelegate.requestDelete();
       }
@@ -334,5 +341,20 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     } else {
       return ((OSBTreeRidBag) delegate).getCollectionPointer();
     }
+  }
+
+  /**
+   * IMPORTANT! Only for internal usage.
+   */
+  public boolean tryMerge(ORidBag otherValue) {
+    if (!isEmbedded() && !otherValue.isEmbedded()) {
+      final OSBTreeRidBag thisTree = (OSBTreeRidBag) delegate;
+      final OSBTreeRidBag otherTree = (OSBTreeRidBag) otherValue.delegate;
+      if (thisTree.getCollectionPointer().equals(otherTree.getCollectionPointer())) {
+        delegate = otherValue.delegate;
+        return true;
+      }
+    }
+    return false;
   }
 }

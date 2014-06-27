@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageTxConfiguration;
@@ -27,6 +32,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -38,11 +44,6 @@ import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class OStorageLocalTxExecuter {
   private final OStorageLocal storage;
@@ -205,15 +206,15 @@ public class OStorageLocalTxExecuter {
 
   private void commitEntry(final OTransaction iTx, final ORecordOperation txEntry, final boolean iUseLog) throws IOException {
 
-    if (txEntry.type != ORecordOperation.DELETED && !txEntry.getRecord().isDirty())
+    final ORecordInternal<?> record = txEntry.getRecord();
+    if (txEntry.type != ORecordOperation.DELETED && !record.isDirty())
       return;
 
-    final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
+    final ORecordId rid = (ORecordId) record.getIdentity();
 
-    if (rid.clusterId == ORID.CLUSTER_ID_INVALID && txEntry.getRecord() instanceof ODocument
-        && ((ODocument) txEntry.getRecord()).getSchemaClass() != null) {
+    if (rid.clusterId == ORID.CLUSTER_ID_INVALID && record instanceof ODocument && ((ODocument) record).getSchemaClass() != null) {
       // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
-      final OClass schemaClass = ((ODocument) txEntry.getRecord()).getSchemaClass();
+      final OClass schemaClass = ((ODocument) record).getSchemaClass();
 
       rid.clusterId = schemaClass.getClusterForNewInstance();
     }
@@ -230,8 +231,8 @@ public class OStorageLocalTxExecuter {
       // ONLY LOCAL CLUSTER ARE INVOLVED IN TX
       return;
 
-    if (txEntry.getRecord() instanceof OTxListener)
-      ((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.BEFORE_COMMIT);
+    if (record instanceof OTxListener)
+      ((OTxListener) record).onEvent(txEntry, OTxListener.EVENT.BEFORE_COMMIT);
 
     switch (txEntry.type) {
     case ORecordOperation.LOADED:
@@ -239,7 +240,7 @@ public class OStorageLocalTxExecuter {
 
     case ORecordOperation.CREATED: {
       // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
-      final byte[] stream = txEntry.getRecord().toStream();
+      final byte[] stream = record.toStream();
       if (stream == null) {
         OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
         break;
@@ -251,79 +252,69 @@ public class OStorageLocalTxExecuter {
         rid.clusterId = cluster.getId();
         final OPhysicalPosition ppos;
         if (iUseLog)
-          ppos = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry
-              .getRecord().getRecordType());
+          ppos = createRecord(iTx.getId(), dataSegment, cluster, rid, stream, record.getRecordVersion(), record.getRecordType());
         else
           ppos = iTx
               .getDatabase()
               .getStorage()
-              .createRecord(txEntry.dataSegmentId, rid, stream, OVersionFactory.instance().createVersion(),
-                  txEntry.getRecord().getRecordType(), (byte) 0, null).getResult();
+              .createRecord(txEntry.dataSegmentId, rid, stream, OVersionFactory.instance().createVersion(), record.getRecordType(),
+                  (byte) 0, null).getResult();
 
         rid.clusterPosition = ppos.clusterPosition;
-        txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
+        record.getRecordVersion().copyFrom(ppos.recordVersion);
 
         iTx.updateIdentityAfterCommit(oldRID, rid);
       } else {
-        if (iUseLog)
-          txEntry
-              .getRecord()
-              .getRecordVersion()
-              .copyFrom(
-                  updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord()
-                      .getRecordType()));
-        else
-          txEntry
-              .getRecord()
-              .getRecordVersion()
-              .copyFrom(
-                  iTx.getDatabase()
-                      .getStorage()
-                      .updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(),
-                          (byte) 0, null).getResult());
+        final ORecordVersion version;
+        if (iUseLog) {
+          version = updateRecord(iTx.getId(), cluster, rid, stream, record.getRecordVersion(), record.getRecordType());
+        } else {
+          version = iTx
+              .getDatabase()
+              .getStorage()
+              .updateRecord(rid, record.isContentChanged(), stream, record.getRecordVersion(), record.getRecordType(), (byte) 0,
+                  null).getResult();
+        }
+        record.getRecordVersion().copyFrom(version);
       }
       break;
     }
 
     case ORecordOperation.UPDATED: {
-      final byte[] stream = txEntry.getRecord().toStream();
+      final byte[] stream = record.toStream();
       if (stream == null) {
         OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
         break;
       }
 
+      if (!record.isContentChanged())
+        break;
+
       if (iUseLog)
-        txEntry
-            .getRecord()
-            .getRecordVersion()
-            .copyFrom(
-                updateRecord(iTx.getId(), cluster, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord()
-                    .getRecordType()));
+        record.getRecordVersion().copyFrom(
+            updateRecord(iTx.getId(), cluster, rid, stream, record.getRecordVersion(), record.getRecordType()));
       else
-        txEntry
-            .getRecord()
-            .getRecordVersion()
-            .copyFrom(
-                iTx.getDatabase()
-                    .getStorage()
-                    .updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(),
-                        (byte) 0, null).getResult());
+        record.getRecordVersion().copyFrom(
+            iTx.getDatabase()
+                .getStorage()
+                .updateRecord(rid, record.isContentChanged(), stream, record.getRecordVersion(), record.getRecordType(), (byte) 0,
+                    null).getResult());
       break;
     }
 
     case ORecordOperation.DELETED: {
       if (iUseLog)
-        deleteRecord(iTx.getId(), cluster, rid.clusterPosition, txEntry.getRecord().getRecordVersion());
+        deleteRecord(iTx.getId(), cluster, rid.clusterPosition, record.getRecordVersion());
       else
-        iTx.getDatabase().getStorage().deleteRecord(rid, txEntry.getRecord().getRecordVersion(), (byte) 0, null);
+        iTx.getDatabase().getStorage().deleteRecord(rid, record.getRecordVersion(), (byte) 0, null);
     }
       break;
     }
 
-    txEntry.getRecord().unsetDirty();
+    record.unsetDirty();
 
-    if (txEntry.getRecord() instanceof OTxListener)
-      ((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);
+    if (record instanceof OTxListener)
+      ((OTxListener) record).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);
   }
 
   public boolean isCommitting() {

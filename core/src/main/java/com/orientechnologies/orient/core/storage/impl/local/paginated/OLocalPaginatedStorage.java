@@ -36,6 +36,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -71,6 +72,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteD
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -108,8 +110,6 @@ import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Andrey Lomakin
@@ -746,7 +746,54 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         iLockingStrategy));
   }
 
-  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId rid, final byte[] content,
+  /**
+   * Execute actions of serialization context but not touch the record.
+   */
+  public void applySerializationContextActions(final ORecordId rid) {
+    checkOpeness();
+    final long timer = Orient.instance().getProfiler().startChrono();
+
+    final OCluster cluster = getClusterById(rid.clusterId);
+    cluster.getExternalModificationLock().requestModificationLock();
+    try {
+      modificationLock.requestModificationLock();
+      try {
+        lock.acquireSharedLock();
+        try {
+          // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
+          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          try {
+
+            dirtyFlag.makeDirty();
+            atomicOperationsManager.startAtomicOperation();
+            try {
+              final ORecordSerializationContext context = ORecordSerializationContext.getContext();
+              if (context != null)
+                context.executeOperations(this);
+              atomicOperationsManager.endAtomicOperation(false);
+            } catch (RuntimeException e) {
+              atomicOperationsManager.endAtomicOperation(true);
+              throw e;
+            }
+
+          } finally {
+            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          }
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
+        } finally {
+          lock.releaseSharedLock();
+        }
+      } finally {
+        modificationLock.releaseModificationLock();
+      }
+    } finally {
+      cluster.getExternalModificationLock().releaseModificationLock();
+      Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
+    }
+  }
+
+  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId rid, boolean updateContent, final byte[] content,
       final ORecordVersion version, final byte recordType, final int mode, ORecordCallback<ORecordVersion> callback) {
     checkOpeness();
 
@@ -773,33 +820,36 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               return new OStorageOperationResult<ORecordVersion>(recordVersion);
             }
 
-            // VERSION CONTROL CHECK
-            switch (version.getCounter()) {
-            // DOCUMENT UPDATE, NO VERSION CONTROL
-            case -1:
-              ppos.recordVersion.increment();
-              break;
+            if (updateContent) {
+              // VERSION CONTROL CHECK
+              switch (version.getCounter()) {
+              // DOCUMENT UPDATE, NO VERSION CONTROL
+              case -1:
+                ppos.recordVersion.increment();
+                break;
 
-            // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
-            case -2:
-              ppos.recordVersion.setCounter(-2);
-              break;
+              // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
+              case -2:
+                ppos.recordVersion.setCounter(-2);
+                break;
 
-            default:
-              // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
-              // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-              if (!version.equals(ppos.recordVersion))
-                if (OFastConcurrentModificationException.enabled())
-                  throw OFastConcurrentModificationException.instance();
-                else
-                  throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.UPDATED);
-              ppos.recordVersion.increment();
+              default:
+                // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
+                // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
+                if (!version.equals(ppos.recordVersion))
+                  if (OFastConcurrentModificationException.enabled())
+                    throw OFastConcurrentModificationException.instance();
+                  else
+                    throw new OConcurrentModificationException(rid, ppos.recordVersion, version, ORecordOperation.UPDATED);
+                ppos.recordVersion.increment();
+              }
             }
 
             dirtyFlag.makeDirty();
             atomicOperationsManager.startAtomicOperation();
             try {
-              cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
+              if (updateContent)
+                cluster.updateRecord(rid.clusterPosition, content, ppos.recordVersion, recordType);
 
               final ORecordSerializationContext context = ORecordSerializationContext.getContext();
               if (context != null)
@@ -2043,17 +2093,17 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {
 
-    if (txEntry.type != ORecordOperation.DELETED && !txEntry.getRecord().isDirty())
+    final ORecordInternal<?> rec = txEntry.getRecord();
+    if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
       return;
 
-    final ORecordId rid = (ORecordId) txEntry.getRecord().getIdentity();
+    final ORecordId rid = (ORecordId) rec.getIdentity();
 
     ORecordSerializationContext.pushContext();
     try {
-      if (rid.clusterId == ORID.CLUSTER_ID_INVALID && txEntry.getRecord() instanceof ODocument
-          && ((ODocument) txEntry.getRecord()).getSchemaClass() != null) {
+      if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument && ((ODocument) rec).getSchemaClass() != null) {
         // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
-        rid.clusterId = ((ODocument) txEntry.getRecord()).getSchemaClass().getDefaultClusterId();
+        rid.clusterId = ((ODocument) rec).getSchemaClass().getDefaultClusterId();
       }
 
       final OCluster cluster = getClusterById(rid.clusterId);
@@ -2063,8 +2113,8 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         // AVOID TO COMMIT INDEX STUFF
         return;
 
-      if (txEntry.getRecord() instanceof OTxListener)
-        ((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.BEFORE_COMMIT);
+      if (rec instanceof OTxListener)
+        ((OTxListener) rec).onEvent(txEntry, OTxListener.EVENT.BEFORE_COMMIT);
 
       switch (txEntry.type) {
       case ORecordOperation.LOADED:
@@ -2073,7 +2123,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       case ORecordOperation.CREATED: {
         // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
 
-        byte[] stream = txEntry.getRecord().toStream();
+        byte[] stream = rec.toStream();
         if (stream == null) {
           OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
           break;
@@ -2084,44 +2134,35 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         if (rid.isNew()) {
           rid.clusterId = cluster.getId();
           final OPhysicalPosition ppos;
-          ppos = createRecord(-1, rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), -1,
-              null).getResult();
+          ppos = createRecord(-1, rid, stream, rec.getRecordVersion(), rec.getRecordType(), -1, null).getResult();
 
           rid.clusterPosition = ppos.clusterPosition;
-          txEntry.getRecord().getRecordVersion().copyFrom(ppos.recordVersion);
+          rec.getRecordVersion().copyFrom(ppos.recordVersion);
 
           clientTx.updateIdentityAfterCommit(oldRID, rid);
         } else {
-          txEntry
-              .getRecord()
-              .getRecordVersion()
-              .copyFrom(
-                  updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), -1, null)
-                      .getResult());
+          rec.getRecordVersion().copyFrom(
+              updateRecord(rid, rec.isContentChanged(), stream, rec.getRecordVersion(), rec.getRecordType(), -1, null).getResult());
         }
 
         break;
       }
 
       case ORecordOperation.UPDATED: {
-        byte[] stream = txEntry.getRecord().toStream();
+        byte[] stream = rec.toStream();
         if (stream == null) {
           OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
           break;
         }
 
-        txEntry
-            .getRecord()
-            .getRecordVersion()
-            .copyFrom(
-                updateRecord(rid, stream, txEntry.getRecord().getRecordVersion(), txEntry.getRecord().getRecordType(), -1, null)
-                    .getResult());
+        rec.getRecordVersion().copyFrom(
+            updateRecord(rid, rec.isContentChanged(), stream, rec.getRecordVersion(), rec.getRecordType(), -1, null).getResult());
 
         break;
       }
 
       case ORecordOperation.DELETED: {
-        deleteRecord(rid, txEntry.getRecord().getRecordVersion(), -1, null);
+        deleteRecord(rid, rec.getRecordVersion(), -1, null);
         break;
       }
       }
@@ -2129,10 +2170,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       ORecordSerializationContext.pullContext();
     }
 
-    txEntry.getRecord().unsetDirty();
+    rec.unsetDirty();
 
-    if (txEntry.getRecord() instanceof OTxListener)
-      ((OTxListener) txEntry.getRecord()).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);
+    if (rec instanceof OTxListener)
+      ((OTxListener) rec).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);
   }
 
   private void checkClusterSegmentIndexRange(final int iClusterId) {

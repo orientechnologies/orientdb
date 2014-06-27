@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
@@ -30,7 +42,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageDataConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEHClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
@@ -66,18 +77,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWrite
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
 
 public class OStorageLocal extends OStorageLocalAbstract {
   private static String[]               ALL_FILE_EXTENSIONS       = { "ocf", ".och", ".ocl", ".oda", ".odh", ".otx", ".ocs",
@@ -1141,7 +1140,7 @@ public class OStorageLocal extends OStorageLocalAbstract {
         iLockingStrategy));
   }
 
-  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
+  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, boolean updateContent, final byte[] iContent,
       final ORecordVersion iVersion, final byte iRecordType, final int iMode, ORecordCallback<ORecordVersion> iCallback) {
     checkOpeness();
 

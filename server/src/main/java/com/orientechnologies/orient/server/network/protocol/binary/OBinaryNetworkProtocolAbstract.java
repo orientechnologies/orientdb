@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.logging.Level;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -50,10 +54,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.util.logging.Level;
 
 /**
  * Abstract base class for binary network implementations.
@@ -289,13 +289,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   protected ORecordVersion updateRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
-      final ORecordVersion version, final byte recordType) {
+      final ORecordVersion version, final byte recordType, boolean updateContent) {
     final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     newRecord.fill(rid, version, buffer, true);
 
-    // if (((OSchemaProxy) iDatabase.getMetadata().getSchema()).getIdentity().equals(rid))
-    // // || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
-    // throw new OSecurityAccessException("Cannot update internal record " + rid);
+    newRecord.setContentChanged(updateContent);
 
     final ORecordInternal<?> currentRecord;
     if (newRecord instanceof ODocument) {

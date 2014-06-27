@@ -227,7 +227,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
     if (updateOwner)
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
-          identifiable, identifiable));
+          identifiable, identifiable, null, false));
   }
 
   private AbsoluteChange getAbsoluteValue(OIdentifiable identifiable) {
@@ -274,7 +274,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
     if (updateOwner)
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
+          OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable, false));
   }
 
   public int size() {
@@ -435,6 +435,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     OIntegerSerializer.INSTANCE.serialize(rootPointer.getPageOffset(), stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
+    // Keep this section for binary compatibility with versions older then 1.7.5
     OIntegerSerializer.INSTANCE.serialize(size, stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
@@ -499,7 +500,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     final int pageOffset = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    final int size = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
+    // Cached bag size. Not used after 1.7.5
     offset += OIntegerSerializer.INT_SIZE;
 
     if (fileId == -1)
@@ -507,7 +508,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     else
       collectionPointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
 
-    this.size = size;
+    this.size = -1;
 
     changes.putAll(ChangeSerializationHelper.INSTANCE.deserializeChanges(stream, offset));
 
@@ -663,7 +664,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
       if (updateOwner)
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-            OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue));
+            OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue, false));
       currentRemoved = true;
     }
 
