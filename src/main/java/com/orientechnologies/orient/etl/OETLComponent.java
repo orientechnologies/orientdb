@@ -18,11 +18,15 @@
 
 package com.orientechnologies.orient.etl;
 
-import java.io.File;
-import java.util.Map;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public interface OImporterCallback {
-  public boolean filterFile(File f, Map<String, File> iFiles);
+/**
+ * ETL basic component.
+ */
+public interface OETLComponent {
 
-  void onAfterProcessingFile(File f);
+  public void configure(ODatabaseDocumentTx iDatabase, final ODocument iConfiguration);
+
+  public String getName();
 }

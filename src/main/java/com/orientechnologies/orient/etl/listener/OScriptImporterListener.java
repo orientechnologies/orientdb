@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,6 +65,10 @@ public class OScriptImporterListener implements OImporterListener {
   @Override
   public void onJoinNotFound(ODatabaseDocumentTx db, OCommandContext iContext, OIndex<?> iIndex, Object iKey) {
     executeEvent(db, "onJoinNotFound", iContext);
+  }
+
+  @Override
+  public void validate(ODatabaseDocumentTx db, OCommandContext iContext, ODocument iRecord) {
   }
 
   private Object executeEvent(final ODatabaseDocumentTx db, final String iEventName, final OCommandContext iContext) {

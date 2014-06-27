@@ -22,6 +22,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class ODefaultImporterListener implements OImporterListener {
 
@@ -46,5 +47,9 @@ public class ODefaultImporterListener implements OImporterListener {
     iContext.setVariable("joinNotFound", ((Integer) iContext.getVariable("joinNotFound", 0)) + 1);
     OLogManager.instance().warn(this, "     + %d line: join record not found in index '%s' for key='%s'",
         iContext.getVariable("currentLine"), iIndex, iKey);
+  }
+
+  @Override
+  public void validate(ODatabaseDocumentTx db, OCommandContext iContext, ODocument iRecord) {
   }
 }

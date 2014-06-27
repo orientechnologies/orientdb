@@ -16,25 +16,36 @@
  *
  */
 
-package com.orientechnologies.orient.etl.listener;
+package com.orientechnologies.orient.etl.loader;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public interface OImporterListener {
-  public void onBeforeFile(ODatabaseDocumentTx db, OCommandContext iContext);
+/**
+ * ETL Loader.
+ */
+public class OOrientLoader implements OLoader {
+  protected ODatabaseDocumentTx db;
+  protected long                progress = 0;
 
-  public void onAfterFile(ODatabaseDocumentTx db, OCommandContext iContext);
+  public OOrientLoader() {
+  }
 
-  public boolean onBeforeLine(ODatabaseDocumentTx db, OCommandContext iContext);
+  public void load(final Object input) {
+    progress++;
+  }
 
-  public void onAfterLine(ODatabaseDocumentTx db, OCommandContext iContext);
+  public long getProgress() {
+    return progress;
+  }
 
-  public void onDump(ODatabaseDocumentTx db, OCommandContext iContext);
+  @Override
+  public void configure(ODatabaseDocumentTx iDatabase, ODocument iConfiguration) {
+    this.db = iDatabase;
+  }
 
-  public void onJoinNotFound(ODatabaseDocumentTx db, OCommandContext iContext, final OIndex<?> iIndex, final Object iKey);
-
-  public void validate(ODatabaseDocumentTx db, OCommandContext iContext, ODocument iRecord);
+  @Override
+  public String getName() {
+    return "orient";
+  }
 }

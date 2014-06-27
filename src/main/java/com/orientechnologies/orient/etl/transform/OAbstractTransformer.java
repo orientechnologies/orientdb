@@ -16,25 +16,34 @@
  *
  */
 
-package com.orientechnologies.orient.etl.listener;
+package com.orientechnologies.orient.etl.transform;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-public interface OImporterListener {
-  public void onBeforeFile(ODatabaseDocumentTx db, OCommandContext iContext);
+/**
+ * Abstract Transformer.
+ */
+public abstract class OAbstractTransformer implements OTransformer {
+  protected Object obj;
 
-  public void onAfterFile(ODatabaseDocumentTx db, OCommandContext iContext);
+  @Override
+  public void transform(final Object input) {
+    obj = input;
+  }
 
-  public boolean onBeforeLine(ODatabaseDocumentTx db, OCommandContext iContext);
+  @Override
+  public void configure(ODatabaseDocumentTx iDatabase, ODocument iConfiguration) {
+  }
 
-  public void onAfterLine(ODatabaseDocumentTx db, OCommandContext iContext);
+  @Override
+  public boolean hasNext() {
+    return obj != null;
+  }
 
-  public void onDump(ODatabaseDocumentTx db, OCommandContext iContext);
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException("remove()");
+  }
 
-  public void onJoinNotFound(ODatabaseDocumentTx db, OCommandContext iContext, final OIndex<?> iIndex, final Object iKey);
-
-  public void validate(ODatabaseDocumentTx db, OCommandContext iContext, ODocument iRecord);
 }
