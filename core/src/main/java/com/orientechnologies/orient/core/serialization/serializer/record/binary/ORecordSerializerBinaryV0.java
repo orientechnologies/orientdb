@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -302,7 +303,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         // temporary skip serialization skip of unknown types
         if (type == null)
           continue;
-        pointer = writeSingleValue(bytes, value, type);
+        pointer = writeSingleValue(bytes, value, type, getLinkedType(document, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
@@ -310,8 +311,19 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   }
 
+  private OType getLinkedType(ODocument document, String key) {
+    OClass clazz = document.getSchemaClass();
+    if (clazz != null) {
+      OProperty prop = clazz.getProperty(key);
+      if (prop != null) {
+        return prop.getLinkedType();
+      }
+    }
+    return null;
+  }
+
   @SuppressWarnings("unchecked")
-  private int writeSingleValue(BytesContainer bytes, Object value, OType type) {
+  private int writeSingleValue(BytesContainer bytes, Object value, OType type, OType linkedType) {
     int pointer = 0;
     switch (type) {
     case INTEGER:
@@ -341,10 +353,18 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       bytes.bytes[pointer] = ((Boolean) value) ? (byte) 1 : (byte) 0;
       break;
     case DATETIME:
-      pointer = OVarIntSerializer.write(bytes, ((Date) value).getTime());
+      if (value instanceof Long) {
+        pointer = OVarIntSerializer.write(bytes, (Long) value);
+      } else
+        pointer = OVarIntSerializer.write(bytes, ((Date) value).getTime());
       break;
     case DATE:
-      pointer = OVarIntSerializer.write(bytes, (((Date) value).getTime() + ONE_HOUR) / MILLISEC_PER_DAY);
+      long dateValue;
+      if (value instanceof Long) {
+        dateValue = (Long) value;
+      } else
+        dateValue = ((Date) value).getTime();
+      pointer = OVarIntSerializer.write(bytes, (dateValue + ONE_HOUR) / MILLISEC_PER_DAY);
       break;
     case EMBEDDED:
       pointer = bytes.offset;
@@ -359,9 +379,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case EMBEDDEDSET:
     case EMBEDDEDLIST:
       if (value.getClass().isArray())
-        pointer = writeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)));
+        pointer = writeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)), linkedType);
       else
-        pointer = writeEmbeddedCollection(bytes, (Collection<?>) value);
+        pointer = writeEmbeddedCollection(bytes, (Collection<?>) value, linkedType);
       break;
     case DECIMAL:
       BigDecimal decimalValue = (BigDecimal) value;
@@ -411,10 +431,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     int fullPos = OVarIntSerializer.write(bytes, map.size());
     for (Entry<Object, OIdentifiable> entry : map.entrySet()) {
       // TODO:check skip of complex types
-      OType type = getTypeFromValue(entry.getKey(), true);
+      // FIXME: changed to support only string key on map
+      OType type = OType.STRING;
       writeOType(bytes, bytes.alloc(1), type);
-      writeSingleValue(bytes, entry.getKey(), type);
-
+      writeString(bytes, entry.getKey().toString());
       writeOptimizedLink(bytes, entry.getValue());
     }
     return fullPos;
@@ -428,9 +448,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     int fullPos = OVarIntSerializer.write(bytes, map.size());
     for (Entry<Object, Object> entry : map.entrySet()) {
       // TODO:check skip of complex types
-      OType type = getTypeFromValue(entry.getKey(), true);
+      // FIXME: changed to support only string key on map
+      OType type = OType.STRING;
       writeOType(bytes, bytes.alloc(1), type);
-      writeSingleValue(bytes, entry.getKey(), type);
+      writeString(bytes, entry.getKey().toString());
       pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
       values[i] = entry;
       i++;
@@ -444,7 +465,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         // temporary skip serialization of unknown types
         if (type == null)
           continue;
-        pointer = writeSingleValue(bytes, value, type);
+        pointer = writeSingleValue(bytes, value, type, null);
         OIntegerSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
@@ -495,6 +516,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   private int writeLinkCollection(BytesContainer bytes, Collection<OIdentifiable> value) {
+    if (value instanceof OMVRBTreeRIDSet) {
+      ((OMVRBTreeRIDSet) value).toStream();
+    }
     int pos = OVarIntSerializer.write(bytes, value.size());
     for (OIdentifiable itemValue : value) {
       writeLink(bytes, itemValue);
@@ -502,7 +526,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return pos;
   }
 
-  private int writeEmbeddedCollection(BytesContainer bytes, Collection<?> value) {
+  private int writeEmbeddedCollection(BytesContainer bytes, Collection<?> value, OType linkedType) {
     int pos = OVarIntSerializer.write(bytes, value.size());
     // TODO manage embedded type from schema and autodeterminated.
     writeOType(bytes, bytes.alloc(1), OType.ANY);
@@ -512,10 +536,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         writeOType(bytes, bytes.alloc(1), OType.ANY);
         continue;
       }
-      OType type = getTypeFromValue(itemValue, true);
+      OType type;
+      if (linkedType == null)
+        type = getTypeFromValue(itemValue, true);
+      else
+        type = linkedType;
       if (type != null) {
         writeOType(bytes, bytes.alloc(1), type);
-        writeSingleValue(bytes, itemValue, type);
+        writeSingleValue(bytes, itemValue, type, null);
       }
     }
     return pos;
@@ -524,7 +552,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   private OType getFieldType(ODocument document, String key, Object fieldValue) {
     OType type = document.fieldType(key);
     if (type == null) {
-      type = getTypeFromValue(fieldValue, false);
+      OClass clazz = document.getSchemaClass();
+      if (clazz != null) {
+        OProperty prop = clazz.getProperty(key);
+        if (prop != null) {
+          type = prop.getType();
+        }
+      }
+      if (type == null)
+        type = getTypeFromValue(fieldValue, false);
     }
     return type;
   }
