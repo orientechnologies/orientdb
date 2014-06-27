@@ -19,6 +19,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 import java.io.IOException;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -53,25 +54,26 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageC
  * @since 16.08.13
  */
 public class ODurablePage {
-  protected static final int           MAGIC_NUMBER_OFFSET = 0;
-  protected static final int           CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
+  protected static final int         MAGIC_NUMBER_OFFSET = 0;
+  protected static final int         CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
-  public static final int              WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
-  public static final int              WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
-  public static final int              MAX_PAGE_SIZE_BYTES = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  public static final int            WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
+  public static final int            WAL_POSITION_OFFSET = WAL_SEGMENT_OFFSET + OLongSerializer.LONG_SIZE;
+  public static final int            MAX_PAGE_SIZE_BYTES = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
 
-  protected static final int           NEXT_FREE_POSITION  = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
+  protected static final int         NEXT_FREE_POSITION  = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
 
-  protected OPageChanges               pageChanges         = new OPageChanges();
+  protected OPageChanges             pageChanges         = new OPageChanges();
 
-  protected final OCacheEntry          cacheEntry;
-  protected final OCachePointer        cachePointer;
-  protected final ODirectMemoryPointer pagePointer;
-  protected final TrackMode            trackMode;
+  private final OCacheEntry          cacheEntry;
+	private final ODirectMemoryPointer pagePointer;
+
+  protected final TrackMode          trackMode;
 
   public ODurablePage(OCacheEntry cacheEntry, TrackMode trackMode) {
     this.cacheEntry = cacheEntry;
-    this.cachePointer = cacheEntry.getCachePointer();
+
+		final OCachePointer cachePointer = cacheEntry.getCachePointer();
     this.pagePointer = cachePointer.getDataPointer();
 
     this.trackMode = trackMode;
@@ -98,6 +100,14 @@ public class ODurablePage {
 
   protected byte[] getBinaryValue(int pageOffset, int valLen) {
     return pagePointer.get(pageOffset, valLen);
+  }
+
+  protected int getObjectSizeInDirectMemory(OBinarySerializer binarySerializer, long offset) {
+    return binarySerializer.getObjectSizeInDirectMemory(pagePointer, offset);
+  }
+
+  protected <T> T deserializeFromDirectMemory(OBinarySerializer<T> binarySerializer, long offset) {
+    return binarySerializer.deserializeFromDirectMemory(pagePointer, offset);
   }
 
   protected byte getByteValue(int pageOffset) {

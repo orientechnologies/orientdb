@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -29,7 +28,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
@@ -123,10 +121,10 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
     final long hashCode = getLongValue(entryPosition);
     entryPosition += OLongSerializer.LONG_SIZE;
 
-    final K key = keySerializer.deserializeFromDirectMemory(pagePointer, entryPosition);
-    entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition);
+    final K key = deserializeFromDirectMemory(keySerializer, entryPosition);
+    entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
 
-    final V value = valueSerializer.deserializeFromDirectMemory(pagePointer, entryPosition);
+    final V value = deserializeFromDirectMemory(valueSerializer, entryPosition);
     return new Entry<K, V>(key, value, hashCode);
   }
 
@@ -138,7 +136,7 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
   public K getKey(int index) {
     int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
 
-    return keySerializer.deserializeFromDirectMemory(pagePointer, entryPosition + OLongSerializer.LONG_SIZE);
+    return deserializeFromDirectMemory(keySerializer, entryPosition + OLongSerializer.LONG_SIZE);
   }
 
   public int getIndex(final long hashCode, final K key) {
@@ -171,10 +169,10 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
   public int updateEntry(int index, V value) throws IOException {
     int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE);
     entryPosition += OLongSerializer.LONG_SIZE;
-    entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition);
+    entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
 
     final int newSize = valueSerializer.getObjectSize(value);
-    final int oldSize = valueSerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition);
+    final int oldSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
     if (newSize != oldSize)
       return -1;
 
@@ -198,9 +196,8 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
     final int positionOffset = POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE;
     final int entryPosition = getIntValue(positionOffset);
 
-    final int keySize = keySerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition + OLongSerializer.LONG_SIZE);
-    final int ridSize = valueSerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition + keySize
-        + OLongSerializer.LONG_SIZE);
+    final int keySize = getObjectSizeInDirectMemory(keySerializer, entryPosition + OLongSerializer.LONG_SIZE);
+    final int ridSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition + keySize + OLongSerializer.LONG_SIZE);
     final int entrySize = keySize + ridSize + OLongSerializer.LONG_SIZE;
 
     moveData(positionOffset + OIntegerSerializer.INT_SIZE, positionOffset, size() * OIntegerSerializer.INT_SIZE - (index + 1)
