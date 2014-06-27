@@ -60,6 +60,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -1496,6 +1497,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
                           + "' (rid=" + doc.getIdentity() + ")");
                   }
                 } else if (fieldValue instanceof Iterable<?>) {
+                  if (fieldValue instanceof ORecordLazyMultiValue)
+                    ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
+
                   final Iterator<Object> it = ((Iterable) fieldValue).iterator();
                   for (int i = 0; it.hasNext(); ++i) {
                     final Object v = it.next();
