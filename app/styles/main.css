@@ -129,20 +129,12 @@ div.scroll-editclass, div.scroll-indexes {
     line-height: 40px;
 }
 
-div.document form.bs-docs-example:after {
-    content: "Document";
-}
-
 div.vertex form.bs-docs-example:after {
     content: "Vertex";
 }
 
 div.edge form.bs-docs-example:after {
     content: "Edge";
-}
-
-.edgesList {
-
 }
 
 .record-header {
@@ -179,10 +171,6 @@ div.edge form.bs-docs-example:after {
     max-width: 30%;
 }
 
-.odoc .query-header a {
-    display: inline;
-}
-
 .query-header a {
     text-overflow: ellipsis;
     overflow: hidden;
@@ -217,14 +205,6 @@ div.edge form.bs-docs-example:after {
 .ocontainer-body {
     padding: 10px 10px 0px;
 
-}
-
-.odoc .query-actions {
-    border: none;
-}
-
-.odoc .query-body {
-    padding-top: 0;
 }
 
 .query-container {
@@ -492,8 +472,6 @@ ul.horizontallist, ol.horizontallist {
     overflow-y: scroll;
 }
 
-
-
 .navbar.navbar-inverse .navbar-inner {
     background: none repeat scroll 0 0 #262626;
     border-bottom: 3px solid #FF6600;
@@ -528,7 +506,6 @@ ul.horizontallist, ol.horizontallist {
     height: 300px;
     margin-bottom: 20px;
 }
-
 
 .label-data {
     background-color: #F38630;
@@ -701,8 +678,6 @@ ul.arrayrid > li {
     position: absolute;
     right: -1px;
 }
-
-
 
 .show {
     -webkit-transform: translateX(0px);
@@ -960,6 +935,11 @@ ul.arrayrid > li {
     /*height: 600px;*/
     /*width: 100%;*/
     /*overflow: auto;*/
+}
+
+span.badge-edge {
+    display: inline-block;
+    margin-right: 1px;
 }
 
 .badge-edge > a {

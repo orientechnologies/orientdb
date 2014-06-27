@@ -1,43 +1,42 @@
-<div class="query-container odoc">
-    <div class="row-fluid">
-        <form class="form-horizontal  css-form" name="docForm">
-            <div class="query-header"><h5> {{ label }}: <a
-                    href="#/database/{{database}}/schema/editclass/{{doc['@class']}}">{{doc['@class']}}</a> -
-                {{doc['@rid']}} - Version
-                {{doc['@version']}}</h5></div>
+<div class="panel panel-default">
 
-            <div class="query-actions">
-
-                <button type="submit" class="btn btn-primary" ng-show="canSave" ng-click="save(docForm)"
-                        ng-disabled="!docValid" tooltip="Save"><i class="icon-ok icon-white"></i> Save
-                </button>
+    <div class="panel-heading">
+        {{ label }}: <a
+            href="#/database/{{database}}/schema/editclass/{{doc['@class']}}">{{doc['@class']}}</a> -
+        {{doc['@rid']}} - Version
+        {{doc['@version']}}
+        <div class="panel-actions">
+            <div class="btn-toolbar">
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-sm btn-primary" ng-show="canSave" ng-click="save(docForm)"
+                            ng-disabled="!docValid" tooltip="Save"><i class="fa fa-save"></i> Save
+                    </button>
+                </div>
                 <div class="btn-group" ng-show="canAdd">
-                    <a class="btn" href="javascript:void(0)">Actions</a>
-                    <a class="btn dropdown-toggle" data-toggle="dropdown" href="#"><span
+                    <a class="btn btn-sm btn-default" href="javascript:void(0)">Actions</a>
+                    <a class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"
+                       href="javascript:void(0)"><span
                             class="caret"></span></a>
                     <ul class="dropdown-menu">
-                        <li><a href="javascript:void(0)" ng-click="create()"><i class="icon-plus-sign"></i>
+                        <li><a href="javascript:void(0)" ng-click="create()"><i class="fa fa-plus-circle"></i>
                             New</a></li>
-                        <li><a href="javascript:void(0)" ng-click="addField()"><i class="icon-th-list"></i>
+                        <li><a href="javascript:void(0)" ng-click="addField()"><i class="fa fa-list"></i>
                             Add field</a></li>
-                        <li><a href="javascript:void(0)" ng-click="delete()"><i class="icon-trash"></i>
+                        <li><a href="javascript:void(0)" ng-click="delete()"><i class="fa fa-trash-o"></i>
                             Delete</a></li>
                     </ul>
                 </div>
             </div>
-            <fieldset>
-                <div class="control-group">
-                    <div class="controls controls-row doc-header controls-row">
-                        <label class="span9"></label>
-
-                        <div class="span3">
-
-                        </div>
+        </div>
+    </div>
+    <div class="panel-body">
+        <div class="row">
+            <form class="form-horizontal css-form" name="docForm">
+                <fieldset>
+                    <div docwidget>
                     </div>
-                </div>
-                <div class="query-body" docwidget>
-                </div>
-            </fieldset>
-        </form>
+                </fieldset>
+            </form>
+        </div>
     </div>
 </div>

@@ -52,7 +52,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                     if (index != -1)
                         $scope.showInConsoleAfterSave($scope.functions[index]);
                 }
-                Aside.show({scope: $scope, template: 'views/database/function/functionAside.html', show: true});
+                Aside.show({scope: $scope, template: 'views/database/function/functionAside.html', show: false});
             }
         });
 

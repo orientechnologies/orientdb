@@ -5,8 +5,9 @@ a.navbar-brand > img {
 
 .navbar-inverse {
     background-color: #222222;
-    border-bottom: 3px solid #ff6600;
-    border-color: #080808 #080808 #ff6600;
+    /*border-bottom: 3px solid #ff6600;*/
+    border-color: #080808 #080808 #080808;
+    box-shadow: 0px 0px 2px 2px #080808;
 }
 
 .aside .aside-dialog .aside-content .aside-header {
@@ -20,6 +21,7 @@ a.navbar-brand > img {
 body {
     background: url("../img/bg-texture-light.gif") repeat scroll 0 0 #f6f6f6;
 }
+
 body div.container-notification {
     padding-top: 48px
 }
@@ -47,11 +49,34 @@ body div.container-studio {
     border-left: 3px solid #c5c5c5;
 }
 
-
 .aside {
     top: 53px;
 }
 
 .panel-function .panel-body {
     padding-top: 0;
+}
+
+.panel .page-header {
+    margin-top: 20px;
+}
+
+.opanel .col-md-2 {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.opanel .col-md-10 {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.opanel .col-md-8 {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.rid-list {
+    /*max-height: 40px;*/
+    /*overflow: auto;*/
 }

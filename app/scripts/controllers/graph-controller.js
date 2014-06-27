@@ -52,10 +52,8 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
         var modalScope = $scope.$new(true);
         modalScope.db = $scope.database;
         modalScope.rid = rid;
-        var modalPromise = $modal({template: 'views/database/modalEdit.html', persist: true, show: false, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
-        $q.when(modalPromise).then(function (modalEl) {
-            modalEl.modal('show');
-        });
+        var modalPromise = $modal({template: 'views/database/modalEdit.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
+
     };
     $scope.showModalConnection = function (label) {
         var modalScope = $scope.$new(true);
@@ -63,7 +61,7 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
         modalScope.originRid = $scope.rid;
         modalScope.container = $scope;
         modalScope.label = label
-        var modalPromise = $modal({template: 'views/vertex/modalConnection.html', persist: true, show: false, backdrop: 'static', scope: modalScope, modalClass: 'createEdge'});
+        var modalPromise = $modal({template: 'views/vertex/modalConnection.html', persist: false, show: false, backdrop: 'static', scope: modalScope, modalClass: 'createEdge'});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
         });

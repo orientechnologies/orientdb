@@ -386,19 +386,18 @@ Widget.directive('ridrender', function (Database) {
                 }
             }
             if (value instanceof Array) {
-                var html = "<ul class='arrayrid'>";
+                var html = "<div class='rid-list'>";
                 var i = 0;
                 var dbName = Database.getName();
 
                 value.forEach(function (elem) {
                     if (typeof elem == 'string' && elem.indexOf('#') == 0) {
-                        var link = '<li><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></li>, ';
+                        var link = '<span class="label label-default badge-edge"><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></span> ';
                         html += link;
                         i++;
                     }
                 });
-                html = html.replace(/,([^,]*)$/, '$1');
-                html += "</ul>";
+                html += "</div>";
                 if (html != "" && i == value.length) {
                     element.html(html);
                 }

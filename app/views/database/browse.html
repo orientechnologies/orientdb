@@ -11,7 +11,7 @@
                     </button>
                 </div>
                 <div class="btn-group config">
-                    <a class="btn btn-trasparent btn-small" ng-controller="QueryConfigController"
+                    <a class="btn btn-trasparent btn-sm"
                        data-placement="bottom"
                        data-title="Query configuration"
                        data-template="views/database/browseConfig.html"
@@ -42,22 +42,29 @@
             <form class="form-inline pull-right" ng-show="!hideSettings">
                 <fieldset>
 
-                    <label>Content Type
-                        <select ng-model="selectedContentType" class="input-small"
+                    <div class="form-group">
+                        <label>Content Type</label>
+                        <select ng-model="selectedContentType" class="form-control input-sm"
                                 ng-options="q for q in contentType"></select>
-                    </label>
-                    <label>Limit
-                        <input type="text" class="input-xxsmall" ng-model="limit"/>
-                    </label>
-                    <label> Keep result set in history
-                        <input type="text" class="input-xxsmall" ng-model="keepLimit"/>
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" class="input-xxsmall" ng-model="shallow"/> Shallow collection
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" class="input-xxsmall" ng-model="hideSettings"/> Hide settings
-                    </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Limit</label>
+                        <input type="text" class="form-control input-sm" ng-model="limit"/>
+                    </div>
+                    <div class="form-group">
+                        <label> Keep result set in history</label>
+                        <input type="text" class="form-control input-sm" ng-model="keepLimit"/>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" class="" ng-model="shallow"/> Shallow collection
+                        </label>
+                    </div>
+                    <div class="checkbox">
+                        <label>
+                            <input type="checkbox" class="" ng-model="hideSettings"/> Hide settings
+                        </label>
+                    </div>
                     <button ng-click="query()" ng-disabled="!queryText" class="btn btn-small btn-primary"><i
                             class="icon-white icon-cog"></i>
                         Run

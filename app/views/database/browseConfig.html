@@ -1,32 +1,40 @@
-<div class="row-fluid">
+<div class="popover" ng-controller="QueryConfigController">
+    <h3 class="popover-title" ng-bind-html="title" ng-show="title"></h3>
 
-    <div class="span12">
-        <form class="">
-            <fieldset>
+    <div class="popover-content">
 
-                <label>Content Type</label>
-                <select ng-model="selectedContentType" class="input-medium"
-                        ng-options="q for q in contentType"></select>
-                <label>Limit</label>
-                <input type="text" class="input-medium" ng-model="limit"/>
+        <div class="row">
+            <div class="col-md-12">
+                <form class="">
+                    <fieldset>
+                        <div class="form-group">
+                            <label>Content Type</label>
+                            <select ng-model="selectedContentType" class="form-control input-sm"
+                                    ng-options="q for q in contentType"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Limit</label>
+                            <input type="text" class="form-control input-sm" ng-model="limit"/>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" ng-model="hideSettings"/> Hide settings
+                            </label>
+                        </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" ng-model="shallow"/> Shallow collection
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label> Keep result set in history</label>
+                            <input type="text" class="form-control input-sm" ng-model="keepLimit"/>
+                        </div>
+                    </fieldset>
 
-                <label class="checkbox">
-                    <input type="checkbox" class="input-medium" ng-model="hideSettings"/> Hide settings
-                </label>
-                <label class="checkbox">
-                    <input type="checkbox" class="input-medium" ng-model="shallow"/> Shallow collection
-                </label>
-                <label> Keep result set in history</label>
-                <input type="text" class="input-medium" ng-model="keepLimit"/>
-                <!--<div style="margin-top: 5px;">-->
-                <!--<label>History</label>-->
-                <!--<select ng-model="queryText" ng-options="q for q in queries"></select>-->
-                <!--<i class="icon-trash pointer" ng-click="clear()"></i>-->
-                <!--</div>-->
-            </fieldset>
 
-            
-        </form>
+                </form>
+            </div>
+        </div>
     </div>
-
 </div>

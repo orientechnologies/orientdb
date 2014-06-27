@@ -54,10 +54,9 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
         modalScope.originRid = $scope.rid;
         modalScope.container = $scope;
         modalScope.label = label
-        var modalPromise = $modal({template: 'views/document/modalConnection.html', persist: true, show: false, backdrop: 'static', scope: modalScope, modalClass: 'createEdge'});
-        $q.when(modalPromise).then(function (modalEl) {
-            modalEl.modal('show');
-        });
+        var modalPromise = $modal({template: 'views/document/modalConnection.html', persist: true, show: true, backdrop: 'static', scope: modalScope, modalClass: 'createEdge'});
+
+
     }
 }]);
 DocController.controller("DocumentCreateController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {

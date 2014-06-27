@@ -25,7 +25,7 @@
         <div class="collapse navbar-collapse navbar-ex1-collapse">
             <ul class="nav navbar-nav">
                 <li data-match-route="{{menu.link}}" ng-class="getClass(menu)" ng-repeat="menu in menus">
-                    <a href="{{menu.link}}"><i class="{{menu.icon}} icon-white"></i> {{menu.name | capitalize}}</a>
+                    <a href="{{menu.link}}"><i class="{{menu.icon}} "></i> {{menu.name | capitalize}}</a>
                 </li>
 
                 <li>
@@ -36,23 +36,24 @@
                 <li>
                     <!-- report issue -->
                     <a href="https://github.com/orientechnologies/orientdb-studio/issues" target="_blank"><i
-                            class="fa fa-bug  icon-white"></i> Report Issue</a>
+                            class="fa fa-bug "></i> Report Issue</a>
                 </li>
 
 
             </ul>
             <ul class="nav navbar-nav navbar-right navbar-user" ng-show="database.getName()">
                 <li class="dropdown user">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    <a href="javascript:void(0)" class="dropdown-toggle" data-toggle="dropdown">
+                        <i class="fa fa-user"></i>
                         <span class="username">{{ database.getName()}} ({{ database.currentUser()}})</span>
-                        <i class="icon-angle-down icon-white"></i>
+                        <i class="fa fa-angle-down"></i>
                     </a>
                     <ul class="dropdown-menu">
                         <li><a href="javascript:void(0)" ng-click="refreshMetadata()"><i
-                                class="icon-refresh "></i> Refresh Metadata</a></li>
-                        <li><a href="javascript:void(0)" ng-click="showAbout()"><i class="icon-info-sign"></i> About</a>
+                                class="fa fa-refresh "></i> Refresh Metadata</a></li>
+                        <li><a href="javascript:void(0)" ng-click="showAbout()"><i class="fa fa-info-circle"></i> About</a>
                         </li>
-                        <li><a href="#" ng-click="logout()"><i class="icon-off "></i> Log Out</a></li>
+                        <li><a href="#" ng-click="logout()"><i class="fa fa-power-off "></i> Log Out</a></li>
                     </ul>
                 </li>
             </ul>
