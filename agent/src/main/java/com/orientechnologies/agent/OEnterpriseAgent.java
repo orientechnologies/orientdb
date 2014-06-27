@@ -40,11 +40,11 @@ import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtoco
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 public class OEnterpriseAgent extends OServerPluginAbstract {
+  private static final String ORIENDB_ENTERPRISE_VERSION = "1.7"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
   private OServer             server;
   private String              license;
   private String              version;
   private boolean             enabled                    = false;
-  private static final String ORIENDB_ENTERPRISE_VERSION = "1.7-rc2"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH THIS
 
   public OEnterpriseAgent() {
   }
@@ -118,7 +118,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
   private void uninstallProfiler() {
     final OProfilerMBean currentProfiler = Orient.instance().getProfiler();
 
-    Orient.instance().setProfiler(new OProfiler((OProfiler) currentProfiler));
+    Orient.instance().setProfiler(new OProfiler((OAbstractProfiler) currentProfiler));
     Orient.instance().getProfiler().startup();
 
     currentProfiler.shutdown();

@@ -17,6 +17,12 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,12 +39,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
-import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
-import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
 public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstract {
 
@@ -65,7 +65,7 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 	@Override
 	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
 
-		final String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: log/<type>?<value>");
+		final String[] urlParts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: log/<type>?<value>");
 
 		String type = urlParts[1]; // the type of the log tail search or file
 

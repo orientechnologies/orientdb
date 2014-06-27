@@ -37,7 +37,7 @@ public class OServerCommandGetDistributed extends OServerCommandAuthenticatedSer
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] parts = checkSyntax(iRequest.url, 2, "Syntax error: distributed/<command>/[<id>]");
+    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: distributed/<command>/[<id>]");
 
     iRequest.data.commandInfo = "Distributed information";
 

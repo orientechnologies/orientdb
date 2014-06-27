@@ -17,14 +17,14 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import java.io.StringWriter;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
+
+import java.io.StringWriter;
 
 public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServerAbstract {
   private static final String[] NAMES = { "GET|profiler/*", "POST|profiler/*" };
@@ -35,7 +35,7 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    final String[] parts = checkSyntax(iRequest.url, 2, "Syntax error: profiler/<command>/[<config>]|[<from>]");
+    final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: profiler/<command>/[<config>]|[<from>]");
 
     iRequest.data.commandInfo = "Profiler information";
 
@@ -64,7 +64,6 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
       } else if (command.equalsIgnoreCase("reset")) {
         Orient.instance().getProfiler().resetRealtime(arg);
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "deleted", null);
-        
 
       } else if (command.equalsIgnoreCase("restart")) {
         Orient.instance().getProfiler().stopRecording();

@@ -36,6 +36,8 @@ public class OL {
       if (!d.after(now))
         throw new OLicenseException("license expired on: " + d);
       return getDateDiff(d, now);
+    } catch (OLicenseException e) {
+      throw e;
     } catch (Exception e) {
       throw new OLicenseException("license not valid");
     }

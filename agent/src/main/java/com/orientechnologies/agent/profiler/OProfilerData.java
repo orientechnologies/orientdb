@@ -18,6 +18,9 @@
 
 package com.orientechnologies.agent.profiler;
 
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.profiler.OProfilerEntry;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -28,9 +31,6 @@ import java.util.Map.Entry;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.profiler.OProfilerEntry;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create

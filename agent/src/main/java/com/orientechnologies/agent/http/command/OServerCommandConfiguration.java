@@ -17,19 +17,19 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class OServerCommandConfiguration extends
 		OServerCommandAuthenticatedServerAbstract {
@@ -49,7 +49,7 @@ public class OServerCommandConfiguration extends
 	public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse)
 			throws Exception {
 
-		checkSyntax(iRequest.url, 2, "Syntax error: configuration/");
+		checkSyntax(iRequest.getUrl(), 2, "Syntax error: configuration/");
 		if (iRequest.httpMethod.equals("GET")) {
 			return doGet(iRequest, iResponse);
 		}
