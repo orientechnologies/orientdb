@@ -57,10 +57,11 @@ public class OETLProcessor implements OETLComponent {
   protected TimerTask                  dumpTask;
 
   protected class OETLProcessorStats {
-    public long lastProgress = 0;
-    public long lastLap      = 0;
-    public long warnings     = 0;
-    public long errors       = 0;
+    public long lastExtractorProgress = 0;
+    public long lastLoaderProgress    = 0;
+    public long lastLap               = 0;
+    public long warnings              = 0;
+    public long errors                = 0;
   }
 
   public OETLProcessor(final OExtractor iExtractor, final OTransformer[] iTransformers, final OLoader iLoader) {
@@ -265,17 +266,23 @@ public class OETLProcessor implements OETLComponent {
 
   protected void dumpProgress() {
     final long now = System.currentTimeMillis();
+
     final long extractorProgress = extractor.getProgress();
     final long extractorTotal = extractor.getTotal();
+    final long extractorItemsSec = (long) ((extractorProgress - stats.lastExtractorProgress) * 1000f / (now - stats.lastLap));
+    final String extractorUnit = extractor.getUnit();
 
-    final long extractorItemsSec = (long) ((extractorProgress - stats.lastProgress) * 1000f / (now - stats.lastLap));
+    final long loaderProgress = loader.getProgress();
+    final long loaderItemsSec = (long) ((loaderProgress - stats.lastLoaderProgress) * 1000f / (now - stats.lastLap));
+    final String loaderUnit = loader.getUnit();
 
     OLogManager.instance().info(this,
-        "+ %3.2f%% -> extracted %,d/%,d (%,d items/sec) -> transformed -> loaded %,d [%d warnings, %d errors]",
-        ((float) extractorProgress * 100 / extractorTotal), extractorProgress, extractorTotal, extractorItemsSec,
-        loader.getProgress(), stats.warnings, stats.errors);
+        "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) -> transformed -> loaded %,d %s (%,d %s/sec) [%d warnings, %d errors]",
+        ((float) extractorProgress * 100 / extractorTotal), extractorProgress, extractorTotal, extractorUnit, extractorItemsSec,
+        extractorUnit, loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, stats.warnings, stats.errors);
 
-    stats.lastProgress = extractorProgress;
+    stats.lastExtractorProgress = extractorProgress;
+    stats.lastLoaderProgress = loaderProgress;
     stats.lastLap = now;
   }
 }

@@ -59,6 +59,10 @@ public class OFileExtractor extends OAbstractExtractor {
     return "file";
   }
 
+  public String getUnit() {
+    return "bytes";
+  }
+
   public void extract(OCommandContext context) {
     if (path instanceof String)
       path = new File((String) path);

@@ -28,4 +28,6 @@ public interface OLoader extends OETLComponent {
   public void load(final Object input, OCommandContext context);
 
   public long getProgress();
+
+  public String getUnit();
 }

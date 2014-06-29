@@ -81,4 +81,9 @@ public class OOrientLoader implements OLoader {
   public String getName() {
     return "orient";
   }
+
+  public String getUnit() {
+    return "records";
+  }
+
 }

@@ -29,6 +29,8 @@ import java.util.Iterator;
 public interface OExtractor extends OETLComponent, Iterator<Object> {
   public void extract(OCommandContext context);
 
+  public String getUnit();
+
   public long getProgress();
 
   public long getTotal();
