@@ -26,7 +26,7 @@ import java.util.Iterator;
  * ETL Extractor.
  */
 public interface OExtractor extends OETLComponent, Iterator<Object> {
-  public void extract(final Object input);
+  public void extract();
 
   public long getProgress();
 

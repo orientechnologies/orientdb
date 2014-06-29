@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 public class OCSVTransformer extends OAbstractTransformer {
   protected char         separator          = ',';
@@ -42,15 +41,15 @@ public class OCSVTransformer extends OAbstractTransformer {
 
   @Override
   public String getName() {
-    return "csv2document";
+    return "csv";
   }
 
   @Override
-  public Object next() {
-    if (!hasNext())
-      throw new NoSuchElementException("EOF");
+  public Object transform(final Object input) {
+    if (input == null)
+      return null;
 
-    final List<String> fields = OStringSerializerHelper.smartSplit(obj.toString(), new char[] { separator }, 0, -1, false, false,
+    final List<String> fields = OStringSerializerHelper.smartSplit(input.toString(), new char[] { separator }, 0, -1, false, false,
         false, false);
 
     if (columns == null) {

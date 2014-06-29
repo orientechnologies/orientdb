@@ -25,25 +25,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Abstract Transformer.
  */
 public abstract class OAbstractTransformer implements OTransformer {
-  protected Object obj;
-
-  @Override
-  public void transform(final Object input) {
-    obj = input;
-  }
-
   @Override
   public void configure(ODatabaseDocumentTx iDatabase, ODocument iConfiguration) {
   }
-
-  @Override
-  public boolean hasNext() {
-    return obj != null;
-  }
-
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException("remove()");
-  }
-
 }

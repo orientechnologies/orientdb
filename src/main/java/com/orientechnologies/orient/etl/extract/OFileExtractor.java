@@ -35,6 +35,7 @@ import java.util.zip.GZIPInputStream;
 
 public class OFileExtractor extends OAbstractExtractor {
   protected String            fileName;
+  protected Object            path;
   protected boolean           lockFile    = false;
   protected long              byteParsed  = 0;
   protected long              byteToParse = -1;
@@ -47,18 +48,20 @@ public class OFileExtractor extends OAbstractExtractor {
 
   @Override
   public void configure(ODatabaseDocumentTx iDatabase, ODocument iConfiguration) {
+    if (iConfiguration.containsField("path"))
+      path = iConfiguration.field("path");
     if (iConfiguration.containsField("lock"))
       lockFile = iConfiguration.field("lock");
   }
 
   @Override
   public String getName() {
-    return null;
+    return "file";
   }
 
-  public void extract(final Object input) {
-    if (input instanceof File) {
-      final File file = (File) input;
+  public void extract() {
+    if (path instanceof File) {
+      final File file = (File) path;
       fileName = file.getName();
 
       try {
@@ -75,16 +78,16 @@ public class OFileExtractor extends OAbstractExtractor {
       } catch (Exception e) {
         end();
       }
-    } else if (input instanceof InputStream) {
+    } else if (path instanceof InputStream) {
       fileName = null;
       byteToParse = -1;
-      fileReader = new InputStreamReader((InputStream) input);
-    } else if (input instanceof InputStreamReader) {
+      fileReader = new InputStreamReader((InputStream) path);
+    } else if (path instanceof InputStreamReader) {
       fileName = null;
       byteToParse = -1;
-      fileReader = (InputStreamReader) input;
+      fileReader = (InputStreamReader) path;
     } else
-      throw new OExtractorException("Unknown input '" + input + "' of class '" + input.getClass() + "'");
+      throw new OExtractorException("Unknown input '" + path + "' of class '" + path.getClass() + "'");
 
     begin();
   }

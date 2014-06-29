@@ -1,0 +1,12 @@
+{
+  extractors : [
+   { file: { path: "/temp/test.csv" } },
+   { line : { lock : true } }
+  ],
+  transformers : [
+   { csv: { separator: ";", columnsOnFirstLine: true } },
+  ],
+  loaders : [
+   { orient: { class: "Client" } },
+  ]
+}

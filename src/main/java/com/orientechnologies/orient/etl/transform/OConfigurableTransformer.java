@@ -52,23 +52,8 @@ public class OConfigurableTransformer implements OTransformer {
   }
 
   @Override
-  public boolean hasNext() {
-    return false;
-  }
-
-  @Override
-  public Object next() {
-    return null;
-  }
-
-  @Override
-  public void remove() {
-
-  }
-
-  @Override
-  public void transform(Object input) {
-
+  public Object transform(Object input) {
+    return input;
   }
 
   // @SuppressWarnings("unchecked")

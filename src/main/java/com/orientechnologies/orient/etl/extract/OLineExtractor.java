@@ -20,12 +20,9 @@ package com.orientechnologies.orient.etl.extract;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.NoSuchElementException;
 
-public class OLineExtractor extends OAbstractExtractor {
+public class OLineExtractor extends OFileExtractor {
   protected BufferedReader reader;
   private long             progress;
 
@@ -74,14 +71,10 @@ public class OLineExtractor extends OAbstractExtractor {
   }
 
   @Override
-  public void extract(final Object input) {
-    if (input instanceof InputStream) {
-      reader = new BufferedReader(new InputStreamReader((InputStream) input));
-    } else if (input instanceof Reader) {
-      reader = new BufferedReader((Reader) input);
-    } else
-      throw new OExtractorException("Unknown input '" + input + "' of class '" + input.getClass() + "'");
+  public void extract() {
+    super.extract();
 
+    reader = new BufferedReader(fileReader);
   }
 
   @Override

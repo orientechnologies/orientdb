@@ -28,14 +28,7 @@ public class ONullTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object next() {
-    if (obj == null)
-      return false;
-
-    try {
-      return true;
-    } finally {
-      obj = null;
-    }
+  public Object transform(final Object input) {
+    return input;
   }
 }

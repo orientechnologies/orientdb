@@ -20,12 +20,10 @@ package com.orientechnologies.orient.etl.transform;
 
 import com.orientechnologies.orient.etl.OETLComponent;
 
-import java.util.Iterator;
-
 /**
  * ETL Transformer.
  */
-public interface OTransformer extends Iterator<Object>, OETLComponent {
+public interface OTransformer extends OETLComponent {
 
-  public void transform(Object input);
+  public Object transform(Object input);
 }

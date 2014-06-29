@@ -20,8 +20,6 @@ package com.orientechnologies.orient.etl.transform;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
-import java.util.NoSuchElementException;
-
 public class OJSONTransformer extends OAbstractTransformer {
   @Override
   public String getName() {
@@ -29,20 +27,15 @@ public class OJSONTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object next() {
-    if (!hasNext())
-      throw new NoSuchElementException("EOF");
+  public Object transform(final Object input) {
+    if (input == null)
+      return null;
 
-    try {
-      if (obj instanceof ODocument)
-        return obj;
-      else if (obj instanceof String)
-        return new ODocument((String) obj);
-      else
-        throw new OTransformException("Unknown input '" + obj + "' of class '" + obj.getClass() + "'");
-
-    } finally {
-      obj = null;
-    }
+    if (input instanceof ODocument)
+      return input;
+    else if (input instanceof String)
+      return new ODocument((String) input);
+    else
+      throw new OTransformException("Unknown input '" + input + "' of class '" + input.getClass() + "'");
   }
 }

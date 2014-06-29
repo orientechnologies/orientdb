@@ -18,12 +18,6 @@
 
 package com.orientechnologies.orient.etl;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-import java.util.TimerTask;
-
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -32,10 +26,14 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.extract.OExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
-import com.orientechnologies.orient.etl.loader.OOrientLoader;
-import com.orientechnologies.orient.etl.transform.OCSVTransformer;
-import com.orientechnologies.orient.etl.transform.ONullTransformer;
 import com.orientechnologies.orient.etl.transform.OTransformer;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.TimerTask;
 
 /**
  * ETL processor class.
@@ -43,9 +41,9 @@ import com.orientechnologies.orient.etl.transform.OTransformer;
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLProcessor implements OETLComponent {
-  protected final List<OExtractor>     extractors;
+  protected final OExtractor           extractor;
   protected final List<OTransformer>   transformers;
-  protected final List<OLoader>        loaders;
+  protected final OLoader              loader;
   protected final OETLComponentFactory factory     = new OETLComponentFactory();
   protected long                       startTime;
   protected long                       elapsed;
@@ -60,16 +58,22 @@ public class OETLProcessor implements OETLComponent {
     public long errors       = 0;
   }
 
-  public OETLProcessor(final List<OExtractor> iExtractor, final List<OTransformer> iTransformer, final List<OLoader> iLoader) {
-    extractors = iExtractor;
-    transformers = iTransformer;
-    loaders = iLoader;
+  public OETLProcessor(final OExtractor iExtractor, final OTransformer[] iTransformers, final OLoader iLoader) {
+    extractor = iExtractor;
+    transformers = Arrays.asList(iTransformers);
+    loader = iLoader;
+  }
+
+  public OETLProcessor(final OExtractor iExtractor, final List<OTransformer> iTransformers, final OLoader iLoader) {
+    extractor = iExtractor;
+    transformers = iTransformers;
+    loader = iLoader;
   }
 
   public OETLProcessor(final Object iExtractor, final Object iTransformer, final Object iLoader) {
-    extractors = null;
+    extractor = null;
     transformers = null;
-    loaders = null;
+    loader = null;
   }
 
   public static void main(final String[] args) {
@@ -78,9 +82,9 @@ public class OETLProcessor implements OETLComponent {
     String dbPassword = "admin";
     boolean dbAutoCreate = true;
 
-    Object cfgExtract;
-    Object cfgTransformers;
-    Object cfgLoaders;
+    Object cfgExtract = null;
+    Object cfgTransformers = null;
+    Object cfgLoaders = null;
 
     for (int i = 0; i < args.length; ++i) {
       final String arg = args[i];
@@ -129,7 +133,17 @@ public class OETLProcessor implements OETLComponent {
         throw new IllegalArgumentException("Database '" + dbURL + "' not exists and 'dbAutoCreate' setting is false");
     }
 
-    final OETLProcessor processor = new OETLProcessor(new OCSVTransformer(), new ONullTransformer(), new OOrientLoader());
+    final List<OExtractor> extractors = new ArrayList<OExtractor>();
+    final List<OTransformer> transformers = new ArrayList<OTransformer>();
+    final List<OLoader> loaders = new ArrayList<OLoader>();
+
+    if (cfgExtract instanceof Iterable) {
+      for (Object o : (Iterable) cfgExtract)
+        extractors.add((OExtractor) o);
+    } else if (cfgExtract instanceof OExtractor)
+      extractors.add((OExtractor) cfgExtract);
+
+    final OETLProcessor processor = new OETLProcessor(extractors, transformers, loaders);
 
     processor.configure(db, null);
     processor.execute();
@@ -138,24 +152,33 @@ public class OETLProcessor implements OETLComponent {
   public void execute() {
     begin();
 
+    extractor.extract();
+
     Object current = null;
-    for (OExtractor ex : extractors ) {
-      ex.extract(current);
-    }
-
-
-    while (extractor.hasNext())
+    while (extractor.hasNext()) {
+      // EXTRACTOR
       current = extractor.next();
 
-    loader.load(transformer.transform(extractor.next()));
+      // TRANSFORM
+      for (OTransformer t : transformers) {
+        current = t.transform(current);
+        if (current == null)
+          break;
+      }
+
+      // LOAD
+      loader.load(current);
+    }
+
     end();
   }
 
   @Override
   public void configure(final ODatabaseDocumentTx iDatabase, final ODocument iConfiguration) {
     extractor.configure(iDatabase, iConfiguration);
-    transformers.configure(iDatabase, iConfiguration);
-    loaders.configure(iDatabase, iConfiguration);
+    for (OTransformer t : transformers)
+      t.configure(iDatabase, iConfiguration);
+    loader.configure(iDatabase, iConfiguration);
   }
 
   @Override
@@ -189,8 +212,8 @@ public class OETLProcessor implements OETLComponent {
 
     OLogManager.instance().info(this,
         "+ %3.2f%% -> extracted %d/%d (%.2f items/sec) -> transformed %d -> loaded %d [%d warnings, %d errors]",
-        (extractorProgress * 100 / extractorTotal), extractorProgress, extractorTotal, extractorItemsSec,
-        transformer.getProgress(), loader.getProgress(), stats.warnings, stats.errors);
+        (extractorProgress * 100 / extractorTotal), extractorProgress, extractorTotal, extractorItemsSec, extractor.getProgress(),
+        loader.getProgress(), stats.warnings, stats.errors);
 
     stats.lastLap = now;
   }
