@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.transform;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -30,7 +30,7 @@ public class OCSVTransformer extends OAbstractTransformer {
   protected List<String> columns            = null;
 
   @Override
-  public void configure(ODatabaseDocumentTx iDatabase, ODocument iConfiguration) {
+  public void configure(final ODocument iConfiguration) {
     if (iConfiguration.containsField("separator"))
       separator = iConfiguration.field("separator").toString().charAt(0);
     if (iConfiguration.containsField("columnsOnFirstLine"))
@@ -45,7 +45,7 @@ public class OCSVTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object transform(final Object input) {
+  public Object transform(final Object input, OCommandContext iContext) {
     if (input == null)
       return null;
 

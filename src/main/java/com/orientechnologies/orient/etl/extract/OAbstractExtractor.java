@@ -26,7 +26,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public abstract class OAbstractExtractor implements OExtractor {
   @Override
-  public void configure(ODatabaseDocumentTx iDatabase, ODocument iConfiguration) {
+  public void configure(ODocument iConfiguration) {
+  }
+
+  @Override
+  public void prepare(ODatabaseDocumentTx iDatabase) {
   }
 
   @Override

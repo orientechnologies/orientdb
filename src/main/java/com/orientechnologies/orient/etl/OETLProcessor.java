@@ -21,9 +21,12 @@ package com.orientechnologies.orient.etl;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.etl.extract.OExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.transform.OTransformer;
@@ -32,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.TimerTask;
 
@@ -48,8 +52,9 @@ public class OETLProcessor implements OETLComponent {
   protected long                       startTime;
   protected long                       elapsed;
 
-  protected long                       dumpEveryMs = 0;
+  protected long                       dumpEveryMs = 1000;
   protected OETLProcessorStats         stats       = new OETLProcessorStats();
+  protected TimerTask                  dumpTask;
 
   protected class OETLProcessorStats {
     public long lastProgress = 0;
@@ -70,10 +75,30 @@ public class OETLProcessor implements OETLComponent {
     loader = iLoader;
   }
 
-  public OETLProcessor(final Object iExtractor, final Object iTransformer, final Object iLoader) {
-    extractor = null;
-    transformers = null;
-    loader = null;
+  public OETLProcessor(final ODocument iExtractor, final Collection<ODocument> iTransformers, final ODocument iLoader) {
+    try {
+      // EXTRACTOR
+      String name = iExtractor.fieldNames()[0];
+      extractor = factory.getExtractor(name);
+      extractor.configure((ODocument) iExtractor.field(name));
+
+      // TRANSFORMERS
+      transformers = new ArrayList<OTransformer>();
+      for (ODocument t : iTransformers) {
+        name = t.fieldNames()[0];
+        final OTransformer tr = factory.getTransformer(name);
+        transformers.add(tr);
+        tr.configure((ODocument) t.field(name));
+      }
+
+      // LOADER
+      name = iLoader.fieldNames()[0];
+      loader = factory.getLoader(name);
+      loader.configure((ODocument) iLoader.field(name));
+
+    } catch (Exception e) {
+      throw new OConfigurationException("Error on creating ETL perocessor", e);
+    }
   }
 
   public static void main(final String[] args) {
@@ -82,9 +107,9 @@ public class OETLProcessor implements OETLComponent {
     String dbPassword = "admin";
     boolean dbAutoCreate = true;
 
-    Object cfgExtract = null;
-    Object cfgTransformers = null;
-    Object cfgLoaders = null;
+    ODocument cfgExtract = null;
+    Collection<ODocument> cfgTransformers = null;
+    ODocument cfgLoader = null;
 
     for (int i = 0; i < args.length; ++i) {
       final String arg = args[i];
@@ -101,23 +126,34 @@ public class OETLProcessor implements OETLComponent {
         final String cfgPath = args[++i];
         try {
           final String config = OIOUtils.readFileAsString(new File(cfgPath));
-          final ODocument cfg = new ODocument().fromJSON(config);
+          final ODocument cfg = new ODocument().fromJSON(config, "noMap");
 
-          cfgExtract = cfg.field("extractors");
+          cfgExtract = cfg.field("extractor");
           cfgTransformers = cfg.field("transformers");
-          cfgLoaders = cfg.field("loaders");
+          cfgLoader = cfg.field("loader");
 
         } catch (IOException e) {
           throw new OConfigurationException("Error on loading config file: " + cfgPath);
         }
       } else if (arg.equalsIgnoreCase("-e")) {
-        cfgExtract = new ODocument().fromJSON(args[++i]);
+        cfgExtract = new ODocument().fromJSON(args[++i], "noMap");
       } else if (arg.equalsIgnoreCase("-t")) {
-        cfgTransformers = new ODocument().fromJSON(args[++i]);
+        final String value = args[++i];
+        cfgTransformers = parseTransformers(value);
+
       } else if (arg.equalsIgnoreCase("-l")) {
-        cfgLoaders = new ODocument().fromJSON(args[++i]);
+        cfgLoader = new ODocument().fromJSON(args[++i], "noMap");
       }
     }
+
+    if (cfgExtract == null)
+      throw new IllegalArgumentException("No Extractor configured");
+
+    if (cfgTransformers == null)
+      throw new IllegalArgumentException("No Transformer configured");
+
+    if (cfgLoader == null)
+      throw new IllegalArgumentException("No Loader configured");
 
     if (dbURL == null)
       throw new IllegalArgumentException("Argument dbURL not found");
@@ -133,26 +169,34 @@ public class OETLProcessor implements OETLComponent {
         throw new IllegalArgumentException("Database '" + dbURL + "' not exists and 'dbAutoCreate' setting is false");
     }
 
-    final List<OExtractor> extractors = new ArrayList<OExtractor>();
-    final List<OTransformer> transformers = new ArrayList<OTransformer>();
-    final List<OLoader> loaders = new ArrayList<OLoader>();
+    final OETLProcessor processor = new OETLProcessor(cfgExtract, cfgTransformers, cfgLoader);
 
-    if (cfgExtract instanceof Iterable) {
-      for (Object o : (Iterable) cfgExtract)
-        extractors.add((OExtractor) o);
-    } else if (cfgExtract instanceof OExtractor)
-      extractors.add((OExtractor) cfgExtract);
-
-    final OETLProcessor processor = new OETLProcessor(extractors, transformers, loaders);
-
-    processor.configure(db, null);
+    processor.prepare(db);
     processor.execute();
   }
 
-  public void execute() {
-    begin();
+  protected static Collection<ODocument> parseTransformers(final String value) {
+    final ArrayList<ODocument> cfgTransformers = new ArrayList<ODocument>();
+    if (!value.isEmpty()) {
+      if (value.charAt(0) == '{') {
+        cfgTransformers.add((ODocument) new ODocument().fromJSON(value, "noMap"));
+      } else if (value.charAt(0) == '[') {
+        final ArrayList<String> items = new ArrayList<String>();
+        OStringSerializerHelper.getCollection(value, 0, items);
+        for (String item : items)
+          cfgTransformers.add((ODocument) new ODocument().fromJSON(item, "noMap"));
+      }
+    }
+    return cfgTransformers;
+  }
 
-    extractor.extract();
+  public void execute() {
+
+    final OCommandContext context = new OBasicCommandContext();
+
+    begin(context);
+
+    extractor.extract(context);
 
     Object current = null;
     while (extractor.hasNext()) {
@@ -161,24 +205,29 @@ public class OETLProcessor implements OETLComponent {
 
       // TRANSFORM
       for (OTransformer t : transformers) {
-        current = t.transform(current);
+        current = t.transform(current, context);
         if (current == null)
           break;
       }
 
-      // LOAD
-      loader.load(current);
+      if (current != null)
+        // LOAD
+        loader.load(current, context);
     }
 
-    end();
+    end(context);
   }
 
   @Override
-  public void configure(final ODatabaseDocumentTx iDatabase, final ODocument iConfiguration) {
-    extractor.configure(iDatabase, iConfiguration);
+  public void configure(final ODocument iConfiguration) {
+  }
+
+  @Override
+  public void prepare(final ODatabaseDocumentTx iDatabase) {
+    extractor.prepare(iDatabase);
     for (OTransformer t : transformers)
-      t.configure(iDatabase, iConfiguration);
-    loader.configure(iDatabase, iConfiguration);
+      t.prepare(iDatabase);
+    loader.prepare(iDatabase);
   }
 
   @Override
@@ -186,18 +235,29 @@ public class OETLProcessor implements OETLComponent {
     return "Processor";
   }
 
-  protected void end() {
+  protected void end(OCommandContext context) {
     elapsed = System.currentTimeMillis() - startTime;
+    if (dumpTask != null) {
+      dumpTask.cancel();
+    }
+
+    OLogManager.instance().info(this, "COMPLETED");
+
+    dumpProgress();
   }
 
-  protected void begin() {
+  protected void begin(OCommandContext context) {
+    OLogManager.instance().info(this, "BEGIN");
+
     if (dumpEveryMs > 0) {
-      Orient.instance().getTimer().schedule(new TimerTask() {
+      dumpTask = new TimerTask() {
         @Override
         public void run() {
           dumpProgress();
         }
-      }, dumpEveryMs, dumpEveryMs);
+      };
+
+      Orient.instance().getTimer().schedule(dumpTask, dumpEveryMs, dumpEveryMs);
 
       startTime = System.currentTimeMillis();
     }
@@ -208,13 +268,14 @@ public class OETLProcessor implements OETLComponent {
     final long extractorProgress = extractor.getProgress();
     final long extractorTotal = extractor.getTotal();
 
-    final float extractorItemsSec = (extractorProgress - stats.lastProgress) * 1000f / (now - stats.lastLap);
+    final long extractorItemsSec = (long) ((extractorProgress - stats.lastProgress) * 1000f / (now - stats.lastLap));
 
     OLogManager.instance().info(this,
-        "+ %3.2f%% -> extracted %d/%d (%.2f items/sec) -> transformed %d -> loaded %d [%d warnings, %d errors]",
-        (extractorProgress * 100 / extractorTotal), extractorProgress, extractorTotal, extractorItemsSec, extractor.getProgress(),
+        "+ %3.2f%% -> extracted %,d/%,d (%,d items/sec) -> transformed -> loaded %,d [%d warnings, %d errors]",
+        ((float) extractorProgress * 100 / extractorTotal), extractorProgress, extractorTotal, extractorItemsSec,
         loader.getProgress(), stats.warnings, stats.errors);
 
+    stats.lastProgress = extractorProgress;
     stats.lastLap = now;
   }
 }

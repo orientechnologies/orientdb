@@ -25,9 +25,14 @@ import com.orientechnologies.orient.etl.extract.OLineExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.loader.OOrientLoader;
 import com.orientechnologies.orient.etl.transform.OCSVTransformer;
+import com.orientechnologies.orient.etl.transform.OCodeTransformer;
+import com.orientechnologies.orient.etl.transform.OEdgeTransformer;
 import com.orientechnologies.orient.etl.transform.OJSONTransformer;
 import com.orientechnologies.orient.etl.transform.ONullTransformer;
+import com.orientechnologies.orient.etl.transform.OSQLFieldTransformer;
+import com.orientechnologies.orient.etl.transform.OSkipTransformer;
 import com.orientechnologies.orient.etl.transform.OTransformer;
+import com.orientechnologies.orient.etl.transform.OVertexTransformer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -46,8 +51,13 @@ public class OETLComponentFactory {
     registerExtractor(OFileExtractor.class);
     registerExtractor(OLineExtractor.class);
 
+    registerTransformer(OSQLFieldTransformer.class);
+    registerTransformer(OVertexTransformer.class);
+    registerTransformer(OEdgeTransformer.class);
+    registerTransformer(OCodeTransformer.class);
     registerTransformer(OJSONTransformer.class);
     registerTransformer(OCSVTransformer.class);
+    registerTransformer(OSkipTransformer.class);
     registerTransformer(ONullTransformer.class);
 
     registerLoader(OOrientLoader.class);
@@ -80,4 +90,24 @@ public class OETLComponentFactory {
     return this;
   }
 
+  public OExtractor getExtractor(final String iName) throws IllegalAccessException, InstantiationException {
+    final Class<? extends OExtractor> cls = extractors.get(iName);
+    if (cls == null)
+      throw new IllegalArgumentException("Extractor '" + iName + "' not found");
+    return cls.newInstance();
+  }
+
+  public OTransformer getTransformer(final String iName) throws IllegalAccessException, InstantiationException {
+    final Class<? extends OTransformer> cls = transformers.get(iName);
+    if (cls == null)
+      throw new IllegalArgumentException("Transformer '" + iName + "' not found");
+    return cls.newInstance();
+  }
+
+  public OLoader getLoader(final String iName) throws IllegalAccessException, InstantiationException {
+    final Class<? extends OLoader> cls = loaders.get(iName);
+    if (cls == null)
+      throw new IllegalArgumentException("Loader '" + iName + "' not found");
+    return cls.newInstance();
+  }
 }

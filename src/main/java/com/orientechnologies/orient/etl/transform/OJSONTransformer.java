@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transform;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OJSONTransformer extends OAbstractTransformer {
@@ -27,7 +28,7 @@ public class OJSONTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object transform(final Object input) {
+  public Object transform(final Object input, OCommandContext iContext) {
     if (input == null)
       return null;
 

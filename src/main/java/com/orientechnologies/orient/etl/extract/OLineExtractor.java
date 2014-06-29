@@ -18,6 +18,8 @@
 
 package com.orientechnologies.orient.etl.extract;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.NoSuchElementException;
@@ -54,7 +56,9 @@ public class OLineExtractor extends OFileExtractor {
 
     try {
       final String line = reader.readLine();
-      progress += line.length() + 1;
+      progress += line.length();
+      if (reader.ready())
+        progress++;
       return line;
     } catch (IOException e) {
       throw new OExtractorException(e);
@@ -71,8 +75,8 @@ public class OLineExtractor extends OFileExtractor {
   }
 
   @Override
-  public void extract() {
-    super.extract();
+  public void extract(OCommandContext context) {
+    super.extract(context);
 
     reader = new BufferedReader(fileReader);
   }
@@ -80,10 +84,5 @@ public class OLineExtractor extends OFileExtractor {
   @Override
   public long getProgress() {
     return progress;
-  }
-
-  @Override
-  public long getTotal() {
-    return -1;
   }
 }

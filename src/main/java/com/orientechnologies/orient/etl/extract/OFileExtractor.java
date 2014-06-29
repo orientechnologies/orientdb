@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl.extract;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.File;
@@ -47,7 +47,7 @@ public class OFileExtractor extends OAbstractExtractor {
   protected FileLock          lock        = null;
 
   @Override
-  public void configure(ODatabaseDocumentTx iDatabase, ODocument iConfiguration) {
+  public void configure(ODocument iConfiguration) {
     if (iConfiguration.containsField("path"))
       path = iConfiguration.field("path");
     if (iConfiguration.containsField("lock"))
@@ -59,7 +59,10 @@ public class OFileExtractor extends OAbstractExtractor {
     return "file";
   }
 
-  public void extract() {
+  public void extract(OCommandContext context) {
+    if (path instanceof String)
+      path = new File((String) path);
+
     if (path instanceof File) {
       final File file = (File) path;
       fileName = file.getName();

@@ -1,12 +1,9 @@
 {
-  extractors : [
-   { file: { path: "/temp/test.csv" } },
-   { line : { lock : true } }
-  ],
+  extractor : { line: { path: "/temp/test.csv", lock : true } },
   transformers : [
-   { csv: { separator: ";", columnsOnFirstLine: true } },
+   { csv: { separator: ";", columnsOnFirstLine: false, columns: ["id","beginDate","aams","wow","serial","dontknow","endDate"] } },
+   { field: { name: "dontknow", expression: "dontknow.trim()" } },
+   { skip: { expression: "dontknow is null" } }
   ],
-  loaders : [
-   { orient: { class: "Client" } },
-  ]
+  loader : { orient: { class: "Client" } }
 }

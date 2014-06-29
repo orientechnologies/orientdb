@@ -26,7 +26,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public interface OETLComponent {
 
-  public void configure(ODatabaseDocumentTx iDatabase, final ODocument iConfiguration);
+  public void configure(ODocument iConfiguration);
+
+  public void prepare(ODatabaseDocumentTx iDatabase);
 
   public String getName();
 }

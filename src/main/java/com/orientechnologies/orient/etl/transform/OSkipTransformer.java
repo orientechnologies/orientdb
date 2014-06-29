@@ -19,18 +19,37 @@
 package com.orientechnologies.orient.etl.transform;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 
-/**
- * No operation ETL Transformer.
- */
-public class ONullTransformer extends OAbstractTransformer {
+public class OSkipTransformer extends OAbstractTransformer {
+  protected String     expression;
+  protected OSQLFilter sqlFilter;
+
   @Override
-  public String getName() {
-    return "null";
+  public void configure(final ODocument iConfiguration) {
+    expression = iConfiguration.field("expression");
   }
 
   @Override
-  public Object transform(final Object input, OCommandContext iContext) {
+  public String getName() {
+    return "skip";
+  }
+
+  @Override
+  public Object transform(final Object input, final OCommandContext iContext) {
+    if (input == null)
+      return null;
+
+    if (sqlFilter == null)
+      // ONLY THE FIRST TIME
+      sqlFilter = new OSQLFilter(expression, iContext, null);
+
+    final Boolean result = (Boolean) sqlFilter.evaluate((ODocument) input, null, iContext);
+    if (result)
+      // TRUE: SKIP IT
+      return null;
+
     return input;
   }
 }

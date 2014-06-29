@@ -28,7 +28,7 @@
     <name>orientdb-etl</name>
     <description>ETL tools for OrientDB NoSQL document graph dbms</description>
     <url>http://maven.apache.org</url>
-    <inceptionYear>2013</inceptionYear>
+    <inceptionYear>2014</inceptionYear>
     <organization>
         <name>Orient Technologies</name>
         <url>http://www.orientechnologies.com</url>
@@ -82,6 +82,7 @@
     </distributionManagement>
 
     <properties>
+        <blueprints.version>2.5.0</blueprints.version>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
         <orientdb.version>1.7</orientdb.version>
@@ -221,6 +222,11 @@
             <artifactId>orientdb-graphdb</artifactId>
             <version>${orientdb.version}</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tinkerpop.blueprints</groupId>
+            <artifactId>blueprints-core</artifactId>
+            <version>${blueprints.version}</version>
         </dependency>
 
     </dependencies>

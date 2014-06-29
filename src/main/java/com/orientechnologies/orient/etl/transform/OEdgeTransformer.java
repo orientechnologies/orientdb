@@ -18,18 +18,42 @@
 
 package com.orientechnologies.orient.etl.transform;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
-/**
- * Abstract Transformer.
- */
-public abstract class OAbstractTransformer implements OTransformer {
+public class OEdgeTransformer extends OAbstractTransformer {
+  protected boolean         tx = true;
+  protected OrientBaseGraph graph;
+
   @Override
-  public void configure(final ODocument iCfg) {
+  public void configure(final ODocument iConfiguration) {
+    if (iConfiguration.containsField("tx"))
+      tx = Boolean.parseBoolean((String) iConfiguration.field("tx"));
   }
 
   @Override
   public void prepare(final ODatabaseDocumentTx iDatabase) {
+    super.prepare(iDatabase);
+    if (tx)
+      graph = new OrientGraph(iDatabase);
+    else
+      graph = new OrientGraphNoTx(iDatabase);
+  }
+
+  @Override
+  public String getName() {
+    return "edge";
+  }
+
+  @Override
+  public Object transform(final Object input, final OCommandContext iContext) {
+    if (input == null)
+      return null;
+
+    return graph.getEdge(input);
   }
 }

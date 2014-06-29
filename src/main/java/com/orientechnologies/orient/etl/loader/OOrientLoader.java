@@ -18,7 +18,11 @@
 
 package com.orientechnologies.orient.etl.loader;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -27,11 +31,28 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OOrientLoader implements OLoader {
   protected ODatabaseDocumentTx db;
   protected long                progress = 0;
+  protected String              clusterName;
+  protected String              className;
+  protected OClass              schemaClass;
 
   public OOrientLoader() {
   }
 
-  public void load(final Object input) {
+  public void load(final Object input, OCommandContext context) {
+    if (input == null)
+      return;
+
+    if (!(input instanceof ORecord<?>))
+      throw new IllegalArgumentException("Expected record but received object '" + input + "' of class: " + input.getClass());
+
+    if (className != null && input instanceof ODocument)
+      ((ODocument) input).setClassName(className);
+
+    if (clusterName != null)
+      ((ORecord) input).save(clusterName);
+    else
+      ((ORecord) input).save();
+
     progress++;
   }
 
@@ -40,8 +61,20 @@ public class OOrientLoader implements OLoader {
   }
 
   @Override
-  public void configure(ODatabaseDocumentTx iDatabase, ODocument iConfiguration) {
+  public void configure(final ODocument iConfiguration) {
+    if (iConfiguration.containsField("cluster"))
+      clusterName = iConfiguration.field("cluster");
+    if (iConfiguration.containsField("class"))
+      className = iConfiguration.field("class");
+  }
+
+  @Override
+  public void prepare(final ODatabaseDocumentTx iDatabase) {
     this.db = iDatabase;
+    if (className != null) {
+      schemaClass = iDatabase.getMetadata().getSchema().getOrCreateClass(className);
+      OLogManager.instance().info(this, "Found %d records in class '%s'", schemaClass.count(), className);
+    }
   }
 
   @Override

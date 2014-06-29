@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transform;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.etl.OETLComponent;
 
 /**
@@ -25,5 +26,5 @@ import com.orientechnologies.orient.etl.OETLComponent;
  */
 public interface OTransformer extends OETLComponent {
 
-  public Object transform(Object input);
+  public Object transform(Object input, OCommandContext iContext);
 }

@@ -18,13 +18,14 @@
 
 package com.orientechnologies.orient.etl.loader;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.etl.OETLComponent;
 
 /**
  * ETL Loader.
  */
 public interface OLoader extends OETLComponent {
-  public void load(final Object input);
+  public void load(final Object input, OCommandContext context);
 
   public long getProgress();
 }
