@@ -44,17 +44,18 @@ public class OServerCommandGetLoggedUserInfo extends OServerCommandAuthenticated
     final String[] urlParts = checkSyntax(iRequest.url, 1, "Syntax error: loggedUserInfo/<db>/<type>");
 
     String command = urlParts[2];
+
+    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     if ("configuration".equals(command)) {
       if (iRequest.httpMethod.equals("GET")) {
-        ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("user", session.getUserName());
         final List<OIdentifiable> response = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(
             "select from UserConfiguration where user.name = :user"), params);
         iResponse.writeRecords(response, "*:1");
       } else {
-        ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+
         ODocument doc = new ODocument().fromJSON(iRequest.content);
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("name", session.getUserName());
@@ -69,6 +70,26 @@ public class OServerCommandGetLoggedUserInfo extends OServerCommandAuthenticated
     } else if ("version".equals(command)) {
 
       return false;
+    } else if ("changePassword".equals(command)) {
+      if (iRequest.httpMethod.equals("POST")) {
+        ODocument doc = new ODocument().fromJSON(iRequest.content);
+
+        String oldpassword = doc.field("oldpassword");
+        if (oldpassword != null) {
+
+          // TODO CHECK THE OLD PASSWORD WITH DB
+          if (oldpassword.equals(session.getUserPassword())) {
+            Object reset = null;
+            doc.field("oldpassword", reset);
+            db.save(doc);
+            iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+          } else {
+            throw new RuntimeException("Wrong old password.");
+          }
+        }
+        throw new RuntimeException("Old password missing.");
+      }
+      return false;
     } else {
       try {
         ODocument document = new ODocument();
@@ -82,6 +103,7 @@ public class OServerCommandGetLoggedUserInfo extends OServerCommandAuthenticated
       }
       return false;
     }
+
   }
 
   @Override

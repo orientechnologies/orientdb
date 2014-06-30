@@ -214,7 +214,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
 
                 @Override
                 public Object getValue() {
-                  return version;
+                  return ORIENDB_ENTERPRISE_VERSION;
                 }
               });
       Orient

@@ -47,7 +47,7 @@ Widget.directive('piechart', function () {
         }
     };
 });
-Widget.directive('stackedchart', function () {
+Widget.directive('stackedchart', function ($rootScope, $timeout) {
 
     var createStacked = function (data, element) {
 
@@ -78,6 +78,11 @@ Widget.directive('stackedchart', function () {
                 .transition().duration(1200)
                 .call(chart);
 
+            $rootScope.$on("disposition:changed", function () {
+
+                $timeout(chart.update, 500);
+
+            });
             nv.utils.windowResize(chart.update);
             return chart;
         });
@@ -107,7 +112,7 @@ Widget.directive('stackedchart', function () {
         }
     };
 });
-Widget.directive('stackedarea', function (Metric) {
+Widget.directive('stackedarea', function (Metric, $rootScope, $timeout) {
 
     var createStackedArea = function (scope, data, element, render, realtime) {
 
@@ -147,6 +152,10 @@ Widget.directive('stackedarea', function (Metric) {
                 .transition().duration(0)
                 .call(chart);
 
+
+            $rootScope.$on("disposition:changed", function () {
+                $timeout(chart.update, 500);
+            });
             nv.utils.windowResize(chart.update);
 
 
@@ -154,11 +163,11 @@ Widget.directive('stackedarea', function (Metric) {
                 var self = this;
                 scope.$apply(function () {
                     /*Metric.getMetricWithName(event.key, function (data) {
-                        if (data) {
-                            $(self).tooltip({title: data.description, container: 'body'});
-                            $(self).tooltip('show')
-                        }
-                    });*/
+                     if (data) {
+                     $(self).tooltip({title: data.description, container: 'body'});
+                     $(self).tooltip('show')
+                     }
+                     });*/
                 });
             });
             return chart;

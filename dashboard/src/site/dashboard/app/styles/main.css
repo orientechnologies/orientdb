@@ -1210,5 +1210,30 @@ ul.tcp-members li {
     margin-bottom: 0px;
 }
 
+.chart-actions {
+    width: 10%;
+}
+
+.available-charts {
+    max-height: 210px;
+    overflow: auto;
+}
+
+.chart-close-container {
+    position: absolute;
+}
+
+.chart-close {
+    background: url("../images/gritter.png") no-repeat scroll left top rgba(0, 0, 0, 0);
+    cursor: pointer;
+    display: block;
+    height: 30px;
+    left: -10px;
+    position: relative;
+    top: -10px;
+    width: 30px;
+}
+
+
 
 

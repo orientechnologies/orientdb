@@ -333,11 +333,11 @@ monitor.factory('Settings', function ($http, $resource) {
 monitor.factory('Users', function ($http, $resource) {
     var resource = $resource(API + 'database/:database');
 
-    resource.savePasswd = function (ouser, callback) {
-        $http.put(API + 'document/monitor/' + ouser['@rid'].replace("#", ''), ouser).success(function (data) {
+    resource.savePasswd = function (ouser, callback, err) {
+        $http.post(API + 'loggedUserInfo/monitor/changePassword', ouser).success(function (data) {
             callback(data);
         }).error(function (error) {
-                callback(error);
+                err(error);
             });
     }
     resource.getWithUsername = function (username, callback) {

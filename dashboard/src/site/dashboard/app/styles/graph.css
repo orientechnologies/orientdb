@@ -67,6 +67,7 @@ text.id {
     text-anchor: middle;
     font-weight: bold;
     cursor: pointer;
+    text-decoration: underline;
 }
 
 .graph-server, .graph-db {
@@ -173,7 +174,6 @@ circle.server-offline {
 .circle-interrupt-stop {
     display: none;
 }
-
 
 .circle1 {
     background-color: rgba(0, 0, 0, 0);

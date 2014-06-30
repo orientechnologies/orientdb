@@ -17,6 +17,25 @@ module.controller('ClusterNewController', function ($scope, Cluster) {
     $scope.cluster.multicast.port = 2434;
 
 
+    $scope.$watch("cluster.tcp.enabled", function (data) {
+        if (data != undefined && data != null) {
+            if (data) {
+                $scope.cluster.multicast.enabled = false;
+            } else {
+                $scope.cluster.multicast.enabled = true;
+            }
+        }
+    });
+    $scope.$watch("cluster.multicast.enabled", function (data) {
+        if (data != undefined && data != null) {
+            if (data) {
+                $scope.cluster.tcp.enabled = false;
+            } else {
+                $scope.cluster.tcp.enabled = true;
+            }
+        }
+    });
+
     $scope.save = function () {
         Cluster.saveCluster($scope.cluster).then(function (data) {
 
@@ -27,6 +46,16 @@ module.controller('ClusterNewController', function ($scope, Cluster) {
 module.controller('ClusterEditController', function ($scope, Cluster) {
 
 
+    $scope.$watch("cluster.tcp.enabled", function (data) {
+        if (data) {
+            $scope.cluster.multicast.enabled = false;
+        }
+    });
+    $scope.$watch("cluster.multicast.enabled", function (data) {
+        if (data) {
+            $scope.cluster.tcp.enabled = false;
+        }
+    });
     $scope.save = function () {
         Cluster.saveCluster($scope.cluster).then(function (data) {
 
@@ -54,7 +83,7 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
         $scope.nodeClusters = data;
         if ($scope.nodeClusters.length > 0) {
             $scope.cluster = $scope.nodeClusters[0];
-            $location.path("dashboard/cluster/" + $scope.cluster.name, false);
+            //$location.path("dashboard/cluster/" + $scope.cluster.name, false);
         }
     });
 
@@ -73,7 +102,7 @@ module.controller('ClusterMainController', function ($scope, $i18n, Cluster, $mo
             });
         }
     }
-    $scope.removeCluster = function () {
+    $scope.deleteCluster = function () {
 
         if ($scope.cluster) {
             $odialog.confirm({

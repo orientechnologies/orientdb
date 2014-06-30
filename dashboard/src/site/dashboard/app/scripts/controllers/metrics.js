@@ -264,16 +264,19 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
 )
 ;
 
-app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, $odialog, Monitor, Metric, Server, MetricConfig) {
+app.controller('MetricsMonitorController', function ($scope, $location, $routeParams, $odialog, Monitor, Metric, Server, MetricConfig, Settings) {
 
     $scope.rid = $routeParams.server;
     $scope.names = new Array;
     $scope.render = 'bar';
     $scope.fields = ['value', 'entries', 'min', 'max', 'average', 'total'];
     $scope.mType = {};
+    $scope.inDashboard = {};
     Monitor.getServers(function (data) {
         $scope.servers = data.result;
     });
+
+
     Metric.getMetricTypes({}, function (data) {
         $scope.metrics = data.result;
         if ($scope.metrics.length > 0) {
@@ -289,6 +292,7 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
             $scope.savedMetrics = data.result;
             if ($scope.savedMetrics.length > 0) {
                 $scope.selectedConfig = $scope.savedMetrics[0];
+                $scope.currentIdx = 0;
             } else {
                 $scope.selectedConfig = MetricConfig.create();
             }
@@ -300,19 +304,63 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
         $scope.selectedConfig = MetricConfig.create();
     }
     $scope.saveMetricConfig = function () {
+
+        var rid = $scope.selectedConfig["@rid"]
         MetricConfig.saveConfig($scope.selectedConfig, function (data) {
-            ;
+
             $scope.testMsg = 'Metrics configuration saved.';
             $scope.testMsgClass = 'alert alert-setting'
-            $scope.refreshMetricConfig();
+
+            if (rid == "#-1:-1") {
+
+                var msg = 'Do you want to add the new chart ' + data.name + ' to the Dashboard?';
+                $odialog.confirm({title: 'Info', body: msg, success: function () {
+                    $scope.addToDashboard(data);
+                }, cancel: function () {
+                    $scope.refreshMetricConfig();
+                }});
+
+            } else {
+                $scope.refreshMetricConfig();
+            }
+
         });
     }
 
-    $scope.selectConfig = function (config) {
+    $scope.selectConfig = function (config, idx) {
         $scope.selectedConfig = config;
+        $scope.currentIdx = idx;
+    }
+    $scope.addToDashboard = function (config) {
+
+        if (!$scope.config['metrics']) {
+            $scope.config['metrics'] = new Array;
+        }
+
+        $scope.inDashboard[config["@rid"]] = true;
+        $scope.config['metrics'].push(config);
+        $scope.saveDashboardConfig();
+
+    }
+    $scope.removeFromDashboard = function (config) {
+
+        var index = -1;
+
+        $scope.config['metrics'].forEach(function (element, idx, arr) {
+
+            if (config["@rid"] == element["@rid"]) {
+                index = idx;
+                delete $scope.inDashboard[element["@rid"]];
+            }
+        });
+
+        if (index != -1) {
+            $scope.config['metrics'].splice(index, 1);
+            $scope.saveDashboardConfig(true);
+        }
     }
     $scope.deleteConfig = function (config) {
-        var msg = 'You are removing metric ' + config.name + '. Are you sure?';
+        var msg = 'You are removing chart ' + config.name + '. Are you sure?';
         $odialog.confirm({title: 'Warning', body: msg, success: function () {
             MetricConfig.deleteConfig(config, function (data) {
                 $scope.refreshMetricConfig();
@@ -334,6 +382,41 @@ app.controller('MetricsMonitorController', function ($scope, $location, $routePa
     $scope.refreshMetricConfig();
 
 
+    $scope.saveDashboardConfig = function (remove) {
+        Settings.put($scope.config, function (data) {
+            if (remove) {
+                $scope.testMsg = 'Chart removed from dashboard.';
+            } else {
+                $scope.testMsg = 'Chart added to dashboard.';
+            }
+
+
+            $scope.testMsgClass = 'alert alert-setting'
+            $scope.refreshMetricConfig();
+            $scope.init();
+
+        }, function (error) {
+            $scope.testMsg = error;
+            $scope.testMsgClass = 'alert alert-error alert-setting'
+        });
+    }
+    $scope.init = function () {
+        Settings.get(function (data) {
+            if (data.result.length == 0) {
+                $scope.config = Settings.new();
+            } else {
+                $scope.config = data.result[0];
+
+                if ($scope.config['metrics']) {
+                    !$scope.config['metrics'].forEach(function (elem) {
+                        $scope.inDashboard[elem["@rid"]] = true;
+                    });
+
+                }
+            }
+        });
+    }
+    $scope.init();
 });
 
 app.controller('ConfigChartController', function ($scope, $location, $routeParams) {

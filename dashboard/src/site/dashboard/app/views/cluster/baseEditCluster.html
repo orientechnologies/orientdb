@@ -71,7 +71,7 @@
                         {{ 'settings.cluster.tcp.member'
                         | i18n }} {{$index}} :
                         <div class="input-append">
-                            <input class="input-medium" type="text" ng-model="cluster.tcp.members[$index]">
+                            <input class="input-medium" type="text" placeholder="<IP-ADDRESS>" ng-model="cluster.tcp.members[$index]">
                             <button class="btn" type="button" ng-click="cluster.tcp.members.splice($index,1)">
                                 <span class="icon-remove"></span>
                             </button>

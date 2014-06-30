@@ -10,20 +10,23 @@ app.controller('NavController', function ($scope, $routeParams, $location, Login
     $scope.logged = false;
 
     storage.bind($scope, "username");
+    $rootScope.$on('user:logged', function () {
+        storage.bind($scope, "username");
+    });
 
     $scope.hideClass = "nav navbar-nav side-nav";
 
     $scope.menus = [
         {name: 'dashboard', i18n: 'dashboard', link: '#/dashboard/', icon: 'icon-dashboard' },
-        {name: 'settings', i18n: 'dashboard.settings', link: '#/dashboard/settings/', icon: 'icon-gear' },
-        {name: 'general', i18n: 'dashboard.general', link: '#/dashboard/general/', icon: 'icon-cogs' },
+        {name: 'general', i18n: 'dashboard.general', link: '#/dashboard/general/', icon: 'icon-desktop' },
         {name: 'cluster', i18n: 'dashboard.cluster', link: '#/dashboard/cluster/', icon: 'icon-sitemap' },
         {name: 'query', i18n: 'dashboard.query', link: '#/dashboard/query', icon: 'icon-rocket' },
-        {name: 'metrics', i18n: 'dashboard.metrics', link: '#/dashboard/metrics/' + $scope.rid, icon: 'icon-bar-chart' },
         {name: 'logjava', i18n: 'dashboard.javalog', link: '#/dashboard/logjava/', icon: 'icon-bug' },
         {name: 'events', i18n: 'dashboard.events', link: '#/dashboard/events/', icon: 'icon-bell' },
-        {name: 'messages', i18n: 'dashboard.messages', link: '#/dashboard/messages/', icon: 'icon-envelope' },
-        {name: 'gettstart', i18n: 'dashboard.gettstart', link: '#/dashboard/gettstart/', icon: 'icon-info-sign' },
+        {name: 'charts', i18n: 'dashboard.metrics', link: '#/dashboard/charts/' + $scope.rid, icon: 'icon-bar-chart' },
+        {name: 'settings', i18n: 'dashboard.settings', link: '#/dashboard/settings/', icon: 'icon-gear' },
+//        {name: 'messages', i18n: 'dashboard.messages', link: '#/dashboard/messages/', icon: 'icon-envelope' },
+//        {name: 'gettstart', i18n: 'dashboard.gettstart', link: '#/dashboard/gettstart/', icon: 'icon-info-sign' },
         {name: 'help', i18n: 'dashboard.help', link: '#/dashboard/help/', icon: 'icon-question' }
 
 

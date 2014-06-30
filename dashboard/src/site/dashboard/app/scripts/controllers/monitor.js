@@ -4,7 +4,6 @@ angular.module('MonitorApp')
     .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q, $odialog, Monitor, Server, Notification, Settings, StickyNotification) {
 
 
-
         $scope.chartHeight = 300;
         $scope.pollTime = 5000;
 
@@ -84,6 +83,21 @@ angular.module('MonitorApp')
                 modalEl.modal('show');
             });
         }
+        $scope.removeConfig = function (metr) {
+            var idx = $scope.config["metrics"].indexOf(metr);
+            $scope.config["metrics"].splice(idx, 1);
+            $scope.saveConfigAndRefresh();
+
+        }
+
+        $scope.$watch("config.grid", function (data) {
+            $scope.$emit("disposition:changed");
+        });
+        $scope.saveConfigAndRefresh = function () {
+            Settings.put($scope.config, function (data) {
+                $scope.refreshConfig();
+            });
+        }
         $scope.editCluster = function (cluster) {
 
             var modalScope = $scope.$new(true);
@@ -108,7 +122,14 @@ angular.module('MonitorApp')
             });
 
         }
+        $scope.setOver = function (chart) {
+            $scope.over = chart;
+        }
+        $scope.isOver = function (chart) {
 
+
+            return $scope.over == chart;
+        }
         $scope.refreshConfig();
         $scope.refresh();
     });

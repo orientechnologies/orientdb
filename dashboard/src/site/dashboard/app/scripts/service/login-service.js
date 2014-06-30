@@ -21,9 +21,11 @@ spinner.factory('Login', function (Monitor, $rootScope, $location, $http, storag
                 self.usr = username;
                 $rootScope.loggedIn = true;
                 storage.set('login', true);
+
                 storage.set('username', username);
                 ok(data);
                 $location.path("/dashboard");
+                $rootScope.$emit('user:logged', username);
             }, function (data) {
                 err(data);
             });

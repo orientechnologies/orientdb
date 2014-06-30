@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.workbench.event.OEventExecutor;
 
@@ -34,8 +35,9 @@ public abstract class OEventMetricExecutor implements OEventExecutor {
 
     String metricName = source.field("name");
 
-    String metricValue = source.field(whenParameter);
-    Double metricValueD = new Double(metricValue);
+    Object metricValue = source.field(whenParameter);
+    Double metricValueD = (Double) OType.convert(metricValue, Double.class);
+
     if (metricName.equalsIgnoreCase(whenMetricName)) {
 
       if (whenOperator.equalsIgnoreCase("Greater Than") && metricValueD >= whenValue) {
@@ -69,8 +71,7 @@ public abstract class OEventMetricExecutor implements OEventExecutor {
 
     String whenParameter = when.field("parameter");
     this.getBody2name().put("parameter", whenParameter);
-    String metricValue = source.field(whenParameter);
-    this.getBody2name().put("metricvalue", metricValue);
+    this.getBody2name().put("metricvalue", "" + source.field(whenParameter));
 
   }
 
