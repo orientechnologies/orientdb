@@ -28,6 +28,8 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
   @Override
   public ORecordInternal<?> fromStream(byte[] iSource, ORecordInternal<?> iRecord, String[] iFields) {
+    if (iSource.length == 0)
+      return iRecord;
     if (iRecord == null)
       iRecord = new ODocument();
     else

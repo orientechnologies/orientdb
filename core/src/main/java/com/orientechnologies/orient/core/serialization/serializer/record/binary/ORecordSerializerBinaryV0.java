@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
@@ -152,7 +151,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       value = readEmbeddedCollection(bytes, new OTrackedList<Object>(document), document);
       break;
     case LINKSET:
-      value = readLinkCollection(bytes, new ORecordLazySet(document));
+      value = readLinkCollection(bytes, new OMVRBTreeRIDSet(document));
       break;
     case LINKLIST:
       value = readLinkCollection(bytes, new ORecordLazyList(document));
@@ -220,6 +219,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   private Object readEmbeddedMap(BytesContainer bytes, ODocument document) {
     int size = OVarIntSerializer.read(bytes).intValue();
     Map<Object, Object> result = new OTrackedMap<Object>(document);
+    int last = 0;
     while ((size--) > 0) {
       OType keyType = readOType(bytes);
       Object key = readSingleValue(bytes, keyType, document);
@@ -230,18 +230,26 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         int headerCursor = bytes.offset;
         bytes.offset = valuePos;
         Object value = readSingleValue(bytes, type, document);
+        if (bytes.offset > last)
+          last = bytes.offset;
         bytes.offset = headerCursor;
         result.put(key, value);
       } else
         result.put(key, null);
     }
+    if (last > bytes.offset)
+      bytes.offset = last;
     return result;
   }
 
   private Collection<OIdentifiable> readLinkCollection(BytesContainer bytes, Collection<OIdentifiable> found) {
     int items = OVarIntSerializer.read(bytes).intValue();
     for (int i = 0; i < items; i++) {
-      found.add(readLink(bytes));
+      OIdentifiable identifiable = readLink(bytes);
+      if (ORecordId.EMPTY_RECORD_ID.equals(identifiable))
+        found.add(null);
+      else
+        found.add(identifiable);
     }
     return found;
   }
@@ -522,7 +530,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     }
     int pos = OVarIntSerializer.write(bytes, value.size());
     for (OIdentifiable itemValue : value) {
-      writeLink(bytes, itemValue);
+      // TODO: handle the null links
+      if (itemValue == null)
+        writeLink(bytes, ORecordId.EMPTY_RECORD_ID);
+      else
+        writeLink(bytes, itemValue);
     }
     return pos;
   }
@@ -560,7 +572,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           type = prop.getType();
         }
       }
-      if (type == null)
+      if (type == null || OType.ANY == type)
         type = getTypeFromValue(fieldValue, false);
     }
     return type;
@@ -603,12 +615,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       type = OType.LINKBAG;
     else if (fieldValue instanceof Map<?, ?>) {
 
-      final Iterable<Object> firstValue = OMultiValue.getMultiValueIterable(fieldValue);
       boolean link = true;
-      for (Object object : firstValue) {
-        if (!(object instanceof OIdentifiable))
-          link = false;
-      }
+      if (((Map<?, ?>) fieldValue).size() > 0) {
+        final Iterable<Object> firstValue = OMultiValue.getMultiValueIterable(fieldValue);
+        for (Object object : firstValue) {
+          if (!(object instanceof OIdentifiable))
+            link = false;
+        }
+      } else
+        link = false;
       if (link)
         type = OType.LINKMAP;
       else
