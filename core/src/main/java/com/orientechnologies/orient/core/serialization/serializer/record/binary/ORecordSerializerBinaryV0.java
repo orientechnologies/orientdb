@@ -51,11 +51,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   @Override
   public void deserialize(ODocument document, BytesContainer bytes) {
     String className = readString(bytes);
-    if (className != null)
+    if (className.length() != 0)
       document.setClassNameIfExists(className);
     int last = 0;
     String field;
-    while ((field = readString(bytes)) != null) {
+    while ((field = readString(bytes)).length() != 0) {
       int valuePos = OIntegerSerializer.INSTANCE.deserialize(bytes.bytes, bytes.offset);
       bytes.read(OIntegerSerializer.INT_SIZE);
       OType type = readOType(bytes);
@@ -407,11 +407,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     case LINKBAG:
       pointer = ((ORidBag) value).toStream(bytes);
-    case TRANSIENT:
       break;
     case CUSTOM:
       pointer = writeString(bytes, value.getClass().getName());
       writeBinary(bytes, ((OSerializableStream) value).toStream());
+      break;
+    case TRANSIENT:
       break;
     case ANY:
       break;
@@ -639,8 +640,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   private String readString(BytesContainer bytes) {
     Number n = OVarIntSerializer.read(bytes);
     int len = n.intValue();
-    if (len == 0)
-      return null;
     String res = new String(bytes.bytes, bytes.offset, len, utf8);
     bytes.read(len);
     return res;
