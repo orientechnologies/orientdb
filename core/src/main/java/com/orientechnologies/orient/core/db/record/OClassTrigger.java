@@ -227,8 +227,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
     if (clzName == null || methodName == null)
       return null;
     try {
-      //Class clz = ClassLoader.getSystemClassLoader().loadClass(clzName);
-      Class clz = Class.forName(clzName);
+      Class clz = ClassLoader.getSystemClassLoader().loadClass(clzName);
       Method method = clz.getMethod(methodName, ODocument.class);
       return new Object[] { clz, method };
     } catch (Exception ex) {
@@ -278,7 +277,6 @@ public class OClassTrigger extends ODocumentHookAbstract {
     // final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(funcName);
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     final ScriptEngine scriptEngine = scriptManager.getEngine(func.getLanguage());
-    scriptEngine.put("engine", scriptEngine);
     // final ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("javascript");
     final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
     // final Bindings binding = scriptEngine.createBindings();
@@ -298,8 +296,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
     try {
       if (func.getLanguage() == null)
         throw new OConfigurationException("Database function '" + func.getName() + "' has no language");
-      //final String funcStr = scriptManager.getFunctionDefinition(func);
-      final String funcStr = scriptManager.getLibrary(db, func.getLanguage());
+      final String funcStr = scriptManager.getFunctionDefinition(func);
       if (funcStr != null) {
         try {
           scriptEngine.eval(funcStr);

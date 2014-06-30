@@ -71,7 +71,6 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     final ScriptEngine scriptEngine = scriptManager.getEngine(f.getLanguage());
-    scriptEngine.put("engine", scriptEngine);
     final Bindings binding = scriptManager.bind(scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), (ODatabaseRecordTx) db,
         iContext, iArgs);
 
