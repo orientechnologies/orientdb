@@ -4,26 +4,37 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
     </button>
-    <a class="navbar-brand" href="index.html">OrientDB Enterprise</a>
+    <a class="navbar-brand" href="index.html">
+        <img src="img/orient_db.png" alt="logo"/>
+    </a>
 </div>
 <div class="collapse nav-collapse navbar-collapse navbar-ex1-collapse">
-    <ul class="nav navbar-nav side-nav" ng-show="login.logged">
+    <ul class="" ng-class="hideClass" ng-show="logged">
+        <li class="hider">
+            <button class="pull-right btn-small" href="javascript:void(0)" ng-click="hideMenu(!hided)">
+                <i class="icon-align-justify"> </i>
+            </button>
+        </li>
         <li ng-repeat="menu in menus" ng-class="{ active : menu == selectedMenu }">
-            <a ng-click="navigate(menu)" href="javascript:void(0)">
+
+            <a ng-click="navigate(menu)" bs-tooltip="{{ menu.i18n | i18n }}" data-toggle="tooltip"
+               data-original-title="{{ menu.i18n | i18n }}" data-placement="right"
+               href="javascript:void(0)">
                 <i class="{{ menu.icon }}"></i>
-                <span class="menuTitle"> {{ menu.i18n | i18n }}</span>
+                <span ng-show="!hided" class="menuTitle"> {{ menu.i18n | i18n }}</span>
                 <span ng-class="{ selected : menu == selectedMenu }"></span>
             </a>
         </li>
     </ul>
     <ul class="nav navbar-nav navbar-right navbar-user">
-        <li class="dropdown user-dropdown" ng-show="login.logged">
+        <li class="dropdown user-dropdown" ng-show="logged">
             <a class="dropdown-toggle" data-toggle="dropdown" href="javascript:void(0)">
                 <i class="icon-user"></i>
-                {{ login.username }}
+                {{ username }}
                 <b class="caret"></b>
             </a>
             <ul class="dropdown-menu">
+
                 <li>
                     <a href="#/dashboard/settings">
                         <i class="icon-gear"> Settings</i>
@@ -36,18 +47,18 @@
 
                     </a>
                 </li>
-                <li>
-                    <a href="javascript:void(0)" ng-click="checkUpdates()">
-                        <i class="icon-download"> Check for updates</i>
+                <!--<li>-->
+                    <!--<a href="javascript:void(0)" ng-click="checkUpdates()">-->
+                        <!--<i class="icon-download"> Check for updates</i>-->
 
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i class="icon-info"> About
-                        </i>
-                    </a>
-                </li>
+                    <!--</a>-->
+                <!--</li>-->
+                <!--<li>-->
+                    <!--<a href="#">-->
+                        <!--<i class="icon-info"> About-->
+                        <!--</i>-->
+                    <!--</a>-->
+                <!--</li>-->
                 <li>
                     <a href="javascript:void(0)" ng-click="gettingStarted()">
                         <i class="icon-info-sign"> Getting started</i>

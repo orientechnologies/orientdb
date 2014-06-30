@@ -986,13 +986,50 @@ Production support available on demand;
 </div>
 </div>
 <div class="sect1">
-<h2 id="_dashboard_overview">4. Dashboard overview</h2>
+<h2 id="_join_cluster">4. Join Cluster</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>If you are using OrientDB Distributed you can easily join the cluster and Workbench will automatically start monitoring all
+the server configured in the cluster.</p></div>
+<div class="paragraph"><p>In the dashboard panel click to "Join Cluster"</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="views/server/asciidoc/add_cluster.png" alt="views/server/asciidoc/add_cluster.png" width="30%" />
+</div>
+<div class="title">Figure 3. Server Configuration</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_cluster_configuration">5. Cluster Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph"><p>To Join a cluster just fill information such as Group name and password, and the connection type (Multicast or Tcp/Ip)
+and the click "Save changes".</p></div>
+<div class="paragraph"><p>Workbench will join the cluster and will get all the information off the servers needed for monitoring.</p></div>
+<div class="imageblock">
+<div class="content">
+<img src="views/server/asciidoc/popup_cluster.png" alt="views/server/asciidoc/popup_cluster.png" width="30%" />
+</div>
+<div class="title">Figure 4. Server Configuration</div>
+</div>
+<div class="admonitionblock">
+<table><tr>
+<td class="icon">
+<img src="views/server/asciidoc/images/icons/note.png" alt="Note" />
+</td>
+<td class="content">Pay attention to the configuration. If you write a wrong group name or network configuration. Workbench will not give any error.
+It will create another cluster with only it self as cluster member.</td>
+</tr></table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_dashboard_overview">6. Dashboard overview</h2>
 <div class="sectionbody">
 <div class="imageblock">
 <div class="content">
 <img src="views/server/asciidoc/dashboard_filled.png" alt="views/server/asciidoc/dashboard_filled.png" width="80%" />
 </div>
-<div class="title">Figure 3. Dashboard overview</div>
+<div class="title">Figure 5. Dashboard overview</div>
 </div>
 <div class="admonitionblock">
 <table><tr>
@@ -1009,7 +1046,7 @@ Production support available on demand;
 <div id="footnotes"><hr /></div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2013-12-10 14:25:45 CET
+Last updated 2014-06-24 19:37:35 CEST
 </div>
 </div>
 </body>

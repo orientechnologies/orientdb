@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('MonitorApp')
-    .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q, $odialog, Monitor, Server, Notification, Settings) {
+    .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q, $odialog, Monitor, Server, Notification, Settings, StickyNotification) {
 
 
         $scope.chartHeight = 300;
@@ -27,6 +27,16 @@ angular.module('MonitorApp')
             var modalScope = $scope.$new(true)
             modalScope.refresh = $scope.refresh;
             var modalPromise = $modal({template: 'views/settings/newModal.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
+
+            $q.when(modalPromise).then(function (modalEl) {
+                modalEl.modal('show');
+            });
+        }
+        $scope.addCluster = function () {
+
+            var modalScope = $scope.$new(true)
+            modalScope.refresh = $scope.refresh;
+            var modalPromise = $modal({template: 'views/cluster/newCluster.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
 
             $q.when(modalPromise).then(function (modalEl) {
                 modalEl.modal('show');
@@ -73,6 +83,31 @@ angular.module('MonitorApp')
                 modalEl.modal('show');
             });
         }
+        $scope.removeConfig = function (metr) {
+            var idx = $scope.config["metrics"].indexOf(metr);
+            $scope.config["metrics"].splice(idx, 1);
+            $scope.saveConfigAndRefresh();
+
+        }
+
+        $scope.$watch("config.grid", function (data) {
+            $scope.$emit("disposition:changed");
+        });
+        $scope.saveConfigAndRefresh = function () {
+            Settings.put($scope.config, function (data) {
+                $scope.refreshConfig();
+            });
+        }
+        $scope.editCluster = function (cluster) {
+
+            var modalScope = $scope.$new(true);
+            modalScope.cluster = cluster;
+            var modalPromise = $modal({template: 'views/cluster/editCluster.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
+
+            $q.when(modalPromise).then(function (modalEl) {
+                modalEl.modal('show');
+            });
+        }
         $scope.deleteServer = function (server) {
 
             $odialog.confirm({
@@ -87,7 +122,14 @@ angular.module('MonitorApp')
             });
 
         }
+        $scope.setOver = function (chart) {
+            $scope.over = chart;
+        }
+        $scope.isOver = function (chart) {
 
+
+            return $scope.over == chart;
+        }
         $scope.refreshConfig();
         $scope.refresh();
     });

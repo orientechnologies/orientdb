@@ -16,15 +16,8 @@
 
 package com.orientechnologies.workbench;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.io.OIOUtils;
@@ -59,20 +52,7 @@ import com.orientechnologies.workbench.event.OEventMetricFunctionExecutor;
 import com.orientechnologies.workbench.event.OEventMetricHttpExecutor;
 import com.orientechnologies.workbench.event.OEventMetricMailExecutor;
 import com.orientechnologies.workbench.hooks.OEventHook;
-import com.orientechnologies.workbench.http.OServerCommandAuthenticateSingleDatabase;
-import com.orientechnologies.workbench.http.OServerCommandDeleteRealtimeMetrics;
-import com.orientechnologies.workbench.http.OServerCommandDeleteServer;
-import com.orientechnologies.workbench.http.OServerCommandGetConnectionsCommand;
-import com.orientechnologies.workbench.http.OServerCommandGetExplainCommand;
-import com.orientechnologies.workbench.http.OServerCommandGetLoggedUserInfo;
-import com.orientechnologies.workbench.http.OServerCommandGetMonitoredServers;
-import com.orientechnologies.workbench.http.OServerCommandGetRealtimeMetrics;
-import com.orientechnologies.workbench.http.OServerCommandGetServerConfiguration;
-import com.orientechnologies.workbench.http.OServerCommandGetServerLog;
-import com.orientechnologies.workbench.http.OServerCommandMessageExecute;
-import com.orientechnologies.workbench.http.OServerCommandNotifyChangedMetric;
-import com.orientechnologies.workbench.http.OServerCommandPurgeMetric;
-import com.orientechnologies.workbench.http.OServerCommandQueryPassThrough;
+import com.orientechnologies.workbench.http.*;
 
 public class OWorkbenchPlugin extends OServerPluginAbstract {
 
@@ -83,6 +63,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   public static final String                        VERSION                           = OConstants.ORIENT_VERSION;
   static final String                               SYSTEM_CONFIG                     = "system.config";
 
+  public static final String                        CLASS_CLUSTER                     = "Cluster";
   public static final String                        CLASS_SERVER                      = "Server";
   public static final String                        CLASS_LOG                         = "Log";
   public static final String                        CLASS_EVENT                       = "Event";
@@ -123,11 +104,12 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   private String                                    dbPassword                        = "OrientDB_KILLS_Neo4J!";
   private ODatabaseDocumentTx                       db;
   Map<String, OMonitoredServer>                     servers                           = new HashMap<String, OMonitoredServer>();
+  private Map<String, OMonitoredCluster>            clusters                          = new HashMap<String, OMonitoredCluster>();
   Map<Integer, Map<Integer, Set<OMonitoredServer>>> keyMap;
   Map<String, OPair<String, METRIC_TYPE>>           dictionary;
   private Set<OServerConfigurationListener>         listeners                         = new HashSet<OServerConfigurationListener>();
   private ConcurrentHashMap<String, Boolean>        metricsEnabled                    = new ConcurrentHashMap<String, Boolean>();
-  public   String                                    version;
+  public String                                     version;
   private OWorkbenchUpdateTask                      updater;
   private OWorkbenchMessageTask                     messageTask;
 
@@ -166,6 +148,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     registerCommands();
     Orient.instance().getTimer().schedule(new OWorkbenchTask(this), updateTimer, updateTimer);
     Orient.instance().getTimer().schedule(new OWorkbenchPurgeTask(this), purgeTimer, purgeTimer);
+    Orient.instance().getTimer().schedule(new OWorkbenchHazelcastTask(this), updateTimer, updateTimer);
     messageTask = new OWorkbenchMessageTask(this);
     Orient.instance().getTimer().schedule(messageTask, 600000, 600000);
     updater = new OWorkbenchUpdateTask(this);
@@ -174,7 +157,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     System.out.printf("\n\n************************************************");
     System.out.printf("\n*   ORIENTDB WORKBENCH -  ENTERPRISE EDITION   *");
     System.out.printf("\n*                                              *");
-    System.out.printf("\n* Copyrights (c) 2013 Orient Technologies LTD  *");
+    System.out.printf("\n* Copyrights (c) 2014 Orient Technologies LTD  *");
     System.out.printf("\n************************************************");
     System.out.printf("\n* Version...: %-32s *", VERSION);
     System.out.printf("\n************************************************\n");
@@ -184,7 +167,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
         System.out
             .printf(
                 "\nTo open the Web Console open your browser to the URL: http://%s and use 'admin' as user and password to log in, unless you already changed it.\n\n",
-                l.getListeningAddress());
+                l.getListeningAddress(true));
         break;
       }
     }
@@ -216,9 +199,10 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     listener.registerStatelessCommand(new OServerCommandGetServerLog());
     listener.registerStatelessCommand(new OServerCommandGetServerConfiguration());
     listener.registerStatelessCommand(new OServerCommandPurgeMetric());
-    listener.registerStatelessCommand(new OServerCommandDeleteServer());
+    listener.registerStatelessCommand(new OServerCommandMgrServer());
     listener.registerStatelessCommand(new OServerCommandNotifyChangedMetric());
     listener.registerStatelessCommand(new OServerCommandMessageExecute());
+    listener.registerStatelessCommand(new OServerCommandDistributedManager());
   }
 
   private void unregisterCommands() {
@@ -237,13 +221,18 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     listener.unregisterStatelessCommand(OServerCommandGetServerLog.class);
     listener.unregisterStatelessCommand(OServerCommandGetServerConfiguration.class);
     listener.unregisterStatelessCommand(OServerCommandPurgeMetric.class);
-    listener.unregisterStatelessCommand(OServerCommandDeleteServer.class);
+    listener.unregisterStatelessCommand(OServerCommandMgrServer.class);
     listener.unregisterStatelessCommand(OServerCommandNotifyChangedMetric.class);
     listener.unregisterStatelessCommand(OServerCommandMessageExecute.class);
+    listener.unregisterStatelessCommand(OServerCommandDistributedManager.class);
   }
 
   public OMonitoredServer getMonitoredServer(final String iServer) {
     return servers.get(iServer);
+  }
+
+  public void removeMonitoredServer(final String name) {
+    servers.remove(name);
   }
 
   public Set<Entry<String, OMonitoredServer>> getMonitoredServers() {
@@ -333,6 +322,12 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     server.createProperty("url", OType.STRING);
     server.createProperty("user", OType.STRING);
     server.createProperty("password", OType.STRING);
+
+    final OClass cluster = schema.createClass(CLASS_CLUSTER);
+    cluster.createProperty("name", OType.STRING);
+    cluster.createProperty("password", OType.STRING);
+    cluster.createProperty("port", OType.INTEGER);
+    cluster.createProperty("portIncrement", OType.BOOLEAN);
 
     final OClass snapshot = schema.createClass(CLASS_SNAPSHOT);
     snapshot.createProperty("server", OType.LINK, server);
@@ -543,5 +538,40 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 
   public void setDb(ODatabaseDocumentTx db) {
     this.db = db;
+  }
+
+  public void addCluster(OMonitoredCluster cluster) {
+    clusters.put(cluster.getName(), cluster);
+  }
+
+  public boolean hasCluster(String name) {
+    return clusters.get(name) != null;
+  }
+
+  public Map<String, OMonitoredCluster> getClusters() {
+    return clusters;
+  }
+
+  public Collection<OMonitoredCluster> getClustersList() {
+    return clusters.values();
+  }
+
+  public OMonitoredCluster getClusterByName(String cluster) {
+    return clusters.get(cluster);
+  }
+
+  public Collection<OMonitoredServer> getServersByClusterName(String cluster) {
+    List<OMonitoredServer> srvs = new ArrayList<OMonitoredServer>();
+    for (OMonitoredServer s : servers.values()) {
+      ODocument doc = s.getConfiguration().field("cluster");
+      if (doc != null && cluster.equals(doc.field("name"))) {
+        srvs.add(s);
+      }
+    }
+    return srvs;
+  }
+
+  public void removeMonitoredCluster(String cluster) {
+    clusters.remove(cluster);
   }
 }

@@ -1,6 +1,31 @@
 'use strict';
 
-var app = angular.module('MonitorApp', ['ngI18n', , 'messages.controller', 'workbench-logs.controller', 'workbench-events.controller', 'login.services', 'monitor.services', 'ui-nvd3', 'ngMoment', 'OFilter', 'ui.select2', '$strap.directives', 'monitor.directive', 'orientdb.directives', 'ui.codemirror', 'ngGrid', 'bootstrap.tabset', 'message.services','spinner.controller','spinner.services']);
+var app = angular.module('MonitorApp',
+    ['ngI18n',
+        'messages.controller',
+        'workbench-logs.controller',
+        'workbench-events.controller',
+        'login.services',
+        'monitor.services',
+        'ui-nvd3',
+        'ngMoment',
+        'OFilter',
+        'ui.select2',
+        '$strap.directives',
+        'monitor.directive',
+        'monitor.gdirective',
+        'orientdb.directives',
+        'ui.codemirror',
+        'ngGrid',
+        'bootstrap.tabset',
+        'message.services',
+        'spinner.controller',
+        'spinner.services',
+        'ngRoute',
+        'ngAnimate',
+        'angularLocalStorage'
+    ]
+);
 app.config(function ($routeProvider) {
     $routeProvider
         .when('/', {
@@ -27,7 +52,11 @@ app.config(function ($routeProvider) {
             templateUrl: 'views/main.html',
             controller: 'ServerMonitorController'
         })
-
+        .when('/dashboard/cluster/:cluster/:db', {
+            templateUrl: 'views/server/cluster.html',
+            controller: 'ClusterMainController',
+            reloadOnSearch: false
+        })
         .when('/server/:rid', {
             templateUrl: 'views/server/main.html',
             controller: 'ServerMonitorController'
@@ -59,14 +88,22 @@ app.config(function ($routeProvider) {
         .otherwise({
             redirectTo: '/'
         });
-});
+})
+;
 
 app.config(function ($httpProvider) {
-    $httpProvider.interceptors.push(function ($rootScope, $location, $q) {
+    $httpProvider.interceptors.push(function ($rootScope, $location, $q, storage) {
         return {
             'request': function (request) {
                 // if we're not logged-in to the AngularJS app, redirect to login page
 
+
+                if (!$rootScope.loggedIn) {
+                    var logged = JSON.parse(storage.get("login"));
+                    if (logged) {
+                        $rootScope.loggedIn = logged;
+                    }
+                }
                 if (!$rootScope.loggedIn && $location.path() != '/login') {
                     $location.path('/login');
                 }
@@ -102,3 +139,16 @@ $('.popover').on("hide", function (e) {
 
     e.stopPropagation();
 });
+app.run(['$route', '$rootScope', '$location', function ($route, $rootScope, $location) {
+    var original = $location.path;
+    $location.path = function (path, reload) {
+        if (reload === false) {
+            var lastRoute = $route.current;
+            var un = $rootScope.$on('$locationChangeSuccess', function () {
+                $route.current = lastRoute;
+                un();
+            });
+        }
+        return original.apply($location, [path]);
+    };
+}])

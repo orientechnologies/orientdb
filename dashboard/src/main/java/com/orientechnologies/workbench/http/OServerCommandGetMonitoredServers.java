@@ -59,7 +59,7 @@ public class OServerCommandGetMonitoredServers extends OServerCommandAbstract {
         results.add(r);
       }
 
-      iResponse.writeResult(results, "indent:6");
+      iResponse.writeResult(results, "indent:6", null);
 
     } catch (Exception e) {
       iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);

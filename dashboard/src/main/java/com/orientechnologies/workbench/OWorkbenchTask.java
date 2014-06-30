@@ -50,6 +50,7 @@ public final class OWorkbenchTask extends TimerTask {
             int idC = OL.getClientId(license);
             int idS = OL.getServerId(license);
 
+            // TO REMOVE
             if (handler.getKeyMap().size() > 1 && handler.getKeyMap().get(idC).get(idS).size() > 1) {
               updateServerStatus(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID);
               log(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID, "License " + license + " invalid");
@@ -280,7 +281,17 @@ public final class OWorkbenchTask extends TimerTask {
   protected static ODocument fetchFromRemoteServer(final ODocument server, final URL iRemoteUrl) throws IOException {
     URLConnection urlConnection = iRemoteUrl.openConnection();
 
-    String authString = server.field("user") + ":" + server.field("password");
+    String enc = server.field("password");
+    if (enc == null) {
+      throw new IOException("401");
+    }
+    String pwd = null;
+    try {
+      pwd = OL.decrypt(enc);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    String authString = server.field("user") + ":" + pwd;
     String authStringEnc = OBase64Utils.encodeBytes(authString.getBytes());
 
     urlConnection.setRequestProperty("Authorization", "Basic " + authStringEnc);
@@ -298,6 +309,7 @@ public final class OWorkbenchTask extends TimerTask {
 
     final ODocument docMetrics = new ODocument().fromJSON(result);
     return docMetrics;
+
   }
 
   public static void log(final OIdentifiable iServer, final OWorkbenchPlugin.STATUS iLevel, final String iDescription) {

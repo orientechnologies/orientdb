@@ -2,28 +2,30 @@
 
 var app = angular.module('MonitorApp');
 
-app.controller('QueryMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, $i18n, Spinner) {
+app.controller('QueryMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, $i18n, Spinner, ContextNotification) {
 
 
     $scope.rid = $routeParams.server;
     $scope.db = $routeParams.db;
 
+
     $scope.filterOptions = {filterText: '' };
 
     $scope.gridOptions = { data: 'commands',
         enablePaging: true,
+        enableColumnResize: true,
         pagingOptions: $scope.pagingOptions,
         totalServerItems: 'total',
         filterOptions: $scope.filterOptions,
         columnDefs: [
-            {field: 'name', displayName: $i18n.get('queryprofiler.type'), cellFilter: 'ctype', width: 'auto'},
-            {field: 'name', displayName: $i18n.get('queryprofiler.command'), cellFilter: 'cname'},
-            {field: 'entries', displayName: $i18n.get('queryprofiler.entries'), width: 'auto'},
-            {field: 'average', displayName: $i18n.get('queryprofiler.average'), width: 'auto'},
-            {field: 'total', displayName: $i18n.get('queryprofiler.total'), width: 'auto'},
-            {field: 'max', displayName: $i18n.get('queryprofiler.max'), width: 'auto'},
-            {field: 'min', displayName: $i18n.get('queryprofiler.min'), width: 'auto'},
-            {field: 'last', displayName: $i18n.get('queryprofiler.last'), width: 'auto'}
+            {field: 'name', displayName: $i18n.get('queryprofiler.type'), cellFilter: 'ctype', width: "5%", resizable: true},
+            {field: 'name', displayName: $i18n.get('queryprofiler.command'), cellFilter: 'cname', width: "50%", resizable: true},
+            {field: 'entries', displayName: $i18n.get('queryprofiler.entries'), width: "10%", resizable: true},
+            {field: 'average', displayName: $i18n.get('queryprofiler.average'), width: "10%", resizable: true},
+            {field: 'total', displayName: $i18n.get('queryprofiler.total'), width: "10%", resizable: true},
+            {field: 'max', displayName: $i18n.get('queryprofiler.max'), width: "10%", resizable: true},
+            {field: 'min', displayName: $i18n.get('queryprofiler.min'), width: "10%", resizable: true},
+            {field: 'last', displayName: $i18n.get('queryprofiler.last'), width: "10%", resizable: true}
         ]
     };
     Monitor.getServers(function (data) {
@@ -50,6 +52,9 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
             $scope.commands = $scope.flatten(data.result, metricName);
             Spinner.stopSpinner();
 
+        }, function (error) {
+            Spinner.stopSpinner();
+            ContextNotification.push({content: error.data, error: true});
         });
     }
 
@@ -84,7 +89,8 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
     });
     $scope.findDatabases = function (server) {
         var params = {  server: server, type: 'realtime', kind: 'information', names: 'system.databases' };
-        Metric.get(params, function (data) {
+        var db = Metric.get(params);
+        db.$promise.then(function (data) {
             $scope.databases = data.result[0]['system.databases'].split(",");
             if ($scope.databases.length > 0) {
                 $scope.db = $scope.databases[0];
@@ -92,6 +98,8 @@ app.controller('QueryMonitorController', function ($scope, $location, $routePara
             if ($scope.db) {
                 $scope.refresh();
             }
+        }, function (error) {
+            ContextNotification.push({content: error.data, error: true});
         });
     }
 

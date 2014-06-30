@@ -29,7 +29,7 @@ monitor.factory('Monitor', function ($http, $resource) {
             });
     }
     resource.getServers = function (callback) {
-        var query = 'select * from Server'
+        var query = 'select * from Server fetchPlan *:1'
         $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
             callback(data);
         });
@@ -37,11 +37,11 @@ monitor.factory('Monitor', function ($http, $resource) {
     resource.updateServer = function (server, callback) {
 
         if (server['@rid'].replace("#", '') == '-1:-1') {
-            $http.post(API + 'document/monitor/-1:-1', server).success(function (data) {
+            $http.post(API + 'monitoredServer/monitor/-1:-1', server).success(function (data) {
                 callback(data);
             });
         } else {
-            $http.put(API + 'document/monitor/' + server['@rid'].replace("#", ''), server).success(function (data) {
+            $http.put(API + 'monitoredServer/monitor/' + server['@rid'].replace("#", ''), server).success(function (data) {
                 callback(data);
             });
         }
@@ -219,10 +219,21 @@ monitor.factory('Server', function ($http, $resource, Metric) {
 //                error(data);
             });
     }
-    resource.findDatabases = function (server, callback) {
+    resource.findDatabases = function (server, callback, error) {
         var params = {  server: server, type: 'realtime', kind: 'information', names: 'system.databases' };
         Metric.get(params, function (data) {
             var databases = data.result[0]['system.databases'].split(",");
+            callback(databases)
+        }, error);
+    }
+    resource.findDatabasesOnSnapshot = function (server, callback) {
+        var params = {  server: server, type: 'snapshot', kind: 'information', names: 'system.databases' };
+        Metric.get(params, function (data) {
+            if (data.result[0] && data.result[0]['value']) {
+                var databases = data.result[0]['value'].split(",");
+            } else {
+                var databases = [];
+            }
             callback(databases)
         });
     }
@@ -236,7 +247,10 @@ monitor.factory('MetricConfig', function ($http, $resource) {
     resource.getAll = function (callback, plan) {
 
         plan = plan || "";
-        var query = 'select * from MetricConfig fetchPlan' + plan
+        var query = 'select * from MetricConfig';
+        if (plan != "") {
+            query += " fetchPlan" + plan
+        }
         $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
             callback(data);
         });
@@ -305,6 +319,7 @@ monitor.factory('Settings', function ($http, $resource) {
         var conf = {};
         conf['@class'] = 'UserConfiguration';
         conf['metrics'] = new Array;
+        conf.grid = 1;
         return conf;
     }
     resource.put = function (config, callback) {
@@ -318,11 +333,11 @@ monitor.factory('Settings', function ($http, $resource) {
 monitor.factory('Users', function ($http, $resource) {
     var resource = $resource(API + 'database/:database');
 
-    resource.savePasswd = function (ouser, callback) {
-        $http.put(API + 'document/monitor/' + ouser['@rid'].replace("#", ''), ouser).success(function (data) {
+    resource.savePasswd = function (ouser, callback, err) {
+        $http.post(API + 'loggedUserInfo/monitor/changePassword', ouser).success(function (data) {
             callback(data);
         }).error(function (error) {
-                callback(error);
+                err(error);
             });
     }
     resource.getWithUsername = function (username, callback) {
@@ -333,4 +348,151 @@ monitor.factory('Users', function ($http, $resource) {
         });
     }
     return resource;
+});
+
+monitor.factory('Cluster', function ($http, $resource, $q) {
+    var resource = $resource(API + 'database/:database');
+
+    resource.delete = function (name, callback) {
+        var url = API + 'distributed/monitor/configuration/' + name;
+        $http.delete(url).success(function (data) {
+            callback(data);
+        })
+    }
+
+    resource.connect = function (name) {
+        var deferred = $q.defer();
+        var url = API + 'distributed/monitor/connect/' + name;
+        $http.get(url).success(function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
+    }
+    resource.disconnect = function (name) {
+        var deferred = $q.defer();
+        var url = API + 'distributed/monitor/disconnect/' + name;
+        $http.get(url).success(function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
+    }
+    resource.saveCluster = function (cluster) {
+        var deferred = $q.defer();
+        var url = API + 'distributed/monitor/configuration';
+        $http.post(url, cluster).success(function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
+    }
+
+    resource.getServers = function (cluster) {
+        var deferred = $q.defer();
+        var cId = cluster['@rid'];
+        var query = 'select * from Server where cluster = {{cluster}}';
+        query = S(query).template({cluster: cId}).s;
+        $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
+            deferred.resolve(data.result);
+        });
+        return deferred.promise;
+    }
+    resource.getAll = function () {
+        var deferred = $q.defer();
+
+        var query = 'select * from Cluster';
+        $http.post(API + 'command/monitor/sql/-/-1', query).success(function (data) {
+            deferred.resolve(data.result);
+        });
+        return deferred.promise;
+    }
+    resource.getDistributedInfo = function (type) {
+        var deferred = $q.defer();
+        var url = API + 'distributed/monitor/' + type;
+        $http.get(url).success(function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
+    }
+    resource.getClusterDbInfo = function (cluster, db) {
+        var deferred = $q.defer();
+        var url = API + 'distributed/monitor/dbconfig/{{cluster}}/{{db}}';
+        url = S(url).template({cluster: cluster, db: db}).s;
+        $http.get(url).success(function (data) {
+            deferred.resolve(data);
+        }).error(function (data) {
+                deferred.reject(data);
+            });
+        return deferred.promise;
+    }
+    resource.saveClusterDbInfo = function (cluster, db, config) {
+        var deferred = $q.defer();
+        var url = API + 'distributed/monitor/dbconfig/{{cluster}}/{{db}}';
+        url = S(url).template({cluster: cluster, db: db}).s;
+        $http.post(url, config).success(function (data) {
+            deferred.resolve(data);
+        });
+        return deferred.promise;
+    }
+    resource.deployDb = function (cluster, server, db) {
+        var deferred = $q.defer();
+        var url = API + 'distributed/monitor/deploy/{{cluster}}/{{server}}/{{db}}';
+        url = S(url).template({cluster: cluster, server: server, db: db}).s;
+        $http.get(url).success(function (data) {
+            deferred.resolve(data);
+        }).error(function (data) {
+                deferred.reject(data);
+            });
+        return deferred.promise;
+    }
+    return resource;
+});
+
+monitor.factory('ContextNotification', function ($timeout) {
+
+    return {
+        notifications: new Array,
+        errors: new Array,
+
+        push: function (notification) {
+            this.notifications.splice(0, this.notifications.length);
+            this.errors.splice(0, this.errors.length);
+
+            if (notification.error) {
+                this.errors.push(notification);
+            } else {
+                this.notifications.push(notification);
+            }
+            var that = this;
+            $timeout(function () {
+                that.clear();
+            }, 5000);
+        },
+        clear: function () {
+            this.notifications.splice(0, this.notifications.length);
+            this.errors.splice(0, this.errors.length);
+        }
+
+    }
+});
+monitor.factory('StickyNotification', function ($timeout) {
+
+    return {
+        notifications: new Array,
+        errors: new Array,
+
+        push: function (notification) {
+            this.notifications.splice(0, this.notifications.length);
+            this.errors.splice(0, this.errors.length);
+
+            if (notification.error) {
+                this.errors.push(notification);
+            } else {
+                this.notifications.push(notification);
+            }
+        },
+        clear: function () {
+            this.notifications.splice(0, this.notifications.length);
+            this.errors.splice(0, this.errors.length);
+        }
+
+    }
 });

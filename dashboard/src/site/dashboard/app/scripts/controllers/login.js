@@ -18,15 +18,19 @@ login.controller('LoginController', function ($scope, Monitor, Login) {
 
 login.controller('ChangePasswordController', function ($scope, Users, Login, $location) {
 
-    $scope.username = Login.username;
+    $scope.username = Login.username();
     Users.getWithUsername($scope.username, function (data) {
         $scope.user = data;
     });
     $scope.save = function () {
 
+        $scope.user.oldpassword = $scope.oldpassword
         $scope.user.password = $scope.newpassword;
         Users.savePasswd($scope.user, function (data) {
             Login.logout();
+            $scope.hide();
+        }, function (data) {
+            console.log(data);
         });
     }
 });

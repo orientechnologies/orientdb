@@ -19,11 +19,33 @@ package com.orientechnologies.agent;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
+
 @SuppressWarnings("restriction")
 public class OL {
+
+  public static final int      DELAY    = 60;
+  public static final String   AES      = "AES";
+  private static SecretKeySpec key;
+  private static final byte[]  keyValue = new byte[] { 'T', 'h', 'e', 'B', 'e', 's', 't', 'S', 'e', 'c', 'r', 'e', 't', 'K', 'e',
+      'y'                              };
+  public static final String   UTF_8    = "UTF-8";
+
+  static {
+    try {
+      key = new SecretKeySpec(keyValue, AES);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 
   public static int checkDate(final String iLicense) throws OLicenseException {
     if (iLicense == null || iLicense.isEmpty())
@@ -32,12 +54,14 @@ public class OL {
     final String key = "@Ld" + "ks#2" + "" + "3dsLvc" + (35 - 12 * 2) + "a!Po" + "weRr";
     try {
       final Date now = new Date();
+
       final Date d = new SimpleDateFormat("yyyyMMdd").parse(OCry.decrypt(iLicense, key).substring(12));
-      if (!d.after(now))
+      Calendar c = Calendar.getInstance();
+      c.setTime(d);
+      c.add(Calendar.DATE, DELAY);
+      if (!c.getTime().after(now))
         throw new OLicenseException("license expired on: " + d);
-      return getDateDiff(d, now);
-    } catch (OLicenseException e) {
-      throw e;
+      return getDateDiff(now, d);
     } catch (Exception e) {
       throw new OLicenseException("license not valid");
     }
@@ -197,6 +221,25 @@ public class OL {
     public OLicenseException(String message) {
       super(message);
     }
+  }
+
+  public static String encrypt(String plainText) throws Exception {
+
+    Cipher cipher = Cipher.getInstance(AES);
+    cipher.init(Cipher.ENCRYPT_MODE, key);
+    byte[] enc = cipher.doFinal(plainText.getBytes(UTF_8));
+    String encryptedValue = new BASE64Encoder().encode(enc);
+    return encryptedValue;
+  }
+
+  public static String decrypt(String text) throws Exception {
+
+    Cipher cipher = Cipher.getInstance(AES);
+    cipher.init(Cipher.DECRYPT_MODE, key);
+    byte[] decordedValue = new BASE64Decoder().decodeBuffer(text);
+    byte[] decValue = cipher.doFinal(decordedValue);
+    String decryptedValue = new String(decValue, UTF_8);
+    return decryptedValue;
   }
 
 }

@@ -45,7 +45,7 @@ module.controller('ServerEditController', function ($scope, $location, $injector
 });
 module.controller('SettingsController', function ($scope, $location, $injector, $routeParams, Metric, MetricConfig, CommandLogApi, Settings) {
 
-    $scope.currentTab = 'dashboard';
+    $scope.currentTab = 'metrics';
 
 
     $scope.filterOptions = {filterText: '' };
@@ -85,6 +85,7 @@ module.controller('SettingsController', function ($scope, $location, $injector, 
     Metric.getMetricDictionary(function (data) {
         $scope.metrics = data.result;
         $scope.total = $scope.metrics.length;
+        console.log($scope.total);
 
     });
     $scope.getGridClass = function (index, gridOpt) {

@@ -15,6 +15,10 @@
  */
 package com.orientechnologies.agent.http.command;
 
+import java.net.SocketException;
+import java.util.Date;
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -28,10 +32,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
-import java.net.SocketException;
-import java.util.Date;
-import java.util.List;
-
 public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticatedServerAbstract implements OCommandOutputListener {
   public OServerCommandPostBackupDatabase() {
     super("database.backup");
@@ -41,7 +41,7 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
 
   @Override
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse) throws Exception {
-    final String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: backup/<database>");
+    final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: backup/<database>");
 
     iRequest.data.commandInfo = "Database backup";
     try {
@@ -55,7 +55,9 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
         iResponse.writeLine("Content-Disposition: attachment; filename=" + database.getName() + ".gz");
         iResponse.writeLine("Date: " + new Date());
         iResponse.writeLine(null);
-        database.backup(iResponse.getOutputStream(), null, null, null, 9, 0);
+
+         // TODO
+        database.backup(iResponse.getOutputStream(), null, null, null,0,0);
 
         try {
           iResponse.flush();

@@ -98,7 +98,7 @@ public class OEventHook extends ORecordHookAbstract {
         }
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("name", metricName);
-        triggers = doc.getDatabase().query(new OSQLSynchQuery<Object>("select from Event where when.name = :name"));
+        triggers = doc.getDatabase().query(new OSQLSynchQuery<Object>("select from Event where when.name = :name"),params);
 
         for (ODocument oDocument : triggers) {
 

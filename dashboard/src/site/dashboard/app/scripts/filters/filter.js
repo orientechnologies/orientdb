@@ -12,6 +12,16 @@ Ofilter.filter('ctype', function () {
         return input.substring(0, index);
     };
 });
+Ofilter.filter('tconfig', function () {
+
+    return function (input, args) {
+        if (input) {
+            delete input["@type"];
+            delete input["@version"];
+        }
+        return input;
+    };
+});
 Ofilter.filter('cname', function () {
 
     return function (input, args) {

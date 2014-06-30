@@ -18,7 +18,11 @@ appServices.provider('$odialog', function () {
                         params.success();
                         modalScope.hide();
                     }
-
+                    modalScope.cancel = function () {
+                        if (params.cancel) {
+                            params.cancel();
+                        }
+                    }
                     var modalPromise = $modal({template: 'views/modal/yesno.html', persist: true, show: false, backdrop: 'static', scope: modalScope, modalClass: ''});
                     $q.when(modalPromise).then(function (modalEl) {
                         modalEl.modal('show');

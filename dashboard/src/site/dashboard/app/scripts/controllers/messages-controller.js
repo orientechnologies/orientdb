@@ -199,3 +199,32 @@ dbModule.controller("MessagesController", ['$scope', '$http', '$route', '$locati
     }
 
 }]);
+
+dbModule.controller("ContextNotificationController", ['$scope', 'ContextNotification', function ($scope, ContextNotification) {
+    $scope.alerts = ContextNotification.notifications;
+    $scope.errors = ContextNotification.errors;
+
+
+}]);
+dbModule.controller("StickyNotificationController", ['$scope', 'StickyNotification', function ($scope, StickyNotification) {
+    $scope.alerts = StickyNotification.notifications;
+    $scope.errors = StickyNotification.errors;
+
+
+}]);
+dbModule.controller("LicenseNotificationController", ['$scope', 'Monitor', 'StickyNotification', function ($scope, Monitor, StickyNotification) {
+
+    $scope.delay = 60;
+    Monitor.getServers(function (data) {
+        $scope.servers = data.result;
+
+        $scope.servers.forEach(function (elem, idx, arr) {
+            if (elem.configuration && elem.configuration.dayLeft < 0) {
+                var msgTpl = "License for server <b>{{name}}</b> is expired. Enterprise features will be disabled in <b>{{days}}</b> days. Please contact Orient Technologies at: <a href='mailto:info@orientechnologies.com'>info@orientechnologies.com</a>."
+                var msg = S(msgTpl).template({name: elem.name, days: $scope.delay + elem.configuration.dayLeft}).s
+                StickyNotification.push({content: msg, error: true});
+            }
+        });
+    });
+
+}]);

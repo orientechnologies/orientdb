@@ -30,8 +30,10 @@
                 <div id="loader" ng-show="loading" ng-animate="'fade'">
                     <img src="img/orient_sun_logo.gif" class="chart-loader"/>
                 </div>
-                <svg preserveAspectRatio="none" ng-hide="loading" stackedarea="metricsData"
-                     stackedrender="render" realtime="realtime"></svg>
+                <div ng-hide="loading">
+                <svg preserveAspectRatio="none"  stackedarea="metricsData"
+                         stackedrender="render" realtime="realtime"></svg>
+                </div>
             </div>
 
         </div>

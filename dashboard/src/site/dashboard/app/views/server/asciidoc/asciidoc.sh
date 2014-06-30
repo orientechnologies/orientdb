@@ -1,6 +1,7 @@
  python asciidoc.py introduction.txt
  python asciidoc.py gettingstarted.txt
  python asciidoc.py servermanagement.txt
+ python asciidoc.py clustermgmt.txt
  python asciidoc.py metrics.txt
  python asciidoc.py queryprofiler.txt
  python asciidoc.py notifications.txt

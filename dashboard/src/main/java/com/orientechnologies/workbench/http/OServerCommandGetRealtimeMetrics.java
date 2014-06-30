@@ -39,10 +39,12 @@ import com.orientechnologies.workbench.OMonitoredServer;
 import com.orientechnologies.workbench.OWorkbenchPlugin;
 
 public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticatedDbAbstract {
-  private static final String[] NAMES  = { "GET|metrics/*" };
+  public static final String    DISTRIBUTED = "distributed";
+  public static final String    DB          = "db";
+  private static final String[] NAMES       = { "GET|metrics/*" };
 
   private OWorkbenchPlugin      monitor;
-  public final String[]         fields = { "min", "max", "value", "entries", "total", "last" };
+  public final String[]         fields      = { "min", "max", "value", "entries", "total", "last" };
 
   public OServerCommandGetRealtimeMetrics() {
   }
@@ -66,7 +68,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
       final String[] metricNames = parts[6].split(",");
       String from = null;
       String to = null;
-      String compress = null;
+      String compress = "none";
       String limit = null;
       if (parts.length > 7) {
         limit = parts[7];
@@ -143,7 +145,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
           }
       }
     }
-    iResponse.writeResult(result, "indent:6");
+    iResponse.writeResult(result, "indent:6", null);
   }
 
   protected void sendSnapshotMetrics(OHttpRequest iRequest, OHttpResponse iResponse, final String iMetricKind,
@@ -290,10 +292,13 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
     dbFormatted = databases;
 
     for (String m : metrics) {
-      if (m.startsWith("db")) {
+      if (m.startsWith(DB)) {
         for (String db : dbFormatted) {
           finalMetrics.add(m.replace("*", db));
         }
+      } else if (m.startsWith(DISTRIBUTED)) {
+        String name = server.getConfiguration().field("name");
+        finalMetrics.add(m.replace("*", name));
       } else {
         finalMetrics.add(m);
       }
