@@ -1,9 +1,10 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.server.OServer;
 
@@ -13,7 +14,7 @@ import com.orientechnologies.orient.server.OServer;
 public class ODistributedStorageTest {
   @Test
   public void testSupportedFreezeTrue() {
-    OStorageLocal storage = Mockito.mock(OStorageLocal.class);
+    OLocalPaginatedStorage storage = Mockito.mock(OLocalPaginatedStorage.class);
     ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), storage);
 
     ds.freeze(true);
@@ -23,7 +24,7 @@ public class ODistributedStorageTest {
 
   @Test
   public void testSupportedFreezeFalse() {
-    OStorageLocal storage = Mockito.mock(OStorageLocal.class);
+    OLocalPaginatedStorage storage = Mockito.mock(OLocalPaginatedStorage.class);
     ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), storage);
 
     ds.freeze(false);
@@ -40,7 +41,7 @@ public class ODistributedStorageTest {
 
   @Test
   public void testSupportedRelease() {
-    OStorageLocal storage = Mockito.mock(OStorageLocal.class);
+    OLocalPaginatedStorage storage = Mockito.mock(OLocalPaginatedStorage.class);
     ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), storage);
 
     ds.release();

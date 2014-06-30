@@ -28,50 +28,50 @@ public class OStorageLocalTest {
   public void withLegacyPath() {
     String dbPath = getDatabasePath();
 
-    System.out.println("Using db = local:" + dbPath);
+    System.out.println("Using db = plocal:" + dbPath);
     File dbDir = new File(dbPath);
     System.out.println("Clean db directory for test...");
     delTree(dbDir);
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath);
     db.create();
     db.close();
 
     System.out.println("Reopen it...");
     // Something was added to dbPath so the legacy situation was simulated
     dbPath += "/foo";
-    db = new ODatabaseDocumentTx("local:" + dbPath).open("admin", "admin");
+    db = new ODatabaseDocumentTx("plocal:" + dbPath).open("admin", "admin");
     db.drop();
   }
 
   public void withNormalPath() {
     String dbPath = getDatabasePath();
 
-    System.out.println("Using db = local:" + dbPath);
+    System.out.println("Using db = plocal:" + dbPath);
     File dbDir = new File(dbPath);
     System.out.println("Clean db directory for test...");
     delTree(dbDir);
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath);
     db.create();
     db.close();
 
     System.out.println("Reopen it...");
-    db = new ODatabaseDocumentTx("local:" + dbPath).open("admin", "admin");
+    db = new ODatabaseDocumentTx("plocal:" + dbPath).open("admin", "admin");
     db.drop();
   }
 
   public void dbOperations() {
     String dbPath = getDatabasePath();
 
-    System.out.println("Using db = local:" + dbPath);
+    System.out.println("Using db = plocal:" + dbPath);
     File dbDir = new File(dbPath);
     System.out.println("Clean db directory for test...");
     delTree(dbDir);
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("local:" + dbPath);
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("plocal:" + dbPath);
     db.create();
     db.close();
 
     System.out.println("Create OK!");
-    db = new ODatabaseDocumentTx("local:" + dbPath).open("admin", "admin");
+    db = new ODatabaseDocumentTx("plocal:" + dbPath).open("admin", "admin");
     System.out.println("Open OK!");
     Assert.assertTrue(db.exists());
     System.out.println("Exists OK!");

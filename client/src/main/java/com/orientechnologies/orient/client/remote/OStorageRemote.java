@@ -18,6 +18,7 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
@@ -57,7 +58,6 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -1662,7 +1662,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
       } while (engine.getConnectionManager().getAvailableConnections(currentURL) > 0);
 
-      currentURL = removeServerURL(currentURL);
+      currentURL = useNewServerURL(currentURL);
 
     } while (currentURL != null);
 
@@ -1672,13 +1672,22 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     throw new OStorageException("Cannot create a connection to remote server address(es): " + serverURLs);
   }
 
-  protected String removeServerURL(final String iUrl) {
-    serverURLs.remove(iUrl);
+  protected String useNewServerURL(final String iUrl) {
+    int pos = iUrl.indexOf('/');
+    if (pos >= iUrl.length() - 1)
+      // IGNORE ENDING /
+      pos = -1;
+
+    final String postFix = pos > -1 ? iUrl.substring(pos) : "";
+    final String url = pos > -1 ? iUrl.substring(0, pos) : iUrl;
+
+    // REMOVE INVALID URL
+    serverURLs.remove(url);
 
     OLogManager.instance().debug(this, "Updated server list: %s...", serverURLs);
 
     if (!serverURLs.isEmpty())
-      return serverURLs.get(0);
+      return serverURLs.get(0) + postFix;
 
     return null;
   }
@@ -1797,16 +1806,25 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   protected OChannelBinaryAsynchClient getAvailableNetwork(final String iCurrentURL) throws IOException {
     OChannelBinaryAsynchClient network;
+
+    String lastURL = iCurrentURL;
     do {
-      network = engine.getConnectionManager().acquire(iCurrentURL, clientConfiguration, connectionOptions, asynchEventListener);
-      if (!network.isConnected()) {
+      network = engine.getConnectionManager().acquire(lastURL, clientConfiguration, connectionOptions, asynchEventListener);
+
+      if (network == null) {
+        lastURL = useNewServerURL(lastURL);
+        if (lastURL == null) {
+          parseServerURLs();
+          throw new OIOException("Cannot open a connection to remote server: " + iCurrentURL);
+        }
+      } else if (!network.isConnected()) {
         // DISCONNECTED NETWORK, GET ANOTHER ONE
-        OLogManager.instance().error(this, "Removing disconnected network channel '%s'...", iCurrentURL);
+        OLogManager.instance().error(this, "Removing disconnected network channel '%s'...", lastURL);
         engine.getConnectionManager().remove(network);
         network = null;
       } else if (!network.tryLock()) {
         // CANNOT LOCK IT, MAYBE HASN'T BE CORRECTLY UNLOCKED BY PREVIOUS USER
-        OLogManager.instance().error(this, "Removing locked network channel '%s'...", iCurrentURL);
+        OLogManager.instance().error(this, "Removing locked network channel '%s'...", lastURL);
         engine.getConnectionManager().remove(network);
         network = null;
       }

@@ -2,6 +2,9 @@ package com.orientechnologies.orient.core.index.sbtree.local;
 
 import java.util.*;
 
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -19,20 +22,23 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 public class SBTreeNonLeafBucketTest {
   public void testInitialization() throws Exception {
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+		cachePointer.incrementReferrer();
 
-    OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, false,
+    OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, false,
         OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertFalse(treeBucket.isLeaf());
 
-    treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE,
+    treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE,
         ODurablePage.TrackMode.FULL);
     Assert.assertEquals(treeBucket.size(), 0);
     Assert.assertFalse(treeBucket.isLeaf());
     Assert.assertEquals(treeBucket.getLeftSibling(), -1);
     Assert.assertEquals(treeBucket.getRightSibling(), -1);
 
-    pointer.free();
+    cachePointer.decrementReferrer();
   }
 
   public void testSearch() throws Exception {
@@ -47,7 +53,11 @@ public class SBTreeNonLeafBucketTest {
     }
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
-    OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, false,
+    OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+    OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+		cachePointer.incrementReferrer();
+
+    OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, false,
         OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
     int index = 0;
@@ -89,7 +99,7 @@ public class SBTreeNonLeafBucketTest {
       prevLeft = entry.leftChild;
     }
 
-    pointer.free();
+    cachePointer.decrementReferrer();
   }
 
   public void testShrink() throws Exception {
@@ -104,7 +114,12 @@ public class SBTreeNonLeafBucketTest {
     }
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(OSBTreeBucket.MAX_PAGE_SIZE_BYTES);
-    OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(pointer, false,
+		OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
+		OCacheEntry cacheEntry = new OCacheEntry(0, 0, cachePointer, false);
+
+		cachePointer.incrementReferrer();
+
+    OSBTreeBucket<Long, OIdentifiable> treeBucket = new OSBTreeBucket<Long, OIdentifiable>(cacheEntry, false,
         OLongSerializer.INSTANCE, null, OLinkSerializer.INSTANCE, ODurablePage.TrackMode.FULL);
 
     int index = 0;
@@ -169,7 +184,7 @@ public class SBTreeNonLeafBucketTest {
     Assert.assertEquals(treeBucket.size(), originalSize);
     Assert.assertEquals(addedKeys, keysToAdd);
 
-    pointer.free();
+    cachePointer.decrementReferrer();
   }
 
 }

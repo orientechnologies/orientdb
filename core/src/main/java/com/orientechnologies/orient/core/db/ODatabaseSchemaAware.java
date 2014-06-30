@@ -22,19 +22,30 @@ package com.orientechnologies.orient.core.db;
  * 
  */
 public interface ODatabaseSchemaAware<T extends Object> extends ODatabaseComplex<T> {
-	/**
-	 * Creates a new entity instance. Each database implementation will return the right type.
-	 * 
-	 * @return The new instance.
-	 */
-	public <RET extends Object> RET newInstance(String iClassName);
+  /**
+   * Creates a new entity instance. Each database implementation will return the right type.
+   * 
+   * @return The new instance.
+   */
+  public <RET extends Object> RET newInstance(String iClassName);
 
-	/**
-	 * Counts the entities contained in the specified class.
-	 * 
-	 * @param iClassName
-	 *          Class name
-	 * @return Total entities
-	 */
-	public long countClass(String iClassName);
+  /**
+   * Counts the entities contained in the specified class and sub classes (polymorphic).
+   * 
+   * @param iClassName
+   *          Class name
+   * @return Total entities
+   */
+  public long countClass(String iClassName);
+
+  /**
+   * Counts the entities contained in the specified class.
+   * 
+   * @param iClassName
+   *          Class name
+   * @param iPolymorphic
+   *          True if consider also the sub classes, otherwise false
+   * @return Total entities
+   */
+  public long countClass(String iClassName, final boolean iPolymorphic);
 }

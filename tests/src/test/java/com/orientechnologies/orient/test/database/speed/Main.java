@@ -85,7 +85,7 @@ public class Main {
     /*
      * creating database
      */
-    final String dbUrl = "local:/temp/database/davide";
+    final String dbUrl = "plocal:/temp/database/davide";
 
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
     if (db.exists())

@@ -185,8 +185,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       Orient
           .instance()
           .getProfiler()
-          .updateCounter("distributed.replication." + databaseName + ".msgSent",
-              "Number of replication messages sent from current node", +1, "distributed.replication.*.msgSent");
+          .updateCounter("distributed.db." + databaseName + ".msgSent", "Number of replication messages sent from current node",
+              +1, "distributed.db.*.msgSent");
 
       return waitForResponse(iRequest, currentResponseMgr);
 
@@ -434,7 +434,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
               "reached waited request %d on request=%s sourceNode=%s", waitForMessageId.get(), req, req.getSenderNodeName());
 
           waitForMessageId.set(-1);
-          return req;
+          break;
         } else {
           // SKIP IT
           ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,

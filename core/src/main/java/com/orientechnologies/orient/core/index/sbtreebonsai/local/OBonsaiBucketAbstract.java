@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 /**
@@ -18,8 +19,8 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OBonsaiBucketAbstract extends ODurablePage {
-  public OBonsaiBucketAbstract(ODirectMemoryPointer pagePointer, TrackMode trackMode) {
-    super(pagePointer, trackMode);
+  public OBonsaiBucketAbstract(OCacheEntry cacheEntry, TrackMode trackMode) {
+    super(cacheEntry, trackMode);
   }
 
   /**

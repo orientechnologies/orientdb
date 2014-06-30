@@ -253,9 +253,6 @@ public class ConcurrentUpdatesTest {
 
   @Test
   public void concurrentPessimisticSQLUpdates() throws Exception {
-    if (url.startsWith("local:"))
-      // SKIP TEST WITH LOCAL
-      return;
     sqlUpdate(true);
   }
 

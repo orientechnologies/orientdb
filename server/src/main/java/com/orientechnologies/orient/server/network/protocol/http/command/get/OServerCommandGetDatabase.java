@@ -32,10 +32,6 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
-import com.orientechnologies.orient.core.storage.impl.local.ODataLocal;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.storage.impl.local.OTxSegment;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -190,28 +186,16 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.endCollection();
       }
 
-      if (db.getStorage() instanceof OStorageLocal) {
-        json.beginCollection("dataSegments");
-        for (ODataLocal data : ((OStorageLocal) db.getStorage()).getDataSegments()) {
-          if (data != null) {
-            json.beginObject();
-            json.writeAttribute("id", data.getId());
-            json.writeAttribute("name", data.getName());
-            json.writeAttribute("size", data.getSize());
-            json.writeAttribute("filled", data.getFilledUpTo());
-            json.writeAttribute("maxSize", data.getConfig().maxSize);
-            json.writeAttribute("files", Arrays.toString(data.getConfig().infoFiles));
-            json.endObject();
-          }
-        }
-        json.endCollection();
-      }
-
       if (db.getClusterNames() != null) {
         json.beginCollection("clusters");
         OCluster cluster;
         for (String clusterName : db.getClusterNames()) {
-          cluster = db.getStorage().getClusterById(db.getClusterIdByName(clusterName));
+          try {
+            cluster = db.getStorage().getClusterById(db.getClusterIdByName(clusterName));
+          } catch (IllegalArgumentException e) {
+            OLogManager.instance().error(this, "Cluster '%s' does not exist in database", clusterName);
+            continue;
+          }
 
           try {
             json.beginObject();
@@ -219,34 +203,15 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
             json.writeAttribute("name", clusterName);
             json.writeAttribute("type", cluster.getType());
             json.writeAttribute("records", cluster.getEntries() - cluster.getTombstonesCount());
-            if (cluster instanceof OClusterLocal) {
-              json.writeAttribute("size", ((OClusterLocal) cluster).getSize());
-              json.writeAttribute("filled", ((OClusterLocal) cluster).getFilledUpTo());
-              json.writeAttribute("maxSize", ((OClusterLocal) cluster).getConfig().getMaxSize());
-              json.writeAttribute("files", Arrays.toString(((OClusterLocal) cluster).getConfig().getInfoFiles()));
-            } else {
-              json.writeAttribute("size", "-");
-              json.writeAttribute("filled", "-");
-              json.writeAttribute("maxSize", "-");
-              json.writeAttribute("files", "-");
-            }
+            json.writeAttribute("size", "-");
+            json.writeAttribute("filled", "-");
+            json.writeAttribute("maxSize", "-");
+            json.writeAttribute("files", "-");
           } catch (Exception e) {
             json.writeAttribute("records", "? (Unauthorized)");
           }
           json.endObject();
         }
-        json.endCollection();
-      }
-
-      if (db.getStorage() instanceof OStorageLocal) {
-        json.beginCollection("txSegment");
-        final OTxSegment txSegment = ((OStorageLocal) db.getStorage()).getTxManager().getTxSegment();
-        json.beginObject();
-        json.writeAttribute("size", txSegment.getSize());
-        json.writeAttribute("filled", txSegment.getFilledUpTo());
-        json.writeAttribute("maxSize", txSegment.getConfig().maxSize);
-        json.writeAttribute("file", txSegment.getConfig().path);
-        json.endObject();
         json.endCollection();
       }
 

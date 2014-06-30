@@ -64,15 +64,15 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
     return delegate.getIndex(iRID);
   }
 
-  public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-                                final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata) {
-    return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener, metadata);
+  public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
+      final int[] clusterIdsToIndex, final OProgressListener progressListener, ODocument metadata) {
+    return delegate.createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata);
   }
 
   @Override
   public OIndex<?> createIndex(String iName, String iType, OIndexDefinition iIndexDefinition, int[] iClusterIdsToIndex,
-                                OProgressListener iProgressListener, ODocument metadata, String algorithm) {
-    return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener, metadata, algorithm);
+      OProgressListener progressListener, ODocument metadata, String algorithm) {
+    return delegate.createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, progressListener, metadata, algorithm);
   }
 
   public OIndex<?> getIndexInternal(final String iName) {
@@ -122,6 +122,11 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
 
   public Set<OIndex<?>> getClassIndexes(final String className) {
     return delegate.getClassIndexes(className);
+  }
+
+  @Override
+  public void getClassIndexes(final String className, final Collection<OIndex<?>> indexes) {
+    delegate.getClassIndexes(className, indexes);
   }
 
   public OIndex<?> getClassIndex(final String className, final String indexName) {

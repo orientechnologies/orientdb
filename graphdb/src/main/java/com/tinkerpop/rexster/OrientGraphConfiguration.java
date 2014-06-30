@@ -18,7 +18,7 @@ import org.apache.commons.configuration.SubnodeConfiguration;
  *   <graph-enabled>false</graph-enabled>
  *   <graph-name>orientdbsample</graph-name>
  *   <graph-type>com.tinkerpop.rexster.OrientGraphConfiguration</graph-type>
- *   <graph-location>local:/tmp/orientdb-graph</graph-location>
+ *   <graph-location>plocal:/tmp/orientdb-graph</graph-location>
  *   <properties>
  *     <username>admin</username>
  *     <password>admin</password>

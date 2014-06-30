@@ -56,11 +56,9 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
     final ODatabaseDocumentTx db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 
-    if (result == null)
-      result = new ArrayList<Object>();
+    result = new ArrayList<Object>();
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    final Object scriptResult = OGremlinHelper.execute(db, (String) iParams[0], null, (Map) iContext.getVariables(), result,
+    OGremlinHelper.execute(db, (String) iParams[0], null, (Map) iContext.getVariables(), result,
         new OGremlinHelper.OGremlinCallback() {
 
           @Override
@@ -86,7 +84,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
           }
         }, null);
 
-    return scriptResult;
+    return result;
   }
 
   @Override

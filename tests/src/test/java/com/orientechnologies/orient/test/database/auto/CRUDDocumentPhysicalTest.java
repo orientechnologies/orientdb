@@ -546,30 +546,39 @@ public class CRUDDocumentPhysicalTest {
     }
   }
 
-  // @Test
-  // public void testTransientField() {
-  // database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-  //
-  // ODocument doc = new ODocument( "Profile");
-  // doc.field("nick", "LucaPhotoTest");
-  // doc.field("photo", "testPhoto"); // THIS IS DECLARED TRANSIENT IN SCHEMA
-  // (see SchemaTest.java)
-  // doc.save();
-  //
-  // // RELOAD FROM THE CACHE
-  // doc.reload(null, false);
-  // Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
-  // Assert.assertTrue(doc.containsField("photo"));
-  //
-  // // RELOAD FROM DISK
-  // doc.reload();
-  // Assert.assertEquals(doc.field("nick"), "LucaPhotoTest");
-  // Assert.assertFalse(doc.containsField("photo")); // THIS IS DECLARED
-  // TRANSIENT IN SCHEMA (see SchemaTest.java)
-  //
-  // database.close();
-  // }
-  //
+  public void testJSONLinkd() {
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    try {
+      ODocument jaimeDoc = new ODocument("PersonTest");
+      jaimeDoc.field("name", "jaime");
+      jaimeDoc.save();
+
+      ODocument cerseiDoc = new ODocument("PersonTest");
+      cerseiDoc.fromJSON("{\"@type\":\"d\",\"name\":\"cersei\",\"valonqar\":" + jaimeDoc.toJSON() + "}");
+      cerseiDoc.save();
+
+      // The link between jamie and tyrion is not saved properly
+      ODocument tyrionDoc = new ODocument("PersonTest");
+      tyrionDoc.fromJSON("{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"relationship\":\"brother\",\"contact\":"
+          + jaimeDoc.toJSON() + "}}");
+      tyrionDoc.save();
+
+      System.out.println("The saved documents are:");
+      for (ODocument o : database.browseClass("PersonTest")) {
+        System.out.println("my id is " + o.getIdentity().toString());
+        System.out.println("my name is: " + o.field("name"));
+        System.out.println("my ODocument representation is " + o);
+        System.out.println("my JSON representation is " + o.toJSON());
+        System.out.println("my traversable links are: ");
+        for (OIdentifiable id : new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
+          System.out.println(database.load(id.getIdentity()).toJSON());
+        }
+      }
+    } finally {
+      database.close();
+    }
+  }
+
   @Test
   public void testDirtyChild() {
     ODocument parent = new ODocument();

@@ -20,8 +20,8 @@ public class ODirectoryPage extends ODurablePage {
 
   private final OCacheEntry entry;
 
-  public ODirectoryPage(ODirectMemoryPointer pagePointer, TrackMode trackMode, OCacheEntry entry) {
-    super(pagePointer, trackMode);
+  public ODirectoryPage(OCacheEntry cacheEntry, TrackMode trackMode, OCacheEntry entry) {
+    super(cacheEntry, trackMode);
     this.entry = entry;
   }
 

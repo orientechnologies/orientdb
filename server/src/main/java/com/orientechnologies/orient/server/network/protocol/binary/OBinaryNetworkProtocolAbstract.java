@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -236,7 +235,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     final OStorage stg = Orient.instance().getStorage(dbName);
     if (stg != null)
       path = stg.getURL();
-    else if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME)) {
+    else if (storageType.equals(OEngineLocalPaginated.NAME)) {
       // if this storage was configured return always path from config file, otherwise return default path
       path = server.getConfiguration().getStoragePath(dbName);
 
@@ -282,8 +281,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final byte recordType, final int dataSegmentId) {
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     record.fill(rid, OVersionFactory.instance().createVersion(), buffer, true);
-    if (dataSegmentId > 0)
-      record.setDataSegmentName(iDatabase.getDataSegmentNameById(dataSegmentId));
     iDatabase.save(record);
     return record;
   }
@@ -292,10 +289,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final ORecordVersion version, final byte recordType) {
     final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     newRecord.fill(rid, version, buffer, true);
-
-    // if (((OSchemaProxy) iDatabase.getMetadata().getSchema()).getIdentity().equals(rid))
-    // // || ((OIndexManagerImpl) connection.database.getMetadata().getIndexManager()).getDocument().getIdentity().equals(rid)) {
-    // throw new OSecurityAccessException("Cannot update internal record " + rid);
 
     final ORecordInternal<?> currentRecord;
     if (newRecord instanceof ODocument) {

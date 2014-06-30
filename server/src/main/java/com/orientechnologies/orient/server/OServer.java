@@ -339,9 +339,7 @@ public class OServer {
     String dbURL = configuration.getStoragePath(name);
     if (dbURL == null) {
       // SEARCH IN DEFAULT DATABASE DIRECTORY
-      if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.odh").exists())
-        dbURL = "local:" + dbPath;
-      else if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.pcl").exists())
+      if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.pcl").exists())
         dbURL = "plocal:" + dbPath;
       else
         throw new OConfigurationException("Database '" + name + "' is not configured on server (home=" + getDatabaseDirectory()
@@ -741,14 +739,10 @@ public class OServer {
       if (files != null)
         for (File db : files) {
           if (db.isDirectory()) {
-            final File localFile = new File(db.getAbsolutePath() + "/default.odh");
             final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
             final String dbPath = db.getPath().replace('\\', '/');
             final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
-            if (localFile.exists()) {
-              // FOUND DB FOLDER
-              storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "local:" + dbPath);
-            } else if (plocalFile.exists()) {
+            if (plocalFile.exists()) {
               storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "plocal:" + dbPath);
             } else
               // TRY TO GO IN DEEP RECURSIVELY

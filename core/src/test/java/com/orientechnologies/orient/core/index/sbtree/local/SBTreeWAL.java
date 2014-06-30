@@ -47,7 +47,7 @@ public class SBTreeWAL extends SBTreeTest {
   private String                          actualStorageDir;
   private String                          expectedStorageDir;
 
-  private OWriteAheadLog                  writeAheadLog;
+  private ODiskWriteAheadLog              writeAheadLog;
 
   private ODiskCache                      actualDiskCache;
   private ODiskCache                      expectedDiskCache;
@@ -122,7 +122,7 @@ public class SBTreeWAL extends SBTreeTest {
     if (!actualStorageDirFile.exists())
       actualStorageDirFile.mkdirs();
 
-    writeAheadLog = new OWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, actualStorage);
+    writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, actualStorage);
 
     actualDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, actualStorage, null, false, false);
@@ -273,17 +273,18 @@ public class SBTreeWAL extends SBTreeTest {
     writeAheadLog.close();
     expectedSBTree.close();
 
-    actualDiskCache.clear();
+    ((OReadWriteDiskCache) actualDiskCache).clear();
 
     restoreDataFromWAL();
 
-    expectedDiskCache.clear();
+    ((OReadWriteDiskCache) expectedDiskCache).clear();
 
     assertFileContentIsTheSame(expectedSBTree.getName(), sbTree.getName());
   }
 
   private void restoreDataFromWAL() throws IOException {
-    OWriteAheadLog log = new OWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, actualStorage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024,
+        actualStorage);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();
@@ -312,16 +313,15 @@ public class SBTreeWAL extends SBTreeTest {
             expectedDiskCache.openFile(fileId);
 
           final OCacheEntry cacheEntry = expectedDiskCache.load(fileId, pageIndex, true);
-          final OCachePointer cachePointer = cacheEntry.getCachePointer();
-          cachePointer.acquireExclusiveLock();
+          cacheEntry.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
+            ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(updatePageRecord.getLsn());
 
             cacheEntry.markDirty();
           } finally {
-            cachePointer.releaseExclusiveLock();
+            cacheEntry.releaseExclusiveLock();
             expectedDiskCache.release(cacheEntry);
           }
         }

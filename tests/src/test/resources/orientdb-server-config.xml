@@ -12,7 +12,7 @@
                 <parameter value="false" name="enabled"/>
                 <parameter value="4h" name="delay"/>
                 <parameter value="backup" name="target.directory"/>
-                <parameter value="${DBNAME}-${DATE:yyyyMMddHHmmss}.json" name="target.fileName"/>
+                <parameter value="${DBNAME}-${DATE:yyyyMMddHHmmss}.zip" name="target.fileName"/>
                 <parameter value="" name="db.include"/>
                 <parameter value="" name="db.exclude"/>
             </parameters>

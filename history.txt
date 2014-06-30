@@ -26,9 +26,30 @@
 This document contains the last changes to the OrientDB project.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 1.7.4 - (June, 23rd 2014)
+---------------------------------------------------------------------------------------------------
+Hot fixes.
+
+https://github.com/orientechnologies/orientdb/issues?milestone=21&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7.3 - (June, 12th 2014)
+---------------------------------------------------------------------------------------------------
+Hot fixes.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=20&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7.2 - (June, 7th 2014)
+---------------------------------------------------------------------------------------------------
+Hot fixes.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?milestone=19&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
 VERSION 1.7.1 - (June, 4th 2014)
 ---------------------------------------------------------------------------------------------------
-Hot fixes only
+Hot fixes.
 
 Full list: https://github.com/orientechnologies/orientdb/issues?milestone=18&page=1&state=closed
 
@@ -72,7 +93,6 @@ VERSION 1.7 - (May, 27th 2014)
 - Bug fixing: 135 issues in total
 
 Full list: https://github.com/orientechnologies/orientdb/issues?labels=&milestone=16&page=1&state=closed
-
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7-rc2 - (March, 25th 2014)

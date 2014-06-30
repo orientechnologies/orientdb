@@ -443,6 +443,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     underlying.callOnCloseListeners();
 
+    for (ORecordHook h : hooks.keySet())
+      h.onUnregister();
+    hooks.clear();
+
     if (metadata != null) {
       if (!(getStorage() instanceof OStorageProxy)) {
         final OIndexManager indexManager = metadata.getIndexManager();
@@ -458,8 +462,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     }
 
     super.close();
-
-    hooks.clear();
 
     user = null;
     level1Cache.shutdown();
@@ -971,23 +973,23 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   /**
    * {@inheritDoc}
    */
-  public <RET extends ORecordInternal<?>> RET executeReadRecord(final ORecordId iRid, ORecordInternal<?> iRecord,
+  public <RET extends ORecordInternal<?>> RET executeReadRecord(final ORecordId rid, ORecordInternal<?> iRecord,
       final String iFetchPlan, final boolean iIgnoreCache, final boolean loadTombstones,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
 
     try {
-      checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(iRid.getClusterId()));
+      checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(rid.getClusterId()));
 
       // SEARCH IN LOCAL TX
-      ORecordInternal<?> record = getTransaction().getRecord(iRid);
+      ORecordInternal<?> record = getTransaction().getRecord(rid);
       if (record == OTransactionRealAbstract.DELETED_RECORD)
         // DELETED IN TX
         return null;
 
       if (record == null && !iIgnoreCache)
         // SEARCH INTO THE CACHE
-        record = getLocalCache().findRecord(iRid);
+        record = getLocalCache().findRecord(rid);
 
       if (record != null) {
         if (iRecord != null) {
@@ -1012,7 +1014,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         return (RET) record;
       }
 
-      final ORawBuffer recordBuffer = underlying.read(iRid, iFetchPlan, iIgnoreCache, loadTombstones, iLockingStrategy).getResult();
+      final ORawBuffer recordBuffer = underlying.read(rid, iFetchPlan, iIgnoreCache, loadTombstones, iLockingStrategy).getResult();
       if (recordBuffer == null)
         return null;
 
@@ -1020,7 +1022,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         // NO SAME RECORD TYPE: CAN'T REUSE OLD ONE BUT CREATE A NEW ONE FOR IT
         iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType);
 
-      iRecord.fill(iRid, recordBuffer.version, recordBuffer.buffer, false);
+      iRecord.fill(rid, recordBuffer.version, recordBuffer.buffer, false);
 
       if (iRecord.getRecordVersion().isTombstone())
         return (RET) iRecord;
@@ -1042,9 +1044,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     } catch (Exception e) {
       // WRAP IT AS ODATABASE EXCEPTION
-      OLogManager.instance().exception("Error on retrieving record " + iRid, e, ODatabaseException.class);
+      throw new ODatabaseException("Error on retrieving record " + rid, e);
     }
-    return null;
   }
 
   public <RET extends ORecordInternal<?>> RET executeSaveRecord(final ORecordInternal<?> record, String iClusterName,
@@ -1111,9 +1112,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
           if (iCallTriggers) {
             final TYPE triggerType = wasNew ? TYPE.BEFORE_CREATE : TYPE.BEFORE_UPDATE;
 
-            if (callbackHooks(triggerType, record) == RESULT.RECORD_CHANGED) {
+            final RESULT hookResult = callbackHooks(triggerType, record);
+            if (hookResult == RESULT.RECORD_CHANGED)
               stream = updateStream(record);
-            }
+            else if (hookResult == RESULT.SKIP_IO)
+              return (RET) record;
           }
         }
 
@@ -1385,7 +1388,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
+  public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl, final ORecordHook.HOOK_POSITION iPosition) {
     final Map<ORecordHook, ORecordHook.HOOK_POSITION> tmp = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>(hooks);
     tmp.put(iHookImpl, iPosition);
     hooks.clear();
@@ -1409,7 +1412,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * {@inheritDoc}
    */
   public <DB extends ODatabaseComplex<?>> DB unregisterHook(final ORecordHook iHookImpl) {
-    hooks.remove(iHookImpl);
+    if (iHookImpl != null) {
+      iHookImpl.onUnregister();
+      hooks.remove(iHookImpl);
+    }
     return (DB) this;
   }
 
@@ -1473,6 +1479,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
         if (res == RESULT.RECORD_CHANGED)
           recordChanged = true;
+        else if (res == RESULT.SKIP_IO)
+          // SKIP IO OPERATION
+          return res;
         else if (res == RESULT.SKIP)
           // SKIP NEXT HOOKS AND RETURN IT
           return res;

@@ -17,44 +17,33 @@ package com.orientechnologies.orient.core.storage;
 
 import java.util.Arrays;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageMemoryClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageMemoryLinearHashingClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryArrayList;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryHashing;
 
 public class ODefaultClusterFactory implements OClusterFactory {
-  protected static final String[] TYPES = { OClusterLocal.TYPE, OClusterMemory.TYPE };
+  protected static final String[] TYPES = { OClusterMemory.TYPE, OPaginatedCluster.TYPE };
 
-  public OCluster createCluster(final String iType) {
-    if (iType.equalsIgnoreCase(OClusterLocal.TYPE))
-      return new OClusterLocal();
-    else if (iType.equalsIgnoreCase(OClusterMemory.TYPE))
+  public OCluster createCluster(final String type) {
+    if (type.equalsIgnoreCase(OClusterMemory.TYPE))
       return new OClusterMemoryArrayList();
     else
-      OLogManager.instance().exception(
-          "Cluster type '" + iType + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
-          OStorageException.class);
-    return null;
+      throw new OStorageException("Cluster type '" + type + "' is not supported. Supported types are: " + Arrays.toString(TYPES));
   }
 
-  public OCluster createCluster(final OStorageClusterConfiguration iConfig) {
-    if (iConfig instanceof OStoragePhysicalClusterConfigurationLocal)
-      return new OClusterLocal();
-    else if (iConfig instanceof OStorageMemoryClusterConfiguration)
+  public OCluster createCluster(final OStorageClusterConfiguration config) {
+    if (config instanceof OStorageMemoryClusterConfiguration)
       return new OClusterMemoryArrayList();
-    else if (iConfig instanceof OStorageMemoryLinearHashingClusterConfiguration)
+    else if (config instanceof OStorageMemoryLinearHashingClusterConfiguration)
       return new OClusterMemoryHashing();
     else
-      OLogManager.instance().exception(
-          "Cluster type '" + iConfig + "' is not supported. Supported types are: " + Arrays.toString(TYPES), null,
-          OStorageException.class);
-    return null;
+      throw new OStorageException("Cluster type '" + config + "' is not supported. Supported types are: " + Arrays.toString(TYPES));
   }
 
   public String[] getSupported() {

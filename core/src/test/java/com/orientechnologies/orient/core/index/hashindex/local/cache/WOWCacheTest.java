@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.zip.CRC32;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -19,7 +20,6 @@ import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
 
 /**
@@ -34,7 +34,7 @@ public class WOWCacheTest {
   private OLocalPaginatedStorage storageLocal;
   private String                 fileName;
 
-  private OWriteAheadLog         writeAheadLog;
+  private ODiskWriteAheadLog writeAheadLog;
 
   private OWOWCache              wowCache;
 

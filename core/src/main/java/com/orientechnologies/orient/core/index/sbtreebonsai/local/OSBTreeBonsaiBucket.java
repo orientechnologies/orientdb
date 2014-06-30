@@ -29,6 +29,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 
 /**
@@ -65,9 +66,9 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
   private final Comparator<? super K> comparator               = ODefaultComparator.INSTANCE;
 
-  public OSBTreeBonsaiBucket(ODirectMemoryPointer cachePointer, int pageOffset, boolean isLeaf, OBinarySerializer<K> keySerializer,
+  public OSBTreeBonsaiBucket(OCacheEntry cacheEntry, int pageOffset, boolean isLeaf, OBinarySerializer<K> keySerializer,
       OBinarySerializer<V> valueSerializer, TrackMode trackMode) throws IOException {
-    super(cachePointer, trackMode);
+    super(cacheEntry, trackMode);
 
     this.offset = pageOffset;
     this.isLeaf = isLeaf;
@@ -87,9 +88,9 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     setByteValue(offset + VALUE_SERIALIZER_OFFSET, valueSerializer.getId());
   }
 
-  public OSBTreeBonsaiBucket(ODirectMemoryPointer cachePointer, int pageOffset, OBinarySerializer<K> keySerializer,
+  public OSBTreeBonsaiBucket(OCacheEntry cacheEntry, int pageOffset, OBinarySerializer<K> keySerializer,
       OBinarySerializer<V> valueSerializer, TrackMode trackMode) {
-    super(cachePointer, trackMode);
+    super(cacheEntry, trackMode);
 
     this.offset = pageOffset;
     this.isLeaf = getByteValue(offset + IS_LEAF_OFFSET) > 0;

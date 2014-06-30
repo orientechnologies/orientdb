@@ -10,12 +10,8 @@ import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedExcept
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecordsFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.WriteAheadLogTest;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -38,7 +34,7 @@ public class ReadWriteDiskCacheTest {
   private OLocalPaginatedStorage storageLocal;
   private String                 fileName;
   private byte                   seed;
-  private OWriteAheadLog         writeAheadLog;
+  private ODiskWriteAheadLog writeAheadLog;
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -744,7 +740,7 @@ public class ReadWriteDiskCacheTest {
     if (!file.exists())
       file.mkdir();
 
-    writeAheadLog = new OWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
+    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
         "readWriteDiskCacheTest.tst", 0);
@@ -783,7 +779,7 @@ public class ReadWriteDiskCacheTest {
     if (!file.exists())
       file.mkdir();
 
-    writeAheadLog = new OWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
+    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
     writeAheadLog.logFuzzyCheckPointStart();
     OLogSequenceNumber pageLSN = writeAheadLog.logFuzzyCheckPointEnd();
 

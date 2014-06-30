@@ -26,10 +26,8 @@ import java.util.Set;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
@@ -74,17 +72,17 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   @Override
-  public void checkEntry(final OIdentifiable iRecord, Object key) {
+  public void checkEntry(final OIdentifiable record, Object key) {
     checkForRebuild();
 
     key = getCollatingValue(key);
 
     // CHECK IF ALREADY EXIST
     final OIdentifiable indexedRID = get(key);
-    if (indexedRID != null && !indexedRID.getIdentity().equals(iRecord.getIdentity())) {
+    if (indexedRID != null && !indexedRID.getIdentity().equals(record.getIdentity())) {
       // CHECK IF IN THE SAME TX THE ENTRY WAS DELETED
       String storageType = getDatabase().getStorage().getType();
-      if (storageType.equals(OEngineMemory.NAME) || storageType.equals(OEngineLocal.NAME)) {
+      if (storageType.equals(OEngineMemory.NAME)) {
         final OTransactionIndexChanges indexChanges = ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
             .getIndexChanges(getName());
         if (indexChanges != null) {
@@ -99,9 +97,8 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
         }
       }
 
-      OLogManager.instance().exception(
-          "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", null,
-          OIndexException.class, key, iRecord, indexedRID);
+      throw new OIndexException("Cannot index record : " + record + " found duplicated key '" + key + "' in index " + getName()
+          + " previously assigned to the record " + indexedRID);
     }
   }
 

@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Collection;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -25,9 +28,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
-import java.util.Collection;
-import java.util.Set;
-
 public class OIndexManagerRemote extends OIndexManagerAbstract {
   private static final String QUERY_DROP = "drop index %s";
 
@@ -36,7 +36,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   }
 
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata, String engine) {
+      final int[] iClusterIdsToIndex, final OProgressListener progressListener, ODocument metadata, String engine) {
 
     String createIndexDDL;
     if (iIndexDefinition != null)
@@ -52,15 +52,15 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
     acquireExclusiveLock();
     try {
-      if (iProgressListener != null)
-        iProgressListener.onBegin(this, 0, false);
+      if (progressListener != null)
+        progressListener.onBegin(this, 0, false);
 
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
       document.setIdentity(new ORecordId(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId));
 
-      if (iProgressListener != null)
-        iProgressListener.onCompletition(this, true);
+      if (progressListener != null)
+        progressListener.onCompletition(this, true);
 
       reload();
       return preProcessBeforeReturn(indexes.get(iName.toLowerCase()));
@@ -70,9 +70,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, String iType, OIndexDefinition iIndexDefinition, int[] iClusterIdsToIndex,
-      OProgressListener iProgressListener, ODocument metadata) {
-    return createIndex(iName, iType, iIndexDefinition, iClusterIdsToIndex, iProgressListener, metadata, null);
+  public OIndex<?> createIndex(String iName, String iType, OIndexDefinition indexDefinition, int[] clusterIdsToIndex,
+      OProgressListener progressListener, ODocument metadata) {
+    return createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata, null);
   }
 
   public OIndexManager dropIndex(final String iIndexName) {

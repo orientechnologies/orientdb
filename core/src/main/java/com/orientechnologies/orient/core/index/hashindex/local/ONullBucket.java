@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.orient.core.cache.OCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.io.IOException;
@@ -29,8 +31,8 @@ import java.io.IOException;
 public class ONullBucket<V> extends ODurablePage {
   private final OBinarySerializer<V> valueSerializer;
 
-  public ONullBucket(ODirectMemoryPointer pagePointer, TrackMode trackMode, OBinarySerializer<V> valueSerializer, boolean isNew) {
-    super(pagePointer, trackMode);
+  public ONullBucket(OCacheEntry cacheEntry, TrackMode trackMode, OBinarySerializer<V> valueSerializer, boolean isNew) {
+    super(cacheEntry, trackMode);
     this.valueSerializer = valueSerializer;
 
     if (isNew)

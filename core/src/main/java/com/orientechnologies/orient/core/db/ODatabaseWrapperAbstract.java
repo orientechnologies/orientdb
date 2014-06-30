@@ -171,11 +171,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.getDataSegmentIdByName(iDataSegmentName);
   }
 
-  public String getDataSegmentNameById(final int iDataSegmentId) {
-    checkOpeness();
-    return underlying.getDataSegmentNameById(iDataSegmentId);
-  }
-
   public int getClusterIdByName(final String iClusterName) {
     checkOpeness();
     return underlying.getClusterIdByName(iClusterName);

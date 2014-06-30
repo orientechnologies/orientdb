@@ -1,206 +1,336 @@
 package com.orientechnologies.orient.graph.blueprints;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.Date;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BlueprintsConcurrentAddEdgeTest {
-  private static final int                        THREADS     = 20;
-  private static final int                        VERTICES    = 200;
-  private static final int                        RETRIES     = 20;
-  private static final String                     DBURL       = "local:target/databases/concurrenttestdb";
+  private static final int                                VERTEXES_COUNT    = 100000;
+  private static final int                                EDGES_COUNT       = 5 * VERTEXES_COUNT;
+  private static final int                                THREADS           = 16;
+  private static final String                             URL               = "plocal:./blueprintsConcurrentAddEdgeTest";
 
-  private final ConcurrentHashMap<String, String> vertexReg   = new ConcurrentHashMap<String, String>();
-  private final ConcurrentSkipListSet<String>     vertexSet   = new ConcurrentSkipListSet<String>();
-  private final AtomicInteger                     edgeCounter = new AtomicInteger();
+  private final ConcurrentSkipListMap<String, TestVertex> vertexesToCreate  = new ConcurrentSkipListMap<String, TestVertex>();
+  private final List<TestVertex>                          vertexes          = new ArrayList<TestVertex>();
+  private final List<TestEdge>                            edges             = new ArrayList<TestEdge>();
 
-  public static void main(String args[]) {
-    new BlueprintsConcurrentAddEdgeTest().test();
-  }
-
-  public BlueprintsConcurrentAddEdgeTest() {
-  }
+  private AtomicInteger                                   indexCollisions   = new AtomicInteger();
+  private AtomicInteger                                   versionCollisions = new AtomicInteger();
+  private CountDownLatch                                  latch             = new CountDownLatch(1);
+  private final Random                                    random            = new Random();
 
   @Test
   @Ignore
-  public void test() {
-    createGraph();
-    try {
+  public void testCreateEdge() throws Exception {
+    generateVertexes();
+    generateEdges();
+    initGraph();
 
-      insertVertices();
-      cacheVerticesIds();
-      createEdgesConcurrently();
+    addEdgesConcurrently();
+    assertGraph();
 
-    } finally {
-      getGraph().getRawGraph().drop();
+    OrientGraph graph = new OrientGraph(URL);
+    graph.drop();
+  }
+
+  private void generateVertexes() {
+    for (int i = 0; i < VERTEXES_COUNT; i++) {
+      TestVertex vertex = new TestVertex();
+      vertex.uuid = UUID.randomUUID().toString();
+      vertex.inEdges = Collections.newSetFromMap(new ConcurrentHashMap<TestEdge, Boolean>());
+      vertex.outEdges = Collections.newSetFromMap(new ConcurrentHashMap<TestEdge, Boolean>());
+
+      vertexes.add(vertex);
+      vertexesToCreate.put(vertex.uuid, vertex);
     }
   }
 
-  private void createEdgesConcurrently() {
-    Thread myThreads[] = new Thread[THREADS];
+  private void generateEdges() {
+    for (int i = 0; i < EDGES_COUNT; i++) {
+      int fromVertexIndex = random.nextInt(vertexes.size());
+      int toVertexIndex = random.nextInt(vertexes.size());
 
-    for (int i = 0; i < THREADS; ++i) {
-      Thread t = new Thread(new EdgeRunnerNoTx());
-      myThreads[i] = t;
-      t.start();
+      TestVertex fromVertex = vertexes.get(fromVertexIndex);
+      TestVertex toVertex = vertexes.get(toVertexIndex);
+
+      TestEdge edge = new TestEdge();
+      edge.uuid = UUID.randomUUID().toString();
+      edge.in = fromVertex.uuid;
+      edge.out = toVertex.uuid;
+      edges.add(edge);
+
+      fromVertex.outEdges.add(edge);
+      toVertex.inEdges.add(edge);
+    }
+  }
+
+  private void initGraph() {
+    OrientGraph graph = new OrientGraph(URL);
+    graph.setAutoStartTx(false);
+    graph.commit();
+
+    final OrientVertexType vertexType = graph.createVertexType("TestVertex");
+    vertexType.createProperty("uuid", OType.STRING);
+    vertexType.createIndex("TestVertexUuidIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "uuid");
+
+    final OrientEdgeType edgeType = graph.createEdgeType("TestEdge");
+    edgeType.createProperty("uuid", OType.STRING);
+    edgeType.createIndex("TestEdgeUuidIndex", OClass.INDEX_TYPE.UNIQUE_HASH_INDEX, "uuid");
+    graph.shutdown();
+  }
+
+  private void addEdgesConcurrently() throws Exception {
+    ExecutorService executorService = Executors.newCachedThreadPool();
+
+    List<Future<Void>> futures = new ArrayList<Future<Void>>();
+    for (int i = 0; i < THREADS; i++)
+      futures.add(executorService.submit(new ConcurrentGraphCreator()));
+
+    latch.countDown();
+
+    for (Future<Void> future : futures)
+      future.get();
+
+    System.out.println("Graph was created used threads : " + THREADS + " duplication exceptions : " + indexCollisions.get()
+        + " version exceptions : " + versionCollisions.get() + " vertexes : " + VERTEXES_COUNT + " edges : " + EDGES_COUNT);
+  }
+
+  private void assertGraph() {
+    OrientGraph graph = new OrientGraph(URL);
+    graph.setUseLightweightEdges(false);
+
+    Assert.assertEquals(VERTEXES_COUNT, graph.countVertices("TestVertex"));
+    Assert.assertEquals(EDGES_COUNT, graph.countEdges("TestEdge"));
+
+    for (TestVertex vertex : vertexes) {
+      Iterable<Vertex> vertexes = graph.command(
+          new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + vertex.uuid + "'")).execute();
+
+      Assert.assertTrue(vertexes.iterator().hasNext());
     }
 
-    for (Thread t1 : myThreads) {
-      try {
-        t1.join();
-      } catch (InterruptedException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      } catch (NullPointerException ex) {
+    for (TestEdge edge : edges) {
+      Iterable<Edge> edges = graph.command(new OSQLSynchQuery<Edge>("select from TestEdge where uuid = '" + edge.uuid + "'"))
+          .execute();
 
+      Assert.assertTrue(edges.iterator().hasNext());
+    }
+
+    for (TestVertex vertex : vertexes) {
+      Iterable<Vertex> vertexes = graph.command(
+          new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + vertex.uuid + "'")).execute();
+
+      Assert.assertTrue(vertexes.iterator().hasNext());
+
+      Vertex gVertex = vertexes.iterator().next();
+
+      Iterable<Edge> outEdges = gVertex.getEdges(Direction.OUT);
+      Iterator<Edge> outGEdgesIterator = outEdges.iterator();
+
+      int counter = 0;
+      while (outGEdgesIterator.hasNext()) {
+        counter++;
+
+        Edge gEdge = outGEdgesIterator.next();
+        TestEdge testEdge = new TestEdge();
+        testEdge.uuid = gEdge.getProperty("uuid");
+
+        Assert.assertTrue(vertex.outEdges.contains(testEdge));
       }
-    }
+      Assert.assertEquals(vertex.outEdges.size(), counter);
 
-    System.out.println("Done adding edges" + new Date().getTime() + " Thread:" + Thread.currentThread().getName());
-  }
+      Iterable<Edge> inEdges = gVertex.getEdges(Direction.IN);
+      Iterator<Edge> inGEdgesIterator = inEdges.iterator();
 
-  private OrientGraphNoTx createGraph() {
-    OrientGraphNoTx graph = null;
-    try {
-      graph = new OrientGraphNoTx(DBURL);
-      if (graph.getRawGraph().exists())
-        graph.getRawGraph().drop();
-      else
-        graph.shutdown();
+      counter = 0;
+      while (inGEdgesIterator.hasNext()) {
+        counter++;
 
-      graph = getGraph();
+        Edge gEdge = inGEdgesIterator.next();
 
-      graph.createVertexType("CustomVertex");
-      graph.createEdgeType("CustomEdge");
+        TestEdge testEdge = new TestEdge();
+        testEdge.uuid = gEdge.getProperty("uuid");
 
-    } catch (OSchemaException ex) {
-
-    }
-    return graph;
-  }
-
-  private void cacheVerticesIds() {
-    OrientGraphNoTx graph2 = getGraph();
-    try {
-      Iterable<OrientVertex> result = graph2.command(new OSQLSynchQuery<ODocument>("select from CustomVertex")).execute();
-
-      for (OrientVertex vRow : result) {
-        try {
-          vertexReg.put(vRow.getProperty("name").toString(), vRow.getIdentity().toString());
-        } catch (NullPointerException ex) {
-          // System.err.println("Some problem");
-        }
+        Assert.assertTrue(vertex.inEdges.contains(testEdge));
       }
+      Assert.assertEquals(vertex.inEdges.size(), counter);
 
-    } finally {
-      graph2.shutdown();
     }
-    System.out.println("Finished creating registry" + vertexReg);
 
-    vertexSet.addAll(vertexReg.keySet());
+    graph.shutdown();
   }
 
-  private void insertVertices() {
-    System.out.println("Start insert vertices");
-    OrientGraphNoTx graph = getGraph();
-    // create vertices
-    try {
+  private class TestVertex {
+    private String        uuid;
 
-      OrientVertex rootNode = graph.addVertex("class:CustomVertex", "name", "root");
-      Random r = new Random();
-
-      for (int i = 0; i < VERTICES; i++) {
-        graph.addVertex("class:CustomVertex", "name", "SomeVertex_" + r.nextInt(VERTICES));
-      }
-
-      Assert.assertEquals(graph.countVertices("CustomVertex"), VERTICES + 1);
-
-      graph.getRawGraph().getDictionary().put("RootNode", rootNode.getRecord());
-    } finally {
-      graph.shutdown();
-    }
-    System.out.println("Finish insert vertices");
+    private Set<TestEdge> outEdges;
+    private Set<TestEdge> inEdges;
   }
 
-  class EdgeRunnerNoTx implements Runnable {
+  private class TestEdge {
+    private String uuid;
+
+    private String in;
+    private String out;
 
     @Override
-    public void run() {
-      System.out.println("Start adding edges" + new Date().getTime() + " Thread:" + Thread.currentThread().getName());
-      OrientGraphNoTx databaseNoTx = getGraph();
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
 
-      while (!vertexSet.isEmpty()) {
-        String keyFrom = vertexSet.pollFirst();
-        Set<String> toKeySet = vertexReg.keySet();
+      TestEdge testEdge = (TestEdge) o;
 
-        ODatabaseRecordThreadLocal.INSTANCE.set(databaseNoTx.getRawGraph());
-        final int total = toKeySet.size();
-        int current = 0;
+      if (uuid != null ? !uuid.equals(testEdge.uuid) : testEdge.uuid != null)
+        return false;
 
-        for (String keyTo : toKeySet) {
-          boolean success = false;
-          for (int retry = 0; retry < RETRIES; retry++) {
-            try {
-              OrientVertex iSourceVertex = databaseNoTx.getVertex(vertexReg.get(keyFrom));
-              OrientVertex iDestVertex = databaseNoTx.getVertex(vertexReg.get(keyTo));
-              databaseNoTx.addEdge(null, iSourceVertex, iDestVertex, "CustomEdge");
+      return true;
+    }
 
-              // OK
-              if (retry > 2)
-                System.out.println("OK (key #" + current + "/" + total + ") after " + retry + " retries - Thread:"
-                    + Thread.currentThread().getName());
-              success = true;
-              current++;
-
-              final int totalEdges = edgeCounter.incrementAndGet();
-
-              if (totalEdges % 10000 == 0)
-                System.out.println("Inserted edges: " + totalEdges + ", currentThread " + current + " Thread:"
-                    + Thread.currentThread().getName());
-
-              break;
-
-            } catch (OConcurrentModificationException e) {
-              if (retry > 2)
-                System.out.println("Managing concurrent exception (key #" + current + "/" + total + ") adding edge " + keyFrom
-                    + "->" + keyTo + ", retry " + retry + " Thread:" + Thread.currentThread().getName());
-            } catch (Exception e) {
-              System.err.println("Exception (key #" + current + "/" + total + ") adding edge " + keyFrom + "->" + keyTo
-                  + ", retry " + retry + " Thread:" + Thread.currentThread().getName());
-              e.printStackTrace();
-            }
-          }
-
-          if (!success)
-            System.out.println("ERROR on (key #" + current + "/" + total + ") adding edge " + keyFrom + "->" + keyTo + " Thread:"
-                + Thread.currentThread().getName());
-
-        }
-      }
-
-      System.out.println("Done adding edges" + new Date().getTime() + " Thread:" + Thread.currentThread().getName());
-
+    @Override
+    public int hashCode() {
+      return uuid != null ? uuid.hashCode() : 0;
     }
   }
 
-  private OrientGraphNoTx getGraph() {
-    OrientGraphNoTx graph = new OrientGraphNoTx(DBURL);
-    graph.getRawGraph().getLocalCache().setEnable(false);
-    return graph;
-  }
+  private class ConcurrentGraphCreator implements Callable<Void> {
+    @Override
+    public Void call() throws Exception {
+      OrientGraph graph = new OrientGraph(URL);
+      latch.await();
+      final int startIndex = random.nextInt(vertexes.size());
 
+      final String startUUID = vertexes.get(startIndex).uuid;
+      String currentUUID = startUUID;
+      try {
+        do {
+          TestVertex fromVertex = vertexesToCreate.get(currentUUID);
+
+          for (TestEdge edge : fromVertex.outEdges) {
+            TestVertex toVertex = vertexesToCreate.get(edge.out);
+
+            boolean success = false;
+            while (!success)
+              try {
+                Iterable<Vertex> vertexes = graph.command(
+                    new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'")).execute();
+
+                Vertex gFromVertex;
+
+                Iterator<Vertex> gVertexesIterator = vertexes.iterator();
+
+                if (!gVertexesIterator.hasNext()) {
+                  graph.command(new OCommandSQL("CREATE VERTEX TestVertex SET uuid = '" + fromVertex.uuid + "'")).execute();
+
+                  vertexes = graph.command(
+                      new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'")).execute();
+                  gVertexesIterator = vertexes.iterator();
+                  gFromVertex = gVertexesIterator.next();
+                } else {
+                  gFromVertex = gVertexesIterator.next();
+                }
+
+                vertexes = graph.command(new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + toVertex.uuid + "'"))
+                    .execute();
+
+                Vertex gToVertex;
+
+                gVertexesIterator = vertexes.iterator();
+                if (!gVertexesIterator.hasNext()) {
+                  graph.command(new OCommandSQL("CREATE VERTEX TestVertex SET uuid = '" + toVertex.uuid + "'")).execute();
+                  vertexes = graph.command(
+                      new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + toVertex.uuid + "'")).execute();
+
+                  gVertexesIterator = vertexes.iterator();
+                  gToVertex = gVertexesIterator.next();
+                } else {
+                  gToVertex = gVertexesIterator.next();
+                }
+
+                Edge gEdge;
+
+                Iterable<Edge> edges = graph.command(
+                    new OSQLSynchQuery<Edge>("select from TestEdge where uuid = '" + edge.uuid + "'")).execute();
+
+                if (!edges.iterator().hasNext()) {
+                  graph.command(
+                      new OCommandSQL("CREATE EDGE TestEdge FROM " + gFromVertex.getId() + " TO " + gToVertex.getId()
+                          + " SET uuid = '" + edge.uuid + "'")).execute();
+                }
+
+                graph.commit();
+
+                success = true;
+              } catch (OConcurrentModificationException e) {
+                graph.rollback();
+
+                versionCollisions.incrementAndGet();
+                Thread.yield();
+              } catch (ORecordDuplicatedException e) {
+                graph.rollback();
+
+                indexCollisions.incrementAndGet();
+                Thread.yield();
+              }
+          }
+
+          if (fromVertex.outEdges.isEmpty()) {
+            boolean success = false;
+            while (!success)
+              try {
+                Iterable<Vertex> vertexes = graph.command(
+                    new OSQLSynchQuery<Vertex>("select from TestVertex where uuid = '" + fromVertex.uuid + "'")).execute();
+
+                Iterator<Vertex> gVertexesIterator = vertexes.iterator();
+
+                if (!gVertexesIterator.hasNext()) {
+                  graph.command(new OCommandSQL("CREATE VERTEX TestVertex SET uuid = '" + fromVertex.uuid + "'")).execute();
+                }
+
+                success = true;
+              } catch (OConcurrentModificationException e) {
+                graph.rollback();
+
+                versionCollisions.incrementAndGet();
+                Thread.yield();
+              } catch (ORecordDuplicatedException e) {
+                graph.rollback();
+
+                indexCollisions.incrementAndGet();
+                Thread.yield();
+              }
+          }
+
+          currentUUID = vertexesToCreate.higherKey(currentUUID);
+          if (currentUUID == null)
+            currentUUID = vertexesToCreate.firstKey();
+        } while (!startUUID.equals(currentUUID));
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw e;
+      } finally {
+        graph.shutdown();
+      }
+
+      return null;
+
+    }
+  }
 }

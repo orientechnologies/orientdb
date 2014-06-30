@@ -14,7 +14,6 @@
         <classes>
             <class name="com.orientechnologies.orient.test.database.auto.DbListenerTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DbCreationTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.StorageTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.ClusterMetadataTest"/>
         </classes>
     </test>
@@ -177,7 +176,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.OEmbeddedRidBagTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.OSBTreeRidBagTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.HideRecordTest"/>
-            <class name="com.orientechnologies.orient.test.database.auto.PoolTest"/> 
+            <class name="com.orientechnologies.orient.test.database.auto.PoolTest"/>
         </classes>
     </test>
     <test name="DbTools">

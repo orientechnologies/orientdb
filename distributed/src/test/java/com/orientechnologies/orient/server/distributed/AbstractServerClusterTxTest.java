@@ -68,7 +68,7 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
 
           database.begin();
           try {
-            ODocument doc = createRecord(database, i);
+            ODocument doc = createRecord(database, serverId, i);
             updateRecord(database, doc);
             checkRecord(database, doc);
 
@@ -99,24 +99,6 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
       return null;
     }
 
-    private ODocument createRecord(ODatabaseDocumentTx database, int i) {
-      final int uniqueId = count * serverId + i;
-
-      ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
-          "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
-      database.save(person);
-      return person;
-    }
-
-    private void updateRecord(ODatabaseDocumentTx database, ODocument doc) {
-      doc.field("updated", true);
-      doc.save();
-    }
-
-    private void checkRecord(ODatabaseDocumentTx database, ODocument doc) {
-      doc.reload();
-      Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
-    }
   }
 
   class Reader implements Callable<Void> {
@@ -230,6 +212,25 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
     new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
     new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
     new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
+  }
+
+  protected ODocument createRecord(ODatabaseDocumentTx database, int serverId, int i) {
+    final int uniqueId = count * serverId + i;
+
+    ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
+        "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
+    database.save(person);
+    return person;
+  }
+
+  protected void updateRecord(ODatabaseDocumentTx database, ODocument doc) {
+    doc.field("updated", true);
+    doc.save();
+  }
+
+  protected void checkRecord(ODatabaseDocumentTx database, ODocument doc) {
+    doc.reload();
+    Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
   }
 
   private long printStats(final String databaseUrl) {

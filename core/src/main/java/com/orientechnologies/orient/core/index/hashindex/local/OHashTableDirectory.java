@@ -48,7 +48,7 @@ public class OHashTableDirectory extends ODurableComponent {
     this.durableInNonTxMode = durableInNonTxMode;
     this.storage = storage;
 
-    init(storage.getAtomicOperationsManager(), storage.getWALInstance());
+    init(storage);
   }
 
   public void create() throws IOException {
@@ -74,10 +74,9 @@ public class OHashTableDirectory extends ODurableComponent {
 
       diskCache.pinPage(firstEntry);
 
-      final OCachePointer cachePointer = firstEntry.getCachePointer();
-      cachePointer.acquireExclusiveLock();
+      firstEntry.acquireExclusiveLock();
       try {
-        ODirectoryFirstPage firstPage = new ODirectoryFirstPage(cachePointer.getDataPointer(), getTrackMode(), firstEntry);
+        ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, getTrackMode(), firstEntry);
 
         firstPage.setTreeSize(0);
         firstPage.setTombstone(-1);
@@ -85,7 +84,7 @@ public class OHashTableDirectory extends ODurableComponent {
         firstEntry.markDirty();
         logPageChanges(firstPage, firstEntry.getFileId(), firstEntry.getPageIndex(), true);
       } finally {
-        cachePointer.releaseExclusiveLock();
+        firstEntry.releaseExclusiveLock();
         diskCache.release(firstEntry);
       }
 
@@ -161,10 +160,9 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       diskCache.loadPinnedPage(firstEntry);
 
-      final OCachePointer firstPagePointer = firstEntry.getCachePointer();
-      firstPagePointer.acquireExclusiveLock();
+      firstEntry.acquireExclusiveLock();
       try {
-        ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstPagePointer.getDataPointer(), getTrackMode(), firstEntry);
+        ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, getTrackMode(), firstEntry);
 
         final int tombstone = firstPage.getTombstone();
 
@@ -206,11 +204,10 @@ public class OHashTableDirectory extends ODurableComponent {
 
           diskCache.loadPinnedPage(cacheEntry);
 
-          OCachePointer cachePointer = cacheEntry.getCachePointer();
-          cachePointer.acquireExclusiveLock();
+          cacheEntry.acquireExclusiveLock();
 
           try {
-            ODirectoryPage page = new ODirectoryPage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE, cacheEntry);
+            ODirectoryPage page = new ODirectoryPage(cacheEntry, ODurablePage.TrackMode.NONE, cacheEntry);
 
             page.setMaxLeftChildDepth(localLevel, maxLeftChildDepth);
             page.setMaxRightChildDepth(localLevel, maxRightChildDepth);
@@ -225,16 +222,14 @@ public class OHashTableDirectory extends ODurableComponent {
             cacheEntry.markDirty();
             logPageChanges(page, cacheEntry.getFileId(), firstEntry.getPageIndex(), newPage);
           } finally {
-            cachePointer.releaseExclusiveLock();
+            cacheEntry.releaseExclusiveLock();
             diskCache.release(cacheEntry);
           }
         }
 
-        firstEntry.markDirty();
-
         logPageChanges(firstPage, firstEntry.getFileId(), firstEntry.getPageIndex(), false);
       } finally {
-        firstPagePointer.releaseExclusiveLock();
+        firstEntry.releaseExclusiveLock();
         diskCache.release(firstEntry);
       }
 
@@ -259,11 +254,9 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       diskCache.loadPinnedPage(firstEntry);
 
-      final OCachePointer firstPagePointer = firstEntry.getCachePointer();
-      firstPagePointer.acquireExclusiveLock();
+      firstEntry.acquireExclusiveLock();
       try {
-        ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstPagePointer.getDataPointer(), ODurablePage.TrackMode.NONE,
-            firstEntry);
+        ODirectoryFirstPage firstPage = new ODirectoryFirstPage(firstEntry, ODurablePage.TrackMode.NONE, firstEntry);
         if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
           firstPage.setPointer(nodeIndex, 0, firstPage.getTombstone());
           firstPage.setTombstone(nodeIndex);
@@ -273,11 +266,10 @@ public class OHashTableDirectory extends ODurableComponent {
 
           final OCacheEntry cacheEntry = entries.get(pageIndex);
           diskCache.loadPinnedPage(cacheEntry);
-          OCachePointer cachePointer = cacheEntry.getCachePointer();
 
-          cachePointer.acquireExclusiveLock();
+          cacheEntry.acquireExclusiveLock();
           try {
-            ODirectoryPage page = new ODirectoryPage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE, cacheEntry);
+            ODirectoryPage page = new ODirectoryPage(cacheEntry, ODurablePage.TrackMode.NONE, cacheEntry);
 
             page.setPointer(localNodeIndex, 0, firstPage.getTombstone());
             firstPage.setTombstone(nodeIndex);
@@ -285,15 +277,13 @@ public class OHashTableDirectory extends ODurableComponent {
             cacheEntry.markDirty();
             logPageChanges(page, cacheEntry.getFileId(), cacheEntry.getPageIndex(), false);
           } finally {
-            cachePointer.releaseExclusiveLock();
+            cacheEntry.releaseExclusiveLock();
             diskCache.release(cacheEntry);
           }
         }
-
-        firstEntry.markDirty();
         logPageChanges(firstPage, firstEntry.getFileId(), firstEntry.getPageIndex(), false);
       } finally {
-        firstPagePointer.releaseExclusiveLock();
+        firstEntry.releaseExclusiveLock();
         diskCache.release(firstEntry);
       }
 
@@ -550,22 +540,20 @@ public class OHashTableDirectory extends ODurableComponent {
   private ODirectoryPage loadPage(int nodeIndex, boolean exclusiveLock) throws IOException {
     if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
       diskCache.loadPinnedPage(firstEntry);
-      OCachePointer cachePointer = firstEntry.getCachePointer();
       if (exclusiveLock)
-        cachePointer.acquireExclusiveLock();
+        firstEntry.acquireExclusiveLock();
 
-      return new ODirectoryFirstPage(cachePointer.getDataPointer(), getTrackMode(), firstEntry);
+      return new ODirectoryFirstPage(firstEntry, getTrackMode(), firstEntry);
     }
 
     final int pageIndex = (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) / ODirectoryPage.NODES_PER_PAGE;
     final OCacheEntry cacheEntry = entries.get(pageIndex);
     diskCache.loadPinnedPage(cacheEntry);
 
-    final OCachePointer cachePointer = cacheEntry.getCachePointer();
     if (exclusiveLock)
-      cachePointer.acquireExclusiveLock();
+      cacheEntry.acquireExclusiveLock();
 
-    return new ODirectoryPage(cachePointer.getDataPointer(), getTrackMode(), cacheEntry);
+    return new ODirectoryPage(cacheEntry, getTrackMode(), cacheEntry);
   }
 
   private void releasePage(ODirectoryPage page, boolean exclusiveLock) {

@@ -323,8 +323,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on saving record %s of class '%s'", e, ODatabaseException.class,
-          iRecord.getIdentity(), (doc.getClassName() != null ? doc.getClassName() : "?"));
+      throw new ODatabaseException("Error on saving record " + iRecord.getIdentity() + " of class  '"
+          + (doc.getClassName() != null ? doc.getClassName() : "?") + "'", e);
     }
     return (RET) doc;
   }
@@ -450,28 +450,28 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.
    * 
-   * @param iRecord
+   * @param record
    *          record to delete
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
-  public ODatabaseDocumentTx delete(final ORecordInternal<?> iRecord) {
-    if (iRecord == null)
+  public ODatabaseDocumentTx delete(final ORecordInternal<?> record) {
+    if (record == null)
       throw new ODatabaseException("Cannot delete null document");
 
     // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
-    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null)
-      checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_DELETE, ((ODocument) iRecord).getClassName());
+    if (record instanceof ODocument && ((ODocument) record).getClassName() != null)
+      checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_DELETE, ((ODocument) record).getClassName());
 
     try {
-      underlying.delete(iRecord);
+      underlying.delete(record);
 
     } catch (Exception e) {
-      if (iRecord instanceof ODocument)
-        OLogManager.instance().exception("Error on deleting record %s of class '%s'", e, ODatabaseException.class,
-            iRecord.getIdentity(), ((ODocument) iRecord).getClassName());
+      if (record instanceof ODocument)
+        throw new ODatabaseException("Error on deleting record " + record.getIdentity() + " of class '"
+            + ((ODocument) record).getClassName() + "'", e);
       else
-        OLogManager.instance().exception("Error on deleting record %s", e, ODatabaseException.class, iRecord.getIdentity());
+        throw new ODatabaseException("Error on deleting record " + record.getIdentity());
     }
     return this;
   }
@@ -480,12 +480,19 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * Returns the number of the records of the class iClassName.
    */
   public long countClass(final String iClassName) {
+    return countClass(iClassName, true);
+  }
+
+  /**
+   * Returns the number of the records of the class iClassName considering also sub classes if polymorphic is true.
+   */
+  public long countClass(final String iClassName, final boolean iPolymorphic) {
     final OClass cls = getMetadata().getSchema().getClass(iClassName);
 
     if (cls == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");
 
-    return cls.count();
+    return cls.count(iPolymorphic);
   }
 
   /**

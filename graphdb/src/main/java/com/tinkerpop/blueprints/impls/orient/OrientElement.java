@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -179,7 +180,15 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     else if (key.equals("_rid"))
       return (T) rawElement.getIdentity().toString();
 
-    return getRecord().field(key);
+    final Object fieldValue = getRecord().field(key);
+    if (fieldValue instanceof OIdentifiable)
+      // CONVERT IT TO VERTEX/EDGE
+      return (T) graph.getElement(fieldValue);
+    else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable)
+      // CONVERT IT TO ITERABLE<VERTEX/EDGE>
+      return (T) new OrientElementIterable<OrientElement>(graph, OMultiValue.getMultiValueIterable(fieldValue));
+
+    return (T) fieldValue;
   }
 
   /**
@@ -232,15 +241,14 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   /**
    * (Blueprints Extension) Fills the Element from a byte[]
    * 
-   * @param iStream
+   * @param stream
    *          byte array representation of the object
    * @throws OSerializationException
    */
   @Override
-  public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
+  public OSerializableStream fromStream(final byte[] stream) throws OSerializationException {
     final ODocument record = getRecord();
-    ((ORecordId) record.getIdentity()).fromString(new String(iStream));
-    record.setInternalStatus(STATUS.NOT_LOADED);
+    ((ORecordId) record.getIdentity()).fromString(new String(stream));
     return this;
   }
 
@@ -428,19 +436,19 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * Check if a class already exists, otherwise create it at the fly. If a transaction is running commit changes, create the class
    * and begin a new transaction.
    * 
-   * @param iClassName
+   * @param className
    *          Class's name
    */
-  protected String checkForClassInSchema(final String iClassName) {
-    if (iClassName == null)
+  protected String checkForClassInSchema(final String className) {
+    if (className == null)
       return null;
 
-    if( isDetached() )
-      return iClassName;
+    if (isDetached())
+      return className;
 
     final OSchema schema = graph.getRawGraph().getMetadata().getSchema();
 
-    if (!schema.existsClass(iClassName)) {
+    if (!schema.existsClass(className)) {
       // CREATE A NEW CLASS AT THE FLY
       try {
         graph
@@ -448,24 +456,24 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
 
               @Override
               public OClass call(final OrientBaseGraph g) {
-                return schema.createClass(iClassName, schema.getClass(getBaseClassName()));
+                return schema.createClass(className, schema.getClass(getBaseClassName()));
 
               }
-            }, "Committing the active transaction to create the new type '", iClassName, "' as subclass of '", getBaseClassName(),
+            }, "Committing the active transaction to create the new type '", className, "' as subclass of '", getBaseClassName(),
                 "'. The transaction will be reopen right after that. To avoid this behavior create the classes outside the transaction");
 
       } catch (OSchemaException e) {
-        if (!schema.existsClass(iClassName))
+        if (!schema.existsClass(className))
           throw e;
       }
     } else {
       // CHECK THE CLASS INHERITANCE
-      final OClass cls = schema.getClass(iClassName);
+      final OClass cls = schema.getClass(className);
       if (!cls.isSubClassOf(getBaseClassName()))
-        throw new IllegalArgumentException("Class '" + iClassName + "' is not an instance of " + getBaseClassName());
+        throw new IllegalArgumentException("Class '" + className + "' is not an instance of " + getBaseClassName());
     }
 
-    return iClassName;
+    return className;
   }
 
   protected void setPropertyInternal(final Element element, final ODocument doc, final String key, final Object value) {
