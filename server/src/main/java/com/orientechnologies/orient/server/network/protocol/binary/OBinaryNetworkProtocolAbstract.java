@@ -15,12 +15,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.logging.Level;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -37,6 +43,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -49,10 +56,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.util.logging.Level;
 
 /**
  * Abstract base class for binary network implementations.
@@ -328,14 +331,20 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     channel.writeVersion(iRecord.getRecordVersion());
     try {
       final byte[] stream = iRecord.toStream();
-
-      // TRIM TAILING SPACES (DUE TO OVERSIZE)
       int realLength = stream.length;
-      for (int i = stream.length - 1; i > -1; --i) {
-        if (stream[i] == 32)
-          --realLength;
-        else
-          break;
+      // TODO: This Logic should not be here provide an api in the Serializer for ask for trimmed content.
+      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (db != null && db instanceof ODatabaseDocument) {
+        if (db.getSerializer() instanceof ORecordSerializerSchemaAware2CSV) {
+          // TRIM TAILING SPACES (DUE TO OVERSIZE)
+          for (int i = stream.length - 1; i > -1; --i) {
+            if (stream[i] == 32)
+              --realLength;
+            else
+              break;
+          }
+
+        }
       }
 
       channel.writeBytes(stream, realLength);
