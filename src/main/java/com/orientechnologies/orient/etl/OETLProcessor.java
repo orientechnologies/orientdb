@@ -19,7 +19,6 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -30,6 +29,8 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.etl.extract.OExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.transform.OTransformer;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,12 +57,13 @@ public class OETLProcessor implements OETLComponent {
   protected OETLProcessorStats         stats       = new OETLProcessorStats();
   protected TimerTask                  dumpTask;
 
-  protected class OETLProcessorStats {
-    public long lastExtractorProgress = 0;
-    public long lastLoaderProgress    = 0;
-    public long lastLap               = 0;
-    public long warnings              = 0;
-    public long errors                = 0;
+  public class OETLProcessorStats {
+    public boolean verbose               = false;
+    public long    lastExtractorProgress = 0;
+    public long    lastLoaderProgress    = 0;
+    public long    lastLap               = 0;
+    public long    warnings              = 0;
+    public long    errors                = 0;
   }
 
   public OETLProcessor(final OExtractor iExtractor, final OTransformer[] iTransformers, final OLoader iLoader) {
@@ -81,7 +83,7 @@ public class OETLProcessor implements OETLComponent {
       // EXTRACTOR
       String name = iExtractor.fieldNames()[0];
       extractor = factory.getExtractor(name);
-      extractor.configure((ODocument) iExtractor.field(name));
+      configureComponent(extractor, (ODocument) iExtractor.field(name));
 
       // TRANSFORMERS
       transformers = new ArrayList<OTransformer>();
@@ -89,16 +91,16 @@ public class OETLProcessor implements OETLComponent {
         name = t.fieldNames()[0];
         final OTransformer tr = factory.getTransformer(name);
         transformers.add(tr);
-        tr.configure((ODocument) t.field(name));
+        configureComponent(tr, (ODocument) t.field(name));
       }
 
       // LOADER
       name = iLoader.fieldNames()[0];
       loader = factory.getLoader(name);
-      loader.configure((ODocument) iLoader.field(name));
+      configureComponent(loader, (ODocument) iLoader.field(name));
 
     } catch (Exception e) {
-      throw new OConfigurationException("Error on creating ETL perocessor", e);
+      throw new OConfigurationException("Error on creating ETL processor", e);
     }
   }
 
@@ -106,6 +108,7 @@ public class OETLProcessor implements OETLComponent {
     String dbURL = null;
     String dbUser = "admin";
     String dbPassword = "admin";
+    boolean verbose = false;
     boolean dbAutoCreate = true;
 
     ODocument cfgExtract = null;
@@ -115,15 +118,17 @@ public class OETLProcessor implements OETLComponent {
     for (int i = 0; i < args.length; ++i) {
       final String arg = args[i];
 
-      if (arg.equalsIgnoreCase("-dbUrl"))
+      if (arg.equalsIgnoreCase("-dbUrl")) {
         dbURL = args[++i];
-      else if (arg.equalsIgnoreCase("-dbUser"))
+      } else if (arg.equalsIgnoreCase("-dbUser")) {
         dbUser = args[++i];
-      else if (arg.equalsIgnoreCase("-dbPassword"))
+      } else if (arg.equalsIgnoreCase("-dbPassword")) {
         dbPassword = args[++i];
-      else if (arg.equalsIgnoreCase("-dbAutoCreate"))
+      } else if (arg.equalsIgnoreCase("-dbAutoCreate")) {
         dbAutoCreate = Boolean.parseBoolean(args[++i]);
-      else if (arg.equalsIgnoreCase("-config")) {
+      } else if (arg.equalsIgnoreCase("-v")) {
+        verbose = true;
+      } else if (arg.equalsIgnoreCase("-config")) {
         final String cfgPath = args[++i];
         try {
           final String config = OIOUtils.readFileAsString(new File(cfgPath));
@@ -161,18 +166,19 @@ public class OETLProcessor implements OETLComponent {
 
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbURL);
 
-    if (db.exists())
+    if (db.exists()) {
       db.open(dbUser, dbPassword);
-    else {
-      if (dbAutoCreate)
+    } else {
+      if (dbAutoCreate) {
         db.create();
-      else
+      } else {
         throw new IllegalArgumentException("Database '" + dbURL + "' not exists and 'dbAutoCreate' setting is false");
+      }
     }
 
-    final OETLProcessor processor = new OETLProcessor(cfgExtract, cfgTransformers, cfgLoader);
+    final OETLProcessor processor = new OETLProcessor(cfgExtract, cfgTransformers, cfgLoader).setVerbose(verbose);
 
-    processor.prepare(db);
+    processor.init(processor, db);
     processor.execute();
   }
 
@@ -192,31 +198,43 @@ public class OETLProcessor implements OETLComponent {
   }
 
   public void execute() {
+    analyzeFlow();
 
     final OCommandContext context = new OBasicCommandContext();
 
-    begin(context);
+    try {
+      begin(context);
 
-    extractor.extract(context);
+      final String loaderIn = loader.getConfiguration().field("in");
 
-    Object current = null;
-    while (extractor.hasNext()) {
-      // EXTRACTOR
-      current = extractor.next();
+      extractor.extract(context);
 
-      // TRANSFORM
-      for (OTransformer t : transformers) {
-        current = t.transform(current, context);
-        if (current == null)
-          break;
+      Object current = null;
+      while (extractor.hasNext()) {
+        // EXTRACTOR
+        current = extractor.next();
+
+        // TRANSFORM
+        for (OTransformer t : transformers) {
+          current = t.transform(current, context);
+          if (current == null)
+            break;
+        }
+
+        if (current != null)
+          // LOAD
+          loader.load(current, context);
       }
+      end(context);
 
-      if (current != null)
-        // LOAD
-        loader.load(current, context);
+    } catch (OETLProcessHaltedException e) {
+      out(false, "ETL process halted: " + e);
     }
+  }
 
-    end(context);
+  @Override
+  public ODocument getConfiguration() {
+    return null;
   }
 
   @Override
@@ -224,16 +242,56 @@ public class OETLProcessor implements OETLComponent {
   }
 
   @Override
-  public void prepare(final ODatabaseDocumentTx iDatabase) {
-    extractor.prepare(iDatabase);
+  public void init(OETLProcessor iProcessor, final ODatabaseDocumentTx iDatabase) {
+    extractor.init(iProcessor, iDatabase);
     for (OTransformer t : transformers)
-      t.prepare(iDatabase);
-    loader.prepare(iDatabase);
+      t.init(iProcessor, iDatabase);
+    loader.init(iProcessor, iDatabase);
   }
 
   @Override
   public String getName() {
     return "Processor";
+  }
+
+  public OETLProcessor setVerbose(final boolean verbose) {
+    stats.verbose = verbose;
+    return this;
+  }
+
+  public void out(final boolean iDebug, final String iText, final Object... iArgs) {
+    if (!iDebug || stats.verbose)
+      System.out.println(String.format(iText, iArgs));
+  }
+
+  public OETLProcessorStats getStats() {
+    return stats;
+  }
+
+  protected void configureComponent(final OETLComponent iComponent, final ODocument iCfg) {
+    iComponent.configure(iCfg);
+  }
+
+  protected Class getClassByName(final OETLComponent iComponent, final String iClassName) {
+    final Class inClass;
+    if (iClassName.equals("ODocument"))
+      inClass = ODocument.class;
+    else if (iClassName.equals("String"))
+      inClass = String.class;
+    else if (iClassName.equals("Object"))
+      inClass = Object.class;
+    else if (iClassName.equals("OrientVertex"))
+      inClass = OrientVertex.class;
+    else if (iClassName.equals("OrientEdge"))
+      inClass = OrientEdge.class;
+    else
+      try {
+        inClass = Class.forName(iClassName);
+      } catch (ClassNotFoundException e) {
+        throw new OConfigurationException("Class '" + iClassName + "' declared as 'input' of ETL Component '"
+            + iComponent.getName() + "' was not found.");
+      }
+    return inClass;
   }
 
   protected void end(OCommandContext context) {
@@ -242,19 +300,19 @@ public class OETLProcessor implements OETLComponent {
       dumpTask.cancel();
     }
 
-    OLogManager.instance().info(this, "COMPLETED");
+    out(false, "END ETL PROCESSOR");
 
-    dumpProgress();
+    dumpProgress(false);
   }
 
   protected void begin(OCommandContext context) {
-    OLogManager.instance().info(this, "BEGIN");
+    out(false, "BEGIN ETL PROCESSOR");
 
     if (dumpEveryMs > 0) {
       dumpTask = new TimerTask() {
         @Override
         public void run() {
-          dumpProgress();
+          dumpProgress(true);
         }
       };
 
@@ -264,7 +322,7 @@ public class OETLProcessor implements OETLComponent {
     }
   }
 
-  protected void dumpProgress() {
+  protected void dumpProgress(final boolean iDebug) {
     final long now = System.currentTimeMillis();
 
     final long extractorProgress = extractor.getProgress();
@@ -276,13 +334,45 @@ public class OETLProcessor implements OETLComponent {
     final long loaderItemsSec = (long) ((loaderProgress - stats.lastLoaderProgress) * 1000f / (now - stats.lastLap));
     final String loaderUnit = loader.getUnit();
 
-    OLogManager.instance().info(this,
-        "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) -> transformed -> loaded %,d %s (%,d %s/sec) [%d warnings, %d errors]",
+    out(iDebug, "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) -> loaded %,d %s (%,d %s/sec) [%d warnings, %d errors]",
         ((float) extractorProgress * 100 / extractorTotal), extractorProgress, extractorTotal, extractorUnit, extractorItemsSec,
         extractorUnit, loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, stats.warnings, stats.errors);
 
     stats.lastExtractorProgress = extractorProgress;
     stats.lastLoaderProgress = loaderProgress;
     stats.lastLap = now;
+  }
+
+  protected void analyzeFlow() {
+    if (extractor == null)
+      throw new OConfigurationException("extractor is null");
+
+    if (loader == null)
+      throw new OConfigurationException("loader is null");
+
+    OETLComponent lastComponent = extractor;
+
+    for (OTransformer t : transformers) {
+      checkTypeCompatibility(t, lastComponent);
+      lastComponent = t;
+    }
+
+    checkTypeCompatibility(loader, lastComponent);
+  }
+
+  protected void checkTypeCompatibility(OETLComponent iCurrentComponent, OETLComponent iLastComponent) {
+    final String out = iLastComponent.getConfiguration().field("output");
+    final Class outClass = getClassByName(iLastComponent, out);
+
+    final List<String> ins = iCurrentComponent.getConfiguration().field("input");
+    for (String in : ins) {
+      final Class inClass = getClassByName(iCurrentComponent, in);
+      if (inClass.isAssignableFrom(outClass)) {
+        return;
+      }
+    }
+
+    throw new OConfigurationException("Component " + iCurrentComponent.getName() + " expects one of the following inputs " + ins
+        + " but the 'output' for component '" + iLastComponent.getName() + "' is: " + out);
   }
 }

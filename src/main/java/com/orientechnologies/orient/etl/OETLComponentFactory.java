@@ -23,13 +23,13 @@ import com.orientechnologies.orient.etl.extract.OExtractor;
 import com.orientechnologies.orient.etl.extract.OFileExtractor;
 import com.orientechnologies.orient.etl.extract.OLineExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
-import com.orientechnologies.orient.etl.loader.OOrientLoader;
+import com.orientechnologies.orient.etl.loader.OOrientDocumentLoader;
 import com.orientechnologies.orient.etl.transform.OCSVTransformer;
 import com.orientechnologies.orient.etl.transform.OCodeTransformer;
 import com.orientechnologies.orient.etl.transform.OEdgeTransformer;
+import com.orientechnologies.orient.etl.transform.OFieldTransformer;
 import com.orientechnologies.orient.etl.transform.OJSONTransformer;
 import com.orientechnologies.orient.etl.transform.ONullTransformer;
-import com.orientechnologies.orient.etl.transform.OSQLFieldTransformer;
 import com.orientechnologies.orient.etl.transform.OSkipTransformer;
 import com.orientechnologies.orient.etl.transform.OTransformer;
 import com.orientechnologies.orient.etl.transform.OVertexTransformer;
@@ -51,7 +51,7 @@ public class OETLComponentFactory {
     registerExtractor(OFileExtractor.class);
     registerExtractor(OLineExtractor.class);
 
-    registerTransformer(OSQLFieldTransformer.class);
+    registerTransformer(OFieldTransformer.class);
     registerTransformer(OVertexTransformer.class);
     registerTransformer(OEdgeTransformer.class);
     registerTransformer(OCodeTransformer.class);
@@ -60,7 +60,7 @@ public class OETLComponentFactory {
     registerTransformer(OSkipTransformer.class);
     registerTransformer(ONullTransformer.class);
 
-    registerLoader(OOrientLoader.class);
+    registerLoader(OOrientDocumentLoader.class);
   }
 
   public OETLComponentFactory registerExtractor(final Class<? extends OExtractor> iComponent) {

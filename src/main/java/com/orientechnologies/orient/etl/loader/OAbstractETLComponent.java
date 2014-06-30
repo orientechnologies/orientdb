@@ -16,27 +16,22 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extract;
+package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLComponent;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
 /**
- * Abstract Transformer.
+ * ETL abstract component.
  */
-public abstract class OAbstractExtractor implements OExtractor {
-  @Override
-  public void configure(ODocument iConfiguration) {
-  }
+public abstract class OAbstractETLComponent implements OETLComponent {
+  protected ODatabaseDocumentTx db;
+  protected OETLProcessor       processor;
 
   @Override
   public void init(OETLProcessor iProcessor, ODatabaseDocumentTx iDatabase) {
+    processor = iProcessor;
+    db = iDatabase;
   }
-
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException("remove()");
-  }
-
 }

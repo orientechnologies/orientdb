@@ -33,10 +33,20 @@ public class OCodeTransformer extends OAbstractTransformer {
   protected Map<Object, Object>    params   = new HashMap<Object, Object>();
 
   @Override
+  public ODocument getConfiguration() {
+    return new ODocument().fromJSON("{parameters:[{language:{optional:true,description:'Code language, default is Javascript'}},"
+        + "{code:{optional:false,description:'Code to execute'}}]," + "input:['Object'],output:'Object'}");
+  }
+
+  @Override
   public void configure(final ODocument iConfiguration) {
     if (iConfiguration.containsField("language"))
       language = iConfiguration.field("language");
-    code = iConfiguration.field("code");
+
+    if (iConfiguration.containsField("code"))
+      code = iConfiguration.field("code");
+    else
+      throw new IllegalArgumentException("'code' parameter is mandatory in Code Transformer");
   }
 
   @Override

@@ -25,10 +25,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * ETL basic component.
  */
 public interface OETLComponent {
+  public ODocument getConfiguration();
 
   public void configure(ODocument iConfiguration);
 
-  public void prepare(ODatabaseDocumentTx iDatabase);
+  public void init(OETLProcessor iProcessor, ODatabaseDocumentTx iDatabase);
 
   public String getName();
 }

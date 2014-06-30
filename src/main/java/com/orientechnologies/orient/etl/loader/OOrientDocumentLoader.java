@@ -18,32 +18,28 @@
 
 package com.orientechnologies.orient.etl.loader;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
 /**
  * ETL Loader.
  */
-public class OOrientLoader implements OLoader {
-  protected ODatabaseDocumentTx db;
-  protected long                progress = 0;
-  protected String              clusterName;
-  protected String              className;
-  protected OClass              schemaClass;
+public class OOrientDocumentLoader extends OAbstractETLComponent implements OLoader {
+  protected long   progress = 0;
+  protected String clusterName;
+  protected String className;
+  protected OClass schemaClass;
 
-  public OOrientLoader() {
+  public OOrientDocumentLoader() {
   }
 
   public void load(final Object input, OCommandContext context) {
     if (input == null)
       return;
-
-    if (!(input instanceof ORecord<?>))
-      throw new IllegalArgumentException("Expected record but received object '" + input + "' of class: " + input.getClass());
 
     if (className != null && input instanceof ODocument)
       ((ODocument) input).setClassName(className);
@@ -61,25 +57,28 @@ public class OOrientLoader implements OLoader {
   }
 
   @Override
-  public void configure(final ODocument iConfiguration) {
-    if (iConfiguration.containsField("cluster"))
-      clusterName = iConfiguration.field("cluster");
-    if (iConfiguration.containsField("class"))
-      className = iConfiguration.field("class");
+  public ODocument getConfiguration() {
+    return new ODocument().fromJSON("{parameters:[{class:{optional:false,description:'Record class name'}},"
+        + "{cluster:{optional:true,description:'Cluster name where to store the new record'}}]," + "input:['ODocument']}");
   }
 
   @Override
-  public void prepare(final ODatabaseDocumentTx iDatabase) {
-    this.db = iDatabase;
-    if (className != null) {
-      schemaClass = iDatabase.getMetadata().getSchema().getOrCreateClass(className);
-      OLogManager.instance().info(this, "Found %d records in class '%s'", schemaClass.count(), className);
-    }
+  public void configure(final ODocument iConfiguration) {
+    clusterName = iConfiguration.field("cluster");
+    className = iConfiguration.field("class");
+  }
+
+  @Override
+  public void init(final OETLProcessor iProcessor, final ODatabaseDocumentTx iDatabase) {
+    super.init(iProcessor, iDatabase);
+
+    schemaClass = iDatabase.getMetadata().getSchema().getOrCreateClass(className);
+    processor.out(true, "%s: found %d records in class '%s'", getName(), schemaClass.count(), className);
   }
 
   @Override
   public String getName() {
-    return "orient";
+    return "orientdb_doc";
   }
 
   public String getUnit() {

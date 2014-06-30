@@ -20,6 +20,8 @@ package com.orientechnologies.orient.etl.transform;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
 public class OConfigurableTransformer extends OAbstractTransformer {
   protected ODatabaseDocumentTx db;
@@ -34,7 +36,12 @@ public class OConfigurableTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void prepare(final ODatabaseDocumentTx db) {
+  public ODocument getConfiguration() {
+    return null;
+  }
+
+  @Override
+  public void init(OETLProcessor iProcessor, final ODatabaseDocumentTx db) {
     this.db = db;
 
     // if (iConfiguration.containsField("separator"))

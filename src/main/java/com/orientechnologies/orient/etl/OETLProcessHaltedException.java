@@ -13,30 +13,18 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *
+ *  
  */
 
-package com.orientechnologies.orient.etl.extract;
+package com.orientechnologies.orient.etl;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLProcessor;
+import com.orientechnologies.common.exception.OException;
 
 /**
- * Abstract Transformer.
+ * Created by luca on 30/06/14.
  */
-public abstract class OAbstractExtractor implements OExtractor {
-  @Override
-  public void configure(ODocument iConfiguration) {
+public class OETLProcessHaltedException extends OException {
+  public OETLProcessHaltedException(String s) {
+    super(s);
   }
-
-  @Override
-  public void init(OETLProcessor iProcessor, ODatabaseDocumentTx iDatabase) {
-  }
-
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException("remove()");
-  }
-
 }

@@ -21,6 +21,7 @@ package com.orientechnologies.orient.etl.transform;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
@@ -30,14 +31,20 @@ public class OEdgeTransformer extends OAbstractTransformer {
   protected OrientBaseGraph graph;
 
   @Override
+  public ODocument getConfiguration() {
+    return new ODocument().fromJSON("{parameters:[{tx:{optional:true,description:'Transactional or not'}},"
+        + "input:['ODocument'],output:'OrientEdge'}");
+  }
+
+  @Override
   public void configure(final ODocument iConfiguration) {
     if (iConfiguration.containsField("tx"))
       tx = Boolean.parseBoolean((String) iConfiguration.field("tx"));
   }
 
   @Override
-  public void prepare(final ODatabaseDocumentTx iDatabase) {
-    super.prepare(iDatabase);
+  public void init(OETLProcessor iProcessor, final ODatabaseDocumentTx iDatabase) {
+    super.init(iProcessor, iDatabase);
     if (tx)
       graph = new OrientGraph(iDatabase);
     else

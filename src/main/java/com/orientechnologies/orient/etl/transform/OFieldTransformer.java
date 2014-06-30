@@ -22,23 +22,29 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
-public class OSQLFieldTransformer extends OAbstractTransformer {
+public class OFieldTransformer extends OAbstractTransformer {
   protected String     fieldName;
   protected String     expression;
   protected OSQLFilter sqlFilter;
 
   @Override
-  public void configure(final ODocument iConfiguration) {
-    if (iConfiguration.containsField("name"))
-      fieldName = iConfiguration.field("name");
-    if (iConfiguration.containsField("expression"))
-      expression = iConfiguration.field("expression");
+  public ODocument getConfiguration() {
+    return new ODocument()
+        .fromJSON("{parameters:[{fieldName:{optional:false,description:'field name to apply the result'}},{expression:{optional:false,description:'expression to evaluate'}}],"
+            + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override
-  public void prepare(final ODatabaseDocumentTx iDatabase) {
-    super.prepare(iDatabase);
+  public void configure(final ODocument iConfiguration) {
+    fieldName = iConfiguration.field("fieldName");
+    expression = iConfiguration.field("expression");
+  }
+
+  @Override
+  public void init(OETLProcessor iProcessor, final ODatabaseDocumentTx iDatabase) {
+    super.init(iProcessor, iDatabase);
   }
 
   @Override
@@ -52,17 +58,14 @@ public class OSQLFieldTransformer extends OAbstractTransformer {
       return null;
 
     if (input instanceof ODocument) {
-      final Object value = ((ODocument) input).field(fieldName);
-      if (value != null) {
-        if (sqlFilter == null)
-          // ONLY THE FIRST TIME
-          sqlFilter = new OSQLFilter(expression, iContext, null);
+      if (sqlFilter == null)
+        // ONLY THE FIRST TIME
+        sqlFilter = new OSQLFilter(expression, iContext, null);
 
-        final Object newValue = sqlFilter.evaluate((ODocument) input, null, iContext);
+      final Object newValue = sqlFilter.evaluate((ODocument) input, null, iContext);
 
-        // SET THE TRANSFORMED FIELD BACK
-        ((ODocument) input).field(fieldName, newValue);
-      }
+      // SET THE TRANSFORMED FIELD BACK
+      ((ODocument) input).field(fieldName, newValue);
     }
 
     return input;

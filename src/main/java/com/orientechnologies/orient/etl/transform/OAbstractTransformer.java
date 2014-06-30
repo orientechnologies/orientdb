@@ -18,18 +18,14 @@
 
 package com.orientechnologies.orient.etl.transform;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.loader.OAbstractETLComponent;
 
 /**
  * Abstract Transformer.
  */
-public abstract class OAbstractTransformer implements OTransformer {
+public abstract class OAbstractTransformer extends OAbstractETLComponent implements OTransformer {
   @Override
   public void configure(final ODocument iCfg) {
-  }
-
-  @Override
-  public void prepare(final ODatabaseDocumentTx iDatabase) {
   }
 }

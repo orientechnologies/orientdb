@@ -27,6 +27,12 @@ public class OSkipTransformer extends OAbstractTransformer {
   protected OSQLFilter sqlFilter;
 
   @Override
+  public ODocument getConfiguration() {
+    return new ODocument().fromJSON("{parameters:[{expression:{optional:false,description:'Expression to evaluate'}}],"
+        + "input:['ODocument'],output:'ODocument'}");
+  }
+
+  @Override
   public void configure(final ODocument iConfiguration) {
     expression = iConfiguration.field("expression");
   }

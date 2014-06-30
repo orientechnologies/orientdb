@@ -33,7 +33,7 @@ import java.nio.channels.FileLock;
 import java.util.NoSuchElementException;
 import java.util.zip.GZIPInputStream;
 
-public class OFileExtractor extends OAbstractExtractor {
+public abstract class OFileExtractor extends OAbstractExtractor {
   protected String            fileName;
   protected Object            path;
   protected boolean           lockFile    = false;
@@ -48,8 +48,7 @@ public class OFileExtractor extends OAbstractExtractor {
 
   @Override
   public void configure(ODocument iConfiguration) {
-    if (iConfiguration.containsField("path"))
-      path = iConfiguration.field("path");
+    path = iConfiguration.field("path");
     if (iConfiguration.containsField("lock"))
       lockFile = iConfiguration.field("lock");
   }

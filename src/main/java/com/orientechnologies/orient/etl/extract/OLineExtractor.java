@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl.extract;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,6 +28,12 @@ import java.util.NoSuchElementException;
 public class OLineExtractor extends OFileExtractor {
   protected BufferedReader reader;
   private long             progress;
+
+  @Override
+  public ODocument getConfiguration() {
+    return new ODocument().fromJSON("{parameters:[{path:{optional:false,description:'File path'}},"
+        + "{lock:{optional:true,description:'Lock the file while browsing it'}}]," + "output:'String'}");
+  }
 
   @Override
   public String getName() {

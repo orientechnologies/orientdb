@@ -19,11 +19,17 @@
 package com.orientechnologies.orient.etl.transform;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * No operation ETL Transformer.
  */
 public class ONullTransformer extends OAbstractTransformer {
+  @Override
+  public ODocument getConfiguration() {
+    return new ODocument().fromJSON("{parameters:[],input:['Object'],output:'Object'}");
+  }
+
   @Override
   public String getName() {
     return "null";

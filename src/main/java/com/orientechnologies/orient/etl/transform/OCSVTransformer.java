@@ -30,6 +30,13 @@ public class OCSVTransformer extends OAbstractTransformer {
   protected List<String> columns            = null;
 
   @Override
+  public ODocument getConfiguration() {
+    return new ODocument().fromJSON("{parameters:[{separator:{optional:true,description:'Column separator'}},"
+        + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
+        + "{columns:{optional:true,description:'Columns array'}}],input:['String'],output:'ODocument'}");
+  }
+
+  @Override
   public void configure(final ODocument iConfiguration) {
     if (iConfiguration.containsField("separator"))
       separator = iConfiguration.field("separator").toString().charAt(0);
