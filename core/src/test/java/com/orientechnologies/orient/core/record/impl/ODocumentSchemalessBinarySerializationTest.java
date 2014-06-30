@@ -593,6 +593,26 @@ public class ODocumentSchemalessBinarySerializationTest {
   }
 
   @Test
+  public void testEmbeddedListOfEmbeddedMap() {
+
+    ODocument document = new ODocument();
+    List<Map<String, String>> coll = new ArrayList<Map<String, String>>();
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("first", "something");
+    map.put("second", "somethingElse");
+    Map<String, String> map2 = new HashMap<String, String>();
+    map2.put("first", "something");
+    map2.put("second", "somethingElse");
+    coll.add(map);
+    coll.add(map2);
+    document.field("list", coll);
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+    assertEquals(extr.fields(), document.fields());
+    assertEquals(extr.field("list"), document.field("list"));
+  }
+
+  @Test
   public void testMapOfEmbeddedDocument() {
 
     ODocument document = new ODocument();
