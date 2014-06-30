@@ -24,17 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
@@ -1246,17 +1237,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       for (final OIndex<?> index : indexes) {
         try {
           final OIndexDefinition indexDefinition = index.getDefinition();
+          final long size = index.getKeySize();
           if (indexDefinition == null || indexDefinition.getClassName() == null) {
-            message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10), "", "",
-                index.getSize());
+            message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10), "", "", size);
           } else {
             final List<String> fields = indexDefinition.getFields();
             if (fields.size() == 1) {
               message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10),
-                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getKeySize());
+                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), size);
             } else {
               message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10),
-                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getKeySize());
+                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), size);
               for (int i = 1; i < fields.size(); i++) {
                 message("\n %-45s| %-10s | %-22s| %-15s|%11s |", "", "", "", fields.get(i), "");
               }
@@ -1264,7 +1255,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           }
 
           totalIndexes++;
-          totalRecords += index.getSize();
+          totalRecords += size;
         } catch (Exception ignored) {
         }
       }
