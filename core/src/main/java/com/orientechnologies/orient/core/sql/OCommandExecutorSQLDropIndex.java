@@ -71,7 +71,7 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract im
     if (name.equals("*")) {
       long totalIndexed = 0;
       for (OIndex<?> idx : getDatabase().getMetadata().getIndexManager().getIndexes()) {
-        idx.delete();
+        getDatabase().getMetadata().getIndexManager().dropIndex(idx.getName());
         totalIndexed++;
       }
 
