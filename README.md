@@ -1,6 +1,6 @@
 ## OrientDB
 
-[<img src="http://www.orientdb.org/images/graphed-tutorial-graph_small.png">](http://studio.nuvolabase.com/db/free/demo/GratefulDeadConcerts/studio/?user=reader&passthrough=false&database=/db/free/demo/GratefulDeadConcerts&password=reader)
+<img src="http://www.orientdb.org/images/graphed-tutorial-graph_small.png">
 
 ## What is Orient?
 
@@ -27,7 +27,7 @@ It all began on 2009 when [Luca Garulli](https://github.com/orientechnologies/or
 
 ## But wasn't OrientDB an ODBMS?
 
-Orient ODBMS was the very first version of the Orient engine developed in C++ in 1998. Today OrientDB has been totally rewritten in Java in the form of a Document database but with the previous main goal: performance. However, now you can find the [Object Database], but it's a wrapper built on top of the [Document Database](https://github.com/orientechnologies/orientdb/wiki/Document-Database). It maps transparently OrientDB document records to POJOs.
+Orient ODBMS was the very first version of the Orient engine developed in C++ in 1998. Today OrientDB has been totally rewritten in Java in the form of a Document database but with the previous main goal: performance. However, now you can find the [https://github.com/orientechnologies/orientdb/wiki/Object-Database], but it's a wrapper built on top of the [Document Database](https://github.com/orientechnologies/orientdb/wiki/Document-Database). It maps transparently OrientDB document records to POJOs.
 
 ## How does it compare with other products?
 
