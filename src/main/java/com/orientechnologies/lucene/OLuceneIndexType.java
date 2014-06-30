@@ -100,22 +100,13 @@ public class OLuceneIndexType {
     return new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.toString()));
   }
 
-  public static Query createFullQuery(OIndexDefinition index, Object key, Analyzer analyzer, Version version) throws ParseException {
-    QueryParser queryParser = null;
-    String query = null;
-    if (key instanceof String) {
-      query = (String) key;
-      return getQueryParser(index, query, analyzer, version);
-    } else if (key instanceof OCompositeKey) {
-      if (((OCompositeKey) key).getKeys().size() == 1) {
-        query = ((OCompositeKey) key).getKeys().get(0).toString();
+  public static Query createFullQuery(OIndexDefinition index, OCompositeKey key, Analyzer analyzer, Version version)
+      throws ParseException {
 
-        return getQueryParser(index, query, analyzer, version);
-      } else {
-        return createExactQuery(index, key);
-      }
-    }
-    return null;
+    String query = key.getKeys().get(0).toString();
+
+    return getQueryParser(index, query, analyzer, version);
+
   }
 
   protected static Query getQueryParser(OIndexDefinition index, String key, Analyzer analyzer, Version version)

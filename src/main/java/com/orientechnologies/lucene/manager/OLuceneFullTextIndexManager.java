@@ -102,9 +102,10 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   @Override
   public Object get(Object key) {
     Query q = null;
-    try {
-      q = OLuceneIndexType.createFullQuery(index, key, mgrWriter.getIndexWriter().getAnalyzer(), getVersion(metadata));
 
+    try {
+      q = OLuceneIndexType.createFullQuery(index, (OCompositeKey) key, mgrWriter.getIndexWriter().getAnalyzer(),
+          getVersion(metadata));
       OCommandContext context = null;
       if (key instanceof OFullTextCompositeKey) {
         context = ((OFullTextCompositeKey) key).getContext();
@@ -139,11 +140,11 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   private Set<OIdentifiable> getResults(Query query, OCommandContext context) {
-    Set<OIdentifiable> results = new LinkedHashSet<>();
+    Set<OIdentifiable> results = new LinkedHashSet<OIdentifiable>();
     try {
       IndexSearcher searcher = getSearcher();
 
-      Map<String, Float> scores = new HashMap<>();
+      Map<String, Float> scores = new HashMap<String, Float>();
       TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
       ScoreDoc[] hits = docs.scoreDocs;
       for (ScoreDoc score : hits) {

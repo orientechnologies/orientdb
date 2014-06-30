@@ -167,7 +167,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
     double lat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class)).doubleValue();
     double lng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class)).doubleValue();
-    Set<OIdentifiable> result = new LinkedHashSet<>();
+    Set<OIdentifiable> result = new LinkedHashSet<OIdentifiable>();
 
     SpatialOperation operation = SpatialOperation.Intersects;
     Point p = ctx.makePoint(lng, lat);
@@ -194,7 +194,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
   public Object searchWithin(OSpatialCompositeKey key) throws IOException {
 
-    Set<OIdentifiable> result = new LinkedHashSet<>();
+    Set<OIdentifiable> result = new LinkedHashSet<OIdentifiable>();
 
     Shape shape = factory.makeShape(key, ctx);
     if (shape == null)
