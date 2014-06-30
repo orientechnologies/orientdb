@@ -13,6 +13,8 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
@@ -59,7 +61,7 @@ public class ODocumentSchemafullSerializationTest {
   private static final String EMBEDDED_FIELD = "embeddedField";
   private ODatabaseDocument   databaseDocument;
   private OClass              simple;
-
+  private ORecordSerializer   defaultSerializer;
   private ORecordSerializer   serializer;
   private OClass              embSimp;
   private OClass              address;
@@ -73,7 +75,10 @@ public class ODocumentSchemafullSerializationTest {
     this(new ORecordSerializerSchemaAware2CSV());
   }
 
+  @BeforeTest
   public void before() {
+    defaultSerializer = ODatabaseDocumentTx.getDefaultSerializer();
+    ODatabaseDocumentTx.setDefaultSerializer(serializer);
     databaseDocument = new ODatabaseDocumentTx("memory:ODocumentSchemafullSerializationTest").create();
     // databaseDocument.getMetadata().
     OSchema schema = databaseDocument.getMetadata().getSchema();
@@ -123,13 +128,15 @@ public class ODocumentSchemafullSerializationTest {
     clazzEmbComp.createProperty("addressByStreet", OType.EMBEDDEDMAP, address);
   }
 
+  @AfterTest
   public void after() {
     databaseDocument.drop();
+    ODatabaseDocumentTx.setDefaultSerializer(defaultSerializer);
   }
 
   @Test
   public void testSimpleSerialization() {
-    before();
+    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocument);
     ODocument document = new ODocument(simple);
 
     document.field(STRING_FIELD, NAME);
@@ -157,13 +164,12 @@ public class ODocumentSchemafullSerializationTest {
     assertEquals(extr.field(BOOLEAN_FIELD), document.field(BOOLEAN_FIELD));
     assertEquals(extr.field(DATE_FIELD), document.field(DATE_FIELD));
     assertEquals(extr.field(RECORDID_FIELD), document.field(RECORDID_FIELD));
-    after();
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
   @Test
   public void testSimpleLiteralList() {
-    before();
+    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocument);
     ODocument document = new ODocument(embSimp);
     List<String> strings = new ArrayList<String>();
     strings.add("a");
@@ -249,12 +255,11 @@ public class ODocumentSchemafullSerializationTest {
     assertEquals(extr.field(LIST_BYTES), document.field(LIST_BYTES));
     assertEquals(extr.field(LIST_BOOLEANS), document.field(LIST_BOOLEANS));
     assertEquals(extr.field(LIST_MIXED), document.field(LIST_MIXED));
-    after();
   }
 
   @Test
   public void testSimpleMapStringLiteral() {
-    before();
+    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocument);
     ODocument document = new ODocument(embMapSimple);
 
     Map<String, String> mapString = new HashMap<String, String>();
@@ -306,12 +311,11 @@ public class ODocumentSchemafullSerializationTest {
     assertEquals(extr.field(MAP_DATE), document.field(MAP_DATE));
     assertEquals(extr.field(MAP_DOUBLE), document.field(MAP_DOUBLE));
     assertEquals(extr.field(MAP_BYTES), document.field(MAP_BYTES));
-    after();
   }
 
   @Test
   public void testSimpleEmbeddedDoc() {
-    before();
+    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocument);
     ODocument document = new ODocument(simple);
     ODocument embedded = new ODocument(address);
     embedded.field(NAME, "test");
@@ -327,7 +331,6 @@ public class ODocumentSchemafullSerializationTest {
     assertEquals(emb.field(NAME), embedded.field(NAME));
     assertEquals(emb.field(NUMBER), embedded.field(NUMBER));
     assertEquals(emb.field(CITY), embedded.field(CITY));
-    after();
   }
 
 }

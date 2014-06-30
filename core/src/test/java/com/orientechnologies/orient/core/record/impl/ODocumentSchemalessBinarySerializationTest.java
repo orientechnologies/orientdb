@@ -389,26 +389,32 @@ public class ODocumentSchemalessBinarySerializationTest {
 
   @Test
   public void testLinkCollections() {
-    ODocument document = new ODocument();
-    Set<ORecordId> linkSet = new HashSet<ORecordId>();
-    linkSet.add(new ORecordId(10, new OClusterPositionLong(20)));
-    linkSet.add(new ORecordId(10, new OClusterPositionLong(21)));
-    linkSet.add(new ORecordId(10, new OClusterPositionLong(22)));
-    linkSet.add(new ORecordId(11, new OClusterPositionLong(22)));
-    document.field("linkSet", linkSet, OType.LINKSET);
+    ODatabaseDocument db = new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
+    try {
+      ODocument document = new ODocument();
+      Set<ORecordId> linkSet = new HashSet<ORecordId>();
+      linkSet.add(new ORecordId(10, new OClusterPositionLong(20)));
+      linkSet.add(new ORecordId(10, new OClusterPositionLong(21)));
+      linkSet.add(new ORecordId(10, new OClusterPositionLong(22)));
+      linkSet.add(new ORecordId(11, new OClusterPositionLong(22)));
+      document.field("linkSet", linkSet, OType.LINKSET);
 
-    List<ORecordId> linkList = new ArrayList<ORecordId>();
-    linkList.add(new ORecordId(10, new OClusterPositionLong(20)));
-    linkList.add(new ORecordId(10, new OClusterPositionLong(21)));
-    linkList.add(new ORecordId(10, new OClusterPositionLong(22)));
-    linkList.add(new ORecordId(11, new OClusterPositionLong(22)));
-    document.field("linkList", linkList, OType.LINKLIST);
-    byte[] res = serializer.toStream(document, false);
-    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+      List<ORecordId> linkList = new ArrayList<ORecordId>();
+      linkList.add(new ORecordId(10, new OClusterPositionLong(20)));
+      linkList.add(new ORecordId(10, new OClusterPositionLong(21)));
+      linkList.add(new ORecordId(10, new OClusterPositionLong(22)));
+      linkList.add(new ORecordId(11, new OClusterPositionLong(22)));
+      document.field("linkList", linkList, OType.LINKLIST);
+      byte[] res = serializer.toStream(document, false);
+      ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
 
-    assertEquals(extr.fields(), document.fields());
-    assertEquals(extr.field("linkSet"), document.field("linkSet"));
-    assertEquals(extr.field("linkList"), document.field("linkList"));
+      assertEquals(extr.fields(), document.fields());
+      assertEquals(((Set<?>) extr.field("linkSet")).size(), ((Set<?>) document.field("linkSet")).size());
+      assertTrue(((Set<?>) extr.field("linkSet")).containsAll((Set<?>) document.field("linkSet")));
+      assertEquals(extr.field("linkList"), document.field("linkList"));
+    } finally {
+      db.drop();
+    }
 
   }
 
@@ -612,30 +618,36 @@ public class ODocumentSchemalessBinarySerializationTest {
   public void testMapOfLink() {
     // needs a database because of the lazy loading
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
-    ODocument document = new ODocument();
+    try {
+      ODocument document = new ODocument();
 
-    Map<String, OIdentifiable> map = new HashMap<String, OIdentifiable>();
-    map.put("link", new ORecordId(0, new OClusterPositionLong(0)));
-    document.field("map", map, OType.LINKMAP);
+      Map<String, OIdentifiable> map = new HashMap<String, OIdentifiable>();
+      map.put("link", new ORecordId(0, new OClusterPositionLong(0)));
+      document.field("map", map, OType.LINKMAP);
 
-    byte[] res = serializer.toStream(document, false);
-    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
-    assertEquals(extr.fields(), document.fields());
-    assertEquals(extr.field("map"), document.field("map"));
-    db.drop();
+      byte[] res = serializer.toStream(document, false);
+      ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+      assertEquals(extr.fields(), document.fields());
+      assertEquals(extr.field("map"), document.field("map"));
+    } finally {
+      db.drop();
+    }
   }
 
   @Test
   public void testDocumentWithClassName() {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:ODocumentSchemalessBinarySerializationTest").create();
-    ODocument document = new ODocument("TestClass");
-    document.field("test", "test");
-    byte[] res = serializer.toStream(document, false);
-    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
-    assertEquals(extr.getClassName(), document.getClassName());
-    assertEquals(extr.fields(), document.fields());
-    assertEquals(extr.field("test"), document.field("test"));
-    db.drop();
+    try {
+      ODocument document = new ODocument("TestClass");
+      document.field("test", "test");
+      byte[] res = serializer.toStream(document, false);
+      ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+      assertEquals(extr.getClassName(), document.getClassName());
+      assertEquals(extr.fields(), document.fields());
+      assertEquals(extr.field("test"), document.field("test"));
+    } finally {
+      db.drop();
+    }
   }
 
   public static class Custom implements OSerializableStream {

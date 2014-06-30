@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import static org.testng.AssertJUnit.assertNotNull;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -9,8 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -22,6 +26,7 @@ import static org.testng.Assert.assertEquals;
 public class ODocumentSchemalessSerializationTest {
 
   protected ORecordSerializer serializer;
+  private ORecordSerializer   defaultSerializer;
 
   public ODocumentSchemalessSerializationTest(ORecordSerializer serializer) {
     this.serializer = serializer;
@@ -29,6 +34,17 @@ public class ODocumentSchemalessSerializationTest {
 
   public ODocumentSchemalessSerializationTest() {
     this(new ORecordSerializerSchemaAware2CSV());
+  }
+
+  @BeforeTest
+  public void before() {
+    defaultSerializer = ODatabaseDocumentTx.getDefaultSerializer();
+    ODatabaseDocumentTx.setDefaultSerializer(serializer);
+  }
+
+  @AfterTest
+  public void after() {
+    ODatabaseDocumentTx.setDefaultSerializer(defaultSerializer);
   }
 
   @Test
@@ -62,7 +78,7 @@ public class ODocumentSchemalessSerializationTest {
     // assertEquals(document.field("character"), extr.field("character"));
     assertEquals(extr.field("alive"), document.field("alive"));
     assertEquals(extr.field("date"), document.field("date"));
-//    assertEquals(extr.field("recordId"), document.field("recordId"));
+    // assertEquals(extr.field("recordId"), document.field("recordId"));
 
   }
 
