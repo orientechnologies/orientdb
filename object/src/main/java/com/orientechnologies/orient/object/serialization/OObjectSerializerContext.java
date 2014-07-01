@@ -60,6 +60,22 @@ public class OObjectSerializerContext implements OObjectSerializer<Object, Objec
 		return customSerializers.get(iClass) != null;
 	}
 
+	public Class<?> getBoundClassTarget(Class<?> iClass) {
+	        if (isClassBinded(iClass)) {
+	            final Type[] actualTypes = OReflectionHelper.getGenericTypes(customSerializers.get(iClass).getClass());
+	            if (actualTypes[1] instanceof Class<?>) {
+			return (Class<?>) actualTypes[1];
+	            } else if (actualTypes[1] instanceof ParameterizedType) {
+		        return (Class<?>) ((ParameterizedType) actualTypes[1]).getRawType();
+	            } else {
+	        	// ?
+	        	throw new IllegalStateException("Class " + iClass.getName() + " reported as binded but is not a class?");
+	            }
+	        } else {
+	            return null;
+	        }
+	}
+
 	public Object serializeFieldValue(final Class<?> iClass, Object iFieldValue) {
 		for (Class<?> type : customSerializers.keySet()) {
 			if (type.isInstance(iFieldValue) || (iFieldValue == null && type == Void.class)) {
