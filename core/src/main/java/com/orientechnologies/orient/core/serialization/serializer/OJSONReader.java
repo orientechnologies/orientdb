@@ -26,7 +26,7 @@ public class OJSONReader {
   private int                cursor            = 0;
   private int                lineNumber        = 0;
   private int                columnNumber      = 0;
-  private StringBuilder      buffer            = new StringBuilder();
+  private StringBuilder      buffer            = new StringBuilder(16384); //16KB
   private String             value;
   private char               c;
   private Character          missedChar;
