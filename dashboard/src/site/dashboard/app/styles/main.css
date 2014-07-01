@@ -917,14 +917,25 @@ div.pagination span.disabled {
 }
 
 .navbar-inverse .navbar-brand {
-    color: #999999;
+    color: #f5f5f5;
+}
+
+.enterprise-brand {
+    display: inline-block;
+    height: auto;
+}
+
+.navbar-brand span {
+    padding-top: 10px;
+    margin-left: -10px;
 }
 
 .navbar-brand {
     float: left;
-    font-size: 18px;
+    font-size: 15px;
     line-height: 20px;
     padding: 2px 10px;
+    cursor: pointer;
 }
 
 @media (min-width: 768px) {

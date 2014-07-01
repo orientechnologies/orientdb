@@ -66,3 +66,24 @@ image::{icondir}dashboard_filled.png[width="80%"]
 
 NOTE: Now you have one server in your dashboard panel with latest notification about it.
  You can modify server configuration by clicking on the button at the right side of the server.
+
+Dashboard Layout
+----------------
+
+Under the the notifications list, you can see a toolbar that you can use to change
+the shape of your dashboard. You can:
+
+- Add a new link:#/help/charts[Chart] to the Dashboard.
+- Save the layout.
+- Change the layout in grid of 1, 2 or 3 columns each row.
+
+
+NOTE: If you want to remove a chart from a dashboard you can remove from the link:#/help/charts[Chart Editor] or you
+      can click on the X icon that appears when the mouse is over the chart.
+
+
+.Dashboard Layout
+image::{icondir}layout.png[width="80%"]
+
+
+

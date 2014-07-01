@@ -78,6 +78,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
                 if (db) {
                     $scope.getDbMetrics(db);
                 }
+                $scope.initMetrics();
                 Server.getConfiguration(server, function (data) {
                     $scope.configuration = data.configuration;
                 });
@@ -89,6 +90,20 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
 
         }
     });
+    $scope.initMetrics = function () {
+        var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord"];
+        var cfg = MetricConfig.create();
+        cfg.name = $i18n.get('db.operations');
+        cfg.server = $scope.server['@rid'];
+
+        cfg.databases = db;
+        cfg.config = new Array;
+
+        names.forEach(function (name) {
+            cfg.config.push({name: name, field: 'entries'});
+        })
+        $scope.configDb = cfg;
+    }
     $scope.getDbMetrics = function (db) {
         var names = ["db.*.createRecord", "db.*.updateRecord", "db.*.readRecord", "db.*.deleteRecord"];
         var cfg = MetricConfig.create();

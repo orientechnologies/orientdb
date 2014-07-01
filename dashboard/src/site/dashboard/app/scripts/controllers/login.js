@@ -30,7 +30,8 @@ login.controller('ChangePasswordController', function ($scope, Users, Login, $lo
             Login.logout();
             $scope.hide();
         }, function (data) {
-            console.log(data);
+            $scope.testMsg = data;
+            $scope.testMsgClass = 'alert alert-error'
         });
     }
 });

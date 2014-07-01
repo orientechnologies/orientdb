@@ -207,6 +207,7 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                     var tmpArr = new Array;
 
                     data.result.forEach(function (elem, idx, array) {
+                        console.log(elem);
                         if (!tmpArr[elem.name]) {
                             tmpArr[elem.name] = new Array;
                         }
@@ -221,7 +222,6 @@ app.controller('SingleMetricController', function ($scope, $location, $routePara
                         }
                         tmpArr[elem.name][elem.dateTo] = el;
                     });
-
                     $scope.metricsData = tmpArr
 
                     $scope.loading = false;

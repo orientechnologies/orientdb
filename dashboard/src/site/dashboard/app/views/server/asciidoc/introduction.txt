@@ -12,7 +12,7 @@ Index
 1. link:#/dashboard/gettstart[Getting Started]
 2. link:#/help/servermanagement[Server Management]
 3. link:#/help/clustermgmt[Cluster Management]
-4. link:#/help/metrics[Metrics]
+4. link:#/help/charts[Metrics]
 5. link:#/help/queryprofiler[Query Profiler]
 6. link:#/help/notifications[Notifications]
 7. link:#/help/alerts[Alerts]

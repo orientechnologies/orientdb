@@ -51,7 +51,7 @@ public final class OWorkbenchTask extends TimerTask {
             int idS = OL.getServerId(license);
 
             // TO REMOVE
-            if (handler.getKeyMap().size() > 1 && handler.getKeyMap().get(idC).get(idS).size() > 1) {
+            if (handler.getKeyMap().size() > 1 && handler.getKeyMap().get(idC).size() > 1) {
               updateServerStatus(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID);
               log(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID, "License " + license + " invalid");
               continue;

@@ -4,24 +4,33 @@
 
 link:#/dashboard/help[Back to index]
 
-Metrics
--------
+Chart Editor
+------------
 
-Metrics panel helps you to configure the metrics of interest by choosing from a list of these.
+Chart Editor panel helps you to configure the metrics of interest by choosing from a list of these.
 
-A list of saved configuration are displayed on the left.
+In the Available Charts you will see all the configuration you have made.
+You can:
 
-.Metrics builder
+- Search Charts
+- Delete Charts
+- Edit Charts
+- Add Charts to the Dashboard
+- Remove Charts from the Dashboard
+
+.Chart Editor
 image::{icondir}metricsbuilder.png[width="80%"]
 
 
-If you want to build a new configuration:
+If you want to build a new chart:
 
 - click on "new" button
 - write a name
 - select a server
 - click on plus button to add a metric
 - choose a metric and a value
+
+
 
 
 

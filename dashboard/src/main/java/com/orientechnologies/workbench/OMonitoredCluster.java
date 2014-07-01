@@ -86,7 +86,7 @@ public class OMonitoredCluster {
   private String getAndRemovePwd(String nodeName) {
     String name = EE + nodeName;
     String iPropertyValue = (String) getConfigValue(name);
-    removeConfigValue(name);
+    // removeConfigValue(name);
     return iPropertyValue;
   }
 

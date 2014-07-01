@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -35,12 +37,14 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+import com.orientechnologies.workbench.OMonitoredCluster;
 import com.orientechnologies.workbench.OMonitoredServer;
 import com.orientechnologies.workbench.OWorkbenchPlugin;
 
 public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticatedDbAbstract {
   public static final String    DISTRIBUTED = "distributed";
   public static final String    DB          = "db";
+  public static final String    NODE        = "node";
   private static final String[] NAMES       = { "GET|metrics/*" };
 
   private OWorkbenchPlugin      monitor;
@@ -83,13 +87,14 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
         to = parts[10];
       }
       final OMonitoredServer server = monitor.getMonitoredServer(serverName);
+
       if (server == null)
         throw new IllegalArgumentException("Invalid server '" + serverName + "'");
 
       final Map<String, Object> result = new HashMap<String, Object>();
 
       if ("realtime".equalsIgnoreCase(type))
-        sendRealtimeMetrics(iResponse, metricKind, metricNames, server, databases, result);
+        sendRealtimeMetrics(iRequest, iResponse, metricKind, metricNames, server, databases, result);
       else if ("snapshot".equalsIgnoreCase(type)) {
         sendSnapshotMetrics(iRequest, iResponse, metricKind, metricNames, server, databases, limit, compress, from, to, result);
       }
@@ -100,10 +105,12 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
     return false;
   }
 
-  protected void sendRealtimeMetrics(OHttpResponse iResponse, final String iMetricKind, final String[] metricNames,
-      final OMonitoredServer server, String[] databases, final Map<String, Object> result) throws MalformedURLException,
-      IOException, InterruptedException {
+  protected void sendRealtimeMetrics(OHttpRequest request, OHttpResponse iResponse, final String iMetricKind,
+      final String[] metricNames, final OMonitoredServer server, String[] databases, final Map<String, Object> result)
+      throws MalformedURLException, IOException, InterruptedException {
     String[] dbs = databases;
+    ODatabaseDocumentTx db = getProfiledDatabaseInstance(request);
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     if (databases.length == 1 && databases[0].equals("all")) {
       try {
         final Map<String, Object> mapDb = server.getRealtime().getInformation("system.databases");
@@ -116,12 +123,15 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
       }
 
     }
+
+    String[] nodes = getNodeList(server);
+
     final String status = server.getConfiguration().field("status");
     String licenseInvalid = OWorkbenchPlugin.STATUS.LICENSE_INVALID.toString();
     String licenseExpired = OWorkbenchPlugin.STATUS.LICENSE_EXPIRED.toString();
     if (!licenseInvalid.equals(status) && !licenseExpired.equals(status)) {
-      Map<String, String> aggregation = buildAssociation(server, metricNames, dbs);
-      for (String metricName : expandMetric(server, metricNames, dbs)) {
+      Map<String, String> aggregation = buildAssociation(server, metricNames, dbs, nodes);
+      for (String metricName : expandMetric(server, metricNames, dbs, nodes)) {
         final Map<String, Object> metrics;
 
         if (iMetricKind.equals("chrono"))
@@ -148,11 +158,33 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
     iResponse.writeResult(result, "indent:6", null);
   }
 
+  private String[] getNodeList(OMonitoredServer server) {
+    String[] nodes = new String[0];
+    ODocument cluster = server.getConfiguration().field("cluster");
+    String serverName = server.getConfiguration().field("name");
+    if (cluster != null) {
+      String cName = cluster.field("name");
+      if (cName != null) {
+        List<String> nodesName = new ArrayList<String>();
+        for (OMonitoredServer s : monitor.getServersByClusterName(cName)) {
+          String name = s.getConfiguration().field("name");
+          if (!serverName.equals(name)) {
+            nodesName.add(name);
+          }
+        }
+        nodes = nodesName.toArray(nodes);
+      }
+    }
+    return nodes;
+  }
+
   protected void sendSnapshotMetrics(OHttpRequest iRequest, OHttpResponse iResponse, final String iMetricKind,
       final String[] metricNames, final OMonitoredServer server, String[] databases, String limit, String compress, String from,
       String to, final Map<String, Object> result) throws MalformedURLException, IOException, InterruptedException {
     String query = "select @class, snapshot.dateTo as dateTo,snapshot.dateFrom as dateFrom, name, entries, last, min, max, average,value,total from Metric where name in :names and snapshot.server.name = :sname ";
     String[] dbs = databases;
+    ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     if (databases.length == 1 && databases[0].equals("all")) {
       try {
         final Map<String, Object> mapDb = server.getRealtime().getInformation("system.databases");
@@ -165,8 +197,11 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
       }
 
     }
+
+    String[] nodes = getNodeList(server);
+
     final Map<String, Object> params = new HashMap<String, Object>();
-    params.put("names", expandMetric(server, metricNames, dbs));
+    params.put("names", expandMetric(server, metricNames, dbs, nodes));
     params.put("sname", server.getConfiguration().field("name"));
 
     if (from != null) {
@@ -187,9 +222,9 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
     String licenseInvalid = OWorkbenchPlugin.STATUS.LICENSE_INVALID.toString();
     String licenseExpired = OWorkbenchPlugin.STATUS.LICENSE_EXPIRED.toString();
     if (!licenseInvalid.equals(status) && !licenseExpired.equals(status)) {
-      docs = getProfiledDatabaseInstance(iRequest).query(new OSQLSynchQuery<ORecordSchemaAware<?>>(query), params);
+      docs = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(query), params);
     }
-    Map<String, String> aggregation = buildAssociation(server, metricNames, dbs);
+    Map<String, String> aggregation = buildAssociation(server, metricNames, dbs, nodes);
 
     if (compress.equals("none") || compress.equals("1")) {
       for (ODocument oDocument : docs) {
@@ -266,15 +301,28 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
     return docs;
   }
 
-  protected Map<String, String> buildAssociation(OMonitoredServer server, String[] metrics, String[] databases) {
+  protected Map<String, String> buildAssociation(OMonitoredServer server, String[] metrics, String[] databases, String[] nodes) {
     Map<String, String> ass = new HashMap<String, String>();
     String[] dbFormatted;
     dbFormatted = databases;
     for (String m : metrics) {
-      if (m.startsWith("db")) {
+      if (m.startsWith(DB)) {
         for (String db : dbFormatted) {
           String replace = m.replace("*", db);
           ass.put(replace, m);
+        }
+      } else if (m.startsWith(DISTRIBUTED)) {
+
+        if (m.startsWith(DISTRIBUTED + "." + NODE)) {
+          for (String node : nodes) {
+            String replace = m.replace("*", node);
+            ass.put(replace, m);
+          }
+        } else {
+          for (String db : dbFormatted) {
+            String replace = m.replace("*", db);
+            ass.put(replace, m);
+          }
         }
       } else {
         ass.put(m, m);
@@ -283,7 +331,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
     return ass;
   }
 
-  protected List<String> expandMetric(OMonitoredServer server, String[] metrics, String[] databases) {
+  protected List<String> expandMetric(OMonitoredServer server, String[] metrics, String[] databases, String[] nodes) {
     String[] dbFormatted;
     List<String> finalMetrics = new ArrayList<String>();
     if (databases.length == 0)
@@ -297,8 +345,17 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
           finalMetrics.add(m.replace("*", db));
         }
       } else if (m.startsWith(DISTRIBUTED)) {
-        String name = server.getConfiguration().field("name");
-        finalMetrics.add(m.replace("*", name));
+
+        if (m.startsWith(DISTRIBUTED + "." + NODE)) {
+          for (String name : nodes) {
+            finalMetrics.add(m.replace("*", name));
+          }
+        } else {
+          for (String db : dbFormatted) {
+            finalMetrics.add(m.replace("*", db));
+          }
+        }
+
       } else {
         finalMetrics.add(m);
       }

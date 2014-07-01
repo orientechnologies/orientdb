@@ -34,19 +34,7 @@ public class OServerCommandGetDeployDb extends OServerCommandAuthenticatedServer
     if (manager instanceof OHazelcastPlugin) {
       ((OHazelcastPlugin) manager).installDatabase(true, db, dbConf);
     }
-    // ODistributedConfiguration cfg = manager.getDatabaseConfiguration(db);
-    // final Collection<String> nodes = cfg.getServers();
-    // nodes.remove(manager.getLocalNodeName());
-    // ODistributedServerLog.warn(this, manager.getLocalNodeName(), nodes.toString(), ODistributedServerLog.DIRECTION.OUT,
-    // "requesting deploy of database '%s' on local server...", db);
-    //
-    //
-    // ODistributedMessageService messageService = manager.getMessageService();
-    // messageService.registerDatabase(db);
-    // final Map<String, Object> results = (Map<String, Object>) manager.sendRequest(db, null, nodes, new ODeployDatabaseTask(),
-    // ODistributedRequest.EXECUTION_MODE.RESPONSE);
-    // ODistributedServerLog.warn(this, manager.getLocalNodeName(), nodes.toString(), ODistributedServerLog.DIRECTION.OUT,
-    // "deploy returned: %s", results);
+
     iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
     return false;
   }

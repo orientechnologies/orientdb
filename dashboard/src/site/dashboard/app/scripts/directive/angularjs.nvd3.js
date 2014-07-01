@@ -147,6 +147,7 @@ Widget.directive('stackedarea', function (Metric, $rootScope, $timeout) {
             $(element[0]).empty();
             var height = scope.chartHeight || '500';
             $(element[0]).attr('height', height);
+
             d3.select(element[0])
                 .datum(data)
                 .transition().duration(0)
@@ -181,7 +182,9 @@ Widget.directive('stackedarea', function (Metric, $rootScope, $timeout) {
             var render = attr.stackedrender;
             var realtime = attr.realtime;
 
+
             var manipulateData = function (data) {
+
                 var keys = new Array;
                 Object.keys(data).forEach(function (elem, idx, array) {
                     Object.keys(data[elem]).forEach(function (el, i, a) {

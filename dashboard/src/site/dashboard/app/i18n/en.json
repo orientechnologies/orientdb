@@ -64,7 +64,7 @@
     "dashboard.query": "Query Profiler",
     "dashboard.events": "Events",
     "dashboard.addwidget": "Add  Chart",
-    "dashboard.apply": "Apply Disposition",
+    "dashboard.apply": "Save Layout",
     "dashboard.grid1": "One per row",
     "dashboard.grid2": "Two per row",
     "dashboard.grid3": "Three per row",

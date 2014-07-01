@@ -31,6 +31,8 @@ app.controller('NavController', function ($scope, $routeParams, $location, Login
 
 
     ]
+
+
     $scope.hideMenu = function (data) {
         $scope.hided = data;
         $scope.$emit("menu:visibility", data);
