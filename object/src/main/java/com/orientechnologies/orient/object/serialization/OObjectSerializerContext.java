@@ -65,8 +65,8 @@ public class OObjectSerializerContext implements OObjectSerializer<Object, Objec
 	            final Type[] actualTypes = OReflectionHelper.getGenericTypes(customSerializers.get(iClass).getClass());
 	            if (actualTypes[1] instanceof Class<?>) {
 			return (Class<?>) actualTypes[1];
-	            } else if (actualTypes[0] instanceof ParameterizedType) {
-		        return (Class<?>) ((ParameterizedType) actualTypes[0]).getRawType();
+	            } else if (actualTypes[1] instanceof ParameterizedType) {
+		        return (Class<?>) ((ParameterizedType) actualTypes[1]).getRawType();
 	            } else {
 	        	// ?
 	        	throw new IllegalStateException("Class " + iClass.getName() + " reported as binded but is not a class?");
