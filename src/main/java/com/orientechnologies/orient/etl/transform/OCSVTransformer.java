@@ -28,12 +28,18 @@ public class OCSVTransformer extends OAbstractTransformer {
   protected char         separator          = ',';
   protected boolean      columnsOnFirstLine = true;
   protected List<String> columns            = null;
+  protected long         skipFrom           = -1;
+  protected long         skipTo             = -1;
+  protected long         line               = -1;
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[{separator:{optional:true,description:'Column separator'}},"
         + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
-        + "{columns:{optional:true,description:'Columns array'}}],input:['String'],output:'ODocument'}");
+        + "{columns:{optional:true,description:'Columns array'}},"
+        + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
+        + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}}"
+        + "],input:['String'],output:'ODocument'}");
   }
 
   @Override
@@ -44,6 +50,10 @@ public class OCSVTransformer extends OAbstractTransformer {
       columnsOnFirstLine = iConfiguration.field("columnsOnFirstLine");
     if (iConfiguration.containsField("columns"))
       columns = iConfiguration.field("columns");
+    if (iConfiguration.containsField("skipFrom"))
+      skipFrom = ((Number) iConfiguration.field("skipFrom")).longValue();
+    if (iConfiguration.containsField("skipTo"))
+      skipTo = ((Number) iConfiguration.field("skipTo")).longValue();
   }
 
   @Override
@@ -55,6 +65,17 @@ public class OCSVTransformer extends OAbstractTransformer {
   public Object transform(final Object input, OCommandContext iContext) {
     if (input == null)
       return null;
+
+    line++;
+
+    if (skipFrom > -1) {
+      if (skipTo > -1) {
+        if (line >= skipFrom && line <= skipTo)
+          return null;
+      } else if (line >= skipFrom)
+        // SKIP IT
+        return null;
+    }
 
     final List<String> fields = OStringSerializerHelper.smartSplit(input.toString(), new char[] { separator }, 0, -1, false, false,
         false, false);
