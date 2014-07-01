@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -79,6 +80,7 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializationThreadLocal;
+import com.orientechnologies.orient.object.serialization.OObjectSerializerContext;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 /**
@@ -663,6 +665,18 @@ public class OObjectEntitySerializer {
         && OObjectSerializerHelper.serializerContexts.get(null).isClassBinded(type);
   }
 
+  public static Class<?> getBoundClassTarget(final Class<?> type) {
+    for (Map.Entry<Class<?>, OObjectSerializerContext> entry : OObjectSerializerHelper.serializerContexts.entrySet()) {
+      if (entry.getKey() != null && entry.getKey().isAssignableFrom(type)) {
+        return entry.getValue().getBoundClassTarget(type);
+      }
+    }
+    if (OObjectSerializerHelper.serializerContexts.get(null) != null)
+      return OObjectSerializerHelper.serializerContexts.get(null).getBoundClassTarget(type);
+
+    return null;
+    }
+
   public static Object serializeFieldValue(final Class<?> type, final Object iFieldValue) {
 
     for (Class<?> classContext : OObjectSerializerHelper.serializerContexts.keySet()) {
@@ -949,7 +963,11 @@ public class OObjectEntitySerializer {
     } else if (Date.class.isAssignableFrom(f.getType())) {
       return OType.DATETIME;
     } else {
-      return OType.getTypeByClass(f.getType());
+      OType res = OType.getTypeByClass(f.getType());
+      if (res != null) {
+	  return res;
+      }
+      return OType.getTypeByClass(OObjectEntitySerializer.getBoundClassTarget(f.getType()));
     }
   }
 
