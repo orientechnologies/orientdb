@@ -15,18 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
@@ -96,6 +84,18 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
+
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -715,39 +715,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
-  private void sendErrorDetails(Throwable current) throws IOException {
-    while (current != null) {
-      // MORE DETAILS ARE COMING AS EXCEPTION
-      channel.writeByte((byte) 1);
-
-      channel.writeString(current.getClass().getName());
-      channel.writeString(current.getMessage());
-
-      current = current.getCause();
-    }
-    channel.writeByte((byte) 0);
-  }
-
-  private void serializeExceptionObject(Throwable original) throws IOException {
-    try {
-      final OMemoryStream memoryStream = new OMemoryStream();
-      final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
-
-      objectOutputStream.writeObject(original);
-      objectOutputStream.flush();
-
-      final byte[] result = memoryStream.toByteArray();
-      objectOutputStream.close();
-
-      channel.writeBytes(result);
-    } catch (Exception e) {
-      OLogManager.instance().warn(this, "Can't serialize an exception object", e);
-
-      // Write empty stream for binary compatibility
-      channel.writeBytes(new byte[0]);
-    }
-  }
-
   protected void shutdownConnection() throws IOException {
     setDataCommandInfo("Shutdowning");
 
@@ -775,26 +742,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.socket.getInetAddress(), channel.socket.getPort());
 
     sendError(clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
-  }
-
-  /**
-   * Due to protocol thread is daemon, shutdown should be executed in separate thread to guarantee its complete execution.
-   * 
-   * This method never returns normally.
-   */
-  private void runShutdownInNonDaemonThread() {
-    Thread shutdownThread = new Thread("OrientDB server shutdown thread") {
-      public void run() {
-        server.shutdown();
-        System.exit(0);
-      }
-    };
-    shutdownThread.setDaemon(false);
-    shutdownThread.start();
-    try {
-      shutdownThread.join();
-    } catch (InterruptedException ignored) {
-    }
   }
 
   protected void copyDatabase() throws IOException {
@@ -1667,6 +1614,62 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
     } finally {
       endResponse();
+    }
+  }
+
+  private void sendErrorDetails(Throwable current) throws IOException {
+    while (current != null) {
+      // MORE DETAILS ARE COMING AS EXCEPTION
+      channel.writeByte((byte) 1);
+
+      channel.writeString(current.getClass().getName());
+      channel.writeString(current.getMessage());
+
+      current = current.getCause();
+    }
+    channel.writeByte((byte) 0);
+  }
+
+  private void serializeExceptionObject(Throwable original) throws IOException {
+    try {
+      final OMemoryStream memoryStream = new OMemoryStream();
+      final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
+
+      objectOutputStream.writeObject(original);
+      objectOutputStream.flush();
+
+      final byte[] result = memoryStream.toByteArray();
+      objectOutputStream.close();
+
+      channel.writeBytes(result);
+    } catch (Exception e) {
+      OLogManager.instance().warn(this, "Can't serialize an exception object", e);
+
+      // Write empty stream for binary compatibility
+      channel.writeBytes(new byte[0]);
+    }
+  }
+
+  /**
+   * Due to protocol thread is daemon, shutdown should be executed in separate thread to guarantee its complete execution.
+   * 
+   * This method never returns normally.
+   */
+  private void runShutdownInNonDaemonThread() {
+    Thread shutdownThread = new Thread("OrientDB server shutdown thread") {
+      public void run() {
+        server.shutdown();
+
+        final boolean allowsJVMShutdown = OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.getValueAsBoolean();
+        if (allowsJVMShutdown)
+          System.exit(0);
+      }
+    };
+    shutdownThread.setDaemon(false);
+    shutdownThread.start();
+    try {
+      shutdownThread.join();
+    } catch (InterruptedException ignored) {
     }
   }
 

@@ -45,6 +45,8 @@ public enum OGlobalConfiguration {
       "Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management",
       Boolean.class, Boolean.TRUE),
 
+  ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows to shutdown the JVM if needed/requested", Boolean.class, true),
+
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
 
@@ -481,14 +483,14 @@ public enum OGlobalConfiguration {
       "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),
 
   CLIENT_USE_SSL("client.ssl.enabled", "Use SSL for client connections", Boolean.class, false),
-      
+
   CLIENT_SSL_KEYSTORE("client.ssl.keyStore", "Use SSL for client connections", String.class, null),
-  
+
   CLIENT_SSL_KEYSTORE_PASSWORD("client.ssl.keyStorePass", "Use SSL for client connections", String.class, null),
-  
+
   CLIENT_SSL_TRUSTSTORE("client.ssl.trustStore", "Use SSL for client connections", String.class, null),
-  
-  CLIENT_SSL_TRUSTSTORE_PASSWORD("client.ssl.trustStorePass", "Use SSL for client connections", String.class, null),      
+
+  CLIENT_SSL_TRUSTSTORE_PASSWORD("client.ssl.trustStorePass", "Use SSL for client connections", String.class, null),
 
   // SERVER
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,

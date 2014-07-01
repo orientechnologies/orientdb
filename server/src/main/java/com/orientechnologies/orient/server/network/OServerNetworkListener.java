@@ -286,6 +286,8 @@ public class OServerNetworkListener extends Thread {
    * @param iHostName
    */
   private void listen(final String iHostName, final String iHostPortRange, final String iProtocolName) {
+    final boolean allowsJVMShutdown = OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.getValueAsBoolean();
+
     final int[] ports = getPorts(iHostPortRange);
 
     for (int port : ports) {
@@ -304,17 +306,20 @@ public class OServerNetworkListener extends Thread {
         OLogManager.instance().info(this, "Port %s:%d busy, trying the next available...", iHostName, port);
       } catch (SocketException se) {
         OLogManager.instance().error(this, "Unable to create socket", se);
-        System.exit(1);
+        if (allowsJVMShutdown)
+          System.exit(1);
       } catch (IOException ioe) {
         OLogManager.instance().error(this, "Unable to read data from an open socket", ioe);
         System.err.println("Unable to read data from an open socket.");
-        System.exit(1);
+        if (allowsJVMShutdown)
+          System.exit(1);
       }
     }
 
     OLogManager.instance().error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'",
         iHostPortRange, iHostName);
-    System.exit(1);
+    if (allowsJVMShutdown)
+      System.exit(1);
   }
 
   /**
