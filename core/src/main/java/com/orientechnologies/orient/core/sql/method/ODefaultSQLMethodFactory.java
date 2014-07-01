@@ -69,6 +69,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     register(OSQLMethodIndexOf.NAME, new OSQLMethodIndexOf());
     register(OSQLMethodJavaType.NAME, new OSQLMethodJavaType());
     register(OSQLMethodKeys.NAME, new OSQLMethodKeys());
+    register(OSQLMethodLastIndexOf.NAME, new OSQLMethodLastIndexOf());
     register(OSQLMethodLeft.NAME, new OSQLMethodLeft());
     register(OSQLMethodLength.NAME, new OSQLMethodLength());
     register(OSQLMethodMultiValue.NAME, new OSQLMethodMultiValue());
