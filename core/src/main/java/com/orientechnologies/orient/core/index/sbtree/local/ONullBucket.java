@@ -72,7 +72,7 @@ public class ONullBucket<V> extends ODurablePage {
     if (isLink)
       return new OSBTreeValue<V>(true, getLongValue(NEXT_FREE_POSITION + 2), null);
 
-    return new OSBTreeValue<V>(false, -1, valueSerializer.deserializeFromDirectMemory(pagePointer, NEXT_FREE_POSITION + 2));
+    return new OSBTreeValue<V>(false, -1, deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
   }
 
   public void removeValue() {

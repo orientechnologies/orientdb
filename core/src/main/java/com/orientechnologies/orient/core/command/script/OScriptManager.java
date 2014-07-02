@@ -238,7 +238,7 @@ public class OScriptManager {
           currentLine = scanner.next();
           int pos = currentLine.indexOf("function");
           if (pos > -1) {
-            final String[] words = OStringParser.getWords(currentLine.substring(pos + "function".length() + 1), " \r\n\t");
+            final String[] words = OStringParser.getWords(currentLine.substring(Math.min(pos + "function".length() + 1, currentLine.length())), " \r\n\t");
             if (words.length > 0 && words[0] != "(")
               lastFunctionName = words[0];
           }

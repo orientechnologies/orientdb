@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -1196,17 +1197,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       for (final OIndex<?> index : indexes) {
         try {
           final OIndexDefinition indexDefinition = index.getDefinition();
+          final long size = index.getKeySize();
           if (indexDefinition == null || indexDefinition.getClassName() == null) {
-            message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10), "", "",
-                index.getSize());
+            message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10), "", "", size);
           } else {
             final List<String> fields = indexDefinition.getFields();
             if (fields.size() == 1) {
               message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10),
-                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getKeySize());
+                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), size);
             } else {
               message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10),
-                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getKeySize());
+                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), size);
               for (int i = 1; i < fields.size(); i++) {
                 message("\n %-45s| %-10s | %-22s| %-15s|%11s |", "", "", "", fields.get(i), "");
               }
@@ -1214,7 +1215,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           }
 
           totalIndexes++;
-          totalRecords += index.getSize();
+          totalRecords += size;
         } catch (Exception ignored) {
         }
       }
@@ -1446,8 +1447,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
                       message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName
                           + "' (rid=" + doc.getIdentity() + ")");
                   }
-                } else if (fieldValue instanceof Collection<?>) {
-                  final Iterator<Object> it = ((Collection) fieldValue).iterator();
+                } else if (fieldValue instanceof Iterable<?>) {
+                  if (fieldValue instanceof ORecordLazyMultiValue)
+                    ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
+
+                  final Iterator<Object> it = ((Iterable) fieldValue).iterator();
                   for (int i = 0; it.hasNext(); ++i) {
                     final Object v = it.next();
                     if (fixLink(v)) {

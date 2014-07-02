@@ -824,7 +824,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       if (value instanceof Boolean) {
         continue;
-      } else if (value instanceof Exception) {
+      } else if (value instanceof Throwable) {
         ODistributedServerLog.error(this, getLocalNodeName(), r.getKey(), DIRECTION.IN, "error on installing database %s in %s",
             (Exception) value, databaseName, dbPath);
       } else if (value instanceof ODistributedDatabaseChunk) {
