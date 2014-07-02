@@ -38,7 +38,7 @@ public class BytesContainerTest {
   @Test
   public void testReadSimple() {
     BytesContainer bytesContainer = new BytesContainer();
-    bytesContainer.read((short) 100);
+    bytesContainer.skip((short) 100);
     assertEquals(bytesContainer.offset, 100);
   }
 

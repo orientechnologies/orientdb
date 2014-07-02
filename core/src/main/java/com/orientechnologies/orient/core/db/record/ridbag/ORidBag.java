@@ -100,6 +100,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     fromStream(stream);
   }
 
+  public static ORidBag fromStream(String value) {
+    final byte[] stream = OBase64Utils.decode(value);
+    return new ORidBag(stream);
+  }
+
   public void addAll(Collection<OIdentifiable> values) {
     delegate.addAll(values);
   }
@@ -228,7 +233,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   @Override
   public OStringBuilderSerializable toStream(StringBuilder output) throws OSerializationException {
-    BytesContainer container = new BytesContainer();
+    final BytesContainer container = new BytesContainer();
     toStream(container);
     output.append(OBase64Utils.encodeBytes(container.bytes, 0, container.offset));
     return this;
@@ -250,12 +255,12 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return this;
   }
 
-  public void fromStream(byte[] stream) {
+  public void fromStream(final byte[] stream) {
     fromStream(new BytesContainer(stream));
   }
 
   public void fromStream(BytesContainer stream) {
-    byte first = stream.bytes[stream.offset++];
+    final byte first = stream.bytes[stream.offset++];
     if ((first & 1) == 1)
       delegate = new OEmbeddedRidBag();
     else
@@ -263,24 +268,19 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     if ((first & 2) == 2) {
       uuid = OUUIDSerializer.INSTANCE.deserialize(stream.bytes, stream.offset);
-      stream.read(OUUIDSerializer.UUID_SIZE);
+      stream.skip(OUUIDSerializer.UUID_SIZE);
     }
 
-    stream.read(delegate.deserialize(stream.bytes, stream.offset));
-  }
-
-  public static ORidBag fromStream(String value) {
-    final byte[] stream = OBase64Utils.decode(value);
-    return new ORidBag(stream);
+    stream.skip(delegate.deserialize(stream.bytes, stream.offset));
   }
 
   @Override
-  public void addChangeListener(OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
+  public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     delegate.addChangeListener(changeListener);
   }
 
   @Override
-  public void removeRecordChangeListener(OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
+  public void removeRecordChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     delegate.removeRecordChangeListener(changeListener);
   }
 
@@ -328,6 +328,14 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     }
   }
 
+  public OBonsaiCollectionPointer getPointer() {
+    if (isEmbedded()) {
+      return OBonsaiCollectionPointer.INVALID;
+    } else {
+      return ((OSBTreeRidBag) delegate).getCollectionPointer();
+    }
+  }
+
   /**
    * Silently replace delegate by tree implementation.
    * 
@@ -339,13 +347,5 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     final OSBTreeRidBag treeBag = new OSBTreeRidBag();
     treeBag.setCollectionPointer(pointer);
     delegate = treeBag;
-  }
-
-  public OBonsaiCollectionPointer getPointer() {
-    if (isEmbedded()) {
-      return OBonsaiCollectionPointer.INVALID;
-    } else {
-      return ((OSBTreeRidBag) delegate).getCollectionPointer();
-    }
   }
 }

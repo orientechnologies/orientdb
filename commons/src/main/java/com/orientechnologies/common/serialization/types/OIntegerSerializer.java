@@ -24,26 +24,24 @@ import java.nio.ByteOrder;
 
 /**
  * Serializer for {@link Integer} type.
- *
+ * 
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
  * @since 17.01.12
  */
 public class OIntegerSerializer implements OBinarySerializer<Integer> {
-  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
-
-  public static OIntegerSerializer INSTANCE = new OIntegerSerializer();
-  public static final byte ID = 8;
-
+  public static final byte              ID        = 8;
   /**
    * size of int value in bytes
    */
-  public static final int INT_SIZE = 4;
+  public static final int               INT_SIZE  = 4;
+  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
+  public static OIntegerSerializer      INSTANCE  = new OIntegerSerializer();
 
   public int getObjectSize(Integer object, Object... hints) {
     return INT_SIZE;
   }
 
-  public void serialize(Integer object, byte[] stream, int startPosition, Object... hints) {
+  public void serialize(final Integer object, final byte[] stream, final int startPosition, final Object... hints) {
     final int value = object;
     stream[startPosition] = (byte) ((value >>> 24) & 0xFF);
     stream[startPosition + 1] = (byte) ((value >>> 16) & 0xFF);
@@ -52,7 +50,7 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
 
   }
 
-  public Integer deserialize(byte[] stream, int startPosition) {
+  public Integer deserialize(final byte[] stream, final int startPosition) {
     return (stream[startPosition]) << 24 | (0xff & stream[startPosition + 1]) << 16 | (0xff & stream[startPosition + 2]) << 8
         | ((0xff & stream[startPosition + 3]));
   }

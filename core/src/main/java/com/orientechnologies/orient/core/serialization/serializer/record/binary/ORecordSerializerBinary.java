@@ -19,15 +19,8 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     serializerByVersion[0] = new ORecordSerializerBinaryV0();
   }
 
-  private void checkTypeODocument(ORecordInternal<?> iRecord) {
-    if (!(iRecord instanceof ODocument)) {
-      throw new UnsupportedOperationException("The " + ORecordSerializerBinary.NAME + " don't support record of type "
-          + iRecord.getClass().getName());
-    }
-  }
-
   @Override
-  public ORecordInternal<?> fromStream(byte[] iSource, ORecordInternal<?> iRecord, String[] iFields) {
+  public ORecordInternal<?> fromStream(final byte[] iSource, ORecordInternal<?> iRecord, final String[] iFields) {
     if (iSource.length == 0)
       return iRecord;
     if (iRecord == null)
@@ -36,13 +29,13 @@ public class ORecordSerializerBinary implements ORecordSerializer {
       checkTypeODocument(iRecord);
 
     BytesContainer container = new BytesContainer(iSource);
-    container.read(1);
+    container.skip(1);
     serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
     return iRecord;
   }
 
   @Override
-  public byte[] toStream(ORecordInternal<?> iSource, boolean iOnlyDelta) {
+  public byte[] toStream(final ORecordInternal<?> iSource, final boolean iOnlyDelta) {
     checkTypeODocument(iSource);
     if (!checkRecursion((ODocument) iSource))
       return null;
@@ -54,7 +47,14 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     return container.fitBytes();
   }
 
-  private boolean checkRecursion(ODocument document) {
+  private void checkTypeODocument(final ORecordInternal<?> iRecord) {
+    if (!(iRecord instanceof ODocument)) {
+      throw new UnsupportedOperationException("The " + ORecordSerializerBinary.NAME + " don't support record of type "
+          + iRecord.getClass().getName());
+    }
+  }
+
+  private boolean checkRecursion(final ODocument document) {
     Set<ODocument> iMarshalledRecords = OSerializationSetThreadLocal.INSTANCE.get();
     // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
     if (iMarshalledRecords.contains(document)) {

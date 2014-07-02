@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+
 public class BytesContainer {
 
   public byte[] bytes;
@@ -19,30 +20,30 @@ public class BytesContainer {
   }
 
   public int alloc(int toAlloc) {
-    int cur = offset;
+    final int cur = offset;
     offset += toAlloc;
     if (bytes.length < offset)
       resize();
     return cur;
   }
 
-  private void resize() {
-    int newLength = bytes.length;
-    while (newLength < offset)
-      newLength *= 2;
-    byte[] newBytes = new byte[newLength];
-    System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
-    bytes = newBytes;
-  }
-
-  public void read(int read) {
+  public void skip(final int read) {
     offset += read;
   }
 
   public byte[] fitBytes() {
-    byte[] fitted = new byte[offset];
+    final byte[] fitted = new byte[offset];
     System.arraycopy(bytes, 0, fitted, 0, offset);
     return fitted;
+  }
+
+  private void resize() {
+    int newLength = bytes.length;
+    while (newLength < offset)
+      newLength *= 2;
+    final byte[] newBytes = new byte[newLength];
+    System.arraycopy(bytes, 0, newBytes, 0, bytes.length);
+    bytes = newBytes;
   }
 
 }

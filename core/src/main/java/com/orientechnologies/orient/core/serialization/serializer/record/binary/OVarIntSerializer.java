@@ -12,8 +12,16 @@ public class OVarIntSerializer {
 
   }
 
-  public static Number read(BytesContainer bytes) {
+  public static short readAsShort(final BytesContainer bytes) {
+    return (short) readSignedVarLong(bytes);
+  }
+
+  public static long readAsLong(final BytesContainer bytes) {
     return readSignedVarLong(bytes);
+  }
+
+  public static int readAsInteger(final BytesContainer bytes) {
+    return (int) readSignedVarLong(bytes);
   }
 
   /**
@@ -47,7 +55,7 @@ public class OVarIntSerializer {
    * @throws IOException
    *           if {@link DataOutput} throws {@link IOException}
    */
-  public static void writeUnsignedVarLong(long value, BytesContainer bos) {
+  public static void writeUnsignedVarLong(long value, final BytesContainer bos) {
     int pos;
     while ((value & 0xFFFFFFFFFFFFFF80L) != 0L) {
       // out.writeByte(((int) value & 0x7F) | 0x80);
@@ -70,10 +78,10 @@ public class OVarIntSerializer {
    *           if variable-length value does not terminate after 9 bytes have been read
    * @see #writeSignedVarLong(long, DataOutput)
    */
-  public static long readSignedVarLong(BytesContainer bytes) {
-    long raw = readUnsignedVarLong(bytes);
+  public static long readSignedVarLong(final BytesContainer bytes) {
+    final long raw = readUnsignedVarLong(bytes);
     // This undoes the trick in writeSignedVarLong()
-    long temp = (((raw << 63) >> 63) ^ raw) >> 1;
+    final long temp = (((raw << 63) >> 63) ^ raw) >> 1;
     // This extra step lets us deal with the largest signed values by
     // treating
     // negative results from read unsigned methods as like unsigned values
@@ -91,7 +99,7 @@ public class OVarIntSerializer {
    *           if variable-length value does not terminate after 9 bytes have been read
    * @see #writeUnsignedVarLong(long, DataOutput)
    */
-  public static long readUnsignedVarLong(BytesContainer bytes) {
+  public static long readUnsignedVarLong(final BytesContainer bytes) {
     long value = 0L;
     int i = 0;
     long b;
