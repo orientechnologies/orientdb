@@ -34,4 +34,22 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     processor = iProcessor;
     db = iDatabase;
   }
+
+  protected String stringArray2Json(final Object[] iObject) {
+    final StringBuilder buffer = new StringBuilder();
+    buffer.append('[');
+    for (int i = 0; i < iObject.length; ++i) {
+      if (i > 0)
+        buffer.append(',');
+
+      final Object value = iObject[i];
+      if (value != null) {
+        buffer.append("'");
+        buffer.append(value.toString());
+        buffer.append("'");
+      }
+    }
+    buffer.append(']');
+    return buffer.toString();
+  }
 }

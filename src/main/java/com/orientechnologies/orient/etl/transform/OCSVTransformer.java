@@ -31,12 +31,16 @@ public class OCSVTransformer extends OAbstractTransformer {
   protected long         skipFrom           = -1;
   protected long         skipTo             = -1;
   protected long         line               = -1;
+  protected String       nullValue;
+  protected char         stringCharacter    = '"';
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[{separator:{optional:true,description:'Column separator'}},"
         + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
         + "{columns:{optional:true,description:'Columns array'}},"
+        + "{nullValue:{optional:true,description:'value to consider as NULL. Default is not declared'}},"
+        + "{stringCharacter:{optional:true,description:'String character delimiter'}},"
         + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
         + "{skipTo:{optional:true,description:'Line number where skip ends',type:'int'}}"
         + "],input:['String'],output:'ODocument'}");
@@ -54,6 +58,10 @@ public class OCSVTransformer extends OAbstractTransformer {
       skipFrom = ((Number) iConfiguration.field("skipFrom")).longValue();
     if (iConfiguration.containsField("skipTo"))
       skipTo = ((Number) iConfiguration.field("skipTo")).longValue();
+    if (iConfiguration.containsField("nullValue"))
+      nullValue = iConfiguration.field("nullValue");
+    if (iConfiguration.containsField("stringCharacter"))
+      stringCharacter = iConfiguration.field("stringCharacter").toString().charAt(0);
   }
 
   @Override
@@ -62,10 +70,7 @@ public class OCSVTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object transform(final Object input, OCommandContext iContext) {
-    if (input == null)
-      return null;
-
+  public Object executeTransform(final Object input, OCommandContext iContext) {
     line++;
 
     if (skipFrom > -1) {
@@ -84,12 +89,48 @@ public class OCSVTransformer extends OAbstractTransformer {
       if (!columnsOnFirstLine)
         throw new OTransformException("CSV: columnsOnFirstLine=false and no columns declared");
       columns = fields;
+
+      // REMOVE ANY STRING CHARACTERS IF ANY
+      for (int i = 0; i < columns.size(); ++i)
+        columns.set(i, OStringSerializerHelper.getStringContent(columns.get(i)));
+
       return null;
     }
 
     final ODocument doc = new ODocument();
-    for (int i = 0; i < columns.size(); ++i)
-      doc.field(columns.get(i), fields.get(i));
+    for (int i = 0; i < columns.size(); ++i) {
+      final String fieldStringValue = fields.get(i);
+      Object fieldValue;
+
+      if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
+        final char firstChar = fieldStringValue.charAt(0);
+        if (firstChar == stringCharacter)
+          // STRING
+          fieldValue = OStringSerializerHelper.getStringContent(fieldStringValue);
+        else if (Character.isDigit(firstChar))
+          // NUMBER
+          if (fieldStringValue.contains(".") || fieldStringValue.contains(","))
+            try {
+              fieldValue = Float.parseFloat(fieldStringValue);
+            } catch (Exception e) {
+              fieldValue = Double.parseDouble(fieldStringValue);
+            }
+          else
+            try {
+              fieldValue = Integer.parseInt(fieldStringValue);
+            } catch (Exception e) {
+              fieldValue = Long.parseLong(fieldStringValue);
+            }
+        else
+          fieldValue = fieldStringValue;
+
+        if (nullValue != null && nullValue.equals(fieldValue))
+          // NULL VALUE, SKIP
+          continue;
+
+        doc.field(columns.get(i), fieldValue);
+      }
+    }
 
     return doc;
   }

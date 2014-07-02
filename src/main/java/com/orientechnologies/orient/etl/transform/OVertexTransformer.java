@@ -57,10 +57,7 @@ public class OVertexTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object transform(final Object input, final OCommandContext iContext) {
-    if (input == null)
-      return null;
-
+  public Object executeTransform(final Object input, final OCommandContext iContext) {
     return graph.getVertex(input);
   }
 }

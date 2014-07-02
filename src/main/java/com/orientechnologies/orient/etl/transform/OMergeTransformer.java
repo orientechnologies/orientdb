@@ -20,7 +20,6 @@ package com.orientechnologies.orient.etl.transform;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -28,33 +27,26 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
- * Converts a JOIN in LINK
+ * Merges two records. Useful when a record needs to be updated rather than created.
  */
-public class OLinkTransformer extends OAbstractTransformer {
+public class OMergeTransformer extends OAbstractTransformer {
   protected String               joinFieldName;
-  protected String               linkFieldName;
-  protected OType                linkFieldType;
   protected String               lookup;
-  protected ACTION               unresolvedLinkAction;
+  protected ACTION               unresolvedLinkAction = ACTION.NOTHING;
   protected OSQLQuery<ODocument> sqlQuery;
   protected OIndex<?>            index;
 
   protected enum ACTION {
-    CREATE, WARNING, ERROR, HALT, SKIP
+    NOTHING, WARNING, ERROR, HALT, SKIP
   }
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument()
-        .fromJSON("{parameters:[{joinFieldName:{optional:false,description:'field name containing the value to join'}},{linkFieldName:{optional:false,description:'field name containing the link to set'}},"
-            + "{linkFieldType:{optional:true,description:'field type containing the link to set. Use LINK for single link and LINKSET or LINKLIST for many'}},"
+        .fromJSON("{parameters:[{joinFieldName:{optional:false,description:'field name containing the value to join'}},"
             + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
             + "{unresolvedLinkAction:{optional:true,description:'action when a unresolved link is found',values:"
             + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument'],output:'ODocument'}");
@@ -63,9 +55,6 @@ public class OLinkTransformer extends OAbstractTransformer {
   @Override
   public void configure(final ODocument iConfiguration) {
     joinFieldName = iConfiguration.field("joinFieldName");
-    linkFieldName = iConfiguration.field("linkFieldName");
-    if (iConfiguration.containsField("linkFieldType"))
-      linkFieldType = OType.valueOf((String) iConfiguration.field("linkFieldType"));
 
     if (iConfiguration.containsField("lookup"))
       lookup = iConfiguration.field("lookup");
@@ -76,7 +65,7 @@ public class OLinkTransformer extends OAbstractTransformer {
 
   @Override
   public String getName() {
-    return "link";
+    return "merge";
   }
 
   @Override
@@ -102,44 +91,17 @@ public class OLinkTransformer extends OAbstractTransformer {
         result = index.get(joinValue);
       }
 
-      if (result != null) {
-        if (linkFieldType != null) {
-          // CONVERT IT
-          if (linkFieldType == OType.LINK) {
-            if (result instanceof Collection<?>) {
-              if (!((Collection) result).isEmpty())
-                result = ((Collection) result).iterator().next();
-              else
-                result = null;
-            }
-          } else if (linkFieldType == OType.LINKSET) {
-            if (!(result instanceof Collection)) {
-              final Set<OIdentifiable> res = new HashSet<OIdentifiable>();
-              res.add((OIdentifiable) result);
-              result = res;
-            }
-          } else if (linkFieldType == OType.LINKLIST) {
-            if (!(result instanceof Collection)) {
-              final List<OIdentifiable> res = new ArrayList<OIdentifiable>();
-              res.add((OIdentifiable) result);
-              result = res;
-            }
-          }
-        }
-      }
+      if (result != null)
+        if (result instanceof Collection) {
+          if (!((Collection) result).isEmpty())
+            result = ((Collection<OIdentifiable>) result).iterator().next().getRecord();
+        } else if (result instanceof OIdentifiable)
+          result = ((OIdentifiable) result).getRecord();
 
       if (result == null) {
         // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
         switch (unresolvedLinkAction) {
-        case CREATE:
-          if (lookup != null) {
-            final String[] lookupParts = lookup.split("\\.");
-            final ODocument linkedDoc = new ODocument(lookupParts[0]);
-            linkedDoc.field(lookupParts[1], joinValue);
-            linkedDoc.save();
-            result = linkedDoc;
-          } else
-            throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
+        case NOTHING:
           break;
         case ERROR:
           processor.getStats().errors++;
@@ -154,10 +116,11 @@ public class OLinkTransformer extends OAbstractTransformer {
         case HALT:
           throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinValue + "'");
         }
+      } else {
+        final ODocument loadedDocument = (ODocument) result;
+        ((ODocument) result).merge((ODocument) input, true, false);
+        return result;
       }
-
-      // SET THE TRANSFORMED FIELD BACK
-      ((ODocument) input).field(linkFieldName, result);
     }
 
     return input;

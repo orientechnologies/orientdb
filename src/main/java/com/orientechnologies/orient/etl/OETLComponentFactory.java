@@ -24,15 +24,7 @@ import com.orientechnologies.orient.etl.extract.OFileExtractor;
 import com.orientechnologies.orient.etl.extract.OLineExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.loader.OOrientDocumentLoader;
-import com.orientechnologies.orient.etl.transform.OCSVTransformer;
-import com.orientechnologies.orient.etl.transform.OCodeTransformer;
-import com.orientechnologies.orient.etl.transform.OEdgeTransformer;
-import com.orientechnologies.orient.etl.transform.OFieldTransformer;
-import com.orientechnologies.orient.etl.transform.OJSONTransformer;
-import com.orientechnologies.orient.etl.transform.ONullTransformer;
-import com.orientechnologies.orient.etl.transform.OSkipTransformer;
-import com.orientechnologies.orient.etl.transform.OTransformer;
-import com.orientechnologies.orient.etl.transform.OVertexTransformer;
+import com.orientechnologies.orient.etl.transform.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,14 +43,16 @@ public class OETLComponentFactory {
     registerExtractor(OFileExtractor.class);
     registerExtractor(OLineExtractor.class);
 
-    registerTransformer(OFieldTransformer.class);
-    registerTransformer(OVertexTransformer.class);
-    registerTransformer(OEdgeTransformer.class);
     registerTransformer(OCodeTransformer.class);
-    registerTransformer(OJSONTransformer.class);
     registerTransformer(OCSVTransformer.class);
-    registerTransformer(OSkipTransformer.class);
+    registerTransformer(OEdgeTransformer.class);
+    registerTransformer(OFieldTransformer.class);
+    registerTransformer(OJSONTransformer.class);
+    registerTransformer(OLinkTransformer.class);
+    registerTransformer(OMergeTransformer.class);
     registerTransformer(ONullTransformer.class);
+    registerTransformer(OSkipTransformer.class);
+    registerTransformer(OVertexTransformer.class);
 
     registerLoader(OOrientDocumentLoader.class);
   }

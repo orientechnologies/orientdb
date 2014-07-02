@@ -1,7 +1,7 @@
 {
   extractor : { line: { path: "/temp/SoccerLeague.csv", lock : true } },
   transformers : [
-   { csv: { separator: ",", columnsOnFirstLine: true, skipFrom: 1, skipTo: 3} }
+   { csv: { separator: ",", nullValue:'NULL', columnsOnFirstLine: true, skipFrom: 1, skipTo: 3} }
   ],
   loader : { orientdb_doc: { class: "SoccerLeague" } }
 }

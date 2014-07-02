@@ -36,7 +36,7 @@ public class ONullTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object transform(final Object input, OCommandContext iContext) {
+  public Object executeTransform(final Object input, OCommandContext iContext) {
     return input;
   }
 }

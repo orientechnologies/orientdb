@@ -43,10 +43,7 @@ public class OSkipTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object transform(final Object input, final OCommandContext iContext) {
-    if (input == null)
-      return null;
-
+  public Object executeTransform(final Object input, final OCommandContext iContext) {
     if (sqlFilter == null)
       // ONLY THE FIRST TIME
       sqlFilter = new OSQLFilter(expression, iContext, null);

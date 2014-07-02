@@ -55,7 +55,7 @@ public class OCodeTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object transform(final Object input, final OCommandContext iContext) {
+  public Object executeTransform(final Object input, final OCommandContext iContext) {
     if (input == null)
       return null;
 

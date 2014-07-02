@@ -18,14 +18,50 @@
 
 package com.orientechnologies.orient.etl.transform;
 
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.etl.loader.OAbstractETLComponent;
 
 /**
  * Abstract Transformer.
  */
 public abstract class OAbstractTransformer extends OAbstractETLComponent implements OTransformer {
+  protected String     ifExpression;
+  protected OSQLFilter ifFilter;
+
+  abstract Object executeTransform(final Object input, final OCommandContext iContext);
+
   @Override
-  public void configure(final ODocument iCfg) {
+  public void configure(final ODocument iConfiguration) {
+    ifExpression = iConfiguration.field("if");
+  }
+
+  public final Object transform(final Object input, final OCommandContext iContext) {
+    if (input == null)
+      return null;
+
+    if (skip(input, iContext))
+      return null;
+
+    return executeTransform(input, iContext);
+  }
+
+  protected boolean skip(final Object input, final OCommandContext iContext) {
+    if (ifExpression != null && input instanceof ODocument ) {
+      if (ifFilter == null)
+        // ONLY THE FIRST TIME
+        ifFilter = new OSQLFilter(ifExpression, iContext, null);
+
+      final Object result = ifFilter.evaluate((ODocument) input, null, iContext);
+      if (!(result instanceof Boolean))
+        throw new OConfigurationException("'if' expression in Transformer " + getName() + " returned '" + result
+            + "' instead of boolean");
+
+      return !((Boolean) result).booleanValue();
+    }
+
+    return false;
   }
 }

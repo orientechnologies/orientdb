@@ -334,9 +334,11 @@ public class OETLProcessor implements OETLComponent {
     final long loaderItemsSec = (long) ((loaderProgress - stats.lastLoaderProgress) * 1000f / (now - stats.lastLap));
     final String loaderUnit = loader.getUnit();
 
-    out(iDebug, "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) -> loaded %,d %s (%,d %s/sec) [%d warnings, %d errors]",
+    out(iDebug,
+        "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
         ((float) extractorProgress * 100 / extractorTotal), extractorProgress, extractorTotal, extractorUnit, extractorItemsSec,
-        extractorUnit, loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, stats.warnings, stats.errors);
+        extractorUnit, loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, OIOUtils.getTimeAsString(now - startTime),
+        stats.warnings, stats.errors);
 
     stats.lastExtractorProgress = extractorProgress;
     stats.lastLoaderProgress = loaderProgress;
