@@ -16,15 +16,13 @@
  *
  */
 
-package com.orientechnologies.orient.etl.transform;
+package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.etl.OETLComponent;
 
 /**
  * ETL Transformer.
  */
 public interface OTransformer extends OETLComponent {
-
-  public Object transform(Object input, OCommandContext iContext);
+  public Object transform(final Object input);
 }

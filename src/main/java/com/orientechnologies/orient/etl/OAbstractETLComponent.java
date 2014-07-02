@@ -16,23 +16,36 @@
  *
  */
 
-package com.orientechnologies.orient.etl.loader;
+package com.orientechnologies.orient.etl;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.etl.OETLComponent;
-import com.orientechnologies.orient.etl.OETLProcessor;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 
 /**
  * ETL abstract component.
  */
 public abstract class OAbstractETLComponent implements OETLComponent {
-  protected ODatabaseDocumentTx db;
-  protected OETLProcessor       processor;
+  protected OETLProcessor        processor;
+  protected OBasicCommandContext context;
+  protected OSQLFilter           ifFilter;
 
   @Override
-  public void init(OETLProcessor iProcessor, ODatabaseDocumentTx iDatabase) {
+  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
     processor = iProcessor;
-    db = iDatabase;
+    context = iContext;
+
+    final String ifExpression = iConfiguration.field("if");
+    if (ifExpression != null)
+      ifFilter = new OSQLFilter(ifExpression, iContext, null);
+  }
+
+  @Override
+  public void begin() {
+  }
+
+  @Override
+  public void end() {
   }
 
   protected String stringArray2Json(final Object[] iObject) {
@@ -51,5 +64,11 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     }
     buffer.append(']');
     return buffer.toString();
+  }
+
+  protected <T> T resolveVariable(final String iName) {
+    if (iName != null && iName.startsWith("$"))
+      return (T) context.getVariable(iName);
+    return (T) iName;
   }
 }

@@ -16,7 +16,7 @@
  *  
  */
 
-package com.orientechnologies.orient.etl.transform;
+package com.orientechnologies.orient.etl.transformer;
 
 /**
  * Created by luca on 26/06/14.

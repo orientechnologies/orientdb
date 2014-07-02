@@ -16,10 +16,9 @@
  *
  */
 
-package com.orientechnologies.orient.etl.transform;
+package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -37,14 +36,10 @@ public class OFieldTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(final ODocument iConfiguration) {
-    fieldName = iConfiguration.field("fieldName");
+  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
+    super.configure(iProcessor, iConfiguration, iContext);
+    fieldName = resolveVariable((String) iConfiguration.field("fieldName"));
     expression = iConfiguration.field("expression");
-  }
-
-  @Override
-  public void init(OETLProcessor iProcessor, final ODatabaseDocumentTx iDatabase) {
-    super.init(iProcessor, iDatabase);
   }
 
   @Override
@@ -53,13 +48,13 @@ public class OFieldTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object executeTransform(final Object input, final OCommandContext iContext) {
+  public Object executeTransform(final Object input) {
     if (input instanceof ODocument) {
       if (sqlFilter == null)
         // ONLY THE FIRST TIME
-        sqlFilter = new OSQLFilter(expression, iContext, null);
+        sqlFilter = new OSQLFilter(expression, context, null);
 
-      final Object newValue = sqlFilter.evaluate((ODocument) input, null, iContext);
+      final Object newValue = sqlFilter.evaluate((ODocument) input, null, context);
 
       // SET THE TRANSFORMED FIELD BACK
       ((ODocument) input).field(fieldName, newValue);

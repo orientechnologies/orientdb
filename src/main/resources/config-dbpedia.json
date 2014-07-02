@@ -1,0 +1,31 @@
+{
+  config: {
+    verbose: true,
+    fileDirectory: "/temp/databases/dbpedia_csv/",
+    fileName: "Person.csv.gz"
+  },
+  begin: [
+   { let: { name: "$filePath",  value: "$fileDirectory.append( $fileName )"} },
+   { let: { name: "$className", value: "$fileName.substring( 0, $fileName.indexOf('.') )"} }
+  ],
+  extractor : {
+    line: { path: "$filePath", lock : true }
+  },
+  transformers : [
+   { csv: { separator: ",", nullValue: "NULL", skipFrom: 1, skipTo: 3 } },
+   { merge: { joinFieldName:"URI", lookup:"V.URI" } },
+   { vertex: { class: "$className"} }
+  ],
+  loader : {
+    orientdb: {
+      dbURL: "plocal:/temp/databases/dbpedia",
+      dbUser: "admin",
+      dbPassword: "admin",
+      dbAutoCreate: true,
+      tx: false,
+      batchCommit: 1000,
+      dbType: "graph",
+      indexes: [{class:"V", fields:["URI:string"], type:"UNIQUE" }]
+    }
+  }
+}

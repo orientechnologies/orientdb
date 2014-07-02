@@ -16,43 +16,39 @@
  *
  */
 
-package com.orientechnologies.orient.etl.transform;
+package com.orientechnologies.orient.etl.block;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
-public class OSkipTransformer extends OAbstractTransformer {
-  protected String     expression;
-  protected OSQLFilter sqlFilter;
+public class OLetBlock extends OAbstractBlock {
+  protected String     name;
+  protected OSQLFilter expression;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[{expression:{optional:false,description:'Expression to evaluate'}}],"
-        + "input:['ODocument'],output:'ODocument'}");
+    return new ODocument().fromJSON("{parameters:[{name:{optional:false,description:'Variable name'}},"
+        + "{value:{optional:false,description:'Variable value'}}]}");
   }
 
   @Override
-  public void configure(final ODocument iConfiguration) {
-    expression = iConfiguration.field("expression");
+  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
+    super.configure(iProcessor, iConfiguration, iContext);
+    name = iConfiguration.field("name");
+    expression = new OSQLFilter((String) iConfiguration.field("value"), iContext, null);
+
+    executeBlock();
   }
 
   @Override
   public String getName() {
-    return "skip";
+    return "let";
   }
 
   @Override
-  public Object executeTransform(final Object input, final OCommandContext iContext) {
-    if (sqlFilter == null)
-      // ONLY THE FIRST TIME
-      sqlFilter = new OSQLFilter(expression, iContext, null);
-
-    final Boolean result = (Boolean) sqlFilter.evaluate((ODocument) input, null, iContext);
-    if (result)
-      // TRUE: SKIP IT
-      return null;
-
-    return input;
+  public void executeBlock() {
+    context.setVariable(name, expression.evaluate(null, null, context));
   }
 }

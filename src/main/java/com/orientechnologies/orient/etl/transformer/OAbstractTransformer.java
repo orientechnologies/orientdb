@@ -16,45 +16,32 @@
  *
  */
 
-package com.orientechnologies.orient.etl.transform;
+package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.etl.loader.OAbstractETLComponent;
+import com.orientechnologies.orient.etl.OAbstractETLComponent;
 
 /**
  * Abstract Transformer.
  */
 public abstract class OAbstractTransformer extends OAbstractETLComponent implements OTransformer {
-  protected String     ifExpression;
-  protected OSQLFilter ifFilter;
-
-  abstract Object executeTransform(final Object input, final OCommandContext iContext);
-
   @Override
-  public void configure(final ODocument iConfiguration) {
-    ifExpression = iConfiguration.field("if");
-  }
-
-  public final Object transform(final Object input, final OCommandContext iContext) {
+  public Object transform(final Object input) {
     if (input == null)
       return null;
 
-    if (skip(input, iContext))
-      return null;
-
-    return executeTransform(input, iContext);
+    if (skip(input))
+      return input;
+    else
+      return executeTransform(input);
   }
 
-  protected boolean skip(final Object input, final OCommandContext iContext) {
-    if (ifExpression != null && input instanceof ODocument ) {
-      if (ifFilter == null)
-        // ONLY THE FIRST TIME
-        ifFilter = new OSQLFilter(ifExpression, iContext, null);
+  protected abstract Object executeTransform(final Object input);
 
-      final Object result = ifFilter.evaluate((ODocument) input, null, iContext);
+  protected boolean skip(final Object input) {
+    if (ifFilter != null && input instanceof ODocument) {
+      final Object result = ifFilter.evaluate((ODocument) input, null, context);
       if (!(result instanceof Boolean))
         throw new OConfigurationException("'if' expression in Transformer " + getName() + " returned '" + result
             + "' instead of boolean");

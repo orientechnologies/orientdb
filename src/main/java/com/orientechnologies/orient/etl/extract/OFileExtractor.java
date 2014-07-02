@@ -18,8 +18,9 @@
 
 package com.orientechnologies.orient.etl.extract;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -47,10 +48,20 @@ public abstract class OFileExtractor extends OAbstractExtractor {
   protected FileLock          lock        = null;
 
   @Override
-  public void configure(ODocument iConfiguration) {
-    path = iConfiguration.field("path");
+  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
+    super.configure(iProcessor, iConfiguration, iContext);
+
+    path = resolveVariable((String) iConfiguration.field("path"));
     if (iConfiguration.containsField("lock"))
       lockFile = iConfiguration.field("lock");
+
+    if (path instanceof String)
+      path = new File((String) path);
+
+    if (path instanceof File) {
+      final File file = (File) path;
+      fileName = file.getName();
+    }
   }
 
   @Override
@@ -60,42 +71,6 @@ public abstract class OFileExtractor extends OAbstractExtractor {
 
   public String getUnit() {
     return "bytes";
-  }
-
-  public void extract(OCommandContext context) {
-    if (path instanceof String)
-      path = new File((String) path);
-
-    if (path instanceof File) {
-      final File file = (File) path;
-      fileName = file.getName();
-
-      try {
-        raf = new RandomAccessFile(file, "rw");
-        channel = raf.getChannel();
-        fis = new FileInputStream(file);
-        if (fileName.endsWith(".gz"))
-          fileReader = new InputStreamReader(new GZIPInputStream(fis));
-        else {
-          fileReader = new FileReader(file);
-          byteToParse = file.length();
-        }
-
-      } catch (Exception e) {
-        end();
-      }
-    } else if (path instanceof InputStream) {
-      fileName = null;
-      byteToParse = -1;
-      fileReader = new InputStreamReader((InputStream) path);
-    } else if (path instanceof InputStreamReader) {
-      fileName = null;
-      byteToParse = -1;
-      fileReader = (InputStreamReader) path;
-    } else
-      throw new OExtractorException("Unknown input '" + path + "' of class '" + path.getClass() + "'");
-
-    begin();
   }
 
   @Override
@@ -127,6 +102,7 @@ public abstract class OFileExtractor extends OAbstractExtractor {
     }
   }
 
+  @Override
   public void end() {
     if (lock != null)
       try {
@@ -174,7 +150,37 @@ public abstract class OFileExtractor extends OAbstractExtractor {
     return byteToParse;
   }
 
-  protected void begin() {
+  @Override
+  public void begin() {
+    if (path instanceof File) {
+      final File file = (File) path;
+
+      try {
+        final String fileMode = lockFile ? "rw" : "r";
+        raf = new RandomAccessFile(file, fileMode);
+        channel = raf.getChannel();
+        fis = new FileInputStream(file);
+        if (fileName.endsWith(".gz"))
+          fileReader = new InputStreamReader(new GZIPInputStream(fis));
+        else {
+          fileReader = new FileReader(file);
+          byteToParse = file.length();
+        }
+
+      } catch (Exception e) {
+        end();
+      }
+    } else if (path instanceof InputStream) {
+      fileName = null;
+      byteToParse = -1;
+      fileReader = new InputStreamReader((InputStream) path);
+    } else if (path instanceof InputStreamReader) {
+      fileName = null;
+      byteToParse = -1;
+      fileReader = (InputStreamReader) path;
+    } else
+      throw new OExtractorException("Unknown input '" + path + "' of class '" + path.getClass() + "'");
+
     byteParsed = 0;
 
     if (lockFile)

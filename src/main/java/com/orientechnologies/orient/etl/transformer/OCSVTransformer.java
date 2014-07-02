@@ -16,12 +16,13 @@
  *
  */
 
-package com.orientechnologies.orient.etl.transform;
+package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,6 @@ public class OCSVTransformer extends OAbstractTransformer {
     return new ODocument().fromJSON("{parameters:[{separator:{optional:true,description:'Column separator'}},"
         + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
         + "{columns:{optional:true,description:'Columns array containing names, and optionally type after :'}},"
-        + "{types:{optional:true,description:'Columns array'}},"
         + "{nullValue:{optional:true,description:'value to consider as NULL. Default is not declared'}},"
         + "{stringCharacter:{optional:true,description:'String character delimiter'}},"
         + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
@@ -51,7 +51,9 @@ public class OCSVTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(final ODocument iConfiguration) {
+  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
+    super.configure(iProcessor, iConfiguration, iContext);
+
     if (iConfiguration.containsField("separator"))
       separator = iConfiguration.field("separator").toString().charAt(0);
     if (iConfiguration.containsField("columnsOnFirstLine"))
@@ -86,7 +88,7 @@ public class OCSVTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object executeTransform(final Object input, OCommandContext iContext) {
+  public Object executeTransform(final Object input) {
     line++;
 
     if (skipFrom > -1) {
@@ -114,51 +116,57 @@ public class OCSVTransformer extends OAbstractTransformer {
     }
 
     final ODocument doc = new ODocument();
-    for (int i = 0; i < columnNames.size(); ++i) {
+    for (int i = 0; i < columnNames.size() && i < fields.size(); ++i) {
       final String fieldName = columnNames.get(i);
-      final String fieldStringValue = fields.get(i);
-      Object fieldValue;
+      Object fieldValue = null;
+      try {
+        final String fieldStringValue = fields.get(i);
 
-      final OType fieldType = columnTypes != null ? columnTypes.get(i) : null;
+        final OType fieldType = columnTypes != null ? columnTypes.get(i) : null;
 
-      if (fieldType != null && fieldType != OType.ANY) {
-        // DEFINED TYPE
-        fieldValue = OStringSerializerHelper.getStringContent(fieldStringValue);
-        try {
-          fieldValue = OType.convert(fieldValue, fieldType.getDefaultJavaType());
-        } catch (Exception e) {
-          processor.getStats().incrementErrors();
-          processor.out(false, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s", processor
-              .getExtractor().getCurrent(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
-        }
-      } else if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
-        // DETERMINE THE TYPE
-        final char firstChar = fieldStringValue.charAt(0);
-        if (firstChar == stringCharacter)
-          // STRING
+        if (fieldType != null && fieldType != OType.ANY) {
+          // DEFINED TYPE
           fieldValue = OStringSerializerHelper.getStringContent(fieldStringValue);
-        else if (Character.isDigit(firstChar))
-          // NUMBER
-          if (fieldStringValue.contains(".") || fieldStringValue.contains(","))
-            try {
-              fieldValue = Float.parseFloat(fieldStringValue);
-            } catch (Exception e) {
-              fieldValue = Double.parseDouble(fieldStringValue);
-            }
+          try {
+            fieldValue = OType.convert(fieldValue, fieldType.getDefaultJavaType());
+            doc.field(fieldName, fieldValue);
+          } catch (Exception e) {
+            processor.getStats().incrementErrors();
+            processor.out(false, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s", processor
+                .getExtractor().getCurrent(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
+          }
+        } else if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
+          // DETERMINE THE TYPE
+          final char firstChar = fieldStringValue.charAt(0);
+          if (firstChar == stringCharacter)
+            // STRING
+            fieldValue = OStringSerializerHelper.getStringContent(fieldStringValue);
+          else if (Character.isDigit(firstChar))
+            // NUMBER
+            if (fieldStringValue.contains(".") || fieldStringValue.contains(","))
+              try {
+                fieldValue = Float.parseFloat(fieldStringValue);
+              } catch (Exception e) {
+                fieldValue = Double.parseDouble(fieldStringValue);
+              }
+            else
+              try {
+                fieldValue = Integer.parseInt(fieldStringValue);
+              } catch (Exception e) {
+                fieldValue = Long.parseLong(fieldStringValue);
+              }
           else
-            try {
-              fieldValue = Integer.parseInt(fieldStringValue);
-            } catch (Exception e) {
-              fieldValue = Long.parseLong(fieldStringValue);
-            }
-        else
-          fieldValue = fieldStringValue;
+            fieldValue = fieldStringValue;
 
-        if (nullValue != null && nullValue.equals(fieldValue))
-          // NULL VALUE, SKIP
-          continue;
+          if (nullValue != null && nullValue.equals(fieldValue))
+            // NULL VALUE, SKIP
+            continue;
 
-        doc.field(fieldName, fieldValue);
+          doc.field(fieldName, fieldValue);
+        }
+      } catch (Exception e) {
+        processor.getStats().incrementErrors();
+        processor.out(false, "Error on setting document field %s=%s (cause=%s)", fieldName, fieldValue, e.toString());
       }
     }
 

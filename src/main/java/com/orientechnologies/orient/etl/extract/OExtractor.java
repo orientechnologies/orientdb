@@ -18,7 +18,6 @@
 
 package com.orientechnologies.orient.etl.extract;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.etl.OETLComponent;
 
 import java.util.Iterator;
@@ -27,8 +26,6 @@ import java.util.Iterator;
  * ETL Extractor.
  */
 public interface OExtractor extends OETLComponent, Iterator<Object> {
-  public void extract(OCommandContext context);
-
   public String getUnit();
 
   public long getProgress();

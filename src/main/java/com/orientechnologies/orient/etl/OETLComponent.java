@@ -18,7 +18,7 @@
 
 package com.orientechnologies.orient.etl;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -27,9 +27,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public interface OETLComponent {
   public ODocument getConfiguration();
 
-  public void configure(ODocument iConfiguration);
+  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iSettings);
 
-  public void init(OETLProcessor iProcessor, ODatabaseDocumentTx iDatabase);
+  public void begin();
+
+  public void end();
 
   public String getName();
 }

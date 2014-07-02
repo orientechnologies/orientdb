@@ -16,17 +16,32 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extract;
+package com.orientechnologies.orient.etl.block;
 
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.etl.OAbstractETLComponent;
 
 /**
- * Abstract Transformer.
+ * Abstract Block.
  */
-public abstract class OAbstractExtractor extends OAbstractETLComponent implements OExtractor {
+public abstract class OAbstractBlock extends OAbstractETLComponent implements OBlock {
   @Override
-  public void remove() {
-    throw new UnsupportedOperationException("remove()");
+  public void execute() {
+    if (!skip())
+      executeBlock();
   }
 
+  protected abstract void executeBlock();
+
+  protected boolean skip() {
+    if (ifFilter != null) {
+      final Object result = ifFilter.evaluate(null, null, context);
+      if (!(result instanceof Boolean))
+        throw new OConfigurationException("'if' expression in Transformer " + getName() + " returned '" + result
+            + "' instead of boolean");
+
+      return !((Boolean) result).booleanValue();
+    }
+    return false;
+  }
 }

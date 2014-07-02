@@ -16,27 +16,13 @@
  *
  */
 
-package com.orientechnologies.orient.etl.transform;
+package com.orientechnologies.orient.etl.block;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLComponent;
 
 /**
- * No operation ETL Transformer.
+ * ETL Generic Block.
  */
-public class ONullTransformer extends OAbstractTransformer {
-  @Override
-  public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[],input:['Object'],output:'Object'}");
-  }
-
-  @Override
-  public String getName() {
-    return "null";
-  }
-
-  @Override
-  public Object executeTransform(final Object input, OCommandContext iContext) {
-    return input;
-  }
+public interface OBlock extends OETLComponent {
+  public void execute();
 }

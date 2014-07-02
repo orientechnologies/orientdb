@@ -16,17 +16,21 @@
  *
  */
 
-package com.orientechnologies.orient.etl.transform;
+package com.orientechnologies.orient.etl.block;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class OCodeTransformer extends OAbstractTransformer {
+/**
+ * Executes arbitrary code in any supported language by JVM.
+ */
+public class OCodeBlock extends OAbstractBlock {
   protected String                 language = "javascript";
   protected String                 code;
   protected OCommandExecutorScript cmd;
@@ -39,7 +43,8 @@ public class OCodeTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(final ODocument iConfiguration) {
+  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
+    super.configure(iProcessor, iConfiguration, iContext);
     if (iConfiguration.containsField("language"))
       language = iConfiguration.field("language");
 
@@ -47,6 +52,8 @@ public class OCodeTransformer extends OAbstractTransformer {
       code = iConfiguration.field("code");
     else
       throw new IllegalArgumentException("'code' parameter is mandatory in Code Transformer");
+
+    cmd = new OCommandExecutorScript().parse(new OCommandScript(language, code));
   }
 
   @Override
@@ -55,14 +62,7 @@ public class OCodeTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object executeTransform(final Object input, final OCommandContext iContext) {
-    if (input == null)
-      return null;
-
-    if (cmd == null)
-      cmd = new OCommandExecutorScript().parse(new OCommandScript(language, code));
-
-    params.put("record", input);
-    return cmd.executeInContext(iContext, params);
+  public void executeBlock() {
+    cmd.executeInContext(context, params);
   }
 }

@@ -18,7 +18,6 @@
 
 package com.orientechnologies.orient.etl.extract;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.BufferedReader;
@@ -47,11 +46,7 @@ public class OLineExtractor extends OFileExtractor {
       return false;
 
     try {
-      final boolean res = reader.ready();
-      if (!res)
-        // CLOSE IT
-        end();
-      return res;
+      return reader.ready();
     } catch (IOException e) {
       throw new OExtractorException(e);
     }
@@ -74,6 +69,13 @@ public class OLineExtractor extends OFileExtractor {
     }
   }
 
+  @Override
+  public void begin() {
+    super.begin();
+
+    reader = new BufferedReader(fileReader);
+  }
+
   public void end() {
     if (reader != null)
       try {
@@ -81,13 +83,8 @@ public class OLineExtractor extends OFileExtractor {
       } catch (IOException e) {
         e.printStackTrace();
       }
-  }
 
-  @Override
-  public void extract(OCommandContext context) {
-    super.extract(context);
-
-    reader = new BufferedReader(fileReader);
+    super.end();
   }
 
   @Override
