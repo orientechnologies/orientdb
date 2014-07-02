@@ -21,8 +21,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Text based Command Request abstract class.
@@ -31,7 +30,7 @@ import java.util.Map;
  * 
  */
 @SuppressWarnings("serial")
-public abstract class OCommandRequestAbstract implements OCommandRequestInternal {
+public abstract class OCommandRequestAbstract implements OCommandRequestInternal, ODistributedCommand {
   protected OCommandResultListener    resultListener;
   protected OProgressListener         progressListener;
   protected int                       limit           = -1;
@@ -42,6 +41,8 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   protected String                    fetchPlan       = null;
   protected boolean                   useCache        = false;
   protected OCommandContext           context;
+
+  private final Set<String>           nodesToExclude  = new HashSet<String>();
 
   protected OCommandRequestAbstract() {
   }
@@ -154,5 +155,18 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
   public void setLockStrategy(final OStorage.LOCKING_STRATEGY lockStrategy) {
     this.lockStrategy = lockStrategy;
+  }
+
+  @Override
+  public Set<String> nodesToExclude() {
+    return Collections.unmodifiableSet(nodesToExclude);
+  }
+
+  public void addExcludedNode(String node) {
+    nodesToExclude.add(node);
+  }
+
+  public void removeExcludedNode(String node) {
+    nodesToExclude.remove(node);
   }
 }

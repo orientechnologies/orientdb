@@ -54,7 +54,7 @@ public class ONullBucket<V> extends ODurablePage {
     if (getByteValue(NEXT_FREE_POSITION) == 0)
       return null;
 
-    return valueSerializer.deserializeFromDirectMemory(pagePointer, NEXT_FREE_POSITION + 1);
+    return deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 1);
   }
 
   public void removeValue() {

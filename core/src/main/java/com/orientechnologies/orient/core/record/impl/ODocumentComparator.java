@@ -69,18 +69,15 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
 
       if (!(fieldValue1 instanceof Comparable<?>)) {
 				context.incrementVariable(OBasicCommandContext.INVALID_COMPARE_COUNT);
-				return ("" + fieldValue1).compareTo("" + fieldValue2);
+				partialResult =  ("" + fieldValue1).compareTo("" + fieldValue2);
+			} else {
+				try {
+					partialResult = ((Comparable<Object>) fieldValue1).compareTo(fieldValue2);
+				} catch (Exception x) {
+					context.incrementVariable(OBasicCommandContext.INVALID_COMPARE_COUNT);
+					partialResult =  ("" + fieldValue1).compareTo("" + fieldValue2);
+				}
 			}
-
-			try {
-				partialResult = ((Comparable<Object>) fieldValue1).compareTo(fieldValue2);
-			} catch (Exception x) {
-				context.incrementVariable(OBasicCommandContext.INVALID_COMPARE_COUNT);
-				return ("" + fieldValue1).compareTo("" + fieldValue2);
-			}
-			
-      partialResult = ((Comparable<Object>) fieldValue1).compareTo(fieldValue2);
-
       partialResult = factor(partialResult, ordering);
 
       if (partialResult != 0)

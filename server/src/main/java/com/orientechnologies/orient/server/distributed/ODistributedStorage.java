@@ -21,11 +21,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -174,12 +170,18 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
         nodes = dbCfg.getServers(involvedClusters);
+        if (iCommand instanceof ODistributedCommand)
+          nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
+
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
       } else {
         // SHARDED, GET ONLY ONE NODE PER INVOLVED CLUSTER
         task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.UNION);
 
         nodes = dbCfg.getOneServerPerCluster(involvedClusters, dManager.getLocalNodeName());
+
+        if (iCommand instanceof ODistributedCommand)
+          nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
 
         if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName()))
           // LOCAL NODE, AVOID TO DISTRIBUTE IT
@@ -928,6 +930,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   @Override
   public String getStorageId() {
     return dManager.getLocalNodeName() + "." + getName();
+  }
+
+  @Override
+  public String getNodeId() {
+    return dManager.getLocalNodeName();
   }
 
   protected void handleDistributedException(final String iMessage, final Exception e, final Object... iParams) {

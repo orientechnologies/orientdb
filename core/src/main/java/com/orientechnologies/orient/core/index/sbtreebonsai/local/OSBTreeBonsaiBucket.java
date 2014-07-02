@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -148,7 +147,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   public void remove(int entryIndex) throws IOException {
     int entryPosition = getIntValue(offset + POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
 
-    int entrySize = keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
+    int entrySize = getObjectSizeInDirectMemory(keySerializer, offset + entryPosition);
     if (isLeaf) {
       assert valueSerializer.isFixedLength();
       entrySize += valueSerializer.getFixedLength();
@@ -189,10 +188,10 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     int entryPosition = getIntValue(offset + entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
     if (isLeaf) {
-      K key = keySerializer.deserializeFromDirectMemory(pagePointer, offset + entryPosition);
-      entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
+      K key = deserializeFromDirectMemory(keySerializer, offset + entryPosition);
+      entryPosition += getObjectSizeInDirectMemory(keySerializer, offset + entryPosition);
 
-      V value = valueSerializer.deserializeFromDirectMemory(pagePointer, offset + entryPosition);
+      V value = deserializeFromDirectMemory(valueSerializer, offset + entryPosition);
 
       return new SBTreeEntry<K, V>(OBonsaiBucketPointer.NULL, OBonsaiBucketPointer.NULL, key, value);
     } else {
@@ -202,7 +201,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
       OBonsaiBucketPointer rightChild = getBucketPointer(offset + entryPosition);
       entryPosition += OBonsaiBucketPointer.SIZE;
 
-      K key = keySerializer.deserializeFromDirectMemory(pagePointer, offset + entryPosition);
+      K key = deserializeFromDirectMemory(keySerializer, offset + entryPosition);
 
       return new SBTreeEntry<K, V>(leftChild, rightChild, key, null);
     }
@@ -214,7 +213,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     if (!isLeaf)
       entryPosition += 2 * (OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
 
-    return keySerializer.deserializeFromDirectMemory(pagePointer, offset + entryPosition);
+    return deserializeFromDirectMemory(keySerializer, offset + entryPosition);
   }
 
   public boolean isLeaf() {
@@ -326,14 +325,14 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     assert valueSerializer.isFixedLength();
 
     int entryPosition = getIntValue(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
-    entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, offset + entryPosition);
+    entryPosition += getObjectSizeInDirectMemory(keySerializer, offset + entryPosition);
 
     final int size = valueSerializer.getFixedLength();
 
     byte[] serializedValue = new byte[size];
     valueSerializer.serializeNative(value, serializedValue, 0);
 
-    byte[] oldSerializedValue = pagePointer.get(offset + entryPosition, size);
+    byte[] oldSerializedValue = getBinaryValue(offset + entryPosition, size);
 
     if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, serializedValue) == 0)
       return 0;

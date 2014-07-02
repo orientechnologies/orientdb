@@ -139,7 +139,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   public long remove(int entryIndex) throws IOException {
     int entryPosition = getIntValue(POSITIONS_ARRAY_OFFSET + entryIndex * OIntegerSerializer.INT_SIZE);
-    int keySize = keySerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition);
+    int keySize = getObjectSizeInDirectMemory(keySerializer, entryPosition);
 
     int entrySize;
     long linkValue = -1;
@@ -148,16 +148,14 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       if (valueSerializer.isFixedLength()) {
         entrySize = keySize + valueSerializer.getFixedLength() + OByteSerializer.BYTE_SIZE;
       } else {
-        final boolean isLink = pagePointer.getByte(entryPosition + keySize) > 0;
+        final boolean isLink = getByteValue(entryPosition + keySize) > 0;
 
         if (!isLink)
-          entrySize = keySize
-              + valueSerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition + keySize + OByteSerializer.BYTE_SIZE)
+          entrySize = keySize + getObjectSizeInDirectMemory(valueSerializer, entryPosition + keySize + OByteSerializer.BYTE_SIZE)
               + OByteSerializer.BYTE_SIZE;
         else {
           entrySize = keySize + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE;
-          linkValue = OLongSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, entryPosition + keySize
-              + OByteSerializer.BYTE_SIZE);
+          linkValue = deserializeFromDirectMemory(OLongSerializer.INSTANCE, entryPosition + keySize + OByteSerializer.BYTE_SIZE);
         }
       }
     } else {
@@ -199,17 +197,17 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     int entryPosition = getIntValue(entryIndex * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
     if (isLeaf) {
-      K key = keySerializer.deserializeFromDirectMemory(pagePointer, entryPosition);
-      entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition);
+      K key = deserializeFromDirectMemory(keySerializer, entryPosition);
+      entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition);
 
-      boolean isLinkValue = pagePointer.getByte(entryPosition) > 0;
+      boolean isLinkValue = getByteValue(entryPosition) > 0;
       long link = -1;
       V value = null;
 
       if (isLinkValue)
-        link = OLongSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, entryPosition + OByteSerializer.BYTE_SIZE);
+        link = deserializeFromDirectMemory(OLongSerializer.INSTANCE, entryPosition + OByteSerializer.BYTE_SIZE);
       else
-        value = valueSerializer.deserializeFromDirectMemory(pagePointer, entryPosition + OByteSerializer.BYTE_SIZE);
+        value = deserializeFromDirectMemory(valueSerializer, entryPosition + OByteSerializer.BYTE_SIZE);
 
       return new SBTreeEntry<K, V>(-1, -1, key, new OSBTreeValue<V>(link >= 0, link, value));
     } else {
@@ -219,7 +217,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       long rightChild = getLongValue(entryPosition);
       entryPosition += OLongSerializer.LONG_SIZE;
 
-      K key = keySerializer.deserializeFromDirectMemory(pagePointer, entryPosition);
+      K key = deserializeFromDirectMemory(keySerializer, entryPosition);
 
       return new SBTreeEntry<K, V>(leftChild, rightChild, key, null);
     }
@@ -231,7 +229,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     if (!isLeaf)
       entryPosition += 2 * OLongSerializer.LONG_SIZE;
 
-    return keySerializer.deserializeFromDirectMemory(pagePointer, entryPosition);
+    return deserializeFromDirectMemory(keySerializer, entryPosition);
   }
 
   public boolean isLeaf() {
@@ -337,7 +335,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
   public int updateValue(int index, OSBTreeValue<V> value) throws IOException {
     int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
-    entryPosition += keySerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition) + OByteSerializer.BYTE_SIZE;
+    entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition) + OByteSerializer.BYTE_SIZE;
 
     int newSize = 0;
     if (value.isLink())
@@ -345,7 +343,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     else
       newSize = valueSerializer.getObjectSize(value.getValue());
 
-    final int oldSize = valueSerializer.getObjectSizeInDirectMemory(pagePointer, entryPosition);
+    final int oldSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
     if (newSize != oldSize)
       return -1;
 
@@ -355,7 +353,7 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     else
       valueSerializer.serializeNative(value.getValue(), serializedValue, 0);
 
-    byte[] oldSerializedValue = pagePointer.get(entryPosition, oldSize);
+    byte[] oldSerializedValue = getBinaryValue(entryPosition, oldSize);
 
     if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, serializedValue) == 0)
       return 0;

@@ -235,8 +235,6 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
    * treat all the number types numbers are postponed with a character that tells the type: b=byte, s=short, l=long, f=float,
    * d=double, t=date.
    * 
-   * @param iUnusualSymbols
-   *          Localized decimal number separators
    * @param iValue
    *          Value to parse
    * @return The closest type recognized

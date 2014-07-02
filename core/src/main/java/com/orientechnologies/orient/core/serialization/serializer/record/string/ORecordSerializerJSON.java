@@ -686,6 +686,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (!iFieldValue.isEmpty()) {
       for (String item : OStringSerializerHelper.smartSplit(iFieldValue, ',')) {
         final String itemValue = item.trim();
+        if (itemValue.length() == 0)
+          continue;
 
         final Object collectionItem = getValue(iRecord, null, itemValue, OStringSerializerHelper.getStringContent(itemValue),
             iLinkedType, null, iFieldTypes, iNoMap, iOptions);
