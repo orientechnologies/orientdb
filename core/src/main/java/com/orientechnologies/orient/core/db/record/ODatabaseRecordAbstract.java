@@ -1558,8 +1558,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       final OClass clusterIdClass = metadata.getSchema().getClassByClusterId(rid.clusterId);
       if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
           || (recordClass != null && !recordClass.equals(clusterIdClass)))
-        throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class " + clusterIdClass
-            + " but saved with class " + recordClass);
+        throw new OSchemaException("Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
+            + "' but has been created with class '" + recordClass + "'");
     }
   }
 

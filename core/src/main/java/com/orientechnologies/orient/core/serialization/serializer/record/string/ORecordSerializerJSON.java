@@ -15,22 +15,17 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -54,6 +49,16 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -157,7 +162,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         ' ', '\n', '\r', '\t');
 
     if (fields.size() % 2 != 0)
-      throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>");
+      throw new OSerializationException("Error on unmarshalling JSON content: wrong format \"" + iSource
+          + "\". Use <field> : <value>");
 
     Map<String, Character> fieldTypes = null;
 
@@ -291,6 +297,52 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return iRecord;
   }
 
+  @Override
+  public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
+      final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
+      boolean autoDetectCollectionType) {
+    try {
+      final StringWriter buffer = new StringWriter(INITIAL_SIZE);
+      final OJSONWriter json = new OJSONWriter(buffer, iFormat);
+      final FormatSettings settings = new FormatSettings(iFormat);
+
+      json.beginObject();
+      OJSONFetchContext context = new OJSONFetchContext(json, settings);
+      context.writeSignature(json, iRecord);
+
+      if (iRecord instanceof ORecordSchemaAware<?>) {
+
+        OFetchHelper.fetch(iRecord, null, OFetchHelper.buildFetchPlan(settings.fetchPlan), new OJSONFetchListener(), context,
+            iFormat);
+      } else if (iRecord instanceof ORecordStringable) {
+
+        // STRINGABLE
+        final ORecordStringable record = (ORecordStringable) iRecord;
+        json.writeAttribute(settings.indentLevel + 1, true, "value", record.value());
+
+      } else if (iRecord instanceof ORecordBytes) {
+        // BYTES
+        final ORecordBytes record = (ORecordBytes) iRecord;
+        json.writeAttribute(settings.indentLevel + 1, true, "value", OBase64Utils.encodeBytes(record.toStream()));
+      } else
+
+        throw new OSerializationException("Error on marshalling record of type '" + iRecord.getClass()
+            + "' to JSON. The record type cannot be exported to JSON");
+
+      json.endObject(0, true);
+
+      iOutput.append(buffer);
+      return iOutput;
+    } catch (IOException e) {
+      throw new OSerializationException("Error on marshalling of record to JSON", e);
+    }
+  }
+
+  @Override
+  public String toString() {
+    return NAME;
+  }
+
   private OType determineType(ODocument doc, String fieldName) {
     OType type = null;
     final OClass cls = doc.getSchemaClass();
@@ -338,52 +390,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           noMap = true;
     }
     return noMap;
-  }
-
-  @Override
-  public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
-      final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
-      boolean autoDetectCollectionType) {
-    try {
-      final StringWriter buffer = new StringWriter(INITIAL_SIZE);
-      final OJSONWriter json = new OJSONWriter(buffer, iFormat);
-      final FormatSettings settings = new FormatSettings(iFormat);
-
-      json.beginObject();
-      OJSONFetchContext context = new OJSONFetchContext(json, settings);
-      context.writeSignature(json, iRecord);
-
-      if (iRecord instanceof ORecordSchemaAware<?>) {
-
-        OFetchHelper.fetch(iRecord, null, OFetchHelper.buildFetchPlan(settings.fetchPlan), new OJSONFetchListener(), context,
-            iFormat);
-      } else if (iRecord instanceof ORecordStringable) {
-
-        // STRINGABLE
-        final ORecordStringable record = (ORecordStringable) iRecord;
-        json.writeAttribute(settings.indentLevel + 1, true, "value", record.value());
-
-      } else if (iRecord instanceof ORecordBytes) {
-        // BYTES
-        final ORecordBytes record = (ORecordBytes) iRecord;
-        json.writeAttribute(settings.indentLevel + 1, true, "value", OBase64Utils.encodeBytes(record.toStream()));
-      } else
-
-        throw new OSerializationException("Error on marshalling record of type '" + iRecord.getClass()
-            + "' to JSON. The record type cannot be exported to JSON");
-
-      json.endObject(0, true);
-
-      iOutput.append(buffer);
-      return iOutput;
-    } catch (IOException e) {
-      throw new OSerializationException("Error on marshalling of record to JSON", e);
-    }
-  }
-
-  @Override
-  public String toString() {
-    return NAME;
   }
 
   @SuppressWarnings("unchecked")
