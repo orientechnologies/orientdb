@@ -42,8 +42,9 @@ public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
     if (predicate == null)
       predicate = new OSQLPredicate((String) iParams[0].toString());
 
+    final ODocument currentResult = iCurrentResult instanceof ODocument ? (ODocument) iCurrentResult : null;
     try {
-      return predicate.evaluate(iRecord != null ? iRecord.getRecord() : null, (ODocument) iCurrentResult, iContext);
+      return predicate.evaluate(iRecord != null ? iRecord.getRecord() : null, currentResult, iContext);
     } catch (ArithmeticException e) {
       // DIVISION BY 0
       return 0;

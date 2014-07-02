@@ -35,8 +35,7 @@ public class OSQLMethodLastIndexOf extends OAbstractSQLMethod {
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
     final String toFind = OStringSerializerHelper.getStringContent(iParams[0].toString());
-    int startIndex = iParams.length > 1 ? Integer.parseInt(iParams[1].toString()) : 0;
-
-    return iThis != null ? iThis.toString().lastIndexOf(toFind, startIndex) : null;
+    return iParams.length > 1 ? iThis.toString().lastIndexOf(toFind, Integer.parseInt(iParams[1].toString())) : iThis.toString()
+        .lastIndexOf(toFind);
   }
 }

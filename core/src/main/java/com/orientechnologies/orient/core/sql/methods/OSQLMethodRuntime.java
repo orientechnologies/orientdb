@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 
 import java.util.List;
@@ -86,6 +87,9 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
                   iCurrentResult, iContext);
           } else if (configuredParameters[i] instanceof OSQLMethodRuntime)
             runtimeParameters[i] = ((OSQLMethodRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
+                                                                                          iContext);
+          else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
+            runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
                 iContext);
           else if (configuredParameters[i] instanceof OSQLFilterItemVariable) {
             runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue(iCurrentRecord, iCurrentResult,
