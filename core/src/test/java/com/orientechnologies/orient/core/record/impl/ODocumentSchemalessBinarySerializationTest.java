@@ -584,7 +584,7 @@ public class ODocumentSchemalessBinarySerializationTest {
     byte[] res = serializer.toStream(document, false);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
     assertEquals(extr.fields(), document.fields());
-    List<List<String>> savedValue = (List) extr.field("complexArray");
+    List<List<String>> savedValue = extr.field("complexArray");
     assertEquals(savedValue.size(), array.length);
     assertEquals(savedValue.get(0).size(), array[0].length);
     assertEquals(savedValue.get(0).get(0), array[0][0]);
