@@ -19,15 +19,18 @@
 package com.orientechnologies.orient.etl.transform;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OCSVTransformer extends OAbstractTransformer {
   protected char         separator          = ',';
   protected boolean      columnsOnFirstLine = true;
-  protected List<String> columns            = null;
+  protected List<String> columnNames        = null;
+  protected List<OType>  columnTypes        = null;
   protected long         skipFrom           = -1;
   protected long         skipTo             = -1;
   protected long         line               = -1;
@@ -38,7 +41,8 @@ public class OCSVTransformer extends OAbstractTransformer {
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[{separator:{optional:true,description:'Column separator'}},"
         + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
-        + "{columns:{optional:true,description:'Columns array'}},"
+        + "{columns:{optional:true,description:'Columns array containing names, and optionally type after :'}},"
+        + "{types:{optional:true,description:'Columns array'}},"
         + "{nullValue:{optional:true,description:'value to consider as NULL. Default is not declared'}},"
         + "{stringCharacter:{optional:true,description:'String character delimiter'}},"
         + "{skipFrom:{optional:true,description:'Line number where start to skip',type:'int'}},"
@@ -52,8 +56,20 @@ public class OCSVTransformer extends OAbstractTransformer {
       separator = iConfiguration.field("separator").toString().charAt(0);
     if (iConfiguration.containsField("columnsOnFirstLine"))
       columnsOnFirstLine = iConfiguration.field("columnsOnFirstLine");
-    if (iConfiguration.containsField("columns"))
-      columns = iConfiguration.field("columns");
+    if (iConfiguration.containsField("columns")) {
+      final List<String> columns = iConfiguration.field("columns");
+      columnNames = new ArrayList<String>(columns.size());
+      columnTypes = new ArrayList<OType>(columns.size());
+      for (String c : columns) {
+        final String[] parts = c.split(":");
+
+        columnNames.add(parts[0]);
+        if (parts.length > 1)
+          columnTypes.add(OType.valueOf(parts[1].toUpperCase()));
+        else
+          columnTypes.add(OType.ANY);
+      }
+    }
     if (iConfiguration.containsField("skipFrom"))
       skipFrom = ((Number) iConfiguration.field("skipFrom")).longValue();
     if (iConfiguration.containsField("skipTo"))
@@ -85,24 +101,38 @@ public class OCSVTransformer extends OAbstractTransformer {
     final List<String> fields = OStringSerializerHelper.smartSplit(input.toString(), new char[] { separator }, 0, -1, false, false,
         false, false);
 
-    if (columns == null) {
+    if (columnNames == null) {
       if (!columnsOnFirstLine)
         throw new OTransformException("CSV: columnsOnFirstLine=false and no columns declared");
-      columns = fields;
+      columnNames = fields;
 
       // REMOVE ANY STRING CHARACTERS IF ANY
-      for (int i = 0; i < columns.size(); ++i)
-        columns.set(i, OStringSerializerHelper.getStringContent(columns.get(i)));
+      for (int i = 0; i < columnNames.size(); ++i)
+        columnNames.set(i, OStringSerializerHelper.getStringContent(columnNames.get(i)));
 
       return null;
     }
 
     final ODocument doc = new ODocument();
-    for (int i = 0; i < columns.size(); ++i) {
+    for (int i = 0; i < columnNames.size(); ++i) {
+      final String fieldName = columnNames.get(i);
       final String fieldStringValue = fields.get(i);
       Object fieldValue;
 
-      if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
+      final OType fieldType = columnTypes != null ? columnTypes.get(i) : null;
+
+      if (fieldType != null && fieldType != OType.ANY) {
+        // DEFINED TYPE
+        fieldValue = OStringSerializerHelper.getStringContent(fieldStringValue);
+        try {
+          fieldValue = OType.convert(fieldValue, fieldType.getDefaultJavaType());
+        } catch (Exception e) {
+          processor.getStats().incrementErrors();
+          processor.out(false, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s", processor
+              .getExtractor().getCurrent(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
+        }
+      } else if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
+        // DETERMINE THE TYPE
         final char firstChar = fieldStringValue.charAt(0);
         if (firstChar == stringCharacter)
           // STRING
@@ -128,7 +158,7 @@ public class OCSVTransformer extends OAbstractTransformer {
           // NULL VALUE, SKIP
           continue;
 
-        doc.field(columns.get(i), fieldValue);
+        doc.field(fieldName, fieldValue);
       }
     }
 

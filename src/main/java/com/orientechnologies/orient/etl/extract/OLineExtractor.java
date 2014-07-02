@@ -27,7 +27,8 @@ import java.util.NoSuchElementException;
 
 public class OLineExtractor extends OFileExtractor {
   protected BufferedReader reader;
-  private long             progress;
+  private long             progressBytes;
+  private long             currentRow;
 
   @Override
   public ODocument getConfiguration() {
@@ -63,9 +64,10 @@ public class OLineExtractor extends OFileExtractor {
 
     try {
       final String line = reader.readLine();
-      progress += line.length();
+      progressBytes += line.length();
+      currentRow++;
       if (reader.ready())
-        progress++;
+        progressBytes++;
       return line;
     } catch (IOException e) {
       throw new OExtractorException(e);
@@ -89,7 +91,17 @@ public class OLineExtractor extends OFileExtractor {
   }
 
   @Override
+  public long getCurrent() {
+    return currentRow;
+  }
+
+  @Override
+  public String getCurrentUnit() {
+    return "row";
+  }
+
+  @Override
   public long getProgress() {
-    return progress;
+    return progressBytes;
   }
 }

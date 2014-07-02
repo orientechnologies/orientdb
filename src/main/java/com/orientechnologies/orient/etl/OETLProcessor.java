@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.TimerTask;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * ETL processor class.
@@ -58,12 +59,20 @@ public class OETLProcessor implements OETLComponent {
   protected TimerTask                  dumpTask;
 
   public class OETLProcessorStats {
-    public boolean verbose               = false;
-    public long    lastExtractorProgress = 0;
-    public long    lastLoaderProgress    = 0;
-    public long    lastLap               = 0;
-    public long    warnings              = 0;
-    public long    errors                = 0;
+    public boolean    verbose               = false;
+    public long       lastExtractorProgress = 0;
+    public long       lastLoaderProgress    = 0;
+    public long       lastLap               = 0;
+    public AtomicLong warnings              = new AtomicLong();
+    public AtomicLong errors                = new AtomicLong();
+
+    public long incrementWarnings() {
+      return warnings.incrementAndGet();
+    }
+
+    public long incrementErrors() {
+      return errors.incrementAndGet();
+    }
   }
 
   public OETLProcessor(final OExtractor iExtractor, final OTransformer[] iTransformers, final OLoader iLoader) {
@@ -268,6 +277,18 @@ public class OETLProcessor implements OETLComponent {
     return stats;
   }
 
+  public OExtractor getExtractor() {
+    return extractor;
+  }
+
+  public OLoader getLoader() {
+    return loader;
+  }
+
+  public List<OTransformer> getTransformers() {
+    return transformers;
+  }
+
   protected void configureComponent(final OETLComponent iComponent, final ODocument iCfg) {
     iComponent.configure(iCfg);
   }
@@ -335,10 +356,10 @@ public class OETLProcessor implements OETLComponent {
     final String loaderUnit = loader.getUnit();
 
     out(iDebug,
-        "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
+        "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
         ((float) extractorProgress * 100 / extractorTotal), extractorProgress, extractorTotal, extractorUnit, extractorItemsSec,
-        extractorUnit, loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, OIOUtils.getTimeAsString(now - startTime),
-        stats.warnings, stats.errors);
+        extractorUnit, extractor.getCurrent(), extractor.getCurrentUnit(), loaderProgress, loaderUnit, loaderItemsSec,
+        loaderUnit, OIOUtils.getTimeAsString(now - startTime), stats.warnings.get(), stats.errors.get());
 
     stats.lastExtractorProgress = extractorProgress;
     stats.lastLoaderProgress = loaderProgress;

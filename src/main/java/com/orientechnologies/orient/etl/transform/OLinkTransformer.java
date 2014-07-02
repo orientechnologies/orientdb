@@ -142,11 +142,11 @@ public class OLinkTransformer extends OAbstractTransformer {
             throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
           break;
         case ERROR:
-          processor.getStats().errors++;
+          processor.getStats().incrementErrors();
           processor.out(true, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
           break;
         case WARNING:
-          processor.getStats().warnings++;
+          processor.getStats().incrementWarnings();
           processor.out(true, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
           break;
         case SKIP:

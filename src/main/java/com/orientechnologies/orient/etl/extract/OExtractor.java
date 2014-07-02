@@ -34,4 +34,8 @@ public interface OExtractor extends OETLComponent, Iterator<Object> {
   public long getProgress();
 
   public long getTotal();
+
+  public long getCurrent();
+
+  public String getCurrentUnit();
 }

@@ -18,6 +18,8 @@
 
 package com.orientechnologies.orient.etl.transform;
 
+import java.util.Collection;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -26,8 +28,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
-
-import java.util.Collection;
 
 /**
  * Merges two records. Useful when a record needs to be updated rather than created.
@@ -104,11 +104,11 @@ public class OMergeTransformer extends OAbstractTransformer {
         case NOTHING:
           break;
         case ERROR:
-          processor.getStats().errors++;
+          processor.getStats().incrementErrors();
           processor.out(true, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
           break;
         case WARNING:
-          processor.getStats().warnings++;
+          processor.getStats().incrementWarnings();
           processor.out(true, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
           break;
         case SKIP:
