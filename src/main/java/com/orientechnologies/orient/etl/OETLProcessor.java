@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -146,6 +147,13 @@ public class OETLProcessor implements OETLComponent {
     Collection<ODocument> cfgTransformers = null;
     ODocument cfgLoader = null;
     Collection<ODocument> cfgEnd = null;
+
+    System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
+    if (args.length == 0 ) {
+      System.out.println("Syntax error, missing configuration file.");
+      System.out.println("Use: oetl.sh <json-file>");
+      System.exit(1);
+    }
 
     final OBasicCommandContext context = createDefaultContext();
 
