@@ -17,13 +17,13 @@ $ ./oetl.sh config-dbpedia.json
 ```
 
 ## Available Components
-- [[Blocks]]
-- [[Extractors]]
-- [[Transformers]]
-- [[Loaders]]
+- [Blocks](https://github.com/orientechnologies/orientdb-etl/wiki/Blocks)
+- [Extractors](https://github.com/orientechnologies/orientdb-etl/wiki/Extractors)
+- [Transformers](https://github.com/orientechnologies/orientdb-etl/wiki/Transformers)
+- [Loaders](https://github.com/orientechnologies/orientdb-etl/wiki/Loaders)
 
 Examples:
-- [Import DBPedia](Import-from-DBPedia)
+- [Import DBPedia](https://github.com/orientechnologies/orientdb-etl/wiki/Import-from-DBPedia)
 
 ## Configuration Syntax
 ```
