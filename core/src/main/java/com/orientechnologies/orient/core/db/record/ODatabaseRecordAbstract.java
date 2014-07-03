@@ -71,6 +71,7 @@ import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -91,6 +92,7 @@ import java.util.concurrent.Callable;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
+  @Deprecated
   private static final String                               DEF_RECORD_FORMAT   = "csv";
   private final Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
   protected ORecordSerializer                               serializer;
@@ -98,6 +100,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   private OMetadataDefault                                  metadata;
   private OUser                                             user;
   private byte                                              recordType;
+  @Deprecated
   private String                                            recordFormat;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION>       hooks               = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   private boolean                                           retainRecords       = true;
@@ -266,6 +269,17 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     try {
       super.open(iUserName, iUserPassword);
+      ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
+      String serializeName = getStorage().getConfiguration().getRecordSerializer();
+      if (serializeName == null)
+        serializeName = ORecordSerializerSchemaAware2CSV.NAME;
+      serializer = serializerFactory.getFormat(serializeName);
+      if (serializer == null)
+        throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
+      if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
+        // TODO: I need a better message!
+        throw new ODatabaseException("Persistet record serializer version is not support by the current implementation");
+
       componentsFactory = getStorage().getComponentsFactory();
 
       final OSBTreeCollectionManager sbTreeCM = getStorage().getResource(OSBTreeCollectionManager.class.getSimpleName(),
@@ -365,6 +379,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
             }
           }));
       level1Cache.startup();
+
+      getStorage().getConfiguration().setRecordSerializer(getSerializer().toString());
+      getStorage().getConfiguration().setRecordSerializerVersion(getSerializer().getCurrentVersion());
 
       getStorage().getConfiguration().update();
 
@@ -1523,6 +1540,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     this.dataSegmentStrategy = dataSegmentStrategy;
   }
 
+  // Never used so can be deprecate.
+  @Deprecated
   protected ORecordSerializer resolveFormat(final Object iObject) {
     return ORecordSerializerFactory.instance().getFormatForObject(iObject, recordFormat);
   }

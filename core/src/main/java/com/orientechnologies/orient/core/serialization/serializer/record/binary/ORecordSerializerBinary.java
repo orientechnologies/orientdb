@@ -10,13 +10,28 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 public class ORecordSerializerBinary implements ORecordSerializer {
 
   public static final String    NAME                = "ORecordSerializerBinary";
-  private static final byte     LAST_RECORD_VERSION = 0;
+  private static final byte     CURRENT_RECORD_VERSION = 0;
 
   private ODocumentSerializer[] serializerByVersion;
 
   public ORecordSerializerBinary() {
     serializerByVersion = new ODocumentSerializer[1];
     serializerByVersion[0] = new ORecordSerializerBinaryV0();
+  }
+
+  @Override
+  public int getCurrentVersion() {
+    return CURRENT_RECORD_VERSION;
+  }
+
+  @Override
+  public int getMinSupportedVersion() {
+    return CURRENT_RECORD_VERSION;
+  }
+
+  @Override
+  public String toString() {
+    return NAME;
   }
 
   @Override
@@ -41,8 +56,8 @@ public class ORecordSerializerBinary implements ORecordSerializer {
       return null;
     BytesContainer container = new BytesContainer();
     int pos = container.alloc(1);
-    container.bytes[pos] = LAST_RECORD_VERSION;
-    serializerByVersion[LAST_RECORD_VERSION].serialize((ODocument) iSource, container);
+    container.bytes[pos] = CURRENT_RECORD_VERSION;
+    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container);
     removeCheck((ODocument) iSource);
     return container.fitBytes();
   }

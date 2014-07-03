@@ -33,6 +33,8 @@ public class ORecordSerializerFactory {
   private static final ORecordSerializerFactory instance        = new ORecordSerializerFactory();
 
   private Map<String, ORecordSerializer>        implementations = new HashMap<String, ORecordSerializer>();
+  
+  @Deprecated
   private ORecordSerializer                     defaultRecordFormat;
 
   public ORecordSerializerFactory() {
@@ -67,6 +69,8 @@ public class ORecordSerializerFactory {
     return implementations.get(iFormatName);
   }
 
+  //Never used so can be deprecate.
+  @Deprecated
   public ORecordSerializer getFormatForObject(final Object iObject, final String iFormatName) {
     if (iObject == null)
       return null;
@@ -81,10 +85,12 @@ public class ORecordSerializerFactory {
     return recordFormat;
   }
 
+  @Deprecated
   public ORecordSerializer getDefaultRecordFormat() {
     return defaultRecordFormat;
   }
 
+  @Deprecated
   public void setDefaultRecordFormat(final ORecordSerializer iDefaultFormat) {
     this.defaultRecordFormat = iDefaultFormat;
   }

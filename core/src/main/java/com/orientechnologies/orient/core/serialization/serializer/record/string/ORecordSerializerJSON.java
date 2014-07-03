@@ -77,6 +77,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     void visitItem(Object item);
   }
 
+  @Override
+  public int getCurrentVersion() {
+    return 0;
+  }
+
+  @Override
+  public int getMinSupportedVersion() {
+    return 0;
+  }
+
   public class FormatSettings {
     public boolean includeVer;
     public boolean includeType;
