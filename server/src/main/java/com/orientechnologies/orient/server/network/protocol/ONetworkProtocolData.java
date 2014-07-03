@@ -39,4 +39,5 @@ public class ONetworkProtocolData {
   public short  protocolVersion           = -1;
   public String clientId                  = null;
   public String currentUserId             = null;
+  public String serializationImpl         = null;
 }

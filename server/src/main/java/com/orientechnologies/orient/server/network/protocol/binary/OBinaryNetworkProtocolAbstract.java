@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -283,7 +284,13 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected ORecordInternal<?> createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
       final byte recordType, final int dataSegmentId) {
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-    record.fill(rid, OVersionFactory.instance().createVersion(), buffer, true);
+
+    if (record.getRecordType() == ODocument.RECORD_TYPE) {
+      record.fill(rid, OVersionFactory.instance().createVersion(), null, true);
+      getRecordSerializer().fromStream(buffer, record, null);
+      record.setDirty();
+    } else
+      record.fill(rid, OVersionFactory.instance().createVersion(), buffer, true);
     iDatabase.save(record);
     return record;
   }
@@ -291,7 +298,12 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected ORecordVersion updateRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
       final ORecordVersion version, final byte recordType) {
     final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-    newRecord.fill(rid, version, buffer, true);
+    if (recordType == ODocument.RECORD_TYPE) {
+      newRecord.fill(rid, version, null, true);
+      getRecordSerializer().fromStream(buffer, newRecord, null);
+      newRecord.setDirty();
+    } else
+      newRecord.fill(rid, version, buffer, true);
 
     final ORecordInternal<?> currentRecord;
     if (newRecord instanceof ODocument) {
@@ -330,7 +342,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     channel.writeRID(iRecord.getIdentity());
     channel.writeVersion(iRecord.getRecordVersion());
     try {
-      final byte[] stream = iRecord.toStream();
+      final byte[] stream;
+      if (iRecord.getRecordType() == ODocument.RECORD_TYPE)
+        stream = getRecordSerializer().toStream(iRecord, false);
+      else
+        stream = iRecord.toStream();
       int realLength = stream.length;
       // TODO: This Logic should not be here provide an api in the Serializer for ask for trimmed content.
       final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
@@ -356,4 +372,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       throw new OSerializationException(message, e);
     }
   }
+
+  protected abstract ORecordSerializer getRecordSerializer();
+
 }

@@ -63,6 +63,9 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -1393,7 +1396,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         if (record != null) {
           channel.writeByte((byte) 1); // HAS RECORD
-          channel.writeBytes(record.toStream());
+          if (record.getRecordType() == ODocument.RECORD_TYPE)
+            channel.writeBytes(getRecordSerializer().toStream(record, false));
+          else
+            channel.writeBytes(record.toStream());
           channel.writeVersion(record.getRecordVersion());
           channel.writeByte(record.getRecordType());
 
@@ -1457,6 +1463,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     connection.data.driverVersion = channel.readString();
     connection.data.protocolVersion = channel.readShort();
     connection.data.clientId = channel.readString();
+    if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_21)
+      connection.data.serializationImpl = channel.readString();
+    else
+      connection.data.serializationImpl = ORecordSerializerSchemaAware2CSV.NAME;
   }
 
   protected void sendOk(final int iClientTxId) throws IOException {
@@ -2019,4 +2029,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     account = connection.database.getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
     return true;
   }
+
+  @Override
+  protected ORecordSerializer getRecordSerializer() {
+    return ORecordSerializerFactory.instance().getFormat(connection.data.serializationImpl);
+  }
+
 }
