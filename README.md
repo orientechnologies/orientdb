@@ -1,48 +1,21 @@
-Welcome to the OrientDB-ETL module. By using this module you can easily move data from and to OrientDB.
+Welcome to the OrientDB-ETL module. By using this module you can easily move data from and to OrientDB by executing an [ETL process](http://en.wikipedia.org/wiki/Extract,_transform,_load). OrientDB ETL is based on the following principles:
+- one [configuration file](Configuration-File) in [JSON](http://en.wikipedia.org/wiki/JSON) format
+- one [[Extractor]] is allowed to extract data from a source
+- one [[Loader]] is allowed to load data to a destintion
+- multiple [Transformers](Transformer) that transform data in pipeline. They receive something in input, do something, return something as output that will be processed as input by the next component
 
-## Installation
-Starting from OrientDB v2.0 the ETL module will be distributed in bundle with the official release. If you want to use it, then follow these steps:
-- Clone the repository on your computer, by executing:
- - ```git clone https://github.com/orientechnologies/orientdb-etl.git```
-- Compile the module, by executing:
- - ```mvn clean install```
-- Copy ```script/oetl.sh``` (or .bat under Windows) to $ORIENTDB_HOME/bin
-- Copy ```target/orientdb-etl-2.0-SNAPSHOT.jar``` to $ORIENTDB_HOME/lib
-
-## Usage
+## How ETL works
+```
+EXTRACTOR => TRANSFORMERS[] => LOADER
+```
+Example of a process that extract from a CSV file, apply some change, lookup if the record has already been created and then store the record as document against OrientDB database:
 
 ```
-$ cd $ORIENTDB_HOME/bin
-$ ./oetl.sh config-dbpedia.json
++----------------+-----------------------+-----------+
+|   EXTRACTOR    | TRANSFORMERS pipeline |  LOADER   |
++----------------+-----------------------+-----------+
+|    FILE       ==>  CSV->FIELD->MERGE  ==> OrientDB |
++----------------+-----------------------+-----------+
 ```
 
-## Available Components
-- [Blocks](https://github.com/orientechnologies/orientdb-etl/wiki/Blocks)
-- [Extractors](https://github.com/orientechnologies/orientdb-etl/wiki/Extractors)
-- [Transformers](https://github.com/orientechnologies/orientdb-etl/wiki/Transformers)
-- [Loaders](https://github.com/orientechnologies/orientdb-etl/wiki/Loaders)
-
-Examples:
-- [Import DBPedia](https://github.com/orientechnologies/orientdb-etl/wiki/Import-from-DBPedia)
-
-## Configuration Syntax
-```
-{
-  "config": {
-    <name>: <value>
-  },
-  "begin": [
-    { <block-name>: { <configuration> } }
-  ],
-  "extractor" : {
-    { <extractor-name>: { <configuration> } }
-  },
-  "transformers" : [
-    { <transformer-name>: { <configuration> } }
-  ],
-  "loader" : { <loader-name>: { <configuration> } },
-  "end": [
-   { <block-name>: { <configuration> } }
-  ]
-}
-```
+Look to the [Documentation](https://github.com/orientechnologies/orientdb-etl/wiki/Home) for more information.
