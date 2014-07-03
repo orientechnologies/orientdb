@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
-import com.orientechnologies.orient.etl.transformer.OAbstractTransformer;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -51,13 +50,14 @@ public class OLinkTransformer extends OAbstractTransformer {
   protected ODatabaseDocument    db;
 
   protected enum ACTION {
-    CREATE, WARNING, ERROR, HALT, SKIP
+    CREATE, NOTHING, WARNING, ERROR, HALT, SKIP
   }
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument()
-        .fromJSON("{parameters:[{joinFieldName:{optional:false,description:'field name containing the value to join'}},{linkFieldName:{optional:false,description:'field name containing the link to set'}},"
+        .fromJSON("{parameters:[{joinFieldName:{optional:false,description:'field name containing the value to join'}},"
+            + "{linkFieldName:{optional:false,description:'field name containing the link to set'}},"
             + "{linkFieldType:{optional:true,description:'field type containing the link to set. Use LINK for single link and LINKSET or LINKLIST for many'}},"
             + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
             + "{unresolvedLinkAction:{optional:true,description:'action when a unresolved link is found',values:"

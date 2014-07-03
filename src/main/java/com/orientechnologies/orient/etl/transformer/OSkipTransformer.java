@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.etl.OETLProcessor;
-import com.orientechnologies.orient.etl.transformer.OAbstractTransformer;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OSkipTransformer extends OAbstractTransformer {
   protected String     expression;
@@ -48,7 +48,16 @@ public class OSkipTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    final Boolean result = (Boolean) sqlFilter.evaluate((ODocument) input, null, context);
+    ODocument doc;
+    if (input instanceof ODocument)
+      doc = (ODocument) input;
+    else if (input instanceof OrientVertex)
+      doc = ((OrientVertex) input).getRecord();
+    else
+      throw new IllegalArgumentException(getName() + " transformer: unsupported input object '" + input + "' of class: "
+          + input.getClass());
+
+    final Boolean result = (Boolean) sqlFilter.evaluate(doc, null, context);
     if (result)
       // TRUE: SKIP IT
       return null;
