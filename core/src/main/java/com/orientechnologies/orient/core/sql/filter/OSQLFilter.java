@@ -30,6 +30,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
   public OSQLFilter(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
     super();
+
+    if( iText == null )
+      throw new IllegalArgumentException("Filter expression is null");
+
     context = iContext;
     parserText = iText;
     parserTextUpperCase = iText.toUpperCase();
