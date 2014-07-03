@@ -24,6 +24,7 @@ import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -286,8 +287,6 @@ public class OServerNetworkListener extends Thread {
    * @param iHostName
    */
   private void listen(final String iHostName, final String iHostPortRange, final String iProtocolName) {
-    final boolean allowsJVMShutdown = OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.getValueAsBoolean();
-
     final int[] ports = getPorts(iHostPortRange);
 
     for (int port : ports) {
@@ -306,20 +305,17 @@ public class OServerNetworkListener extends Thread {
         OLogManager.instance().info(this, "Port %s:%d busy, trying the next available...", iHostName, port);
       } catch (SocketException se) {
         OLogManager.instance().error(this, "Unable to create socket", se);
-        if (allowsJVMShutdown)
-          System.exit(1);
+        ShutdownHelper.shutdown(1);
       } catch (IOException ioe) {
         OLogManager.instance().error(this, "Unable to read data from an open socket", ioe);
         System.err.println("Unable to read data from an open socket.");
-        if (allowsJVMShutdown)
-          System.exit(1);
+        ShutdownHelper.shutdown(1);
       }
     }
 
     OLogManager.instance().error(this, "Unable to listen for connections using the configured ports '%s' on host '%s'",
         iHostPortRange, iHostName);
-    if (allowsJVMShutdown)
-      System.exit(1);
+    ShutdownHelper.shutdown(1);
   }
 
   /**

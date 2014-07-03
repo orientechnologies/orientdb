@@ -79,6 +79,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServ
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
@@ -1659,10 +1660,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     Thread shutdownThread = new Thread("OrientDB server shutdown thread") {
       public void run() {
         server.shutdown();
-
-        final boolean allowsJVMShutdown = OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.getValueAsBoolean();
-        if (allowsJVMShutdown)
-          System.exit(0);
+        ShutdownHelper.shutdown(1);
       }
     };
     shutdownThread.setDaemon(false);
