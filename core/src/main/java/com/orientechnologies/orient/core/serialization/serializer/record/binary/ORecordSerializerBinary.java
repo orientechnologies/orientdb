@@ -9,10 +9,11 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 
 public class ORecordSerializerBinary implements ORecordSerializer {
 
-  public static final String    NAME                = "ORecordSerializerBinary";
-  private static final byte     CURRENT_RECORD_VERSION = 0;
+  public static final String                  NAME                   = "ORecordSerializerBinary";
+  public static final ORecordSerializerBinary INSTANCE               = new ORecordSerializerBinary();
+  private static final byte                   CURRENT_RECORD_VERSION = 0;
 
-  private ODocumentSerializer[] serializerByVersion;
+  private ODocumentSerializer[]               serializerByVersion;
 
   public ORecordSerializerBinary() {
     serializerByVersion = new ODocumentSerializer[1];

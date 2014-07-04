@@ -1657,7 +1657,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     super.setup();
 
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && db instanceof ODatabaseDocument)
+    if (db != null)
       _recordFormat = db.getSerializer();
 
     if (_recordFormat == null)

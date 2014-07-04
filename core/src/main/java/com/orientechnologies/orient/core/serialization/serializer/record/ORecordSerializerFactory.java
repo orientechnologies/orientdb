@@ -33,17 +33,17 @@ public class ORecordSerializerFactory {
   private static final ORecordSerializerFactory instance        = new ORecordSerializerFactory();
 
   private Map<String, ORecordSerializer>        implementations = new HashMap<String, ORecordSerializer>();
-  
+
   @Deprecated
   private ORecordSerializer                     defaultRecordFormat;
 
   public ORecordSerializerFactory() {
     defaultRecordFormat = new ORecordSerializerRaw();
 
-    register(ORecordSerializerSchemaAware2CSV.NAME, new ORecordSerializerSchemaAware2CSV());
-    register(ORecordSerializerJSON.NAME, new ORecordSerializerJSON());
+    register(ORecordSerializerSchemaAware2CSV.NAME, ORecordSerializerSchemaAware2CSV.INSTANCE);
+    register(ORecordSerializerJSON.NAME, ORecordSerializerJSON.INSTANCE);
     register(ORecordSerializerRaw.NAME, defaultRecordFormat);
-    register(ORecordSerializerBinary.NAME, new ORecordSerializerBinary());
+    register(ORecordSerializerBinary.NAME, ORecordSerializerBinary.INSTANCE);
   }
 
   /**
@@ -69,7 +69,7 @@ public class ORecordSerializerFactory {
     return implementations.get(iFormatName);
   }
 
-  //Never used so can be deprecate.
+  // Never used so can be deprecate.
   @Deprecated
   public ORecordSerializer getFormatForObject(final Object iObject, final String iFormatName) {
     if (iObject == null)
