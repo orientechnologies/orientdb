@@ -70,6 +70,11 @@ public class OJDBCExtractor extends OAbstractExtractor {
 
     try {
       Class.forName(driverClass).newInstance();
+    } catch (Exception e) {
+      throw new OConfigurationException("JDBC Driver " + driverClass + " not found", e);
+    }
+
+    try {
       conn = DriverManager.getConnection(url, userName, userPassword);
     } catch (Exception e) {
       throw new OConfigurationException("Error on connecting to JDBC url '" + url + "' using user '" + userName
