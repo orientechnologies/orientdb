@@ -1,0 +1,9 @@
+
+.graph-container {
+    border: 1px solid #DEDEDE;
+}
+
+text.id {
+    text-anchor: middle;
+    font-weight: bold;
+}

@@ -263,6 +263,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     if ($scope.item.rawData instanceof Object) {
         $scope.item.rawData = JSON.stringify($scope.item.rawData);
     }
+    $scope.current = 'table';
     $scope.bookIcon = 'fa fa-star';
     $scope.viewerOptions = {
         lineWrapping: true,
@@ -275,6 +276,9 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
         }
 
     };
+    $scope.graphOptions = {
+        data: data
+    }
     $scope.changeIcon = function () {
         $scope.bookIcon = 'icon-star';
     }

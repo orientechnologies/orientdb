@@ -61,10 +61,8 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
         modalScope.originRid = $scope.rid;
         modalScope.container = $scope;
         modalScope.label = label
-        var modalPromise = $modal({template: 'views/vertex/modalConnection.html', persist: false, show: false, backdrop: 'static', scope: modalScope, modalClass: 'createEdge'});
-        $q.when(modalPromise).then(function (modalEl) {
-            modalEl.modal('show');
-        });
+        var modalPromise = $modal({template: 'views/vertex/modalConnection.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'createEdge'});
+
     }
     if (!$scope.doc) {
         $scope.reload();

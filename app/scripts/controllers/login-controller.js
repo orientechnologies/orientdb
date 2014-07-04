@@ -1,4 +1,5 @@
-angular.module('login.controller', ['database.services']).controller("LoginController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'DatabaseApi', 'Notification', function ($scope, $routeParams, $location, $modal, $q, Database, DatabaseApi, Notification) {
+var login = angular.module('login.controller', ['database.services']);
+login.controller("LoginController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'DatabaseApi', 'Notification', '$rootScope', function ($scope, $routeParams, $location, $modal, $q, Database, DatabaseApi, Notification, $rootScope) {
 
     $scope.server = "http://localhost:2480"
 
@@ -21,22 +22,27 @@ angular.module('login.controller', ['database.services']).controller("LoginContr
             Notification.push({content: noti});
         });
     }
+    $rootScope.$on("db:created", function (event, db) {
+        $scope.databases.push(db);
+    })
     $scope.createNew = function () {
-        modalScope = $scope.$new(true);
-        modalScope.stype = "plocal";
-        modalScope.type = "graph";
-        modalScope.username = "root";
-        modalScope.types = ['document', 'graph']
-        modalScope.stypes = ['local', 'plocal', 'memory']
-        modalScope.createNew = function () {
-            DatabaseApi.createDatabase(modalScope.name, modalScope.type, modalScope.stype, modalScope.username, modalScope.password, function (data) {
-                $scope.databases.push(modalScope.name);
-                modalScope.hide();
-            });
-        }
-        var modalPromise = $modal({template: 'views/database/newDatabase.html', scope: modalScope});
-        $q.when(modalPromise).then(function (modalEl) {
-            modalEl.modal('show');
-        });
+
+        $modal({template: 'views/database/newDatabase.html', show: true});
     }
 }]);
+
+login.controller("NewDatabaseController", function ($scope, DatabaseApi, $rootScope) {
+
+
+    $scope.stype = "plocal";
+    $scope.type = "graph";
+    $scope.username = "root";
+    $scope.types = ['document', 'graph']
+    $scope.stypes = ['local', 'plocal', 'memory']
+    $scope.createNew = function () {
+        DatabaseApi.createDatabase($scope.name, $scope.type, $scope.stype, $scope.username, $scope.password, function (data) {
+            $rootScope.$emit("db:created", $scope.name);
+            $scope.$hide();
+        });
+    }
+});

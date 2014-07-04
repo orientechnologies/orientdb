@@ -276,7 +276,7 @@ div.edge form.bs-docs-example:after {
     font-size: 13px;
     height: 39px;
     padding: 0px 19px 14px;
-    line-height: 39px;
+    /*line-height: 39px;*/
 }
 
 .query-info .row-fluid [class*="span"] {
@@ -849,7 +849,7 @@ ul.arrayrid > li {
     height: 50px;
     margin: 0 auto;
     position: relative;
-    top: -75px;
+    top: -65px;
     -moz-animation: spinoffPulse 1s infinite linear;
     -webkit-animation: spinoffPulse 1s infinite linear;
 }

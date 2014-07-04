@@ -5,7 +5,7 @@
                 In Edges <a href="javascript:void(0)" ng-init="init('incomings')"
                             ng-controller="VertexPopoverLabelController" data-placement="bottom"
                             data-title="Add Label" bs-popover="'views/vertex/addLabel.html'"><i
-                    class="icon-plus-sign"></i></a>
+                    class="fa fa-plus-circle"></i></a>
             </div>
             <div class="panel-body">
                 <form>
@@ -15,7 +15,7 @@
                                 <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2"
                                    data-target="#{{i}}" href="javascript:void(0)">
                                     {{ i | nograph }} ({{filterArray(doc[i]).length}})
-                                    <i class="icon-plus-sign" data-placement="bottom"
+                                    <i class="fa fa-plus-circle" data-placement="bottom"
                                        ng-click="showModalConnection(i)"></i>
                                 </a>
                             </div>
@@ -52,7 +52,7 @@
             <div class="panel-heading">
                 <a href="javascript:void(0)" ng-init="init('outgoings')"
                    ng-controller="VertexPopoverLabelController" data-placement="bottom" data-title="Add Label"
-                   bs-popover="'views/vertex/addLabel.html'"><i class="icon-plus-sign"></i></a> Out Edges
+                   bs-popover="'views/vertex/addLabel.html'"><i class="fa fa-plus-circle"></i></a> Out Edges
             </div>
             <div class="panel-body">
                 <form>
@@ -62,7 +62,7 @@
                                 <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion1"
                                    data-target="#{{i}}" href="javascript:void(0)">
                                     {{i | nograph}} ({{filterArray(doc[i]).length}})
-                                    <i class="icon-plus-sign" data-placement="bottom"
+                                    <i class="fa fa-plus-circle" data-placement="bottom"
                                        ng-click="showModalConnection(i)"></i>
                                 </a>
                             </div>

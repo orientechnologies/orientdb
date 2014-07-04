@@ -80,3 +80,7 @@ body div.container-studio {
     /*max-height: 40px;*/
     /*overflow: auto;*/
 }
+
+.del-field {
+    padding-left: 0px;
+}

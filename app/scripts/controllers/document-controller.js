@@ -302,10 +302,8 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
             var modalScope = $scope.$new(true);
             modalScope.addField = $scope.addField;
             modalScope.types = Database.getSupportedTypes();
-            var modalPromise = $modal({template: 'views/database/newField.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
-            $q.when(modalPromise).then(function (modalEl) {
-                modalEl.modal('show');
-            });
+            var modalPromise = $modal({template: 'views/database/newField.html', persist: true, show: true, backdrop: 'static', scope: modalScope});
+
         }
 
     }
