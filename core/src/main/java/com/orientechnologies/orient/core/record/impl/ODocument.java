@@ -1399,10 +1399,14 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * Returns the number of fields in memory.
    */
   public int fields() {
+    checkForLoading();
+    checkForFields();
     return _fieldValues == null ? 0 : _fieldValues.size();
   }
 
   public boolean isEmpty() {
+    checkForLoading();
+    checkForFields();
     return _fieldValues == null || _fieldValues.isEmpty();
   }
 
