@@ -399,6 +399,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         }
 
         if (fieldValue instanceof Map<?, ?>) {
+          @SuppressWarnings("unchecked")
           Map<String, Object> map = (Map<String, Object>) fieldValue;
 
           OPair<String, Object> pair = entry.getValue();
