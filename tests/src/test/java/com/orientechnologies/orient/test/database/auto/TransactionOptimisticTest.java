@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "dictionary")
-public class TransactionOptimisticTest extends BaseTest {
+public class TransactionOptimisticTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
   public TransactionOptimisticTest(@Optional String iURL) {
     super(iURL);

@@ -45,7 +45,7 @@ import java.util.*;
  * 
  */
 public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty {
-  private OClassImpl          owner;
+  private final OClassImpl    owner;
 
   private String              name;
   private OType               type;
@@ -62,12 +62,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private boolean             readonly;
   private Map<String, String> customFields;
   private OCollate            collate = new ODefaultCollate();
-
-  /**
-   * Constructor used in unmarshalling.
-   */
-  public OPropertyImpl() {
-  }
 
   public OPropertyImpl(final OClassImpl iOwner, final String iName, final OType iType) {
     this(iOwner);
@@ -578,12 +572,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       break;
     }
 
-    try {
-      saveInternal();
-    } catch (Exception e) {
-    }
-
-    owner.reload();
+    saveInternal();
   }
 
   public void set(final ATTRIBUTES attribute, final Object iValue) {
@@ -765,8 +754,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public void saveInternal() {
-    if (!(getDatabase().getStorage() instanceof OStorageProxy))
-      ((OSchemaProxy) getDatabase().getMetadata().getSchema()).saveInternal();
+    owner.saveInternal();
   }
 
   private void checkForDateFormat(final String iDateAsString) {

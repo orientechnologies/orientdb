@@ -59,31 +59,4 @@ public class AbstractClassTest {
   public void testCannotCreateInstances() {
     new ODocument("AbstractPerson").save();
   }
-  //
-  // @Test
-  // public void testAlterClass() {
-  // OClass abstractPerson = database.getMetadata().getSchema().getClass("AbstractPerson");
-  // Assert.assertNotNull(abstractPerson);
-  //
-  // abstractPerson.setAbstract(false);
-  // ODocument doc = new ODocument("AbstractPerson").save();
-  //
-  // try {
-  // abstractPerson.setAbstract(true);
-  // Assert.assertTrue(false);
-  // } catch (OCommandExecutionException e) {
-  // Assert.assertTrue(e.getCause() instanceof IllegalStateException);
-  // }
-  //
-  // doc.delete();
-  //
-  // abstractPerson.setAbstract(true);
-  //
-  // try {
-  // doc.load();
-  // Assert.assertTrue(false);
-  // } catch (ORecordNotFoundException e) {
-  // Assert.assertTrue(true);
-  // }
-  // }
 }

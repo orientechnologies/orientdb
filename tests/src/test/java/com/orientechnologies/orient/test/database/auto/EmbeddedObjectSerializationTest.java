@@ -16,7 +16,7 @@ import java.util.List;
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 3/27/14
  */
-public class EmbeddedObjectSerializationTest extends BaseTest {
+public class EmbeddedObjectSerializationTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
   public EmbeddedObjectSerializationTest(@Optional String url) {

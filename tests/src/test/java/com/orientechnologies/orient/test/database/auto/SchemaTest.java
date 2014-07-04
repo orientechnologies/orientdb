@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -37,16 +38,13 @@ import java.io.IOException;
 import java.util.List;
 
 @Test(groups = "schema")
-public class SchemaTest {
-  private ODatabaseDocumentTx database;
-  private String              url;
+public class SchemaTest extends DocumentDBBaseTest {
+	@Parameters(value = "url")
+	public SchemaTest(@Optional String url) {
+		super(url);
+	}
 
-  @Parameters(value = "url")
-  public SchemaTest(String iURL) {
-    url = iURL;
-  }
-
-  public void createSchema() throws IOException {
+	public void createSchema() throws IOException {
     database = new ODatabaseDocumentTx(url);
     if (ODatabaseHelper.existsDatabase(database, "plocal"))
       database.open("admin", "admin");

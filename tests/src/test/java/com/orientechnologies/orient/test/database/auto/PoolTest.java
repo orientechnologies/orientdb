@@ -18,7 +18,7 @@ import java.util.concurrent.*;
  * @since 3/31/14
  */
 @Test
-public class PoolTest extends BaseTest {
+public class PoolTest extends DocumentDBBaseTest {
   private int                  counter = 0;
   private final Object         lock    = new Object();
 

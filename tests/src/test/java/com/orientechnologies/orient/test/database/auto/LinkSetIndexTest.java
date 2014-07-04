@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 3/28/14
  */
-public class LinkSetIndexTest extends BaseTest {
+public class LinkSetIndexTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
   public LinkSetIndexTest(@Optional String url) {
     super(url);

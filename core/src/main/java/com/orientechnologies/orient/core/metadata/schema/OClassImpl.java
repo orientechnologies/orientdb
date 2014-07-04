@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
@@ -55,29 +56,24 @@ import java.util.concurrent.Callable;
  */
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final long              serialVersionUID        = 1L;
-  private static final int               NOT_EXISTENT_CLUSTER_ID = -1;
-  protected int                          defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
-  protected final Map<String, OProperty> properties              = new LinkedHashMap<String, OProperty>();
-  protected OSchemaShared                owner;
-  protected String                       name;
-  protected Class<?>                     javaClass;
-  protected int[]                        clusterIds;
-  protected OClassImpl                   superClass;
-  protected int[]                        polymorphicClusterIds;
-  protected List<OClass>                 baseClasses;
-  protected float                        overSize                = 0f;
-  protected String                       shortName;
-  protected boolean                      strictMode              = false;                                 // @SINCE v1.0rc8
-  protected boolean                      abstractClass           = false;                                 // @SINCE v1.2.0
-  protected Map<String, String>          customFields;
-  protected OClusterSelectionStrategy    clusterSelection;                                                // @SINCE 1.7
+  private static final long            serialVersionUID        = 1L;
+  private static final int             NOT_EXISTENT_CLUSTER_ID = -1;
 
-  /**
-   * Constructor used in unmarshalling.
-   */
-  public OClassImpl() {
-  }
+  private int                          defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
+  private final Map<String, OProperty> properties              = new HashMap<String, OProperty>();
+  protected final OSchemaShared        owner;
+  private String                       name;
+  private Class<?>                     javaClass;
+  private int[]                        clusterIds;
+  private OClassImpl                   superClass;
+  private int[]                        polymorphicClusterIds;
+  private List<OClass>                 baseClasses;
+  private float                        overSize                = 0f;
+  private String                       shortName;
+  private boolean                      strictMode              = false;                           // @SINCE v1.0rc8
+  private boolean                      abstractClass           = false;                           // @SINCE v1.2.0
+  private Map<String, String>          customFields;
+  private OClusterSelectionStrategy    clusterSelection;                                          // @SINCE 1.7
 
   /**
    * Constructor used in unmarshalling.
@@ -598,18 +594,32 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     clusterIds[clusterIds.length - 1] = clusterId;
     Arrays.sort(clusterIds);
 
-    polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
-    polymorphicClusterIds[polymorphicClusterIds.length - 1] = clusterId;
-    Arrays.sort(polymorphicClusterIds);
+    addPolymorphicClusterId(clusterId);
 
     if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID)
       defaultClusterId = clusterId;
 
     setDirty();
-    addClusterIdToIndexes(clusterId);
+    saveInternal();
 
     owner.addClusterForClass(clusterId, this);
     return this;
+  }
+
+  private void addPolymorphicClusterId(int clusterId) {
+    if (Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0)
+      return;
+
+    polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
+    polymorphicClusterIds[polymorphicClusterIds.length - 1] = clusterId;
+    Arrays.sort(polymorphicClusterIds);
+
+    setDirty();
+
+    addClusterIdToIndexes(clusterId);
+
+    if (superClass != null)
+      superClass.addPolymorphicClusterId(clusterId);
   }
 
   public OClass removeClusterId(final int clusterId) {
@@ -618,14 +628,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     getDatabase().command(new OCommandSQL(cmd)).execute();
     removeClusterIdInternal(clusterId);
 
-    owner.removeClusterForClass(clusterId, this);
     return this;
   }
 
-  public OClass removeClusterIdInternal(final int iId) {
+  public OClass removeClusterIdInternal(final int clusterToRemove) {
     boolean found = false;
     for (int clusterId : clusterIds) {
-      if (clusterId == iId) {
+      if (clusterId == clusterToRemove) {
         found = true;
         break;
       }
@@ -634,7 +643,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (found) {
       final int[] newClusterIds = new int[clusterIds.length - 1];
       for (int i = 0, k = 0; i < clusterIds.length; ++i) {
-        if (clusterIds[i] == iId)
+        if (clusterIds[i] == clusterToRemove)
           // JUMP IT
           continue;
 
@@ -643,11 +652,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
       clusterIds = newClusterIds;
 
-      removePolymorphicClusterId(iId);
+      removePolymorphicClusterId(clusterToRemove);
     }
 
-    if (defaultClusterId == iId)
+    if (defaultClusterId == clusterToRemove)
       defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+
+    owner.removeClusterForClass(clusterToRemove, this);
+
+    setDirty();
+    saveInternal();
 
     return this;
   }
@@ -681,14 +695,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (baseClasses == null)
       return this;
 
-    if (baseClasses.remove(baseClass)) {
-      OClassImpl currentClass = this;
-
-      while (currentClass != null) {
-        currentClass.removePolymorphicClusterIds((OClassImpl) baseClass);
-        currentClass = (OClassImpl) currentClass.getSuperClass();
-      }
-    }
+    if (baseClasses.remove(baseClass))
+      removePolymorphicClusterIds((OClassImpl) baseClass);
 
     return this;
   }
@@ -1279,11 +1287,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void addClusterIdToIndexes(int iId) {
-    String clusterName = getDatabase().getClusterNameById(iId);
-    for (OIndex<?> index : getIndexes()) {
-      if (index.getInternal() != null) {
-        index.getInternal().addCluster(clusterName);
-      }
+    if (getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded) {
+      final String clusterName = getDatabase().getClusterNameById(iId);
+      final List<String> indexesToAdd = new ArrayList<String>();
+
+      for (OIndex<?> index : getIndexes())
+        indexesToAdd.add(index.getName());
+
+      final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+      for (String indexName : indexesToAdd)
+        indexManager.addClusterToIndex(clusterName, indexName);
     }
   }
 
@@ -1313,9 +1326,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void removePolymorphicClusterIds(final OClassImpl iBaseClass) {
-    for (final int clusterId : iBaseClass.polymorphicClusterIds) {
+    for (final int clusterId : iBaseClass.polymorphicClusterIds)
       removePolymorphicClusterId(clusterId);
-    }
   }
 
   private void removePolymorphicClusterId(int clusterId) {
@@ -1327,6 +1339,26 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       System.arraycopy(polymorphicClusterIds, index + 1, polymorphicClusterIds, index, polymorphicClusterIds.length - (index + 1));
 
     polymorphicClusterIds = Arrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length - 1);
+
+    setDirty();
+    removeClusterFromIndexes(clusterId);
+
+    if (superClass != null)
+      superClass.removePolymorphicClusterId(clusterId);
+  }
+
+  private void removeClusterFromIndexes(int iId) {
+    if (getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded) {
+      final String clusterName = getDatabase().getClusterNameById(iId);
+      final List<String> indexesToRemove = new ArrayList<String>();
+
+      for (final OIndex<?> index : getIndexes())
+        indexesToRemove.add(index.getName());
+
+      final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
+      for (final String indexName : indexesToRemove)
+        indexManager.removeClusterFromIndex(clusterName, indexName);
+    }
   }
 
   private void tryDropCluster(int defaultClusterId) {
