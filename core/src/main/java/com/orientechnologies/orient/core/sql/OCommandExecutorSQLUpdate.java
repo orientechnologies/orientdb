@@ -427,25 +427,52 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
           final Object fieldValue = record.field(entry.getKey());
 
           if (fieldValue instanceof Collection<?>) {
-            if (((Collection<?>) fieldValue).remove(value))
-              updated = true;
+            updated = removeFromCollection(updated, value, (Collection<?>) fieldValue);
           } else if (fieldValue instanceof Map<?, ?>) {
-            if (((Map<?, ?>) fieldValue).remove(value) != null)
-              updated = true;
+            updated = removeFromMap(updated, value, (Map<?, ?>) fieldValue);
           } else if (fieldValue instanceof ORidBag) {
-            final ORidBag bag = (ORidBag) fieldValue;
-
-            if (!(value instanceof OIdentifiable))
-              throw new OCommandExecutionException("Only links or records can be removed from LINKBAG");
-
-            bag.remove((OIdentifiable) value);
-            if (record.isDirty())
-              updated = true;
+            updated = removeFromBag(record, updated, value, (ORidBag) fieldValue);
           }
         }
       }
     }
     return updated;
+  }
+
+  private boolean removeFromCollection(boolean updated, Object value, Collection<?> collection) {
+    if (value instanceof Collection<?>)
+      updated |= collection.removeAll(((Collection) value));
+    else
+      updated |= collection.remove(value);
+    return updated;
+  }
+
+  private boolean removeFromMap(boolean updated, Object value, Map<?, ?> map) {
+    if (value instanceof Collection) {
+      for (Object o : ((Collection) value)) {
+        updated |= map.remove(o) != null;
+      }
+    } else
+      updated |= map.remove(value) != null;
+    return updated;
+  }
+
+  private boolean removeFromBag(ODocument record, boolean updated, Object value, ORidBag bag) {
+    if (value instanceof Collection) {
+      for (Object o : ((Collection) value)) {
+        updated |= removeSingleValueFromBag(bag, o, record);
+      }
+    } else
+      updated |= removeSingleValueFromBag(bag, value, record);
+    return updated;
+  }
+
+  private boolean removeSingleValueFromBag(ORidBag bag, Object value, ODocument record) {
+    if (!(value instanceof OIdentifiable))
+      throw new OCommandExecutionException("Only links or records can be removed from LINKBAG");
+
+    bag.remove((OIdentifiable) value);
+    return record.isDirty();
   }
 
   private Object extractValue(ODocument record, OPair<String, Object> entry) {
