@@ -13,21 +13,26 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *  
+ *
  */
 
-package com.orientechnologies.orient.etl.extract;
+package com.orientechnologies.orient.etl.extractor;
+
+import com.orientechnologies.orient.etl.OETLComponent;
+
+import java.util.Iterator;
 
 /**
- * Created by luca on 26/06/14.
+ * ETL Extractor.
  */
-public class OExtractorException extends RuntimeException {
+public interface OExtractor extends OETLComponent, Iterator<Object> {
+  public String getUnit();
 
-  public OExtractorException(final Exception e) {
-    super(e);
-  }
+  public long getProgress();
 
-  public OExtractorException(String s) {
-    super(s);
-  }
+  public long getTotal();
+
+  public long getCurrent();
+
+  public String getCurrentUnit();
 }

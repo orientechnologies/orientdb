@@ -16,7 +16,7 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extract;
+package com.orientechnologies.orient.etl.extractor;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 

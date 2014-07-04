@@ -16,23 +16,27 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extract;
+package com.orientechnologies.orient.etl.extractor;
 
-import com.orientechnologies.orient.etl.OETLComponent;
-
-import java.util.Iterator;
+import com.orientechnologies.orient.etl.OAbstractETLComponent;
 
 /**
- * ETL Extractor.
+ * Abstract Transformer.
  */
-public interface OExtractor extends OETLComponent, Iterator<Object> {
-  public String getUnit();
+public abstract class OAbstractExtractor extends OAbstractETLComponent implements OExtractor {
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException("remove()");
+  }
 
-  public long getProgress();
+  @Override
+  public long getCurrent() {
+    return getProgress();
+  }
 
-  public long getTotal();
+  @Override
+  public String getCurrentUnit() {
+    return getUnit();
+  }
 
-  public long getCurrent();
-
-  public String getCurrentUnit();
 }

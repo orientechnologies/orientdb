@@ -13,20 +13,25 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *
+ *  
  */
 
-package com.orientechnologies.orient.etl.extract;
-
-import com.orientechnologies.orient.etl.OAbstractETLComponent;
+package com.orientechnologies.orient.etl.extractor;
 
 /**
- * Abstract Transformer.
+ * Created by luca on 26/06/14.
  */
-public abstract class OAbstractExtractor extends OAbstractETLComponent implements OExtractor {
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException("remove()");
+public class OExtractorException extends RuntimeException {
+
+  public OExtractorException(final Exception e) {
+    super(e);
   }
 
+  public OExtractorException(String s) {
+    super(s);
+  }
+
+  public OExtractorException(String s, Exception e) {
+    super(s, e);
+  }
 }

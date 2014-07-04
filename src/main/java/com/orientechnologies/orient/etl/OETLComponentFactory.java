@@ -22,8 +22,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.etl.block.OBlock;
 import com.orientechnologies.orient.etl.block.OCodeBlock;
 import com.orientechnologies.orient.etl.block.OLetBlock;
-import com.orientechnologies.orient.etl.extract.OExtractor;
-import com.orientechnologies.orient.etl.extract.OLineExtractor;
+import com.orientechnologies.orient.etl.extractor.OExtractor;
+import com.orientechnologies.orient.etl.extractor.OJDBCExtractor;
+import com.orientechnologies.orient.etl.extractor.OLineExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.loader.OOrientDBLoader;
 import com.orientechnologies.orient.etl.transformer.*;
@@ -46,6 +47,7 @@ public class OETLComponentFactory {
     registerBlock(OCodeBlock.class);
     registerBlock(OLetBlock.class);
 
+    registerExtractor(OJDBCExtractor.class);
     registerExtractor(OLineExtractor.class);
 
     registerTransformer(OBlockTransformer.class);
