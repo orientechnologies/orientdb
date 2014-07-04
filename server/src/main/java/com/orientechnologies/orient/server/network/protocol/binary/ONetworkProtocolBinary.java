@@ -1396,10 +1396,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         if (record != null) {
           channel.writeByte((byte) 1); // HAS RECORD
-          if (record.getRecordType() == ODocument.RECORD_TYPE)
-            channel.writeBytes(getRecordSerializer().toStream(record, false));
-          else
-            channel.writeBytes(record.toStream());
+          channel.writeBytes(getRecordBytes(record));
           channel.writeVersion(record.getRecordVersion());
           channel.writeByte(record.getRecordType());
 
@@ -2031,8 +2028,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   @Override
-  protected ORecordSerializer getRecordSerializer() {
-    return ORecordSerializerFactory.instance().getFormat(connection.data.serializationImpl);
+  protected String getRecordSerializerName() {
+    return connection.data.serializationImpl;
   }
 
 }
