@@ -86,7 +86,6 @@ public class OFetchHelper {
         processRecord(record, iUserObject, iFetchPlan, 0, 0, -1, parsedRecords, "", iListener, iContext, iFormat);
       }
     } catch (Exception e) {
-      e.printStackTrace();
       OLogManager.instance().error(null, "Fetching error on record %s", e, iRootRecord.getIdentity());
     }
   }
@@ -199,7 +198,6 @@ public class OFetchHelper {
           fetchRidMap(record, iFetchPlan, fieldValue, fieldName, iCurrentLevel, nextLevel, iFieldDepthLevel, parsedRecords,
               fieldPath, iContext);
         } catch (Exception e) {
-          e.printStackTrace();
           OLogManager.instance().error(null, "Fetching error on record %s", e, record.getIdentity());
         }
       }

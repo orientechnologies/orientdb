@@ -759,7 +759,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       try {
         listener.onOpen(getDatabaseOwner());
       } catch (Throwable t) {
-        t.printStackTrace();
+        OLogManager.instance().error(this, "Error on invoking onOpen() against listener: %s", t, listener);
       }
   }
 
@@ -773,7 +773,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       try {
         listener.onClose(getDatabaseOwner());
       } catch (Throwable t) {
-        t.printStackTrace();
+        OLogManager.instance().error(this, "Error on invoking onClose() against listener: %s", t, listener);
       }
   }
 

@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.server.handler;
 
-import java.lang.reflect.Method;
-import java.util.List;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -12,6 +9,9 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHookConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+
+import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * User: kasper fock Date: 09/11/12 Time: 22:35 Registers hooks defined the in xml configuration.
@@ -59,8 +59,7 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
             }
           db.registerHook(h, pos);
         } catch (Exception e) {
-          e.printStackTrace();
-          OLogManager.instance().error(this, "[configure] Failed to configure hook '%s' due to the an error : ", hook.clazz,
+          OLogManager.instance().error(this, "[configure] Failed to configure hook '%s' due to the an error : ", e, hook.clazz,
               e.getMessage());
         }
       }

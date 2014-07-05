@@ -16,13 +16,6 @@
 
 package com.orientechnologies.orient.server.schedule;
 
-import java.io.File;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -35,18 +28,25 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
+import java.io.File;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * Author : henryzhao81@gmail.com Mar 28, 2013
  */
 
 public class OScheduleHandler extends OServerPluginAbstract {
+  private final static String BASEPATH      = "${ORIENTDB_HOME}/databases/";
   private static int          MAX_POOL_SIZE = 21;                                         // 1 for TimerThread
   private ExecutorService     executor      = Executors.newFixedThreadPool(MAX_POOL_SIZE);
   protected String            databaseName  = "";
   protected String            user          = "admin";
   protected String            pass          = "admin";
   protected boolean           isEnabled     = false;
-  private final static String BASEPATH      = "${ORIENTDB_HOME}/databases/";
 
   public OScheduleHandler() {
   }
@@ -116,9 +116,8 @@ public class OScheduleHandler extends OServerPluginAbstract {
         OLogManager.instance().error(this, "database " + this.databaseName + " does not exist");
       }
     } catch (Exception ex) {
-      ex.printStackTrace();
       db = null;
-      OLogManager.instance().error(this, "failed to open database");
+      OLogManager.instance().error(this, "failed to open database", ex);
     }
     return db;
   }

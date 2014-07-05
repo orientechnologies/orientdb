@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.serialization;
 
 import com.orientechnologies.common.io.OIOException;
+import com.orientechnologies.common.log.OLogManager;
 
 /**
  * <p>
@@ -345,6 +346,417 @@ public class OBase64Utils {
   /* ******** D E T E R M I N E W H I C H A L H A B E T ******** */
 
   /**
+   * A {@link OBase64Utils.InputStream} will read data from another <tt>java.io.InputStream</tt>, given in the constructor, and
+   * encode/decode to/from Base64 notation on the fly.
+   * 
+   * @see OBase64Utils
+   * @since 1.3
+   */
+  public static class InputStream extends java.io.FilterInputStream {
+
+    private boolean encode;      // Encoding or decoding
+    private int     position;    // Current position in the buffer
+    private byte[]  buffer;      // Small buffer holding converted data
+    private int     bufferLength; // Length of buffer (3 or 4)
+    private int     numSigBytes; // Number of meaningful bytes in the buffer
+    private int     lineLength;
+    private boolean breakLines;  // Break lines at less than 80 characters
+    private int     options;     // Record options used to create the stream.
+    private byte[]  decodabet;   // Local copies to avoid extra method calls
+
+    /**
+     * Constructs a {@link OBase64Utils.InputStream} in DECODE mode.
+     * 
+     * @param in
+     *          the <tt>java.io.InputStream</tt> from which to read data.
+     * @since 1.3
+     */
+    public InputStream(java.io.InputStream in) {
+      this(in, DECODE);
+    } // end constructor
+
+    /**
+     * Constructs a {@link OBase64Utils.InputStream} in either ENCODE or DECODE mode.
+     * <p>
+     * Valid options:
+     * 
+     * <pre>
+     *   ENCODE or DECODE: Encode or Decode as data is read.
+     *   DO_BREAK_LINES: break lines at 76 characters
+     *     (only meaningful when encoding)</i>
+     * </pre>
+     * <p>
+     * Example: <code>new Base64.InputStream( in, Base64.DECODE )</code>
+     * 
+     * 
+     * @param in
+     *          the <tt>java.io.InputStream</tt> from which to read data.
+     * @param options
+     *          Specified options
+     * @see OBase64Utils#ENCODE
+     * @see OBase64Utils#DECODE
+     * @see OBase64Utils#DO_BREAK_LINES
+     * @since 2.0
+     */
+    public InputStream(java.io.InputStream in, int options) {
+
+      super(in);
+      this.options = options; // Record for later
+      this.breakLines = (options & DO_BREAK_LINES) > 0;
+      this.encode = (options & ENCODE) > 0;
+      this.bufferLength = encode ? 4 : 3;
+      this.buffer = new byte[bufferLength];
+      this.position = -1;
+      this.lineLength = 0;
+      this.decodabet = getDecodabet(options);
+    } // end constructor
+
+    /**
+     * Reads enough of the input stream to convert to/from Base64 and returns the next byte.
+     * 
+     * @return next byte
+     * @since 1.3
+     */
+    @Override
+    public int read() throws java.io.IOException {
+
+      // Do we need to get data?
+      if (position < 0) {
+        if (encode) {
+          byte[] b3 = new byte[3];
+          int numBinaryBytes = 0;
+          for (int i = 0; i < 3; i++) {
+            int b = in.read();
+
+            // If end of stream, b is -1.
+            if (b >= 0) {
+              b3[i] = (byte) b;
+              numBinaryBytes++;
+            } else {
+              break; // out of for loop
+            } // end else: end of stream
+
+          } // end for: each needed input byte
+
+          if (numBinaryBytes > 0) {
+            encode3to4(b3, 0, numBinaryBytes, buffer, 0, options);
+            position = 0;
+            numSigBytes = 4;
+          } // end if: got data
+          else {
+            return -1; // Must be end of stream
+          } // end else
+        } // end if: encoding
+
+        // Else decoding
+        else {
+          byte[] b4 = new byte[4];
+          int i = 0;
+          for (i = 0; i < 4; i++) {
+            // Read four "meaningful" bytes:
+            int b = 0;
+            do {
+              b = in.read();
+            } while (b >= 0 && decodabet[b & 0x7f] <= WHITE_SPACE_ENC);
+
+            if (b < 0) {
+              break; // Reads a -1 if end of stream
+            } // end if: end of stream
+
+            b4[i] = (byte) b;
+          } // end for: each needed input byte
+
+          if (i == 4) {
+            numSigBytes = decode4to3(b4, 0, buffer, 0, options);
+            position = 0;
+          } // end if: got four characters
+          else if (i == 0) {
+            return -1;
+          } // end else if: also padded correctly
+          else {
+            // Must have broken out from above.
+            throw new java.io.IOException("Improperly padded Base64 input.");
+          } // end
+
+        } // end else: decode
+      } // end else: get data
+
+      // Got data?
+      if (position >= 0) {
+        // End of relevant data?
+        if ( /* !encode && */position >= numSigBytes) {
+          return -1;
+        } // end if: got data
+
+        if (encode && breakLines && lineLength >= MAX_LINE_LENGTH) {
+          lineLength = 0;
+          return '\n';
+        } // end if
+        else {
+          lineLength++; // This isn't important when decoding
+                        // but throwing an extra "if" seems
+                        // just as wasteful.
+
+          int b = buffer[position++];
+
+          if (position >= bufferLength) {
+            position = -1;
+          } // end if: end
+
+          return b & 0xFF; // This is how you "cast" a byte that's
+                           // intended to be unsigned.
+        } // end else
+      } // end if: position >= 0
+
+      // Else error
+      else {
+        throw new java.io.IOException("Error in Base64 code reading stream.");
+      } // end else
+    } // end read
+
+    /**
+     * Calls {@link #read()} repeatedly until the end of stream is reached or <var>len</var> bytes are read. Returns number of bytes
+     * read into array or -1 if end of stream is encountered.
+     * 
+     * @param dest
+     *          array to hold values
+     * @param off
+     *          offset for array
+     * @param len
+     *          max number of bytes to read into array
+     * @return bytes read into array or -1 if end of stream is encountered.
+     * @since 1.3
+     */
+    @Override
+    public int read(byte[] dest, int off, int len) throws java.io.IOException {
+      int i;
+      int b;
+      for (i = 0; i < len; i++) {
+        b = read();
+
+        if (b >= 0) {
+          dest[off + i] = (byte) b;
+        } else if (i == 0) {
+          return -1;
+        } else {
+          break; // Out of 'for' loop
+        } // Out of 'for' loop
+      } // end for: each byte read
+      return i;
+    } // end read
+
+  } // end inner class InputStream
+
+  /**
+   * A {@link OBase64Utils.OutputStream} will write data to another <tt>java.io.OutputStream</tt>, given in the constructor, and
+   * encode/decode to/from Base64 notation on the fly.
+   * 
+   * @see OBase64Utils
+   * @since 1.3
+   */
+  public static class OutputStream extends java.io.FilterOutputStream {
+
+    private boolean encode;
+    private int     position;
+    private byte[]  buffer;
+    private int     bufferLength;
+    private int     lineLength;
+    private boolean breakLines;
+    private byte[]  b4;             // Scratch used in a few places
+    private boolean suspendEncoding;
+    private int     options;        // Record for later
+    private byte[]  decodabet;      // Local copies to avoid extra method calls
+
+    /**
+     * Constructs a {@link OBase64Utils.OutputStream} in ENCODE mode.
+     * 
+     * @param out
+     *          the <tt>java.io.OutputStream</tt> to which data will be written.
+     * @since 1.3
+     */
+    public OutputStream(java.io.OutputStream out) {
+      this(out, ENCODE);
+    } // end constructor
+
+    /**
+     * Constructs a {@link OBase64Utils.OutputStream} in either ENCODE or DECODE mode.
+     * <p>
+     * Valid options:
+     * 
+     * <pre>
+     *   ENCODE or DECODE: Encode or Decode as data is read.
+     *   DO_BREAK_LINES: don't break lines at 76 characters
+     *     (only meaningful when encoding)</i>
+     * </pre>
+     * <p>
+     * Example: <code>new Base64.OutputStream( out, Base64.ENCODE )</code>
+     * 
+     * @param out
+     *          the <tt>java.io.OutputStream</tt> to which data will be written.
+     * @param options
+     *          Specified options.
+     * @see OBase64Utils#ENCODE
+     * @see OBase64Utils#DECODE
+     * @see OBase64Utils#DO_BREAK_LINES
+     * @since 1.3
+     */
+    public OutputStream(java.io.OutputStream out, int options) {
+      super(out);
+      this.breakLines = (options & DO_BREAK_LINES) != 0;
+      this.encode = (options & ENCODE) != 0;
+      this.bufferLength = encode ? 3 : 4;
+      this.buffer = new byte[bufferLength];
+      this.position = 0;
+      this.lineLength = 0;
+      this.suspendEncoding = false;
+      this.b4 = new byte[4];
+      this.options = options;
+      this.decodabet = getDecodabet(options);
+    } // end constructor
+
+    /**
+     * Writes the byte to the output stream after converting to/from Base64 notation. When encoding, bytes are buffered three at a
+     * time before the output stream actually gets a write() call. When decoding, bytes are buffered four at a time.
+     * 
+     * @param theByte
+     *          the byte to write
+     * @since 1.3
+     */
+    @Override
+    public void write(int theByte) throws java.io.IOException {
+      // Encoding suspended?
+      if (suspendEncoding) {
+        this.out.write(theByte);
+        return;
+      } // end if: supsended
+
+      // Encode?
+      if (encode) {
+        buffer[position++] = (byte) theByte;
+        if (position >= bufferLength) { // Enough to encode.
+
+          this.out.write(encode3to4(b4, buffer, bufferLength, options));
+
+          lineLength += 4;
+          if (breakLines && lineLength >= MAX_LINE_LENGTH) {
+            this.out.write(NEW_LINE);
+            lineLength = 0;
+          } // end if: end of line
+
+          position = 0;
+        } // end if: enough to output
+      } // end if: encoding
+
+      // Else, Decoding
+      else {
+        // Meaningful Base64 character?
+        if (decodabet[theByte & 0x7f] > WHITE_SPACE_ENC) {
+          buffer[position++] = (byte) theByte;
+          if (position >= bufferLength) { // Enough to output.
+
+            int len = OBase64Utils.decode4to3(buffer, 0, b4, 0, options);
+            out.write(b4, 0, len);
+            position = 0;
+          } // end if: enough to output
+        } // end if: meaningful base64 character
+        else if (decodabet[theByte & 0x7f] != WHITE_SPACE_ENC) {
+          throw new java.io.IOException("Invalid character in Base64 data.");
+        } // end else: not white space either
+      } // end else: decoding
+    } // end write
+
+    /**
+     * Calls {@link #write(int)} repeatedly until <var>len</var> bytes are written.
+     * 
+     * @param theBytes
+     *          array from which to read bytes
+     * @param off
+     *          offset for array
+     * @param len
+     *          max number of bytes to read into array
+     * @since 1.3
+     */
+    @Override
+    public void write(byte[] theBytes, int off, int len) throws java.io.IOException {
+      // Encoding suspended?
+      if (suspendEncoding) {
+        this.out.write(theBytes, off, len);
+        return;
+      } // end if: supsended
+
+      for (int i = 0; i < len; i++) {
+        write(theBytes[off + i]);
+      } // end for: each byte written
+
+    } // end write
+
+    /**
+     * Method added by PHIL. [Thanks, PHIL. -Rob] This pads the buffer without closing the stream.
+     * 
+     * @throws java.io.IOException
+     *           if there's an error.
+     */
+    public void flushBase64() throws java.io.IOException {
+      if (position > 0) {
+        if (encode) {
+          out.write(encode3to4(b4, buffer, position, options));
+          position = 0;
+        } // end if: encoding
+        else {
+          throw new java.io.IOException("Base64 input not properly padded.");
+        } // end else: decoding
+      } // end if: buffer partially full
+
+    } // end flush
+
+    /**
+     * Flushes and closes (I think, in the superclass) the stream.
+     * 
+     * @since 1.3
+     */
+    @Override
+    public void close() throws java.io.IOException {
+      // 1. Ensure that pending characters are written
+      flushBase64();
+
+      // 2. Actually close the stream
+      // Base class both flushes and closes.
+      super.close();
+
+      buffer = null;
+      out = null;
+    } // end close
+
+    /**
+     * Suspends encoding of the stream. May be helpful if you need to embed a piece of base64-encoded data in a stream.
+     * 
+     * @throws java.io.IOException
+     *           if there's an error flushing
+     * @since 1.5.1
+     */
+    public void suspendEncoding() throws java.io.IOException {
+      flushBase64();
+      this.suspendEncoding = true;
+    } // end suspendEncoding
+
+    /**
+     * Resumes encoding of the stream. May be helpful if you need to embed a piece of base64-encoded data in a stream.
+     * 
+     * @since 1.5.1
+     */
+    public void resumeEncoding() {
+      this.suspendEncoding = false;
+    } // end resumeEncoding
+
+  } // end inner class OutputStream
+
+  /** Defeats instantiation. */
+  private OBase64Utils() {
+  }
+
+  /* ******** E N C O D I N G M E T H O D S ******** */
+
+  /**
    * Returns one of the _SOMETHING_ALPHABET byte arrays depending on the options specified. It's possible, though silly, to specify
    * ORDERED <b>and</b> URLSAFE in which case one of them will be picked, though there is no guarantee as to which one will be
    * picked.
@@ -372,12 +784,6 @@ public class OBase64Utils {
       return _STANDARD_DECODABET;
     }
   } // end getAlphabet
-
-  /** Defeats instantiation. */
-  private OBase64Utils() {
-  }
-
-  /* ******** E N C O D I N G M E T H O D S ******** */
 
   /**
    * Encodes up to the first three bytes of array <var>threeBytes</var> and returns a four-byte array in Base64 notation. The actual
@@ -813,6 +1219,8 @@ public class OBase64Utils {
 
   } // end encodeBytes
 
+  /* ******** D E C O D I N G M E T H O D S ******** */
+
   /**
    * Similar to {@link #encodeBytes(byte[])} but returns a byte array instead of instantiating a String. This is more efficient if
    * you're working with I/O streams and have large data sets to encode.
@@ -971,8 +1379,6 @@ public class OBase64Utils {
     } // end else: don't compress
 
   } // end encodeBytesToBytes
-
-  /* ******** D E C O D I N G M E T H O D S ******** */
 
   /**
    * Decodes four bytes from array <var>source</var> and writes the resulting bytes (up to three of them) to <var>destination</var>.
@@ -1239,7 +1645,7 @@ public class OBase64Utils {
 
         } // end try
         catch (java.io.IOException e) {
-          e.printStackTrace();
+          OLogManager.instance().error(null, "Error on decoding Base64", e);
           // Just return originally-decoded bytes
         } // end catch
         finally {
@@ -1542,6 +1948,8 @@ public class OBase64Utils {
     return encodedData;
   } // end encodeFromFile
 
+  /* ******** I N N E R C L A S S I N P U T S T R E A M ******** */
+
   /**
    * Reads <tt>infile</tt> and encodes it to <tt>outfile</tt>.
    * 
@@ -1572,6 +1980,8 @@ public class OBase64Utils {
     } // end finally
   } // end encodeFileToFile
 
+  /* ******** I N N E R C L A S S O U T P U T S T R E A M ******** */
+
   /**
    * Reads <tt>infile</tt> and decodes it to <tt>outfile</tt>.
    * 
@@ -1601,414 +2011,5 @@ public class OBase64Utils {
       }
     } // end finally
   } // end decodeFileToFile
-
-  /* ******** I N N E R C L A S S I N P U T S T R E A M ******** */
-
-  /**
-   * A {@link OBase64Utils.InputStream} will read data from another <tt>java.io.InputStream</tt>, given in the constructor, and
-   * encode/decode to/from Base64 notation on the fly.
-   * 
-   * @see OBase64Utils
-   * @since 1.3
-   */
-  public static class InputStream extends java.io.FilterInputStream {
-
-    private boolean encode;      // Encoding or decoding
-    private int     position;    // Current position in the buffer
-    private byte[]  buffer;      // Small buffer holding converted data
-    private int     bufferLength; // Length of buffer (3 or 4)
-    private int     numSigBytes; // Number of meaningful bytes in the buffer
-    private int     lineLength;
-    private boolean breakLines;  // Break lines at less than 80 characters
-    private int     options;     // Record options used to create the stream.
-    private byte[]  decodabet;   // Local copies to avoid extra method calls
-
-    /**
-     * Constructs a {@link OBase64Utils.InputStream} in DECODE mode.
-     * 
-     * @param in
-     *          the <tt>java.io.InputStream</tt> from which to read data.
-     * @since 1.3
-     */
-    public InputStream(java.io.InputStream in) {
-      this(in, DECODE);
-    } // end constructor
-
-    /**
-     * Constructs a {@link OBase64Utils.InputStream} in either ENCODE or DECODE mode.
-     * <p>
-     * Valid options:
-     * 
-     * <pre>
-     *   ENCODE or DECODE: Encode or Decode as data is read.
-     *   DO_BREAK_LINES: break lines at 76 characters
-     *     (only meaningful when encoding)</i>
-     * </pre>
-     * <p>
-     * Example: <code>new Base64.InputStream( in, Base64.DECODE )</code>
-     * 
-     * 
-     * @param in
-     *          the <tt>java.io.InputStream</tt> from which to read data.
-     * @param options
-     *          Specified options
-     * @see OBase64Utils#ENCODE
-     * @see OBase64Utils#DECODE
-     * @see OBase64Utils#DO_BREAK_LINES
-     * @since 2.0
-     */
-    public InputStream(java.io.InputStream in, int options) {
-
-      super(in);
-      this.options = options; // Record for later
-      this.breakLines = (options & DO_BREAK_LINES) > 0;
-      this.encode = (options & ENCODE) > 0;
-      this.bufferLength = encode ? 4 : 3;
-      this.buffer = new byte[bufferLength];
-      this.position = -1;
-      this.lineLength = 0;
-      this.decodabet = getDecodabet(options);
-    } // end constructor
-
-    /**
-     * Reads enough of the input stream to convert to/from Base64 and returns the next byte.
-     * 
-     * @return next byte
-     * @since 1.3
-     */
-    @Override
-    public int read() throws java.io.IOException {
-
-      // Do we need to get data?
-      if (position < 0) {
-        if (encode) {
-          byte[] b3 = new byte[3];
-          int numBinaryBytes = 0;
-          for (int i = 0; i < 3; i++) {
-            int b = in.read();
-
-            // If end of stream, b is -1.
-            if (b >= 0) {
-              b3[i] = (byte) b;
-              numBinaryBytes++;
-            } else {
-              break; // out of for loop
-            } // end else: end of stream
-
-          } // end for: each needed input byte
-
-          if (numBinaryBytes > 0) {
-            encode3to4(b3, 0, numBinaryBytes, buffer, 0, options);
-            position = 0;
-            numSigBytes = 4;
-          } // end if: got data
-          else {
-            return -1; // Must be end of stream
-          } // end else
-        } // end if: encoding
-
-        // Else decoding
-        else {
-          byte[] b4 = new byte[4];
-          int i = 0;
-          for (i = 0; i < 4; i++) {
-            // Read four "meaningful" bytes:
-            int b = 0;
-            do {
-              b = in.read();
-            } while (b >= 0 && decodabet[b & 0x7f] <= WHITE_SPACE_ENC);
-
-            if (b < 0) {
-              break; // Reads a -1 if end of stream
-            } // end if: end of stream
-
-            b4[i] = (byte) b;
-          } // end for: each needed input byte
-
-          if (i == 4) {
-            numSigBytes = decode4to3(b4, 0, buffer, 0, options);
-            position = 0;
-          } // end if: got four characters
-          else if (i == 0) {
-            return -1;
-          } // end else if: also padded correctly
-          else {
-            // Must have broken out from above.
-            throw new java.io.IOException("Improperly padded Base64 input.");
-          } // end
-
-        } // end else: decode
-      } // end else: get data
-
-      // Got data?
-      if (position >= 0) {
-        // End of relevant data?
-        if ( /* !encode && */position >= numSigBytes) {
-          return -1;
-        } // end if: got data
-
-        if (encode && breakLines && lineLength >= MAX_LINE_LENGTH) {
-          lineLength = 0;
-          return '\n';
-        } // end if
-        else {
-          lineLength++; // This isn't important when decoding
-                        // but throwing an extra "if" seems
-                        // just as wasteful.
-
-          int b = buffer[position++];
-
-          if (position >= bufferLength) {
-            position = -1;
-          } // end if: end
-
-          return b & 0xFF; // This is how you "cast" a byte that's
-                           // intended to be unsigned.
-        } // end else
-      } // end if: position >= 0
-
-      // Else error
-      else {
-        throw new java.io.IOException("Error in Base64 code reading stream.");
-      } // end else
-    } // end read
-
-    /**
-     * Calls {@link #read()} repeatedly until the end of stream is reached or <var>len</var> bytes are read. Returns number of bytes
-     * read into array or -1 if end of stream is encountered.
-     * 
-     * @param dest
-     *          array to hold values
-     * @param off
-     *          offset for array
-     * @param len
-     *          max number of bytes to read into array
-     * @return bytes read into array or -1 if end of stream is encountered.
-     * @since 1.3
-     */
-    @Override
-    public int read(byte[] dest, int off, int len) throws java.io.IOException {
-      int i;
-      int b;
-      for (i = 0; i < len; i++) {
-        b = read();
-
-        if (b >= 0) {
-          dest[off + i] = (byte) b;
-        } else if (i == 0) {
-          return -1;
-        } else {
-          break; // Out of 'for' loop
-        } // Out of 'for' loop
-      } // end for: each byte read
-      return i;
-    } // end read
-
-  } // end inner class InputStream
-
-  /* ******** I N N E R C L A S S O U T P U T S T R E A M ******** */
-
-  /**
-   * A {@link OBase64Utils.OutputStream} will write data to another <tt>java.io.OutputStream</tt>, given in the constructor, and
-   * encode/decode to/from Base64 notation on the fly.
-   * 
-   * @see OBase64Utils
-   * @since 1.3
-   */
-  public static class OutputStream extends java.io.FilterOutputStream {
-
-    private boolean encode;
-    private int     position;
-    private byte[]  buffer;
-    private int     bufferLength;
-    private int     lineLength;
-    private boolean breakLines;
-    private byte[]  b4;             // Scratch used in a few places
-    private boolean suspendEncoding;
-    private int     options;        // Record for later
-    private byte[]  decodabet;      // Local copies to avoid extra method calls
-
-    /**
-     * Constructs a {@link OBase64Utils.OutputStream} in ENCODE mode.
-     * 
-     * @param out
-     *          the <tt>java.io.OutputStream</tt> to which data will be written.
-     * @since 1.3
-     */
-    public OutputStream(java.io.OutputStream out) {
-      this(out, ENCODE);
-    } // end constructor
-
-    /**
-     * Constructs a {@link OBase64Utils.OutputStream} in either ENCODE or DECODE mode.
-     * <p>
-     * Valid options:
-     * 
-     * <pre>
-     *   ENCODE or DECODE: Encode or Decode as data is read.
-     *   DO_BREAK_LINES: don't break lines at 76 characters
-     *     (only meaningful when encoding)</i>
-     * </pre>
-     * <p>
-     * Example: <code>new Base64.OutputStream( out, Base64.ENCODE )</code>
-     * 
-     * @param out
-     *          the <tt>java.io.OutputStream</tt> to which data will be written.
-     * @param options
-     *          Specified options.
-     * @see OBase64Utils#ENCODE
-     * @see OBase64Utils#DECODE
-     * @see OBase64Utils#DO_BREAK_LINES
-     * @since 1.3
-     */
-    public OutputStream(java.io.OutputStream out, int options) {
-      super(out);
-      this.breakLines = (options & DO_BREAK_LINES) != 0;
-      this.encode = (options & ENCODE) != 0;
-      this.bufferLength = encode ? 3 : 4;
-      this.buffer = new byte[bufferLength];
-      this.position = 0;
-      this.lineLength = 0;
-      this.suspendEncoding = false;
-      this.b4 = new byte[4];
-      this.options = options;
-      this.decodabet = getDecodabet(options);
-    } // end constructor
-
-    /**
-     * Writes the byte to the output stream after converting to/from Base64 notation. When encoding, bytes are buffered three at a
-     * time before the output stream actually gets a write() call. When decoding, bytes are buffered four at a time.
-     * 
-     * @param theByte
-     *          the byte to write
-     * @since 1.3
-     */
-    @Override
-    public void write(int theByte) throws java.io.IOException {
-      // Encoding suspended?
-      if (suspendEncoding) {
-        this.out.write(theByte);
-        return;
-      } // end if: supsended
-
-      // Encode?
-      if (encode) {
-        buffer[position++] = (byte) theByte;
-        if (position >= bufferLength) { // Enough to encode.
-
-          this.out.write(encode3to4(b4, buffer, bufferLength, options));
-
-          lineLength += 4;
-          if (breakLines && lineLength >= MAX_LINE_LENGTH) {
-            this.out.write(NEW_LINE);
-            lineLength = 0;
-          } // end if: end of line
-
-          position = 0;
-        } // end if: enough to output
-      } // end if: encoding
-
-      // Else, Decoding
-      else {
-        // Meaningful Base64 character?
-        if (decodabet[theByte & 0x7f] > WHITE_SPACE_ENC) {
-          buffer[position++] = (byte) theByte;
-          if (position >= bufferLength) { // Enough to output.
-
-            int len = OBase64Utils.decode4to3(buffer, 0, b4, 0, options);
-            out.write(b4, 0, len);
-            position = 0;
-          } // end if: enough to output
-        } // end if: meaningful base64 character
-        else if (decodabet[theByte & 0x7f] != WHITE_SPACE_ENC) {
-          throw new java.io.IOException("Invalid character in Base64 data.");
-        } // end else: not white space either
-      } // end else: decoding
-    } // end write
-
-    /**
-     * Calls {@link #write(int)} repeatedly until <var>len</var> bytes are written.
-     * 
-     * @param theBytes
-     *          array from which to read bytes
-     * @param off
-     *          offset for array
-     * @param len
-     *          max number of bytes to read into array
-     * @since 1.3
-     */
-    @Override
-    public void write(byte[] theBytes, int off, int len) throws java.io.IOException {
-      // Encoding suspended?
-      if (suspendEncoding) {
-        this.out.write(theBytes, off, len);
-        return;
-      } // end if: supsended
-
-      for (int i = 0; i < len; i++) {
-        write(theBytes[off + i]);
-      } // end for: each byte written
-
-    } // end write
-
-    /**
-     * Method added by PHIL. [Thanks, PHIL. -Rob] This pads the buffer without closing the stream.
-     * 
-     * @throws java.io.IOException
-     *           if there's an error.
-     */
-    public void flushBase64() throws java.io.IOException {
-      if (position > 0) {
-        if (encode) {
-          out.write(encode3to4(b4, buffer, position, options));
-          position = 0;
-        } // end if: encoding
-        else {
-          throw new java.io.IOException("Base64 input not properly padded.");
-        } // end else: decoding
-      } // end if: buffer partially full
-
-    } // end flush
-
-    /**
-     * Flushes and closes (I think, in the superclass) the stream.
-     * 
-     * @since 1.3
-     */
-    @Override
-    public void close() throws java.io.IOException {
-      // 1. Ensure that pending characters are written
-      flushBase64();
-
-      // 2. Actually close the stream
-      // Base class both flushes and closes.
-      super.close();
-
-      buffer = null;
-      out = null;
-    } // end close
-
-    /**
-     * Suspends encoding of the stream. May be helpful if you need to embed a piece of base64-encoded data in a stream.
-     * 
-     * @throws java.io.IOException
-     *           if there's an error flushing
-     * @since 1.5.1
-     */
-    public void suspendEncoding() throws java.io.IOException {
-      flushBase64();
-      this.suspendEncoding = true;
-    } // end suspendEncoding
-
-    /**
-     * Resumes encoding of the stream. May be helpful if you need to embed a piece of base64-encoded data in a stream.
-     * 
-     * @since 1.5.1
-     */
-    public void resumeEncoding() {
-      this.suspendEncoding = false;
-    } // end resumeEncoding
-
-  } // end inner class OutputStream
 
 } // end class Base64

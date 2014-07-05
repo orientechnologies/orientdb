@@ -20,7 +20,6 @@ import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -2063,7 +2062,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected void printError(final Exception e) {
     if (properties.get("debug") != null && Boolean.parseBoolean(properties.get("debug"))) {
       message("\n\n!ERROR:");
-      e.printStackTrace();
+      e.printStackTrace(err);
     } else {
       // SHORT FORM
       message("\n\n!ERROR: " + e.getMessage());

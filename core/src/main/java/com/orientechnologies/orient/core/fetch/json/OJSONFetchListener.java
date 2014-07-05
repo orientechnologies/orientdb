@@ -16,14 +16,15 @@
  */
 package com.orientechnologies.orient.core.fetch.json;
 
-import java.io.IOException;
-
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+
+import java.io.IOException;
 
 /**
  * @author luca.molino
@@ -46,7 +47,7 @@ public class OJSONFetchListener implements OFetchListener {
       ((OJSONFetchContext) iContext).getJsonWriter().writeValue(((OJSONFetchContext) iContext).getIndentLevel(), true,
           OJSONWriter.encode(iFieldValue));
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error on processStandardCollectionValue", e);
     }
   }
 

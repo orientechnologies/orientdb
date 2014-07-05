@@ -245,7 +245,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     try {
       return URLEncoder.encode(iClassName, "UTF-8");
     } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(null, "Error on encoding class name using encoding '%s'", e, "UTF-8");
       return iClassName;
     }
   }
@@ -263,7 +263,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     try {
       return URLDecoder.decode(iClassName, "UTF-8");
     } catch (UnsupportedEncodingException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(null, "Error on decoding class name using encoding '%s'", e, "UTF-8");
       return iClassName;
     }
   }

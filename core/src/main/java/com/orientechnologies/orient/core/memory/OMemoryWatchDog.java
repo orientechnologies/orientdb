@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.core.memory;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
@@ -26,13 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.WeakHashMap;
-
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
-import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * This memory warning system will call the listener when we exceed the percentage of available memory specified. There should only
@@ -177,7 +177,7 @@ public class OMemoryWatchDog extends Thread {
               try {
                 listener.listener.lowMemory(maxHeap - usedHeap, 100 - usedMemoryPer);
               } catch (Exception e) {
-                e.printStackTrace();
+                OLogManager.instance().error(this, "Error on freeing memory against listener: %s", e, listener.listener);
               }
             }
           }
@@ -212,7 +212,7 @@ public class OMemoryWatchDog extends Thread {
               try {
                 listener.listener.lowMemory(maxHeap - usedHeap, 100 - usedMemoryPer);
               } catch (Exception e) {
-                e.printStackTrace();
+                OLogManager.instance().error(this, "Error on freeing memory against listener: %s", e, listener.listener);
               }
             }
           }

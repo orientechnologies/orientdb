@@ -121,7 +121,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       writer.flush();
     } catch (Exception e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error on exporting database '%s' to: %s", e, database.getName(), fileName);
       throw new ODatabaseExportException("Error on exporting database '" + database.getName() + "' to: " + fileName, e);
     } finally {
       close();

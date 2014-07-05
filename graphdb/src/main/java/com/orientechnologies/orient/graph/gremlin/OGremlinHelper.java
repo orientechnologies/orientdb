@@ -17,6 +17,7 @@ package com.orientechnologies.orient.graph.gremlin;
 
 import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -272,7 +273,8 @@ public class OGremlinHelper {
           // 4. Impossible to clone
           // ***************************************************************************************************************************************
         } catch (Throwable e2) {
-          e2.printStackTrace();
+          OLogManager.instance().error(null, "[GremlinHelper] error on cloning object %s, previous %s", e2, objectToClone,
+              previousClone);
           return null;
         }
       }

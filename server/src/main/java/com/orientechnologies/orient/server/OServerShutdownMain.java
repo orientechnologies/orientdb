@@ -103,7 +103,7 @@ public class OServerShutdownMain {
         channel = new OChannelBinaryAsynchClientSynch(networkAddress, port, null, contextConfig);
         break;
       } catch (Exception e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error on connecting to %s:%d", e, networkAddress, port);
       }
 
     if (channel == null)

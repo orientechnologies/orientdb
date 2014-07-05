@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,15 +38,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
 /**
  * Maintains information about current HTTP response.
@@ -197,10 +197,6 @@ public class OHttpResponse {
     }
   }
 
-  private boolean isJSObject(Object iResult) {
-    return iResult.getClass().getName().equals("jdk.nashorn.api.scripting.ScriptObjectMirror");
-  }
-
   public void writeRecords(final Object iRecords) throws IOException {
     writeRecords(iRecords, null, null, null);
   }
@@ -271,7 +267,7 @@ public class OHttpResponse {
             iArgument.flush();
 
           } catch (IOException e) {
-            e.printStackTrace();
+            OLogManager.instance().error(this, "HTTP response: error on writing records", e);
           }
 
           return null;
@@ -417,7 +413,7 @@ public class OHttpResponse {
       gout.finish();
       return baos.toByteArray();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      OLogManager.instance().error(this, "Error on compressing HTTP response", ex);
     } finally {
       try {
         if (gout != null)
@@ -425,7 +421,6 @@ public class OHttpResponse {
         if (baos != null)
           baos.close();
       } catch (Exception ex) {
-        ex.printStackTrace();
       }
     }
     return null;
@@ -466,6 +461,10 @@ public class OHttpResponse {
 
   public void setSessionId(String sessionId) {
     this.sessionId = sessionId;
+  }
+
+  private boolean isJSObject(Object iResult) {
+    return iResult.getClass().getName().equals("jdk.nashorn.api.scripting.ScriptObjectMirror");
   }
 
 }

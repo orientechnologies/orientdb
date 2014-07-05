@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.URLDecoder;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.IllegalFormatException;
-import java.util.InputMismatchException;
-import java.util.Map;
-import java.util.zip.GZIPInputStream;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -75,6 +61,20 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.URLDecoder;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.InputMismatchException;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private static final String          COMMAND_SEPARATOR = "|";
@@ -624,7 +624,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       String newstr = new String(baos.toByteArray(), "UTF-8");
       return newstr;
     } catch (Exception ex) {
-      ex.printStackTrace();
+      OLogManager.instance().error(this, "Error on decompressing HTTP response", ex);
     } finally {
       try {
         if (gzip != null)
@@ -634,7 +634,6 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
         if (baos != null)
           baos.close();
       } catch (Exception ex) {
-
       }
     }
     return null;
