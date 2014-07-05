@@ -5,3 +5,5 @@ target/
 *.prefs
 */.idea
 *.iml
+
+licenses/*
