@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -48,6 +42,12 @@ import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord> extends ODatabaseWrapperAbstract<DB> implements
@@ -386,6 +386,24 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     underlying.setDataSegmentStrategy(dataSegmentStrategy);
   }
 
+  /**
+   * Executes a backup of the database. During the backup the database will be frozen in read-only mode.
+   * 
+   * @param out
+   *          OutputStream used to write the backup content. Use a FileOutputStream to make the backup persistent on disk
+   * @param options
+   *          Backup options as Map<String, Object> object
+   * @param callable
+   *          Callback to execute when the database is locked
+   * @param iListener
+   *          Listener called for backup messages
+   * @param compressionLevel
+   *          ZIP Compression level between 1 (the minimum) and 9 (maximum). The bigger is the compression, the smaller will be the
+   *          final backup content, but will consume more CPU and time to execute
+   * @param bufferSize
+   *          Buffer size in bytes, the bigger is the buffer, the more efficient will be the compression
+   * @throws IOException
+   */
   @Override
   public void backup(final OutputStream out, final Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {

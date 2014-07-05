@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -172,6 +173,21 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
   }
 
+
+  /**
+   * Executes a restore of a database backup. During the restore the database will be frozen in read-only mode.
+   *
+   * @param in
+   *          InputStream used to read the backup content. Use a FileInputStream to read a backup on a disk
+   * @param options
+   *          Backup options as Map<String, Object> object
+   * @param callable
+   *          Callback to execute when the database is locked
+   * @param iListener
+   *          Listener called for backup messages
+   * @throws IOException
+   * @see ODatabaseImport
+   */
   @Override
   public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
       throws IOException {

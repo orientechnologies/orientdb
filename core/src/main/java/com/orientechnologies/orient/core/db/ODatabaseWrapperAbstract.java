@@ -15,6 +15,17 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,16 +34,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OLocalRecordCache;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements ODatabase {
@@ -64,12 +65,44 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     underlying.reload();
   }
 
+  /**
+   * Executes a backup of the database. During the backup the database will be frozen in read-only mode.
+   * 
+   * @param out
+   *          OutputStream used to write the backup content. Use a FileOutputStream to make the backup persistent on disk
+   * @param options
+   *          Backup options as Map<String, Object> object
+   * @param callable
+   *          Callback to execute when the database is locked
+   * @param iListener
+   *          Listener called for backup messages
+   * @param compressionLevel
+   *          ZIP Compression level between 1 (the minimum) and 9 (maximum). The bigger is the compression, the smaller will be the
+   *          final backup content, but will consume more CPU and time to execute
+   * @param bufferSize
+   *          Buffer size in bytes, the bigger is the buffer, the more efficient will be the compression
+   * @throws IOException
+   */
   @Override
   public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
       final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     underlying.backup(out, options, callable, iListener, compressionLevel, bufferSize);
   }
 
+  /**
+   * Executes a restore of a database backup. During the restore the database will be frozen in read-only mode.
+   * 
+   * @param in
+   *          InputStream used to read the backup content. Use a FileInputStream to read a backup on a disk
+   * @param options
+   *          Backup options as Map<String, Object> object
+   * @param callable
+   *          Callback to execute when the database is locked
+   * @param iListener
+   *          Listener called for backup messages
+   * @throws IOException
+   * @see ODatabaseImport
+   */
   @Override
   public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
       throws IOException {
