@@ -353,7 +353,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, iTask,
         iExecutionMode);
     if(ODatabaseRecordThreadLocal.INSTANCE.get().getUser() != null)
-      req.setRequestLoginUserName(ODatabaseRecordThreadLocal.INSTANCE.get().getUser().getName());
+      req.setUserName(ODatabaseRecordThreadLocal.INSTANCE.get().getUser().getName());
 
     final OHazelcastDistributedDatabase db = messageService.getDatabase(iDatabaseName);
 

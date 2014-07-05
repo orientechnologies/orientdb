@@ -35,7 +35,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   private String              senderNodeName;
   private String              databaseName;
   private long                senderThreadId;
-  private String              requestLoginUserName;
+  private String              userName = "";
   private OAbstractRemoteTask task;
 
   /**
@@ -71,19 +71,19 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   public String getDatabaseName() {
     return databaseName;
   }
-  
-  public String getRequestLoginUserName() {
-    return requestLoginUserName;
-  }
-
-  public void setRequestLoginUserName(String requestLoginUserName) {
-    this.requestLoginUserName = requestLoginUserName;
-  }
 
   @Override
   public OHazelcastDistributedRequest setDatabaseName(final String databaseName) {
     this.databaseName = databaseName;
     return this;
+  }
+
+  public String getUserName() {
+    return userName;
+  }
+
+  public void setUserName(String userName) {
+    this.userName = userName;
   }
 
   @Override
@@ -122,8 +122,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     out.writeUTF(senderNodeName);
     out.writeLong(senderThreadId);
     out.writeUTF(databaseName);
-    if (requestLoginUserName != null && requestLoginUserName.length() > 0)
-      out.writeUTF(requestLoginUserName);
+    out.writeUTF(userName);
     out.writeObject(task);
   }
 
@@ -133,7 +132,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     senderNodeName = in.readUTF();
     senderThreadId = in.readLong();
     databaseName = in.readUTF();
-    requestLoginUserName = in.readUTF();
+    userName = in.readUTF();
     task = (OAbstractRemoteTask) in.readObject();
   }
 
@@ -148,9 +147,9 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
       buffer.append(" task=");
       buffer.append(task.toString());
     }
-    if (requestLoginUserName != null) {
-      buffer.append(" requestLoginUserName=");
-      buffer.append(requestLoginUserName);
+    if (userName != null) {
+      buffer.append(" userName=");
+      buffer.append(userName);
     }
     return buffer.toString();
   }

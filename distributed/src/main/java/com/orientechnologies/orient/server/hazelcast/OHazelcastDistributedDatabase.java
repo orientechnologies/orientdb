@@ -520,8 +520,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         if(ODatabaseRecordThreadLocal.INSTANCE.get() != null) {
           try {
             if (database != null) {
-              if(lastUser == null || !(lastUser.getName()).equals(iRequest.getRequestLoginUserName()))
-                lastUser = database.getMetadata().getSecurity().getUser(iRequest.getRequestLoginUserName());
+              if(lastUser == null || !(lastUser.getName()).equals(iRequest.getUserName()))
+                lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserName());
               ODatabaseRecordThreadLocal.INSTANCE.get().setUser(lastUser);//set to new user
             }
           } catch(Throwable ex) {
