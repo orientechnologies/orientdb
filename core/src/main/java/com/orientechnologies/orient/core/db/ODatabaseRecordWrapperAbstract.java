@@ -398,7 +398,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
    * @param iListener
    *          Listener called for backup messages
    * @param compressionLevel
-   *          ZIP Compression level between 1 (the minimum) and 9 (maximum). The bigger is the compression, the smaller will be the
+   *          ZIP Compression level between 0 (no compression) and 9 (maximum). The bigger is the compression, the smaller will be the
    *          final backup content, but will consume more CPU and time to execute
    * @param bufferSize
    *          Buffer size in bytes, the bigger is the buffer, the more efficient will be the compression
