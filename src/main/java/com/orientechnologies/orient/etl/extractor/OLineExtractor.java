@@ -81,7 +81,6 @@ public class OLineExtractor extends OFileExtractor {
       try {
         reader.close();
       } catch (IOException e) {
-        e.printStackTrace();
       }
 
     super.end();

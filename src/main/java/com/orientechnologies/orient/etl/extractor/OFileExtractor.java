@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -108,35 +109,30 @@ public abstract class OFileExtractor extends OAbstractExtractor {
       try {
         lock.release();
       } catch (IOException e) {
-        e.printStackTrace();
       }
 
     if (fis != null)
       try {
         fis.close();
       } catch (IOException e) {
-        e.printStackTrace();
       }
 
     if (fileReader != null)
       try {
         fileReader.close();
       } catch (IOException e) {
-        e.printStackTrace();
       }
 
     if (channel != null)
       try {
         channel.close();
       } catch (IOException e) {
-        e.printStackTrace();
       }
 
     if (raf != null)
       try {
         raf.close();
       } catch (IOException e) {
-        e.printStackTrace();
       }
   }
 
@@ -187,7 +183,7 @@ public abstract class OFileExtractor extends OAbstractExtractor {
       try {
         lock = channel.lock();
       } catch (IOException e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error on locking file: %s", e, fileName);
       }
 
     final long startTime = System.currentTimeMillis();
