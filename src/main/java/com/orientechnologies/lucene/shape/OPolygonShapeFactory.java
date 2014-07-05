@@ -18,6 +18,7 @@
 
 package com.orientechnologies.lucene.shape;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.context.jts.JtsSpatialContext;
@@ -38,7 +39,7 @@ public class OPolygonShapeFactory implements OShapeFactory {
     try {
       return ctx1.getWktShapeParser().parse(value);
     } catch (ParseException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error on making shape", e);
     }
     return null;
   }

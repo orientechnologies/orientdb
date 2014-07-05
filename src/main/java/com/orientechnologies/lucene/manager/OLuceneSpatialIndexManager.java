@@ -16,22 +16,37 @@
 
 package com.orientechnologies.lucene.manager;
 
-import java.io.IOException;
-import java.util.*;
-
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.lucene.shape.OShapeFactory;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexEngine;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
-import com.spatial4j.core.context.jts.JtsSpatialContext;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.spatial4j.core.context.SpatialContext;
+import com.spatial4j.core.distance.DistanceUtils;
+import com.spatial4j.core.shape.Point;
+import com.spatial4j.core.shape.Shape;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.*;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StoredField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queries.function.ValueSource;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.Filter;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.spatial.SpatialStrategy;
 import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
 import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
@@ -41,17 +56,9 @@ import org.apache.lucene.spatial.query.SpatialOperation;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Version;
 
-import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.spatial4j.core.context.SpatialContext;
-import com.spatial4j.core.distance.DistanceUtils;
-import com.spatial4j.core.shape.Point;
-import com.spatial4j.core.shape.Shape;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
@@ -85,24 +92,6 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     return new IndexWriter(directory, iwc);
   }
 
-  private Document newGeoDocument(String rid, Shape shape) {
-
-    FieldType ft = new FieldType();
-    ft.setIndexed(true);
-    ft.setStored(true);
-
-    Document doc = new Document();
-
-    doc.add(new TextField(RID, rid, Field.Store.YES));
-    for (IndexableField f : strategy.createIndexableFields(shape)) {
-      doc.add(f);
-    }
-
-    doc.add(new StoredField(strategy.getFieldName(), ctx.toString(shape)));
-
-    return doc;
-  }
-
   @Override
   public void init() {
 
@@ -130,32 +119,22 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
   @Override
   public Object get(Object key) {
-    if (key instanceof OSpatialCompositeKey) {
+    try {
+      if (key instanceof OSpatialCompositeKey) {
+        final OSpatialCompositeKey newKey = (OSpatialCompositeKey) key;
 
-      OSpatialCompositeKey newKey = (OSpatialCompositeKey) key;
+        final SpatialOperation strategy = newKey.getOperation() != null ? newKey.getOperation() : SpatialOperation.Intersects;
 
-      SpatialOperation strategy = newKey.getOperation() != null ? newKey.getOperation() : SpatialOperation.Intersects;
-
-      if (SpatialOperation.Intersects.equals(strategy)) {
-        try {
+        if (SpatialOperation.Intersects.equals(strategy))
           return searchIntersect(newKey, newKey.getMaxDistance(), newKey.getLimit());
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      } else if (SpatialOperation.IsWithin.equals(strategy)) {
-        try {
+        else if (SpatialOperation.IsWithin.equals(strategy))
           return searchWithin(newKey);
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
 
-    } else if (key instanceof OCompositeKey) {
-      try {
+      } else if (key instanceof OCompositeKey)
         return searchIntersect((OCompositeKey) key, 0, null);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
+
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on getting entry against Lucene index", e);
     }
 
     return null;
@@ -263,5 +242,23 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
   @Override
   public boolean hasRangeQuerySupport() {
     return false;
+  }
+
+  private Document newGeoDocument(String rid, Shape shape) {
+
+    FieldType ft = new FieldType();
+    ft.setIndexed(true);
+    ft.setStored(true);
+
+    Document doc = new Document();
+
+    doc.add(new TextField(RID, rid, Field.Store.YES));
+    for (IndexableField f : strategy.createIndexableFields(shape)) {
+      doc.add(f);
+    }
+
+    doc.add(new StoredField(strategy.getFieldName(), ctx.toString(shape)));
+
+    return doc;
   }
 }
