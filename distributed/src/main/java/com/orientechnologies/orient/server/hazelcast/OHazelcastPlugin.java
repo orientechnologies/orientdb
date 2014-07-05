@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -351,6 +352,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, iTask,
         iExecutionMode);
+
+    if (ODatabaseRecordThreadLocal.INSTANCE.get().getUser() != null)
+      req.setUserName(ODatabaseRecordThreadLocal.INSTANCE.get().getUser().getName());
 
     final OHazelcastDistributedDatabase db = messageService.getDatabase(iDatabaseName);
 
@@ -714,63 +718,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return getHazelcastInstance().getMap("orientdb");
   }
 
-  protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
-    return Hazelcast.newHazelcastInstance(new FileSystemXmlConfig(hazelcastConfigFile));
-  }
-
-  /**
-   * Initializes all the available server's databases as distributed.
-   */
-  protected void loadDistributedDatabases() {
-    for (Entry<String, String> storageEntry : serverInstance.getAvailableStorageNames().entrySet()) {
-      final String databaseName = storageEntry.getKey();
-
-      if (messageService.getDatabase(databaseName) == null) {
-        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "opening database '%s'...", databaseName);
-
-        final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
-
-        if (!getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
-          // PUBLISH CFG FIRST TIME
-          getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfg.serialize());
-        }
-
-        final boolean hotAlignment = cfg.isHotAlignment();
-
-        final OHazelcastDistributedDatabase db = messageService.registerDatabase(databaseName).configureDatabase(hotAlignment,
-            hotAlignment);
-
-        if (!db.isRestoringMessages())
-          // NO PENDING MESSAGE, SET IT ONLINE
-          db.setOnline();
-        else
-          db.initDatabaseInstance();
-      }
-    }
-  }
-
-  protected void installNewDatabases(final boolean iStartup) {
-    if (activeNodes.size() <= 1)
-      // NO OTHER NODES WHERE ALIGN
-      return;
-
-    // LOCKING THIS RESOURCE PREVENT CONCURRENT INSTALL OF THE SAME DB
-    synchronized (installDatabaseLock) {
-      for (Entry<String, Object> entry : getConfigurationMap().entrySet()) {
-        if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
-          final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
-
-          final ODocument config = (ODocument) entry.getValue();
-          final Boolean autoDeploy = config.field("autoDeploy");
-
-          if (autoDeploy != null && autoDeploy) {
-            installDatabase(iStartup, databaseName, config);
-          }
-        }
-      }
-    }
-  }
-
   public boolean installDatabase(boolean iStartup, String databaseName, ODocument config) {
 
     final Boolean hotAlignment = config.field("hotAlignment");
@@ -892,6 +839,63 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
 
+  }
+
+  protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
+    return Hazelcast.newHazelcastInstance(new FileSystemXmlConfig(hazelcastConfigFile));
+  }
+
+  /**
+   * Initializes all the available server's databases as distributed.
+   */
+  protected void loadDistributedDatabases() {
+    for (Entry<String, String> storageEntry : serverInstance.getAvailableStorageNames().entrySet()) {
+      final String databaseName = storageEntry.getKey();
+
+      if (messageService.getDatabase(databaseName) == null) {
+        ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "opening database '%s'...", databaseName);
+
+        final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
+
+        if (!getConfigurationMap().containsKey(CONFIG_DATABASE_PREFIX + databaseName)) {
+          // PUBLISH CFG FIRST TIME
+          getConfigurationMap().put(CONFIG_DATABASE_PREFIX + databaseName, cfg.serialize());
+        }
+
+        final boolean hotAlignment = cfg.isHotAlignment();
+
+        final OHazelcastDistributedDatabase db = messageService.registerDatabase(databaseName).configureDatabase(hotAlignment,
+            hotAlignment);
+
+        if (!db.isRestoringMessages())
+          // NO PENDING MESSAGE, SET IT ONLINE
+          db.setOnline();
+        else
+          db.initDatabaseInstance();
+      }
+    }
+  }
+
+  protected void installNewDatabases(final boolean iStartup) {
+    if (activeNodes.size() <= 1)
+      // NO OTHER NODES WHERE ALIGN
+      return;
+
+    // LOCKING THIS RESOURCE PREVENT CONCURRENT INSTALL OF THE SAME DB
+    synchronized (installDatabaseLock) {
+      for (Entry<String, Object> entry : getConfigurationMap().entrySet()) {
+        if (entry.getKey().startsWith(CONFIG_DATABASE_PREFIX)) {
+          final String databaseName = entry.getKey().substring(CONFIG_DATABASE_PREFIX.length());
+
+          final ODocument config = (ODocument) entry.getValue();
+          final Boolean autoDeploy = config.field("autoDeploy");
+
+          if (autoDeploy != null && autoDeploy) {
+            installDatabase(iStartup, databaseName, config);
+          }
+        }
+      }
+    }
   }
 
   protected long writeDatabaseChunk(final int iChunkId, final ODistributedDatabaseChunk chunk, final FileOutputStream out)
