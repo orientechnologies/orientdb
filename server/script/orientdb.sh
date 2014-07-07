@@ -1,5 +1,28 @@
 #!/bin/sh
 
+### BEGIN INIT INFO
+# Provides:          orientdb
+# Required-Start:    $remote_fs $network
+# Required-Stop:     $remote_fs $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: OrientDB Document Graph NoSQL Database
+### END INIT INFO
+#
+### BEGIN Fedora SysV
+#
+# chkconfig: 2345 90 10
+# description: OrientDB Document Graph NoSQL Database
+#
+### END Fedora SysV
+
+#
+# To install, configure ORIENTDB_DIR and ORIENTDB_USER below and copy or link
+# this file into /etc/rc.d/init.d as orientdb. Then use the following command
+# to automatically set the server to start up:
+# "# /sbin/chkconfig orietdb reset"
+#
+
 # OrientDB init script
 
 # You have to SET the OrientDB installation directory here
