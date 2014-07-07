@@ -81,20 +81,12 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
       if (configuredParameters[i] instanceof OSQLFilterItemField) {
         runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(iCurrentRecord, iCurrentResult, iContext);
-        if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable)
-          // LOOK INTO THE CURRENT RESULT
-          runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue((OIdentifiable) iCurrentResult,
-              iCurrentResult, iContext);
       } else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
         runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
             iContext);
       else if (configuredParameters[i] instanceof OSQLFilterItemVariable) {
         runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i])
             .getValue(iCurrentRecord, iCurrentResult, iContext);
-        if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable)
-          // LOOK INTO THE CURRENT RESULT
-          runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue((OIdentifiable) iCurrentResult,
-              iCurrentResult, iContext);
       } else if (configuredParameters[i] instanceof OCommandSQL) {
         try {
           runtimeParameters[i] = ((OCommandSQL) configuredParameters[i]).setContext(iContext).execute();
@@ -151,27 +143,6 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     return function.getName();
   }
 
-  @Override
-  protected void setRoot(final OBaseParser iQueryToParse, final String iText) {
-    final int beginParenthesis = iText.indexOf('(');
-
-    // SEARCH FOR THE FUNCTION
-    final String funcName = iText.substring(0, beginParenthesis);
-
-    final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
-
-    function = OSQLEngine.getInstance().getFunction(funcName);
-    if (function == null)
-      throw new OCommandSQLParsingException("Unknown function " + funcName + "()");
-
-    // PARSE PARAMETERS
-    this.configuredParameters = new Object[funcParamsText.size()];
-    for (int i = 0; i < funcParamsText.size(); ++i)
-      this.configuredParameters[i] = funcParamsText.get(i);
-
-    setParameters(configuredParameters, true);
-  }
-
   public OSQLFunctionRuntime setParameters(final Object[] iParameters, final boolean iEvaluate) {
     this.configuredParameters = new Object[iParameters.length];
     for (int i = 0; i < iParameters.length; ++i) {
@@ -213,5 +184,26 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
   public Object[] getRuntimeParameters() {
     return runtimeParameters;
+  }
+
+  @Override
+  protected void setRoot(final OBaseParser iQueryToParse, final String iText) {
+    final int beginParenthesis = iText.indexOf('(');
+
+    // SEARCH FOR THE FUNCTION
+    final String funcName = iText.substring(0, beginParenthesis);
+
+    final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
+
+    function = OSQLEngine.getInstance().getFunction(funcName);
+    if (function == null)
+      throw new OCommandSQLParsingException("Unknown function " + funcName + "()");
+
+    // PARSE PARAMETERS
+    this.configuredParameters = new Object[funcParamsText.size()];
+    for (int i = 0; i < funcParamsText.size(); ++i)
+      this.configuredParameters[i] = funcParamsText.get(i);
+
+    setParameters(configuredParameters, true);
   }
 }
