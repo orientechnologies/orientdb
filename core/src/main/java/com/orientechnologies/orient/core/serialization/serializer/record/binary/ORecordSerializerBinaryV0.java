@@ -1,5 +1,15 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
@@ -27,21 +37,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import com.orientechnologies.orient.core.util.ODateHelper;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private static final long MILLISEC_PER_DAY = 86400000;
-  private static final long ONE_HOUR         = 3600000;
   private Charset           utf8;
 
   public ORecordSerializerBinaryV0() {
@@ -49,7 +49,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void deserialize(final ODocument document,final BytesContainer bytes) {
+  public void deserialize(final ODocument document, final BytesContainer bytes) {
     String className = readString(bytes);
     if (className.length() != 0)
       document.setClassNameIfExists(className);
@@ -165,7 +165,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       value = new Date(OVarIntSerializer.readAsLong(bytes));
       break;
     case DATE:
-      value = new Date((OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY) - ONE_HOUR);
+      long savedTime = OVarIntSerializer.readAsLong(bytes) * MILLISEC_PER_DAY;
+      int offset = ODateHelper.getDatabaseTimeZone().getOffset(savedTime);
+      value = new Date(savedTime - offset);
       break;
     case EMBEDDED:
       value = new ODocument();
@@ -370,7 +372,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         dateValue = (Long) value;
       } else
         dateValue = ((Date) value).getTime();
-      pointer = OVarIntSerializer.write(bytes, (dateValue + ONE_HOUR) / MILLISEC_PER_DAY);
+      int offset = ODateHelper.getDatabaseTimeZone().getOffset(dateValue);
+      pointer = OVarIntSerializer.write(bytes, (dateValue + offset) / MILLISEC_PER_DAY);
       break;
     case EMBEDDED:
       pointer = bytes.offset;
@@ -683,7 +686,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return value;
   }
 
-  
   private int writeString(final BytesContainer bytes, final String toWrite) {
     final byte[] nameBytes = toWrite.getBytes(utf8);
     final int pointer = OVarIntSerializer.write(bytes, nameBytes.length);
