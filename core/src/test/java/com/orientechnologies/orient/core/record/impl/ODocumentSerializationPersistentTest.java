@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  * @since 12/20/12
  */
-public class ODocumentSerializationTest {
+public class ODocumentSerializationPersistentTest {
 
   private ODatabaseDocumentTx db;
   private ORID                docId;

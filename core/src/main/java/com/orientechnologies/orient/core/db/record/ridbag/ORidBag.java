@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
@@ -99,6 +100,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     fromStream(stream);
   }
 
+  public static ORidBag fromStream(String value) {
+    final byte[] stream = OBase64Utils.decode(value);
+    return new ORidBag(stream);
+  }
+
   public void addAll(Collection<OIdentifiable> values) {
     delegate.addAll(values);
   }
@@ -159,11 +165,12 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return delegate instanceof OEmbeddedRidBag;
   }
 
-  @Override
-  public OStringBuilderSerializable toStream(StringBuilder output) throws OSerializationException {
+  public int toStream(BytesContainer bytesContainer) throws OSerializationException {
+
     final ORecordSerializationContext context = ORecordSerializationContext.getContext();
     if (context != null) {
-      if (delegate.size() >= topThreshold && isEmbedded() && ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager() != null  ) {
+      if (delegate.size() >= topThreshold && isEmbedded()
+          && ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager() != null) {
         ORidBagDelegate oldDelegate = delegate;
         delegate = new OSBTreeRidBag();
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
@@ -202,7 +209,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     final int serializedSize = OByteSerializer.BYTE_SIZE + delegate.getSerializedSize()
         + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
-    final byte[] stream = new byte[serializedSize];
+    int pointer = bytesContainer.alloc((short) serializedSize);
+    int offset = pointer;
+    final byte[] stream = bytesContainer.bytes;
 
     byte configByte = 0;
     if (isEmbedded())
@@ -211,17 +220,22 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     if (hasUuid)
       configByte |= 2;
 
-    stream[0] = configByte;
+    stream[offset++] = configByte;
 
-    int offset = 1;
     if (hasUuid) {
       OUUIDSerializer.INSTANCE.serialize(uuid, stream, offset);
       offset += OUUIDSerializer.UUID_SIZE;
     }
 
     delegate.serialize(stream, offset, oldUuid);
+    return pointer;
+  }
 
-    output.append(OBase64Utils.encodeBytes(stream));
+  @Override
+  public OStringBuilderSerializable toStream(StringBuilder output) throws OSerializationException {
+    final BytesContainer container = new BytesContainer();
+    toStream(container);
+    output.append(OBase64Utils.encodeBytes(container.bytes, 0, container.offset));
     return this;
   }
 
@@ -241,33 +255,32 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return this;
   }
 
-  private void fromStream(byte[] stream) {
-    if ((stream[0] & 1) == 1)
+  public void fromStream(final byte[] stream) {
+    fromStream(new BytesContainer(stream));
+  }
+
+  public void fromStream(BytesContainer stream) {
+    final byte first = stream.bytes[stream.offset++];
+    if ((first & 1) == 1)
       delegate = new OEmbeddedRidBag();
     else
       delegate = new OSBTreeRidBag();
 
-    int offset = 1;
-    if ((stream[0] & 2) == 2) {
-      uuid = OUUIDSerializer.INSTANCE.deserialize(stream, offset);
-      offset += OUUIDSerializer.UUID_SIZE;
+    if ((first & 2) == 2) {
+      uuid = OUUIDSerializer.INSTANCE.deserialize(stream.bytes, stream.offset);
+      stream.skip(OUUIDSerializer.UUID_SIZE);
     }
 
-    delegate.deserialize(stream, offset);
-  }
-
-  public static ORidBag fromStream(String value) {
-    final byte[] stream = OBase64Utils.decode(value);
-    return new ORidBag(stream);
+    stream.skip(delegate.deserialize(stream.bytes, stream.offset));
   }
 
   @Override
-  public void addChangeListener(OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
+  public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     delegate.addChangeListener(changeListener);
   }
 
   @Override
-  public void removeRecordChangeListener(OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
+  public void removeRecordChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
     delegate.removeRecordChangeListener(changeListener);
   }
 
@@ -315,6 +328,14 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     }
   }
 
+  public OBonsaiCollectionPointer getPointer() {
+    if (isEmbedded()) {
+      return OBonsaiCollectionPointer.INVALID;
+    } else {
+      return ((OSBTreeRidBag) delegate).getCollectionPointer();
+    }
+  }
+
   /**
    * Silently replace delegate by tree implementation.
    * 
@@ -326,13 +347,5 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     final OSBTreeRidBag treeBag = new OSBTreeRidBag();
     treeBag.setCollectionPointer(pointer);
     delegate = treeBag;
-  }
-
-  public OBonsaiCollectionPointer getPointer() {
-    if (isEmbedded()) {
-      return OBonsaiCollectionPointer.INVALID;
-    } else {
-      return ((OSBTreeRidBag) delegate).getCollectionPointer();
-    }
   }
 }

@@ -24,10 +24,12 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -441,12 +443,12 @@ public class JSONTest extends BaseTest {
   public void testJsonToStream() {
     String doc1Json = "{Key1:{\"%Field1\":[{},{},{},{},{}],\"%Field2\":false,\"%Field3\":\"Value1\"}}";
     ODocument doc1 = new ODocument().fromJSON(doc1Json);
-    String doc1String = new String(doc1.toStream());
+    String doc1String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc1, false));
     Assert.assertEquals(doc1Json, "{" + doc1String + "}");
 
     String doc2Json = "{Key1:{\"%Field1\":[{},{},{},{},{}],\"%Field2\":false,\"%Field3\":\"Value1\"}}";
     ODocument doc2 = new ODocument().fromJSON(doc2Json);
-    String doc2String = new String(doc2.toStream());
+    String doc2String = new String(ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc2, false));
     Assert.assertEquals(doc2Json, "{" + doc2String + "}");
   }
 

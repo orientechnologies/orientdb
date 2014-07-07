@@ -55,7 +55,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public static final String                         DEFAULT_CHARSET               = "UTF-8";
   private String                                     charset                       = DEFAULT_CHARSET;
-  public static final int                            CURRENT_VERSION               = 9;
+  public static final int                            CURRENT_VERSION               = 10;
   public static final int                            CURRENT_BINARY_FORMAT_VERSION = 11;
   public volatile int                                version                       = -1;
 
@@ -84,6 +84,8 @@ public class OStorageConfiguration implements OSerializableStream {
   private transient volatile DecimalFormatSymbols    unusualSymbols;
   private volatile String                            clusterSelection;
   private volatile int                               minimumClusters               = 1;
+  private volatile String                            recordSerializer;
+  private volatile int                               recordSerializerVersion;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
@@ -287,6 +289,11 @@ public class OStorageConfiguration implements OSerializableStream {
       // DEFAULT = 1
       minimumClusters = 1;
 
+    if (version >= 10) {
+      recordSerializer = read(values[index++]);
+      recordSerializerVersion = Integer.parseInt(read(values[index++]));
+    }
+
     return this;
   }
 
@@ -377,6 +384,9 @@ public class OStorageConfiguration implements OSerializableStream {
     write(buffer, binaryFormatVersion);
     write(buffer, clusterSelection);
     write(buffer, minimumClusters);
+
+    write(buffer, recordSerializer);
+    write(buffer, recordSerializerVersion);
 
     // PLAIN: ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
     buffer.append("|");
@@ -480,6 +490,22 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void setMinimumClusters(final int minimumClusters) {
     this.minimumClusters = minimumClusters;
+  }
+
+  public String getRecordSerializer() {
+    return recordSerializer;
+  }
+
+  public void setRecordSerializer(String recordSerializer) {
+    this.recordSerializer = recordSerializer;
+  }
+
+  public int getRecordSerializerVersion() {
+    return recordSerializerVersion;
+  }
+
+  public void setRecordSerializerVersion(int recordSerializerVersion) {
+    this.recordSerializerVersion = recordSerializerVersion;
   }
 
   private int phySegmentFromStream(final String[] values, int index, final OStorageSegmentConfiguration iSegment) {

@@ -36,4 +36,8 @@ public interface ORecordSerializer {
   public ORecordInternal<?> fromStream(byte[] iSource, ORecordInternal<?> iRecord, String[] iFields);
 
   public byte[] toStream(ORecordInternal<?> iSource, boolean iOnlyDelta);
+
+  public int getCurrentVersion();
+
+  public int getMinSupportedVersion();
 }
