@@ -163,7 +163,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return this;
   }
 
-  public void onBeforeIdentityChanged(final ORID iRID) {
+  public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
     prevRid = _recordId.copy();
   }
 

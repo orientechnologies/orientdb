@@ -1103,7 +1103,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         final boolean isNew = iForceCreate || rid.isNew();
         if (isNew)
           // NOTIFY IDENTITY HAS CHANGED
-          record.onBeforeIdentityChanged(rid);
+          record.onBeforeIdentityChanged(record);
         else if (stream == null || stream.length == 0)
           // ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A GRAPH)
           return (RET) record;

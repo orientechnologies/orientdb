@@ -314,7 +314,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         recordEntries.put(newRid, rec);
 
       if (!rec.getRecord().getIdentity().equals(newRid)) {
-        rec.getRecord().onBeforeIdentityChanged(oldRid);
+        rec.getRecord().onBeforeIdentityChanged(rec.getRecord());
 
         final ORecordId recordId = (ORecordId) rec.getRecord().getIdentity();
         if (recordId == null) {

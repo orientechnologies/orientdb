@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -145,7 +144,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     return this;
   }
 
-  public void onBeforeIdentityChanged(ORID iRID) {
+  public void onBeforeIdentityChanged(ORecord<?> iRecord) {
   }
 
   public void onAfterIdentityChanged(ORecord<?> iRecord) {

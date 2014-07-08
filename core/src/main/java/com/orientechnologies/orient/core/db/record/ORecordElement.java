@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
@@ -62,7 +61,7 @@ public interface ORecordElement {
   /**
    * Internal only.
    */
-  public void onBeforeIdentityChanged(ORID iRID);
+  public void onBeforeIdentityChanged(ORecord<?> iRecord);
 
   /**
    * Internal only.

@@ -24,7 +24,6 @@ import java.util.ListIterator;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -176,7 +175,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     return (RET) this;
   }
 
-  public void onBeforeIdentityChanged(ORID iRID) {
+  public void onBeforeIdentityChanged(ORecord<?> iRecord) {
   }
 
   public void onAfterIdentityChanged(ORecord<?> iRecord) {

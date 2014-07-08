@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -148,8 +147,8 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     return this;
   }
 
-  public void onBeforeIdentityChanged(final ORID iRID) {
-    remove(iRID);
+  public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
+    remove(iRecord.getIdentity());
   }
 
   @SuppressWarnings("unchecked")

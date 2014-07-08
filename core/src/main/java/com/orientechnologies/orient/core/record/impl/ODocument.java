@@ -1179,8 +1179,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   @Override
-  public void onBeforeIdentityChanged(final ORID iRID) {
-    super.onBeforeIdentityChanged(iRID);
+  public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
+    super.onBeforeIdentityChanged(iRecord);
     if (_owners != null) {
       final List<WeakReference<ORecordElement>> temp = new ArrayList<WeakReference<ORecordElement>>(_owners);
 
@@ -1188,7 +1188,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       for (WeakReference<ORecordElement> o : temp) {
         e = o.get();
         if (e != null)
-          e.onBeforeIdentityChanged(iRID);
+          e.onBeforeIdentityChanged(iRecord);
       }
     }
   }

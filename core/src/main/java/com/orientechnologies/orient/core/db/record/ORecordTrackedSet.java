@@ -22,7 +22,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -34,10 +33,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> implements Set<OIdentifiable>, ORecordElement {
-  protected final ORecord<?>    sourceRecord;
-  protected Map<Object, Object> map           = new HashMap<Object, Object>();
-  private STATUS                status        = STATUS.NOT_LOADED;
-  protected final static Object ENTRY_REMOVAL = new Object();
+  protected final ORecord<?>           sourceRecord;
+  protected Map<OIdentifiable, Object> map           = new HashMap<OIdentifiable, Object>();
+  private STATUS                       status        = STATUS.NOT_LOADED;
+  protected final static Object        ENTRY_REMOVAL = new Object();
 
   public ORecordTrackedSet(final ORecord<?> iSourceRecord) {
     this.sourceRecord = iSourceRecord;
@@ -135,8 +134,8 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
     return this;
   }
 
-  public void onBeforeIdentityChanged(final ORID iRID) {
-    map.remove(iRID);
+  public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
+    map.remove(iRecord);
     setDirty();
   }
 

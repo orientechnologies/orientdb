@@ -337,7 +337,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
         if (!rid.isValid()) {
-          iRecord.onBeforeIdentityChanged(rid);
+          iRecord.onBeforeIdentityChanged(iRecord);
 
           // ASSIGN A UNIQUE SERIAL TEMPORARY ID
           if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
