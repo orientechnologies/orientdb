@@ -35,7 +35,6 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   private String              senderNodeName;
   private String              databaseName;
   private long                senderThreadId;
-  private String              userName = "";
   private OAbstractRemoteTask task;
   private String              userName = "";
 
@@ -77,14 +76,6 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   public OHazelcastDistributedRequest setDatabaseName(final String databaseName) {
     this.databaseName = databaseName;
     return this;
-  }
-
-  public String getUserName() {
-    return userName;
-  }
-
-  public void setUserName(String userName) {
-    this.userName = userName;
   }
 
   @Override

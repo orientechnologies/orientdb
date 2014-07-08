@@ -307,16 +307,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       }
     }
   }
-  
-  private void createReplicatorUser(ODatabaseDocumentTx database, final OServerUserConfiguration replicatorUser) {
-    String strQuery = "select from ouser where name = '" + replicatorUser.name +"'";
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(strQuery);
-    List<ODocument> result = database.command(query).execute();
-    if(result == null || result.size() == 0) {
-      String strExec = "insert into ouser (name, password, status, roles) values ('"+replicatorUser.name+"', '"+replicatorUser.password+"', 'ACTIVE', [#4:0])";
-      database.command(new OCommandSQL(strExec)).execute();
-    }
-  }
 
   @Override
   public void setOnline() {
@@ -532,7 +522,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         responsePayload = manager.executeOnLocalNode(iRequest, database);
 
       } finally {
-        if (database != null) 
+        if (database != null)
           database.setUser(origin);
       }
 

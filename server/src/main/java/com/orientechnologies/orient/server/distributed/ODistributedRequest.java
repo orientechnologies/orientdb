@@ -31,10 +31,6 @@ public interface ODistributedRequest {
 
   void setId(long iId);
 
-  String getUserName();
-
-  void setUserName(String requestLoginUserName);
-
   EXECUTION_MODE getExecutionMode();
 
   String getDatabaseName();
