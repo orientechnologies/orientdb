@@ -31,10 +31,6 @@ public interface ODistributedRequest {
 
   void setId(long iId);
 
-  String getUserName();
-
-  void setUserName(String requestLoginUserName);
-
   EXECUTION_MODE getExecutionMode();
 
   String getDatabaseName();
@@ -50,4 +46,8 @@ public interface ODistributedRequest {
   ODistributedRequest setTask(final OAbstractRemoteTask payload);
 
   void undo();
+
+  String getUserName();
+
+  void setUserName(String userName);
 }

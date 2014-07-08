@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @Test
-public class CollateTest extends BaseTest {
+public class CollateTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
   public CollateTest(@Optional String url) {

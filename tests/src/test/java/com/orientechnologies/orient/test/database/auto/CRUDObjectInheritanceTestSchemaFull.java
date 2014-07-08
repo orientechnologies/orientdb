@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -57,24 +58,26 @@ import com.orientechnologies.orient.test.domain.schemageneration.JavaTestSchemaG
 import com.orientechnologies.orient.test.domain.schemageneration.TestSchemaGenerationChild;
 
 @Test(groups = { "crud", "object", "schemafull", "inheritanceSchemaFull" })
-public class CRUDObjectInheritanceTestSchemaFull {
+public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
   protected static final int TOT_RECORDS    = 10;
 
   public static final String buildDirectory = System.getProperty("buildDirectory", ".");
   public static final String EXPORT_DIR     = buildDirectory + File.separator + "objectSchemaTest/database.export.gz";
 
   protected long             startRecordNumber;
-  private OObjectDatabaseTx  database;
   private City               redmond        = new City(new Country("Washington"), "Redmond");
-  private String             url;
 
-  @Parameters(value = { "url", "testPath" })
-  public CRUDObjectInheritanceTestSchemaFull(String iURL, String iTestPath) {
-    url = iURL;
-  }
+	@Parameters(value = "url")
+	public CRUDObjectInheritanceTestSchemaFull(@Optional String url) {
+		super(url);
+	}
 
-  @BeforeClass
-  public void init() throws IOException {
+	@BeforeClass
+  public void beforeClass() throws Exception {
+		super.beforeClass();
+
+		database.close();
+
     database = new OObjectDatabaseTx(url + "_objectschema");
     ODatabaseHelper.createDatabase(database, url + "_objectschema");
     database.close();
@@ -125,15 +128,11 @@ public class CRUDObjectInheritanceTestSchemaFull {
       database.command(new OCommandSQL("delete from Profile")).execute();
     if (database.getMetadata().getSchema().existsClass("IdentityChild"))
       database.command(new OCommandSQL("delete from IdentityChild")).execute();
-    // database.command(
-    // new OCommandSQL("delete from Profile where nick = 'PresidentSon1' or nick = 'PresidentSon2' or nick = 'ThePresident'"))
-    // .execute();
     database.close();
   }
 
   @Test
   public void create() {
-    database.open("admin", "admin");
     database.getMetadata().getSchema().synchronizeSchema();
     database.setAutomaticSchemaGeneration(true);
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
@@ -154,23 +153,17 @@ public class CRUDObjectInheritanceTestSchemaFull {
       company.getAddresses().add(new Address("Headquarter", redmond, "WA 98073-9717"));
       database.save(company);
     }
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "create")
   public void testCreate() {
-    database.open("admin", "admin");
     database.setAutomaticSchemaGeneration(true);
 
     Assert.assertEquals(database.countClusterElements("Company") - startRecordNumber, TOT_RECORDS);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testCreate")
   public void queryByBaseType() {
-    database.open("admin", "admin");
     database.setAutomaticSchemaGeneration(true);
 
     final List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Company where name.length() > 0"));
@@ -190,13 +183,10 @@ public class CRUDObjectInheritanceTestSchemaFull {
     }
 
     Assert.assertEquals(companyRecords, TOT_RECORDS);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "queryByBaseType")
   public void queryPerSuperType() {
-    database.open("admin", "admin");
     database.setAutomaticSchemaGeneration(true);
 
     final List<Company> result = database.query(new OSQLSynchQuery<ODocument>("select * from Company where name.length() > 0"));
@@ -208,13 +198,10 @@ public class CRUDObjectInheritanceTestSchemaFull {
       account = result.get(i);
       Assert.assertNotSame(account.getName().length(), 0);
     }
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "queryPerSuperType")
   public void deleteFirst() {
-    database.open("admin", "admin");
     database.setAutomaticSchemaGeneration(true);
 
     startRecordNumber = database.countClusterElements("Company");
@@ -230,12 +217,10 @@ public class CRUDObjectInheritanceTestSchemaFull {
 
     Assert.assertEquals(database.countClusterElements("Company"), startRecordNumber - 1);
 
-    database.close();
   }
 
   @Test(dependsOnMethods = "deleteFirst")
   public void testSuperclassInheritanceCreation() {
-    database.open("admin", "admin");
     database.setAutomaticSchemaGeneration(true);
 
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.inheritance");
@@ -252,12 +237,10 @@ public class CRUDObjectInheritanceTestSchemaFull {
     Assert.assertEquals(baseClass.getSuperClass().getName(), abstractClass.getName());
     Assert.assertEquals(testClass.getSuperClass(), baseClass);
     Assert.assertEquals(testClass.getSuperClass().getName(), baseClass.getName());
-    database.close();
   }
 
   @Test(dependsOnMethods = "testSuperclassInheritanceCreation")
   public void testIdFieldInheritance() {
-    database.open("admin", "admin");
     database.setAutomaticSchemaGeneration(true);
 
     database.getEntityManager().registerEntityClass(Musician.class);
@@ -272,13 +255,10 @@ public class CRUDObjectInheritanceTestSchemaFull {
     Assert.assertNotNull(instrumentIdField);
     Assert.assertEquals(idField, instrumentIdField);
     Assert.assertEquals(instrumentIdField, musicianIdField);
-    idField = OObjectEntitySerializer.getIdField(IdObject.class);
-    database.close();
   }
 
   @Test(dependsOnMethods = "testIdFieldInheritance")
   public void testIdFieldInheritanceFirstSubClass() {
-    database.open("admin", "admin");
     database.setAutomaticSchemaGeneration(true);
     database.command(new OCommandSQL("delete from InheritanceTestBaseClass")).execute();
     database.command(new OCommandSQL("delete from InheritanceTestClass")).execute();
@@ -293,13 +273,10 @@ public class CRUDObjectInheritanceTestSchemaFull {
     final List<InheritanceTestBaseClass> result1 = database.query(new OSQLSynchQuery<InheritanceTestBaseClass>(
         "select from InheritanceTestBaseClass"));
     Assert.assertEquals(2, result1.size());
-    database.close();
   }
 
   @Test(dependsOnMethods = "testIdFieldInheritanceFirstSubClass")
   public void testSchemaGeneration() {
-    database.open("admin", "admin");
-
     database.getMetadata().getSchema().generateSchema("com.orientechnologies.orient.test.domain.base");
     if (url.startsWith(OEngineRemote.NAME)) {
       database.getMetadata().reload();
@@ -312,12 +289,10 @@ public class CRUDObjectInheritanceTestSchemaFull {
     checkNotExistsProperty(instrumentClass, "version");
     checkProperty(musicianClass, "name", OType.STRING);
     checkProperty(musicianClass, "instruments", OType.LINKLIST, instrumentClass);
-    database.close();
   }
 
   @Test(dependsOnMethods = "testSchemaGeneration")
   public void testAutomaticSchemaGeneration() {
-    database.open("admin", "admin");
     database.setAutomaticSchemaGeneration(true);
 
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.schemageneration");
@@ -375,12 +350,10 @@ public class CRUDObjectInheritanceTestSchemaFull {
     checkNotExistsProperty(testSchemaClass, "transientDateField");
 
     database.setAutomaticSchemaGeneration(false);
-    database.close();
   }
 
   @Test(dependsOnMethods = "testAutomaticSchemaGeneration")
   public void testMultipleSchemaGeneration() {
-    database.open("admin", "admin");
     try {
       database.getMetadata().getSchema().generateSchema(Musician.class);
       database.getMetadata().getSchema().generateSchema(JavaTestSchemaGeneration.class);
@@ -391,7 +364,6 @@ public class CRUDObjectInheritanceTestSchemaFull {
     } catch (Exception e) {
       Assert.fail("Shouldn't throw exceptions");
     }
-    database.close();
   }
 
   protected void checkNotExistsProperty(OClass iClass, String iPropertyName) {

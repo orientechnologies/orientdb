@@ -119,8 +119,7 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
     }
 
     // REMOVE THE PROPERTY
-    sourceClass.dropPropertyInternal(fieldName);
-    sourceClass.saveInternal();
+    sourceClass.dropProperty(fieldName);
 
     return null;
   }

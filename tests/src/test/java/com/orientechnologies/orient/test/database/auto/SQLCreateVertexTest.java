@@ -20,7 +20,7 @@ import java.util.List;
  * @since 3/24/14
  */
 @Test
-public class SQLCreateVertexTest extends BaseTest {
+public class SQLCreateVertexTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
   public SQLCreateVertexTest(@Optional String url) {

@@ -115,7 +115,7 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
     if (prop == null)
       throw new OCommandExecutionException("Property '" + className + "." + fieldName + "' not exists");
 
-    prop.setInternalAndSave(attribute, value);
+    prop.set(attribute, value);
     return null;
   }
 

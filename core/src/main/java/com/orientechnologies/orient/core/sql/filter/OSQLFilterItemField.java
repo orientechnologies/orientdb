@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.util.Set;
-
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -27,6 +25,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
+
+import java.util.Set;
 
 /**
  * Represent an object field as value in the query condition.
@@ -39,6 +39,43 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   protected String[]    preLoadedFieldsArray;
   protected String      name;
   protected OCollate    collate;
+
+  /**
+   * Represents filter item as chain of fields. Provide interface to work with this chain like with sequence of field names.
+   */
+  public class FieldChain {
+    private FieldChain() {
+    }
+
+    public String getItemName(int fieldIndex) {
+      if (fieldIndex == 0) {
+        return name;
+      } else {
+        return operationsChain.get(fieldIndex - 1).getValue()[0].toString();
+      }
+    }
+
+    public int getItemCount() {
+      if (operationsChain == null) {
+        return 1;
+      } else {
+        return operationsChain.size() + 1;
+      }
+    }
+
+    /**
+     * Field chain is considered as long chain if it contains more than one item.
+     * 
+     * @return true if this chain is long and false in another case.
+     */
+    public boolean isLong() {
+      return operationsChain != null && operationsChain.size() > 0;
+    }
+
+    public boolean belongsTo(OSQLFilterItemField filterItemField) {
+      return OSQLFilterItemField.this == filterItemField;
+    }
+  }
 
   public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName) {
     super(iQueryToParse, iName);
@@ -58,11 +95,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
     // UNMARSHALL THE SINGLE FIELD
     if (doc.deserializeFields(preLoadedFieldsArray)) {
-      Object v = ODocumentHelper.getFieldValue(doc, name);
-
-      if (v == null && iCurrentResult != null)
-        // SEARCH IN CURRENT RESULT FIRST
-        v = ODocumentHelper.getFieldValue(iCurrentResult, name);
+      final Object v = ODocumentHelper.getFieldValue(doc, name);
 
       collate = getCollateForField(doc, name);
 
@@ -121,42 +154,5 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
   public OCollate getCollate() {
     return collate;
-  }
-
-  /**
-   * Represents filter item as chain of fields. Provide interface to work with this chain like with sequence of field names.
-   */
-  public class FieldChain {
-    private FieldChain() {
-    }
-
-    public String getItemName(int fieldIndex) {
-      if (fieldIndex == 0) {
-        return name;
-      } else {
-        return operationsChain.get(fieldIndex - 1).getValue()[0].toString();
-      }
-    }
-
-    public int getItemCount() {
-      if (operationsChain == null) {
-        return 1;
-      } else {
-        return operationsChain.size() + 1;
-      }
-    }
-
-    /**
-     * Field chain is considered as long chain if it contains more than one item.
-     * 
-     * @return true if this chain is long and false in another case.
-     */
-    public boolean isLong() {
-      return operationsChain != null && operationsChain.size() > 0;
-    }
-
-    public boolean belongsTo(OSQLFilterItemField filterItemField) {
-      return OSQLFilterItemField.this == filterItemField;
-    }
   }
 }

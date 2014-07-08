@@ -1,14 +1,13 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import org.testng.annotations.*;
 
 @Test
-public abstract class BaseTest {
-  protected ODatabaseDocumentTx database;
-  protected String              url;
-  private boolean               dropDb = false;
+public abstract class BaseTest<T extends ODatabaseComplex> {
+  protected T      database;
+  protected String url;
+  private boolean  dropDb = false;
 
   @Parameters(value = "url")
   public BaseTest(@Optional String url) {
@@ -18,9 +17,11 @@ public abstract class BaseTest {
       dropDb = true;
     }
 
-    database = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
+    database = createDatabaseInstance(url);
     this.url = database.getURL();
   }
+
+  protected abstract T createDatabaseInstance(String url);
 
   @BeforeClass
   public void beforeClass() throws Exception {

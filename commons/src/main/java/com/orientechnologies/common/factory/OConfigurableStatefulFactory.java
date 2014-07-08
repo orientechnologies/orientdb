@@ -21,6 +21,7 @@ import com.orientechnologies.common.exception.OException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Configurable stateful factory. New instances are created when newInstance() is called, invoking its default empty constructor.
@@ -64,6 +65,11 @@ public class OConfigurableStatefulFactory<K, V> {
       }
     }
     return null;
+  }
+  
+  public Set<K> getKeys()
+  {
+	  return registry.keySet();
   }
 
   public OConfigurableStatefulFactory<K, V> register(final K iKey, final Class<? extends V> iValue) {

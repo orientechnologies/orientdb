@@ -587,8 +587,11 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   public OIndexAbstract<T> addCluster(final String clusterName) {
     acquireExclusiveLock();
     try {
-      if (clustersToIndex.add(clusterName))
+      if (clustersToIndex.add(clusterName)) {
         updateConfiguration();
+        rebuild();
+      }
+
       return this;
     } finally {
       releaseExclusiveLock();
@@ -598,8 +601,11 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   public OIndexAbstract<T> removeCluster(String iClusterName) {
     acquireExclusiveLock();
     try {
-      if (clustersToIndex.remove(iClusterName))
+      if (clustersToIndex.remove(iClusterName)) {
         updateConfiguration();
+        rebuild();
+      }
+
       return this;
     } finally {
       releaseExclusiveLock();
