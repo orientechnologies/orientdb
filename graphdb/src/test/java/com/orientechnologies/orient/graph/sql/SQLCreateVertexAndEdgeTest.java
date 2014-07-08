@@ -59,10 +59,11 @@ public class SQLCreateVertexAndEdgeTest {
 		int eclusterId = database.addCluster("edefault", OStorage.CLUSTER_TYPE.PHYSICAL);
 
     database.command(new OCommandSQL("create class V1 extends V")).execute();
-    database.command(new OCommandSQL("alter class V1 addcluster " + vclusterId)).execute();
+    database.command(new OCommandSQL("alter class V1 addcluster vdefault")).execute();
 
     database.command(new OCommandSQL("create class E1 extends E")).execute();
-		database.command(new OCommandSQL("alter class E1 addcluster " + eclusterId)).execute();
+		database.command(new OCommandSQL("alter class E1 addcluster edefault")).execute();
+
     database.getMetadata().getSchema().reload();
 
     // VERTEXES

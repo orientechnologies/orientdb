@@ -78,7 +78,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
     if (oClass == null)
       return null;
 
-    ((OSchemaProxy) database.getMetadata().getSchema()).dropClassInternal(className);
+    database.getMetadata().getSchema().dropClass(className);
     return true;
   }
 

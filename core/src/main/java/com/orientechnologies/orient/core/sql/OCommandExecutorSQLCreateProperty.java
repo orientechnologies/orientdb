@@ -120,9 +120,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     }
 
     // CREATE IT LOCALLY
-    prop = sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass);
-    sourceClass.saveInternal();
-
+    sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass);
     return sourceClass.properties().size();
   }
 

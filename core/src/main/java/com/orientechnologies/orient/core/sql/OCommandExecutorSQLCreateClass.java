@@ -138,8 +138,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseRecord database = getDatabase();
-    ((OSchemaProxy) database.getMetadata().getSchema()).createClassInternal(className,
-        superClass, clusterIds);
+    database.getMetadata().getSchema().createClass(className, superClass, clusterIds);
 
     return database.getMetadata().getSchema().getClasses().size();
   }
