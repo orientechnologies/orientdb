@@ -1192,11 +1192,22 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return super.setDirty();
   }
 
-  private void setDirtyNoChanged() {
-    if (!_dirty && _status != STATUS.UNMARSHALLING) {
-      _dirty = true;
-      _source = null;
+  @Override
+  public void setDirtyNoChanged() {
+    if (_owners != null) {
+      // PROPAGATES TO THE OWNER
+      ORecordElement e;
+      for (WeakReference<ORecordElement> o : _owners) {
+        e = o.get();
+        if (e != null)
+          e.setDirtyNoChanged();
+      }
     }
+
+    // THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
+    checkForFields();
+
+    super.setDirtyNoChanged();
   }
 
   @Override

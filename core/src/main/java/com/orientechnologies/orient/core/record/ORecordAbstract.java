@@ -170,6 +170,14 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return this;
   }
 
+  @Override
+  public void setDirtyNoChanged() {
+    if (!_dirty && _status != STATUS.UNMARSHALLING) {
+      _dirty = true;
+      _source = null;
+    }
+  }
+
   public void onBeforeIdentityChanged(final ORID iRID) {
     prevRid = _recordId.copy();
   }

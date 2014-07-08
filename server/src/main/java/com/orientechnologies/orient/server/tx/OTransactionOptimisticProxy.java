@@ -178,7 +178,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         indexEntries.put(indexEntry.getKey(), transactionIndexChanges);
       }
 
-      final Boolean clearAll = (Boolean) indexDoc.field("clear");
+      final Boolean clearAll = indexDoc.field("clear");
       if (clearAll != null && clearAll)
         transactionIndexChanges.setCleared();
 
@@ -187,7 +187,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         continue;
 
       for (final ODocument entry : entries) {
-        final List<ODocument> operations = (List<ODocument>) entry.field("ops");
+        final List<ODocument> operations = entry.field("ops");
         if (operations == null)
           continue;
 

@@ -27,6 +27,7 @@ import java.util.WeakHashMap;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -143,9 +144,16 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
   @SuppressWarnings({ "unchecked" })
   public OTrackedMap<T> setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null
+        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
       sourceRecord.setDirty();
     return this;
+  }
+
+  @Override
+  public void setDirtyNoChanged() {
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+      sourceRecord.setDirtyNoChanged();
   }
 
   public void onBeforeIdentityChanged(final ORID iRID) {

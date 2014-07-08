@@ -819,7 +819,7 @@ public abstract class ORidBagTest extends BaseTest {
     ORidBag bag = new ORidBag();
     assertEmbedded(bag.isEmbedded());
 
-    Random random = new Random();
+    Random random = new Random(0);
     List<OIdentifiable> rids = new ArrayList<OIdentifiable>();
     document.field("bag", bag);
     document.save();

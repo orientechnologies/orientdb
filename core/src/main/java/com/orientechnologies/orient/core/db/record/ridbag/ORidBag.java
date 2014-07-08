@@ -351,7 +351,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
       final OSBTreeRidBag thisTree = (OSBTreeRidBag) delegate;
       final OSBTreeRidBag otherTree = (OSBTreeRidBag) otherValue.delegate;
       if (thisTree.getCollectionPointer().equals(otherTree.getCollectionPointer())) {
-        delegate = otherValue.delegate;
+
+        thisTree.mergeChanges(otherTree);
+
+        uuid = otherValue.uuid;
+
         return true;
       }
     }

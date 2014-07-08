@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OLazyIteratorListWrapper;
 import com.orientechnologies.common.collection.OMultiValue;
@@ -26,11 +31,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
 
 /**
  * Lazy implementation of ArrayList. It's bound to a source ORecord object to keep track of changes. This avoid to call the
@@ -280,6 +280,12 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     if (!marshalling)
       return (RET) super.setDirty();
     return (RET) this;
+  }
+
+  @Override
+  public void setDirtyNoChanged() {
+    if (!marshalling)
+      super.setDirtyNoChanged();
   }
 
   @Override

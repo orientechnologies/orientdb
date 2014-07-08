@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,6 +24,11 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 import java.util.WeakHashMap;
+
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
@@ -140,9 +141,16 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   @SuppressWarnings("unchecked")
   public OTrackedSet<T> setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null
+        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
       sourceRecord.setDirty();
     return this;
+  }
+
+  @Override
+  public void setDirtyNoChanged() {
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+      sourceRecord.setDirtyNoChanged();
   }
 
   public void onBeforeIdentityChanged(ORID iRID) {

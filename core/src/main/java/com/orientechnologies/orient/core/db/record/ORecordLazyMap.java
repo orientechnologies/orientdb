@@ -220,6 +220,12 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
   }
 
   @Override
+  public void setDirtyNoChanged() {
+    if (!marshalling)
+      super.setDirtyNoChanged();
+  }
+
+  @Override
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<Object, OIdentifiable> event) {
     if (!marshalling)
       super.fireCollectionChangedEvent(event);

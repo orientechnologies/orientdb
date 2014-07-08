@@ -89,6 +89,11 @@ public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue
     return (RET) this;
   }
 
+  @Override
+  public void setDirtyNoChanged() {
+    delegate.setDirtyNoChanged();
+  }
+
   public Iterator<OIdentifiable> iterator() {
     if (hasNewItems()) {
       lazyLoad(false);

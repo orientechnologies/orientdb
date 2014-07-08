@@ -181,6 +181,38 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return true;
   }
 
+  public void mergeChanges(OSBTreeRidBag treeRidBag) {
+    for (Map.Entry<OIdentifiable, OModifiableInteger> entry : treeRidBag.newEntries.entrySet()) {
+      mergeDiffEntry(entry.getKey(), entry.getValue().getValue());
+    }
+
+    for (Map.Entry<OIdentifiable, Change> entry : treeRidBag.changes.entrySet()) {
+      final OIdentifiable rec = entry.getKey();
+      final Change change = entry.getValue();
+      final int diff;
+      if (change instanceof DiffChange)
+        diff = ((DiffChange) change).delta;
+      else if (change instanceof AbsoluteChange)
+        diff = ((AbsoluteChange) change).value - getAbsoluteValue(rec).value;
+      else
+        throw new IllegalArgumentException("change type is not supported");
+
+      mergeDiffEntry(rec, diff);
+    }
+  }
+
+  private void mergeDiffEntry(OIdentifiable key, int diff) {
+    if (diff > 0) {
+      for (int i = 0; i < diff; i++) {
+        add(key);
+      }
+    } else {
+      for (int i = diff; i < 0; i++) {
+        remove(key);
+      }
+    }
+  }
+
   @Override
   public boolean isAutoConvertToRecord() {
     return autoConvertToRecord;
@@ -235,13 +267,13 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     try {
       final Integer oldValue;
       if (tree == null)
-        oldValue = null;
+        oldValue = 0;
       else
         oldValue = tree.get(identifiable);
 
       final Change change = changes.get(identifiable);
 
-      return new AbsoluteChange(change.applyTo(oldValue));
+      return new AbsoluteChange(change == null ? oldValue : change.applyTo(oldValue));
     } finally {
       releaseTree();
     }
