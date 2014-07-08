@@ -276,8 +276,24 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
         }
 
     };
+
     $scope.graphOptions = {
-        data: data
+        data: data,
+        config: {
+            height: 300,
+            width: 1200,
+            classes: {
+                "Dir": {
+                    style: '',
+                    css: 'vertex-dir',
+                    display: "inode"
+                }
+            },
+            node: {
+                r: 50
+            }
+
+        }
     }
     $scope.changeIcon = function () {
         $scope.bookIcon = 'icon-star';

@@ -1,4 +1,4 @@
-var GrapgController = angular.module('vertex.controller',[]);
+var GrapgController = angular.module('vertex.controller', []);
 GrapgController.controller("VertexCreateController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {
 
 
@@ -236,4 +236,80 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
         });
 
     }
+}]);
+
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside) {
+
+
+    var data = [];
+
+
+    $scope.graphOptions = {
+        data: data,
+        onLoad: function (graph) {
+            $scope.graph = graph;
+
+            $scope.graph.on('node/click', function (v) {
+
+                $scope.doc = v.source;
+
+                Aside.show({scope: $scope, template: 'views/database/graph/asideVertex.html', show: true});
+            });
+            $scope.graph.on('node/dblclick', function (v) {
+                console.log(v);
+            });
+        },
+        config: {
+            height: 500,
+            width: 1200,
+            classes: {
+
+            },
+            node: {
+                r: 30
+            }
+
+        }
+    }
+
+    $scope.query = function () {
+
+        Spinner.start();
+        if ($scope.queryText.startsWith('g.')) {
+            $scope.language = 'gremlin';
+        } else {
+            $scope.language = 'sql';
+        }
+        CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: $scope.language, text: $scope.queryText, limit: 20, shallow: false, verbose: false}, function (data) {
+
+            if (data.result) {
+
+                $scope.graph.data(data.result).redraw();
+            }
+            Spinner.stopSpinner();
+        }, function (data) {
+            Spinner.stopSpinner();
+        });
+
+    }
+
+    if ($routeParams.q) {
+        $scope.queryText = $routeParams.q;
+        $scope.query();
+    }
+}]);
+GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside) {
+
+    $scope.database = $routeParams.database;
+    $scope.headers = Database.getPropertyFromDoc($scope.doc);
+    $scope.active = 'properties';
+    if ($scope.doc['@class']) {
+        $scope.config = $scope.graph.getClazzConfig($scope.doc['@class']);
+    }
+
+    $scope.$watch('config.display', function (val) {
+        if (val) {
+            $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
+        }
+    })
 }]);

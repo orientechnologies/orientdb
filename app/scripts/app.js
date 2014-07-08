@@ -25,7 +25,8 @@ var deps = ['header.controller',
     'duScroll',
     'ui.select2',
     'ngRoute',
-    'ngAnimate'  ];
+    'ngAnimate',
+    "angularSpectrumColorpicker"];
 
 
 var App = angular.module('OrientDBStudioApp', deps);
@@ -104,6 +105,16 @@ App.config(function ($routeProvider) {
         .when('/database/:database/db/:tab', {
             templateUrl: 'views/database/configuration.html',
             controller: 'ConfigurationController',
+            resolve: DatabaseResolve
+        })
+        .when('/database/:database/graph', {
+            templateUrl: 'views/database/graph/graph.html',
+            controller: 'GraphController',
+            resolve: DatabaseResolve
+        })
+        .when('/database/:database/graph/:q', {
+            templateUrl: 'views/database/graph/graph.html',
+            controller: 'GraphController',
             resolve: DatabaseResolve
         })
         .when('/server', {

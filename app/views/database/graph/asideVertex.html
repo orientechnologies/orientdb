@@ -1,0 +1,68 @@
+<div class="aside" role="dialog" tabindex="-1" ng-controller="VertexAsideController">
+    <div class="aside-dialog">
+        <div class="aside-content">
+            <div class="aside-header">
+                <button class="close" ng-click="$hide()" type="button">×</button>
+                <h5 class="aside-title ng-binding">{{doc['@class']}} - {{doc['@rid']}} - Version
+                    {{doc['@version']}}</h5>
+            </div>
+            <div class="aside-body">
+                <div class="container-fluid">
+                    <div class="row">
+                        <ul class="nav nav-pills nav-justified">
+                            <li ng-class="{active : 'properties' == active }"><a href="javascript:void(0)"
+                                                                                 ng-click="active = 'properties'"
+                                    >Properties</a></li>
+                            <li ng-class="{active : 'settings' == active }"><a href="javascript:void(0)"
+                                                                               ng-click="active = 'settings'">Settings</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="row">
+
+                        <div class="col-md-12" ng-show="active == 'properties'">
+                            <dl class="dl-horizontal">
+                                <dt ng-repeat-start="header in headers">{{header}}</dt>
+                                <dd ng-repeat-end>{{doc[header]}}</dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-12" ng-show="active == 'settings'">
+
+                            <form class="form-horizontal">
+                                <div class="form-group">
+                                    <label for="inputDisplay" class="col-md-4 control-label">Display</label>
+
+                                    <div class="col-md-8">
+                                        <select ng-model="config.display" id="inputDisplay"
+                                                ng-options="h for h in headers">
+
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="inputFill" class="col-md-4 control-label">Fill</label>
+
+                                    <div class="col-md-8">
+                                        <spectrum-colorpicker id="inputFill"
+                                                              ng-model="yourFancyModel"></spectrum-colorpicker>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="col-sm-offset-2 col-sm-10">
+                                        <button type="submit" class="btn btn-default" ng-class="apply()">Apply Config</button>
+                                    </div>
+                                </div>
+                            </form>
+
+                        </div>
+                    </div>
+                    <div class="row">
+
+                    </div>
+                </div>
+            </div>
+            <div class="aside-footer">
+            </div>
+        </div>
+    </div>
+</div>

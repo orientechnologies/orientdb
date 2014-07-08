@@ -95,3 +95,23 @@ graph.directive('ngGraphQuery', function () {
         link: linker
     }
 });
+
+graph.directive('ngOGraph', function () {
+
+    var linker = function (scope, element, attrs) {
+
+
+        var opts = angular.extend({}, scope.$eval(attrs.ngOGraph));
+        var ograph = OrientGraph.create(element[0], opts.config);
+
+        ograph.data(opts.data).draw();
+
+        if (opts.onLoad) {
+            opts.onLoad(ograph);
+        }
+    }
+    return {
+        restrict: 'A',
+        link: linker
+    }
+});

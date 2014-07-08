@@ -1,0 +1,32 @@
+<div class="row">
+    <div class="panel panel-default">
+        <div class="panel-heading graph-heading">
+
+
+            <div class="col-md-4">
+                Graph Editor
+            </div>
+            <div class="col-md-8">
+                <div class="input-group">
+                    <input type="text" class="form-control" ng-model="queryText">
+
+                    <div class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="query()">Search</button>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                             <span
+                                     class="caret"></span></button>
+                        <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                            <li><a href="#">Clear Graph</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="clearfix"></div>
+        <div class="panel-body">
+            <div class="graph-container" ng-o-graph="graphOptions">
+
+            </div>
+        </div>
+    </div>
+</div>

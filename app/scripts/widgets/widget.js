@@ -153,7 +153,9 @@ Widget.directive('docwidget', function ($compile, $http, Database, CommandApi, D
         return type != null ? type : "STRING";
     }
     var linker = function (scope, element, attrs) {
-        $http.get('views/widget/form.html').then(function (response) {
+
+        var url = attrs.docwidget ? attrs.docwidget : "views/widget/form.html"
+        $http.get(url).then(function (response) {
             compileForm(response, scope, element, attrs);
         });
     }

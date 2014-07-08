@@ -40,6 +40,7 @@ body div.container-studio {
     margin-top: -5px;
 }
 
+
 .console_class_functions .jumbotron {
     padding: 0px;
 }
@@ -83,4 +84,7 @@ body div.container-studio {
 
 .del-field {
     padding-left: 0px;
+}
+.graph-heading {
+    height: 50px;
 }

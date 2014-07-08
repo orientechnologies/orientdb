@@ -22,6 +22,7 @@
     "angular-ui-bootstrap-bower": "0.10.0",
     "spin.js": "2.0.0",
     "bootstrap-datetimepicker": "0.0.11",
+    "angular-spectrum-colorpicker " : "1.0.13",
     "angular-ui-select2": "~0.0.5",
     "stringjs": "1.5.1",
     "d3": "3.3.5",
