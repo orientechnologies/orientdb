@@ -296,9 +296,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           ODistributedAbstractPlugin.REPLICATOR_USER);
       database.open(replicatorUser.name, replicatorUser.password);
     } else {
-      // After initialize database, create replicator user in DB and reset database with OSecurityShared instead of OSecurityNull 
+      // After initialize database, create replicator user in DB and reset database with OSecurityShared instead of OSecurityNull
       OSecurity security = database.getMetadata().getSecurity();
-      if(security == null || security instanceof OSecurityNull) {
+      if (security == null || security instanceof OSecurityNull) {
         final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
             ODistributedAbstractPlugin.REPLICATOR_USER);
         createReplicatorUser(database, replicatorUser);
@@ -515,26 +515,25 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         ODatabaseRecordThreadLocal.INSTANCE.set(database);
 
         task.setNodeSource(iRequest.getSenderNodeName());
-        //keep original user in database, check the username passed in request and set new user in DB, after document saved, reset to original user  
-        origin = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
-        if(ODatabaseRecordThreadLocal.INSTANCE.get() != null) {
+
+        // keep original user in database, check the username passed in request and set new user in DB, after document saved, reset
+        // to original user
+        if (database != null) {
+          origin = database.getUser();
           try {
-            if (database != null) {
-              if(lastUser == null || !(lastUser.getName()).equals(iRequest.getUserName()))
-                lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserName());
-              ODatabaseRecordThreadLocal.INSTANCE.get().setUser(lastUser);//set to new user
-            }
-          } catch(Throwable ex) {
+            if (lastUser == null || !(lastUser.getName()).equals(iRequest.getUserName()))
+              lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserName());
+            database.setUser(lastUser);// set to new user
+          } catch (Throwable ex) {
             OLogManager.instance().error(this, "failed to convert to OUser " + ex.getMessage());
           }
         }
+
         responsePayload = manager.executeOnLocalNode(iRequest, database);
 
       } finally {
-        if (database != null)
-          database.getLocalCache().clear();
-        if (ODatabaseRecordThreadLocal.INSTANCE.get() != null)
-          ODatabaseRecordThreadLocal.INSTANCE.get().setUser(origin);//set back to origin
+        if (database != null) 
+          database.setUser(origin);
       }
 
       if (ODistributedServerLog.isDebugEnabled())
@@ -718,5 +717,16 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       hotAlignmentError(lastPendingRequest, "Not able to assure last operation has been completed before last crash. Task='%s'",
           task);
     return executeLastPendingRequest;
+  }
+
+  private void createReplicatorUser(ODatabaseDocumentTx database, final OServerUserConfiguration replicatorUser) {
+    String strQuery = "select from ouser where name = '" + replicatorUser.name + "'";
+    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(strQuery);
+    List<ODocument> result = database.command(query).execute();
+    if (result == null || result.size() == 0) {
+      String strExec = "insert into ouser (name, password, status, roles) values ('" + replicatorUser.name + "', '"
+          + replicatorUser.password + "', 'ACTIVE', [#4:0])";
+      database.command(new OCommandSQL(strExec)).execute();
+    }
   }
 }

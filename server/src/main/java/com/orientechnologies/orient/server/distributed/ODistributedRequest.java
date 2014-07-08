@@ -50,4 +50,8 @@ public interface ODistributedRequest {
   ODistributedRequest setTask(final OAbstractRemoteTask payload);
 
   void undo();
+
+  String getUserName();
+
+  void setUserName(String userName);
 }

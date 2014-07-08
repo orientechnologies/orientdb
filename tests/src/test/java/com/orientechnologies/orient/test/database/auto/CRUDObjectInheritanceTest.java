@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -42,20 +43,19 @@ import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestBaseC
 import com.orientechnologies.orient.test.domain.inheritance.InheritanceTestClass;
 
 @Test(groups = { "crud", "object" }, sequential = true)
-public class CRUDObjectInheritanceTest {
+public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
   protected static final int TOT_RECORDS = 10;
   protected long             startRecordNumber;
-  private OObjectDatabaseTx  database;
   private City               redmond     = new City(new Country("Washington"), "Redmond");
 
   @Parameters(value = "url")
-  public CRUDObjectInheritanceTest(String iURL) {
-    database = new OObjectDatabaseTx(iURL);
+  public CRUDObjectInheritanceTest(@Optional String url) {
+    super(url);
   }
 
   @Test
   public void create() {
-    database.open("admin", "admin");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
 
     database.command(new OCommandSQL("delete from Company")).execute();
 
@@ -69,23 +69,15 @@ public class CRUDObjectInheritanceTest {
       company.getAddresses().add(new Address("Headquarter", redmond, "WA 98073-9717"));
       database.save(company);
     }
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "create")
   public void testCreate() {
-    database.open("admin", "admin");
-
     Assert.assertEquals(database.countClusterElements("Company") - startRecordNumber, TOT_RECORDS);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testCreate")
   public void queryByBaseType() {
-    database.open("admin", "admin");
-
     final List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Company where name.length() > 0"));
 
     Assert.assertTrue(result.size() > 0);
@@ -103,14 +95,10 @@ public class CRUDObjectInheritanceTest {
     }
 
     Assert.assertEquals(companyRecords, TOT_RECORDS);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "queryByBaseType")
   public void queryPerSuperType() {
-    database.open("admin", "admin");
-
     final List<Company> result = database.query(new OSQLSynchQuery<ODocument>("select * from Company where name.length() > 0"));
 
     Assert.assertTrue(result.size() == TOT_RECORDS);
@@ -120,14 +108,10 @@ public class CRUDObjectInheritanceTest {
       account = result.get(i);
       Assert.assertNotSame(account.getName().length(), 0);
     }
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "queryPerSuperType")
   public void deleteFirst() {
-    database.open("admin", "admin");
-
     startRecordNumber = database.countClusterElements("Company");
 
     // DELETE ALL THE RECORD IN THE CLUSTER
@@ -140,14 +124,10 @@ public class CRUDObjectInheritanceTest {
     }
 
     Assert.assertEquals(database.countClusterElements("Company"), startRecordNumber - 1);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "deleteFirst")
   public void testSuperclassInheritanceCreation() {
-    database.open("admin", "admin");
-
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.inheritance");
     database.close();
     database.open("admin", "admin");
@@ -158,13 +138,10 @@ public class CRUDObjectInheritanceTest {
     Assert.assertEquals(baseClass.getSuperClass().getName(), abstractClass.getName());
     Assert.assertEquals(testClass.getSuperClass(), baseClass);
     Assert.assertEquals(testClass.getSuperClass().getName(), baseClass.getName());
-    database.close();
   }
 
   @Test(dependsOnMethods = "testSuperclassInheritanceCreation")
   public void testIdFieldInheritance() {
-    database.open("admin", "admin");
-
     database.getEntityManager().registerEntityClass(Musician.class);
     database.getEntityManager().registerEntityClass(Instrument.class);
     database.getEntityManager().registerEntityClass(IdObject.class);
@@ -178,15 +155,13 @@ public class CRUDObjectInheritanceTest {
     Assert.assertEquals(idField, instrumentIdField);
     Assert.assertEquals(instrumentIdField, musicianIdField);
     idField = OObjectEntitySerializer.getIdField(IdObject.class);
-    database.close();
   }
 
   @Test(dependsOnMethods = "testIdFieldInheritance")
   public void testIdFieldInheritanceFirstSubClass() {
-    database.open("admin", "admin");
-
     database.getEntityManager().registerEntityClass(InheritanceTestClass.class);
     database.getEntityManager().registerEntityClass(InheritanceTestBaseClass.class);
+
     InheritanceTestBaseClass a = database.newInstance(InheritanceTestBaseClass.class);
     InheritanceTestBaseClass b = database.newInstance(InheritanceTestClass.class);
     database.save(a);
@@ -195,7 +170,6 @@ public class CRUDObjectInheritanceTest {
     final List<InheritanceTestBaseClass> result1 = database.query(new OSQLSynchQuery<InheritanceTestBaseClass>(
         "select from InheritanceTestBaseClass"));
     Assert.assertEquals(2, result1.size());
-    database.close();
   }
 
 }

@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test(groups = "function")
-public class FunctionsTest extends BaseTest {
+public class FunctionsTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
   public FunctionsTest(@Optional String iURL) {

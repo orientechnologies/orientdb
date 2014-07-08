@@ -35,7 +35,7 @@ import java.io.File;
 import java.util.Collection;
 
 @Test(groups = "sql-delete", sequential = true)
-public class SQLCommandsTest extends BaseTest {
+public class SQLCommandsTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
   public SQLCommandsTest(@Optional String url) {

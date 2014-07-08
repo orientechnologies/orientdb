@@ -138,11 +138,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseRecord database = getDatabase();
-    if (database.getMetadata().getSchema().existsClass(className))
-      throw new OCommandExecutionException("Class " + className + " already exists");
-
-    final OClassImpl sourceClass = (OClassImpl) ((OSchemaProxy) database.getMetadata().getSchema()).createClassInternal(className,
-        superClass, clusterIds);
+    database.getMetadata().getSchema().createClass(className, superClass, clusterIds);
 
     return database.getMetadata().getSchema().getClasses().size();
   }

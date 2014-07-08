@@ -39,7 +39,7 @@ import java.util.*;
 
 @SuppressWarnings("unchecked")
 @Test
-public class JSONTest extends BaseTest {
+public class JSONTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
   public JSONTest(@Optional final String iURL) {
     super(iURL);

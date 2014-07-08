@@ -37,7 +37,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 @Test
-public abstract class ORidBagTest extends BaseTest {
+public abstract class ORidBagTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
   public ORidBagTest(@org.testng.annotations.Optional String url) {
