@@ -67,6 +67,8 @@ public interface OClass extends Comparable<OClass> {
 
   public String getName();
 
+  public OClass setName(String iName);
+
   public String getStreamableName();
 
   public Collection<OProperty> declaredProperties();
