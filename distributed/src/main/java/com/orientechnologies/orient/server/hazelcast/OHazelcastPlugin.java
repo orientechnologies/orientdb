@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -353,8 +354,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, iTask,
         iExecutionMode);
 
-    if (ODatabaseRecordThreadLocal.INSTANCE.get().getUser() != null)
-      req.setUserName(ODatabaseRecordThreadLocal.INSTANCE.get().getUser().getName());
+    final ODatabaseRecord currentDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (currentDatabase != null && currentDatabase.getUser() != null)
+      // SET CURRENT DATABASE NAME
+      req.setUserName(currentDatabase.getUser().getName());
 
     final OHazelcastDistributedDatabase db = messageService.getDatabase(iDatabaseName);
 

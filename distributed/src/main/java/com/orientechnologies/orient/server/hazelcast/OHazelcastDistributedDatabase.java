@@ -508,14 +508,12 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
         // keep original user in database, check the username passed in request and set new user in DB, after document saved, reset
         // to original user
-        origin = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
-        if (ODatabaseRecordThreadLocal.INSTANCE.get() != null) {
+        if (database != null) {
+          origin = database.getUser();
           try {
-            if (database != null) {
-              if (lastUser == null || !(lastUser.getName()).equals(iRequest.getUserName()))
-                lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserName());
-              ODatabaseRecordThreadLocal.INSTANCE.get().setUser(lastUser);// set to new user
-            }
+            if (lastUser == null || !(lastUser.getName()).equals(iRequest.getUserName()))
+              lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserName());
+            database.setUser(lastUser);// set to new user
           } catch (Throwable ex) {
             OLogManager.instance().error(this, "failed to convert to OUser " + ex.getMessage());
           }
@@ -524,10 +522,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         responsePayload = manager.executeOnLocalNode(iRequest, database);
 
       } finally {
-        if (database != null)
+        if (database != null) {
           database.getLevel1Cache().clear();
-        if (ODatabaseRecordThreadLocal.INSTANCE.get() != null)
-          ODatabaseRecordThreadLocal.INSTANCE.get().setUser(origin);
+          database.setUser(origin);
+        }
       }
 
       if (ODistributedServerLog.isDebugEnabled())
