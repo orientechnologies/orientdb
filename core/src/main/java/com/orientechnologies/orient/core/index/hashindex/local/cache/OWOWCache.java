@@ -30,7 +30,8 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -85,7 +86,7 @@ public class OWOWCache {
                                                                                       true,
                                                                                       OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT
                                                                                           .getValueAsInteger());
-  private final OStorageLocalAbstract                       storageLocal;
+  private final OLocalPaginatedStorage                      storageLocal;
   private final Object                                      syncObject            = new Object();
   private final ScheduledExecutorService                    commitExecutor        = Executors
                                                                                       .newSingleThreadScheduledExecutor(new ThreadFactory() {
@@ -420,7 +421,7 @@ public class OWOWCache {
   }
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
-      int cacheMaxSize, OStorageLocalAbstract storageLocal, boolean checkMinSize) {
+      int cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize) {
     this.files = new ConcurrentHashMap<Long, OFileClassic>();
 
     this.syncOnPageFlush = syncOnPageFlush;

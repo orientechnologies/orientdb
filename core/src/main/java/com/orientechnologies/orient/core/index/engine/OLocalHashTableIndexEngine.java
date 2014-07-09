@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * @author Andrey Lomakin
@@ -80,7 +80,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
 
     final ODatabaseRecord database = getDatabase();
     final ORecordBytes identityRecord = new ORecordBytes();
-    final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage();
+    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage();
 
     database.save(identityRecord, clusterIndexName);
     identity = identityRecord.getIdentity();
@@ -98,7 +98,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   @Override
   public void deleteWithoutLoad(String indexName) {
-    hashTable.deleteWithoutLoad(indexName, (OStorageLocalAbstract) getDatabase().getStorage().getUnderlying());
+    hashTable.deleteWithoutLoad(indexName, (OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying());
   }
 
   @Override
@@ -110,7 +110,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
       boolean isAutomatic) {
     identity = indexRid;
-    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, (OStorageLocalAbstract) getDatabase()
+    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, (OAbstractPaginatedStorage) getDatabase()
         .getStorage().getUnderlying(), indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
   }

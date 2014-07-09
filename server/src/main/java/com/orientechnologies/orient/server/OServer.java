@@ -57,7 +57,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.server.config.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -726,7 +726,7 @@ public class OServer {
   }
 
   private boolean isStorageOfCurrentServerInstance(OStorage storage) {
-    if (storage.getUnderlying() instanceof OStorageLocalAbstract) {
+    if (storage.getUnderlying() instanceof OAbstractPaginatedStorage) {
       final String rootDirectory = getDatabaseDirectory();
       return storage.getURL().contains(rootDirectory);
     } else

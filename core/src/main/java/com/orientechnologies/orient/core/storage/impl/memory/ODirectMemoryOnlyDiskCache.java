@@ -36,7 +36,7 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
   private final ConcurrentMap<Long, MemoryFile> files         = new ConcurrentHashMap<Long, MemoryFile>();
 
-  private final AtomicLong                      counter       = new AtomicLong();
+  private long                                  counter       = 0;
 
   private final int                             pageSize;
 
@@ -51,13 +51,16 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
       Long fileId = fileNameIdMap.get(fileName);
 
       if (fileId == null) {
-        final long id = counter.incrementAndGet();
+        final long id = counter++;
+
         files.put(id, new MemoryFile(id, pageSize));
         fileNameIdMap.put(fileName, id);
+
         fileId = id;
+
+        fileIdNameMap.put(fileId, fileName);
       }
 
-      fileIdNameMap.put(fileId, fileName);
       return fileId;
     } finally {
       metadataLock.unlock();
@@ -79,8 +82,13 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   @Override
   public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages) throws IOException {
     final MemoryFile memoryFile = getFile(fileId);
+    final OCacheEntry cacheEntry = memoryFile.loadPage(pageIndex);
 
-    return new OCacheEntry(fileId, pageIndex, memoryFile.loadPage(pageIndex), false);
+    synchronized (cacheEntry) {
+      cacheEntry.incrementUsages();
+    }
+
+    return cacheEntry;
   }
 
   @Override
@@ -89,14 +97,21 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
   @Override
   public void loadPinnedPage(OCacheEntry cacheEntry) throws IOException {
+    synchronized (cacheEntry) {
+      cacheEntry.incrementUsages();
+    }
   }
 
   @Override
   public OCacheEntry allocateNewPage(long fileId) throws IOException {
     final MemoryFile memoryFile = getFile(fileId);
-    final long pageIndex = memoryFile.addNewPage();
+    final OCacheEntry cacheEntry = memoryFile.addNewPage();
 
-    return new OCacheEntry(fileId, pageIndex, memoryFile.loadPage(pageIndex), false);
+    synchronized (cacheEntry) {
+      cacheEntry.incrementUsages();
+    }
+
+    return cacheEntry;
   }
 
   private MemoryFile getFile(long fileId) {
@@ -110,6 +125,9 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
   @Override
   public void release(OCacheEntry cacheEntry) {
+    synchronized (cacheEntry) {
+      cacheEntry.decrementUsages();
+    }
   }
 
   @Override
@@ -264,45 +282,49 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   }
 
   private static final class MemoryFile {
-    private final long                                       id;
+    private final long                                     id;
 
-    private final int                                        pageSize;
-    private final ReadWriteLock                              clearLock = new ReentrantReadWriteLock();
+    private final int                                      pageSize;
+    private final ReadWriteLock                            clearLock = new ReentrantReadWriteLock();
 
-    private final ConcurrentSkipListMap<Long, OCachePointer> content   = new ConcurrentSkipListMap<Long, OCachePointer>();
+    private final ConcurrentSkipListMap<Long, OCacheEntry> content   = new ConcurrentSkipListMap<Long, OCacheEntry>();
 
     private MemoryFile(long id, int pageSize) {
       this.id = id;
       this.pageSize = pageSize;
     }
 
-    private OCachePointer loadPage(long index) {
+    private OCacheEntry loadPage(long index) {
       clearLock.readLock().lock();
       try {
-        OCachePointer cachePointer = content.get(index);
-        if (cachePointer != null)
-          return cachePointer;
+        OCacheEntry cacheEntry = content.get(index);
+        if (cacheEntry != null)
+          return cacheEntry;
 
         ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(pageSize);
-        cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
+        OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
         cachePointer.incrementReferrer();
 
-        OCachePointer oldCachePointer = content.putIfAbsent(index, cachePointer);
-        if (oldCachePointer != null)
-          cachePointer.decrementReferrer();
-        {
-          cachePointer = oldCachePointer;
+        cacheEntry = new OCacheEntry(id, index, cachePointer, false);
+
+        OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
+
+        if (oldCacheEntry != null) {
+          cacheEntry.getCachePointer().decrementReferrer();
+          cacheEntry = oldCacheEntry;
         }
 
-        return cachePointer;
+        return cacheEntry;
       } finally {
         clearLock.readLock().unlock();
       }
     }
 
-    private long addNewPage() {
+    private OCacheEntry addNewPage() {
       clearLock.readLock().lock();
       try {
+        OCacheEntry cacheEntry;
+
         long index = -1;
         do {
           Long lastIndex = content.lastKey();
@@ -315,14 +337,17 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
           final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
           cachePointer.incrementReferrer();
 
-          OCachePointer oldCachePointer = content.putIfAbsent(index, cachePointer);
-          if (oldCachePointer != null) {
-            cachePointer.decrementReferrer();
+          cacheEntry = new OCacheEntry(id, index, cachePointer, false);
+
+          OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
+
+          if (oldCacheEntry != null) {
+            cacheEntry.getCachePointer().decrementReferrer();
             index = -1;
           }
         } while (index < 0);
 
-        return index;
+        return cacheEntry;
       } finally {
         clearLock.readLock().unlock();
       }
@@ -342,16 +367,24 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     }
 
     private void clear() {
+      boolean thereAreNotReleased = false;
+
       clearLock.writeLock().lock();
       try {
-        for (OCachePointer pointer : content.values())
-          pointer.decrementReferrer();
+        for (OCacheEntry entry : content.values()) {
+          synchronized (entry) {
+            thereAreNotReleased |= entry.getUsagesCount() > 0;
+            entry.getCachePointer().decrementReferrer();
+          }
+        }
 
         content.clear();
       } finally {
         clearLock.writeLock().unlock();
       }
 
+      if (thereAreNotReleased)
+        throw new IllegalStateException("Some cache entries were not released. Storage may be in invalid state.");
     }
   }
 }

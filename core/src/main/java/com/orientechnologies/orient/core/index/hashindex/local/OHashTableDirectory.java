@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -36,12 +36,12 @@ public class OHashTableDirectory extends ODurableComponent {
   private List<OCacheEntry>            entries;
 
   private final boolean                durableInNonTxMode;
-  private final OStorageLocalAbstract  storage;
+  private final OAbstractPaginatedStorage storage;
 
   private final ODurablePage.TrackMode txTrackMode       = ODurablePage.TrackMode.valueOf(OGlobalConfiguration.INDEX_TX_MODE
                                                              .getValueAsString().toUpperCase());
 
-  public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OStorageLocalAbstract storage) {
+  public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
     this.defaultExtension = defaultExtension;
     this.name = name;
     this.diskCache = storage.getDiskCache();

@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -48,30 +47,31 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * @author Andrey Lomakin
  * @since 25.04.13
  */
 public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
-  public static final String          MASTER_RECORD_EXTENSION = ".wmr";
-  public static final String          WAL_SEGMENT_EXTENSION   = ".wal";
-  private static final long           ONE_KB                  = 1024L;
-  private final List<LogSegment>      logSegments             = new ArrayList<LogSegment>();
-  private final int                   maxPagesCacheSize;
-  private final int                   commitDelay;
-  private final long                  maxSegmentSize;
-  private final long                  maxLogSize;
-  private final File                  walLocation;
-  private final RandomAccessFile      masterRecordLSNHolder;
-  private final OStorageLocalAbstract storage;
-  private boolean                     useFirstMasterRecord    = true;
-  private long                        logSize;
-  private File                        masterRecordFile;
-  private OLogSequenceNumber          firstMasterRecord;
-  private OLogSequenceNumber          secondMasterRecord;
-  private volatile OLogSequenceNumber flushedLsn;
+  public static final String           MASTER_RECORD_EXTENSION = ".wmr";
+  public static final String           WAL_SEGMENT_EXTENSION   = ".wal";
+  private static final long            ONE_KB                  = 1024L;
+  private final List<LogSegment>       logSegments             = new ArrayList<LogSegment>();
+  private final int                    maxPagesCacheSize;
+  private final int                    commitDelay;
+  private final long                   maxSegmentSize;
+  private final long                   maxLogSize;
+  private final File                   walLocation;
+  private final RandomAccessFile       masterRecordLSNHolder;
+  private final OLocalPaginatedStorage storage;
+  private boolean                      useFirstMasterRecord    = true;
+  private long                         logSize;
+  private File                         masterRecordFile;
+  private OLogSequenceNumber           firstMasterRecord;
+  private OLogSequenceNumber           secondMasterRecord;
+  private volatile OLogSequenceNumber  flushedLsn;
 
   private final class LogSegment implements Comparable<LogSegment> {
     private final RandomAccessFile                           rndFile;
@@ -575,14 +575,14 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
-  public ODiskWriteAheadLog(OStorageLocalAbstract storage) throws IOException {
+  public ODiskWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
     this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
         OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB, OGlobalConfiguration.WAL_MAX_SIZE
             .getValueAsInteger() * ONE_KB * ONE_KB, storage);
   }
 
   public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, long maxLogSize,
-      OStorageLocalAbstract storage) throws IOException {
+      OLocalPaginatedStorage storage) throws IOException {
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
@@ -661,7 +661,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     }
   }
 
-  private static String calculateWalPath(OStorageLocalAbstract storage) {
+  private static String calculateWalPath(OLocalPaginatedStorage storage) {
     String walPath = OGlobalConfiguration.WAL_LOCATION.getValueAsString();
     if (walPath == null)
       walPath = storage.getStoragePath();
@@ -911,7 +911,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       int lastTruncateIndex = -1;
 
-      for (int i = 0; i < logSegments.size(); i++) {
+      for (int i = 0; i < logSegments.size() - 1; i++) {
         final LogSegment logSegment = logSegments.get(i);
 
         if (logSegment.end().compareTo(lsn) < 0)
@@ -1014,7 +1014,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private String getSegmentName(long order) {
     return storage.getName() + "." + order + WAL_SEGMENT_EXTENSION;
   }
-
 
   private OLogSequenceNumber readFlushedLSN() throws IOException {
     int segment = logSegments.size() - 1;

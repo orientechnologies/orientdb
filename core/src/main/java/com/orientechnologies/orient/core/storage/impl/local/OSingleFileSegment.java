@@ -25,9 +25,10 @@ import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 public class OSingleFileSegment {
-  protected OStorageLocalAbstract     storage;
+  protected OLocalPaginatedStorage    storage;
   protected OFile                     file;
   protected OStorageFileConfiguration config;
   private boolean                     wasSoftlyClosedAtPreviousTime = true;
@@ -36,11 +37,11 @@ public class OSingleFileSegment {
     file = OFileFactory.instance().create(iType, OSystemVariableResolver.resolveSystemVariables(iPath), "rw");
   }
 
-  public OSingleFileSegment(final OStorageLocalAbstract iStorage, final OStorageFileConfiguration iConfig) throws IOException {
+  public OSingleFileSegment(final OLocalPaginatedStorage iStorage, final OStorageFileConfiguration iConfig) throws IOException {
     this(iStorage, iConfig, iConfig.type);
   }
 
-  public OSingleFileSegment(final OStorageLocalAbstract iStorage, final OStorageFileConfiguration iConfig, final String iType)
+  public OSingleFileSegment(final OLocalPaginatedStorage iStorage, final OStorageFileConfiguration iConfig, final String iType)
       throws IOException {
     config = iConfig;
     storage = iStorage;

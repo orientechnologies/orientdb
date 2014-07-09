@@ -6,6 +6,7 @@ import static org.testng.Assert.assertTrue;
 import java.util.*;
 
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -15,7 +16,6 @@ import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author Andrey Lomakin
@@ -44,7 +44,7 @@ public class SBTreeCompositeKeyTest {
 
     localSBTree = new OSBTree<OCompositeKey, OIdentifiable>(".sbt", 2, false, ".nbt");
     localSBTree.create("localSBTreeCompositeKeyTest", OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null,
-        (OStorageLocalAbstract) databaseDocumentTx.getStorage().getUnderlying(), false);
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage().getUnderlying(), false);
   }
 
   @BeforeMethod

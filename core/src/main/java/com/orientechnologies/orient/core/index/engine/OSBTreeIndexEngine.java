@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -85,7 +85,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
       final ORecordBytes identityRecord = new ORecordBytes();
       ODatabaseRecord database = getDatabase();
-      final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
+      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       database.save(identityRecord, clusterIndexName);
       identity = identityRecord.getIdentity();
@@ -138,7 +138,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     acquireExclusiveLock();
     try {
       final ODatabaseRecord database = getDatabase();
-      final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
+      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1,
           OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
@@ -157,7 +157,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
           OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
 
       ODatabaseRecord database = getDatabase();
-      final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
+      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
           indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, indexDefinition != null

@@ -16,6 +16,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -65,7 +67,7 @@ public class ORecordSerializationContext {
     operations.push(operation);
   }
 
-  void executeOperations(OLocalPaginatedStorage storage) {
+  public void executeOperations(OAbstractPaginatedStorage storage) {
     for (ORecordSerializationOperation operation : operations) {
       operation.execute(storage);
     }

@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -73,7 +73,7 @@ public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbst
     OSBTreeBonsaiLocal<OIdentifiable, Integer> tree = new OSBTreeBonsaiLocal<OIdentifiable, Integer>(DEFAULT_EXTENSION, true);
 
     tree.load(collectionPointer.getFileId(), collectionPointer.getRootPointer(),
-        (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+        (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
 
     return tree;
   }

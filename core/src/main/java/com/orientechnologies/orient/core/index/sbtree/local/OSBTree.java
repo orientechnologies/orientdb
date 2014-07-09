@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -88,7 +88,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   private final String                        dataFileExtension;
   private final String                        nullFileExtension;
   private final boolean                       durableInNonTxMode;
-  private OStorageLocalAbstract               storage;
+  private OAbstractPaginatedStorage storage;
   private String                              name;
   private ODiskCache                          diskCache;
   private long                                fileId;
@@ -429,7 +429,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-      OStorageLocalAbstract storageLocal, boolean nullPointerSupport) {
+      OAbstractPaginatedStorage storageLocal, boolean nullPointerSupport) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -744,7 +744,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     }
   }
 
-  public void deleteWithoutLoad(String name, OStorageLocalAbstract storageLocal) {
+  public void deleteWithoutLoad(String name, OAbstractPaginatedStorage storageLocal) {
     acquireExclusiveLock();
     try {
       final ODiskCache diskCache = storageLocal.getDiskCache();
@@ -762,7 +762,7 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   public void load(String name, OBinarySerializer<K> keySerializer, OStreamSerializer valueSerializer, OType[] keyTypes,
-      OStorageLocalAbstract storageLocal, boolean nullPointerSupport) {
+      OAbstractPaginatedStorage storageLocal, boolean nullPointerSupport) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -1043,7 +1043,7 @@ public class OSBTree<K, V> extends ODurableComponent {
     return trackMode;
   }
 
-  private void initDurableComponent(OStorageLocalAbstract storageLocal) {
+  private void initDurableComponent(OAbstractPaginatedStorage storageLocal) {
     init(storageLocal);
   }
 

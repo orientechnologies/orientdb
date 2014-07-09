@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
@@ -36,7 +36,7 @@ public class OHashTableDirectoryTest {
     murmurHash3HashFunction.setValueSerializer(OIntegerSerializer.INSTANCE);
 
     directory = new OHashTableDirectory(".tsc", "hashTableDirectoryTest", false,
-        (OStorageLocalAbstract) databaseDocumentTx.getStorage());
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
 
     directory.create();
   }

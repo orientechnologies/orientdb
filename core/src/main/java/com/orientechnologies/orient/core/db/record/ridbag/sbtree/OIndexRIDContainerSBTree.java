@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsaiLocal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
@@ -54,13 +54,13 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer) {
     tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
-    tree.load(fileId, rootPointer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+    tree.load(fileId, rootPointer, (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
   }
 
   public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer) {
     tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
 
-    final OStorageLocalAbstract storage = (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
     final long fileId;
     try {

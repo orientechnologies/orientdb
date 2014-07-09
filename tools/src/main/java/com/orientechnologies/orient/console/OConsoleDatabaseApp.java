@@ -91,7 +91,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected ODatabaseDocument   currentDatabase;
@@ -1407,7 +1407,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throws IOException {
     checkForDatabase();
 
-    if (!(currentDatabase.getStorage() instanceof OStorageLocalAbstract)) {
+    if (!(currentDatabase.getStorage() instanceof OAbstractPaginatedStorage)) {
       message("\nCannot check integrity of non-local database. Connect to it using local mode.");
       return;
     }
@@ -1415,7 +1415,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     boolean verbose = iOptions != null && iOptions.contains("-v");
 
     try {
-      ((OStorageLocalAbstract) currentDatabase.getStorage()).check(verbose, this);
+      ((OAbstractPaginatedStorage) currentDatabase.getStorage()).check(verbose, this);
     } catch (ODatabaseImportException e) {
       printError(e);
     }

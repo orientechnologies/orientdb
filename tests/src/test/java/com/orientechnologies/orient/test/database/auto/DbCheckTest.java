@@ -17,13 +17,13 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
 
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 @Test(groups = "db")
 public class DbCheckTest implements OCommandOutputListener {
@@ -40,7 +40,7 @@ public class DbCheckTest implements OCommandOutputListener {
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
 
-    boolean result = ((OStorageLocalAbstract) database.getStorage()).check(false, this);
+    boolean result = ((OAbstractPaginatedStorage) database.getStorage()).check(false, this);
     Assert.assertTrue(result);
 
     database.close();

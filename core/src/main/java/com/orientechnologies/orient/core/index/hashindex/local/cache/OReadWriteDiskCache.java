@@ -10,7 +10,8 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
@@ -57,14 +58,14 @@ public class OReadWriteDiskCache implements ODiskCache {
   private static String                               METRIC_MISSED_METADATA;
 
   public OReadWriteDiskCache(final long readCacheMaxMemory, final long writeCacheMaxMemory, final int pageSize,
-      final long writeGroupTTL, final int pageFlushInterval, final OStorageLocalAbstract storageLocal,
+      final long writeGroupTTL, final int pageFlushInterval, final OLocalPaginatedStorage storageLocal,
       final OWriteAheadLog writeAheadLog, final boolean syncOnPageFlush, final boolean checkMinSize) {
     this(null, readCacheMaxMemory, writeCacheMaxMemory, pageSize, writeGroupTTL, pageFlushInterval, storageLocal, writeAheadLog,
         syncOnPageFlush, checkMinSize);
   }
 
   public OReadWriteDiskCache(final String storageName, final long readCacheMaxMemory, final long writeCacheMaxMemory,
-      final int pageSize, final long writeGroupTTL, final int pageFlushInterval, final OStorageLocalAbstract storageLocal,
+      final int pageSize, final long writeGroupTTL, final int pageFlushInterval, final OLocalPaginatedStorage storageLocal,
       final OWriteAheadLog writeAheadLog, final boolean syncOnPageFlush, final boolean checkMinSize) {
     this.storageName = storageName;
     this.pageSize = pageSize;
