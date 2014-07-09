@@ -86,7 +86,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
         map.put(iValue.getIdentity(), iValue.getRecord());
         return iValue;
       }
-    }, true);
+    }, autoConvertToRecord);
   }
 
   @Override
