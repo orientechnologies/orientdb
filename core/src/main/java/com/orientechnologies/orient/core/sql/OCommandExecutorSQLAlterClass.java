@@ -115,71 +115,12 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     if (cls == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
 
-    final Object result = cls.setInternalAndSave(attribute, value);
+    cls.set(attribute, value);
 
-    if (OClass.ATTRIBUTES.NAME.equals(attribute))
-      renameClass(database, cls);
-
-    renameCluster();
-
-    return result;
+    return null;
   }
 
   public String getSyntax() {
     return "ALTER CLASS <class> <attribute-name> <attribute-value>";
-  }
-
-  protected void renameClass(ODatabaseRecord database, OClassImpl cls) {
-    final OStorage storage = database.getStorage();
-
-    for (int clusterId : cls.getClusterIds()) {
-      OClusterPosition[] range = storage.getClusterDataRange(clusterId);
-
-      OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(range[0]));
-      do {
-        for (OPhysicalPosition position : positions) {
-          final ORecordId identity = new ORecordId(clusterId, position.clusterPosition);
-          final ORawBuffer record = storage.readRecord(identity, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
-              .getResult();
-
-          if (!database.getStorageVersions().classesAreDetectedByClusterId() && record.recordType == ODocument.RECORD_TYPE) {
-            final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
-                .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
-
-            if (serializer.getClassName(OBinaryProtocol.bytes2string(record.buffer)).equalsIgnoreCase(className)) {
-              final ODocument document = new ODocument();
-              document.setLazyLoad(false);
-              document.fromStream(record.buffer);
-              document.getRecordVersion().copyFrom(record.version);
-              document.setIdentity(identity);
-              document.setClassName(cls.getName());
-              document.setDirty();
-              document.save();
-            }
-          }
-
-          if (positions.length > 0)
-            positions = storage.higherPhysicalPositions(clusterId, positions[positions.length - 1]);
-        }
-      } while (positions.length > 0);
-    }
-  }
-
-  private void renameCluster() {
-    final ODatabaseRecord database = getDatabase();
-    if (attribute.equals(OClass.ATTRIBUTES.NAME) && checkClusterRenameOk(database.getStorage().getClusterIdByName(value))) {
-      database.command(new OCommandSQL("alter cluster " + className + " name " + value)).execute();
-    }
-  }
-
-  private boolean checkClusterRenameOk(int clusterId) {
-    final ODatabaseRecord database = getDatabase();
-    for (OClass clazz : database.getMetadata().getSchema().getClasses()) {
-      if (clazz.getName().equals(value))
-        continue;
-      else if (clazz.getDefaultClusterId() == clusterId || Arrays.asList(clazz.getClusterIds()).contains(clusterId))
-        return false;
-    }
-    return true;
   }
 }

@@ -21,6 +21,7 @@ public class EdgeIndexingTest {
 		graph.drop();
 
 		graph = new OrientGraph(url);
+		graph.createEdgeType("link");
 		graph.setAutoStartTx(false);
 
 		OClass outVertexType = graph.createVertexType("IndexedOutVertex");

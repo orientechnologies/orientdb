@@ -37,6 +37,7 @@ public class OSQLFunctionDijkstraTest {
 
   private void setUpDatabase() {
     graph = new OrientGraph("memory:OSQLFunctionDijkstraTest");
+		graph.createEdgeType("weight");
 
     v1 = graph.addVertex(null);
     v2 = graph.addVertex(null);
