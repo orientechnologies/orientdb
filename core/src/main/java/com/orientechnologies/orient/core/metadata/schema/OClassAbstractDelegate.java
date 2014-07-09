@@ -80,6 +80,11 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
+  public OClass setName(String iName) {
+    return delegate.setName(iName);
+  }
+
+  @Override
   public String getStreamableName() {
     return delegate.getStreamableName();
   }
