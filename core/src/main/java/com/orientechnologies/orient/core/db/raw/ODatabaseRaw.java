@@ -567,7 +567,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     case DEFAULTCLUSTERID:
       return getDefaultClusterId();
     case TYPE:
-      final ODatabaseRecord db = ((ODatabaseRecord) getDatabaseOwner());
+      final ODatabaseRecord db = getDatabaseOwner();
 
       return db.getMetadata().getSchema().existsClass("V") ? "graph" : "document";
     case DATEFORMAT:
@@ -609,6 +609,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
     switch (iAttribute) {
     case STATUS:
+      if (stringValue == null)
+        throw new IllegalArgumentException("DB status can't be null");
       setStatus(STATUS.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
       break;
 
@@ -635,6 +637,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case TIMEZONE:
+      if (stringValue == null)
+        throw new IllegalArgumentException("Timezone can't be null");
+
       storage.getConfiguration().setTimeZone(TimeZone.getTimeZone(stringValue.toUpperCase()));
       storage.getConfiguration().update();
       break;
@@ -655,7 +660,10 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case CUSTOM:
-      if (iValue.toString().indexOf("=") == -1) {
+      if (iValue == null)
+        throw new IllegalArgumentException("CUSTOM attribute value can't be null. expected <name> = <value> or clear");
+
+      if (!iValue.toString().contains("=")) {
         if (iValue.toString().equalsIgnoreCase("clear")) {
           clearCustomInternal();
         } else
