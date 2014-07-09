@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.core.memory;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
-import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
@@ -33,6 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimerTask;
 import java.util.WeakHashMap;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * This memory warning system will call the listener when we exceed the percentage of available memory specified. There should only
@@ -46,7 +46,6 @@ public class OMemoryWatchDog extends Thread {
   protected final MemoryMXBean               memBean;
   private final Map<ListenerWrapper, Object> listeners     = new WeakHashMap<ListenerWrapper, Object>(128);
   private int                                alertTimes    = 0;
-  private long                               autoFreeCheckEveryMs;
   private long                               autoFreeHeapThreshold;
 
   public static interface Listener {
@@ -155,7 +154,7 @@ public class OMemoryWatchDog extends Thread {
               }
             });
 
-    autoFreeCheckEveryMs = OGlobalConfiguration.MEMORY_AUTOFREE_CHECK_EVERY.getValueAsLong();
+    long autoFreeCheckEveryMs = OGlobalConfiguration.MEMORY_AUTOFREE_CHECK_EVERY.getValueAsLong();
     Orient.instance().getTimer().schedule(new TimerTask() {
 
       @Override
@@ -223,7 +222,7 @@ public class OMemoryWatchDog extends Thread {
 
       } catch (InterruptedException e) {
         break;
-      } catch (Exception e) {
+      } catch (Exception ignored) {
       } finally {
         // RE-INSTANTIATE THE MONITOR REF
         monitorRef = new SoftReference<Object>(new Object(), monitorQueue);
@@ -285,6 +284,11 @@ public class OMemoryWatchDog extends Thread {
 
   public void sendShutdown() {
     interrupt();
+  }
+
+  @Override
+  public void interrupt() {
+    super.interrupt();
     synchronized (monitorQueue) {
       monitorQueue.notifyAll();
     }

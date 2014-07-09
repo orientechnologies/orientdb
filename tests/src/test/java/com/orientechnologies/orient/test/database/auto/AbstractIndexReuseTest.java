@@ -15,7 +15,7 @@ import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.Orient;
 
-public abstract class AbstractIndexReuseTest extends BaseTest {
+public abstract class AbstractIndexReuseTest extends DocumentDBBaseTest {
   private JMXConnector     jmxConnector;
   protected OProfilerMBean profiler;
 

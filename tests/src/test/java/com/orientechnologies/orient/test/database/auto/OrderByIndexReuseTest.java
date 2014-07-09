@@ -21,7 +21,7 @@ import java.util.Set;
  * @since 2/11/14
  */
 @Test
-public class OrderByIndexReuseTest extends BaseTest {
+public class OrderByIndexReuseTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
   public OrderByIndexReuseTest(@Optional String url) {

@@ -451,9 +451,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   /**
-   * Returns always null
-   * 
-   * @return
+   * @return always null
    */
   public OLevel1RecordCache getLevel1Cache() {
     return null;

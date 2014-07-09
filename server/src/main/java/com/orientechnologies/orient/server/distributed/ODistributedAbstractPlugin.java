@@ -36,6 +36,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -45,19 +46,20 @@ import java.util.Map;
  */
 public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract implements ODistributedServerManager,
     ODatabaseLifecycleListener {
-  public static final String                              REPLICATOR_USER             = "replicator";
-  protected static final String                           MASTER_AUTO                 = "$auto";
+  public static final String                               REPLICATOR_USER             = "replicator";
+  protected static final String                            MASTER_AUTO                 = "$auto";
 
-  protected static final String                           PAR_DEF_DISTRIB_DB_CONFIG   = "configuration.db.default";
-  protected static final String                           FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
+  protected static final String                            PAR_DEF_DISTRIB_DB_CONFIG   = "configuration.db.default";
+  protected static final String                            FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
-  protected OServer                                       serverInstance;
-  protected Map<String, ODocument>                        cachedDatabaseConfiguration = new HashMap<String, ODocument>();
+  protected OServer                                        serverInstance;
+  protected Map<String, ODocument>                         cachedDatabaseConfiguration = new HashMap<String, ODocument>();
 
-  protected boolean                                       enabled                     = true;
-  protected String                                        nodeName                    = null;
-  protected Class<? extends OReplicationConflictResolver> confictResolverClass;
-  protected File                                          defaultDatabaseConfigFile;
+  protected boolean                                        enabled                     = true;
+  protected String                                         nodeName                    = null;
+  protected Class<? extends OReplicationConflictResolver>  confictResolverClass;
+  protected File                                           defaultDatabaseConfigFile;
+  protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
 
   @SuppressWarnings("unchecked")
   @Override
@@ -113,6 +115,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     if (!enabled)
       return;
 
+    // CLOSE AND FREE ALL THE STORAGES
+    for (ODistributedStorage s : storages.values())
+      try {
+        s.close();
+      } catch (Exception e) {
+      }
+    storages.clear();
+
     Orient.instance().removeDbLifecycleListener(this);
   }
 
@@ -134,9 +144,17 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       if (cfg == null)
         return;
 
-      if (iDatabase instanceof ODatabaseComplex<?> && !(iDatabase.getStorage() instanceof ODistributedStorage))
-        ((ODatabaseComplex<?>) iDatabase).replaceStorage(new ODistributedStorage(serverInstance,
-            (OStorageEmbedded) ((ODatabaseComplex<?>) iDatabase).getStorage()));
+      if (iDatabase instanceof ODatabaseComplex<?> && !(iDatabase.getStorage() instanceof ODistributedStorage)) {
+        ODistributedStorage storage = storages.get(iDatabase.getURL());
+        if (storage == null) {
+          storage = new ODistributedStorage(serverInstance, (OStorageEmbedded) iDatabase.getStorage());
+          final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
+          if (oldStorage != null)
+            storage = oldStorage;
+        }
+
+        iDatabase.replaceStorage(storage);
+      }
     }
   }
 

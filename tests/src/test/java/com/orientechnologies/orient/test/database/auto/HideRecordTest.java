@@ -20,7 +20,7 @@ import java.util.List;
  * @since 3/21/14
  */
 @Test
-public class HideRecordTest extends BaseTest {
+public class HideRecordTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
   public HideRecordTest(@Optional String url) {
     super(url);

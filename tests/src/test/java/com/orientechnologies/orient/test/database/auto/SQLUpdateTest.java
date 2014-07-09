@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  * be affected due to adding or removing cluster from storage.
  */
 @Test(groups = "sql-update", sequential = true)
-public class SQLUpdateTest extends BaseTest {
+public class SQLUpdateTest extends DocumentDBBaseTest {
   private int               updatedRecords;
 
   @Parameters(value = "url")

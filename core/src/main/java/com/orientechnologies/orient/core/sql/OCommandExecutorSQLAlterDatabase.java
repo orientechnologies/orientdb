@@ -15,19 +15,18 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * SQL ALTER DATABASE command: Changes an attribute of the current database.
@@ -94,7 +93,7 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstrac
     final ODatabaseRecord database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
 
-    ((ODatabaseComplex<?>) database).setInternal(attribute, value);
+    database.setInternal(attribute, value);
     return null;
   }
 

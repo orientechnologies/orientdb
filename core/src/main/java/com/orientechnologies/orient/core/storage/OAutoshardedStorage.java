@@ -29,4 +29,6 @@ public interface OAutoshardedStorage {
    * @return storage unique id
    */
   String getStorageId();
+
+	String getNodeId();
 }

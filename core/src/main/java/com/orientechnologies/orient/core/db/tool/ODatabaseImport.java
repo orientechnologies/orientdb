@@ -1272,8 +1272,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
         } else if (fieldName.equals("blueprintsIndexClass"))
           blueprintsIndexClass = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
-
       }
+
+      if (indexName == null)
+        throw new IllegalArgumentException("Index name is missing");
 
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
 
