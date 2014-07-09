@@ -53,8 +53,16 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 /**
@@ -616,7 +624,12 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case TYPE:
-      throw new IllegalArgumentException("Database type property is not supported");
+      if (stringValue.equalsIgnoreCase("graph"))
+        Orient.instance().getDatabaseFactory().checkSchema(getDatabaseOwner());
+      else if (stringValue.equalsIgnoreCase("document"))
+        throw new IllegalArgumentException("Cannot switch back to 'document' type automatically");
+      else
+        throw new IllegalArgumentException("Type '" + stringValue + "' not supported");
 
     case DATEFORMAT:
       storage.getConfiguration().dateFormat = stringValue;
