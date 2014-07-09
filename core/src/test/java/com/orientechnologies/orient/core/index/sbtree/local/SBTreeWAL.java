@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import org.mockito.Mockito;
 import org.testng.Assert;
@@ -21,12 +22,10 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -128,13 +127,11 @@ public class SBTreeWAL extends SBTreeTest {
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, actualStorage, null, false, false);
     actualAtomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
-    OStorageVariableParser variableParser = new OStorageVariableParser(actualStorageDir);
 
     when(actualStorage.getStorageTransaction()).thenReturn(null);
     when(actualStorage.getDiskCache()).thenReturn(actualDiskCache);
     when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
     when(actualStorage.getAtomicOperationsManager()).thenReturn(actualAtomicOperationsManager);
-    when(actualStorage.getVariableParser()).thenReturn(variableParser);
     when(actualStorage.getConfiguration()).thenReturn(actualStorageConfiguration);
     when(actualStorage.getMode()).thenReturn("rw");
 

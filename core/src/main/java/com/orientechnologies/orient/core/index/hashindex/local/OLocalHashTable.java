@@ -20,11 +20,10 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -107,7 +106,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
   public static final int                LEVEL_MASK          = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private OStorageLocalAbstract          storage;
+  private OAbstractPaginatedStorage storage;
 
   private String                         name;
 
@@ -148,7 +147,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-      OStorageLocalAbstract storageLocal, boolean nullKeyIsSupported) {
+      OAbstractPaginatedStorage storageLocal, boolean nullKeyIsSupported) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -650,7 +649,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     }
   }
 
-  public void load(String name, OType[] keyTypes, OStorageLocalAbstract storageLocal, boolean nullKeyIsSupported) {
+  public void load(String name, OType[] keyTypes, OAbstractPaginatedStorage storageLocal, boolean nullKeyIsSupported) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -694,7 +693,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     }
   }
 
-  public void deleteWithoutLoad(String name, OStorageLocalAbstract storageLocal) {
+  public void deleteWithoutLoad(String name, OAbstractPaginatedStorage storageLocal) {
     acquireExclusiveLock();
     try {
       storage = storageLocal;

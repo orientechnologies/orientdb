@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.index.sbtree.local;
 
 import java.util.*;
 
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -16,7 +17,6 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author Andrey Lomakin
@@ -46,7 +46,7 @@ public class SBTreeTest {
     databaseDocumentTx.create();
 
     sbTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false, ".nbt");
-    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, (OStorageLocalAbstract) databaseDocumentTx
+    sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null, (OAbstractPaginatedStorage) databaseDocumentTx
         .getStorage().getUnderlying(), false);
   }
 
@@ -615,7 +615,7 @@ public class SBTreeTest {
   public void testNullKeysInSBTree() {
     final OSBTree<Integer, OIdentifiable> nullSBTree = new OSBTree<Integer, OIdentifiable>(".sbt", 1, false, ".nbt");
     nullSBTree.create("nullSBTree", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE, null,
-        (OStorageLocalAbstract) databaseDocumentTx.getStorage().getUnderlying(), true);
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage().getUnderlying(), true);
 
     try {
       for (int i = 0; i < 10; i++)

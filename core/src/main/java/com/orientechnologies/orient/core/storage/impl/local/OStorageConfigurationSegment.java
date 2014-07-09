@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * Handles the database configuration in one big record.
@@ -34,9 +35,9 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
   private static final int         START_SIZE = 10000;
   private final OSingleFileSegment segment;
 
-  public OStorageConfigurationSegment(final OStorageLocalAbstract iStorage) throws IOException {
+  public OStorageConfigurationSegment(final OLocalPaginatedStorage iStorage) throws IOException {
     super(iStorage);
-    segment = new OSingleFileSegment((OStorageLocalAbstract) storage, new OStorageFileConfiguration(null, getDirectory()
+    segment = new OSingleFileSegment((OLocalPaginatedStorage) storage, new OStorageFileConfiguration(null, getDirectory()
         + "/database.ocf", "classic", fileTemplate.maxSize, fileTemplate.fileIncrementSize));
   }
 

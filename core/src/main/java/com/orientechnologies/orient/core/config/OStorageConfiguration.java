@@ -25,7 +25,8 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORound
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.IOException;
@@ -123,7 +124,7 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public String getDirectory() {
-    return fileTemplate.location != null ? fileTemplate.getLocation() : ((OStorageLocalAbstract) storage).getStoragePath();
+    return fileTemplate.location != null ? fileTemplate.getLocation() : ((OLocalPaginatedStorage) storage).getStoragePath();
   }
 
   public Locale getLocaleInstance() {

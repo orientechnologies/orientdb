@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
@@ -62,7 +62,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   private long resolveFileIdByName(String fileName) {
-    final OStorageLocalAbstract storage = (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+    final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();
     try {
       return storage.getDiskCache().openFile(fileName);

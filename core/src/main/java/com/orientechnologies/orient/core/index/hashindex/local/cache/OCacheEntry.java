@@ -37,21 +37,33 @@ public class OCacheEntry {
     return pageIndex;
   }
 
-	public void acquireExclusiveLock() {
-		dataPointer.acquireExclusiveLock();
-	}
+  public void acquireExclusiveLock() {
+    dataPointer.acquireExclusiveLock();
+  }
 
-	public void releaseExclusiveLock() {
-		dataPointer.releaseExclusiveLock();
-	}
+  public void releaseExclusiveLock() {
+    dataPointer.releaseExclusiveLock();
+  }
 
-	public void acquireSharedLock() {
-		dataPointer.acquireSharedLock();
-	}
+  public void acquireSharedLock() {
+    dataPointer.acquireSharedLock();
+  }
 
-	public void releaseSharedLock() {
-		dataPointer.releaseSharedLock();
-	}
+  public void releaseSharedLock() {
+    dataPointer.releaseSharedLock();
+  }
+
+  public int getUsagesCount() {
+    return usagesCount;
+  }
+
+  public void incrementUsages() {
+    usagesCount++;
+  }
+
+  public void decrementUsages() {
+    usagesCount--;
+  }
 
   @Override
   public boolean equals(Object o) {

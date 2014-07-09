@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -56,7 +56,7 @@ public class LocalHashTableIterationTest {
     localHashTable = new OLocalHashTable<Integer, String>(".imc", ".tsc", ".obf", ".nbh", hashFunction, false);
 
     localHashTable.create("localHashTableIterationTest", OIntegerSerializer.INSTANCE, OBinarySerializerFactory.getInstance()
-        .<String> getObjectSerializer(OType.STRING), null, (OStorageLocalAbstract) databaseDocumentTx.getStorage(), true);
+        .<String> getObjectSerializer(OType.STRING), null, (OAbstractPaginatedStorage) databaseDocumentTx.getStorage(), true);
   }
 
   @AfterClass

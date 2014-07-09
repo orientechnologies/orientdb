@@ -11,6 +11,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import org.testng.Assert;
@@ -21,11 +22,9 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 /**
@@ -81,13 +80,11 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
     atomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
-    OStorageVariableParser variableParser = new OStorageVariableParser(storageDir);
 
     when(storage.getStorageTransaction()).thenReturn(null);
     when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
     when(storage.getDiskCache()).thenReturn(diskCache);
     when(storage.getWALInstance()).thenReturn(writeAheadLog);
-    when(storage.getVariableParser()).thenReturn(variableParser);
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
     when(storage.getMode()).thenReturn("rw");
 

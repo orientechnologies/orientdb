@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
+import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -40,13 +41,10 @@ import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFact
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.version.ORecordVersion;

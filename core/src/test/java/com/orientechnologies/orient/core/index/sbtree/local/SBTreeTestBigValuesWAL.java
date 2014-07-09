@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import org.mockito.Mockito;
 import org.testng.Assert;
 import org.testng.annotations.*;
@@ -20,11 +21,9 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.storage.fs.OAbstractFile;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -121,12 +120,10 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     actualDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, actualStorage, null, false, false);
 
-    OStorageVariableParser variableParser = new OStorageVariableParser(actualStorageDir);
 
     when(actualStorage.getStorageTransaction()).thenReturn(null);
     when(actualStorage.getDiskCache()).thenReturn(actualDiskCache);
     when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
-    when(actualStorage.getVariableParser()).thenReturn(variableParser);
     when(actualStorage.getConfiguration()).thenReturn(actualStorageConfiguration);
     when(actualStorage.getMode()).thenReturn("rw");
 

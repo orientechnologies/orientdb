@@ -35,17 +35,14 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 /**
  * Tree-based dictionary algorithm. Similar to {@link OSBTree} but uses subpages of disk cache that is more efficient for small data
@@ -70,7 +67,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   private final Comparator<? super K>       comparator            = ODefaultComparator.INSTANCE;
 
-  private OStorageLocalAbstract             storage;
+  private OAbstractPaginatedStorage storage;
   private String                            name;
 
   private final String                      dataFileExtension;
@@ -91,12 +88,12 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
-    create(name, keySerializer, valueSerializer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+    create(name, keySerializer, valueSerializer, (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying());
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
-      OStorageLocalAbstract storageLocal) {
+      OAbstractPaginatedStorage storageLocal) {
     try {
       this.storage = storageLocal;
 
@@ -115,12 +112,12 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   public void create(long fileId, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
-    create(fileId, keySerializer, valueSerializer, (OStorageLocalAbstract) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+    create(fileId, keySerializer, valueSerializer, (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying());
   }
 
   public void create(long fileId, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
-      OStorageLocalAbstract storageLocal) {
+      OAbstractPaginatedStorage storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;
@@ -177,7 +174,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  private void initDurableComponent(OStorageLocalAbstract storageLocal) {
+  private void initDurableComponent(OAbstractPaginatedStorage storageLocal) {
     init(storageLocal);
   }
 
@@ -479,7 +476,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
     }
   }
 
-  public void load(long fileId, OBonsaiBucketPointer rootBucketPointer, OStorageLocalAbstract storageLocal) {
+  public void load(long fileId, OBonsaiBucketPointer rootBucketPointer, OAbstractPaginatedStorage storageLocal) {
     acquireExclusiveLock();
     try {
       this.storage = storageLocal;

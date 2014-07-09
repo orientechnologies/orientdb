@@ -19,8 +19,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 import java.io.IOException;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
@@ -64,7 +63,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
   private OWriteAheadLog           writeAheadLog;
   private OAtomicOperationsManager atomicOperationsManager;
-  private OStorageLocalAbstract    storage;
+  private OAbstractPaginatedStorage storage;
 
   public ODurableComponent() {
   }
@@ -81,7 +80,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     super(iConcurrent, iTimeout, ignoreThreadInterruption);
   }
 
-  protected void init(final OStorageLocalAbstract storage) {
+  protected void init(final OAbstractPaginatedStorage storage) {
     this.storage = storage;
     this.atomicOperationsManager = storage.getAtomicOperationsManager();
     this.writeAheadLog = storage.getWALInstance();

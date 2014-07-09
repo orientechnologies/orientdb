@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -23,7 +24,6 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 
 /**
  * @author Andrey Lomakin
@@ -53,7 +53,7 @@ public class OSBTreeBonsaiLocalTest {
 
     sbTree = new OSBTreeBonsaiLocal<Integer, OIdentifiable>(".irs", false);
     sbTree.create("OSBTreeBonsaiLocalTest", OIntegerSerializer.INSTANCE, OLinkSerializer.INSTANCE,
-        (OStorageLocalAbstract) databaseDocumentTx.getStorage());
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage());
   }
 
   @AfterMethod

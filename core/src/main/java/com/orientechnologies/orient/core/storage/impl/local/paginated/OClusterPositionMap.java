@@ -19,18 +19,14 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import java.io.IOException;
 import java.util.Arrays;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
@@ -44,7 +40,7 @@ public class OClusterPositionMap extends ODurableComponent {
   private long               fileId;
   private boolean            useWal;
 
-  public OClusterPositionMap(OStorageLocalAbstract storage, ODiskCache diskCache, String name, boolean useWal) {
+  public OClusterPositionMap(OAbstractPaginatedStorage storage, ODiskCache diskCache, String name, boolean useWal) {
     acquireExclusiveLock();
     try {
       this.diskCache = diskCache;

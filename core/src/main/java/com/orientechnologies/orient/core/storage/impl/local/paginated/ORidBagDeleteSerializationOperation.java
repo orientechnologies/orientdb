@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollecti
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 public class ORidBagDeleteSerializationOperation implements ORecordSerializationOperation {
   private final OBonsaiCollectionPointer collectionPointer;
@@ -20,7 +21,7 @@ public class ORidBagDeleteSerializationOperation implements ORecordSerialization
   }
 
   @Override
-  public void execute(OLocalPaginatedStorage paginatedStorage) {
+  public void execute(OAbstractPaginatedStorage paginatedStorage) {
     OSBTreeBonsai<OIdentifiable, Integer> treeBonsai = loadTree();
     try {
       treeBonsai.delete();

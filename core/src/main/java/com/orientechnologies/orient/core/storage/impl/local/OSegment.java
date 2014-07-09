@@ -16,10 +16,10 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 public abstract class OSegment {
-  protected final OStorageLocalAbstract storage;
+  protected final OAbstractPaginatedStorage storage;
   protected final String                name;
 
-  public OSegment(final OStorageLocalAbstract iStorage, final String iName) {
+  public OSegment(final OAbstractPaginatedStorage iStorage, final String iName) {
     storage = iStorage;
     name = iName;
   }
