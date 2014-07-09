@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.test.database.speed;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -17,39 +20,108 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  */
 public class SuperNodeInsertSpeedTest {
 
-  private static final int           WARM_UP_COUNT = 300;
-  private static final int           TEST_COUNT    = 5000;
-  private static final int           THREAD_COUNT  = 5;
-  private static OrientGraph         graph;
-  private static final AtomicInteger retryCount    = new AtomicInteger();
+  private static final int    WARM_UP_COUNT = 50000;
+  private static final int    TEST_COUNT    = 60000;
+  private static final int    THREAD_COUNT  = 5;
+  private final int           threadCount;
+  private OrientGraph         graph;
+  private final AtomicInteger retryCount    = new AtomicInteger();
 
-  private static void setUp() {
+  public SuperNodeInsertSpeedTest(int threadCount1) {
+    threadCount = threadCount1;
+  }
+
+  private void setUp() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
 
     graph = openGraph();
   }
 
-  private static OrientGraph openGraph() {
+  private OrientGraph openGraph() {
     return new OrientGraph("plocal:target/SuperNodeInsertSpeedTest");
   }
 
-  private static void tearDown() {
+  private void tearDown() {
     graph.shutdown();
   }
 
   public static void main(String[] args) throws InterruptedException {
+    System.out.println("Test insert super-node");
+
+    for (int threadCount = 1; threadCount <= THREAD_COUNT; threadCount++) {
+
+      List<Double> results = new ArrayList<Double>();
+      for (int i = 0; i < 20; i++) {
+        final double time = new SuperNodeInsertSpeedTest(threadCount).start();
+
+        results.add(time);
+      }
+      System.out.println();
+      System.out.println("Thread count: " + threadCount);
+      stat(results);
+    }
+  }
+
+  private static void stat(List<Double> results) {
+    System.out.println("Performance: " + avg(results) + "(" + sd(results) + ")");
+    System.out.println("Median:      " + median(results));
+    System.out.println();
+    System.out.println();
+  }
+
+  private static double sd(List<Double> results) {
+    final double avg = avg(results);
+    final int n = results.size();
+    double sum = 0;
+    for (Double result : results) {
+      sum += sqr(result - avg) / n;
+    }
+
+    return Math.sqrt(sum);
+  }
+
+  private static double sqr(Double result) {
+    return result * result;
+  }
+
+  private static double avg(List<Double> results) {
+    final double sum = sum(results);
+    final int n = results.size();
+
+    return sum / n;
+  }
+
+  private static Double median(List<Double> results) {
+    Collections.sort(results);
+
+    final int n = results.size();
+    if (n % 2 == 0) {
+      return (results.get(n / 2) + results.get(n / 2 - 1)) / 2;
+    } else
+      return (results.get(n / 2));
+  }
+
+  private static double sum(List<Double> results) {
+    double sum = 0;
+    for (Double result : results) {
+      sum += result;
+    }
+    return sum;
+  }
+
+  public double start() throws InterruptedException {
     setUp();
 
-    System.out.println("Test insert super-node");
+    System.out.print("#");
 
     final long time = test();
 
-    printStats(time);
-
     tearDown();
+
+    return ((double) TEST_COUNT) / time * 1000;
   }
 
-  private static long test() throws InterruptedException {
+  private long test() throws InterruptedException {
     OrientVertex superNode = graph.addVertex("");
     superNode.save();
     graph.commit();
@@ -58,11 +130,11 @@ public class SuperNodeInsertSpeedTest {
     // warm up
     createLinks(WARM_UP_COUNT, superNode, graph);
 
-    final CountDownLatch startLatch = new CountDownLatch(THREAD_COUNT);
-    final CountDownLatch endLatch = new CountDownLatch(THREAD_COUNT);
+    final CountDownLatch startLatch = new CountDownLatch(threadCount);
+    final CountDownLatch endLatch = new CountDownLatch(threadCount);
 
-    final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_COUNT);
-    for (int i = 0; i < THREAD_COUNT; i++) {
+    final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+    for (int i = 0; i < threadCount; i++) {
       executorService.submit(new Callable<Long>() {
         @Override
         public Long call() throws Exception {
@@ -94,22 +166,13 @@ public class SuperNodeInsertSpeedTest {
     return time;
   }
 
-  private static long doTest(OrientVertex superNode, OrientGraph graph) {
+  private long doTest(OrientVertex superNode, OrientGraph graph) {
     final long startTime = System.currentTimeMillis();
-    createLinks(TEST_COUNT / THREAD_COUNT, superNode, graph);
+    createLinks(TEST_COUNT / threadCount, superNode, graph);
     return System.currentTimeMillis() - startTime;
   }
 
-  private static void printStats(long time) {
-    System.out.println("Test summary");
-    System.out.println("============");
-    System.out.println("Thread count: " + THREAD_COUNT);
-    System.out.println("Time:         " + time + "ms");
-    System.out.println("Bandwidth:    " + ((double) TEST_COUNT) / time * 1000 + " it/sec");
-    System.out.println("Retries:      " + retryCount.get());
-  }
-
-  private static void createLinks(int vertexNumber, OrientVertex superNode, OrientGraph graph) {
+  private void createLinks(int vertexNumber, OrientVertex superNode, OrientGraph graph) {
     for (int i = 0; i < vertexNumber; i++) {
       while (true)
         try {
