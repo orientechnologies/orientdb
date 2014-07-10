@@ -1,4 +1,4 @@
-Welcome to the OrientDB-ETL module. By using this module you can easily move data from and to OrientDB by executing an [ETL process](http://en.wikipedia.org/wiki/Extract,_transform,_load). OrientDB ETL is based on the following principles:
+The OrientDB-ETL module is an amazing tool to move data from and to OrientDB by executing an [ETL process](http://en.wikipedia.org/wiki/Extract,_transform,_load). It's super easy to use. OrientDB ETL is based on the following principles:
 - one [configuration file](https://github.com/orientechnologies/orientdb-etl/wiki/Configuration-File) in [JSON](http://en.wikipedia.org/wiki/JSON) format
 - one [Extractor](https://github.com/orientechnologies/orientdb-etl/wiki/Extractor) is allowed to extract data from a source
 - one [Loader](https://github.com/orientechnologies/orientdb-etl/wiki/Loader) is allowed to load data to a destintion
