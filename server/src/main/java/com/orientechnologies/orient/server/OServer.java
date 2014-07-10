@@ -204,7 +204,7 @@ public class OServer {
 
     databaseDirectory = contextConfiguration.getValue("server.database.path", serverRootDirectory + "/databases/");
     databaseDirectory = OSystemVariableResolver.resolveSystemVariables(databaseDirectory);
-    databaseDirectory = databaseDirectory.replace("//", "/");
+    databaseDirectory = databaseDirectory.replace("//", "/").replace("\\","/");
 
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
