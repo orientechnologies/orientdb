@@ -511,7 +511,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         try {
           network.writeRID(iRid);
-          if (network.getSrvProtocolVersion() >= 22) {
+          if (network.getSrvProtocolVersion() >= 23) {
             network.writeBoolean(updateContent);
           }
           network.writeBytes(iContent);
@@ -1982,7 +1982,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     case ORecordOperation.UPDATED:
       iNetwork.writeVersion(txEntry.getRecord().getRecordVersion());
       iNetwork.writeBytes(stream);
-      if (iNetwork.getSrvProtocolVersion() >= 22)
+      if (iNetwork.getSrvProtocolVersion() >= 23)
         iNetwork.writeBoolean(txEntry.getRecord().isContentChanged());
       break;
 

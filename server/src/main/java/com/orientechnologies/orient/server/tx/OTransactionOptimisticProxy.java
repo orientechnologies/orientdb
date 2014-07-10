@@ -91,7 +91,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         case ORecordOperation.UPDATED:
           entry.getRecord().fill(rid, channel.readVersion(), channel.readBytes(), true);
-          if (protocolVersion >= 22)
+          if (protocolVersion >= 23)
             entry.getRecord().setContentChanged(channel.readBoolean());
           break;
 
