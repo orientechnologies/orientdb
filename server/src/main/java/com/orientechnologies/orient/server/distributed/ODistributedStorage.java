@@ -15,6 +15,22 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
@@ -27,6 +43,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.ODistributedCommand;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -61,22 +78,6 @@ import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * Distributed storage implementation that routes to the owner node the request.
  * 
@@ -95,6 +96,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     this.serverInstance = iServer;
     this.dManager = iServer.getDistributedManager();
     this.wrapped = wrapped;
+
+    ODistributedServerLog.info(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+        ODistributedServerLog.DIRECTION.NONE, "Installing distributed storage on database '%s'", wrapped.getName());
 
     purgeDeletedRecordsTask = new TimerTask() {
       @Override
@@ -175,12 +179,18 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.ANY);
 
         nodes = dbCfg.getServers(involvedClusters);
+        if (iCommand instanceof ODistributedCommand)
+          nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
+
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
       } else {
         // SHARDED, GET ONLY ONE NODE PER INVOLVED CLUSTER
         task.setResultStrategy(OAbstractRemoteTask.RESULT_STRATEGY.UNION);
 
         nodes = dbCfg.getOneServerPerCluster(involvedClusters, dManager.getLocalNodeName());
+
+        if (iCommand instanceof ODistributedCommand)
+          nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
 
         if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName()))
           // LOCAL NODE, AVOID TO DISTRIBUTE IT
@@ -938,6 +948,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   @Override
   public String getStorageId() {
     return dManager.getLocalNodeName() + "." + getName();
+  }
+
+  @Override
+  public String getNodeId() {
+    return dManager.getLocalNodeName();
   }
 
   protected void handleDistributedException(final String iMessage, final Exception e, final Object... iParams) {

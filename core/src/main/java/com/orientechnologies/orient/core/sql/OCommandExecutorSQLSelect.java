@@ -15,21 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -76,6 +61,13 @@ import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
  * If the query contains the ORDER BY clause, the results are temporary collected internally, then ordered and finally returned all
@@ -113,6 +105,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private boolean                     fullySortedByIndex   = false;
   private OStorage.LOCKING_STRATEGY   lockingStrategy      = OStorage.LOCKING_STRATEGY.DEFAULT;
   private boolean                     parallel             = false;
+  private Lock                        parallelLock         = new ReentrantLock();
 
   private final class IndexComparator implements Comparator<OIndex<?>> {
     public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
@@ -241,13 +234,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return this;
-  }
-
-  private void initContext() {
-    if (context == null)
-      context = new OBasicCommandContext();
-
-    metricRecorder.setContext(context);
   }
 
   /**
@@ -470,20 +456,30 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * @return false if limit has been reached, otherwise true
    */
   protected boolean handleResult(final OIdentifiable iRecord) {
-    if ((orderedFields.isEmpty() || fullySortedByIndex) && skip > 0) {
-      lastRecord = null;
-      skip--;
-      return true;
+    if (parallel)
+      // LOCK FOR PARALLEL EXECUTION. THIS PREVENT CONCURRENT ISSUES
+      parallelLock.lock();
+
+    try {
+      if ((orderedFields.isEmpty() || fullySortedByIndex) && skip > 0) {
+        lastRecord = null;
+        skip--;
+        return true;
+      }
+
+      lastRecord = iRecord;
+
+      resultCount++;
+
+      if (!addResult(lastRecord))
+        return false;
+
+      return !((orderedFields.isEmpty() || fullySortedByIndex) && !isAnyFunctionAggregates() && fetchLimit > -1 && resultCount >= fetchLimit);
+    } finally {
+      if (parallel)
+        // UNLOCK PARALLEL EXECUTION
+        parallelLock.unlock();
     }
-
-    lastRecord = iRecord;
-
-    resultCount++;
-
-    if (!addResult(lastRecord))
-      return false;
-
-    return !((orderedFields.isEmpty() || fullySortedByIndex) && !isAnyFunctionAggregates() && fetchLimit > -1 && resultCount >= fetchLimit);
   }
 
   protected boolean addResult(OIdentifiable iRecord) {
@@ -902,6 +898,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
+  private void initContext() {
+    if (context == null)
+      context = new OBasicCommandContext();
+
+    metricRecorder.setContext(context);
+  }
+
   private void fetchFromTarget(Iterator<? extends OIdentifiable> iTarget) {
     final long startFetching = System.currentTimeMillis();
     try {
@@ -980,7 +983,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
         if (OLogManager.instance().isDebugEnabled())
           if (processed % (total / 10) == 0)
-            OLogManager.instance().debug(this, "Executed %d/%d", processed, total);
+            OLogManager.instance().debug(this, "Executed parallel query %d/%d", processed, total);
       }
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on executing parallel query: %s", e, parserText);

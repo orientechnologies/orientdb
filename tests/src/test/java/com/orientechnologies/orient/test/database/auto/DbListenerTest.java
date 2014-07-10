@@ -155,6 +155,8 @@ public class DbListenerTest {
     ODatabaseHelper.deleteDatabase(database, "plocal");
     Assert.assertEquals(onClose, 2);
     Assert.assertEquals(onDelete, 1);
+
+		ODatabaseHelper.createDatabase(database, dbUrl);
   }
 
   @Test

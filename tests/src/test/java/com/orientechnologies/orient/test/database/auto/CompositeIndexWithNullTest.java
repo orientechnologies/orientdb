@@ -17,7 +17,7 @@ import java.util.Set;
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 4/11/14
  */
-public class CompositeIndexWithNullTest extends BaseTest {
+public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
   public CompositeIndexWithNullTest(@Optional String url) {
     super(url);

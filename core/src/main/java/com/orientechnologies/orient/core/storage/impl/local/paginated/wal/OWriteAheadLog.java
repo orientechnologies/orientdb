@@ -962,7 +962,7 @@ public class OWriteAheadLog {
 
       int lastTruncateIndex = -1;
 
-      for (int i = 0; i < logSegments.size(); i++) {
+      for (int i = 0; i < logSegments.size() - 1; i++) {
         final LogSegment logSegment = logSegments.get(i);
 
         if (logSegment.end().compareTo(lsn) < 0)

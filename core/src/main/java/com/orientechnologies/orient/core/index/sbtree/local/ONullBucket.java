@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.index.sbtree.local;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.io.IOException;
@@ -38,8 +39,8 @@ import java.io.IOException;
 public class ONullBucket<V> extends ODurablePage {
   private final OBinarySerializer<V> valueSerializer;
 
-  public ONullBucket(ODirectMemoryPointer pagePointer, TrackMode trackMode, OBinarySerializer<V> valueSerializer, boolean isNew) {
-    super(pagePointer, trackMode);
+  public ONullBucket(OCacheEntry cacheEntry, TrackMode trackMode, OBinarySerializer<V> valueSerializer, boolean isNew) {
+    super(cacheEntry, trackMode);
     this.valueSerializer = valueSerializer;
 
     if (isNew)
@@ -71,7 +72,7 @@ public class ONullBucket<V> extends ODurablePage {
     if (isLink)
       return new OSBTreeValue<V>(true, getLongValue(NEXT_FREE_POSITION + 2), null);
 
-    return new OSBTreeValue<V>(false, -1, valueSerializer.deserializeFromDirectMemory(pagePointer, NEXT_FREE_POSITION + 2));
+    return new OSBTreeValue<V>(false, -1, deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
   }
 
   public void removeValue() {

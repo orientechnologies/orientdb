@@ -15,6 +15,27 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Scanner;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -39,6 +60,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
@@ -55,6 +77,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -72,18 +95,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected ODatabaseDocument   currentDatabase;
@@ -1122,7 +1133,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\n %-30s | %-50s |", "Dictionary RID", format(dbCfg.dictionaryRecordId, 50));
       message("\n--------------------------------+----------------------------------------------------+");
 
-      if (dbCfg.properties != null && !dbCfg.properties.isEmpty()) {
+      if (!dbCfg.properties.isEmpty()) {
         message("\n\nDATABASE CUSTOM PROPERTIES:");
         message("\n +-------------------------------+--------------------------------------------------+");
         message("\n | NAME                          | VALUE                                            |");
@@ -1235,17 +1246,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       for (final OIndex<?> index : indexes) {
         try {
           final OIndexDefinition indexDefinition = index.getDefinition();
+          final long size = index.getKeySize();
           if (indexDefinition == null || indexDefinition.getClassName() == null) {
-            message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10), "", "",
-                index.getSize());
+            message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10), "", "", size);
           } else {
             final List<String> fields = indexDefinition.getFields();
             if (fields.size() == 1) {
               message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10),
-                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getKeySize());
+                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), size);
             } else {
               message("\n %-45s| %-10s | %-22s| %-15s|%11d |", format(index.getName(), 45), format(index.getType(), 10),
-                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), index.getKeySize());
+                  format(indexDefinition.getClassName(), 22), format(fields.get(0), 10), size);
               for (int i = 1; i < fields.size(); i++) {
                 message("\n %-45s| %-10s | %-22s| %-15s|%11s |", "", "", "", fields.get(i), "");
               }
@@ -1253,7 +1264,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           }
 
           totalIndexes++;
-          totalRecords += index.getSize();
+          totalRecords += size;
         } catch (Exception ignored) {
         }
       }
@@ -1274,7 +1285,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\n----------------------------------------------+-------+---------------------+---------+-----------------+");
 
       int clusterId;
-      String clusterType = null;
+      String clusterType;
       long totalElements = 0;
       long count;
 
@@ -1451,6 +1462,85 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
+  @ConsoleCommand(description = "Repair database structure")
+  public void repairDatabase(@ConsoleParameter(name = "options", description = "Options: -v", optional = true) final String iOptions)
+      throws IOException {
+    checkForDatabase();
+
+    message("\nRepairing database...");
+
+    boolean verbose = iOptions != null && iOptions.contains("-v");
+
+    long fixedLinks = 0l;
+    long modifiedDocuments = 0l;
+    long errors = 0l;
+
+    message("\n- Fixing dirty links...");
+    try {
+      for (String clusterName : currentDatabase.getClusterNames()) {
+        for (ORecord<?> rec : currentDatabase.browseCluster(clusterName)) {
+          try {
+            if (rec instanceof ODocument) {
+              boolean changed = false;
+
+              final ODocument doc = (ODocument) rec;
+              for (String fieldName : doc.fieldNames()) {
+                final Object fieldValue = doc.rawField(fieldName);
+
+                if (fieldValue instanceof OIdentifiable) {
+                  if (fixLink(fieldValue)) {
+                    doc.field(fieldName, (OIdentifiable) null);
+                    fixedLinks++;
+                    changed = true;
+                    if (verbose)
+                      message("\n--- reset link " + ((OIdentifiable) fieldValue).getIdentity() + " in field '" + fieldName
+                          + "' (rid=" + doc.getIdentity() + ")");
+                  }
+                } else if (fieldValue instanceof Iterable<?>) {
+                  if (fieldValue instanceof ORecordLazyMultiValue)
+                    ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
+
+                  final Iterator<Object> it = ((Iterable) fieldValue).iterator();
+                  for (int i = 0; it.hasNext(); ++i) {
+                    final Object v = it.next();
+                    if (fixLink(v)) {
+                      it.remove();
+                      fixedLinks++;
+                      changed = true;
+                      if (verbose)
+                        message("\n--- reset link " + ((OIdentifiable) v).getIdentity() + " as " + i
+                            + " item in collection in field '" + fieldName + "' (rid=" + doc.getIdentity() + ")");
+                    }
+                  }
+                }
+              }
+
+              if (changed) {
+                modifiedDocuments++;
+                doc.save();
+
+                if (verbose)
+                  message("\n-- updated document " + doc.getIdentity());
+              }
+            }
+          } catch (Exception e) {
+            errors++;
+          }
+        }
+      }
+
+      if (verbose)
+        message("\n");
+
+      message("Done! Fixed links: " + fixedLinks + ", modified documents: " + modifiedDocuments);
+
+      message("\nRepair database complete (" + errors + " errors)");
+
+    } catch (Exception e) {
+      printError(e);
+    }
+  }
+
   @ConsoleCommand(description = "Compare two databases")
   public void compareDatabases(
       @ConsoleParameter(name = "db1-url", description = "URL of the first database") final String iDb1URL,
@@ -1506,7 +1596,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       try {
         syntaxError("backupDatabase", getClass().getMethod("backupDatabase", String.class));
         return;
-      } catch (NoSuchMethodException e) {
+      } catch (NoSuchMethodException ignored) {
       }
 
     out.println(new StringBuilder("Backuping current database to: ").append(iText).append("..."));
@@ -1935,6 +2025,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         message(" Error!");
     else
       message(iSucceed ? "] Done." : " Error!");
+  }
+
+  protected boolean fixLink(final Object fieldValue) {
+    if (fieldValue instanceof OIdentifiable) {
+      if (((OIdentifiable) fieldValue).getIdentity().isValid()) {
+        final ORecord<?> connected = ((OIdentifiable) fieldValue).getRecord();
+        if (connected == null)
+          return true;
+      }
+    }
+    return false;
   }
 
   protected void dumpDistributedConfiguration(final boolean iForce) {

@@ -115,19 +115,9 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.createAbstractClass(iClassName, iSuperClass);
   }
 
-  public OClass createClassInternal(final String iClassName, final OClass iSuperClass, final int[] iClusterIds) {
-    setCurrentDatabaseInThreadLocal();
-    return delegate.createClassInternal(iClassName, iSuperClass, iClusterIds);
-  }
-
   public void dropClass(final String iClassName) {
     setCurrentDatabaseInThreadLocal();
     delegate.dropClass(iClassName);
-  }
-
-  public void dropClassInternal(final String iClassName) {
-    setCurrentDatabaseInThreadLocal();
-    delegate.dropClassInternal(iClassName);
   }
 
   public boolean existsClass(final String iClassName) {
@@ -168,11 +158,6 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   public int getVersion() {
     setCurrentDatabaseInThreadLocal();
     return delegate.getVersion();
-  }
-
-  public void saveInternal() {
-    setCurrentDatabaseInThreadLocal();
-    delegate.saveInternal();
   }
 
   public ORID getIdentity() {

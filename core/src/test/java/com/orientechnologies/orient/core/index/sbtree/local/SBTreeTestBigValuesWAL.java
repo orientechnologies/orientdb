@@ -342,16 +342,15 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
             expectedDiskCache.openFile(fileId);
 
           final OCacheEntry cacheEntry = expectedDiskCache.load(fileId, pageIndex, true);
-          final OCachePointer cachePointer = cacheEntry.getCachePointer();
-          cachePointer.acquireExclusiveLock();
+          cacheEntry.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
+            ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(updatePageRecord.getLsn());
 
             cacheEntry.markDirty();
           } finally {
-            cachePointer.releaseExclusiveLock();
+            cacheEntry.releaseExclusiveLock();
             expectedDiskCache.release(cacheEntry);
           }
         }

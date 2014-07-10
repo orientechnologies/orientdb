@@ -19,7 +19,7 @@ import java.util.List;
  * @since 1/30/14
  */
 @Test(groups = { "index" })
-public class LinkBagIndexTest extends BaseTest {
+public class LinkBagIndexTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
   public LinkBagIndexTest(@Optional final String url) {

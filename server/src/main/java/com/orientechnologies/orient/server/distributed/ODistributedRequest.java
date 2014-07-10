@@ -25,7 +25,7 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 public interface ODistributedRequest {
   enum EXECUTION_MODE {
     RESPONSE, NO_RESPONSE
-  };
+  }
 
   long getId();
 
@@ -45,5 +45,7 @@ public interface ODistributedRequest {
 
   ODistributedRequest setTask(final OAbstractRemoteTask payload);
 
-  void undo();
+  String getUserName();
+
+  void setUserName(String userName);
 }

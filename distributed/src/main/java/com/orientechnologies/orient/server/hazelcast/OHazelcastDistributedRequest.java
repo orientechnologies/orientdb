@@ -36,6 +36,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
   private String              databaseName;
   private long                senderThreadId;
   private OAbstractRemoteTask task;
+  private String              userName = "";
 
   /**
    * Constructor used by serializer.
@@ -51,11 +52,6 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     this.task = payload;
     this.executionMode = iExecutionMode;
     id = -1;
-  }
-
-  @Override
-  public void undo() {
-    task.undo();
   }
 
   public long getId() {
@@ -97,6 +93,14 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     return this;
   }
 
+  public String getUserName() {
+    return userName;
+  }
+
+  public void setUserName(final String userName) {
+    this.userName = userName;
+  }
+
   @Override
   public EXECUTION_MODE getExecutionMode() {
     return executionMode;
@@ -114,6 +118,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     out.writeLong(senderThreadId);
     out.writeUTF(databaseName);
     out.writeObject(task);
+    out.writeUTF(userName);
   }
 
   @Override
@@ -123,6 +128,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     senderThreadId = in.readLong();
     databaseName = in.readUTF();
     task = (OAbstractRemoteTask) in.readObject();
+    userName = in.readUTF();
   }
 
   @Override
@@ -135,6 +141,10 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     if (task != null) {
       buffer.append(" task=");
       buffer.append(task.toString());
+    }
+    if (userName != null) {
+      buffer.append(" userName=");
+      buffer.append(userName);
     }
     return buffer.toString();
   }

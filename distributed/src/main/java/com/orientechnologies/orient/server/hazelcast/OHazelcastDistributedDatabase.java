@@ -19,12 +19,19 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
 import com.hazelcast.spi.exception.DistributedObjectDestroyedException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -75,6 +82,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected Object                                    waitForOnline              = new Object();
   protected Thread                                    listenerThread;
   protected AtomicLong                                waitForMessageId           = new AtomicLong(-1);
+  protected volatile OUser                            lastUser;
 
   public OHazelcastDistributedDatabase(final OHazelcastPlugin manager, final OHazelcastDistributedMessageService msgService,
       final String iDatabaseName) {
@@ -287,6 +295,16 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
           ODistributedAbstractPlugin.REPLICATOR_USER);
       database.open(replicatorUser.name, replicatorUser.password);
+    } else {
+      // After initialize database, create replicator user in DB and reset database with OSecurityShared instead of OSecurityNull
+      OSecurity security = database.getMetadata().getSecurity();
+      if (security == null || security instanceof OSecurityNull) {
+        final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
+            ODistributedAbstractPlugin.REPLICATOR_USER);
+        createReplicatorUser(database, replicatorUser);
+        database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
+            replicatorUser.password);
+      }
     }
   }
 
@@ -438,7 +456,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         } else {
           // SKIP IT
           ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-              "discarded request %d because waiting for %d request=%s sourceNode=%s", req.getId(), waitForMessageId, req,
+              "discarded request %d because waiting for %d request=%s sourceNode=%s", req.getId(), waitForMessageId.get(), req,
               req.getSenderNodeName());
 
           // READ THE NEXT ONE
@@ -479,6 +497,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
       // EXECUTE IT LOCALLY
       final Serializable responsePayload;
+      OUser origin = null;
       try {
         if (task.isRequiredOpenDatabase())
           initDatabaseInstance();
@@ -487,11 +506,26 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
         task.setNodeSource(iRequest.getSenderNodeName());
 
+        // keep original user in database, check the username passed in request and set new user in DB, after document saved, reset
+        // to original user
+        if (database != null) {
+          origin = database.getUser();
+          try {
+            if (lastUser == null || !(lastUser.getName()).equals(iRequest.getUserName()))
+              lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserName());
+            database.setUser(lastUser);// set to new user
+          } catch (Throwable ex) {
+            OLogManager.instance().error(this, "failed to convert to OUser " + ex.getMessage());
+          }
+        }
+
         responsePayload = manager.executeOnLocalNode(iRequest, database);
 
       } finally {
-        if (database != null)
+        if (database != null) {
           database.getLevel1Cache().clear();
+          database.setUser(origin);
+        }
       }
 
       if (ODistributedServerLog.isDebugEnabled())
@@ -675,5 +709,16 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       hotAlignmentError(lastPendingRequest, "Not able to assure last operation has been completed before last crash. Task='%s'",
           task);
     return executeLastPendingRequest;
+  }
+
+  private void createReplicatorUser(ODatabaseDocumentTx database, final OServerUserConfiguration replicatorUser) {
+    String strQuery = "select from ouser where name = '" + replicatorUser.name + "'";
+    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(strQuery);
+    List<ODocument> result = database.command(query).execute();
+    if (result == null || result.size() == 0) {
+      String strExec = "insert into ouser (name, password, status, roles) values ('" + replicatorUser.name + "', '"
+          + replicatorUser.password + "', 'ACTIVE', [#4:0])";
+      database.command(new OCommandSQL(strExec)).execute();
+    }
   }
 }
