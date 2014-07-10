@@ -290,9 +290,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   protected ORecordVersion updateRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
-      final ORecordVersion version, final byte recordType) {
+      final ORecordVersion version, final byte recordType, boolean updateContent) {
     final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     fillRecord(rid, buffer, version, newRecord, null);
+
+    newRecord.setContentChanged(updateContent);
 
     final ORecordInternal<?> currentRecord;
     if (newRecord instanceof ODocument) {

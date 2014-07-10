@@ -16,6 +16,21 @@
 
 package com.orientechnologies.orient.core.db.raw;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TimeZone;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.concur.lock.ONoLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -49,21 +64,6 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TimeZone;
-import java.util.concurrent.Callable;
 
 /**
  * Lower level ODatabase implementation. It's extended or wrapped by all the others.
@@ -277,8 +277,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public OStorageOperationResult<ORecordVersion> save(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
+  public OStorageOperationResult<ORecordVersion> save(final int iDataSegmentId, final ORecordId iRid, boolean updateContent,
+      final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
 
     // CHECK IF RECORD TYPE IS SUPPORTED
@@ -293,7 +293,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
       } else {
         // UPDATE
-        return storage.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, iRecordUpdatedCallback);
+        return storage.updateRecord(iRid, updateContent, iContent, iVersion, iRecordType, iMode, iRecordUpdatedCallback);
       }
     } catch (OException e) {
       // PASS THROUGH
@@ -462,9 +462,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   /**
-   * Returns always null
-   * 
-   * @return
+   * @return always null
    */
   public OLocalRecordCache getLocalCache() {
     return null;
@@ -576,7 +574,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     case DEFAULTCLUSTERID:
       return getDefaultClusterId();
     case TYPE:
-      final ODatabaseRecord db = ((ODatabaseRecord) getDatabaseOwner());
+      final ODatabaseRecord db = getDatabaseOwner();
 
       return db.getMetadata().getSchema().existsClass("V") ? "graph" : "document";
     case DATEFORMAT:
@@ -618,6 +616,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
     switch (iAttribute) {
     case STATUS:
+      if (stringValue == null)
+        throw new IllegalArgumentException("DB status can't be null");
       setStatus(STATUS.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
       break;
 
@@ -631,12 +631,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case TYPE:
-      if (stringValue.equalsIgnoreCase("graph"))
-        Orient.instance().getDatabaseFactory().checkSchema(getDatabaseOwner());
-      else if (stringValue.equalsIgnoreCase("document"))
-        throw new IllegalArgumentException("Cannot switch back to 'document' type automatically");
-      else
-        throw new IllegalArgumentException("Type '" + stringValue + "' not supported");
+      throw new IllegalArgumentException("Database type property is not supported");
 
     case DATEFORMAT:
       storage.getConfiguration().dateFormat = stringValue;
@@ -649,6 +644,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case TIMEZONE:
+      if (stringValue == null)
+        throw new IllegalArgumentException("Timezone can't be null");
+
       storage.getConfiguration().setTimeZone(TimeZone.getTimeZone(stringValue.toUpperCase()));
       storage.getConfiguration().update();
       break;
@@ -669,7 +667,10 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case CUSTOM:
-      if (iValue.toString().indexOf("=") == -1) {
+      if (iValue == null)
+        throw new IllegalArgumentException("CUSTOM attribute value can't be null. expected <name> = <value> or clear");
+
+      if (!iValue.toString().contains("=")) {
         if (iValue.toString().equalsIgnoreCase("clear")) {
           clearCustomInternal();
         } else

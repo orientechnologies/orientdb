@@ -496,7 +496,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
-  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
+  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, boolean updateContent, final byte[] iContent,
       final ORecordVersion iVersion, final byte iRecordType, int iMode, final ORecordCallback<ORecordVersion> iCallback) {
 
     if (iMode == 1 && iCallback == null)
@@ -511,6 +511,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         try {
           network.writeRID(iRid);
+          if (network.getSrvProtocolVersion() >= 22) {
+            network.writeBoolean(updateContent);
+          }
           network.writeBytes(iContent);
           network.writeVersion(iVersion);
           network.writeByte(iRecordType);
@@ -1979,6 +1982,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     case ORecordOperation.UPDATED:
       iNetwork.writeVersion(txEntry.getRecord().getRecordVersion());
       iNetwork.writeBytes(stream);
+      if (iNetwork.getSrvProtocolVersion() >= 22)
+        iNetwork.writeBoolean(txEntry.getRecord().isContentChanged());
       break;
 
     case ORecordOperation.DELETED:

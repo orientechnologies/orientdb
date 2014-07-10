@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -129,9 +130,16 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 
   @SuppressWarnings("unchecked")
   public ORecordTrackedSet setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null
+        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
       sourceRecord.setDirty();
     return this;
+  }
+
+  @Override
+  public void setDirtyNoChanged() {
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+      sourceRecord.setDirtyNoChanged();
   }
 
   public void onBeforeIdentityChanged(final ORecord<?> iRecord) {

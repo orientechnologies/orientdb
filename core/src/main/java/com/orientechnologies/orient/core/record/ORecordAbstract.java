@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
+
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -31,14 +39,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
   protected ORecordId                            _recordId;
@@ -49,6 +49,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   protected String                               _dataSegmentName;
   protected transient ORecordSerializer          _recordFormat;
   protected boolean                              _dirty                  = true;
+  protected boolean                              _contentChanged         = true;
   protected ORecordElement.STATUS                _status                 = ORecordElement.STATUS.LOADED;
   protected transient Set<ORecordListener>       _listeners              = null;
 
@@ -72,8 +73,10 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     _status = ORecordElement.STATUS.LOADED;
     _source = iBuffer;
     _size = iBuffer != null ? iBuffer.length : 0;
-    if (_source != null && _source.length > 0)
+    if (_source != null && _source.length > 0) {
       _dirty = iDirty;
+      _contentChanged = iDirty;
+    }
 
     return this;
   }
@@ -141,6 +144,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
   public ORecordAbstract<T> fromStream(final byte[] iRecordBuffer) {
     _dirty = false;
+    _contentChanged = false;
     _source = iRecordBuffer;
     _size = iRecordBuffer != null ? iRecordBuffer.length : 0;
     _status = ORecordElement.STATUS.LOADED;
@@ -151,8 +155,8 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public void unsetDirty() {
-    if (_dirty)
-      _dirty = false;
+    _contentChanged = false;
+    _dirty = false;
   }
 
   public ORecordAbstract<T> setDirty() {
@@ -160,7 +164,17 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
       _dirty = true;
       _source = null;
     }
+
+    _contentChanged = true;
     return this;
+  }
+
+  @Override
+  public void setDirtyNoChanged() {
+    if (!_dirty && _status != STATUS.UNMARSHALLING) {
+      _dirty = true;
+      _source = null;
+    }
   }
 
   public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
@@ -392,14 +406,14 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     cloned._recordFormat = _recordFormat;
     cloned._listeners = null;
     cloned._dirty = false;
+    cloned._contentChanged = false;
     return cloned;
   }
 
   /**
    * Add a listener to the current document to catch all the supported events.
    * 
-   * @see ORecordListener
-   * 
+   * @see ORecordListener ju
    * @param iListener
    *          ODocumentListener implementation
    */
@@ -452,5 +466,15 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   protected void checkForLoading() {
     if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
       reload(null, true);
+  }
+
+  @Override
+  public boolean isContentChanged() {
+    return _contentChanged;
+  }
+
+  @Override
+  public void setContentChanged(boolean contentChanged) {
+    _contentChanged = contentChanged;
   }
 }

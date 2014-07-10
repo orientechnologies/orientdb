@@ -53,6 +53,8 @@ public interface ORecordElement {
    */
   public <RET> RET setDirty();
 
+  void setDirtyNoChanged();
+
   /**
    * @return Returns record element which contains given one.
    */

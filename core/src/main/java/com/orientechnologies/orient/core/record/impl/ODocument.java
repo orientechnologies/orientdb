@@ -112,8 +112,12 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     }
 
     public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event) {
-      if (_status != STATUS.UNMARSHALLING)
-        setDirty();
+      if (_status != STATUS.UNMARSHALLING) {
+        if (event.isChangesOwnerContent())
+          setDirty();
+        else
+          setDirtyNoChanged();
+      }
 
       if (!(_trackingChanges && _recordId.isValid()) || _status == STATUS.UNMARSHALLING)
         return;
@@ -179,6 +183,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     _recordId = (ORecordId) iRID;
     _status = STATUS.NOT_LOADED;
     _dirty = false;
+    _contentChanged = false;
   }
 
   /**
@@ -204,6 +209,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     }
 
     _dirty = false;
+    _contentChanged = false;
     _status = STATUS.NOT_LOADED;
   }
 
@@ -313,6 +319,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     destination.addAllMultiValueChangeListeners();
 
     destination._dirty = _dirty; // LEAVE IT AS LAST TO AVOID SOMETHING SET THE FLAG TO TRUE
+    destination._contentChanged = _contentChanged;
 
     return destination;
   }
@@ -340,6 +347,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     cloned._recordId = _recordId.copy();
     cloned._status = STATUS.NOT_LOADED;
     cloned._dirty = false;
+    cloned._contentChanged = false;
     return cloned;
   }
 
@@ -451,10 +459,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   @Override
   public String toString() {
     final boolean saveDirtyStatus = _dirty;
-
-    final StringBuilder buffer = new StringBuilder();
+    final boolean oldUpdateContent = _contentChanged;
 
     try {
+      final StringBuilder buffer = new StringBuilder();
+
       checkForFields();
       if (_clazz != null)
         buffer.append(_clazz.getStreamableName());
@@ -465,7 +474,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       }
 
       boolean first = true;
-      ORecord<?> record;
       for (Entry<String, Object> f : _fieldValues.entrySet()) {
         buffer.append(first ? '{' : ',');
         buffer.append(f.getKey());
@@ -477,7 +485,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
           buffer.append(OMultiValue.getSize(f.getValue()));
           buffer.append(']');
         } else if (f.getValue() instanceof ORecord<?>) {
-          record = (ORecord<?>) f.getValue();
+          final ORecord<?> record = (ORecord<?>) f.getValue();
 
           if (record.getIdentity().isValid())
             record.getIdentity().toString(buffer);
@@ -497,11 +505,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
         buffer.append(_recordVersion);
       }
 
+      return buffer.toString();
     } finally {
       _dirty = saveDirtyStatus;
+      _contentChanged = oldUpdateContent;
     }
-
-    return buffer.toString();
   }
 
   /**
@@ -521,6 +529,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    */
   public void fromString(final String iValue) {
     _dirty = true;
+    _contentChanged = true;
     _source = OBinaryProtocol.string2bytes(iValue);
 
     removeAllCollectionChangeListeners();
@@ -971,7 +980,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       final Object value = field(f);
       final Object otherValue = iOther.get(f);
 
-      if ((value != null && !value.equals(otherValue)) || (value == null && otherValue != null))
+      boolean bagsMerged = false;
+      if (value instanceof ORidBag && otherValue instanceof ORidBag)
+        bagsMerged = ((ORidBag) value).tryMerge((ORidBag) otherValue);
+
+      if (!bagsMerged && (value != null && !value.equals(otherValue)) || (value == null && otherValue != null))
         field(f, iOther.get(f));
     }
 
@@ -1179,6 +1192,24 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   @Override
+  public void setDirtyNoChanged() {
+    if (_owners != null) {
+      // PROPAGATES TO THE OWNER
+      ORecordElement e;
+      for (WeakReference<ORecordElement> o : _owners) {
+        e = o.get();
+        if (e != null)
+          e.setDirtyNoChanged();
+      }
+    }
+
+    // THIS IS IMPORTANT TO BE SURE THAT FIELDS ARE LOADED BEFORE IT'S TOO LATE AND THE RECORD _SOURCE IS NULL
+    checkForFields();
+
+    super.setDirtyNoChanged();
+  }
+
+  @Override
   public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
     super.onBeforeIdentityChanged(iRecord);
     if (_owners != null) {
@@ -1217,6 +1248,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     _fieldOriginalValues = null;
     _fieldChangeListeners = null;
     _fieldCollectionChangeTimeLines = null;
+    _contentChanged = false;
 
     super.fromStream(iRecordBuffer);
 
@@ -1225,7 +1257,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       checkForLoading();
     }
 
-    return (ODocument) this;
+    return this;
   }
 
   /**

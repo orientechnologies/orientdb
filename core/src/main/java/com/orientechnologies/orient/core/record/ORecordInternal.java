@@ -55,6 +55,10 @@ public interface ORecordInternal<T> extends ORecord<T>, OSerializableStream {
    */
   public byte getRecordType();
 
+  public boolean isContentChanged();
+
+  public void setContentChanged(boolean contentChanged);
+
   /**
    * Internal only. Executes a flat copy of the record.
    * 

@@ -16,7 +16,11 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -41,7 +45,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
 import com.orientechnologies.orient.core.util.OBackupable;
 
 /**
@@ -77,13 +81,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     }
 
     storagePath = OIOUtils.getPathFromDatabaseName(storagePath);
-		variableParser = new OStorageVariableParser(storagePath);
+    variableParser = new OStorageVariableParser(storagePath);
 
     configuration = new OStorageConfigurationSegment(this);
 
     DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
     DELETE_WAIT_TIME = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
-
 
     dirtyFlag = new OPaginatedStorageDirtyFlag(storagePath + File.separator + "dirty.fl");
   }
@@ -223,11 +226,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     return storagePath;
   }
 
-	public OStorageVariableParser getVariableParser() {
-		return variableParser;
-	}
+  public OStorageVariableParser getVariableParser() {
+    return variableParser;
+  }
 
-	public void scheduleFullCheckpoint() {
+  public void scheduleFullCheckpoint() {
     if (checkpointExecutor != null)
       checkpointExecutor.execute(new Runnable() {
         @Override

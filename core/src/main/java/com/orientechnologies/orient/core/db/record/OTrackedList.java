@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -170,9 +171,16 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   @SuppressWarnings("unchecked")
   public <RET> RET setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null
+        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
       sourceRecord.setDirty();
     return (RET) this;
+  }
+
+  @Override
+  public void setDirtyNoChanged() {
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+      sourceRecord.setDirtyNoChanged();
   }
 
   public void onBeforeIdentityChanged(ORecord<?> iRecord) {

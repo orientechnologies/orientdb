@@ -181,6 +181,38 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return true;
   }
 
+  public void mergeChanges(OSBTreeRidBag treeRidBag) {
+    for (Map.Entry<OIdentifiable, OModifiableInteger> entry : treeRidBag.newEntries.entrySet()) {
+      mergeDiffEntry(entry.getKey(), entry.getValue().getValue());
+    }
+
+    for (Map.Entry<OIdentifiable, Change> entry : treeRidBag.changes.entrySet()) {
+      final OIdentifiable rec = entry.getKey();
+      final Change change = entry.getValue();
+      final int diff;
+      if (change instanceof DiffChange)
+        diff = ((DiffChange) change).delta;
+      else if (change instanceof AbsoluteChange)
+        diff = ((AbsoluteChange) change).value - getAbsoluteValue(rec).value;
+      else
+        throw new IllegalArgumentException("change type is not supported");
+
+      mergeDiffEntry(rec, diff);
+    }
+  }
+
+  private void mergeDiffEntry(OIdentifiable key, int diff) {
+    if (diff > 0) {
+      for (int i = 0; i < diff; i++) {
+        add(key);
+      }
+    } else {
+      for (int i = diff; i < 0; i++) {
+        remove(key);
+      }
+    }
+  }
+
   @Override
   public boolean isAutoConvertToRecord() {
     return autoConvertToRecord;
@@ -227,7 +259,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
     if (updateOwner)
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
-          identifiable, identifiable));
+          identifiable, identifiable, null, false));
   }
 
   private AbsoluteChange getAbsoluteValue(OIdentifiable identifiable) {
@@ -235,13 +267,13 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     try {
       final Integer oldValue;
       if (tree == null)
-        oldValue = null;
+        oldValue = 0;
       else
         oldValue = tree.get(identifiable);
 
       final Change change = changes.get(identifiable);
 
-      return new AbsoluteChange(change.applyTo(oldValue));
+      return new AbsoluteChange(change == null ? oldValue : change.applyTo(oldValue));
     } finally {
       releaseTree();
     }
@@ -274,7 +306,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
     if (updateOwner)
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
+          OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable, false));
   }
 
   public int size() {
@@ -435,6 +467,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     OIntegerSerializer.INSTANCE.serialize(rootPointer.getPageOffset(), stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
+    // Keep this section for binary compatibility with versions older then 1.7.5
     OIntegerSerializer.INSTANCE.serialize(size, stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
@@ -499,7 +532,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     final int pageOffset = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    final int size = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
+    // Cached bag size. Not used after 1.7.5
     offset += OIntegerSerializer.INT_SIZE;
 
     if (fileId == -1)
@@ -507,7 +540,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     else
       collectionPointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
 
-    this.size = size;
+    this.size = -1;
 
     changes.putAll(ChangeSerializationHelper.INSTANCE.deserializeChanges(stream, offset));
 
@@ -663,7 +696,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
       if (updateOwner)
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-            OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue));
+            OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue, false));
       currentRemoved = true;
     }
 

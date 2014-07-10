@@ -41,9 +41,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement {
-  public static final ORecordLazySet EMPTY_SET           = new ORecordLazySet();
-  protected boolean                  sorted              = true;
-  protected boolean                  autoConvertToRecord = true;
+  protected boolean sorted              = true;
+  protected boolean autoConvertToRecord = true;
 
   public ORecordLazySet() {
     super(null);
@@ -110,9 +109,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   }
 
   public void convertLinks2Records() {
-    Iterator<Entry<OIdentifiable, Object>> all = map.entrySet().iterator();
-    while (all.hasNext()) {
-      Entry<OIdentifiable, Object> entry = all.next();
+    for (Entry<OIdentifiable, Object> entry : map.entrySet()) {
       if (entry.getValue() == ENTRY_REMOVAL) {
         try {
           entry.setValue(entry.getKey().getRecord());
