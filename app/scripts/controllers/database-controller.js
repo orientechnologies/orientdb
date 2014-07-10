@@ -196,6 +196,8 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 $scope.context = $scope.items[0];
                 $scope.nContext = $scope.items[1];
                 Notification.clear();
+            } else {
+                Notification.push({content: "The command has been executed"});
             }
             Spinner.stopSpinner();
         }, function (data) {
