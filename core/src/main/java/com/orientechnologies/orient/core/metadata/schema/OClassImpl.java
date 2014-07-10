@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -43,12 +55,14 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -329,6 +343,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
+  @Override
+  public boolean hasClusterId(int clusterId) {
+    return Arrays.binarySearch(clusterIds, clusterId) >= 0;
+  }
+
   public OClass getSuperClass() {
     acquireSchemaReadLock();
     try {
@@ -495,7 +514,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private boolean checkClusterRenameOk(int clusterId, String newName) {
     for (OClass clazz : owner.getClasses()) {
       if (!clazz.getName().equals(newName)
-          && (clazz.getDefaultClusterId() == clusterId || Arrays.asList(clazz.getClusterIds()).contains(clusterId))) {
+ && (clazz.getDefaultClusterId() == clusterId || clazz.hasClusterId(clusterId))) {
         return false;
       }
     }
@@ -753,19 +772,19 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       shortName = document.field("shortName");
     else
       shortName = null;
-    defaultClusterId = (Integer) document.field("defaultClusterId");
+    defaultClusterId = document.field("defaultClusterId");
     if (document.containsField("strictMode"))
-      strictMode = (Boolean) document.field("strictMode");
+      strictMode = document.field("strictMode");
     else
       strictMode = false;
 
     if (document.containsField("abstract"))
-      abstractClass = (Boolean) document.field("abstract");
+      abstractClass = document.field("abstract");
     else
       abstractClass = false;
 
     if (document.field("overSize") != null)
-      overSize = (Float) document.field("overSize");
+      overSize = document.field("overSize");
     else
       overSize = 0f;
 
@@ -971,7 +990,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (clId == NOT_EXISTENT_CLUSTER_ID) {
       try {
         clId = Integer.parseInt(parts[0]);
-        throw new IllegalArgumentException("Cluster id '" + nameOrId + "' cannot be added");
+        throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
       } catch (NumberFormatException e) {
         // CREATE THE CLUSTER AT THE FLY
         if (parts.length == 1)
@@ -1304,8 +1323,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
         }
       } else {
-        // SWITCH TO NOT ABSTRACT
-        this.defaultClusterId = getDatabase().getDefaultClusterId();
+        if (!abstractClass)
+          return;
+
+        int clusterId = getDatabase().getClusterIdByName(name);
+        if (clusterId == -1)
+          clusterId = getDatabase().addCluster(name, OStorage.CLUSTER_TYPE.PHYSICAL);
+
+        this.defaultClusterId = clusterId;
         this.clusterIds[0] = this.defaultClusterId;
       }
 

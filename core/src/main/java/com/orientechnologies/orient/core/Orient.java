@@ -237,7 +237,7 @@ public class Orient extends OListenerManger<OOrientListener> {
           OLogManager.instance().info(this, "- storage: " + stg.getName() + "...");
           stg.close(true, false);
         } catch (Throwable e) {
-          OLogManager.instance().warn(this, "Error on closing storage");
+          OLogManager.instance().warn(this, "-- error on closing storage", e);
         }
       }
       storages.clear();
