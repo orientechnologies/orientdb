@@ -51,6 +51,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   }
 
   public ODatabaseRecord begin(final TXTYPE iType) {
+    checkOpeness();
     setCurrentDatabaseinThreadLocal();
 
     if (currentTx.isActive()) {
@@ -88,6 +89,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   }
 
   public ODatabaseRecord begin(final OTransaction iTx) {
+    checkOpeness();
     if (currentTx.isActive() && iTx.equals(currentTx)) {
       currentTx.begin();
       return this;
@@ -115,6 +117,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
   @Override
   public ODatabaseRecord commit(boolean force) throws OTransactionException {
+    checkOpeness();
     if (!currentTx.isActive())
       return this;
 
@@ -195,6 +198,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
   @Override
   public ODatabaseRecord rollback(boolean force) throws OTransactionException {
+    checkOpeness();
     if (currentTx.isActive()) {
 
       if (!force && currentTx.amountOfNestedTxs() > 1) {
@@ -331,6 +335,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
    * Deletes the record without checking the version.
    */
   public ODatabaseRecord delete(final ORID iRecord) {
+    checkOpeness();
     final ORecord<?> rec = iRecord.getRecord();
     if (rec != null)
       rec.delete();
@@ -339,12 +344,14 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
   @Override
   public ODatabaseRecord delete(final ORecordInternal<?> iRecord) {
+    checkOpeness();
     currentTx.deleteRecord(iRecord, OPERATION_MODE.SYNCHRONOUS);
     return this;
   }
 
   @Override
   public boolean hide(ORID rid) {
+    checkOpeness();
     if (currentTx.isActive())
       throw new ODatabaseException("This operation can be executed only in non tx mode");
     return super.hide(rid);
