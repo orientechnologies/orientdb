@@ -16,15 +16,15 @@
 
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
 
 /**
  * Abstract Delegate for OClass interface.
@@ -370,6 +370,11 @@ public abstract class OClassAbstractDelegate implements OClass {
   @Override
   public Set<String> getCustomKeys() {
     return delegate.getCustomKeys();
+  }
+
+  @Override
+  public boolean hasClusterId(int clusterId) {
+    return delegate.hasClusterId(clusterId);
   }
 
   @Override

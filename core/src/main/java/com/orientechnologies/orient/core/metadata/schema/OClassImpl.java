@@ -343,6 +343,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
+  @Override
+  public boolean hasClusterId(int clusterId) {
+    return Arrays.binarySearch(clusterIds, clusterId) >= 0;
+  }
+
   public OClass getSuperClass() {
     acquireSchemaReadLock();
     try {
@@ -509,7 +514,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private boolean checkClusterRenameOk(int clusterId, String newName) {
     for (OClass clazz : owner.getClasses()) {
       if (!clazz.getName().equals(newName)
-          && (clazz.getDefaultClusterId() == clusterId || Arrays.asList(clazz.getClusterIds()).contains(clusterId))) {
+ && (clazz.getDefaultClusterId() == clusterId || clazz.hasClusterId(clusterId))) {
         return false;
       }
     }
@@ -767,19 +772,19 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       shortName = document.field("shortName");
     else
       shortName = null;
-    defaultClusterId = (Integer) document.field("defaultClusterId");
+    defaultClusterId = document.field("defaultClusterId");
     if (document.containsField("strictMode"))
-      strictMode = (Boolean) document.field("strictMode");
+      strictMode = document.field("strictMode");
     else
       strictMode = false;
 
     if (document.containsField("abstract"))
-      abstractClass = (Boolean) document.field("abstract");
+      abstractClass = document.field("abstract");
     else
       abstractClass = false;
 
     if (document.field("overSize") != null)
-      overSize = (Float) document.field("overSize");
+      overSize = document.field("overSize");
     else
       overSize = 0f;
 
@@ -985,7 +990,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (clId == NOT_EXISTENT_CLUSTER_ID) {
       try {
         clId = Integer.parseInt(parts[0]);
-        throw new IllegalArgumentException("Cluster id '" + nameOrId + "' cannot be added");
+        throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
       } catch (NumberFormatException e) {
         // CREATE THE CLUSTER AT THE FLY
         if (parts.length == 1)
