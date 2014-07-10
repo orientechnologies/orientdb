@@ -1,19 +1,21 @@
 package com.orientechnologies.orient.server.distributed;
 
+import junit.framework.Assert;
+
+import org.junit.Test;
+
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import junit.framework.Assert;
-import org.junit.Test;
 
 public class TestSharding extends AbstractServerClusterTest {
 
   protected OrientVertex[] vertices;
 
   @Test
-  //@Ignore
+  // @Ignore
   public void test() throws Exception {
     init(3);
     prepare(false);
@@ -69,8 +71,8 @@ public class TestSharding extends AbstractServerClusterTest {
           for (int cluster = 0; cluster < vertices.length; ++cluster) {
             final String query = "select from cluster:client_" + cluster;
             Iterable<OrientVertex> result = g.command(new OCommandSQL(query)).execute();
-            Assert.assertTrue("Error on query on cluster_" + cluster + " on server " + server + ": " + query, result.iterator()
-                .hasNext());
+            Assert.assertTrue("Error on query against 'cluster_" + cluster + "' on server '" + server + "': " + query, result
+                .iterator().hasNext());
 
             OrientVertex v = result.iterator().next();
 
