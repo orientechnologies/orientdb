@@ -19,14 +19,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.index.engine.OLocalHashTableIndexEngine;
-import com.orientechnologies.orient.core.index.engine.OMemoryHashMapIndexEngine;
+import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -77,39 +73,18 @@ public class OHashIndexFactory implements OIndexFactory {
 
   public OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
-    if (valueContainerAlgorithm == null) {
-      if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(indexType)
-          || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(indexType)
-          || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(indexType)
-          || OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType))
-        valueContainerAlgorithm = ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER;
-      else
+    if (valueContainerAlgorithm == null)
         valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
-    }
-
-    if ((database.getStorage().getType().equals(OEngineLocalPaginated.NAME))
-        && valueContainerAlgorithm.equals(ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER)
-        && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
-      OLogManager
-          .instance()
-          .warn(
-              this,
-              "Index was created using %s as values container. "
-                  + "This container is deprecated and is not supported any more. To avoid this message please drop and recreate indexes or perform DB export/import.",
-              valueContainerAlgorithm);
-    }
 
     OStorage storage = database.getStorage();
     OIndexEngine indexEngine;
 
     final String storageType = storage.getType();
-    if (storageType.equals("memory"))
-      indexEngine = new OMemoryHashMapIndexEngine();
-    else if (storageType.equals("local") || storageType.equals("plocal"))
-      indexEngine = new OLocalHashTableIndexEngine();
+    if (storageType.equals("memory") || storageType.equals("plocal"))
+      indexEngine = new OHashTableIndexEngine();
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OLocalHashTableIndexEngine();
+      indexEngine = new OHashTableIndexEngine();
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
     else

@@ -42,12 +42,13 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageConfigurationSegment;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.util.OBackupable;
 
 /**
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage {
+public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage, OBackupable {
   private static final int                 ONE_KB = 1024;
 
   private final int                        DELETE_MAX_RETRIES;

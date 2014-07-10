@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 
-import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -113,13 +112,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     return this;
   }
 
-  @Override
-  public void unload() {
-    database.getTransaction().clearIndexEntries();
-    super.unload();
-  }
-
-  @Override
+	@Override
   public Object getFirstKey() {
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
     if (indexChanges == null)

@@ -248,12 +248,6 @@ public enum OGlobalConfiguration {
       "Indicates index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
       "ROLLBACK_ONLY"),
 
-  INDEX_USE_SBTREE_BY_DEFAULT("index.useSBTreeByDefault",
-      "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, true),
-
-  INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT("index.notunique.useSBTreeContainerByDefault",
-      "Prefer SBTree based algorithm instead MVRBTree for storing sets of RID", Boolean.class, true),
-
   INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 
   // TREEMAP

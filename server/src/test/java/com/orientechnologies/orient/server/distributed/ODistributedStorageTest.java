@@ -1,11 +1,10 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
 import com.orientechnologies.orient.server.OServer;
 
 /**
@@ -34,7 +33,7 @@ public class ODistributedStorageTest {
 
   @Test(expectedExceptions = { UnsupportedOperationException.class })
   public void testUnsupportedFreeze() {
-    ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), Mockito.mock(OStorageMemory.class));
+    ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), Mockito.mock(ODirectMemoryStorage.class));
 
     ds.freeze(false);
   }
@@ -51,7 +50,7 @@ public class ODistributedStorageTest {
 
   @Test(expectedExceptions = { UnsupportedOperationException.class })
   public void testUnsupportedRelease() {
-    ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), Mockito.mock(OStorageMemory.class));
+    ODistributedStorage ds = new ODistributedStorage(Mockito.mock(OServer.class), Mockito.mock(ODirectMemoryStorage.class));
 
     ds.release();
   }

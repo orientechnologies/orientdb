@@ -48,12 +48,7 @@ public interface OIndex<T> {
   OIndex<T> create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
       boolean rebuild, OProgressListener progressListener);
 
-  /**
-   * Unloads the index freeing the resource in memory.
-   */
-  void unload();
-
-  String getDatabaseName();
+	String getDatabaseName();
 
   /**
    * Types of the keys that index can accept, if index contains composite key, list of types of elements from which this index

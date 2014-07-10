@@ -73,35 +73,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void unload() {
-  }
-
-  @Override
-  public void startTransaction() {
-  }
-
-  @Override
-  public void stopTransaction() {
-  }
-
-  @Override
-  public void afterTxRollback() {
-  }
-
-  @Override
-  public void afterTxCommit() {
-  }
-
-  @Override
-  public void closeDb() {
-  }
-
-  @Override
   public void close() {
-  }
-
-  @Override
-  public void beforeTxBegin() {
   }
 
   @Override

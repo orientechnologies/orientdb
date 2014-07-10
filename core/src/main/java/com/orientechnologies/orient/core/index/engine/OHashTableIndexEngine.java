@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
  * @author Andrey Lomakin
  * @since 15.07.13
  */
-public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
+public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   public static final String                     METADATA_FILE_EXTENSION    = ".him";
   public static final String                     TREE_FILE_EXTENSION        = ".hit";
   public static final String                     BUCKET_FILE_EXTENSION      = ".hib";
@@ -50,7 +50,7 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   private volatile ORID                          identity;
 
-  public OLocalHashTableIndexEngine() {
+  public OHashTableIndexEngine() {
     hashFunction = new OMurmurHash3HashFunction<Object>();
     hashTable = new OLocalHashTable<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
         NULL_BUCKET_FILE_EXTENSION, hashFunction, OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
@@ -128,14 +128,6 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
   @Override
   public void clear() {
     hashTable.clear();
-  }
-
-  @Override
-  public void unload() {
-  }
-
-  @Override
-  public void closeDb() {
   }
 
   @Override
@@ -329,25 +321,6 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
     };
   }
 
-  @Override
-  public void startTransaction() {
-  }
-
-  @Override
-  public void stopTransaction() {
-  }
-
-  @Override
-  public void afterTxRollback() {
-  }
-
-  @Override
-  public void afterTxCommit() {
-  }
-
-  @Override
-  public void beforeTxBegin() {
-  }
 
   private ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();

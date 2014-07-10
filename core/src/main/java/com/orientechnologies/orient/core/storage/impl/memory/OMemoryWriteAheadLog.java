@@ -64,12 +64,10 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public void close() throws IOException {
-    truncate();
   }
 
   @Override
   public void close(boolean flush) throws IOException {
-    truncate();
   }
 
   @Override

@@ -26,9 +26,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -36,17 +34,16 @@ import java.util.List;
 import java.util.Set;
 
 @Test(groups = "security")
-public class RestrictedTest {
-  private ODatabaseDocumentTx database;
+public class RestrictedTest extends DocumentDBBaseTest {
   private ODocument           adminRecord;
   private ODocument           writerRecord;
 
-  @Parameters(value = "url")
-  public RestrictedTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public RestrictedTest(@Optional String url) {
+		super(url);
+	}
 
-  @Test
+	@Test
   public void testCreateRestrictedClass() {
     database.open("admin", "admin");
     database.getMetadata().getSchema().createClass("CMSDocument", database.getMetadata().getSchema().getClass("ORestricted"));
@@ -268,7 +265,7 @@ public class RestrictedTest {
 
   }
 
-  @AfterMethod
+  @BeforeMethod
   protected void closeDb() {
     database.close();
   }

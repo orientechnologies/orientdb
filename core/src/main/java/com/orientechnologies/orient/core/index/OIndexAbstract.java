@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.engine.OMVRBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -412,11 +411,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
             // END OF CLUSTER REACHED, IGNORE IT
           }
 
-        if (indexEngine instanceof OMVRBTreeIndexEngine)
-          flush();
-
-        unload();
-
         if (iProgressListener != null)
           iProgressListener.onCompletition(this, true);
 
@@ -615,15 +609,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
   }
 
-  public void unload() {
-    acquireSharedLock();
-    try {
-      indexEngine.unload();
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   public ODocument updateConfiguration() {
     acquireExclusiveLock();
     try {
@@ -670,8 +655,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
     acquireExclusiveLock();
     try {
-      indexEngine.startTransaction();
-
       final IndexTxSnapshot indexTxSnapshot = txSnapshot.get();
 
       final Boolean clearAll = operationDocument.field("clear");
@@ -688,7 +671,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       final ODocument nullIndexEntry = operationDocument.field("nullEntries");
       applyIndexTxEntry(snapshot, nullIndexEntry);
     } finally {
-      indexEngine.stopTransaction();
       releaseExclusiveLock();
     }
   }
@@ -740,64 +722,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  public void onCreate(final ODatabase iDatabase) {
-  }
-
-  public void onDelete(final ODatabase iDatabase) {
-  }
-
-  public void onOpen(final ODatabase iDatabase) {
-  }
-
-  public void onBeforeTxBegin(final ODatabase iDatabase) {
-    acquireSharedLock();
-    try {
-      indexEngine.beforeTxBegin();
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public void onBeforeTxRollback(final ODatabase iDatabase) {
-  }
-
   public boolean onCorruptionRepairDatabase(final ODatabase database, final String reason, String whatWillbeFixed) {
     if (reason.equals("load"))
       return true;
     return false;
-  }
-
-  public void onAfterTxRollback(final ODatabase database) {
-    acquireSharedLock();
-    try {
-      indexEngine.afterTxRollback();
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public void onBeforeTxCommit(final ODatabase database) {
-  }
-
-  public void onAfterTxCommit(final ODatabase iDatabase) {
-    acquireSharedLock();
-    try {
-      indexEngine.afterTxCommit();
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  public void onClose(final ODatabase iDatabase) {
-    if (isRebuiding())
-      return;
-
-    acquireSharedLock();
-    try {
-      indexEngine.closeDb();
-    } finally {
-      releaseSharedLock();
-    }
   }
 
   public OType[] getKeyTypes() {

@@ -36,21 +36,7 @@ public interface OIndexEngine<V> {
 
   void clear();
 
-  void unload();
-
-  void startTransaction();
-
-  void stopTransaction();
-
-  void afterTxRollback();
-
-  void afterTxCommit();
-
-  void closeDb();
-
   void close();
-
-  void beforeTxBegin();
 
   V get(Object key);
 
