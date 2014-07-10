@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -23,6 +24,7 @@ import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
 /**
  * Lazy implementation of Set. Can be bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty()
@@ -41,13 +43,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement {
-  public static final ORecordLazySet EMPTY_SET           = new ORecordLazySet();
-  protected boolean                  sorted              = true;
   protected boolean                  autoConvertToRecord = true;
-
-  public ORecordLazySet() {
-    super(null);
-  }
 
   public ORecordLazySet(final ODocument iSourceRecord) {
     super(iSourceRecord);
@@ -61,7 +57,13 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   @Override
   public Iterator<OIdentifiable> iterator() {
     return new OLazyRecordIterator(new OLazyIterator<OIdentifiable>() {
-      private Iterator<Entry<OIdentifiable, Object>> iter = ORecordLazySet.super.map.entrySet().iterator();
+      {
+        if (OSerializationSetThreadLocal.check((ODocument) sourceRecord)) {
+          iter = new HashSet<Entry<OIdentifiable, Object>>(ORecordLazySet.super.map.entrySet()).iterator();
+        } else
+          iter = ORecordLazySet.super.map.entrySet().iterator();
+      }
+      private Iterator<Entry<OIdentifiable, Object>> iter;
 
       @Override
       public boolean hasNext() {
@@ -83,7 +85,8 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
 
       @Override
       public OIdentifiable update(OIdentifiable iValue) {
-        map.put(iValue.getIdentity(), iValue.getRecord());
+        if (iValue != null)
+          map.put(iValue.getIdentity(), iValue.getRecord());
         return iValue;
       }
     }, autoConvertToRecord);
@@ -106,6 +109,9 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
 
     if (e instanceof ODocument)
       ((ODocument) e).addOwner(this);
+    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
+        e));
+
     return true;
   }
 
