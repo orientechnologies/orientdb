@@ -9,22 +9,33 @@
             <div class="aside-body">
                 <div class="container-fluid">
                     <div class="row">
-                        <ul class="nav nav-pills nav-justified">
+                        <ul class="nav nav-pills nav-justified nav-pills-aside">
                             <li ng-class="{active : 'properties' == active }"><a href="javascript:void(0)"
                                                                                  ng-click="active = 'properties'"
-                                    >Properties</a></li>
+                                    ><i class="fa fa-bars"></i></a></li>
                             <li ng-class="{active : 'settings' == active }"><a href="javascript:void(0)"
-                                                                               ng-click="active = 'settings'">Settings</a>
+                                                                               ng-click="active = 'settings'"><i
+                                    class="fa fa-cog"></i></a>
                             </li>
                         </ul>
                     </div>
                     <div class="row">
+                        <h4 class="text-center">
+                            {{ active | capitalize}}
+                        </h4>
+                    </div>
+                    <div class="row aside-form">
 
                         <div class="col-md-12" ng-show="active == 'properties'">
-                            <dl class="dl-horizontal">
-                                <dt ng-repeat-start="header in headers">{{header}}</dt>
-                                <dd ng-repeat-end>{{doc[header]}}</dd>
-                            </dl>
+                            <form class="form-horizontal">
+                                <div class="form-group" ng-repeat="header in headers">
+                                    <label for="inputDisplay" class="col-md-4 control-label">{{header}}</label>
+
+                                    <div class="col-md-8">
+                                        <p class="form-control-static">{{doc[header]}}</p>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                         <div class="col-md-12" ng-show="active == 'settings'">
 
@@ -40,20 +51,32 @@
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="inputFill" class="col-md-4 control-label">Fill</label>
+                                    <label for="inputRadius" class="col-md-4 control-label">Radius</label>
 
                                     <div class="col-md-8">
-                                        <spectrum-colorpicker id="inputFill"
-                                                              ng-model="yourFancyModel"></spectrum-colorpicker>
+                                        <input id="inputRadius" ng-model="config.r" class="form-control">
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <div class="col-sm-offset-2 col-sm-10">
-                                        <button type="submit" class="btn btn-default" ng-class="apply()">Apply Config</button>
+                                    <label class="col-md-4 control-label">Fill</label>
+
+                                    <div class="col-md-8">
+                                        <spectrum-colorpicker
+                                                ng-model="config.fill"
+                                                options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
                                     </div>
                                 </div>
-                            </form>
+                                <div class="form-group">
+                                    <label class="col-md-4 control-label">Stroke</label>
 
+                                    <div class="col-md-8">
+                                        <spectrum-colorpicker
+                                                ng-model="config.stroke"
+                                                options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
+                                    </div>
+                                </div>
+
+                            </form>
                         </div>
                     </div>
                     <div class="row">

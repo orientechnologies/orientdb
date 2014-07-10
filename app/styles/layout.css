@@ -11,7 +11,10 @@ a.navbar-brand > img {
 }
 
 .aside .aside-dialog .aside-content .aside-header {
-    background: none repeat scroll 0 0 #ff6600;
+    background: none repeat scroll 0 0 #222222;
+    box-shadow: 0px 0px 2px 2px #080808;
+    border-bottom: none;
+    z-index: 1000;
 }
 
 .aside .aside-dialog .aside-body {
@@ -39,7 +42,6 @@ body div.container-studio {
     float: right;
     margin-top: -5px;
 }
-
 
 .console_class_functions .jumbotron {
     padding: 0px;
@@ -85,6 +87,20 @@ body div.container-studio {
 .del-field {
     padding-left: 0px;
 }
+
 .graph-heading {
     height: 50px;
+}
+
+.nav-pills-aside > li > a {
+    border-radius: 0;
+}
+
+.nav-pills-aside {
+    padding-top: 2px;
+    border-bottom: 1px solid #DDDDDD;
+}
+
+.aside-form {
+    background-color: #EEEEEE;
 }

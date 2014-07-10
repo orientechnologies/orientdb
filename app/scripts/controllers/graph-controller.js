@@ -238,7 +238,7 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
     }
 }]);
 
-GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside) {
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside, DocumentApi) {
 
 
     var data = [];
@@ -257,6 +257,12 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             });
             $scope.graph.on('node/dblclick', function (v) {
                 console.log(v);
+            });
+
+            $scope.graph.on('node/load', function (v, callback) {
+                DocumentApi.get({ database: $routeParams.database, document: v.source}, function (doc) {
+                    callback(doc);
+                });
             });
         },
         config: {
@@ -310,6 +316,21 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
     $scope.$watch('config.display', function (val) {
         if (val) {
             $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
+        }
+    })
+    $scope.$watch('config.fill', function (val) {
+        if (val) {
+            $scope.graph.changeClazzConfig($scope.doc['@class'], 'fill', val);
+        }
+    })
+    $scope.$watch('config.stroke', function (val) {
+        if (val) {
+            $scope.graph.changeClazzConfig($scope.doc['@class'], 'stroke', val);
+        }
+    })
+    $scope.$watch('config.r', function (val) {
+        if (val) {
+            $scope.graph.changeClazzConfig($scope.doc['@class'], 'r', val);
         }
     })
 }]);
