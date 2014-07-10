@@ -16,8 +16,6 @@
 package com.orientechnologies.orient.core.index;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -136,11 +134,7 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
     return delegate.getIdentity();
   }
 
-  public void unload() {
-    delegate.unload();
-  }
-
-  public long rebuild() {
+	public long rebuild() {
     return delegate.rebuild();
   }
 

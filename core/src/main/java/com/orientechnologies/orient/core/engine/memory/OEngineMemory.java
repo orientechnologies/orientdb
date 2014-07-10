@@ -21,7 +21,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
+import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 
 public class OEngineMemory extends OEngineAbstract {
 	public static final String	NAME	= "memory";
@@ -29,11 +29,11 @@ public class OEngineMemory extends OEngineAbstract {
 	public OEngineMemory() {
 	}
 
-	public OStorage createStorage(String iURL, Map<String, String> iConfiguration) {
+	public OStorage createStorage(String url, Map<String, String> configuration) {
 		try {
-			return new OStorageMemory(iURL);
+			return new ODirectMemoryStorage(url, url, getMode(configuration));
 		} catch (Throwable t) {
-			OLogManager.instance().error(this, "Error on opening in memory storage: " + iURL, t, ODatabaseException.class);
+			OLogManager.instance().error(this, "Error on opening in memory storage: " + url, t, ODatabaseException.class);
 		}
 		return null;
 	}

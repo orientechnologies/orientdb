@@ -38,7 +38,7 @@ import java.util.concurrent.Callable;
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
  * 
  * @author Luca Garulli
- * @see com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory
+ * @see com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage
  */
 
 public interface OStorage extends OBackupable, OSharedContainer {

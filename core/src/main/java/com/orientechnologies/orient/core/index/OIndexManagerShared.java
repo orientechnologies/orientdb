@@ -26,9 +26,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -53,12 +51,10 @@ import java.util.Set;
  * 
  */
 public class OIndexManagerShared extends OIndexManagerAbstract implements OIndexManager {
-  private static final boolean useSBTree             = OGlobalConfiguration.INDEX_USE_SBTREE_BY_DEFAULT.getValueAsBoolean();
+  private static final long serialVersionUID      = 1L;
 
-  private static final long    serialVersionUID      = 1L;
-
-  protected volatile Thread    recreateIndexesThread = null;
-  private volatile boolean     rebuildCompleted      = false;
+  protected volatile Thread recreateIndexesThread = null;
+  private volatile boolean  rebuildCompleted      = false;
 
   public OIndexManagerShared(final ODatabaseRecord iDatabase) {
     super(iDatabase);
@@ -128,8 +124,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     ODatabase database = getDatabase();
     OStorage storage = database.getStorage();
 
-    algorithm = chooseTreeAlgorithm(algorithm, storage);
-    final String valueContainerAlgorithm = chooseContainerAlgorithm(iType, storage);
+    algorithm = chooseTreeAlgorithm(algorithm);
+    final String valueContainerAlgorithm = chooseContainerAlgorithm(iType);
 
     final OIndexInternal<?> index;
     acquireExclusiveLock();
@@ -186,28 +182,21 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     return clustersToIndex;
   }
 
-  private String chooseContainerAlgorithm(String iType, OStorage storage) {
+  private String chooseContainerAlgorithm(String type) {
     final String valueContainerAlgorithm;
-    if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(iType) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(iType)
-        || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(iType) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(iType)) {
-      if ((storage.getType().equals(OEngineLocalPaginated.NAME))
-          && OGlobalConfiguration.INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT.getValueAsBoolean()) {
-        valueContainerAlgorithm = ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER;
-      } else {
-        valueContainerAlgorithm = ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER;
-      }
+    if (OClass.INDEX_TYPE.NOTUNIQUE.toString().equals(type) || OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString().equals(type)
+        || OClass.INDEX_TYPE.FULLTEXT_HASH_INDEX.toString().equals(type) || OClass.INDEX_TYPE.FULLTEXT.toString().equals(type)) {
+      valueContainerAlgorithm = ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER;
     } else {
       valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
     }
     return valueContainerAlgorithm;
   }
 
-  private String chooseTreeAlgorithm(String algorithm, OStorage storage) {
+  private String chooseTreeAlgorithm(String algorithm) {
     if (algorithm == null)
-      if (storage.getType().equals(OEngineLocalPaginated.NAME) && useSBTree)
-        algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
-      else
-        algorithm = ODefaultIndexFactory.MVRBTREE_ALGORITHM;
+      algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
+
     return algorithm;
   }
 
@@ -221,7 +210,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       if (idx != null) {
         removeClassPropertyIndex(idx);
 
-        getDatabase().unregisterListener(idx.getInternal());
         idx.delete();
         setDirty();
         save();
@@ -384,7 +372,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
           try {
             OLogManager.instance().warn(this, "Index %s was not found after reload and will be removed", oldIndex.getName());
 
-            getDatabase().unregisterListener(oldIndex.getInternal());
             oldIndex.delete();
           } catch (Exception e) {
             OLogManager.instance().error(this, "Error on deletion of index %s", e, oldIndex.getName());
@@ -534,7 +521,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         ok++;
         OLogManager.instance().info(this, "Index %s was added in DB index list.", index.getName());
       } else {
-        getDatabase().unregisterListener(index.getInternal());
         index.delete();
         errors++;
       }
@@ -543,17 +529,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     private OIndexInternal<?> createIndex(ODocument idx) {
       final String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
       String algorithm = idx.field(OIndexInternal.ALGORITHM);
-
-      if (algorithm.equals(ODefaultIndexFactory.MVRBTREE_ALGORITHM)) {
-        algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
-        idx.field(OIndexInternal.ALGORITHM, algorithm);
-      }
-
       String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);
-      if (ODefaultIndexFactory.MVRBTREE_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-        valueContainerAlgorithm = ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER;
-        idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM, valueContainerAlgorithm);
-      }
+
 
       ODocument metadata = idx.field(OIndexInternal.METADATA);
       if (indexType == null) {

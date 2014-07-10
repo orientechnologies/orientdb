@@ -35,7 +35,7 @@
                 <fileset dir="tests" includes="build.xml"/>
             </subant>
 
-           <echo>   ___   ___  ____    _  </echo>  
+           <echo>   ___   ___  ____    _  </echo>
            <echo> .'   `.|_  ||_  _|  | | </echo>
            <echo>/  .-.  \ | |_/ /    | | </echo>
            <echo>| |   | | |  __'.    |_| </echo>
@@ -224,6 +224,14 @@
 
     <target name="test-plocal" depends="install">
         <subant target="test-plocal">
+            <property name="global.lib" value="../${community.release}/lib"/>
+            <property name="orient.path" value="../${community.release}"/>
+            <fileset dir="tests" includes="build.xml"/>
+        </subant>
+    </target>
+
+    <target name="test-memory" depends="install">
+        <subant target="test-memory">
             <property name="global.lib" value="../${community.release}/lib"/>
             <property name="orient.path" value="../${community.release}"/>
             <fileset dir="tests" includes="build.xml"/>

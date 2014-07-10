@@ -18,32 +18,19 @@ package com.orientechnologies.orient.core.storage;
 import java.util.Arrays;
 
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageMemoryClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageMemoryLinearHashingClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStoragePhysicalClusterConfigurationLocal;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemory;
-import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryArrayList;
-import com.orientechnologies.orient.core.storage.impl.memory.OClusterMemoryHashing;
 
 public class ODefaultClusterFactory implements OClusterFactory {
   protected static final String[] TYPES = { OClusterMemory.TYPE, OPaginatedCluster.TYPE };
 
   public OCluster createCluster(final String type) {
-    if (type.equalsIgnoreCase(OClusterMemory.TYPE))
-      return new OClusterMemoryArrayList();
-    else
-      throw new OStorageException("Cluster type '" + type + "' is not supported. Supported types are: " + Arrays.toString(TYPES));
+    throw new OStorageException("Cluster type '" + type + "' is not supported. Supported types are: " + Arrays.toString(TYPES));
   }
 
   public OCluster createCluster(final OStorageClusterConfiguration config) {
-    if (config instanceof OStorageMemoryClusterConfiguration)
-      return new OClusterMemoryArrayList();
-    else if (config instanceof OStorageMemoryLinearHashingClusterConfiguration)
-      return new OClusterMemoryHashing();
-    else
-      throw new OStorageException("Cluster type '" + config + "' is not supported. Supported types are: " + Arrays.toString(TYPES));
+    throw new OStorageException("Cluster type '" + config + "' is not supported. Supported types are: " + Arrays.toString(TYPES));
   }
 
   public String[] getSupported() {

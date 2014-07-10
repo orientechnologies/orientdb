@@ -203,10 +203,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return (Long) result.get(0).field("size");
   }
 
-  public void unload() {
-  }
-
-  public boolean isAutomatic() {
+	public boolean isAutomatic() {
     return indexDefinition != null && indexDefinition.getClassName() != null;
   }
 

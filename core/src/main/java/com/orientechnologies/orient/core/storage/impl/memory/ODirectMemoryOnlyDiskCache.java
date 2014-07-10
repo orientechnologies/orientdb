@@ -11,10 +11,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirty
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -142,11 +139,14 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
   @Override
   public void closeFile(long fileId) throws IOException {
-    closeFile(fileId, false);
   }
 
   @Override
   public void closeFile(long fileId, boolean flush) throws IOException {
+  }
+
+  @Override
+  public void deleteFile(long fileId) throws IOException {
     metadataLock.lock();
     try {
       final String fileName = fileIdNameMap.remove(fileId);
@@ -160,11 +160,6 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     } finally {
       metadataLock.unlock();
     }
-  }
-
-  @Override
-  public void deleteFile(long fileId) throws IOException {
-    closeFile(fileId, false);
   }
 
   @Override
@@ -211,6 +206,10 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
   @Override
   public void close() throws IOException {
+  }
+
+  @Override
+  public void delete() throws IOException {
     metadataLock.lock();
     try {
       for (MemoryFile file : files.values())
@@ -222,11 +221,6 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     } finally {
       metadataLock.unlock();
     }
-  }
-
-  @Override
-  public void delete() throws IOException {
-    close();
   }
 
   @Override
@@ -301,7 +295,7 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
         if (cacheEntry != null)
           return cacheEntry;
 
-        ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(pageSize);
+        ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize]);
         OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
         cachePointer.incrementReferrer();
 
@@ -327,13 +321,14 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
         long index = -1;
         do {
-          Long lastIndex = content.lastKey();
-          if (lastIndex == null)
+          if (content.isEmpty())
             index = 0;
-          else
+          else {
+            long lastIndex = content.lastKey();
             index = lastIndex + 1;
+          }
 
-          final ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(pageSize);
+          final ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize]);
           final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
           cachePointer.incrementReferrer();
 
@@ -356,11 +351,15 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     private long size() {
       clearLock.readLock().lock();
       try {
-        Long lastKey = content.lastKey();
-        if (lastKey == null)
+        if (content.isEmpty())
           return 0;
 
-        return content.lastKey() + 1;
+        try {
+          return content.lastKey() + 1;
+        } catch (NoSuchElementException e) {
+          return 0;
+        }
+
       } finally {
         clearLock.readLock().unlock();
       }

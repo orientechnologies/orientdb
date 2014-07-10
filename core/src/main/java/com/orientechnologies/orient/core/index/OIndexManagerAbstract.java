@@ -237,10 +237,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
           OIndexInternal<?> indexInternal = idx.getInternal();
           if (indexInternal != null) {
             indexInternal.close();
-
-            final ODatabaseRecord databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-            if (databaseRecord != null)
-              databaseRecord.unregisterListener(indexInternal);
           }
         }
       } else {
@@ -248,10 +244,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
           OIndexInternal<?> indexInternal = idx.getInternal();
           if (indexInternal != null) {
             indexInternal.delete();
-
-            final ODatabaseRecord databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-            if (databaseRecord != null)
-              databaseRecord.unregisterListener(indexInternal);
           }
         }
       }
@@ -396,9 +388,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   protected void addIndexInternal(final OIndex<?> index) {
     acquireExclusiveLock();
     try {
-      if (!(getDatabase().getStorage() instanceof OStorageProxy))
-        getDatabase().registerListener(index.getInternal());
-
       indexes.put(index.getName().toLowerCase(), index);
 
       final OIndexDefinition indexDefinition = index.getDefinition();
@@ -437,8 +426,6 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected OIndex<?> preProcessBeforeReturn(final OIndex<?> index) {
     if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
-      getDatabase().registerListener(index.getInternal());
-
       if (index instanceof OIndexMultiValues)
         return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
       else if (index instanceof OIndexDictionary)

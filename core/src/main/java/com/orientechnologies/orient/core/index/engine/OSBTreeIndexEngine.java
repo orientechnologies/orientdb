@@ -207,29 +207,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     }
   }
 
-  @Override
-  public void unload() {
-  }
-
-  @Override
-  public void startTransaction() {
-  }
-
-  @Override
-  public void stopTransaction() {
-  }
-
-  @Override
-  public void afterTxRollback() {
-  }
-
-  @Override
-  public void afterTxCommit() {
-  }
-
-  @Override
-  public void closeDb() {
-  }
 
   @Override
   public void close() {
@@ -241,9 +218,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     }
   }
 
-  @Override
-  public void beforeTxBegin() {
-  }
 
   @Override
   public V get(Object key) {

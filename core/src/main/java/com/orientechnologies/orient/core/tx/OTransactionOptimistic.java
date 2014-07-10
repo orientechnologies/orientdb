@@ -61,10 +61,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
-  private static final boolean useSBTree = OGlobalConfiguration.INDEX_USE_SBTREE_BY_DEFAULT.getValueAsBoolean();
-  private static AtomicInteger txSerial  = new AtomicInteger();
+  private static AtomicInteger txSerial = new AtomicInteger();
 
-  private boolean              usingLog  = true;
+  private boolean              usingLog = true;
   private int                  txStartCounter;
 
   private class CommitIndexesCallback implements Runnable {
@@ -503,41 +502,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           lockedIndexes.add(index);
         }
 
-      if (!useSBTree) {
-        // SEARCH FOR INDEX BASED ON DOCUMENT TOUCHED
-        final Collection<? extends OIndex<?>> indexes = database.getMetadata().getIndexManager().getIndexes();
-        List<? extends OIndex<?>> indexesToLock = null;
-        if (indexes != null) {
-          indexesToLock = new ArrayList<OIndex<?>>(indexes);
-          Collections.sort(indexesToLock, new Comparator<OIndex<?>>() {
-            public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
-              return indexOne.getName().compareTo(indexTwo.getName());
-            }
-          });
-        }
-
-        if (indexesToLock != null && !indexesToLock.isEmpty()) {
-          if (lockedIndexes == null)
-            lockedIndexes = new ArrayList<OIndexAbstract<?>>();
-
-          for (OIndex<?> index : indexesToLock) {
-            for (Entry<ORID, ORecordOperation> entry : recordEntries.entrySet()) {
-              final ORecord<?> record = entry.getValue().record.getRecord();
-              if (record instanceof ODocument) {
-                ODocument doc = (ODocument) record;
-                if (!lockedIndexes.contains(index.getInternal()) && doc.getSchemaClass() != null && index.getDefinition() != null
-                    && doc.getSchemaClass().isSubClassOf(index.getDefinition().getClassName())) {
-                  index.getInternal().acquireModificationLock();
-                  lockedIndexes.add((OIndexAbstract<?>) index.getInternal());
-                }
-              }
-            }
-          }
-
-          for (OIndexAbstract<?> index : lockedIndexes)
-            index.acquireExclusiveLock();
-        }
-      }
       return lockedIndexes;
     } catch (RuntimeException e) {
       releaseIndexLocks(lockedIndexes);
@@ -547,11 +511,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   private void releaseIndexLocks(List<OIndexAbstract<?>> lockedIndexes) {
     if (lockedIndexes != null) {
-      if (!useSBTree) {
-        for (OIndexAbstract<?> index : lockedIndexes)
-          index.releaseExclusiveLock();
-      }
-
       for (OIndexAbstract<?> index : lockedIndexes)
         index.releaseModificationLock();
 

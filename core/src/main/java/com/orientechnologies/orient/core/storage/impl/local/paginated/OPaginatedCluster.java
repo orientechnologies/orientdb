@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -76,7 +77,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   private OClusterPositionMap                   clusterPositionMap;
 
   private String                                name;
-  private OLocalPaginatedStorage                storageLocal;
+  private OAbstractPaginatedStorage             storageLocal;
   private volatile int                          id;
   private long                                  fileId;
 
@@ -105,7 +106,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         config.name = clusterName;
 
-        init((OLocalPaginatedStorage) storage, config);
+        init((OAbstractPaginatedStorage) storage, config);
       } finally {
         releaseExclusiveLock();
       }
@@ -129,7 +130,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-  private void init(OLocalPaginatedStorage storage, OStorageClusterConfiguration config) throws IOException {
+  private void init(OAbstractPaginatedStorage storage, OStorageClusterConfiguration config) throws IOException {
     OFileUtils.checkValidName(config.getName());
 
     this.config = (OStoragePaginatedClusterConfiguration) config;
@@ -1246,8 +1247,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     } finally {
       externalModificationLock.releaseModificationLock();
     }
-
-    storageLocal.scheduleFullCheckpoint();
   }
 
   private void initCusterState() throws IOException {

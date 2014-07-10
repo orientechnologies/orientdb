@@ -436,11 +436,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  public void unload() {
-    throw new UnsupportedOperationException("Not allowed operation");
-  }
-
-  public OType[] getKeyTypes() {
+	public OType[] getKeyTypes() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 

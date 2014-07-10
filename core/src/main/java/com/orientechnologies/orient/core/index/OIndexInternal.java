@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OIndexInternal<T> extends OIndex<T>, ODatabaseListener {
+public interface OIndexInternal<T> extends OIndex<T> {
 
   public static final String CONFIG_KEYTYPE            = "keyType";
   public static final String CONFIG_AUTOMATIC          = "automatic";

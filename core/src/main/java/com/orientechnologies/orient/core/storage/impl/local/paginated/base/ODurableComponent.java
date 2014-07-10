@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTr
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 
@@ -61,8 +62,8 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * @since 8/27/13
  */
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
-  private OWriteAheadLog           writeAheadLog;
-  private OAtomicOperationsManager atomicOperationsManager;
+  private OWriteAheadLog            writeAheadLog;
+  private OAtomicOperationsManager  atomicOperationsManager;
   private OAbstractPaginatedStorage storage;
 
   public ODurableComponent() {
@@ -139,6 +140,9 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       clientTx = transaction.getClientTx();
     else
       clientTx = null;
+
+    if (storage instanceof ODirectMemoryStorage && transaction == null)
+      return ODurablePage.TrackMode.NONE;
 
     // very risky and not durable case which may lead to data corruption.
     if (clientTx instanceof OTransactionOptimistic && !clientTx.isUsingLog())
