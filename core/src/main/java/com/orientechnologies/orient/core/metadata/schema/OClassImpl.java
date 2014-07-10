@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -43,12 +55,14 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -1304,8 +1318,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
         }
       } else {
-        // SWITCH TO NOT ABSTRACT
-        this.defaultClusterId = getDatabase().getDefaultClusterId();
+        if (!abstractClass)
+          return;
+
+        int clusterId = getDatabase().getClusterIdByName(name);
+        if (clusterId == -1)
+          clusterId = getDatabase().addCluster(name, OStorage.CLUSTER_TYPE.PHYSICAL);
+
+        this.defaultClusterId = clusterId;
         this.clusterIds[0] = this.defaultClusterId;
       }
 
