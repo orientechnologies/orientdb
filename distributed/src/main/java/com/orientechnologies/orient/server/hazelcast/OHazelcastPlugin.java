@@ -671,7 +671,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
    */
   public Serializable executeOnLocalNode(final ODistributedRequest req, final ODatabaseDocumentTx database) {
     if (database != null && !(database.getStorage() instanceof ODistributedStorage))
-      throw new ODistributedException("Distributed storage was not installed for database '" + database.getName() + "'");
+      throw new ODistributedException("Distributed storage was not installed for database '" + database.getName()
+          + "'. Implementation found: " + database.getStorage().getClass().getName());
 
     final OAbstractRemoteTask task = req.getTask();
 
