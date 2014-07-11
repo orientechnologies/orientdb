@@ -43,7 +43,7 @@ public class ORecordLazySetTest {
 
   @Test
   public void testConvertToRecord() {
-    ORecordLazySet set = new ORecordLazySet();
+    ORecordLazySet set = new ORecordLazySet(new ODocument());
     set.add(rid1);
     set.add(rid2);
     set.add(rid3);
@@ -56,7 +56,7 @@ public class ORecordLazySetTest {
 
   @Test
   public void testIteratorConvertToRecord() {
-    ORecordLazySet set = new ORecordLazySet();
+    ORecordLazySet set = new ORecordLazySet(new ODocument());
     set.add(rid1);
     set.add(rid2);
     set.add(rid3);
@@ -68,7 +68,7 @@ public class ORecordLazySetTest {
 
   @Test
   public void testConvertToLink() {
-    ORecordLazySet set = new ORecordLazySet();
+    ORecordLazySet set = new ORecordLazySet(new ODocument());
     set.add(rid1);
     set.add(rid2);
     set.add(rid3);
@@ -86,7 +86,7 @@ public class ORecordLazySetTest {
 
   @Test(enabled = false)
   public void testDocumentConvertToLink() {
-    ORecordLazySet set = new ORecordLazySet();
+    ORecordLazySet set = new ORecordLazySet(new ODocument());
     set.add(doc1);
     set.add(doc2);
     set.add(doc3);

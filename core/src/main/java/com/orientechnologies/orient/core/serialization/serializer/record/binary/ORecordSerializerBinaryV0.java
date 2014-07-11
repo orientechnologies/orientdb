@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
@@ -191,7 +192,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       value = readEmbeddedCollection(bytes, new OTrackedList<Object>(document), document);
       break;
     case LINKSET:
-      value = readLinkCollection(bytes, new OMVRBTreeRIDSet(document));
+      value = readLinkCollection(bytes, new ORecordLazySet(document));
       break;
     case LINKLIST:
       value = readLinkCollection(bytes, new ORecordLazyList(document));
@@ -445,7 +446,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       OType type = OType.STRING;
       writeOType(bytes, bytes.alloc(1), type);
       writeString(bytes, entry.getKey().toString());
-      writeOptimizedLink(bytes, entry.getValue());
+      if (entry.getValue() == null)
+        writeOptimizedLink(bytes, ORecordId.EMPTY_RECORD_ID);
+      else
+        writeOptimizedLink(bytes, entry.getValue());
     }
     return fullPos;
   }
@@ -619,10 +623,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       boolean link = true;
       if (((Map<?, ?>) fieldValue).size() > 0) {
         final Iterable<Object> firstValue = OMultiValue.getMultiValueIterable(fieldValue);
+        boolean empty = true;
         for (Object object : firstValue) {
-          if (!(object instanceof OIdentifiable))
+          if (!(object instanceof OIdentifiable) && object != null)
             link = false;
+          else if (object != null)
+            empty = false;
         }
+        if (empty)
+          link = false;
       } else
         link = false;
       if (link)

@@ -53,13 +53,13 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   @Override
   public byte[] toStream(final ORecordInternal<?> iSource, final boolean iOnlyDelta) {
     checkTypeODocument(iSource);
-    if (!checkRecursion((ODocument) iSource))
+    if (!OSerializationSetThreadLocal.checkAndAdd((ODocument) iSource))
       return null;
     BytesContainer container = new BytesContainer();
     int pos = container.alloc(1);
     container.bytes[pos] = CURRENT_RECORD_VERSION;
     serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container);
-    removeCheck((ODocument) iSource);
+    OSerializationSetThreadLocal.removeCheck((ODocument) iSource);
     return container.fitBytes();
   }
 
@@ -68,20 +68,6 @@ public class ORecordSerializerBinary implements ORecordSerializer {
       throw new UnsupportedOperationException("The " + ORecordSerializerBinary.NAME + " don't support record of type "
           + iRecord.getClass().getName());
     }
-  }
-
-  private boolean checkRecursion(final ODocument document) {
-    Set<ODocument> iMarshalledRecords = OSerializationSetThreadLocal.INSTANCE.get();
-    // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
-    if (iMarshalledRecords.contains(document)) {
-      return false;
-    } else
-      iMarshalledRecords.add((ODocument) document);
-    return true;
-  }
-
-  private void removeCheck(ODocument document) {
-    OSerializationSetThreadLocal.INSTANCE.get().remove(document);
   }
 
 }

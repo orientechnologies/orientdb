@@ -46,18 +46,18 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.open("admin", "admin");
   }
 
-	@AfterMethod
-	public void afterMethod() throws Exception {
-		database.command(new OCommandSQL("DELETE FROM LinkSetIndexTestClass")).execute();
+  @AfterMethod
+  public void afterMethod() throws Exception {
+    database.command(new OCommandSQL("DELETE FROM LinkSetIndexTestClass")).execute();
 
-		List<ODocument> result = database.command(new OCommandSQL("select from LinkSetIndexTestClass")).execute();
-		Assert.assertEquals(result.size(), 0);
+    List<ODocument> result = database.command(new OCommandSQL("select from LinkSetIndexTestClass")).execute();
+    Assert.assertEquals(result.size(), 0);
 
-		result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
-		Assert.assertEquals(result.size(), 0);
+    result = database.command(new OCommandSQL("select key, rid from index:linkSetIndex")).execute();
+    Assert.assertEquals(result.size(), 0);
 
-		database.close();
-	}
+    database.close();
+  }
 
   public void testIndexLinkSet() {
     final ODocument docOne = new ODocument();
@@ -343,8 +343,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
-		linkSet.add(docOne);
-		linkSet.add(docTwo);
+    linkSet.add(docOne);
+    linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
     document.save();
@@ -417,8 +417,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
-		linkSet.add(docOne);
-		linkSet.add(docTwo);
+    linkSet.add(docOne);
+    linkSet.add(docTwo);
     document.field("linkSet", linkSet);
     document.save();
 
@@ -451,8 +451,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
-		linkSet.add(docOne);
-		linkSet.add(docTwo);
+    linkSet.add(docOne);
+    linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
     document.save();
@@ -483,8 +483,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     final ODocument document = new ODocument("LinkSetIndexTestClass");
 
     final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
-		linkSet.add(docOne);
-		linkSet.add(docTwo);
+    linkSet.add(docOne);
+    linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
     document.save();
@@ -506,8 +506,8 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     final ODocument document = new ODocument("LinkSetIndexTestClass");
 
     final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
-		linkSet.add(docOne);
-		linkSet.add(docTwo);
+    linkSet.add(docOne);
+    linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
     document.save();
@@ -536,7 +536,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
     linkSet.add(docOne);
-		linkSet.add(docTwo);
+    linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
     document.save();
@@ -566,25 +566,24 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     final ODocument docTwo = new ODocument();
     docTwo.save();
 
-		final ODocument docThree = new ODocument();
-		docThree.save();
+    final ODocument docThree = new ODocument();
+    docThree.save();
 
     ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSetOne = new HashSet<OIdentifiable>();
-		linkSetOne.add(docOne);
-		linkSetOne.add(docTwo);
+    linkSetOne.add(docOne);
+    linkSetOne.add(docTwo);
 
     document.field("linkSet", linkSetOne);
     document.save();
 
+    document = new ODocument("LinkSetIndexTestClass");
+    final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
+    linkSet.add(docThree);
+    linkSet.add(docTwo);
 
-		document = new ODocument("LinkSetIndexTestClass");
-		final Set<OIdentifiable> linkSet = new HashSet<OIdentifiable>();
-		linkSet.add(docThree);
-		linkSet.add(docTwo);
-
-		document.field("linkSet", linkSet);
-		document.save();
+    document.field("linkSet", linkSet);
+    document.save();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
         "select * from LinkSetIndexTestClass where linkSet contains ?"), docOne.getIdentity());
@@ -594,7 +593,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     List<OIdentifiable> listResult = new ArrayList<OIdentifiable>();
     for (OIdentifiable identifiable : result.get(0).<Set<OIdentifiable>> field("linkSet"))
       listResult.add(identifiable);
-
-    Assert.assertEquals(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity()), listResult);
+    Assert.assertEquals(listResult.size(), 2);
+    Assert.assertTrue(listResult.containsAll(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
   }
 }

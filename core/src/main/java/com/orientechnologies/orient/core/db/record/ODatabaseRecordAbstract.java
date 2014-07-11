@@ -955,7 +955,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   public <DB extends ODatabaseRecord> DB checkSecurity(final String iResourceGeneric, final int iOperation,
       final Object iResourceSpecific) {
-
+    checkOpeness();
     if (user != null) {
       try {
         final StringBuilder keyBuffer = new StringBuilder();
