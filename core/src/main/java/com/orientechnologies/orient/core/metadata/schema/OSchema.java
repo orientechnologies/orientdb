@@ -88,6 +88,7 @@ public interface OSchema {
    * 
    * @COMPATIBILITY 1.0rc1
    */
+  @Deprecated
   public <RET extends ODocumentWrapper> RET save();
 
   /**
