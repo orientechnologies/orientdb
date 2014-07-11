@@ -456,7 +456,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         } else {
           // SKIP IT
           ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-              "discarded request %d because waiting for %d request=%s sourceNode=%s", req.getId(), waitForMessageId, req,
+              "discarded request %d because waiting for %d request=%s sourceNode=%s", req.getId(), waitForMessageId.get(), req,
               req.getSenderNodeName());
 
           // READ THE NEXT ONE

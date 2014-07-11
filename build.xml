@@ -35,7 +35,7 @@
                 <fileset dir="tests" includes="build.xml"/>
             </subant>
 
-           <echo>   ___   ___  ____    _  </echo>
+           <echo>   ___   ___  ____    _  </echo>  
            <echo> .'   `.|_  ||_  _|  | | </echo>
            <echo>/  .-.  \ | |_/ /    | | </echo>
            <echo>| |   | | |  __'.    |_| </echo>

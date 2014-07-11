@@ -4,54 +4,52 @@
          `,`    ,:`                                   
          .,.   :,,                                    
          .,,  ,,,                                     
-    .    .,.:::::  ````                               
-    ,`   .::,,,,::.,,,,,,`;;                      .:  
-    `,.  ::,,,,,,,:.,,.`  `                       .:  
-     ,,:,:,,,,,,,,::.   `        `         ``     .:  
-      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  :::: 
-       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:  
-        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:  
-  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:  
-  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:  
-    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:  
-      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:  
-           ,::::,,,. `:   ,,   :::::    :     :   .:  DB
+    .    .,.:::::  ````                                 :::::::::     :::::::::
+    ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::
+    `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::
+     ,,:,:,,,,,,,,::.   `        `         ``     .:    :::      :::  :::     :::
+      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::   :::      :::  :::    :::
+       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::
+        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::
+  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     :::
+  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     :::
+    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::
+      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::
+           ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::
            ,,:` `,,.                                  
           ,,,    .,`                                  
-         ,,.     `,                      GRAPH DB
-       ``        `.                   ORIENT DATABASE
-                 ``           http://www.orientechnologies.com
+         ,,.     `,                                          GRAPH DATABASE
+       ``        `.                                        COMMUNITY  EDITION
+                 ``                                         www.orientdb.org
+                 `                                    
 
 ***************************************************************************************************
-This document contains the last changes to the OrientDB project.
+This document contains the last changes to OrientDB Community Edition.
+
+---------------------------------------------------------------------------------------------------
+VERSION 1.7.5 - (July, 10th 2014)
+---------------------------------------------------------------------------------------------------
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=22&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7.4 - (June, 23rd 2014)
 ---------------------------------------------------------------------------------------------------
-Hot fixes.
-
-https://github.com/orientechnologies/orientdb/issues?milestone=21&page=1&state=closed
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=21&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7.3 - (June, 12th 2014)
 ---------------------------------------------------------------------------------------------------
-Hot fixes.
-
-Full list: https://github.com/orientechnologies/orientdb/issues?milestone=20&page=1&state=closed
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=20&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7.2 - (June, 7th 2014)
 ---------------------------------------------------------------------------------------------------
-Hot fixes.
-
-Full list: https://github.com/orientechnologies/orientdb/issues?milestone=19&page=1&state=closed
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=19&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7.1 - (June, 4th 2014)
 ---------------------------------------------------------------------------------------------------
-Hot fixes.
-
-Full list: https://github.com/orientechnologies/orientdb/issues?milestone=18&page=1&state=closed
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=18&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7 - (May, 27th 2014)
