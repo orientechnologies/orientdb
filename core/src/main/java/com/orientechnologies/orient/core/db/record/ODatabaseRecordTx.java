@@ -183,6 +183,8 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
   @Override
   public void close() {
+    if (isClosed())
+      return;
     try {
       commit(true);
     } catch (Exception e) {
