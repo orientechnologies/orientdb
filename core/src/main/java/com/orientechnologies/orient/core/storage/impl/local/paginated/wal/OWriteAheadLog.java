@@ -784,15 +784,16 @@ public class OWriteAheadLog {
       logSize += sizeDiff;
 
       if (logSize >= maxLogSize) {
-        LogSegment first = logSegments.get(0);
-        first.stopFlush(false);
+        final LogSegment first = removeHeadSegmentFromList();
 
-        logSize -= first.filledUpTo();
+				if (first != null) {
+					first.stopFlush(false);
 
-        first.delete(false);
-        logSegments.remove(0);
+					logSize -= first.filledUpTo();
 
-        fixMasterRecords();
+					first.delete(false);
+					fixMasterRecords();
+				}
       }
 
       if (last.filledUpTo() >= maxSegmentSize) {
@@ -972,10 +973,18 @@ public class OWriteAheadLog {
       }
 
       for (int i = 0; i <= lastTruncateIndex; i++) {
-        final LogSegment logSegment = logSegments.remove(0);
-        logSegment.delete(false);
+        final LogSegment logSegment = removeHeadSegmentFromList();
+        if (logSegment != null)
+          logSegment.delete(false);
       }
     }
+  }
+
+  private LogSegment removeHeadSegmentFromList() {
+    if (logSegments.size() < 2)
+      return null;
+
+    return logSegments.remove(0);
   }
 
   private void fixMasterRecords() throws IOException {
