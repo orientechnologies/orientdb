@@ -128,11 +128,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   private OType readOType(final BytesContainer bytes) {
-    return OType.values()[readByte(bytes)];
+    return OType.getById(readByte(bytes));
   }
 
   private void writeOType(BytesContainer bytes, int pos, OType type) {
-    bytes.bytes[pos] = (byte) type.ordinal();
+    bytes.bytes[pos] = (byte) type.getId();
   }
 
   private Object readSingleValue(BytesContainer bytes, OType type, ODocument document) {
