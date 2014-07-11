@@ -19,6 +19,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -75,7 +76,8 @@ public enum OType {
 
   LINKLIST("LinkList", 14, new Class<?>[] { List.class }, new Class<?>[] { List.class }),
 
-  LINKSET("LinkSet", 15, new Class<?>[] { OMVRBTreeRIDSet.class }, new Class<?>[] { OMVRBTreeRIDSet.class, Set.class }),
+  LINKSET("LinkSet", 15, new Class<?>[] { OMVRBTreeRIDSet.class, ORecordLazySet.class }, new Class<?>[] { OMVRBTreeRIDSet.class,
+      Set.class }),
 
   LINKMAP("LinkMap", 16, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }),
 

@@ -65,7 +65,8 @@ public class ODocumentHelper {
   public static final String ATTRIBUTE_FIELDS             = "@fields";
   public static final String ATTRIBUTE_RAW                = "@raw";
 
-  public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria, OCommandContext context) {
+  public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria,
+      OCommandContext context) {
     if (ioResultSet != null)
       Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria, context));
   }
@@ -95,7 +96,7 @@ public class ODocumentHelper {
         final Collection<?> newValue;
 
         if (iValue instanceof ORecordLazyList || iValue instanceof ORecordLazyMap)
-          newValue = new OMVRBTreeRIDSet(iDocument);
+          newValue = new ORecordLazySet(iDocument);
         else
           newValue = new OTrackedSet<Object>(iDocument);
 
@@ -130,7 +131,7 @@ public class ODocumentHelper {
         // CONVERT IT TO LIST
         final Collection<?> newValue;
 
-        if (iValue instanceof OMVRBTreeRIDSet || iValue instanceof ORecordLazyMap)
+        if (iValue instanceof OMVRBTreeRIDSet || iValue instanceof ORecordLazyMap || iValue instanceof ORecordLazySet)
           newValue = new ORecordLazyList(iDocument);
         else
           newValue = new OTrackedList<Object>(iDocument);

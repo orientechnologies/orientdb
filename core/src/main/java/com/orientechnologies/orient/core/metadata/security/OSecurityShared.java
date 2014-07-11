@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import java.util.List;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -22,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
@@ -35,10 +39,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Shared security class. It's shared by all the database instances that point to the same storage.
@@ -78,7 +78,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   public OIdentifiable allowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId) {
     Set<OIdentifiable> field = iDocument.field(iAllowFieldName);
     if (field == null) {
-      field = new OMVRBTreeRIDSet(iDocument);
+      field = new ORecordLazySet(iDocument);
       iDocument.field(iAllowFieldName, field);
     }
     field.add(iId);

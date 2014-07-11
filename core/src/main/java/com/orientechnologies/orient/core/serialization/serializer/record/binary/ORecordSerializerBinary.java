@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import java.util.Set;
-
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;

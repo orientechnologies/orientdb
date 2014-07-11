@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -440,7 +441,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                   }
 
                   if (type == null)
-                    if (fieldValue instanceof OMVRBTreeRIDSet)
+                    if (fieldValue instanceof OMVRBTreeRIDSet || fieldValue instanceof ORecordLazySet)
                       type = OType.LINKSET;
                     else if (fieldValue instanceof Set<?>)
                       type = OType.EMBEDDEDSET;
