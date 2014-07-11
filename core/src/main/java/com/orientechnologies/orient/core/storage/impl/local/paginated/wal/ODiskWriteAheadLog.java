@@ -47,7 +47,6 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
@@ -761,15 +760,16 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       logSize += sizeDiff;
 
       if (logSize >= maxLogSize) {
-        LogSegment first = logSegments.get(0);
-        first.stopFlush(false);
+        final LogSegment first = removeHeadSegmentFromList();
 
-        logSize -= first.filledUpTo();
+        if (first != null) {
+          first.stopFlush(false);
 
-        first.delete(false);
-        logSegments.remove(0);
+          logSize -= first.filledUpTo();
 
-        fixMasterRecords();
+          first.delete(false);
+          fixMasterRecords();
+        }
       }
 
       if (last.filledUpTo() >= maxSegmentSize) {
@@ -921,10 +921,18 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       }
 
       for (int i = 0; i <= lastTruncateIndex; i++) {
-        final LogSegment logSegment = logSegments.remove(0);
-        logSegment.delete(false);
+        final LogSegment logSegment = removeHeadSegmentFromList();
+        if (logSegment != null)
+          logSegment.delete(false);
       }
     }
+  }
+
+  private LogSegment removeHeadSegmentFromList() {
+    if (logSegments.size() < 2)
+      return null;
+
+    return logSegments.remove(0);
   }
 
   private void fixMasterRecords() throws IOException {
