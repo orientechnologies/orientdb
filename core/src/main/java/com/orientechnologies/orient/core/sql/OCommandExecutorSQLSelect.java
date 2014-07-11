@@ -65,6 +65,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -103,6 +105,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private boolean                     fullySortedByIndex   = false;
   private OStorage.LOCKING_STRATEGY   lockingStrategy      = OStorage.LOCKING_STRATEGY.DEFAULT;
   private boolean                     parallel             = false;
+  private Lock                        parallelLock         = new ReentrantLock();
 
   private final class IndexComparator implements Comparator<OIndex<?>> {
     public int compare(final OIndex<?> indexOne, final OIndex<?> indexTwo) {
@@ -231,13 +234,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return this;
-  }
-
-  private void initContext() {
-    if (context == null)
-      context = new OBasicCommandContext();
-
-    metricRecorder.setContext(context);
   }
 
   /**
@@ -460,20 +456,30 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * @return false if limit has been reached, otherwise true
    */
   protected boolean handleResult(final OIdentifiable iRecord) {
-    if ((orderedFields.isEmpty() || fullySortedByIndex) && skip > 0) {
-      lastRecord = null;
-      skip--;
-      return true;
+    if (parallel)
+      // LOCK FOR PARALLEL EXECUTION. THIS PREVENT CONCURRENT ISSUES
+      parallelLock.lock();
+
+    try {
+      if ((orderedFields.isEmpty() || fullySortedByIndex) && skip > 0) {
+        lastRecord = null;
+        skip--;
+        return true;
+      }
+
+      lastRecord = iRecord;
+
+      resultCount++;
+
+      if (!addResult(lastRecord))
+        return false;
+
+      return !((orderedFields.isEmpty() || fullySortedByIndex) && !isAnyFunctionAggregates() && fetchLimit > -1 && resultCount >= fetchLimit);
+    } finally {
+      if (parallel)
+        // UNLOCK PARALLEL EXECUTION
+        parallelLock.unlock();
     }
-
-    lastRecord = iRecord;
-
-    resultCount++;
-
-    if (!addResult(lastRecord))
-      return false;
-
-    return !((orderedFields.isEmpty() || fullySortedByIndex) && !isAnyFunctionAggregates() && fetchLimit > -1 && resultCount >= fetchLimit);
   }
 
   protected boolean addResult(OIdentifiable iRecord) {
@@ -890,6 +896,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return false;
+  }
+
+  private void initContext() {
+    if (context == null)
+      context = new OBasicCommandContext();
+
+    metricRecorder.setContext(context);
   }
 
   private void fetchFromTarget(Iterator<? extends OIdentifiable> iTarget) {

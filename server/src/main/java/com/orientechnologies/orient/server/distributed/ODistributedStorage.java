@@ -101,11 +101,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   protected final AtomicLong                                                lastOperationId = new AtomicLong();
 
   public ODistributedStorage(final OServer iServer, final OStorageEmbedded wrapped) {
-    OLogManager.instance().warn(this, "Installing distributed storage against '%s'", wrapped.getName());
-
     this.serverInstance = iServer;
     this.dManager = iServer.getDistributedManager();
     this.wrapped = wrapped;
+
+    ODistributedServerLog.info(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+        ODistributedServerLog.DIRECTION.NONE, "Installing distributed storage on database '%s'", wrapped.getName());
 
     purgeDeletedRecordsTask = new TimerTask() {
       @Override

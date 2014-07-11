@@ -16,16 +16,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
@@ -76,8 +67,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private static final int             NOT_EXISTENT_CLUSTER_ID = -1;
 
   private int                          defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
+  final OSchemaShared                  owner;
   private final Map<String, OProperty> properties              = new HashMap<String, OProperty>();
-
   private String                       name;
   private Class<?>                     javaClass;
   private int[]                        clusterIds;
@@ -90,8 +81,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private boolean                      abstractClass           = false;                           // @SINCE v1.2.0
   private Map<String, String>          customFields;
   private OClusterSelectionStrategy    clusterSelection;                                          // @SINCE 1.7
-
-  final OSchemaShared                  owner;
 
   /**
    * Constructor used in unmarshalling.
@@ -195,17 +184,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private void setClusterSelectionInternal(final String clusterSelection) {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      this.clusterSelection = owner.getClusterSelectionFactory().newInstance(clusterSelection);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
   @Override
   public <T> T newInstance() throws InstantiationException, IllegalAccessException {
     acquireSchemaReadLock();
@@ -233,22 +211,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       return customFields.get(iName);
     } finally {
       releaseSchemaReadLock();
-    }
-  }
-
-  private void setCustomInternal(final String name, final String value) {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      if (customFields == null)
-        customFields = new HashMap<String, String>();
-      if (value == null || "null".equalsIgnoreCase(value))
-        customFields.remove(name);
-      else
-        customFields.put(name, value);
-    } finally {
-      releaseSchemaWriteLock();
     }
   }
 
@@ -316,17 +278,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       } else
         clearCustomInternal();
 
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  private void clearCustomInternal() {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      customFields = null;
     } finally {
       releaseSchemaWriteLock();
     }
@@ -450,77 +401,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  private void setNameInternal(final String name) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      final String oldName = this.name;
-
-      owner.changeClassName(this.name, name, this);
-      this.name = name;
-
-      ODatabaseRecord database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (!database.getStorageVersions().classesAreDetectedByClusterId()) {
-        for (int clusterId : clusterIds) {
-          OClusterPosition[] range = storage.getClusterDataRange(clusterId);
-
-          OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(range[0]));
-          do {
-            for (OPhysicalPosition position : positions) {
-              final ORecordId identity = new ORecordId(clusterId, position.clusterPosition);
-              final ORawBuffer record = storage.readRecord(identity, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
-                  .getResult();
-
-              if (record.recordType == ODocument.RECORD_TYPE) {
-                final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
-                    .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
-
-                if (serializer.getClassName(OBinaryProtocol.bytes2string(record.buffer)).equalsIgnoreCase(name)) {
-                  final ODocument document = new ODocument();
-                  document.setLazyLoad(false);
-                  document.fromStream(record.buffer);
-                  document.getRecordVersion().copyFrom(record.version);
-                  document.setIdentity(identity);
-                  document.setClassName(name);
-                  document.setDirty();
-                  document.save();
-                }
-              }
-
-              if (positions.length > 0)
-                positions = storage.higherPhysicalPositions(clusterId, positions[positions.length - 1]);
-            }
-          } while (positions.length > 0);
-        }
-      }
-
-      renameCluster(oldName, this.name);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  private void renameCluster(String oldName, String newName) {
-    final ODatabaseRecord database = getDatabase();
-    if (checkClusterRenameOk(database.getStorage().getClusterIdByName(newName), newName)) {
-      database.command(new OCommandSQL("alter cluster " + oldName + " name " + newName)).execute();
-    }
-  }
-
-  private boolean checkClusterRenameOk(int clusterId, String newName) {
-    for (OClass clazz : owner.getClasses()) {
-      if (!clazz.getName().equals(newName)
- && (clazz.getDefaultClusterId() == clusterId || clazz.hasClusterId(clusterId))) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   public long getSize() {
     acquireSchemaReadLock();
     try {
@@ -575,26 +455,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
 
     return this;
-  }
-
-  private void setShortNameInternal(final String iShortName) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      String oldName = null;
-
-      if (this.shortName != null)
-        oldName = this.shortName.toLowerCase();
-
-      this.shortName = iShortName;
-
-      owner.changeClassName(oldName, shortName, this);
-    } finally {
-      releaseSchemaWriteLock();
-    }
   }
 
   public String getStreamableName() {
@@ -739,24 +599,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       } else
         dropPropertyInternal(propertyName);
 
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  private void dropPropertyInternal(final String iPropertyName) {
-    if (getDatabase().getTransaction().isActive())
-      throw new IllegalStateException("Cannot drop a property inside a transaction");
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      final OProperty prop = properties.remove(iPropertyName.toLowerCase());
-
-      if (prop == null)
-        throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
     } finally {
       releaseSchemaWriteLock();
     }
@@ -983,30 +825,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  private int createClusterIfNeeded(String nameOrId) {
-    String[] parts = nameOrId.split(" ");
-    int clId = getClusterId(parts[0]);
-
-    if (clId == NOT_EXISTENT_CLUSTER_ID) {
-      try {
-        clId = Integer.parseInt(parts[0]);
-        throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
-      } catch (NumberFormatException e) {
-        // CREATE THE CLUSTER AT THE FLY
-        if (parts.length == 1)
-          // SET THE DEFAULT TYPE
-          parts = new String[] {
-              parts[0],
-              getDatabase().getURL().startsWith(OEngineMemory.NAME.toLowerCase()) ? OStorage.CLUSTER_TYPE.MEMORY.toString()
-                  : OStorage.CLUSTER_TYPE.PHYSICAL.toString() };
-
-        clId = getDatabase().addCluster(parts[0], OStorage.CLUSTER_TYPE.valueOf(parts[1]));
-      }
-    }
-
-    return clId;
-  }
-
   @Override
   public OClass addCluster(final String clusterName, final OStorage.CLUSTER_TYPE iClusterType) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -1040,48 +858,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  private OClass addClusterIdInternal(final int clusterId) {
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      owner.checkClusterCanBeAdded(clusterId, this);
-
-      for (int currId : clusterIds)
-        if (currId == clusterId)
-          // ALREADY ADDED
-          return this;
-
-      clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
-      clusterIds[clusterIds.length - 1] = clusterId;
-      Arrays.sort(clusterIds);
-
-      addPolymorphicClusterId(clusterId);
-
-      if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID)
-        defaultClusterId = clusterId;
-
-      owner.addClusterForClass(clusterId, this);
-      return this;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
-  private void addPolymorphicClusterId(int clusterId) {
-    if (Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0)
-      return;
-
-    polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
-    polymorphicClusterIds[polymorphicClusterIds.length - 1] = clusterId;
-    Arrays.sort(polymorphicClusterIds);
-
-    addClusterIdToIndexes(clusterId);
-
-    if (superClass != null)
-      superClass.addPolymorphicClusterId(clusterId);
-  }
-
   public OClass removeClusterId(final int clusterId) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
@@ -1104,46 +880,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         removeClusterIdInternal(clusterId);
       } else
         removeClusterIdInternal(clusterId);
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    return this;
-  }
-
-  private OClass removeClusterIdInternal(final int clusterToRemove) {
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      boolean found = false;
-      for (int clusterId : clusterIds) {
-        if (clusterId == clusterToRemove) {
-          found = true;
-          break;
-        }
-      }
-
-      if (found) {
-        final int[] newClusterIds = new int[clusterIds.length - 1];
-        for (int i = 0, k = 0; i < clusterIds.length; ++i) {
-          if (clusterIds[i] == clusterToRemove)
-            // JUMP IT
-            continue;
-
-          newClusterIds[k] = clusterIds[i];
-          k++;
-        }
-        clusterIds = newClusterIds;
-
-        removePolymorphicClusterId(clusterToRemove);
-      }
-
-      if (defaultClusterId == clusterToRemove)
-        defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
-
-      owner.removeClusterForClass(clusterToRemove, this);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -1222,10 +958,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class %s oversize %f", name, overSize);
+        // FORMAT FLOAT LOCALE AGNOSTIC
+        final String cmd = String.format("alter class %s oversize %s", name, new Float(overSize).toString());
         database.command(new OCommandSQL(cmd)).execute();
       } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class %s oversize %f", name, overSize);
+        // FORMAT FLOAT LOCALE AGNOSTIC
+        final String cmd = String.format("alter class %s oversize %s", name, new Float(overSize).toString());
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
@@ -1299,47 +1037,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  private void setAbstractInternal(final boolean isAbstract) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      if (isAbstract) {
-        // SWITCH TO ABSTRACT
-        if (defaultClusterId != NOT_EXISTENT_CLUSTER_ID) {
-          // CHECK
-          if (count() > 0)
-            throw new IllegalStateException("Cannot set the class as abstract because contains records.");
-
-          tryDropCluster(defaultClusterId);
-          for (int clusterId : getClusterIds()) {
-            tryDropCluster(clusterId);
-            removePolymorphicClusterId(clusterId);
-            owner.removeClusterForClass(clusterId, this);
-          }
-
-          setClusterIds(new int[] { NOT_EXISTENT_CLUSTER_ID });
-
-          defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
-        }
-      } else {
-        if (!abstractClass)
-          return;
-
-        int clusterId = getDatabase().getClusterIdByName(name);
-        if (clusterId == -1)
-          clusterId = getDatabase().addCluster(name, OStorage.CLUSTER_TYPE.PHYSICAL);
-
-        this.defaultClusterId = clusterId;
-        this.clusterIds[0] = this.defaultClusterId;
-      }
-
-      this.abstractClass = isAbstract;
-    } finally {
-      releaseSchemaWriteLock();
-    }
-  }
-
   public boolean isStrictMode() {
     acquireSchemaReadLock();
     try {
@@ -1377,19 +1074,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
 
     return this;
-  }
-
-  private void setStrictModeInternal(final boolean iStrict) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      this.strictMode = iStrict;
-    } finally {
-      releaseSchemaWriteLock();
-    }
   }
 
   @Override
@@ -1813,6 +1497,333 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
+  public void acquireSchemaReadLock() {
+    owner.acquireSchemaReadLock();
+  }
+
+  public void releaseSchemaReadLock() {
+    owner.releaseSchemaReadLock();
+  }
+
+  public void acquireSchemaWriteLock() {
+    owner.acquireSchemaWriteLock();
+  }
+
+  public void releaseSchemaWriteLock() {
+    owner.releaseSchemaWriteLock();
+  }
+
+  public void checkEmbedded() {
+    if (!(getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded))
+      throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
+  }
+
+  private void setClusterSelectionInternal(final String clusterSelection) {
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      this.clusterSelection = owner.getClusterSelectionFactory().newInstance(clusterSelection);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  private void setCustomInternal(final String name, final String value) {
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      if (customFields == null)
+        customFields = new HashMap<String, String>();
+      if (value == null || "null".equalsIgnoreCase(value))
+        customFields.remove(name);
+      else
+        customFields.put(name, value);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  private void clearCustomInternal() {
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      customFields = null;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  private void setNameInternal(final String name) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      final String oldName = this.name;
+
+      owner.changeClassName(this.name, name, this);
+      this.name = name;
+
+      ODatabaseRecord database = getDatabase();
+      final OStorage storage = database.getStorage();
+
+      if (!database.getStorageVersions().classesAreDetectedByClusterId()) {
+        for (int clusterId : clusterIds) {
+          OClusterPosition[] range = storage.getClusterDataRange(clusterId);
+
+          OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(range[0]));
+          do {
+            for (OPhysicalPosition position : positions) {
+              final ORecordId identity = new ORecordId(clusterId, position.clusterPosition);
+              final ORawBuffer record = storage.readRecord(identity, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+                  .getResult();
+
+              if (record.recordType == ODocument.RECORD_TYPE) {
+                final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
+                    .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
+
+                if (serializer.getClassName(OBinaryProtocol.bytes2string(record.buffer)).equalsIgnoreCase(name)) {
+                  final ODocument document = new ODocument();
+                  document.setLazyLoad(false);
+                  document.fromStream(record.buffer);
+                  document.getRecordVersion().copyFrom(record.version);
+                  document.setIdentity(identity);
+                  document.setClassName(name);
+                  document.setDirty();
+                  document.save();
+                }
+              }
+
+              if (positions.length > 0)
+                positions = storage.higherPhysicalPositions(clusterId, positions[positions.length - 1]);
+            }
+          } while (positions.length > 0);
+        }
+      }
+
+      renameCluster(oldName, this.name);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  private void renameCluster(String oldName, String newName) {
+    final ODatabaseRecord database = getDatabase();
+    if (checkClusterRenameOk(database.getStorage().getClusterIdByName(newName), newName)) {
+      database.command(new OCommandSQL("alter cluster " + oldName + " name " + newName)).execute();
+    }
+  }
+
+  private boolean checkClusterRenameOk(int clusterId, String newName) {
+    for (OClass clazz : owner.getClasses()) {
+      if (!clazz.getName().equals(newName) && (clazz.getDefaultClusterId() == clusterId || clazz.hasClusterId(clusterId))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private void setShortNameInternal(final String iShortName) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      String oldName = null;
+
+      if (this.shortName != null)
+        oldName = this.shortName.toLowerCase();
+
+      this.shortName = iShortName;
+
+      owner.changeClassName(oldName, shortName, this);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  private void dropPropertyInternal(final String iPropertyName) {
+    if (getDatabase().getTransaction().isActive())
+      throw new IllegalStateException("Cannot drop a property inside a transaction");
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
+
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      final OProperty prop = properties.remove(iPropertyName.toLowerCase());
+
+      if (prop == null)
+        throw new OSchemaException("Property '" + iPropertyName + "' not found in class " + name + "'");
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  private int createClusterIfNeeded(String nameOrId) {
+    String[] parts = nameOrId.split(" ");
+    int clId = getClusterId(parts[0]);
+
+    if (clId == NOT_EXISTENT_CLUSTER_ID) {
+      try {
+        clId = Integer.parseInt(parts[0]);
+        throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
+      } catch (NumberFormatException e) {
+        // CREATE THE CLUSTER AT THE FLY
+        if (parts.length == 1)
+          // SET THE DEFAULT TYPE
+          parts = new String[] {
+              parts[0],
+              getDatabase().getURL().startsWith(OEngineMemory.NAME.toLowerCase()) ? OStorage.CLUSTER_TYPE.MEMORY.toString()
+                  : OStorage.CLUSTER_TYPE.PHYSICAL.toString() };
+
+        clId = getDatabase().addCluster(parts[0], OStorage.CLUSTER_TYPE.valueOf(parts[1]));
+      }
+    }
+
+    return clId;
+  }
+
+  private OClass addClusterIdInternal(final int clusterId) {
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      owner.checkClusterCanBeAdded(clusterId, this);
+
+      for (int currId : clusterIds)
+        if (currId == clusterId)
+          // ALREADY ADDED
+          return this;
+
+      clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
+      clusterIds[clusterIds.length - 1] = clusterId;
+      Arrays.sort(clusterIds);
+
+      addPolymorphicClusterId(clusterId);
+
+      if (defaultClusterId == NOT_EXISTENT_CLUSTER_ID)
+        defaultClusterId = clusterId;
+
+      owner.addClusterForClass(clusterId, this);
+      return this;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  private void addPolymorphicClusterId(int clusterId) {
+    if (Arrays.binarySearch(polymorphicClusterIds, clusterId) >= 0)
+      return;
+
+    polymorphicClusterIds = OArrays.copyOf(polymorphicClusterIds, polymorphicClusterIds.length + 1);
+    polymorphicClusterIds[polymorphicClusterIds.length - 1] = clusterId;
+    Arrays.sort(polymorphicClusterIds);
+
+    addClusterIdToIndexes(clusterId);
+
+    if (superClass != null)
+      superClass.addPolymorphicClusterId(clusterId);
+  }
+
+  private OClass removeClusterIdInternal(final int clusterToRemove) {
+
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      boolean found = false;
+      for (int clusterId : clusterIds) {
+        if (clusterId == clusterToRemove) {
+          found = true;
+          break;
+        }
+      }
+
+      if (found) {
+        final int[] newClusterIds = new int[clusterIds.length - 1];
+        for (int i = 0, k = 0; i < clusterIds.length; ++i) {
+          if (clusterIds[i] == clusterToRemove)
+            // JUMP IT
+            continue;
+
+          newClusterIds[k] = clusterIds[i];
+          k++;
+        }
+        clusterIds = newClusterIds;
+
+        removePolymorphicClusterId(clusterToRemove);
+      }
+
+      if (defaultClusterId == clusterToRemove)
+        defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+
+      owner.removeClusterForClass(clusterToRemove, this);
+    } finally {
+      releaseSchemaWriteLock();
+    }
+
+    return this;
+  }
+
+  private void setAbstractInternal(final boolean isAbstract) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      if (isAbstract) {
+        // SWITCH TO ABSTRACT
+        if (defaultClusterId != NOT_EXISTENT_CLUSTER_ID) {
+          // CHECK
+          if (count() > 0)
+            throw new IllegalStateException("Cannot set the class as abstract because contains records.");
+
+          tryDropCluster(defaultClusterId);
+          for (int clusterId : getClusterIds()) {
+            tryDropCluster(clusterId);
+            removePolymorphicClusterId(clusterId);
+            owner.removeClusterForClass(clusterId, this);
+          }
+
+          setClusterIds(new int[] { NOT_EXISTENT_CLUSTER_ID });
+
+          defaultClusterId = NOT_EXISTENT_CLUSTER_ID;
+        }
+      } else {
+        if (!abstractClass)
+          return;
+
+        int clusterId = getDatabase().getClusterIdByName(name);
+        if (clusterId == -1)
+          clusterId = getDatabase().addCluster(name, OStorage.CLUSTER_TYPE.PHYSICAL);
+
+        this.defaultClusterId = clusterId;
+        this.clusterIds[0] = this.defaultClusterId;
+      }
+
+      this.abstractClass = isAbstract;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
+  private void setStrictModeInternal(final boolean iStrict) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      this.strictMode = iStrict;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
   private OProperty addProperty(final String propertyName, final OType type, final OType linkedType, final OClass linkedClass) {
     if (type == null)
       throw new OSchemaException("Property type not defined.");
@@ -1872,22 +1883,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     } finally {
       releaseSchemaWriteLock();
     }
-  }
-
-  public void acquireSchemaReadLock() {
-    owner.acquireSchemaReadLock();
-  }
-
-  public void releaseSchemaReadLock() {
-    owner.releaseSchemaReadLock();
-  }
-
-  public void acquireSchemaWriteLock() {
-    owner.acquireSchemaWriteLock();
-  }
-
-  public void releaseSchemaWriteLock() {
-    owner.releaseSchemaWriteLock();
   }
 
   private int getClusterId(final String stringValue) {
@@ -2026,11 +2021,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     Arrays.sort(clusterIds);
 
     return this;
-  }
-
-  public void checkEmbedded() {
-    if (!(getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded))
-      throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
   }
 
   private boolean isDistributedCommand() {

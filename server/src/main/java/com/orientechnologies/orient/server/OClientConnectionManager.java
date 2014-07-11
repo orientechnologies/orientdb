@@ -43,10 +43,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OClientConnectionManager {
+  private static final OClientConnectionManager       instance         = new OClientConnectionManager();
   protected ConcurrentMap<Integer, OClientConnection> connections      = new ConcurrentHashMap<Integer, OClientConnection>();
   protected AtomicInteger                             connectionSerial = new AtomicInteger(0);
-
-  private static final OClientConnectionManager       instance         = new OClientConnectionManager();
 
   public OClientConnectionManager() {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
@@ -88,6 +87,10 @@ public class OClientConnectionManager {
                 return connections.size();
               }
             });
+  }
+
+  public static OClientConnectionManager instance() {
+    return instance;
   }
 
   /**
@@ -234,10 +237,6 @@ public class OClientConnectionManager {
 
   }
 
-  public static OClientConnectionManager instance() {
-    return instance;
-  }
-
   public List<OClientConnection> getConnections() {
     return new ArrayList<OClientConnection>(connections.values());
   }
@@ -254,9 +253,16 @@ public class OClientConnectionManager {
 
     final Set<String> pushed = new HashSet<String>();
     for (OClientConnection c : connections.values()) {
-      if (pushed.contains(c.getRemoteAddress()))
-        // ALREADY SENT: JUMP IT
+      try {
+        final String remoteAddress = c.getRemoteAddress();
+        if (pushed.contains(remoteAddress))
+          // ALREADY SENT: JUMP IT
+          continue;
+
+      } catch (Exception e) {
+        // SOCKET EXCEPTION SKIP IT
         continue;
+      }
 
       if (!(c.protocol instanceof ONetworkProtocolBinary))
         // INVOLVE ONLY BINAR PROTOCOLS

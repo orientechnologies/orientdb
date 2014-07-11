@@ -1,9 +1,12 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -12,13 +15,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @since 21.03.12
@@ -37,7 +36,7 @@ public class LinkListIndexTest {
     database.open("admin", "admin");
     final OClass linkListIndexTestClass = database.getMetadata().getSchema().createClass("LinkListIndexTestClass");
 
-    linkListIndexTestClass.createProperty("linkCollection", OType.LINKLIST, OType.LINK);
+    linkListIndexTestClass.createProperty("linkCollection", OType.LINKLIST);
 
     linkListIndexTestClass.createIndex("linkCollectionIndex", OClass.INDEX_TYPE.NOTUNIQUE, "linkCollection");
     database.getMetadata().getSchema().save();
