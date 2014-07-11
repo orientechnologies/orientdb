@@ -103,37 +103,38 @@ public class ODatabaseFactory {
         public <THISDB extends ODatabase> THISDB create() {
           final THISDB db = super.create();
 
-          checkSchema();
+          checkSchema((ODatabaseComplex<?>) db);
 
           return db;
         }
 
-        private void checkSchema() {
-          // FORCE NON DISTRIBUTION ON CREATION
-          OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
-          try {
-
-            getMetadata().getSchema().getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
-
-            OClass vertexBaseClass = getMetadata().getSchema().getClass("V");
-            OClass edgeBaseClass = getMetadata().getSchema().getClass("E");
-
-            if (vertexBaseClass == null) {
-              // CREATE THE META MODEL USING THE ORIENT SCHEMA
-              vertexBaseClass = getMetadata().getSchema().createClass("V");
-              vertexBaseClass.setOverSize(2);
-            }
-
-            if (edgeBaseClass == null) {
-              edgeBaseClass = getMetadata().getSchema().createClass("E");
-              edgeBaseClass.setShortName("E");
-            }
-          } finally {
-            OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
-          }
-        }
       };
 
     return new ODatabaseDocumentTx(url);
+  }
+
+  public void checkSchema(final ODatabaseComplex<?> iDatabase) {
+    // FORCE NON DISTRIBUTION ON CREATION
+    OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+    try {
+
+      iDatabase.getMetadata().getSchema().getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+
+      OClass vertexBaseClass = iDatabase.getMetadata().getSchema().getClass("V");
+      OClass edgeBaseClass = iDatabase.getMetadata().getSchema().getClass("E");
+
+      if (vertexBaseClass == null) {
+        // CREATE THE META MODEL USING THE ORIENT SCHEMA
+        vertexBaseClass = iDatabase.getMetadata().getSchema().createClass("V");
+        vertexBaseClass.setOverSize(2);
+      }
+
+      if (edgeBaseClass == null) {
+        edgeBaseClass = iDatabase.getMetadata().getSchema().createClass("E");
+        edgeBaseClass.setShortName("E");
+      }
+    } finally {
+      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+    }
   }
 }

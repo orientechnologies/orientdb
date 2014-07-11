@@ -131,13 +131,15 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
    */
   @Override
   public void onOpen(final ODatabase iDatabase) {
-    final String dbDirectory = serverInstance.getDatabaseDirectory();
-
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
-    if (!dbUrl.substring(dbUrl.indexOf(":") + 1).startsWith(dbDirectory))
-      // NOT OWN DB, SKIP IT
-      return;
+    if (dbUrl.startsWith("plocal:")) {
+      // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
+      final String dbDirectory = serverInstance.getDatabaseDirectory();
+      if (!dbUrl.substring("plocal:".length()).startsWith(dbDirectory))
+        // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
+        return;
+    }
 
     synchronized (cachedDatabaseConfiguration) {
       final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());

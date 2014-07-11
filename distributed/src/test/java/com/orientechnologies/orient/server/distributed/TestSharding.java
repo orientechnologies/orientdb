@@ -71,8 +71,8 @@ public class TestSharding extends AbstractServerClusterTest {
           for (int cluster = 0; cluster < vertices.length; ++cluster) {
             final String query = "select from cluster:client_" + cluster;
             Iterable<OrientVertex> result = g.command(new OCommandSQL(query)).execute();
-            Assert.assertTrue("Error on query on cluster_" + cluster + " on server " + server + ": " + query, result.iterator()
-                .hasNext());
+            Assert.assertTrue("Error on query against 'cluster_" + cluster + "' on server '" + server + "': " + query, result
+                .iterator().hasNext());
 
             OrientVertex v = result.iterator().next();
 

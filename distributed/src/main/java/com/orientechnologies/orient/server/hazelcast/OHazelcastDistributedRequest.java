@@ -54,11 +54,6 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
     id = -1;
   }
 
-  @Override
-  public void undo() {
-    task.undo();
-  }
-
   public long getId() {
     return id;
   }

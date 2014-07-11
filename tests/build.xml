@@ -102,6 +102,12 @@
     </target>
 
     <target name="test-remote" depends="test-init">
+        <echo>KILLING HANGING REMOTE ORIENTDB SERVER INSTANCES...</echo>
+
+        <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+            <arg value="pkill -9 -f OServerMain"/>
+        </exec>
+
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
         <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="JAVA_OPTS"

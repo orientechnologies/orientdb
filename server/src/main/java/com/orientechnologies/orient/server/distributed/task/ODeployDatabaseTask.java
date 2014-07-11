@@ -33,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -44,9 +45,12 @@ import java.util.concurrent.locks.Lock;
  * 
  */
 public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
-  public final static int CHUNK_MAX_SIZE = 1048576; // 1MB
+  public final static int    CHUNK_MAX_SIZE = 1048576;    // 1MB
+  public static final String DEPLOYDB       = "deploydb.";
+  protected long             random;
 
   public ODeployDatabaseTask() {
+    random = UUID.randomUUID().getLeastSignificantBits();
   }
 
   @Override
@@ -62,6 +66,16 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
       final Lock lock = iManager.getLock(databaseName);
       if (lock.tryLock()) {
         try {
+          final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
+          if (lastDeployment != null && lastDeployment.longValue() == random) {
+            // SKIP IT
+            ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+                "skip deploying database because already executed");
+            return Boolean.FALSE;
+          }
+
+          iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
+
           // WAIT UNTIL ALL PENDING OPERATION ARE COMPLETED
           while (database.getStorage().getLastOperationId() >= iManager.getMessageService().getLastMessageId()) {
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
@@ -166,10 +180,12 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
+    out.writeLong(random);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+    random = in.readLong();
   }
 
   @Override

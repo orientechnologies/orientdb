@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
 
 /**
  * Schema class
@@ -391,4 +391,6 @@ public interface OClass extends Comparable<OClass> {
   public void clearCustom();
 
   public Set<String> getCustomKeys();
+
+  boolean hasClusterId(int clusterId);
 }
