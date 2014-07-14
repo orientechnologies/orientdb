@@ -305,7 +305,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     if (liveUpdated)
       updateClusterRange();
 
-    current.clusterId = currentClusterIdx;
+    current.clusterId = clusterIds[currentClusterIdx];
 
     resetCurrentPosition();
     prevPosition();

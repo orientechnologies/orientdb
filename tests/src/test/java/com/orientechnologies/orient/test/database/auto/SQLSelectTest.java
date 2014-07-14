@@ -15,24 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
@@ -51,6 +34,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -59,12 +49,18 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 @Test(groups = "sql-select")
 @SuppressWarnings("unchecked")
 public class SQLSelectTest extends AbstractSelectTest {
-  private ODocument         record = new ODocument();
+  private ODocument record = new ODocument();
 
-	@Parameters(value = "url")
-	public SQLSelectTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public SQLSelectTest(@Optional String url) {
+    super(url);
+  }
+
+  private static void createAndLink(final OrientGraph graph, String name, Map<String, String> map, ODocument root) {
+    OrientVertex vertex = graph.addVertex("class:vertexB", "name", name, "map", map);
+
+    graph.addEdge(null, graph.getVertex(root), vertex, "E");
+  }
 
   @Test
   public void queryNoDirtyResultset() {
@@ -1180,11 +1176,11 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testTraverse() {
-		OrientGraph graph = new OrientGraph(url);
-		graph.setAutoStartTx(false);
-		graph.commit();
+    OrientGraph graph = new OrientGraph(url);
+    graph.setAutoStartTx(false);
+    graph.commit();
 
-		OClass oc = graph.getVertexType("vertexA");
+    OClass oc = graph.getVertexType("vertexA");
     if (oc == null)
       oc = graph.createVertexType("vertexA");
 
@@ -1201,7 +1197,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     ocb.createProperty("name", OType.STRING);
     ocb.createProperty("map", OType.EMBEDDEDMAP);
     ocb.createIndex("vertexB_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
-		graph.setAutoStartTx(true);
+    graph.setAutoStartTx(true);
 
     // FIRST: create a root vertex
     ODocument docA = graph.addVertex("class:vertexA").getRecord();
@@ -1226,12 +1222,6 @@ public class SQLSelectTest extends AbstractSelectTest {
     }
 
     graph.shutdown();
-  }
-
-  private static void createAndLink(final OrientGraph graph, String name, Map<String, String> map, ODocument root) {
-		OrientVertex vertex = graph.addVertex("class:vertexB", "name", name, "map", map);
-
-    graph.addEdge(null, graph.getVertex(root), vertex, "E");
   }
 
   @Test
@@ -1270,7 +1260,6 @@ public class SQLSelectTest extends AbstractSelectTest {
           .getSchemaClass().getName(), "Address");
     }
   }
-
 
   public void testParams() {
     OClass test = database.getMetadata().getSchema().getClass("test");
@@ -1395,21 +1384,6 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertEquals(resultset.size(), 1);
 
     Assert.assertEquals(resultset.get(0).field("oid"), new ORecordId(clusterId, maxPos).toString());
-  }
-
-  private List<OClusterPosition> getValidPositions(int clusterId) {
-    final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
-
-    final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
-
-    for (int i = 0; i < 100; i++) {
-      if (!iteratorCluster.hasNext())
-        break;
-
-      ODocument doc = iteratorCluster.next();
-      positions.add(doc.getIdentity().getClusterPosition());
-    }
-    return positions;
   }
 
   @Test
@@ -1602,5 +1576,36 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(ODocumentHelper.compareCollections(database, synchResultOne.subList(0, synchResultOne.size() / 2), database,
         asynchResultOne, null));
     Assert.assertTrue(ODocumentHelper.compareCollections(database, synchResultTwo, database, asynchResultTwo, null));
+  }
+
+  @Test
+  public void queryOrderByRidDesc() {
+    List<ODocument> result = executeQuery("select from OUser order by @rid desc", database);
+
+    Assert.assertFalse(result.isEmpty());
+
+    ORID lastRid = null;
+    for (ODocument d : result) {
+      ORID rid = d.getIdentity();
+
+      if (lastRid != null)
+        Assert.assertTrue(rid.compareTo(lastRid) < 0);
+      lastRid = rid;
+    }
+  }
+
+  private List<OClusterPosition> getValidPositions(int clusterId) {
+    final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
+
+    final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
+
+    for (int i = 0; i < 100; i++) {
+      if (!iteratorCluster.hasNext())
+        break;
+
+      ODocument doc = iteratorCluster.next();
+      positions.add(doc.getIdentity().getClusterPosition());
+    }
+    return positions;
   }
 }

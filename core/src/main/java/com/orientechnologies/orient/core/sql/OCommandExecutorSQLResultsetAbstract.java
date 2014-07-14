@@ -15,16 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -33,6 +23,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -54,6 +45,16 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -350,6 +351,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   protected void searchInClasses() {
+    searchInClasses(true);
+  }
+
+  protected void searchInClasses(final boolean iAscendentOrder) {
     final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
 
     final ODatabaseRecord database = getDatabase();
@@ -361,8 +366,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
 
     final ORID[] range = getRange();
-    target = new ORecordIteratorClass<ORecordInternal<?>>(database, database, cls.getName(), true, request.isUseCache(), false,
-        locking).setRange(range[0], range[1]);
+    if (iAscendentOrder)
+      target = new ORecordIteratorClass<ORecordInternal<?>>(database, database, cls.getName(), true, request.isUseCache(), false,
+          locking).setRange(range[0], range[1]);
+    else
+      target = new ORecordIteratorClassDescendentOrder<ORecordInternal<?>>(database, database, cls.getName(), true,
+          request.isUseCache(), false, locking).setRange(range[0], range[1]);
   }
 
   protected void searchInClusters() {

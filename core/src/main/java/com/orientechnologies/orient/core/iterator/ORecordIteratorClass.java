@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecordIteratorClusters<REC> {
   protected final OClass targetClass;
   protected boolean      polymorphic;
-  protected boolean      useCache;
 
   /**
    * This method is only to maintain the retro compatibility with TinkerPop BP 2.2

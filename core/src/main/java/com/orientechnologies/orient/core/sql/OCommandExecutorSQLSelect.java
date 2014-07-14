@@ -641,7 +641,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
 
     if (!searchForIndexes(cls)) {
-      super.searchInClasses();
+      // CHECK FOR INVERSE ORDER
+      final boolean browsingOrderAsc = !(orderedFields.size() == 1 && orderedFields.get(0).getKey().equalsIgnoreCase("@rid") && orderedFields
+          .get(0).getValue().equalsIgnoreCase("DESC"));
+      super.searchInClasses(browsingOrderAsc);
     }
   }
 
