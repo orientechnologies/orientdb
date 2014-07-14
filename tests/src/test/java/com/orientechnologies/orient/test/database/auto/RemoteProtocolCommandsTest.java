@@ -4,6 +4,8 @@ import java.util.Map;
 
 import junit.framework.Assert;
 
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
@@ -13,9 +15,14 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 @Test(groups = "db")
-public class RemoteProtocolCommandsTest {
+public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
 
-  @Test
+	@Parameters(value = "url")
+	public RemoteProtocolCommandsTest(@Optional String url) {
+		super(url);
+	}
+
+	@Test
   public void testListDatabasesMemoryDB() throws Exception {
     final OServerAdmin admin = new OServerAdmin("remote:localhost").connect("root", ODatabaseHelper.getServerRootPassword());
 

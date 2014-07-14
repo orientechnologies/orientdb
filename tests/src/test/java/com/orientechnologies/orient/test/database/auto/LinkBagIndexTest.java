@@ -33,19 +33,17 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     ridBagIndexTestClass.createProperty("ridBag", OType.LINKBAG);
 
     ridBagIndexTestClass.createIndex("ridBagIndex", OClass.INDEX_TYPE.NOTUNIQUE, "ridBag");
-    database.getMetadata().getSchema().save();
+
     database.close();
   }
 
   @AfterClass
   public void destroySchema() {
-    database.open("admin", "admin");
-    database.getMetadata().getSchema().dropClass("RidBagIndexTestClass");
-  }
+    if (database.isClosed())
+      database.open("admin", "admin");
 
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
+    database.getMetadata().getSchema().dropClass("RidBagIndexTestClass");
+    database.close();
   }
 
   @AfterMethod
@@ -57,8 +55,6 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
 
     result = database.command(new OCommandSQL("select key, rid from index:ridBagIndex")).execute();
     Assert.assertEquals(result.size(), 0);
-
-    database.close();
   }
 
   public void testIndexRidBag() {

@@ -12,9 +12,17 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
 
-public abstract class AbstractSelectTest {
-  protected List<ODocument> executeQuery(String sql, ODatabaseDocument db, Object... args) {
+public abstract class AbstractSelectTest extends DocumentDBBaseTest {
+
+	@Parameters(value = "url")
+	protected AbstractSelectTest(@Optional String url) {
+		super(url);
+	}
+
+	protected List<ODocument> executeQuery(String sql, ODatabaseDocument db, Object... args) {
     final List<ODocument> synchResult = db.query(new OSQLSynchQuery<ODocument>(sql), args);
     final List<ODocument> asynchResult = new ArrayList<ODocument>();
     final AtomicBoolean endWasCalled = new AtomicBoolean();

@@ -21,10 +21,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
@@ -58,26 +55,19 @@ import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "index" })
-public class IndexTest {
-  private OObjectDatabaseTx database;
-  protected long            startRecordNumber;
+public class IndexTest extends ObjectDBBaseTest {
+  @Parameters(value = "url")
+  public IndexTest(@Optional String url) {
+    super(url);
+  }
 
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
+  @BeforeClass
+  public void beforeClass() throws Exception {
+    super.beforeClass();
+
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
-  }
-
-  @Parameters(value = "url")
-  public IndexTest(String iURL) {
-    database = new OObjectDatabaseTx(iURL);
   }
 
   public void testDuplicatedIndexOnUnique() {
@@ -1430,9 +1420,6 @@ public class IndexTest {
   }
 
   public void testNullIndexKeysSupport() {
-    if (database.getURL().startsWith("memory:"))
-      return;
-
     final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -1473,9 +1460,6 @@ public class IndexTest {
   }
 
   public void testNullHashIndexKeysSupport() {
-    if (database.getURL().startsWith("memory:"))
-      return;
-
     final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -1518,9 +1502,6 @@ public class IndexTest {
   }
 
   public void testNullIndexKeysSupportInTx() {
-    if (database.getURL().startsWith("memory:"))
-      return;
-
     final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
 
     final OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -1568,7 +1549,7 @@ public class IndexTest {
   }
 
   public void testNullIndexKeysSupportInMiddleTx() {
-    if (database.getURL().startsWith("memory:") || database.getURL().startsWith("remote:"))
+    if (database.getURL().startsWith("remote:"))
       return;
 
     final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();

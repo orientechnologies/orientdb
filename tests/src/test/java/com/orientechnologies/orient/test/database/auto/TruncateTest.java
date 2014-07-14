@@ -37,27 +37,13 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test
-public class TruncateTest {
-  private ODatabaseDocumentTx database;
+public class TruncateTest extends DocumentDBBaseTest {
 
-  @Parameters(value = "url")
-  public TruncateTest(@Optional String iURL) {
-    final String url = iURL != null ? iURL : "memory:test";
-    database = new ODatabaseDocumentTx(url);
-  }
+	@Parameters(value = "url")
+	public TruncateTest(@Optional String url) {
+		super(url);
+	}
 
-  @BeforeMethod
-  public void openDatabase() {
-    if (database.getURL().startsWith(OEngineMemory.NAME) && !database.exists())
-      database.create();
-    else
-      database.open("admin", "admin");
-  }
-
-  @AfterMethod
-  public void closeDatabase() {
-    database.close();
-  }
 
   @SuppressWarnings("unchecked")
   @Test

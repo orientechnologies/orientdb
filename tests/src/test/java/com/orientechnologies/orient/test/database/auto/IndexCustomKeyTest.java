@@ -18,11 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.Arrays;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -37,8 +33,12 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.tx.OTransaction;
 
 @Test(groups = { "index" })
-public class IndexCustomKeyTest {
-  private ODatabaseDocumentTx database;
+public class IndexCustomKeyTest extends DocumentDBBaseTest {
+
+  @Parameters(value = "url")
+  public IndexCustomKeyTest(@Optional String url) {
+    super(url);
+  }
 
   public static class ComparableBinary implements Comparable<ComparableBinary>, OSerializableStream {
     private byte[] value;
@@ -167,9 +167,22 @@ public class IndexCustomKeyTest {
     return database.getMetadata().getIndexManager().getIndex("custom-hash");
   }
 
+  @AfterClass
+  @Override
+  public void afterClass() throws Exception {
+    if (database.isClosed())
+      database.open("admin", "admin");
+
+    database.getMetadata().getIndexManager().dropIndex("custom-hash");
+		database.close();
+
+    super.afterClass();
+  }
+
   @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
+  public void beforeMethod() throws Exception {
+    super.beforeMethod();
+
     OIndex<?> index = getIndex();
 
     if (index == null) {
@@ -178,22 +191,6 @@ public class IndexCustomKeyTest {
       database.getMetadata().getIndexManager()
           .createIndex("custom-hash", "UNIQUE", new ORuntimeKeyIndexDefinition(OHash256Serializer.ID), null, null, null);
     }
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
-  }
-
-  @AfterClass
-  public void afterClass() {
-    database.open("admin", "admin");
-    database.getMetadata().getIndexManager().dropIndex("custom-hash");
-  }
-
-  @Parameters(value = "url")
-  public IndexCustomKeyTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
   }
 
   public void testUsage() {

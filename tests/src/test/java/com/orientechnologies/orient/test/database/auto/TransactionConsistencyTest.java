@@ -44,24 +44,15 @@ import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
 
 @Test
-public class TransactionConsistencyTest {
+public class TransactionConsistencyTest extends DocumentDBBaseTest {
   protected ODatabaseDocumentTx database1;
   protected ODatabaseDocumentTx database2;
-
-  protected String              url;
 
   public static final String    NAME = "name";
 
   @Parameters(value = "url")
-  public TransactionConsistencyTest(@Optional(value = "memory:test") String iURL) throws IOException {
-    url = iURL;
-  }
-
-  @BeforeClass
-  public void init() {
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-    if ("memory:test".equals(database.getURL()))
-      database.create();
+  public TransactionConsistencyTest(@Optional String url) {
+    super(url);
   }
 
   @Test
@@ -287,10 +278,7 @@ public class TransactionConsistencyTest {
   @SuppressWarnings("unchecked")
   @Test
   public void checkVersionsInConnectedDocuments() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
-
-    db.begin();
+    database.begin();
 
     ODocument kim = new ODocument("Profile").field("name", "Kim").field("surname", "Bauer");
     ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
@@ -302,40 +290,38 @@ public class TransactionConsistencyTest {
 
     jack.save();
 
-    db.commit();
+    database.commit();
 
-    db.close();
-    db.open("admin", "admin");
+    database.close();
+    database.open("admin", "admin");
 
-    ODocument loadedJack = db.load(jack.getIdentity());
+    ODocument loadedJack = database.load(jack.getIdentity());
 
     ORecordVersion jackLastVersion = loadedJack.getRecordVersion().copy();
-    db.begin();
+    database.begin();
     loadedJack.field("occupation", "agent");
     loadedJack.save();
-    db.commit();
+    database.commit();
     Assert.assertTrue(!jackLastVersion.equals(loadedJack.getRecordVersion()));
 
-    loadedJack = db.load(jack.getIdentity());
+    loadedJack = database.load(jack.getIdentity());
     Assert.assertTrue(!jackLastVersion.equals(loadedJack.getRecordVersion()));
 
-    db.close();
+    database.close();
 
-    db.open("admin", "admin");
-    loadedJack = db.load(jack.getIdentity());
+    database.open("admin", "admin");
+    loadedJack = database.load(jack.getIdentity());
     Assert.assertTrue(!jackLastVersion.equals(loadedJack.getRecordVersion()));
-    db.close();
+    database.close();
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void createLinkInTx() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
-
-    OClass profile = db.getMetadata().getSchema()
-        .createClass("MyProfile", db.addCluster("myprofile", OStorage.CLUSTER_TYPE.PHYSICAL));
-    OClass edge = db.getMetadata().getSchema().createClass("MyEdge", db.addCluster("myedge", OStorage.CLUSTER_TYPE.PHYSICAL));
+    OClass profile = database.getMetadata().getSchema()
+        .createClass("MyProfile", database.addCluster("myprofile", OStorage.CLUSTER_TYPE.PHYSICAL));
+    OClass edge = database.getMetadata().getSchema()
+        .createClass("MyEdge", database.addCluster("myedge", OStorage.CLUSTER_TYPE.PHYSICAL));
     profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
     profile.createProperty("in", OType.LINKSET, edge);
@@ -343,7 +329,7 @@ public class TransactionConsistencyTest {
     edge.createProperty("in", OType.LINK, profile);
     edge.createProperty("out", OType.LINK, profile);
 
-    db.begin();
+    database.begin();
 
     ODocument kim = new ODocument("MyProfile").field("name", "Kim").field("surname", "Bauer");
     ODocument teri = new ODocument("MyProfile").field("name", "Teri").field("surname", "Bauer");
@@ -358,98 +344,84 @@ public class TransactionConsistencyTest {
     kim.save();
     teri.save();
 
-    db.commit();
+    database.commit();
 
-    db.close();
+    database.close();
 
-    db.open("admin", "admin");
-    List<ODocument> result = db.command(new OSQLSynchQuery<ODocument>("select from MyProfile ")).execute();
+    database.open("admin", "admin");
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from MyProfile ")).execute();
 
     Assert.assertTrue(result.size() != 0);
-
-    db.close();
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void loadRecordTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
+    database.begin();
 
-    try {
-      db.begin();
+    ODocument kim = new ODocument("Profile").field("name", "Kim").field("surname", "Bauer");
+    ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
+    ODocument jack = new ODocument("Profile").field("name", "Jack").field("surname", "Bauer");
+    ODocument chloe = new ODocument("Profile").field("name", "Chloe").field("surname", "O'Brien");
 
-      ODocument kim = new ODocument("Profile").field("name", "Kim").field("surname", "Bauer");
-      ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
-      ODocument jack = new ODocument("Profile").field("name", "Jack").field("surname", "Bauer");
-      ODocument chloe = new ODocument("Profile").field("name", "Chloe").field("surname", "O'Brien");
+    ((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
+    ((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
+    ((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following")).add(jack);
+    ((HashSet<ODocument>) teri.field("following")).add(kim);
+    ((HashSet<ODocument>) chloe.field("following", new HashSet<ODocument>()).field("following")).add(jack);
+    ((HashSet<ODocument>) chloe.field("following")).add(teri);
+    ((HashSet<ODocument>) chloe.field("following")).add(kim);
 
-      ((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
-      ((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
-      ((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following")).add(jack);
-      ((HashSet<ODocument>) teri.field("following")).add(kim);
-      ((HashSet<ODocument>) chloe.field("following", new HashSet<ODocument>()).field("following")).add(jack);
-      ((HashSet<ODocument>) chloe.field("following")).add(teri);
-      ((HashSet<ODocument>) chloe.field("following")).add(kim);
+    int profileClusterId = database.getClusterIdByName("Profile");
 
-      int profileClusterId = db.getClusterIdByName("Profile");
+    jack.save();
+    Assert.assertEquals(jack.getIdentity().getClusterId(), profileClusterId);
 
-      jack.save();
-      Assert.assertEquals(jack.getIdentity().getClusterId(), profileClusterId);
+    kim.save();
+    Assert.assertEquals(kim.getIdentity().getClusterId(), profileClusterId);
 
-      kim.save();
-      Assert.assertEquals(kim.getIdentity().getClusterId(), profileClusterId);
+    teri.save();
+    Assert.assertEquals(teri.getIdentity().getClusterId(), profileClusterId);
 
-      teri.save();
-      Assert.assertEquals(teri.getIdentity().getClusterId(), profileClusterId);
+    chloe.save();
+    Assert.assertEquals(chloe.getIdentity().getClusterId(), profileClusterId);
 
-      chloe.save();
-      Assert.assertEquals(chloe.getIdentity().getClusterId(), profileClusterId);
+    database.commit();
 
-      db.commit();
+    Assert.assertEquals(jack.getIdentity().getClusterId(), profileClusterId);
+    Assert.assertEquals(kim.getIdentity().getClusterId(), profileClusterId);
+    Assert.assertEquals(teri.getIdentity().getClusterId(), profileClusterId);
+    Assert.assertEquals(chloe.getIdentity().getClusterId(), profileClusterId);
 
-      Assert.assertEquals(jack.getIdentity().getClusterId(), profileClusterId);
-      Assert.assertEquals(kim.getIdentity().getClusterId(), profileClusterId);
-      Assert.assertEquals(teri.getIdentity().getClusterId(), profileClusterId);
-      Assert.assertEquals(chloe.getIdentity().getClusterId(), profileClusterId);
+    database.close();
+    database.open("admin", "admin");
 
-      db.close();
-      db.open("admin", "admin");
-
-      ODocument loadedChloe = db.load(chloe.getIdentity());
-      System.out.println(loadedChloe);
-    } finally {
-      db.close();
-    }
+    ODocument loadedChloe = database.load(chloe.getIdentity());
   }
 
   @Test
   public void testTransactionPopulateDelete() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
-
-    if (!db.getMetadata().getSchema().existsClass("MyFruit")) {
-      OClass fruitClass = db.getMetadata().getSchema().createClass("MyFruit");
+    if (!database.getMetadata().getSchema().existsClass("MyFruit")) {
+      OClass fruitClass = database.getMetadata().getSchema().createClass("MyFruit");
       fruitClass.createProperty("name", OType.STRING);
       fruitClass.createProperty("color", OType.STRING);
       fruitClass.createProperty("flavor", OType.STRING);
 
-      db.getMetadata().getSchema().getClass("MyFruit").getProperty("name").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-      db.getMetadata().getSchema().getClass("MyFruit").getProperty("color").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-      db.getMetadata().getSchema().getClass("MyFruit").getProperty("flavor").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+      database.getMetadata().getSchema().getClass("MyFruit").getProperty("name").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+      database.getMetadata().getSchema().getClass("MyFruit").getProperty("color").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+      database.getMetadata().getSchema().getClass("MyFruit").getProperty("flavor").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     }
-    db.close();
+    database.close();
 
-    db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
+    database.open("admin", "admin");
     int chunkSize = 500;
     for (int initialValue = 0; initialValue < 10; initialValue++) {
       System.out.println("initialValue = " + initialValue);
-      Assert.assertEquals(db.countClusterElements("MyFruit"), 0);
+      Assert.assertEquals(database.countClusterElements("MyFruit"), 0);
 
       // do insert
       Vector<ODocument> v = new Vector<ODocument>();
-      db.begin();
+      database.begin();
       for (int i = initialValue * chunkSize; i < (initialValue * chunkSize) + chunkSize; i++) {
         ODocument d = new ODocument("MyFruit").field("name", "" + i).field("color", "FOO").field("flavor", "BAR" + i);
         d.save();
@@ -457,21 +429,21 @@ public class TransactionConsistencyTest {
 
       }
       System.out.println("populate commit");
-      db.commit();
+      database.commit();
 
       // do delete
-      db.begin();
+      database.begin();
       System.out.println("vector size = " + v.size());
       for (int i = 0; i < v.size(); i++) {
-        db.delete(v.elementAt(i));
+        database.delete(v.elementAt(i));
       }
       System.out.println("delete commit");
-      db.commit();
+      database.commit();
 
-      Assert.assertEquals(db.countClusterElements("MyFruit"), 0);
+      Assert.assertEquals(database.countClusterElements("MyFruit"), 0);
     }
 
-    db.close();
+    database.close();
   }
 
   @Test
@@ -562,27 +534,26 @@ public class TransactionConsistencyTest {
 
   public void TransactionRollbackConstistencyTest() {
     System.out.println("**************************TransactionRollbackConsistencyTest***************************************");
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
-    OClass vertexClass = db.getMetadata().getSchema().createClass("TRVertex");
-    OClass edgeClass = db.getMetadata().getSchema().createClass("TREdge");
+
+    OClass vertexClass = database.getMetadata().getSchema().createClass("TRVertex");
+    OClass edgeClass = database.getMetadata().getSchema().createClass("TREdge");
     vertexClass.createProperty("in", OType.LINKSET, edgeClass);
     vertexClass.createProperty("out", OType.LINKSET, edgeClass);
     edgeClass.createProperty("in", OType.LINK, vertexClass);
     edgeClass.createProperty("out", OType.LINK, vertexClass);
 
-    OClass personClass = db.getMetadata().getSchema().createClass("TRPerson", vertexClass);
+    OClass personClass = database.getMetadata().getSchema().createClass("TRPerson", vertexClass);
     personClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
     personClass.createProperty("surname", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     personClass.createProperty("version", OType.INTEGER);
 
-    db.getMetadata().getSchema().save();
-    db.close();
+    database.getMetadata().getSchema().save();
+    database.close();
 
     final int cnt = 4;
 
-    db.open("admin", "admin");
-    db.begin();
+    database.open("admin", "admin");
+    database.begin();
     Vector inserted = new Vector();
 
     for (int i = 0; i < cnt; i++) {
@@ -604,9 +575,9 @@ public class TransactionConsistencyTest {
       inserted.add(person);
       person.save();
     }
-    db.commit();
+    database.commit();
 
-    final List<ODocument> result1 = db.command(new OCommandSQL("select from TRPerson")).execute();
+    final List<ODocument> result1 = database.command(new OCommandSQL("select from TRPerson")).execute();
     Assert.assertNotNull(result1);
     Assert.assertEquals(result1.size(), cnt);
     System.out.println("Before transaction commit");
@@ -614,7 +585,7 @@ public class TransactionConsistencyTest {
       System.out.println(d);
 
     try {
-      db.begin();
+      database.begin();
       Vector inserted2 = new Vector();
 
       for (int i = 0; i < cnt; i++) {
@@ -647,24 +618,23 @@ public class TransactionConsistencyTest {
       ((ODocument) inserted.elementAt(cnt - 1)).delete();
       ((ODocument) inserted.elementAt(cnt - 2)).getRecordVersion().reset();
       ((ODocument) inserted.elementAt(cnt - 2)).save();
-      db.commit();
+      database.commit();
       Assert.assertTrue(false);
     } catch (OResponseProcessingException e) {
       Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
-      db.rollback();
+      database.rollback();
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
-      db.rollback();
+      database.rollback();
     }
 
-    final List<ODocument> result2 = db.command(new OCommandSQL("select from TRPerson")).execute();
+    final List<ODocument> result2 = database.command(new OCommandSQL("select from TRPerson")).execute();
     Assert.assertNotNull(result2);
     System.out.println("After transaction commit failure/rollback");
     for (ODocument d : result2)
       System.out.println(d);
     Assert.assertEquals(result2.size(), cnt);
 
-    db.close();
     System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
   }
 

@@ -27,10 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -40,27 +37,30 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @SuppressWarnings("unchecked")
 @Test(groups = { "crud", "record-vobject" })
-public class ComplexTypesTest {
-  private ODatabaseDocumentTx database;
-  private String              url;
+public class ComplexTypesTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
-  public ComplexTypesTest(final String iURL) {
-    url = iURL;
+  public ComplexTypesTest(@Optional String url) {
+    super(url);
   }
 
-  @BeforeMethod
-  public void init() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-  }
+	@BeforeMethod
+	@Override
+	public void beforeMethod() throws Exception {
+		database.close();
+		database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+	}
 
-  @AfterMethod
-  public void deinit() {
-    if (database != null)
-      database.close();
-  }
+	@AfterClass
+	@Override
+	public void afterClass() throws Exception {
+		database.close();
 
-  @Test
+		database = createDatabaseInstance(url);
+		super.afterClass();
+	}
+
+	@Test
   public void testBigDecimal() {
     ODocument newDoc = new ODocument();
     newDoc.field("integer", new BigInteger("10"));

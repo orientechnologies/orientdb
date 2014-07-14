@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -26,24 +27,17 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 @Test(groups = "db")
-public class DbCheckTest implements OCommandOutputListener {
+public class DbCheckTest extends DocumentDBBaseTest implements OCommandOutputListener {
 
-  private String url;
+	@Parameters(value = { "url" })
+	public DbCheckTest(@Optional String url) {
+		super(url);
+	}
 
-  @Parameters(value = { "url" })
-  public DbCheckTest(String iURL) {
-    url = iURL;
-  }
-
-  @Test
+	@Test
   public void checkDatabaseIntegrity() throws IOException {
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-    database.open("admin", "admin");
-
     boolean result = ((OAbstractPaginatedStorage) database.getStorage()).check(false, this);
     Assert.assertTrue(result);
-
-    database.close();
   }
 
   @Override

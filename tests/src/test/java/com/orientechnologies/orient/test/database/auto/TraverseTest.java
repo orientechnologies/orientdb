@@ -37,25 +37,19 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test
 @SuppressWarnings("unused")
-public class TraverseTest {
+public class TraverseTest extends DocumentDBBaseTest {
   private int            totalElements = 0;
-  private ODatabaseDocumentTx database;
   private ODocument      tomCruise;
   private ODocument      megRyan;
   private ODocument      nicoleKidman;
 
-  @Parameters(value = "url")
-  public TraverseTest(@Optional(value = "memory:test") String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public TraverseTest(@Optional String url) {
+		super(url);
+	}
 
   @BeforeClass
   public void init() {
-    if ("memory:test".equals(database.getURL()))
-      database.create();
-    else
-      database.open("admin", "admin");
-
 		OrientGraph graph = new OrientGraph(database);
 		graph.setUseLightweightEdges(false);
 
@@ -92,11 +86,6 @@ public class TraverseTest {
     totalElements++;
 
 		graph.commit();
-  }
-
-  @AfterClass
-  public void deinit() {
-    database.close();
   }
 
   public void traverseSQLAllFromActorNoWhere() {

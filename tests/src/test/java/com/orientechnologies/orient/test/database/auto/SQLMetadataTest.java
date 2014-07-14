@@ -18,10 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.List;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -34,24 +31,11 @@ import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessin
  * SQL test against metadata.
  */
 @Test(groups = "sql-select")
-public class SQLMetadataTest {
-  private ODatabaseDocument database;
-
-  @Parameters(value = "url")
-  public SQLMetadataTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
-
-  @BeforeMethod
-  protected void init() {
-    database.open("admin", "admin");
-  }
-
-  @AfterMethod
-  protected void deinit() {
-    database.close();
-  }
-
+public class SQLMetadataTest extends DocumentDBBaseTest {
+	@Parameters(value = "url")
+	public SQLMetadataTest(@Optional String url) {
+		super(url);
+	}
   @Test
   public void querySchemaClasses() {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select expand(classes) from metadata:schema"))

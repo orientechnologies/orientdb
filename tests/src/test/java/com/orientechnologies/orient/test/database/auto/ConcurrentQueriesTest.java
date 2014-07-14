@@ -31,78 +31,65 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
 
 @Test
-public class ConcurrentQueriesTest {
-  private final static int    THREADS      = 10;
-  private final static int    CYCLES       = 50;
-  private final static int    MAX_RETRIES  = 50;
+public class ConcurrentQueriesTest extends DocumentDBBaseTest {
+  private final static int THREADS      = 10;
+  private final static int CYCLES       = 50;
+  private final static int MAX_RETRIES  = 50;
 
-  protected String            url;
-  private ODatabaseDocumentTx db;
-  private final AtomicLong    counter      = new AtomicLong();
-  private final AtomicLong    totalRetries = new AtomicLong();
+  private final AtomicLong counter      = new AtomicLong();
+  private final AtomicLong totalRetries = new AtomicLong();
+
+	@Parameters(value = "url")
+  public ConcurrentQueriesTest(@Optional String url) {
+    super(url);
+  }
 
   class CommandExecutor implements Callable<Void> {
 
     String url;
 
     public CommandExecutor(String url) {
-     this.url = url;
+      this.url = url;
     }
 
     @Override
     public Void call() {
-        for (int i = 0; i < CYCLES; i++) {
-          ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
-          try {
-            for (int retry = 0; retry < MAX_RETRIES; ++retry) {
-              try {
-                db.command(new OCommandSQL("select from Concurrent")).execute();
+      for (int i = 0; i < CYCLES; i++) {
+        ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
+        try {
+          for (int retry = 0; retry < MAX_RETRIES; ++retry) {
+            try {
+              db.command(new OCommandSQL("select from Concurrent")).execute();
 
-                counter.incrementAndGet();
-                totalRetries.addAndGet(retry);
-                break;
-              } catch (ONeedRetryException e) {
+              counter.incrementAndGet();
+              totalRetries.addAndGet(retry);
+              break;
+            } catch (ONeedRetryException e) {
               try {
                 Thread.sleep(retry * 10);
               } catch (InterruptedException e1) {
                 throw new RuntimeException(e1);
               }
-              }
             }
-          } finally {
-            db.close();
           }
+        } finally {
+          db.close();
         }
+      }
       return null;
     }
   }
 
-  @Parameters(value = "url")
-  public ConcurrentQueriesTest(@Optional(value = "memory:test") String iURL) {
-    url = iURL;
-  }
-
   @BeforeClass
   public void init() {
-    if ("memory:test".equals(url))
-      new ODatabaseDocumentTx(url).create().close();
+    if (database.getMetadata().getSchema().existsClass("Concurrent"))
+      database.getMetadata().getSchema().dropClass("Concurrent");
 
-    db = new ODatabaseDocumentTx(url).open("admin", "admin");
-
-    if (db.getMetadata().getSchema().existsClass("Concurrent"))
-      db.getMetadata().getSchema().dropClass("Concurrent");
-
-    db.getMetadata().getSchema().createClass("Concurrent");
+    database.getMetadata().getSchema().createClass("Concurrent");
 
     for (int i = 0; i < 1000; ++i) {
-      db.newInstance("Concurrent").field("test", i).save();
+      database.newInstance("Concurrent").field("test", i).save();
     }
-  }
-
-  @AfterClass
-  public void deinit() {
-    if (!db.isClosed())
-      db.close();
   }
 
   @Test
@@ -116,7 +103,7 @@ public class ConcurrentQueriesTest {
       }
     });
 
- System.out.println("Done! Total queries executed in parallel: " + counter.get() + " average retries: "
+    System.out.println("Done! Total queries executed in parallel: " + counter.get() + " average retries: "
         + ((float) totalRetries.get() / (float) counter.get()));
 
     Assert.assertEquals(counter.get(), CYCLES * THREADS);

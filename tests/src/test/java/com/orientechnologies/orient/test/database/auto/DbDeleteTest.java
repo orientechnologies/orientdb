@@ -19,8 +19,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.Orient;
@@ -33,18 +32,39 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test(groups = "db")
-public class DbDeleteTest {
+public class DbDeleteTest extends DocumentDBBaseTest {
   private String testPath;
-  private String url;
 
-  @Parameters(value = { "url", "testPath" })
-  public DbDeleteTest(String iURL, String iTestPath) {
-    testPath = iTestPath;
-    url = iURL;
-    Orient.instance().getProfiler().startRecording();
-  }
+	@Parameters(value = { "url", "testPath" })
+	public DbDeleteTest(@Optional String url, String testPath) {
+		super(url);
+		this.testPath = testPath;
+	}
 
-  public void testDbDeleteNoCredential() throws IOException {
+	@BeforeClass
+	@Override
+	public void beforeClass() throws Exception {
+		super.beforeClass();
+		database.close();
+	}
+
+	@AfterClass
+	@Override
+	public void afterClass() throws Exception {
+	}
+
+	@BeforeMethod
+	@Override
+	public void beforeMethod() throws Exception {
+	}
+
+	@AfterMethod
+	@Override
+	public void afterMethod() throws Exception {
+	}
+
+
+	public void testDbDeleteNoCredential() throws IOException {
     ODatabaseDocument db = new ODatabaseDocumentTx(url);
     try {
       db.drop();
@@ -71,14 +91,14 @@ public class DbDeleteTest {
         db.open("admin", "admin");
     }
 
-    ODatabaseHelper.dropDatabase(db, "plocal");
+    ODatabaseHelper.dropDatabase(db, getStorageType());
 
     Assert.assertFalse(new File(testPath + "/" + DbImportExportTest.NEW_DB_PATH).exists());
   }
 
   public void testDbDeleteWithIndex() {
     String prefix = url.substring(0, url.indexOf(':') + 1);
-    if (prefix.equals("memory:") || prefix.equals("remote:"))
+    if (prefix.equals("remote:"))
       return;
 
     ODatabaseDocument db = new ODatabaseDocumentTx(prefix + testPath + "/" + DbImportExportTest.NEW_DB_URL);

@@ -8,12 +8,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,17 +18,15 @@ import java.util.Map;
  * @since 22.03.12
  */
 @Test(groups = { "index" })
-public class LinkMapIndexTest {
-  private final ODatabaseDocumentTx database;
+public class LinkMapIndexTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
-  public LinkMapIndexTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public LinkMapIndexTest(@Optional String url) {
+    super(url);
   }
 
   @BeforeClass
   public void setupSchema() {
-    database.open("admin", "admin");
     final OClass linkMapIndexTestClass = database.getMetadata().getSchema().createClass("LinkMapIndexTestClass");
     linkMapIndexTestClass.createProperty("linkMap", OType.LINKMAP);
 
@@ -41,7 +34,6 @@ public class LinkMapIndexTest {
     linkMapIndexTestClass.createIndex("mapIndexTestValue", OClass.INDEX_TYPE.NOTUNIQUE, "linkMap by value");
 
     database.getMetadata().getSchema().save();
-    database.close();
   }
 
   @AfterClass
@@ -52,15 +44,11 @@ public class LinkMapIndexTest {
     database.close();
   }
 
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
-  }
-
   @AfterMethod
   public void afterMethod() throws Exception {
     database.command(new OCommandSQL("delete from LinkMapIndexTestClass")).execute();
-    database.close();
+
+    super.afterMethod();
   }
 
   public void testIndexMap() {

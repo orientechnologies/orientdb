@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -25,18 +26,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
-public class SQLCreateLinkTest {
-  private ODatabaseDocument database;
-
+public class SQLCreateLinkTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
-  public SQLCreateLinkTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public SQLCreateLinkTest(@Optional String url) {
+    super(url);
   }
 
   @Test
   public void createLinktest() {
-    database.open("admin", "admin");
-
     Assert.assertTrue((Integer) database.command(new OCommandSQL("CREATE CLASS POST")).execute() > 0);
     Assert
         .assertTrue(database.command(new OCommandSQL("INSERT INTO POST (id, title) VALUES ( 10, 'NoSQL movement' )")).execute() instanceof ODocument);
@@ -66,14 +63,10 @@ public class SQLCreateLinkTest {
             .execute()).intValue(), 5);
 
     Assert.assertEquals(((Number) database.command(new OCommandSQL("UPDATE comment REMOVE postId")).execute()).intValue(), 5);
-
-    database.close();
   }
 
   @Test
   public void createRIDLinktest() {
-    database.open("admin", "admin");
-
     Assert.assertTrue((Integer) database.command(new OCommandSQL("CREATE CLASS POST2")).execute() > 0);
     Object p1 = database.command(new OCommandSQL("INSERT INTO POST2 (id, title) VALUES ( 10, 'NoSQL movement' )")).execute();
     Assert.assertTrue(p1 instanceof ODocument);
@@ -108,7 +101,5 @@ public class SQLCreateLinkTest {
             .execute()).intValue(), 5);
 
     Assert.assertEquals(((Number) database.command(new OCommandSQL("UPDATE comment2 REMOVE postId")).execute()).intValue(), 5);
-
-    database.close();
   }
 }

@@ -9,11 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
@@ -26,19 +22,16 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test
-public class DocumentTrackingTest {
-  private final ODatabaseDocumentTx database;
+public class DocumentTrackingTest extends DocumentDBBaseTest {
 
-  @Parameters(value = "url")
-  public DocumentTrackingTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public DocumentTrackingTest(@Optional String url) {
+		super(url);
+	}
 
-  @BeforeClass
-  public void beforeClass() {
-    if (database.isClosed()) {
-      database.open("admin", "admin");
-    }
+	@BeforeClass
+  public void beforeClass() throws Exception {
+		super.beforeClass();
 
     if (!database.getMetadata().getSchema().existsClass("DocumentTrackingTestClass")) {
       final OClass trackedClass = database.getMetadata().getSchema().createClass("DocumentTrackingTestClass");
@@ -51,18 +44,6 @@ public class DocumentTrackingTest {
 
       database.getMetadata().getSchema().save();
     }
-
-    database.close();
-  }
-
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
   }
 
   public void testDocumentEmbeddedListTrackingAfterSave() {

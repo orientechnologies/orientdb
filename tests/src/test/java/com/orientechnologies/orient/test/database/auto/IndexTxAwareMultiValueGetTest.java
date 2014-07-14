@@ -18,30 +18,24 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
-public class IndexTxAwareMultiValueGetTest {
-  private ODatabaseDocumentTx database;
-
+public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
-  public IndexTxAwareMultiValueGetTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public IndexTxAwareMultiValueGetTest(@Optional String url) {
+    super(url);
   }
 
   @BeforeClass
-  public void beforeClass() {
-    database.open("admin", "admin");
-    database.command(new OCommandSQL("create index idxTxAwareMultiValueGetTest notunique")).execute();
-    database.close();
-  }
+  public void beforeClass() throws Exception {
+    super.beforeClass();
 
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
+    database.command(new OCommandSQL("create index idxTxAwareMultiValueGetTest notunique")).execute();
   }
 
   @AfterMethod
-  public void afterMethod() {
+  public void afterMethod() throws Exception {
     database.command(new OCommandSQL("delete from index:idxTxAwareMultiValueGetTest")).execute();
-    database.close();
+
+    super.afterMethod();
   }
 
   @Test

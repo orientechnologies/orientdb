@@ -17,18 +17,17 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test(groups = { "index" })
-public class SQLSelectCompositeIndexDirectSearchTest {
-  private final ODatabaseDocumentTx database;
+public class SQLSelectCompositeIndexDirectSearchTest extends DocumentDBBaseTest {
   private final List<ORID>          rids = new ArrayList<ORID>(100);
 
-  @Parameters(value = "url")
-  public SQLSelectCompositeIndexDirectSearchTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public SQLSelectCompositeIndexDirectSearchTest(@Optional String url) {
+		super(url);
+	}
 
-  @BeforeClass
+	@BeforeClass
   public void beforeClass() throws Exception {
-    database.open("admin", "admin");
+		super.beforeClass();
 
     final OSchema schema = database.getMetadata().getSchema();
 
@@ -59,28 +58,17 @@ public class SQLSelectCompositeIndexDirectSearchTest {
             new OCommandSQL(
                 "create index SQLSelectCompositeHashIndexDirectSearchTestIndex on SQLSelectCompositeIndexDirectSearchTestClass (prop1, prop2) NOTUNIQUE_HASH_INDEX"))
         .execute();
-
-    database.close();
   }
 
   @AfterClass
-  public void afterClass() {
-    if (database.isClosed())
+  public void afterClass() throws Exception {
+		if (database.isClosed())
       database.open("admin", "admin");
     database.command(new OCommandSQL("delete from SQLSelectCompositeIndexDirectSearchTestClass")).execute();
     database.command(new OCommandSQL("drop class SQLSelectCompositeIndexDirectSearchTestClass")).execute();
     database.reload();
-    database.close();
-  }
 
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
+		super.afterClass();
   }
 
   @Test

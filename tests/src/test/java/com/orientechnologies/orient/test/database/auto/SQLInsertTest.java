@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -45,18 +46,15 @@ import java.util.Map;
  * be affected due to adding or removing cluster from storage.
  */
 @Test(groups = "sql-insert")
-public class SQLInsertTest {
-  private ODatabaseDocument database;
+public class SQLInsertTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
-  public SQLInsertTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public SQLInsertTest(@Optional String url) {
+    super(url);
   }
 
   @Test
   public void insertOperator() {
-    database.open("admin", "admin");
-
     final int clId = database.addCluster("anotherdefault", OStorage.CLUSTER_TYPE.PHYSICAL);
     final OClass profileClass = database.getMetadata().getSchema().getClass("Account");
     profileClass.addClusterId(clId);
@@ -88,14 +86,10 @@ public class SQLInsertTest {
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
     Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
-
-    database.close();
   }
 
   @Test
   public void insertWithWildcards() {
-    database.open("admin", "admin");
-
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
     List<OClusterPosition> positions = getValidPositions(addressId);
@@ -123,15 +117,11 @@ public class SQLInsertTest {
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
     Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
-
-    database.close();
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void insertMap() {
-    database.open("admin", "admin");
-
     ODocument doc = (ODocument) database
         .command(
             new OCommandSQL(
@@ -173,14 +163,11 @@ public class SQLInsertTest {
 
     Assert.assertEquals(entries.get("round"), "eeee");
     Assert.assertEquals(entries.get("blaaa"), "zigzag");
-    database.close();
   }
 
   @Test
   @SuppressWarnings("unchecked")
   public void insertList() {
-    database.open("admin", "admin");
-
     ODocument doc = (ODocument) database.command(
         new OCommandSQL(
             "insert into cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )"))
@@ -224,26 +211,18 @@ public class SQLInsertTest {
     Assert.assertEquals(entries.get(1), "top");
     Assert.assertEquals(entries.get(2), "left");
     Assert.assertEquals(entries.get(3), "right");
-
-    database.close();
   }
 
   @Test
   public void insertWithNoSpaces() {
-    database.open("admin", "admin");
-
     ODocument doc = (ODocument) database.command(
         new OCommandSQL("insert into cluster:default(id, title)values(10, 'NoSQL movement')")).execute();
 
     Assert.assertTrue(doc != null);
-
-    database.close();
   }
 
   @Test
   public void insertAvoidingSubQuery() {
-    database.open("admin", "admin");
-
     final OSchema schema = database.getMetadata().getSchema();
     if (schema.getClass("test") == null)
       schema.createClass("test");
@@ -252,14 +231,10 @@ public class SQLInsertTest {
 
     Assert.assertTrue(doc != null);
     Assert.assertEquals(doc.field("text"), "(Hello World)");
-
-    database.close();
   }
 
   @Test
   public void insertSubQuery() {
-    database.open("admin", "admin");
-
     final OSchema schema = database.getMetadata().getSchema();
     if (schema.getClass("test") == null)
       schema.createClass("test");
@@ -271,27 +246,19 @@ public class SQLInsertTest {
     Assert.assertNotNull(doc.field("names"));
     Assert.assertTrue(doc.field("names") instanceof Collection);
     Assert.assertEquals(((Collection<?>) doc.field("names")).size(), 3);
-
-    database.close();
   }
 
   @Test
   public void insertCluster() {
-    database.open("admin", "admin");
-
     ODocument doc = database.command(
         new OCommandSQL("insert into Account cluster anotherdefault (id, title) values (10, 'NoSQL movement')")).execute();
 
     Assert.assertTrue(doc != null);
     Assert.assertEquals(doc.getIdentity().getClusterId(), database.getClusterIdByName("anotherdefault"));
     Assert.assertEquals(doc.getClassName(), "Account");
-
-    database.close();
   }
 
   public void updateMultipleFields() {
-    database.open("admin", "admin");
-
     List<OClusterPosition> positions = getValidPositions(3);
 
     OIdentifiable result = database.command(
@@ -307,13 +274,9 @@ public class SQLInsertTest {
     Assert.assertTrue(map.get("key").equals("value"));
     Assert.assertEquals(record.field("dir"), "");
     Assert.assertEquals(record.field("user", OType.LINK), new ORecordId(3, positions.get(0)));
-
-    database.close();
   }
 
   public void insertSelect() {
-    database.open("admin", "admin");
-
     database.command(new OCommandSQL("CREATE CLASS UserCopy")).execute();
     database.getMetadata().getSchema().reload();
 
@@ -327,8 +290,6 @@ public class SQLInsertTest {
       Assert.assertEquals(((ODocument) r.getRecord()).getClassName(), "UserCopy");
       Assert.assertNotSame(((ODocument) r.getRecord()).field("name"), "admin");
     }
-
-    database.close();
   }
 
   private List<OClusterPosition> getValidPositions(int clusterId) {
@@ -347,66 +308,59 @@ public class SQLInsertTest {
 
   public void insertWithReturn() {
 
-    try {
-      database.open("admin", "admin");
-
-      if (!database.getMetadata().getSchema().existsClass("actor2")) {
-        database.command(new OCommandSQL("CREATE CLASS Actor2")).execute();
-        database.getMetadata().getSchema().reload();
-      }
-
-      // RETURN with $current.
-      ODocument doc = database.command(new OCommandSQL("INSERT INTO Actor2 SET FirstName=\"FFFF\" RETURN $current")).execute();
-      Assert.assertTrue(doc != null);
-      Assert.assertEquals(doc.getClassName(), "Actor2");
-
-      // RETURN with @rid
-      Object res1 = database.command(new OCommandSQL("INSERT INTO Actor2 SET FirstName=\"Butch 1\" RETURN @rid")).execute();
-      Assert.assertTrue(res1 instanceof ORecordId);
-      Assert.assertTrue(((OIdentifiable) res1).getIdentity().isValid());
-
-      // Create many records and return @rid
-      Object res2 = database.command(
-          new OCommandSQL(
-              "INSERT INTO Actor2(FirstName,LastName) VALUES ('Jay','Miner'),('Frank','Hermier'),('Emily','Saut')  RETURN @rid"))
-          .execute();
-      Assert.assertTrue(res2 instanceof List<?>);
-      Assert.assertTrue(((List) res2).get(0) instanceof ORecordId);
-
-      // Create many records by INSERT INTO ...FROM and return wrapped field
-      ORID another = ((OIdentifiable) res1).getIdentity();
-      final String sql = "INSERT INTO Actor2 RETURN $current.FirstName  FROM SELECT * FROM [" + doc.getIdentity().toString() + ","
-          + another.toString() + "]";
-      ArrayList res3 = database.command(new OCommandSQL(sql)).execute();
-      Assert.assertEquals(res3.size(), 2);
-      Assert.assertTrue(((List) res3).get(0) instanceof ODocument);
-      final ODocument res3doc = (ODocument) res3.get(0);
-      Assert.assertTrue(res3doc.containsField("result"));
-      Assert.assertTrue("FFFF".equalsIgnoreCase((String) res3doc.field("result"))
-          || "Butch 1".equalsIgnoreCase((String) res3doc.field("result")));
-      Assert.assertTrue(res3doc.containsField("rid"));
-      Assert.assertTrue(res3doc.containsField("version"));
-
-      // create record using content keyword and update it in sql batch passing recordID between commands
-      final String sql2 = "let var1=INSERT INTO Actor2 CONTENT {Name:\"content\"} RETURN $current.@rid\n"
-          + "let var2=UPDATE $var1 SET Bingo=1 RETURN AFTER @rid\n" + "return $var2\n" + "end";
-      List<?> res_sql2 = database.command(new OCommandScript("sql", sql2)).execute();
-      Assert.assertEquals(res_sql2.size(), 1);
-      Assert.assertTrue(((List) res_sql2).get(0) instanceof ORecordId);
-
-      // create record using content keyword and update it in sql batch passing recordID between commands
-      final String sql3 = "let var1=INSERT INTO Actor2 CONTENT {Name:\"Bingo owner\"} RETURN @this\n"
-          + "let var2=UPDATE $var1 SET Bingo=1 RETURN AFTER\n" + "return $var2\n" + "end";
-      List<?> res_sql3 = database.command(new OCommandScript("sql", sql3)).execute();
-      Assert.assertEquals(res_sql3.size(), 1);
-      Assert.assertTrue(((List) res_sql3).get(0) instanceof ODocument);
-      final ODocument sql3doc = (ODocument) (((List) res_sql3).get(0));
-      Assert.assertEquals(sql3doc.field("Bingo"), 1);
-      Assert.assertEquals(sql3doc.field("Name"), "Bingo owner");
-
-    } finally {
-      database.close();
+    if (!database.getMetadata().getSchema().existsClass("actor2")) {
+      database.command(new OCommandSQL("CREATE CLASS Actor2")).execute();
+      database.getMetadata().getSchema().reload();
     }
+
+    // RETURN with $current.
+    ODocument doc = database.command(new OCommandSQL("INSERT INTO Actor2 SET FirstName=\"FFFF\" RETURN $current")).execute();
+    Assert.assertTrue(doc != null);
+    Assert.assertEquals(doc.getClassName(), "Actor2");
+
+    // RETURN with @rid
+    Object res1 = database.command(new OCommandSQL("INSERT INTO Actor2 SET FirstName=\"Butch 1\" RETURN @rid")).execute();
+    Assert.assertTrue(res1 instanceof ORecordId);
+    Assert.assertTrue(((OIdentifiable) res1).getIdentity().isValid());
+
+    // Create many records and return @rid
+    Object res2 = database.command(
+        new OCommandSQL(
+            "INSERT INTO Actor2(FirstName,LastName) VALUES ('Jay','Miner'),('Frank','Hermier'),('Emily','Saut')  RETURN @rid"))
+        .execute();
+    Assert.assertTrue(res2 instanceof List<?>);
+    Assert.assertTrue(((List) res2).get(0) instanceof ORecordId);
+
+    // Create many records by INSERT INTO ...FROM and return wrapped field
+    ORID another = ((OIdentifiable) res1).getIdentity();
+    final String sql = "INSERT INTO Actor2 RETURN $current.FirstName  FROM SELECT * FROM [" + doc.getIdentity().toString() + ","
+        + another.toString() + "]";
+    ArrayList res3 = database.command(new OCommandSQL(sql)).execute();
+    Assert.assertEquals(res3.size(), 2);
+    Assert.assertTrue(((List) res3).get(0) instanceof ODocument);
+    final ODocument res3doc = (ODocument) res3.get(0);
+    Assert.assertTrue(res3doc.containsField("result"));
+    Assert.assertTrue("FFFF".equalsIgnoreCase((String) res3doc.field("result"))
+        || "Butch 1".equalsIgnoreCase((String) res3doc.field("result")));
+    Assert.assertTrue(res3doc.containsField("rid"));
+    Assert.assertTrue(res3doc.containsField("version"));
+
+    // create record using content keyword and update it in sql batch passing recordID between commands
+    final String sql2 = "let var1=INSERT INTO Actor2 CONTENT {Name:\"content\"} RETURN $current.@rid\n"
+        + "let var2=UPDATE $var1 SET Bingo=1 RETURN AFTER @rid\n" + "return $var2\n" + "end";
+    List<?> res_sql2 = database.command(new OCommandScript("sql", sql2)).execute();
+    Assert.assertEquals(res_sql2.size(), 1);
+    Assert.assertTrue(((List) res_sql2).get(0) instanceof ORecordId);
+
+    // create record using content keyword and update it in sql batch passing recordID between commands
+    final String sql3 = "let var1=INSERT INTO Actor2 CONTENT {Name:\"Bingo owner\"} RETURN @this\n"
+        + "let var2=UPDATE $var1 SET Bingo=1 RETURN AFTER\n" + "return $var2\n" + "end";
+    List<?> res_sql3 = database.command(new OCommandScript("sql", sql3)).execute();
+    Assert.assertEquals(res_sql3.size(), 1);
+    Assert.assertTrue(((List) res_sql3).get(0) instanceof ODocument);
+    final ODocument sql3doc = (ODocument) (((List) res_sql3).get(0));
+    Assert.assertEquals(sql3doc.field("Bingo"), 1);
+    Assert.assertEquals(sql3doc.field("Name"), "Bingo owner");
   }
 
 }

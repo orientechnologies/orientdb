@@ -5,11 +5,7 @@ import java.util.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -19,31 +15,24 @@ import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
-public class IndexTxAwareOneValueGetValuesTest {
-  private ODatabaseDocumentTx database;
+public class IndexTxAwareOneValueGetValuesTest extends DocumentDBBaseTest {
+	@Parameters(value = "url")
+	public IndexTxAwareOneValueGetValuesTest(@Optional String url) {
+		super(url);
+	}
 
-  @Parameters(value = "url")
-  public IndexTxAwareOneValueGetValuesTest(final String iURL) {
-    this.database = new ODatabaseDocumentTx(iURL);
-  }
-
-  @BeforeClass
-  public void beforeClass() {
-    database.open("admin", "admin");
+	@BeforeClass
+  public void beforeClass() throws Exception {
+    super.beforeClass();
 
     database.command(new OCommandSQL("create index idxTxAwareOneValueGetValuesTest unique")).execute();
-    database.close();
-  }
-
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
   }
 
   @AfterMethod
-  public void afterMethod() {
+  public void afterMethod() throws Exception {
     database.command(new OCommandSQL("delete from index:idxTxAwareOneValueGetValuesTest")).execute();
-    database.close();
+
+		super.afterMethod();
   }
 
   @Test

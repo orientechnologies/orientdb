@@ -12,12 +12,20 @@ import org.testng.annotations.Test;
  */
 @Test
 public abstract class DocumentDBBaseTest extends BaseTest<ODatabaseDocumentTx> {
-  @Parameters(value = "url")
+	protected DocumentDBBaseTest() {
+	}
+
+	@Parameters(value = "url")
   protected DocumentDBBaseTest(@Optional String url) {
     super(url);
   }
 
-  protected ODatabaseDocumentTx createDatabaseInstance(String url) {
+	@Parameters(value = "url")
+	protected DocumentDBBaseTest(@Optional String url, String prefix) {
+		super(url, prefix);
+	}
+
+	protected ODatabaseDocumentTx createDatabaseInstance(String url) {
     return Orient.instance().getDatabaseFactory().createDatabase("graph", url);
   }
 }

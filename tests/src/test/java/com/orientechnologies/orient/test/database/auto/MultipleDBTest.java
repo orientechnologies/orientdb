@@ -23,8 +23,7 @@ import java.util.Set;
 import java.util.concurrent.*;
 
 import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -40,16 +39,24 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 /**
  * @author Michael Hiess
  */
-public class MultipleDBTest {
-
-  private String baseUrl;
+public class MultipleDBTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
-  public MultipleDBTest(String iURL) {
-    baseUrl = iURL + "-";
+  public MultipleDBTest(@Optional String url) {
+    super(url, "-");
   }
 
-  @Test
+  @BeforeClass
+  @Override
+  public void beforeClass() throws Exception {
+  }
+
+	@BeforeMethod
+	@Override
+	public void beforeMethod() throws Exception {
+	}
+
+	@Test
   public void testObjectMultipleDBsThreaded() throws Exception {
     final int operations_write = 1000;
     final int operations_read = 1;
@@ -62,7 +69,7 @@ public class MultipleDBTest {
 
     for (int i = 0; i < dbs; i++) {
 
-      final String dbUrl = baseUrl + i;
+      final String dbUrl = url + i;
 
       Callable<Void> t = new Callable<Void>() {
 
@@ -70,8 +77,8 @@ public class MultipleDBTest {
         public Void call() throws InterruptedException, IOException {
           OObjectDatabaseTx tx = new OObjectDatabaseTx(dbUrl);
 
-          ODatabaseHelper.deleteDatabase(tx, "plocal");
-          ODatabaseHelper.createDatabase(tx, dbUrl, "plocal");
+          ODatabaseHelper.deleteDatabase(tx, getStorageType());
+          ODatabaseHelper.createDatabase(tx, dbUrl, getStorageType());
 
           try {
             System.out.println("(" + getDbId(tx) + ") " + "Created");
@@ -89,10 +96,9 @@ public class MultipleDBTest {
 
               dummy = tx.save(dummy);
 
-              if (!dbUrl.startsWith("plocal:"))
-                // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
-                Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j),
-                    "RID was " + dummy.getId());
+              // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
+              Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j),
+                  "RID was " + dummy.getId());
 
               if ((j + 1) % 20000 == 0) {
                 System.out.println("(" + getDbId(tx) + ") " + "Operations (WRITE) executed: " + (j + 1));
@@ -124,7 +130,7 @@ public class MultipleDBTest {
           } finally {
             System.out.println("(" + getDbId(tx) + ") " + "Dropping");
             System.out.flush();
-            ODatabaseHelper.deleteDatabase(tx, "plocal");
+            ODatabaseHelper.deleteDatabase(tx, getStorageType());
             System.out.println("(" + getDbId(tx) + ") " + "Dropped");
             System.out.flush();
           }
@@ -155,7 +161,7 @@ public class MultipleDBTest {
 
     for (int i = 0; i < dbs; i++) {
 
-      final String dbUrl = baseUrl + i;
+      final String dbUrl = url + i;
 
       Callable<Void> t = new Callable<Void>() {
 
@@ -163,10 +169,10 @@ public class MultipleDBTest {
         public Void call() throws InterruptedException, IOException {
           ODatabaseDocumentTx tx = new ODatabaseDocumentTx(dbUrl);
 
-          ODatabaseHelper.deleteDatabase(tx, "plocal");
+          ODatabaseHelper.deleteDatabase(tx, getStorageType());
           System.out.println("Thread " + this + " is creating database " + dbUrl);
           System.out.flush();
-          ODatabaseHelper.createDatabase(tx, dbUrl, "plocal");
+          ODatabaseHelper.createDatabase(tx, dbUrl, getStorageType());
 
           try {
             System.out.println("(" + getDbId(tx) + ") " + "Created");
@@ -186,10 +192,9 @@ public class MultipleDBTest {
 
               dummy = tx.save(dummy);
 
-              if (!dbUrl.startsWith("plocal:"))
-                // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
-                Assert.assertEquals(dummy.getIdentity().getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j),
-                    "RID was " + dummy.getIdentity());
+              // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
+              Assert.assertEquals(dummy.getIdentity().getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j), "RID was "
+                  + dummy.getIdentity());
 
               if ((j + 1) % 20000 == 0) {
                 System.out.println("(" + getDbId(tx) + ") " + "Operations (WRITE) executed: " + (j + 1));
@@ -227,7 +232,7 @@ public class MultipleDBTest {
 
             System.out.println("Thread " + this + "  is dropping database " + dbUrl);
             System.out.flush();
-            ODatabaseHelper.deleteDatabase(tx, "plocal");
+            ODatabaseHelper.deleteDatabase(tx, getStorageType());
           }
           return null;
         }

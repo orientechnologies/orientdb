@@ -31,24 +31,21 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test
-public class GraphDatabaseTest {
+public class GraphDatabaseTest extends DocumentDBBaseTest {
   private OrientGraph database;
-  private String      url;
 
-  @Parameters(value = "url")
-  public GraphDatabaseTest(String iURL) {
-    url = iURL;
-  }
+	@Parameters(value = "url")
+	public GraphDatabaseTest(@Optional String url) {
+		super(url);
+	}
+
 
   @BeforeMethod
   public void init() {

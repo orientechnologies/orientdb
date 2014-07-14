@@ -17,19 +17,20 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = { "index" })
-public class SQLCreateIndexTest {
+public class SQLCreateIndexTest extends DocumentDBBaseTest {
 
-  private final ODatabaseDocumentTx database;
   private static final OType        EXPECTED_PROP1_TYPE = OType.DOUBLE;
   private static final OType        EXPECTED_PROP2_TYPE = OType.INTEGER;
 
-  @Parameters(value = "url")
-  public SQLCreateIndexTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public SQLCreateIndexTest(@Optional String url) {
+		super(url);
+	}
 
   @BeforeClass
-  public void beforeClass() {
+  public void beforeClass() throws Exception {
+		super.beforeClass();
+
     if (database.isClosed())
       database.open("admin", "admin");
 
@@ -44,18 +45,6 @@ public class SQLCreateIndexTest {
     oClass.createProperty("prop8", OType.INTEGER);
     oClass.createProperty("prop9", OType.LINKBAG);
 
-    schema.save();
-    database.close();
-  }
-
-  @BeforeMethod
-  public void beforeMethod() {
-    if (database.isClosed())
-      database.open("admin", "admin");
-  }
-
-  @AfterMethod
-  public void afterMethod() {
     database.close();
   }
 

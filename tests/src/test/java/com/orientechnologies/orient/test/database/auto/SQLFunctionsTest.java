@@ -29,10 +29,7 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
@@ -45,13 +42,12 @@ import java.util.Map;
 import java.util.Set;
 
 @Test(groups = "sql-select")
-public class SQLFunctionsTest {
-  private ODatabaseDocument database;
+public class SQLFunctionsTest extends DocumentDBBaseTest {
 
-  @Parameters(value = "url")
-  public SQLFunctionsTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public SQLFunctionsTest(@Optional String url) {
+		super(url);
+	}
 
   @Test
   public void queryMax() {
@@ -394,15 +390,5 @@ public class SQLFunctionsTest {
       Assert.assertEquals(OSecurityManager.digest2String(name, "SHA-256"), d.field("n256"));
       Assert.assertEquals(OSecurityManager.digest2String(name, "SHA-512"), d.field("n512"));
     }
-  }
-
-  @BeforeTest
-  public void openDatabase() {
-    database.open("admin", "admin");
-  }
-
-  @AfterTest
-  public void closeDatabase() {
-    database.close();
   }
 }

@@ -20,6 +20,8 @@ import java.util.Date;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -32,15 +34,21 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "security")
-public class SecurityTest {
-  private ODatabaseDocumentTx database;
+public class SecurityTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
-  public SecurityTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public SecurityTest(@Optional String url) {
+    super(url);
   }
 
-  @Test
+  @BeforeMethod
+  @Override
+  public void beforeMethod() throws Exception {
+    super.beforeMethod();
+
+    database.close();
+  }
+
   public void testWrongPassword() throws IOException {
     try {
       database.open("reader", "swdsds");
@@ -50,7 +58,6 @@ public class SecurityTest {
     }
   }
 
-  @Test
   public void testSecurityAccessWriter() throws IOException {
     database.open("writer", "writer");
 

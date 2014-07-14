@@ -18,10 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.Arrays;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -35,33 +32,33 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = { "index" })
-public class SQLDropPropertyIndexTest {
-  private final ODatabaseDocumentTx database;
+public class SQLDropPropertyIndexTest extends DocumentDBBaseTest {
+
   private static final OType        EXPECTED_PROP1_TYPE = OType.DOUBLE;
   private static final OType        EXPECTED_PROP2_TYPE = OType.INTEGER;
 
-  @Parameters(value = "url")
-  public SQLDropPropertyIndexTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public SQLDropPropertyIndexTest(@Optional String url) {
+		super(url);
+	}
+
 
   @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
+  public void beforeMethod() throws Exception {
+    super.beforeMethod();
 
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.createClass("DropPropertyIndexTestClass");
     oClass.createProperty("prop1", EXPECTED_PROP1_TYPE);
     oClass.createProperty("prop2", EXPECTED_PROP2_TYPE);
-
-    schema.save();
   }
 
   @AfterMethod
   public void afterMethod() throws Exception {
     database.command(new OCommandSQL("drop class DropPropertyIndexTestClass")).execute();
     database.getMetadata().getSchema().reload();
-    database.close();
+
+		super.afterMethod();
   }
 
   @Test

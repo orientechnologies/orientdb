@@ -16,12 +16,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -36,21 +31,19 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 @Test(groups = { "index" })
-public class ClassIndexTest {
-  private final ODatabaseDocumentTx database;
+public class ClassIndexTest extends DocumentDBBaseTest {
+
   private OClass                    oClass;
   private OClass                    oSuperClass;
 
-  @Parameters(value = "url")
-  public ClassIndexTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public ClassIndexTest(@Optional String url) {
+		super(url);
+	}
 
-  @BeforeClass
-  public void beforeClass() {
-    if (database.isClosed()) {
-      database.open("admin", "admin");
-    }
+	@BeforeClass
+  public void beforeClass() throws Exception {
+		super.beforeClass();
 
     final OSchema schema = database.getMetadata().getSchema();
 
@@ -89,39 +82,6 @@ public class ClassIndexTest {
     oClass.setSuperClass(oSuperClass);
 
     schema.save();
-    database.close();
-  }
-
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
-  }
-
-  @AfterClass
-  public void afterClass() {
-    if (database.isClosed()) {
-      database.open("admin", "admin");
-    }
-
-    database.command(new OCommandSQL("delete from ClassIndexTestClass")).execute();
-    database.command(new OCommandSQL("delete from ClassIndexTestSuperClass")).execute();
-    database.command(new OCommandSQL("delete from ClassIndexInTest")).execute();
-
-    database.command(new OCommandSQL("drop class ClassIndexInTest")).execute();
-    database.command(new OCommandSQL("drop class ClassIndexTestClass")).execute();
-
-    database.getMetadata().getSchema().reload();
-
-    database.command(new OCommandSQL("drop class ClassIndexTestSuperClass")).execute();
-
-    database.getMetadata().getSchema().reload();
-    database.getMetadata().getIndexManager().reload();
-
     database.close();
   }
 

@@ -26,8 +26,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -57,19 +56,34 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
-public class CRUDDocumentPhysicalTest {
-  protected static final int  TOT_RECORDS         = 100;
-  protected static final int  TOT_RECORDS_COMPANY = 10;
+public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
+  protected static final int TOT_RECORDS         = 100;
+  protected static final int TOT_RECORDS_COMPANY = 10;
 
-  protected long              startRecordNumber;
-  private ODatabaseDocumentTx database;
-  private ODocument           record;
-  private String              url;
-  String                      base64;
+  protected long             startRecordNumber;
+  private ODocument          record;
+  String                     base64;
 
   @Parameters(value = "url")
-  public CRUDDocumentPhysicalTest(final String iURL) {
-    url = iURL;
+  public CRUDDocumentPhysicalTest(@Optional String url) {
+    super(url);
+  }
+
+  @BeforeMethod
+  @Override
+  public void beforeMethod() throws Exception {
+    database.close();
+
+    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+  }
+
+  @AfterClass
+  @Override
+  public void afterClass() throws Exception {
+    database.close();
+
+    database = createDatabaseInstance(url);
+    super.afterClass();
   }
 
   @Test
@@ -86,333 +100,254 @@ public class CRUDDocumentPhysicalTest {
 
   @Test
   public void cleanAll() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    record = database.newInstance();
 
-    try {
-      record = database.newInstance();
+    startRecordNumber = database.countClusterElements("Account");
 
-      startRecordNumber = database.countClusterElements("Account");
+    // DELETE ALL THE RECORDS IN THE CLUSTER
+    while (database.countClusterElements("Account") > 0)
+      for (ODocument rec : database.browseCluster("Account"))
+        if (rec != null)
+          rec.delete();
 
-      // DELETE ALL THE RECORDS IN THE CLUSTER
-      while (database.countClusterElements("Account") > 0)
-        for (ODocument rec : database.browseCluster("Account"))
-          if (rec != null)
-            rec.delete();
-
-      Assert.assertEquals(database.countClusterElements("Account"), 0);
-    } finally {
-      database.close();
-    }
+    Assert.assertEquals(database.countClusterElements("Account"), 0);
   }
 
   @Test(dependsOnMethods = "cleanAll")
   public void create() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    startRecordNumber = database.countClusterElements("Account");
 
-    try {
-      startRecordNumber = database.countClusterElements("Account");
+    byte[] binary = new byte[100];
+    for (int b = 0; b < binary.length; ++b)
+      binary[b] = (byte) b;
 
-      byte[] binary = new byte[100];
-      for (int b = 0; b < binary.length; ++b)
-        binary[b] = (byte) b;
+    base64 = OBase64Utils.encodeBytes(binary);
 
-      base64 = OBase64Utils.encodeBytes(binary);
+    final int accountClusterId = database.getClusterIdByName("Account");
 
-      final int accountClusterId = database.getClusterIdByName("Account");
+    for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
+      record.reset();
 
-      for (long i = startRecordNumber; i < startRecordNumber + TOT_RECORDS; ++i) {
-        record.reset();
+      record.setClassName("Account");
+      record.field("id", i);
+      record.field("name", "Gipsy");
+      record.field("location", "Italy");
+      record.field("salary", (i + 300f));
+      record.field("binary", binary);
+      record.field("nonSchemaBinary", binary);
+      record.field("testLong", 10000000000L); // TEST LONG
+      record.field("extra", "This is an extra field not included in the schema");
+      record.field("value", (byte) 10);
 
-        record.setClassName("Account");
-        record.field("id", i);
-        record.field("name", "Gipsy");
-        record.field("location", "Italy");
-        record.field("salary", (i + 300f));
-        record.field("binary", binary);
-        record.field("nonSchemaBinary", binary);
-        record.field("testLong", 10000000000L); // TEST LONG
-        record.field("extra", "This is an extra field not included in the schema");
-        record.field("value", (byte) 10);
+      record.save();
+      Assert.assertEquals(record.getIdentity().getClusterId(), accountClusterId);
+    }
 
-        record.save();
-        Assert.assertEquals(record.getIdentity().getClusterId(), accountClusterId);
-      }
-
-      long startRecordNumberL = database.countClusterElements("Company");
-      final ODocument doc = new ODocument();
-      for (long i = startRecordNumberL; i < startRecordNumberL + TOT_RECORDS_COMPANY; ++i) {
-        doc.setClassName("Company");
-        doc.field("id", i);
-        doc.field("name", "Microsoft" + i);
-        doc.field("employees", (int) (100000 + i));
-        database.save(doc);
-        doc.reset();
-      }
-    } finally {
-      database.close();
+    long startRecordNumberL = database.countClusterElements("Company");
+    final ODocument doc = new ODocument();
+    for (long i = startRecordNumberL; i < startRecordNumberL + TOT_RECORDS_COMPANY; ++i) {
+      doc.setClassName("Company");
+      doc.field("id", i);
+      doc.field("name", "Microsoft" + i);
+      doc.field("employees", (int) (100000 + i));
+      database.save(doc);
+      doc.reset();
     }
   }
 
   @Test(dependsOnMethods = "create")
   public void testCreate() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
-    try {
-      Assert.assertEquals(database.countClusterElements("Account") - startRecordNumber, TOT_RECORDS);
-
-    } finally {
-      database.close();
-    }
+    Assert.assertEquals(database.countClusterElements("Account") - startRecordNumber, TOT_RECORDS);
   }
 
   @Test(dependsOnMethods = "testCreate")
   public void readAndBrowseDescendingAndCheckHoleUtilization() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    // BROWSE IN THE OPPOSITE ORDER
+    byte[] binary;
 
-    try {
-      // BROWSE IN THE OPPOSITE ORDER
-      byte[] binary;
+    Set<Integer> ids = new HashSet<Integer>();
 
-      Set<Integer> ids = new HashSet<Integer>();
+    for (int i = 0; i < TOT_RECORDS; i++)
+      ids.add(i);
 
-      for (int i = 0; i < TOT_RECORDS; i++)
-        ids.add(i);
+    ORecordIteratorCluster<ODocument> it = database.browseCluster("Account");
+    for (it.last(); it.hasPrevious();) {
+      ODocument rec = it.previous();
 
-      ORecordIteratorCluster<ODocument> it = database.browseCluster("Account");
-      for (it.last(); it.hasPrevious();) {
-        ODocument rec = it.previous();
+      if (rec != null) {
+        int id = ((Number) rec.field("id")).intValue();
+        Assert.assertTrue(ids.remove(id));
+        Assert.assertEquals(rec.field("name"), "Gipsy");
+        Assert.assertEquals(rec.field("location"), "Italy");
+        Assert.assertEquals(((Number) rec.field("testLong")).longValue(), 10000000000L);
+        Assert.assertEquals(((Number) rec.field("salary")).intValue(), id + 300);
+        Assert.assertNotNull(rec.field("extra"));
+        Assert.assertEquals(((Byte) rec.field("value", Byte.class)).byteValue(), (byte) 10);
 
-        if (rec != null) {
-          int id = ((Number) rec.field("id")).intValue();
-          Assert.assertTrue(ids.remove(id));
-          Assert.assertEquals(rec.field("name"), "Gipsy");
-          Assert.assertEquals(rec.field("location"), "Italy");
-          Assert.assertEquals(((Number) rec.field("testLong")).longValue(), 10000000000L);
-          Assert.assertEquals(((Number) rec.field("salary")).intValue(), id + 300);
-          Assert.assertNotNull(rec.field("extra"));
-          Assert.assertEquals(((Byte) rec.field("value", Byte.class)).byteValue(), (byte) 10);
+        binary = rec.field("binary", OType.BINARY);
 
-          binary = rec.field("binary", OType.BINARY);
-
-          for (int b = 0; b < binary.length; ++b)
-            Assert.assertEquals(binary[b], (byte) b);
-        }
+        for (int b = 0; b < binary.length; ++b)
+          Assert.assertEquals(binary[b], (byte) b);
       }
-
-      Assert.assertTrue(ids.isEmpty());
-
-    } finally {
-      database.close();
     }
+
+    Assert.assertTrue(ids.isEmpty());
   }
 
   @Test(dependsOnMethods = "readAndBrowseDescendingAndCheckHoleUtilization")
   public void update() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    int i = 0;
+    for (ODocument rec : database.browseCluster("Account")) {
 
-    try {
-      int i = 0;
-      for (ODocument rec : database.browseCluster("Account")) {
+      if (i % 2 == 0)
+        rec.field("location", "Spain");
 
-        if (i % 2 == 0)
-          rec.field("location", "Spain");
+      rec.field("price", i + 100);
 
-        rec.field("price", i + 100);
+      rec.save();
 
-        rec.save();
-
-        i++;
-      }
-
-    } finally {
-      database.close();
+      i++;
     }
   }
 
   @Test(dependsOnMethods = "update")
   public void testUpdate() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    for (ODocument rec : database.browseCluster("Account")) {
+      int price = ((Number) rec.field("price")).intValue();
+      Assert.assertTrue(price - 100 >= 0);
 
-    try {
-      for (ODocument rec : database.browseCluster("Account")) {
-        int price = ((Number) rec.field("price")).intValue();
-        Assert.assertTrue(price - 100 >= 0);
-
-        if ((price - 100) % 2 == 0)
-          Assert.assertEquals(rec.field("location"), "Spain");
-        else
-          Assert.assertEquals(rec.field("location"), "Italy");
-      }
-
-    } finally {
-      database.close();
+      if ((price - 100) % 2 == 0)
+        Assert.assertEquals(rec.field("location"), "Spain");
+      else
+        Assert.assertEquals(rec.field("location"), "Italy");
     }
   }
 
   @Test(dependsOnMethods = "testUpdate")
   public void testDoubleChanges() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    ODocument vDoc = database.newInstance();
+    vDoc.setClassName("Profile");
+    vDoc.field("nick", "JayM1").field("name", "Jay").field("surname", "Miner");
+    vDoc.save();
 
-    try {
-      ODocument vDoc = database.newInstance();
-      vDoc.setClassName("Profile");
-      vDoc.field("nick", "JayM1").field("name", "Jay").field("surname", "Miner");
-      vDoc.save();
+    Assert.assertEquals(vDoc.getIdentity().getClusterId(), vDoc.getSchemaClass().getDefaultClusterId());
 
-      Assert.assertEquals(vDoc.getIdentity().getClusterId(), vDoc.getSchemaClass().getDefaultClusterId());
+    vDoc = database.load(vDoc.getIdentity());
+    vDoc.field("nick", "JayM2");
+    vDoc.field("nick", "JayM3");
+    vDoc.save();
 
-      vDoc = database.load(vDoc.getIdentity());
-      vDoc.field("nick", "JayM2");
-      vDoc.field("nick", "JayM3");
-      vDoc.save();
+    Set<OIndex<?>> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndexes();
 
-      Set<OIndex<?>> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getIndexes();
+    Assert.assertEquals(indexes.size(), 1);
 
-      Assert.assertEquals(indexes.size(), 1);
+    OIndex indexDefinition = indexes.iterator().next();
+    OIdentifiable vOldName = (OIdentifiable) indexDefinition.get("JayM1");
+    Assert.assertNull(vOldName);
 
-      OIndex indexDefinition = indexes.iterator().next();
-      OIdentifiable vOldName = (OIdentifiable) indexDefinition.get("JayM1");
-      Assert.assertNull(vOldName);
+    OIdentifiable vIntermediateName = (OIdentifiable) indexDefinition.get("JayM2");
+    Assert.assertNull(vIntermediateName);
 
-      OIdentifiable vIntermediateName = (OIdentifiable) indexDefinition.get("JayM2");
-      Assert.assertNull(vIntermediateName);
-
-      OIdentifiable vNewName = (OIdentifiable) indexDefinition.get("JayM3");
-      Assert.assertNotNull(vNewName);
-
-    } finally {
-      database.close();
-    }
+    OIdentifiable vNewName = (OIdentifiable) indexDefinition.get("JayM3");
+    Assert.assertNotNull(vNewName);
   }
 
   @Test(dependsOnMethods = "testDoubleChanges")
   public void testMultiValues() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    ODocument vDoc = database.newInstance();
+    vDoc.setClassName("Profile");
+    vDoc.field("nick", "Jacky").field("name", "Jack").field("surname", "Tramiel");
+    vDoc.save();
 
-    try {
-      ODocument vDoc = database.newInstance();
-      vDoc.setClassName("Profile");
-      vDoc.field("nick", "Jacky").field("name", "Jack").field("surname", "Tramiel");
-      vDoc.save();
+    // add a new record with the same name "nameA".
+    vDoc = database.newInstance();
+    vDoc.setClassName("Profile");
+    vDoc.field("nick", "Jack").field("name", "Jack").field("surname", "Bauer");
+    vDoc.save();
 
-      // add a new record with the same name "nameA".
-      vDoc = database.newInstance();
-      vDoc.setClassName("Profile");
-      vDoc.field("nick", "Jack").field("name", "Jack").field("surname", "Bauer");
-      vDoc.save();
+    Collection<OIndex<?>> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndexes();
+    Assert.assertEquals(indexes.size(), 1);
 
-      Collection<OIndex<?>> indexes = database.getMetadata().getSchema().getClass("Profile").getProperty("name").getIndexes();
-      Assert.assertEquals(indexes.size(), 1);
+    OIndex<?> indexName = indexes.iterator().next();
+    // We must get 2 records for "nameA".
+    Collection<OIdentifiable> vName1 = (Collection<OIdentifiable>) indexName.get("Jack");
+    Assert.assertEquals(vName1.size(), 2);
 
-      OIndex<?> indexName = indexes.iterator().next();
-      // We must get 2 records for "nameA".
-      Collection<OIdentifiable> vName1 = (Collection<OIdentifiable>) indexName.get("Jack");
-      Assert.assertEquals(vName1.size(), 2);
+    // Remove this last record.
+    database.delete(vDoc);
 
-      // Remove this last record.
-      database.delete(vDoc);
-
-      // We must get 1 record for "nameA".
-      vName1 = (Collection<OIdentifiable>) indexName.get("Jack");
-      Assert.assertEquals(vName1.size(), 1);
-
-    } finally {
-      database.close();
-    }
+    // We must get 1 record for "nameA".
+    vName1 = (Collection<OIdentifiable>) indexName.get("Jack");
+    Assert.assertEquals(vName1.size(), 1);
   }
 
   @Test(dependsOnMethods = "testMultiValues")
   public void testUnderscoreField() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    ODocument vDoc = database.newInstance();
+    vDoc.setClassName("Profile");
+    vDoc.field("nick", "MostFamousJack").field("name", "Kiefer").field("surname", "Sutherland")
+        .field("tag_list", new String[] { "actor", "myth" });
+    vDoc.save();
 
-    try {
-      ODocument vDoc = database.newInstance();
-      vDoc.setClassName("Profile");
-      vDoc.field("nick", "MostFamousJack").field("name", "Kiefer").field("surname", "Sutherland")
-          .field("tag_list", new String[] { "actor", "myth" });
-      vDoc.save();
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select from Profile where name = 'Kiefer' and tag_list.size() > 0 ")).execute();
 
-      List<ODocument> result = database.command(
-          new OSQLSynchQuery<ODocument>("select from Profile where name = 'Kiefer' and tag_list.size() > 0 ")).execute();
-
-      Assert.assertEquals(result.size(), 1);
-    } finally {
-      database.close();
-    }
+    Assert.assertEquals(result.size(), 1);
   }
 
   public void testLazyLoadingByLink() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-    try {
-      ODocument coreDoc = new ODocument();
-      ODocument linkDoc = new ODocument();
+    ODocument coreDoc = new ODocument();
+    ODocument linkDoc = new ODocument();
 
-      coreDoc.field("link", linkDoc);
-      coreDoc.save();
+    coreDoc.field("link", linkDoc);
+    coreDoc.save();
 
-      ODocument coreDocCopy = database.load(coreDoc.getIdentity(), "*:-1", true);
-      Assert.assertNotSame(coreDocCopy, coreDoc);
+    ODocument coreDocCopy = database.load(coreDoc.getIdentity(), "*:-1", true);
+    Assert.assertNotSame(coreDocCopy, coreDoc);
 
-      Assert.assertTrue(coreDocCopy.field("link", OType.LINK) instanceof ORecordId);
-      Assert.assertTrue(coreDocCopy.field("link", (OType) null) instanceof ODocument);
-    } finally {
-      database.close();
-    }
+    Assert.assertTrue(coreDocCopy.field("link", OType.LINK) instanceof ORecordId);
+    Assert.assertTrue(coreDocCopy.field("link", (OType) null) instanceof ODocument);
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void testDbCacheUpdated() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    ODocument vDoc = database.newInstance();
+    vDoc.setClassName("Profile");
 
-    try {
-      ODocument vDoc = database.newInstance();
-      vDoc.setClassName("Profile");
+    Set<String> tags = new HashSet<String>();
+    tags.add("test");
+    tags.add("yeah");
 
-      Set<String> tags = new HashSet<String>();
-      tags.add("test");
-      tags.add("yeah");
+    vDoc.field("nick", "Dexter").field("name", "Michael").field("surname", "Hall").field("tag_list", tags);
+    vDoc.save();
 
-      vDoc.field("nick", "Dexter").field("name", "Michael").field("surname", "Hall").field("tag_list", tags);
-      vDoc.save();
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where name = 'Michael'"))
+        .execute();
 
-      List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from Profile where name = 'Michael'"))
-          .execute();
+    Assert.assertEquals(result.size(), 1);
+    ODocument dexter = result.get(0);
+    ((Collection<String>) dexter.field("tag_list")).add("actor");
 
-      Assert.assertEquals(result.size(), 1);
-      ODocument dexter = result.get(0);
-      ((Collection<String>) dexter.field("tag_list")).add("actor");
+    dexter.setDirty();
+    dexter.save();
 
-      dexter.setDirty();
-      dexter.save();
-
-      result = database.command(
-          new OSQLSynchQuery<ODocument>("select from Profile where tag_list in 'actor' and tag_list in 'test'")).execute();
-      Assert.assertEquals(result.size(), 1);
-
-    } finally {
-      database.close();
-    }
+    result = database
+        .command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list in 'actor' and tag_list in 'test'")).execute();
+    Assert.assertEquals(result.size(), 1);
   }
 
   @Test(dependsOnMethods = "testUnderscoreField")
   public void testUpdateLazyDirtyPropagation() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    for (ODocument rec : database.browseCluster("Profile")) {
+      Assert.assertFalse(rec.isDirty());
 
-    try {
-      for (ODocument rec : database.browseCluster("Profile")) {
-        Assert.assertFalse(rec.isDirty());
-
-        Collection<?> followers = rec.field("followers");
-        if (followers != null && followers.size() > 0) {
-          followers.remove(followers.iterator().next());
-          Assert.assertTrue(rec.isDirty());
-          break;
-        }
+      Collection<?> followers = rec.field("followers");
+      if (followers != null && followers.size() > 0) {
+        followers.remove(followers.iterator().next());
+        Assert.assertTrue(rec.isDirty());
+        break;
       }
-
-    } finally {
-      database.close();
     }
   }
 
@@ -432,156 +367,114 @@ public class CRUDDocumentPhysicalTest {
 
     final ORecordId rid = (ORecordId) newDoc.save().getIdentity();
 
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-    try {
-      final ODocument loadedDoc = database.load(rid);
+    final ODocument loadedDoc = database.load(rid);
 
-      Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
+    Assert.assertTrue(newDoc.hasSameContentOf(loadedDoc));
 
-      Assert.assertTrue(loadedDoc.containsField("map1"));
-      Assert.assertTrue(loadedDoc.field("map1") instanceof Map<?, ?>);
-      final Map<String, ODocument> loadedMap1 = loadedDoc.field("map1");
-      Assert.assertEquals(loadedMap1.size(), 1);
+    Assert.assertTrue(loadedDoc.containsField("map1"));
+    Assert.assertTrue(loadedDoc.field("map1") instanceof Map<?, ?>);
+    final Map<String, ODocument> loadedMap1 = loadedDoc.field("map1");
+    Assert.assertEquals(loadedMap1.size(), 1);
 
-      Assert.assertTrue(loadedMap1.containsKey("map2"));
-      Assert.assertTrue(loadedMap1.get("map2") instanceof Map<?, ?>);
-      final Map<String, ODocument> loadedMap2 = (Map<String, ODocument>) loadedMap1.get("map2");
-      Assert.assertEquals(loadedMap2.size(), 1);
+    Assert.assertTrue(loadedMap1.containsKey("map2"));
+    Assert.assertTrue(loadedMap1.get("map2") instanceof Map<?, ?>);
+    final Map<String, ODocument> loadedMap2 = (Map<String, ODocument>) loadedMap1.get("map2");
+    Assert.assertEquals(loadedMap2.size(), 1);
 
-      Assert.assertTrue(loadedMap2.containsKey("map3"));
-      Assert.assertTrue(loadedMap2.get("map3") instanceof Map<?, ?>);
-      final Map<String, ODocument> loadedMap3 = (Map<String, ODocument>) loadedMap2.get("map3");
-      Assert.assertEquals(loadedMap3.size(), 0);
-    } finally {
-      database.close();
-    }
+    Assert.assertTrue(loadedMap2.containsKey("map3"));
+    Assert.assertTrue(loadedMap2.get("map3") instanceof Map<?, ?>);
+    final Map<String, ODocument> loadedMap3 = (Map<String, ODocument>) loadedMap2.get("map3");
+    Assert.assertEquals(loadedMap3.size(), 0);
   }
 
   @Test
   public void commandWithPositionalParameters() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
     List<ODocument> result = database.command(query).execute("Barack", "Obama");
 
     Assert.assertTrue(result.size() != 0);
-
-    database.close();
   }
 
   @Test
   public void queryWithPositionalParameters() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
+    List<ODocument> result = database.query(query, "Barack", "Obama");
 
-    try {
-      final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where name = ? and surname = ?");
-      List<ODocument> result = database.query(query, "Barack", "Obama");
-
-      Assert.assertTrue(result.size() != 0);
-
-    } finally {
-      database.close();
-    }
+    Assert.assertTrue(result.size() != 0);
   }
 
   @Test
   public void commandWithNamedParameters() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+        "select from Profile where name = :name and surname = :surname");
 
-    try {
-      final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-          "select from Profile where name = :name and surname = :surname");
+    HashMap<String, String> params = new HashMap<String, String>();
+    params.put("name", "Barack");
+    params.put("surname", "Obama");
 
-      HashMap<String, String> params = new HashMap<String, String>();
-      params.put("name", "Barack");
-      params.put("surname", "Obama");
+    List<ODocument> result = database.command(query).execute(params);
 
-      List<ODocument> result = database.command(query).execute(params);
-
-      Assert.assertTrue(result.size() != 0);
-
-    } finally {
-      database.close();
-    }
+    Assert.assertTrue(result.size() != 0);
   }
 
   @Test
   public void commandWrongParameterNames() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    ODocument doc = database.newInstance();
 
     try {
-      ODocument doc = database.newInstance();
+      doc.field("a:b", 10);
+      Assert.assertFalse(true);
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(true);
+    }
 
-      try {
-        doc.field("a:b", 10);
-        Assert.assertFalse(true);
-      } catch (IllegalArgumentException e) {
-        Assert.assertTrue(true);
-      }
-
-      try {
-        doc.field("a,b", 10);
-        Assert.assertFalse(true);
-      } catch (IllegalArgumentException e) {
-        Assert.assertTrue(true);
-      }
-
-    } finally {
-      database.close();
+    try {
+      doc.field("a,b", 10);
+      Assert.assertFalse(true);
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(true);
     }
   }
 
   @Test
   public void queryWithNamedParameters() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
+        "select from Profile where name = :name and surname = :surname");
 
-    try {
-      final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(
-          "select from Profile where name = :name and surname = :surname");
+    HashMap<String, String> params = new HashMap<String, String>();
+    params.put("name", "Barack");
+    params.put("surname", "Obama");
 
-      HashMap<String, String> params = new HashMap<String, String>();
-      params.put("name", "Barack");
-      params.put("surname", "Obama");
+    List<ODocument> result = database.query(query, params);
 
-      List<ODocument> result = database.query(query, params);
-
-      Assert.assertTrue(result.size() != 0);
-
-    } finally {
-      database.close();
-    }
+    Assert.assertTrue(result.size() != 0);
   }
 
   public void testJSONLinkd() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-    try {
-      ODocument jaimeDoc = new ODocument("PersonTest");
-      jaimeDoc.field("name", "jaime");
-      jaimeDoc.save();
+    ODocument jaimeDoc = new ODocument("PersonTest");
+    jaimeDoc.field("name", "jaime");
+    jaimeDoc.save();
 
-      ODocument cerseiDoc = new ODocument("PersonTest");
-      cerseiDoc.fromJSON("{\"@type\":\"d\",\"name\":\"cersei\",\"valonqar\":" + jaimeDoc.toJSON() + "}");
-      cerseiDoc.save();
+    ODocument cerseiDoc = new ODocument("PersonTest");
+    cerseiDoc.fromJSON("{\"@type\":\"d\",\"name\":\"cersei\",\"valonqar\":" + jaimeDoc.toJSON() + "}");
+    cerseiDoc.save();
 
-      // The link between jamie and tyrion is not saved properly
-      ODocument tyrionDoc = new ODocument("PersonTest");
-      tyrionDoc.fromJSON("{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"relationship\":\"brother\",\"contact\":"
-          + jaimeDoc.toJSON() + "}}");
-      tyrionDoc.save();
+    // The link between jamie and tyrion is not saved properly
+    ODocument tyrionDoc = new ODocument("PersonTest");
+    tyrionDoc.fromJSON("{\"@type\":\"d\",\"name\":\"tyrion\",\"emergency_contact\":{\"relationship\":\"brother\",\"contact\":"
+        + jaimeDoc.toJSON() + "}}");
+    tyrionDoc.save();
 
-      System.out.println("The saved documents are:");
-      for (ODocument o : database.browseClass("PersonTest")) {
-        System.out.println("my id is " + o.getIdentity().toString());
-        System.out.println("my name is: " + o.field("name"));
-        System.out.println("my ODocument representation is " + o);
-        System.out.println("my JSON representation is " + o.toJSON());
-        System.out.println("my traversable links are: ");
-        for (OIdentifiable id : new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
-          System.out.println(database.load(id.getIdentity()).toJSON());
-        }
+    System.out.println("The saved documents are:");
+    for (ODocument o : database.browseClass("PersonTest")) {
+      System.out.println("my id is " + o.getIdentity().toString());
+      System.out.println("my name is: " + o.field("name"));
+      System.out.println("my ODocument representation is " + o);
+      System.out.println("my JSON representation is " + o.toJSON());
+      System.out.println("my traversable links are: ");
+      for (OIdentifiable id : new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
+        System.out.println(database.load(id.getIdentity()).toJSON());
       }
-    } finally {
-      database.close();
     }
   }
 
@@ -611,8 +504,6 @@ public class CRUDDocumentPhysicalTest {
 
   @Test
   public void testInvalidFetchplanLoad() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
     ODocument doc = database.newInstance();
     doc.field("test", "test");
     doc.save();
@@ -637,26 +528,24 @@ public class CRUDDocumentPhysicalTest {
     } finally {
       database.close();
     }
+
     database = null;
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-    try {
-      doc = testInvalidFetchPlanClearL1Cache(doc, docRid);
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(0)));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(1)));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(2)));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(0)));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(1)));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(2)));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(0)));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(1)));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(2)));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(0)));
-      doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(1)));
-      doc = database.load(docRid);
-      doc.delete();
-    } finally {
-      database.close();
-    }
+
+    doc = testInvalidFetchPlanClearL1Cache(doc, docRid);
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(0)));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(0)));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(0)));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(0)));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    doc = database.load(docRid);
+    doc.delete();
   }
 
   private ODocument testInvalidFetchPlanInvalidateL1Cache(ODocument doc, ORID docRid) {
@@ -733,8 +622,6 @@ public class CRUDDocumentPhysicalTest {
 
   @Test
   public void polymorphicQuery() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
     final ORecordAbstract<Object> newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
 
     List<ODocument> superClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
@@ -757,14 +644,10 @@ public class CRUDDocumentPhysicalTest {
     }
 
     newAccount.delete();
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testCreate")
   public void testBrowseClassHasNextTwice() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
     ODocument doc1 = null;
     for (Iterator<ODocument> itDoc = database.browseClass("Account"); itDoc.hasNext();) {
       doc1 = itDoc.next();
@@ -779,14 +662,10 @@ public class CRUDDocumentPhysicalTest {
     }
 
     Assert.assertEquals(doc1, doc2);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testCreate")
   public void nonPolymorphicQuery() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
     final ORecordAbstract<Object> newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
 
     List<ODocument> allResult = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
@@ -810,174 +689,142 @@ public class CRUDDocumentPhysicalTest {
     }
 
     newAccount.delete();
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "cleanAll")
   public void asynchInsertion() {
-    ODatabaseDocumentPool pool = new ODatabaseDocumentPool(url, "admin", "admin");
+    startRecordNumber = database.countClusterElements("Account");
+    final AtomicInteger callBackCalled = new AtomicInteger();
 
-    database = pool.acquire();
+    final long total = startRecordNumber + TOT_RECORDS;
+    for (long i = startRecordNumber; i < total; ++i) {
+      record.reset();
+      record.setClassName("Account");
 
-    try {
-      startRecordNumber = database.countClusterElements("Account");
-      final AtomicInteger callBackCalled = new AtomicInteger();
+      record.field("id", i);
+      record.field("name", "Asynch insertion test");
+      record.field("location", "Italy");
+      record.field("salary", (i + 300));
 
-      final long total = startRecordNumber + TOT_RECORDS;
-      for (long i = startRecordNumber; i < total; ++i) {
-        record.reset();
-        record.setClassName("Account");
+      database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<OClusterPosition>() {
 
-        record.field("id", i);
-        record.field("name", "Asynch insertion test");
-        record.field("location", "Italy");
-        record.field("salary", (i + 300));
-
-        database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<OClusterPosition>() {
-
-          @Override
-          public void call(ORecordId iRID, OClusterPosition iParameter) {
-            callBackCalled.incrementAndGet();
-          }
-        }, null);
-      }
-
-      while (callBackCalled.intValue() < total) {
-        try {
-          Thread.sleep(100);
-        } catch (InterruptedException e) {
+        @Override
+        public void call(ORecordId iRID, OClusterPosition iParameter) {
+          callBackCalled.incrementAndGet();
         }
-      }
-
-      Assert.assertEquals(callBackCalled.intValue(), total);
-
-      // WAIT UNTIL ALL RECORD ARE INSERTED. USE A NEW DATABASE CONNECTION
-      // TO AVOID TO ENQUEUE THE COUNT ITSELF
-      final ODatabaseDocumentTx db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-      long tot;
-      while ((tot = db.countClusterElements("Account")) < startRecordNumber + TOT_RECORDS) {
-        System.out.println("Asynchronous insertion: found " + tot + " records but waiting till "
-            + (startRecordNumber + TOT_RECORDS) + " is reached");
-        try {
-          Thread.sleep(100);
-        } catch (InterruptedException e) {
-        }
-      }
-      db.close();
-
-      if (database.countClusterElements("Account") > 0)
-        for (ODocument d : database.browseClass("Account")) {
-          if (d.field("name").equals("Asynch insertion test"))
-            d.delete();
-        }
-
-    } finally {
-      database.close();
+      }, null);
     }
+
+    while (callBackCalled.intValue() < total) {
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+      }
+    }
+
+    Assert.assertEquals(callBackCalled.intValue(), total);
+
+    // WAIT UNTIL ALL RECORD ARE INSERTED. USE A NEW DATABASE CONNECTION
+    // TO AVOID TO ENQUEUE THE COUNT ITSELF
+    final ODatabaseDocumentTx db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    long tot;
+    while ((tot = db.countClusterElements("Account")) < startRecordNumber + TOT_RECORDS) {
+      System.out.println("Asynchronous insertion: found " + tot + " records but waiting till " + (startRecordNumber + TOT_RECORDS)
+          + " is reached");
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException e) {
+      }
+    }
+    db.close();
+
+    if (database.countClusterElements("Account") > 0)
+      for (ODocument d : database.browseClass("Account")) {
+        if (d.field("name").equals("Asynch insertion test"))
+          d.delete();
+      }
   }
 
   @Test(dependsOnMethods = "cleanAll")
   public void testEmbeddeDocumentInTx() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
     ODocument bank = database.newInstance("Account");
+    database.begin();
 
-    try {
-      database.begin();
+    bank.field("Name", "MyBank");
 
-      bank.field("Name", "MyBank");
+    ODocument bank2 = database.newInstance("Account");
+    bank.field("embedded", bank2, OType.EMBEDDED);
+    bank.save();
 
-      ODocument bank2 = database.newInstance("Account");
-      bank.field("embedded", bank2, OType.EMBEDDED);
-      bank.save();
+    database.commit();
 
-      database.commit();
-
-    } finally {
-      database.close();
-    }
+    database.close();
 
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-    try {
-      bank.reload();
-      Assert.assertTrue(((ODocument) bank.field("embedded")).isEmbedded());
-      Assert.assertFalse(((ODocument) bank.field("embedded")).getIdentity().isPersistent());
+    bank.reload();
+    Assert.assertTrue(((ODocument) bank.field("embedded")).isEmbedded());
+    Assert.assertFalse(((ODocument) bank.field("embedded")).getIdentity().isPersistent());
 
-      bank.delete();
-
-    } finally {
-      database.close();
-    }
+    bank.delete();
   }
 
   @Test(dependsOnMethods = "cleanAll")
   public void testUpdateInChain() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-
     ODocument bank = database.newInstance("Account");
-    try {
-      bank.field("name", "MyBankChained");
+    bank.field("name", "MyBankChained");
 
-      // EMBEDDED
-      ODocument embedded = database.newInstance("Account").field("name", "embedded1");
-      bank.field("embedded", embedded, OType.EMBEDDED);
+    // EMBEDDED
+    ODocument embedded = database.newInstance("Account").field("name", "embedded1");
+    bank.field("embedded", embedded, OType.EMBEDDED);
 
-      ODocument[] embeddeds = new ODocument[] { database.newInstance("Account").field("name", "embedded2"),
-          database.newInstance("Account").field("name", "embedded3") };
-      bank.field("embeddeds", embeddeds, OType.EMBEDDEDLIST);
+    ODocument[] embeddeds = new ODocument[] { database.newInstance("Account").field("name", "embedded2"),
+        database.newInstance("Account").field("name", "embedded3") };
+    bank.field("embeddeds", embeddeds, OType.EMBEDDEDLIST);
 
-      // LINKED
-      ODocument linked = database.newInstance("Account").field("name", "linked1");
-      bank.field("linked", linked);
+    // LINKED
+    ODocument linked = database.newInstance("Account").field("name", "linked1");
+    bank.field("linked", linked);
 
-      ODocument[] linkeds = new ODocument[] { database.newInstance("Account").field("name", "linked2"),
-          database.newInstance("Account").field("name", "linked3") };
-      bank.field("linkeds", linkeds, OType.LINKLIST);
+    ODocument[] linkeds = new ODocument[] { database.newInstance("Account").field("name", "linked2"),
+        database.newInstance("Account").field("name", "linked3") };
+    bank.field("linkeds", linkeds, OType.LINKLIST);
 
-      bank.save();
-
-    } finally {
-      database.close();
-    }
+    bank.save();
+    database.close();
 
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    bank.reload();
+
+    ODocument changedDoc1 = bank.field("embedded.total", 100);
+    // MUST CHANGE THE PARENT DOC BECAUSE IT'S EMBEDDED
+    Assert.assertEquals(changedDoc1.field("name"), "MyBankChained");
+    Assert.assertEquals(changedDoc1.field("embedded.total"), 100);
+
+    ODocument changedDoc2 = bank.field("embeddeds.total", 200);
+    // MUST CHANGE THE PARENT DOC BECAUSE IT'S EMBEDDED
+    Assert.assertEquals(changedDoc2.field("name"), "MyBankChained");
+
+    Collection<Integer> intEmbeddeds = changedDoc2.field("embeddeds.total");
+    for (Integer e : intEmbeddeds)
+      Assert.assertEquals(e.intValue(), 200);
+
+    ODocument changedDoc3 = bank.field("linked.total", 300);
+    // MUST CHANGE THE LINKED DOCUMENT
+    Assert.assertEquals(changedDoc3.field("name"), "linked1");
+    Assert.assertEquals(changedDoc3.field("total"), 300);
+
     try {
-      bank.reload();
-
-      ODocument changedDoc1 = bank.field("embedded.total", 100);
-      // MUST CHANGE THE PARENT DOC BECAUSE IT'S EMBEDDED
-      Assert.assertEquals(changedDoc1.field("name"), "MyBankChained");
-      Assert.assertEquals(changedDoc1.field("embedded.total"), 100);
-
-      ODocument changedDoc2 = bank.field("embeddeds.total", 200);
-      // MUST CHANGE THE PARENT DOC BECAUSE IT'S EMBEDDED
-      Assert.assertEquals(changedDoc2.field("name"), "MyBankChained");
-      Collection<Integer> embeddeds = changedDoc2.field("embeddeds.total");
-      for (Integer e : embeddeds)
-        Assert.assertEquals(e.intValue(), 200);
-
-      ODocument changedDoc3 = bank.field("linked.total", 300);
-      // MUST CHANGE THE LINKED DOCUMENT
-      Assert.assertEquals(changedDoc3.field("name"), "linked1");
-      Assert.assertEquals(changedDoc3.field("total"), 300);
-
-      try {
-        bank.field("linkeds.total", 400);
-        Assert.assertTrue(false);
-      } catch (IllegalArgumentException e) {
-        // MUST THROW AN EXCEPTION
-        Assert.assertTrue(true);
-      }
-
-      ((ODocument) bank.field("linked")).delete();
-      for (ODocument l : (Collection<ODocument>) bank.field("linkeds"))
-        l.delete();
-      bank.delete();
-
-    } finally {
-      database.close();
+      bank.field("linkeds.total", 400);
+      Assert.assertTrue(false);
+    } catch (IllegalArgumentException e) {
+      // MUST THROW AN EXCEPTION
+      Assert.assertTrue(true);
     }
+
+    ((ODocument) bank.field("linked")).delete();
+    for (ODocument l : (Collection<ODocument>) bank.field("linkeds"))
+      l.delete();
+    bank.delete();
   }
 
   public void testSerialization() {
@@ -1003,57 +850,46 @@ public class CRUDDocumentPhysicalTest {
   }
 
   public void testUpdateNoVersionCheck() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
+    ODocument doc = result.get(0);
+    doc.field("name", "modified");
+    int oldVersion = doc.getVersion();
 
-    try {
-      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
-      ODocument doc = result.get(0);
-      doc.field("name", "modified");
-      int oldVersion = doc.getVersion();
+    ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
+    recordVersion.setCounter(-2);
+    doc.getRecordVersion().copyFrom(recordVersion);
 
-      ORecordVersion recordVersion = OVersionFactory.instance().createVersion();
-      recordVersion.setCounter(-2);
-      doc.getRecordVersion().copyFrom(recordVersion);
+    doc.save();
 
-      doc.save();
-
-      doc.reload();
-      Assert.assertEquals(doc.getVersion(), oldVersion);
-      Assert.assertEquals(doc.field("name"), "modified");
-    } finally {
-      database.close();
-    }
+    doc.reload();
+    Assert.assertEquals(doc.getVersion(), oldVersion);
+    Assert.assertEquals(doc.field("name"), "modified");
   }
 
   public void testCreateEmbddedClassDocument() {
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
-    try {
-      final OSchema schema = database.getMetadata().getSchema();
-      final String SUFFIX = "TESTCLUSTER1";
+    final OSchema schema = database.getMetadata().getSchema();
+    final String SUFFIX = "TESTCLUSTER1";
 
-      OClass testClass1 = schema.createClass("testCreateEmbddedClass1");
-      OClass testClass2 = schema.createClass("testCreateEmbddedClass2");
-      testClass2.createProperty("testClass1Property", OType.EMBEDDED, testClass1);
+    OClass testClass1 = schema.createClass("testCreateEmbddedClass1");
+    OClass testClass2 = schema.createClass("testCreateEmbddedClass2");
+    testClass2.createProperty("testClass1Property", OType.EMBEDDED, testClass1);
 
-      int clusterId = database.addCluster("testCreateEmbddedClass2" + SUFFIX, OStorage.CLUSTER_TYPE.PHYSICAL);
-      schema.getClass("testCreateEmbddedClass2").addClusterId(clusterId);
+    int clusterId = database.addCluster("testCreateEmbddedClass2" + SUFFIX, OStorage.CLUSTER_TYPE.PHYSICAL);
+    schema.getClass("testCreateEmbddedClass2").addClusterId(clusterId);
 
-      testClass1 = schema.getClass("testCreateEmbddedClass1");
-      testClass2 = schema.getClass("testCreateEmbddedClass2");
+    testClass1 = schema.getClass("testCreateEmbddedClass1");
+    testClass2 = schema.getClass("testCreateEmbddedClass2");
 
-      ODocument testClass2Document = new ODocument(testClass2);
-      testClass2Document.field("testClass1Property", new ODocument(testClass1));
-      testClass2Document.save("testCreateEmbddedClass2" + SUFFIX);
+    ODocument testClass2Document = new ODocument(testClass2);
+    testClass2Document.field("testClass1Property", new ODocument(testClass1));
+    testClass2Document.save("testCreateEmbddedClass2" + SUFFIX);
 
-      testClass2Document = database.load(testClass2Document.getIdentity(), "*:-1", true);
-      Assert.assertNotNull(testClass2Document);
+    testClass2Document = database.load(testClass2Document.getIdentity(), "*:-1", true);
+    Assert.assertNotNull(testClass2Document);
 
-      Assert.assertEquals(testClass2Document.getSchemaClass(), testClass2);
+    Assert.assertEquals(testClass2Document.getSchemaClass(), testClass2);
 
-      ODocument embeddedDoc = testClass2Document.field("testClass1Property");
-      Assert.assertEquals(embeddedDoc.getSchemaClass(), testClass1);
-    } finally {
-      database.close();
-    }
+    ODocument embeddedDoc = testClass2Document.field("testClass1Property");
+    Assert.assertEquals(embeddedDoc.getSchemaClass(), testClass1);
   }
 }

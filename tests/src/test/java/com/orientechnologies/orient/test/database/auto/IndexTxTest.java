@@ -6,11 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
@@ -22,35 +18,31 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public class IndexTxTest {
-  private ODatabaseDocumentTx database;
+public class IndexTxTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
-  public IndexTxTest(final String iURL) {
-    this.database = new ODatabaseDocumentTx(iURL);
+  public IndexTxTest(@Optional String url) {
+    super(url);
   }
 
   @BeforeClass
-  public void beforeClass() {
-    database.open("admin", "admin");
+  public void beforeClass() throws Exception {
+    super.beforeClass();
 
     database.command(new OCommandSQL("create class IndexTxTestClass")).execute();
     database.command(new OCommandSQL("create property IndexTxTestClass.name string")).execute();
     database.command(new OCommandSQL("create index IndexTxTestIndex on IndexTxTestClass (name) unique")).execute();
-    database.close();
   }
 
   @BeforeMethod
-  public void beforeMethod() throws IOException {
-    database.open("admin", "admin");
+  public void beforeMethod() throws Exception {
+    super.beforeMethod();
+
     final OSchema schema = database.getMetadata().getSchema();
     schema.reload();
-    schema.getClass("IndexTxTestClass").truncate();
-  }
+    database.getStorage().reload();
 
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
+    schema.getClass("IndexTxTestClass").truncate();
   }
 
   @Test

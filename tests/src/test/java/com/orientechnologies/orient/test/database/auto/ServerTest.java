@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import junit.framework.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -25,21 +26,14 @@ import java.io.IOException;
 import java.util.Map;
 
 @Test
-public class ServerTest {
-  private String url;
+public class ServerTest extends DocumentDBBaseTest {
   private String serverURL;
 
   @Parameters(value = "url")
-  public ServerTest(String iURL) {
-    url = iURL;
-    serverURL = url.substring(0, url.lastIndexOf('/'));
-  }
+  public ServerTest(@Optional String url) {
+    super(url);
 
-  @Test(enabled = false)
-  public static void main(String[] args) throws IOException {
-    ServerTest test = new ServerTest("remote:localhost/GratefulDeadConcerts");
-    test.testDbExists();
-    test.testDbList();
+    serverURL = url.substring(0, url.lastIndexOf('/'));
   }
 
   @Test

@@ -4,11 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -25,17 +21,21 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  */
 
 @Test
-public class ByteArrayKeyTest {
-  private ODatabaseDocumentTx database;
+public class ByteArrayKeyTest extends DocumentDBBaseTest {
   private OIndex<?>           manualIndex;
 
-  protected OIndex<?> getManualIndex() {
+	@Parameters(value = "url")
+	public ByteArrayKeyTest(@Optional String url) {
+		super(url);
+	}
+
+	protected OIndex<?> getManualIndex() {
     return database.getMetadata().getIndexManager().getIndex("byte-array-manualIndex");
   }
 
   @BeforeClass
-  public void beforeClass() {
-    database.open("admin", "admin");
+  public void beforeClass() throws Exception {
+    super.beforeClass();
 
     final OClass byteArrayKeyTest = database.getMetadata().getSchema().createClass("ByteArrayKeyTest");
     byteArrayKeyTest.createProperty("byteArrayKey", OType.BINARY);
@@ -52,13 +52,12 @@ public class ByteArrayKeyTest {
         .getMetadata()
         .getIndexManager()
         .createIndex("byte-array-manualIndex-notunique", "NOTUNIQUE", new OSimpleKeyIndexDefinition(OType.BINARY), null, null, null);
-
-    database.close();
   }
 
   @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
+  public void beforeMethod() throws Exception {
+		super.beforeMethod();
+
     OIndex<?> index = getManualIndex();
 
     if (index == null) {
@@ -71,17 +70,7 @@ public class ByteArrayKeyTest {
     }
   }
 
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
-  }
-
-  @Parameters(value = "url")
-  public ByteArrayKeyTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
-
-  public void testUsage() {
+	public void testUsage() {
     OIndex<?> index = getManualIndex();
     byte[] key1 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1 };
     ODocument doc1 = new ODocument().field("k", "key1");

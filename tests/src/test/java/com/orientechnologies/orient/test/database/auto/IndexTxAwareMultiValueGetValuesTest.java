@@ -5,11 +5,7 @@ import java.util.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -22,30 +18,26 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
-public class IndexTxAwareMultiValueGetValuesTest {
-  private final ODatabaseDocumentTx database;
+public class IndexTxAwareMultiValueGetValuesTest extends DocumentDBBaseTest {
 
-  @Parameters(value = "url")
-  public IndexTxAwareMultiValueGetValuesTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public IndexTxAwareMultiValueGetValuesTest(@Optional String url) {
+		super(url);
+	}
 
   @BeforeClass
-  public void beforeClass() {
-    database.open("admin", "admin");
+  public void beforeClass() throws Exception {
+    super.beforeClass();
+
     database.command(new OCommandSQL("create index idxTxAwareMultiValueGetValuesTest notunique")).execute();
-    database.close();
   }
 
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
-  }
 
   @AfterMethod
-  public void afterMethod() {
+  public void afterMethod() throws Exception {
     database.command(new OCommandSQL("delete from index:idxTxAwareMultiValueGetValuesTest")).execute();
-    database.close();
+
+		super.afterMethod();
   }
 
   @Test

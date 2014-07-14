@@ -17,9 +17,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -33,16 +31,18 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
  * 
  */
 @Test
-public class DatabaseThreadFactoryTest {
+public class DatabaseThreadFactoryTest  extends DocumentDBBaseTest {
+	@Parameters(value = "url")
+	public DatabaseThreadFactoryTest(@Optional String url) {
+		super(url);
+	}
 
-  private String url;
+	@BeforeMethod
+	@Override
+	public void beforeMethod() throws Exception {
+	}
 
-  @Parameters(value = "url")
-  public DatabaseThreadFactoryTest(String iUrl) {
-    url = iUrl;
-  }
-
-  @BeforeClass
+	@BeforeClass
   public void init() {
     try {
       ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();

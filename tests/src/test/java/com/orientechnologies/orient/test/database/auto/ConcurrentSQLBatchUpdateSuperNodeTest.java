@@ -33,18 +33,22 @@ import org.testng.annotations.Test;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Test
-public class ConcurrentSQLBatchUpdateSuperNodeTest {
+public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
   private final static int OPTIMISTIC_CYCLES  = 100;
   private final static int PESSIMISTIC_CYCLES = 100;
   private final static int THREADS            = 10;
   private final static int MAX_RETRIES        = 100;
   private final AtomicLong counter            = new AtomicLong();
-  protected String         url;
   private boolean          localCacheEnabled;
   private boolean          mvccEnabled;
   private long             startedOn;
   private AtomicLong       totalRetries       = new AtomicLong();
+
+  @Parameters(value = "url")
+  public ConcurrentSQLBatchUpdateSuperNodeTest(@Optional String url) {
+    super(url);
+  }
 
   class OptimisticThread implements Runnable {
 
@@ -123,11 +127,6 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest {
     }
   }
 
-  @Parameters(value = "url")
-  public ConcurrentSQLBatchUpdateSuperNodeTest(@Optional(value = "memory:test") String iURL) {
-    url = iURL;
-  }
-
   @BeforeClass
   public void init() {
     localCacheEnabled = OGlobalConfiguration.CACHE_LOCAL_ENABLED.getValueAsBoolean();
@@ -137,10 +136,6 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest {
       OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
     if (!mvccEnabled)
       OGlobalConfiguration.DB_MVCC.setValue(true);
-
-    if ("memory:test".equals(url))
-      new ODatabaseDocumentTx(url).create().close();
-
   }
 
   @AfterClass

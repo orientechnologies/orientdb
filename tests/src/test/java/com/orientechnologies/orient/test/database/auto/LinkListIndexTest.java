@@ -8,12 +8,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,37 +18,30 @@ import java.util.List;
  * @since 21.03.12
  */
 @Test(groups = { "index" })
-public class LinkListIndexTest {
-  private final ODatabaseDocumentTx database;
+public class LinkListIndexTest extends DocumentDBBaseTest {
 
-  @Parameters(value = "url")
-  public LinkListIndexTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public LinkListIndexTest(@Optional String url) {
+		super(url);
+	}
+
 
   @BeforeClass
   public void setupSchema() {
-    database.open("admin", "admin");
     final OClass linkListIndexTestClass = database.getMetadata().getSchema().createClass("LinkListIndexTestClass");
 
     linkListIndexTestClass.createProperty("linkCollection", OType.LINKLIST);
 
     linkListIndexTestClass.createIndex("linkCollectionIndex", OClass.INDEX_TYPE.NOTUNIQUE, "linkCollection");
     database.getMetadata().getSchema().save();
-    database.close();
   }
 
   @AfterClass
   public void destroySchema() {
-    database.open("admin", "admin");
+		database.open("admin", "admin");
     database.getMetadata().getSchema().dropClass("LinkListIndexTestClass");
-    database.close();
   }
 
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
-  }
 
   @AfterMethod
   public void afterMethod() throws Exception {
@@ -65,7 +53,7 @@ public class LinkListIndexTest {
     result = database.command(new OCommandSQL("select key, rid from index:linkCollectionIndex")).execute();
     Assert.assertEquals(result.size(), 0);
 
-    database.close();
+		super.afterMethod();
   }
 
   public void testIndexCollection() {

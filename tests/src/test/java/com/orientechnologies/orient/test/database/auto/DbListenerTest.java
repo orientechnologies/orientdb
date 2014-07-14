@@ -27,8 +27,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
 import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 /**
  * Tests the right calls of all the db's listener API.
@@ -36,10 +35,7 @@ import org.testng.annotations.Test;
  * @author Sylvain Spinelli
  * 
  */
-public class DbListenerTest {
-  protected ODatabaseDocumentTx database;
-
-  protected String              dbUrl;
+public class DbListenerTest extends DocumentDBBaseTest {
 
   protected int                 onAfterTxCommit              = 0;
   protected int                 onAfterTxRollback            = 0;
@@ -52,9 +48,6 @@ public class DbListenerTest {
   protected int                 onOpen                       = 0;
   protected int                 onCorruption                 = 0;
 
-  protected int                 onRecordPulled               = 0;
-  protected int                 onClusterConfigurationChange = 0;
-  protected int                 onAvailableDatabaseChange    = 0;
 
   public class DbListener implements ODatabaseListener {
     @Override
@@ -109,22 +102,37 @@ public class DbListenerTest {
     }
   }
 
-  @Parameters(value = "url")
-  public DbListenerTest(String iURL) {
-    dbUrl = iURL;
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public DbListenerTest(@Optional String url) {
+		super(url);
+	}
 
-  @Test
+	@AfterClass
+	@Override
+	public void afterClass() throws Exception {
+	}
+
+	@BeforeMethod
+	@Override
+	public void beforeMethod() throws Exception {
+	}
+
+	@AfterMethod
+	@Override
+	public void afterMethod() throws Exception {
+	}
+
+	@Test
   public void testEmbeddedDbListeners() throws IOException {
     if (database.getURL().startsWith("remote:"))
       return;
+
     if (database.exists())
-      ODatabaseHelper.deleteDatabase(database, "plocal");
+      ODatabaseHelper.deleteDatabase(database, getStorageType());
 
     database.registerListener(new DbListener());
 
-    ODatabaseHelper.createDatabase(database, dbUrl, "plocal");
+    ODatabaseHelper.createDatabase(database, url, getStorageType());
 
     Assert.assertEquals(onCreate, 1);
 
@@ -152,11 +160,11 @@ public class DbListenerTest {
     Assert.assertEquals(onBeforeTxRollback, 1);
     Assert.assertEquals(onAfterTxRollback, 1);
 
-    ODatabaseHelper.deleteDatabase(database, "plocal");
+    ODatabaseHelper.deleteDatabase(database, getStorageType());
     Assert.assertEquals(onClose, 2);
     Assert.assertEquals(onDelete, 1);
 
-		ODatabaseHelper.createDatabase(database, dbUrl);
+		ODatabaseHelper.createDatabase(database, url);
   }
 
   @Test
@@ -164,7 +172,9 @@ public class DbListenerTest {
     if (!database.getURL().startsWith("remote:"))
       return;
 
-    database.registerListener(new DbListener());
+    database.close();
+
+		database.registerListener(new DbListener());
 
     database.open("admin", "admin");
     Assert.assertEquals(onOpen, 1);

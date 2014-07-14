@@ -31,18 +31,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test(groups = { "index" })
-public class PropertyIndexTest {
-  private final ODatabaseDocumentTx database;
+public class PropertyIndexTest extends DocumentDBBaseTest {
 
-  @Parameters(value = "url")
-  public PropertyIndexTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public PropertyIndexTest(@Optional String url) {
+		super(url);
+	}
 
   @BeforeClass
-  public void beforeClass() {
-    if (database.isClosed())
-      database.open("admin", "admin");
+  public void beforeClass() throws Exception {
+		super.beforeClass();
 
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.createClass("PropertyIndexTestClass");
@@ -52,26 +50,13 @@ public class PropertyIndexTest {
     oClass.createProperty("prop3", OType.BOOLEAN);
     oClass.createProperty("prop4", OType.INTEGER);
     oClass.createProperty("prop5", OType.STRING);
-
-    schema.save();
-    database.close();
-  }
-
-  @BeforeMethod
-  public void beforeMethod() {
-    if (database.isClosed())
-      database.open("admin", "admin");
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
   }
 
   @AfterClass
   public void afterClass() {
     if (database.isClosed())
       database.open("admin", "admin");
+
     database.command(new OCommandSQL("delete from PropertyIndexTestClass")).execute();
     database.command(new OCommandSQL("drop class PropertyIndexTestClass")).execute();
     database.reload();

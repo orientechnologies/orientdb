@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.IOException;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -25,19 +26,18 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
 
 @Test(groups = "db")
-public class DbCompareTest implements OCommandOutputListener {
-  final private String url;
+public class DbCompareTest extends DocumentDBBaseTest implements OCommandOutputListener {
   final private String testPath;
 
-  @Parameters(value = { "url", "testPath" })
-  public DbCompareTest(final String iURL, final String iTestPath) {
-    url = iURL;
-    testPath = iTestPath;
-  }
+	@Parameters(value = { "url", "testPath" })
+	public DbCompareTest(@Optional String url, String testPath) {
+		super(url);
+		this.testPath = testPath;
+	}
 
-  @Test
+	@Test
   public void testCompareDatabases() throws IOException {
-    String urlPrefix = "plocal:";
+    String urlPrefix = getStorageType() + ":";
 
     final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportTest.NEW_DB_URL,
         "admin", "admin", this);

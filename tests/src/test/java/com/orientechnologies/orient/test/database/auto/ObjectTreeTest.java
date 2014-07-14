@@ -25,14 +25,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import javassist.util.proxy.Proxy;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -62,13 +59,36 @@ import com.orientechnologies.orient.test.domain.customserialization.SecurityRole
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "record-object" })
-public class ObjectTreeTest {
-  private OObjectDatabaseTx database;
-  protected long            startRecordNumber;
-  private long              beginCities;
-  private String            url;
-  protected int             serialized;
-  protected int             unserialized;
+public class ObjectTreeTest extends ObjectDBBaseTest {
+  protected long startRecordNumber;
+  private long   beginCities;
+  protected int  serialized;
+  protected int  unserialized;
+
+	@BeforeMethod
+	@Override
+	public void beforeMethod() throws Exception {
+		database.close();
+		database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+	}
+
+	@AfterClass
+	@Override
+	public void afterClass() throws Exception {
+		database.close();
+
+		database = createDatabaseInstance(url);
+		super.afterClass();
+	}
+
+
+	public ObjectTreeTest() {
+  }
+
+  @Parameters(value = "url")
+  public ObjectTreeTest(@Optional String url) {
+    super(url);
+  }
 
   public class CustomClass {
     private String                name;
@@ -159,30 +179,11 @@ public class ObjectTreeTest {
     }
   }
 
-  public ObjectTreeTest() {
-  }
-
-  @Parameters(value = "url")
-  public ObjectTreeTest(@Optional(value = "memory:test") String iURL) {
-    url = iURL;
-  }
-
-  @AfterClass
-  public void close() {
-    database.close();
-  }
-
   @BeforeClass
-  public void open() {
-    database = new OObjectDatabaseTx(url);
+  public void init() {
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.base");
-    if ("memory:test".equals(database.getURL())) {
-      database.create();
-    } else {
-      database.open("admin", "admin");
-    }
   }
 
   @Test
@@ -422,8 +423,9 @@ public class ObjectTreeTest {
     database.save(test);
     // Assert.assertEquals(test.getSet().size(), 100);
     ORID rid = database.getIdentity(test);
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
     test = database.load(rid);
     Assert.assertNotNull(test.getDuplicationTestSet());
     Assert.assertEquals(test.getDuplicationTestSet().size(), 1);
@@ -435,8 +437,9 @@ public class ObjectTreeTest {
     Assert.assertEquals(test.getDuplicationTestSet().size(), 1);
     database.save(test);
     rid = database.getIdentity(test);
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
     test = database.load(rid);
     Assert.assertNotNull(test.getDuplicationTestSet());
     Assert.assertEquals(test.getDuplicationTestSet().size(), 1);
@@ -458,8 +461,9 @@ public class ObjectTreeTest {
     database.save(test);
     // Assert.assertEquals(test.getSet().size(), 100);
     ORID rid = database.getIdentity(test);
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
     test = database.load(rid);
     Assert.assertNotNull(test.getSet());
     Iterator<Child> it = test.getSet().iterator();
@@ -544,15 +548,17 @@ public class ObjectTreeTest {
     database.save(test);
     ORID testRid = database.getRecordByUserObject(test, false).getIdentity();
     ORID simpleRid = database.getRecordByUserObject(simple, false).getIdentity();
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
     database.delete(testRid);
     simple = database.load(simpleRid);
     Assert.assertNull(simple);
 
     // TEST SET NULL
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
     test = database.newInstance(JavaCascadeDeleteTestClass.class);
     simple = database.newInstance(JavaSimpleTestClass.class);
     simple.setText("asdasd");
@@ -560,8 +566,9 @@ public class ObjectTreeTest {
     database.save(test);
     testRid = database.getRecordByUserObject(test, false).getIdentity();
     simpleRid = database.getRecordByUserObject(simple, false).getIdentity();
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
     test.setSimpleClass(null);
     database.save(test);
     simple = database.load(simpleRid);
@@ -576,8 +583,9 @@ public class ObjectTreeTest {
     database.save(test);
     testRid = database.getRecordByUserObject(test, false).getIdentity();
     simpleRid = database.getRecordByUserObject(simple, false).getIdentity();
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
     simple = database.newInstance(JavaSimpleTestClass.class);
     database.save(simple);
     test.setSimpleClass(simple);
@@ -618,8 +626,9 @@ public class ObjectTreeTest {
     ORID set1Rid = database.getRecordByUserObject(setChild1, false).getIdentity();
     ORID set2Rid = database.getRecordByUserObject(setChild2, false).getIdentity();
     ORID set3Rid = database.getRecordByUserObject(setChild3, false).getIdentity();
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
     database.delete(testRid);
     listChild1 = database.load(list1Rid);
     listChild2 = database.load(list2Rid);
@@ -672,8 +681,9 @@ public class ObjectTreeTest {
     set2Rid = database.getRecordByUserObject(setChild2, false).getIdentity();
     set3Rid = database.getRecordByUserObject(setChild3, false).getIdentity();
     ORID set4Rid = database.getRecordByUserObject(setChild4, false).getIdentity();
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
     test = database.load(testRid);
     test.getList().remove(listChild4);
     test.getList().remove(0);
@@ -740,8 +750,9 @@ public class ObjectTreeTest {
     ORID testRid = database.getRecordByUserObject(test, false).getIdentity();
     ORID list1Rid = database.getRecordByUserObject(listChild1, false).getIdentity();
     ORID set2Rid = database.getRecordByUserObject(setChild2, false).getIdentity();
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
     database.delete(list1Rid);
     database.delete(set2Rid);
     test = database.load(testRid);
@@ -781,8 +792,8 @@ public class ObjectTreeTest {
     ORID map2Rid = database.getRecordByUserObject(mapChild2, false).getIdentity();
     ORID map3Rid = database.getRecordByUserObject(mapChild3, false).getIdentity();
 
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 
     database.delete(testRid);
     mapChild1 = database.load(map1Rid);
@@ -791,8 +802,8 @@ public class ObjectTreeTest {
     Assert.assertNull(mapChild1);
     Assert.assertNull(mapChild2);
     Assert.assertNull(mapChild3);
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 
     // MAP UPDATE TEST
     test = database.newInstance(JavaCascadeDeleteTestClass.class);
@@ -819,8 +830,9 @@ public class ObjectTreeTest {
     map3Rid = database.getRecordByUserObject(mapChild3, false).getIdentity();
     ORID map4Rid = database.getRecordByUserObject(mapChild4, false).getIdentity();
     ORID map5Rid = database.getRecordByUserObject(mapChild5, false).getIdentity();
-    close();
-    open();
+    database.close();
+    database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+
     test = database.load(testRid);
     Assert.assertNotNull(test.getChildren().get("1"));
     Assert.assertNotNull(test.getChildren().get("2"));

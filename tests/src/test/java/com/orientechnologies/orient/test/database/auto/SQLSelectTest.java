@@ -28,10 +28,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -62,25 +59,12 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 @Test(groups = "sql-select")
 @SuppressWarnings("unchecked")
 public class SQLSelectTest extends AbstractSelectTest {
-  private ODatabaseDocument database;
   private ODocument         record = new ODocument();
-  private String            url;
 
-  @Parameters(value = "url")
-  public SQLSelectTest(String iURL) {
-    url = iURL;
-    database = new ODatabaseDocumentTx(iURL);
-  }
-
-  @BeforeMethod
-  protected void init() {
-    database.open("admin", "admin");
-  }
-
-  @AfterMethod
-  protected void deinit() {
-    database.close();
-  }
+	@Parameters(value = "url")
+	public SQLSelectTest(@Optional String url) {
+		super(url);
+	}
 
   @Test
   public void queryNoDirtyResultset() {

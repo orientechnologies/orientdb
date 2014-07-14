@@ -2,10 +2,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import static org.testng.Assert.assertEquals;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -18,24 +15,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 @Test(groups = { "index" })
-public class IndexClusterTest {
+public class IndexClusterTest extends DocumentDBBaseTest {
 
-  private ODatabaseDocument database;
+	@Parameters(value = "url")
+	public IndexClusterTest(@Optional String url) {
+		super(url);
+	}
 
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
-  }
-
-  @Parameters(value = "url")
-  public IndexClusterTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
 
   @Test
   public void indexAfterRebuildShouldIncludeAllClusters() {

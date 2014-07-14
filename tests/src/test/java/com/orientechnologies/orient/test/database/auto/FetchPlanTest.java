@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -29,17 +30,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "query", sequential = true)
-public class FetchPlanTest {
-  private ODatabaseDocument database;
+public class FetchPlanTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
-  public FetchPlanTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public FetchPlanTest(@Optional String url) {
+    super(url);
   }
 
   @Test
   public void queryNoFetchPlan() {
-    database.open("admin", "admin");
+		createBasicTestSchema();
 
     final long times = Orient.instance().getProfiler().getCounter("Cache.reused");
 
@@ -53,13 +53,10 @@ public class FetchPlanTest {
       if (linked != null)
         Assert.assertNull(database.getLocalCache().findRecord(linked));
     }
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "queryNoFetchPlan")
   public void queryWithFetchPlan() {
-    database.open("admin", "admin");
     database.getLocalCache().setEnable(true);
 
     final long times = Orient.instance().getProfiler().getCounter("Cache.reused");
@@ -72,7 +69,5 @@ public class FetchPlanTest {
       if (linked != null)
         Assert.assertNotNull(database.getLocalCache().findRecord(linked.getIdentity()));
     }
-
-    database.close();
   }
 }

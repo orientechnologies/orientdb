@@ -5,12 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -26,17 +21,17 @@ import com.orientechnologies.orient.test.domain.whiz.Mapper;
  * @since 21.12.11
  */
 @Test(groups = { "index" })
-public class MapIndexTest {
-  private final OObjectDatabaseTx database;
+public class MapIndexTest extends ObjectDBBaseTest {
 
   @Parameters(value = "url")
-  public MapIndexTest(final String iURL) {
-    database = new OObjectDatabaseTx(iURL);
+  public MapIndexTest(@Optional String url) {
+    super(url);
   }
 
   @BeforeClass
   public void setupSchema() {
-    database.open("admin", "admin");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+
     final OClass mapper = database.getMetadata().getSchema().getClass("Mapper");
     mapper.createProperty("id", OType.STRING);
     mapper.createProperty("intMap", OType.EMBEDDEDMAP, OType.INTEGER);
@@ -49,9 +44,6 @@ public class MapIndexTest {
     movie.createProperty("thumbs", OType.EMBEDDEDMAP, OType.INTEGER);
 
     movie.createIndex("indexForMap", OClass.INDEX_TYPE.NOTUNIQUE, "thumbs by key");
-
-    database.getMetadata().getSchema().save();
-    database.close();
   }
 
   @AfterClass
@@ -62,16 +54,13 @@ public class MapIndexTest {
     database.close();
   }
 
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
-  }
 
   @AfterMethod
   public void afterMethod() throws Exception {
     database.command(new OCommandSQL("delete from Mapper")).execute();
     database.command(new OCommandSQL("delete from MapIndexTestMovie")).execute();
-    database.close();
+
+		super.afterMethod();
   }
 
   public void testIndexMap() {

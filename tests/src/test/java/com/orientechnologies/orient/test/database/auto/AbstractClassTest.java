@@ -26,20 +26,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 @Test(groups = "schema")
-public class AbstractClassTest {
-  private ODatabaseDocumentTx database;
-  private String              url;
+public class AbstractClassTest extends DocumentDBBaseTest {
+	@Parameters(value = "url")
+	public AbstractClassTest(@Optional String url) {
+		super(url);
+	}
 
-  @Parameters(value = "url")
-  public AbstractClassTest(String iURL) {
-    url = iURL;
-  }
-
-  @BeforeClass
+	@BeforeClass
   public void createSchema() throws IOException {
     database = new ODatabaseDocumentTx(url);
     if (ODatabaseHelper.existsDatabase(database, "plocal"))
