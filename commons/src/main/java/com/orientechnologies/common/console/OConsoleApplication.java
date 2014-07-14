@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.common.console;
 
+import com.orientechnologies.common.console.annotation.ConsoleCommand;
+import com.orientechnologies.common.console.annotation.ConsoleParameter;
+import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.OArrays;
+
+import javax.imageio.spi.ServiceRegistry;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -36,13 +42,6 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import javax.imageio.spi.ServiceRegistry;
-
-import com.orientechnologies.common.console.annotation.ConsoleCommand;
-import com.orientechnologies.common.console.annotation.ConsoleParameter;
-import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.common.util.OArrays;
 
 public class OConsoleApplication {
   protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" }; ;
@@ -115,9 +114,6 @@ public class OConsoleApplication {
     int result = 0;
 
     if (interactiveMode) {
-      // EXECUTE IN INTERACTIVE MODE
-      // final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-
       String consoleInput;
 
       while (true) {
@@ -163,6 +159,19 @@ public class OConsoleApplication {
     final String v = properties.get("verbose");
     final int verboseLevel = v != null ? Integer.parseInt(v) : 2;
     return verboseLevel;
+  }
+
+  public boolean isEchoEnabled() {
+    return isPropertyEnabled("echo");
+  }
+
+  protected boolean isPropertyEnabled(final String iPropertyName) {
+    String v = properties.get(iPropertyName);
+    if (v != null) {
+      v = v.toLowerCase();
+      return v.equals("true") || v.equals("on");
+    }
+    return false;
   }
 
   protected String getPrompt() {
@@ -221,7 +230,7 @@ public class OConsoleApplication {
         }
 
         if (commandLine != null) {
-          if (iBatchMode) {
+          if (iBatchMode || isEchoEnabled()) {
             out.println();
             out.print(getPrompt());
             out.print(commandLine);
