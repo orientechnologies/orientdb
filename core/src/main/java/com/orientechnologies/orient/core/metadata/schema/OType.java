@@ -45,57 +45,65 @@ import java.util.Set;
  * 
  */
 public enum OType {
-  BOOLEAN("Boolean", 0, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class, Number.class }) {
-  },
-  INTEGER("Integer", 1, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Integer.class, Number.class }) {
-  },
-  SHORT("Short", 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Short.class, Number.class }) {
-  },
-  LONG("Long", 3, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Long.class, Number.class, }) {
-  },
-  FLOAT("Float", 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Float.class, Number.class }) {
-  },
-  DOUBLE("Double", 5, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Double.class, Number.class }) {
-  },
-  DATETIME("Datetime", 6, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }) {
-  },
-  STRING("String", 7, new Class<?>[] { String.class }, new Class<?>[] { String.class, Enum.class }) {
-  },
-  BINARY("Binary", 8, new Class<?>[] { byte[].class }, new Class<?>[] { byte[].class }) {
-  },
-  EMBEDDED("Embedded", 9, new Class<?>[] { Object.class }, new Class<?>[] { OSerializableStream.class }) {
-  },
-  EMBEDDEDLIST("EmbeddedList", 10, new Class<?>[] { List.class }, new Class<?>[] { List.class }) {
-  },
-  EMBEDDEDSET("EmbeddedSet", 11, new Class<?>[] { Set.class }, new Class<?>[] { Set.class }) {
-  },
-  EMBEDDEDMAP("EmbeddedMap", 12, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
-  },
-  LINK("Link", 13, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }) {
-  },
-  LINKLIST("LinkList", 14, new Class<?>[] { List.class }, new Class<?>[] { List.class }) {
-  },
-  LINKSET("LinkSet", 15, new Class<?>[] { OMVRBTreeRIDSet.class }, new Class<?>[] { OMVRBTreeRIDSet.class, Set.class }) {
-  },
-  LINKMAP("LinkMap", 16, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }) {
-  },
-  BYTE("Byte", 17, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Byte.class, Number.class }) {
-  },
-  TRANSIENT("Transient", 18, new Class<?>[] {}, new Class<?>[] {}) {
-  },
-  DATE("Date", 19, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }) {
-  },
-  CUSTOM("Custom", 20, new Class<?>[] { OSerializableStream.class }, new Class<?>[] { OSerializableStream.class }) {
-  },
-  DECIMAL("Decimal", 21, new Class<?>[] { BigDecimal.class }, new Class<?>[] { BigDecimal.class, Number.class }) {
-  },
+  BOOLEAN("Boolean", 0, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class, Number.class }),
+
+  INTEGER("Integer", 1, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Integer.class, Number.class }),
+
+  SHORT("Short", 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Short.class, Number.class }),
+
+  LONG("Long", 3, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Long.class, Number.class, }),
+
+  FLOAT("Float", 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Float.class, Number.class }),
+
+  DOUBLE("Double", 5, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Double.class, Number.class }),
+
+  DATETIME("Datetime", 6, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }),
+
+  STRING("String", 7, new Class<?>[] { String.class }, new Class<?>[] { String.class, Enum.class }),
+
+  BINARY("Binary", 8, new Class<?>[] { byte[].class }, new Class<?>[] { byte[].class }),
+
+  EMBEDDED("Embedded", 9, new Class<?>[] { Object.class }, new Class<?>[] { OSerializableStream.class }),
+
+  EMBEDDEDLIST("EmbeddedList", 10, new Class<?>[] { List.class }, new Class<?>[] { List.class }),
+
+  EMBEDDEDSET("EmbeddedSet", 11, new Class<?>[] { Set.class }, new Class<?>[] { Set.class }),
+
+  EMBEDDEDMAP("EmbeddedMap", 12, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }),
+
+  LINK("Link", 13, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }),
+
+  LINKLIST("LinkList", 14, new Class<?>[] { List.class }, new Class<?>[] { List.class }),
+
+  LINKSET("LinkSet", 15, new Class<?>[] { OMVRBTreeRIDSet.class }, new Class<?>[] { OMVRBTreeRIDSet.class, Set.class }),
+
+  LINKMAP("LinkMap", 16, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }),
+
+  BYTE("Byte", 17, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Byte.class, Number.class }),
+
+  TRANSIENT("Transient", 18, new Class<?>[] {}, new Class<?>[] {}),
+
+  DATE("Date", 19, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }),
+
+  CUSTOM("Custom", 20, new Class<?>[] { OSerializableStream.class }, new Class<?>[] { OSerializableStream.class }),
+
+  DECIMAL("Decimal", 21, new Class<?>[] { BigDecimal.class }, new Class<?>[] { BigDecimal.class, Number.class }),
+
   LINKBAG("LinkBag", 22, new Class<?>[] { ORidBag.class }, new Class<?>[] { ORidBag.class }),
 
   ANY("Any", 23, new Class<?>[] {}, new Class<?>[] {});
 
-  protected static final OType[] TYPES = new OType[] { STRING, BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATETIME, DATE,
-      BINARY, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, EMBEDDED, CUSTOM, TRANSIENT, DECIMAL,
-      LINKBAG, ANY                    };
+  // Don't change the order, the type discover get broken if you change the order.
+  protected static final OType[] TYPES       = new OType[] { STRING, BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATETIME,
+      DATE, BINARY, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, EMBEDDED, CUSTOM, TRANSIENT, DECIMAL,
+      LINKBAG, ANY                          };
+
+  protected static final OType[] TYPES_BY_ID = new OType[24];
+  static {
+    for (OType oType : values()) {
+      TYPES_BY_ID[oType.id] = oType;
+    }
+  }
 
   protected String               name;
   protected int                  id;
@@ -107,6 +115,7 @@ public enum OType {
     id = iId;
     javaTypes = iJavaTypes;
     allowAssignmentFrom = iAllowAssignmentBy;
+
   }
 
   /**
@@ -117,11 +126,18 @@ public enum OType {
    * @return The type if any, otherwise null
    */
   public static OType getById(final byte iId) {
-    for (OType t : TYPES) {
-      if (iId == t.id)
-        return t;
-    }
+    if (iId >= 0 && iId < TYPES_BY_ID.length)
+      return TYPES_BY_ID[iId];
     return null;
+  }
+
+  /**
+   * Get the identifier of the type. use this instead of {@link Enum#ordinal()} for guarantee a cross code version identifier.
+   * 
+   * @return the identifier of the type.
+   */
+  public int getId() {
+    return id;
   }
 
   /**
