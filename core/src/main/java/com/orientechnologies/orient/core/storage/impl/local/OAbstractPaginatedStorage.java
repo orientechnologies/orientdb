@@ -254,6 +254,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
         makeFullCheckpoint();
 
+      postCreateSteps();
+
     } catch (OStorageException e) {
       close();
       throw e;
@@ -264,6 +266,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     } finally {
       lock.releaseExclusiveLock();
     }
+  }
+
+  protected void postCreateSteps() {
   }
 
   protected void preCreateSteps() throws IOException {

@@ -228,10 +228,7 @@ public class OStorageConfiguration implements OSerializableStream {
           phyClusterLocal.setHoleFile(new OStorageClusterHoleConfiguration(phyClusterLocal, read(values[index++]),
               read(values[index++]), read(values[index++])));
         currentCluster = phyClusterLocal;
-      } else if (clusterType.equals("m"))
-        // MEMORY CLUSTER
-        currentCluster = new OStorageMemoryClusterConfiguration(clusterName, clusterId, targetDataSegmentId);
-      else if (clusterType.equals("d")) {
+      } else if (clusterType.equals("d")) {
         currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null,
             Boolean.valueOf(read(values[index++])), Float.valueOf(read(values[index++])), Float.valueOf(read(values[index++])),
             read(values[index++]));
@@ -347,11 +344,6 @@ public class OStorageConfiguration implements OSerializableStream {
         if (holeFile != null)
           fileToStream(buffer, holeFile);
 
-      } else if (c instanceof OStorageMemoryClusterConfiguration) {
-        // MEMORY
-        write(buffer, "m");
-      } else if (c instanceof OStorageEHClusterConfiguration) {
-        write(buffer, "h");
       } else if (c instanceof OStoragePaginatedClusterConfiguration) {
         write(buffer, "d");
 

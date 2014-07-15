@@ -174,10 +174,21 @@
         </copy>
 
         <delete dir="${community.release}/databases"/>
+
+        <condition property="test.storageType" value="plocal" else="memory">
+            <and>
+                <or>
+                    <equals arg1="${orientdb.test.env}" arg2="ci" casesensitive="false"/>
+                    <equals arg1="${orientdb.test.env}" arg2="release" casesensitive="false"/>
+                </or>
+            </and>
+        </condition>
+
         <java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.blueprints.TestLoadGraph">
             <classpath>
                 <fileset dir="${community.release}/lib" includes="*.jar"/>
             </classpath>
+            <jvmarg value="-DstorageType=${test.storageType}"/>
         </java>
 
         <copy todir="${community.release}/databases/GratefulDeadConcerts" failonerror="false">
@@ -214,24 +225,9 @@
         </subant>
     </target>
 
-    <target name="test-local" depends="install">
-        <subant target="test-local">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="orient.path" value="../${community.release}"/>
-            <fileset dir="tests" includes="build.xml"/>
-        </subant>
-    </target>
 
-    <target name="test-plocal" depends="install">
-        <subant target="test-plocal">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="orient.path" value="../${community.release}"/>
-            <fileset dir="tests" includes="build.xml"/>
-        </subant>
-    </target>
-
-    <target name="test-memory" depends="install">
-        <subant target="test-memory">
+    <target name="test-embedded" depends="install">
+        <subant target="test-embedded">
             <property name="global.lib" value="../${community.release}/lib"/>
             <property name="orient.path" value="../${community.release}"/>
             <fileset dir="tests" includes="build.xml"/>
@@ -241,14 +237,6 @@
 
     <target name="test-remote" depends="install">
         <subant target="test-remote">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="orient.path" value="../${community.release}"/>
-            <fileset dir="tests" includes="build.xml"/>
-        </subant>
-    </target>
-
-    <target name="stress-test">
-        <subant target="stress-test">
             <property name="global.lib" value="../${community.release}/lib"/>
             <property name="orient.path" value="../${community.release}"/>
             <fileset dir="tests" includes="build.xml"/>

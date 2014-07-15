@@ -1,14 +1,7 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
 <suite name="Remote Test Suite" verbose="2" parallel="false">
     <parameter name="url" value="remote:localhost/demo"/>
-    <parameter name="path" value="@PATH@"/>
-    <parameter name="testPath" value="tests"/>
 
-    <test name="Setup">
-        <classes>
-            <class name="com.orientechnologies.orient.test.database.base.DeleteDirectory"/>
-        </classes>
-    </test>
 
     <test name="DbCreation">
         <classes>

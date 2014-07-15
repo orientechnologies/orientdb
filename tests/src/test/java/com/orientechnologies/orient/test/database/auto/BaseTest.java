@@ -12,12 +12,18 @@ public abstract class BaseTest<T extends ODatabaseComplex> {
   protected T      database;
   protected String url;
   private boolean  dropDb = false;
+  private String   storageType;
 
   protected BaseTest() {
   }
 
   @Parameters(value = "url")
   public BaseTest(@Optional String url) {
+    storageType = System.getProperty("storageType");
+
+    if (storageType == null)
+      storageType = "memory";
+
     if (url == null) {
       final String buildDirectory = System.getProperty("buildDirectory", ".");
       url = getStorageType() + ":" + buildDirectory + "/test-db/demo";
@@ -32,7 +38,7 @@ public abstract class BaseTest<T extends ODatabaseComplex> {
   public BaseTest(@Optional String url, String prefix) {
     if (url == null) {
       final String buildDirectory = System.getProperty("buildDirectory", ".");
-      url = getStorageType() + buildDirectory + "/test-db/" + this.getClass().getSimpleName() + prefix;
+      url = getStorageType() + ":" + buildDirectory + "/test-db/demo" + prefix;
       dropDb = true;
     } else
       url = url + prefix;
@@ -60,8 +66,8 @@ public abstract class BaseTest<T extends ODatabaseComplex> {
     database.create();
   }
 
-  protected String getStorageType() {
-    return "plocal";
+  protected final String getStorageType() {
+    return storageType;
   }
 
   @AfterClass

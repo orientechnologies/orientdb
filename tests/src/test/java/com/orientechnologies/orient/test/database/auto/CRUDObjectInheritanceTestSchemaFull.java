@@ -79,7 +79,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
 		database.close();
 
     database = new OObjectDatabaseTx(url + "_objectschema");
-    ODatabaseHelper.createDatabase(database, url + "_objectschema");
+    ODatabaseHelper.createDatabase(database, url + "_objectschema", getStorageType());
     database.close();
     try {
       ODatabaseDocumentTx exportDatabase = new ODatabaseDocumentTx(url);

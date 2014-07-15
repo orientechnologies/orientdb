@@ -164,7 +164,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     Assert.assertEquals(onClose, 2);
     Assert.assertEquals(onDelete, 1);
 
-		ODatabaseHelper.createDatabase(database, url);
+		ODatabaseHelper.createDatabase(database, url, getStorageType());
   }
 
   @Test

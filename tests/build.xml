@@ -11,7 +11,7 @@
 
 
     <target name="test"
-            depends="test-memory,test-plocal, test-remote">
+            depends="test-embedded, test-remote">
     </target>
 
     <target name="test-init">
@@ -26,57 +26,48 @@
         <pathconvert property="project.root.dir" targetos="unix">
             <path location="."/>
         </pathconvert>
-        <pathconvert property="test.path" targetos="unix">
+
+        <pathconvert property="test.db.path" targetos="unix">
             <path location="${orient.path}/databases/demo"/>
         </pathconvert>
+
         <pathconvert property="project.root.dir" targetos="windows" dirsep="/">
             <path location="."/>
         </pathconvert>
-        <pathconvert property="test.path" targetos="windows" dirsep="/">
+
+        <pathconvert property="test.db.path" targetos="windows" dirsep="/">
             <path location="${orient.path}/databases/demo"/>
         </pathconvert>
         <echo>Normalized paths</echo>
         <echo>project.root.dir=${project.root.dir}</echo>
         <echo>test.path=${test.path}</echo>
 
+        <condition property="test.storageType" value="plocal" else="memory">
+            <and>
+                <or>
+                    <equals arg1="${orientdb.test.env}" arg2="ci" casesensitive="false"/>
+                    <equals arg1="${orientdb.test.env}" arg2="release" casesensitive="false"/>
+                </or>
+            </and>
+        </condition>
 
         <copy todir="${project.build}">
             <fileset dir="src/test/java">
                 <include name="**/*.xml"/>
             </fileset>
         </copy>
-
-        <replace dir="${project.build}/com/orientechnologies/orient/test/database/auto">
-            <include name="paginated-local-test-db-from-scratch.xml"/>
-
-            <replacefilter token="@PATH@" value="${test.path}"/>
-            <replacefilter token="@URL@" value="plocal:${test.path}"/>
-            <replacefilter token="@TESTPATH@" value="${project.root.dir}"/>
-        </replace>
-
-    </target>
-
-    <target name="test-memory" depends="test-init">
-        <echo>EXECUTING TESTS USING MEMORY DATABASE: memory:demo</echo>
-        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Xmx2G"/>
-            <jvmarg value="-XX:+HeapDumpOnOutOfMemoryError"/>
-            <!-- debug mode -->
-            <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>-->
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="memory-test-db-from-scratch.xml"/>
-        </testng>
     </target>
 
 
-    <target name="test-plocal" depends="test-init">
-        <echo>EXECUTING TESTS USING PAGINATED LOCAL DATABASE: plocal:${orient.path}/databases/demo</echo>
+    <target name="test-embedded" depends="test-init">
+        <echo>REMOVE FIlES OF PREVIOUS INSTANCE OF TEST DATABASE</echo>
+        <delete failonerror="false">
+            <fileset dir="${test.db.path}" includes="**/*"/>
+        </delete>
+
+
+        <echo>EXECUTING TESTS USING EMBEDDED DATABASE ${test.storageType}:${test.db.path}</echo>
+
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
             <jvmarg value="-Xmx2G"/>
             <jvmarg value="-XX:+HeapDumpOnOutOfMemoryError"/>
@@ -87,6 +78,9 @@
             <jvmarg value="-Dstorage.configuration.syncOnUpdate=false"/>
             <jvmarg value="-Dindex.flushAfterCreate=false"/>
             <jvmarg value="-DbuildDirectory=${buildDirectory}"/>
+            <jvmarg value="-Durl=${test.storageType}:${test.db.path}"/>
+            <jvmarg value="-DstorageType=${test.storageType}"/>
+            <jvmarg value="-DtestPath=${project.root.dir}"/>
             <!-- debug -->
             <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>-->
 
@@ -97,11 +91,16 @@
                 </fileset>
             </classpath>
             <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="paginated-local-test-db-from-scratch.xml"/>
+                        includes="embedded-test-db-from-scratch.xml"/>
         </testng>
     </target>
 
     <target name="test-remote" depends="test-init">
+        <echo>REMOVE FIlES OF PREVIOUS INSTANCE OF TEST DATABASE</echo>
+        <delete failonerror="false">
+            <fileset dir="${test.db.path}" includes="**/*"/>
+        </delete>
+
         <echo>KILLING HANGING REMOTE ORIENTDB SERVER INSTANCES...</echo>
 
         <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
@@ -129,7 +128,7 @@
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true">
-            <jvmarg line="-XX:+HeapDumpOnOutOfMemoryError -Xmx3G -DbuildDirectory=${buildDirectory} -Djava.rmi.server.hostname=localhost -Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
+            <jvmarg line="-DtestPath=${project.root.dir} -DstorageType=${test.storageType} -XX:+HeapDumpOnOutOfMemoryError -Xmx3G -DbuildDirectory=${buildDirectory} -Djava.rmi.server.hostname=localhost -Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
 
             <!-- debug -->
             <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>-->
@@ -154,45 +153,6 @@
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./shutdown.sh"/>
         </exec>
-    </target>
-
-    <target name="stress-test">
-        <echo>MASSIVE INSERT 1,000,000 FLAT RECORDS</echo>
-        <java classname="com.orientechnologies.orient.test.database.speed.LocalCreateFlatSpeedTest" fork="yes">
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <sysproperty key="url" value="plocal:../${orient.path}/databases/demo"/>
-            <jvmarg value="-server"/>
-        </java>
-
-        <echo>MASSIVE INSERT 1,000,000 DOCUMENT RECORDS</echo>
-        <java classname="com.orientechnologies.orient.test.database.speed.LocalCreateDocumentSpeedTest" fork="yes">
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <sysproperty key="url" value="plocal:../${orient.path}/databases/demo"/>
-            <jvmarg value="-server"/>
-        </java>
-
-        <echo>MASSIVE INSERT 20,000 POJOs</echo>
-        <java classname="com.orientechnologies.orient.test.database.speed.LocalCreateObjectSpeedTest" fork="yes">
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <sysproperty key="url" value="plocal:../${orient.path}/databases/demo"/>
-            <jvmarg value="-server"/>
-        </java>
-
     </target>
 
     <target name="reports" depends="test">

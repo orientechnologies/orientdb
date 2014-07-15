@@ -3,9 +3,14 @@ package com.orientechnologies.orient.core.storage.impl.memory;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageMemoryConfiguration;
+import com.orientechnologies.orient.core.version.OSimpleVersion;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +27,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   public ODirectMemoryStorage(String name, String filePath, String mode) {
     super(name, filePath, mode);
-		configuration = new OStorageConfiguration(this);
+    configuration = new OStorageMemoryConfiguration(this);
   }
 
   @Override
@@ -35,6 +40,14 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
     if (diskCache == null)
       diskCache = new ODirectMemoryOnlyDiskCache(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB);
+  }
+
+  @Override
+  protected void postCreateSteps() {
+		ORecordId recordId = new ORecordId();
+		recordId.clusterId = 0;
+    createRecord(-1, recordId, new byte[0], new OSimpleVersion(), ORecordBytes.RECORD_TYPE,
+        ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
   }
 
   @Override

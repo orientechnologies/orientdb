@@ -121,7 +121,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     try {
       acquireExclusiveLock();
       try {
-        init((OLocalPaginatedStorage) storage, config);
+        init((OAbstractPaginatedStorage) storage, config);
       } finally {
         releaseExclusiveLock();
       }
@@ -137,9 +137,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     this.compression = OCompressionFactory.INSTANCE.getCompression(this.config.compression);
 
     storageLocal = storage;
-
-    final OAtomicOperationsManager atomicOperationsManager = storage.getAtomicOperationsManager();
-    final OWriteAheadLog writeAheadLog = storage.getWALInstance();
 
     init(storage);
 

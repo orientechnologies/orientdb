@@ -15,9 +15,9 @@ import java.io.IOException;
 
 public class TestLoadGraph {
   private static final String INPUT_FILE = "src/test/resources/graph-example-2.xml";
-  private static final String DBURL      = "plocal:target/databases/GratefulDeadConcerts";
+
   private String              inputFile  = INPUT_FILE;
-  private String              dbURL      = DBURL;
+  private String              dbURL;
 
   public static void main(final String[] args) throws Exception {
     new TestLoadGraph(args).testImport();
@@ -25,21 +25,28 @@ public class TestLoadGraph {
 
   public TestLoadGraph() {
     inputFile = INPUT_FILE;
-    dbURL = DBURL;
   }
 
   private TestLoadGraph(final String[] args) {
     inputFile = args.length > 0 ? args[0] : INPUT_FILE;
-    dbURL = args.length > 1 ? args[1] : DBURL;
+    dbURL = args.length > 1 ? args[1] : null;
   }
 
   @Test
   public void testImport() throws IOException, FileNotFoundException {
+    String storageType = System.getProperty("storageType");
+
+    if (storageType == null)
+      storageType = "memory";
+
+    if (dbURL == null)
+      dbURL = storageType + ":" + "target/databases/GratefulDeadConcerts";
+
     final boolean oldKeepOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
     OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(DBURL);
-    ODatabaseHelper.deleteDatabase(db, "plocal");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbURL);
+    ODatabaseHelper.deleteDatabase(db, storageType);
 
     OrientBaseGraph g = new OrientGraphNoTx(dbURL);
 
