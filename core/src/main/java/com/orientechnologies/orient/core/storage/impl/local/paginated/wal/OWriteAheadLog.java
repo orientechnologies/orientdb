@@ -617,6 +617,8 @@ public class OWriteAheadLog {
         flushedLsn = null;
       } else {
 
+				logSize = 0;
+
         for (File walFile : walFiles) {
           LogSegment logSegment = new LogSegment(walFile, maxPagesCacheSize);
           logSegment.init();
@@ -786,14 +788,15 @@ public class OWriteAheadLog {
       if (logSize >= maxLogSize) {
         final LogSegment first = removeHeadSegmentFromList();
 
-				if (first != null) {
-					first.stopFlush(false);
+        if (first != null) {
+          first.stopFlush(false);
 
-					logSize -= first.filledUpTo();
+          first.delete(false);
 
-					first.delete(false);
-					fixMasterRecords();
-				}
+          recalculateLogSize();
+
+          fixMasterRecords();
+        }
       }
 
       if (last.filledUpTo() >= maxSegmentSize) {
@@ -808,6 +811,13 @@ public class OWriteAheadLog {
 
       return lsn;
     }
+  }
+
+  private void recalculateLogSize() throws IOException {
+    logSize = 0;
+
+    for (LogSegment segment : logSegments)
+      logSize += segment.filledUpTo();
   }
 
   public long size() {
@@ -827,6 +837,8 @@ public class OWriteAheadLog {
         logSegment.delete(false);
         iterator.remove();
       }
+
+			recalculateLogSize();
     }
   }
 
@@ -977,6 +989,8 @@ public class OWriteAheadLog {
         if (logSegment != null)
           logSegment.delete(false);
       }
+
+      recalculateLogSize();
     }
   }
 
