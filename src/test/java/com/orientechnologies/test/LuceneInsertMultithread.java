@@ -51,8 +51,8 @@ public class LuceneInsertMultithread {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    // url = "plocal:" + buildDirectory + "/multiThread";
-    url = "remote:localhost/multiThread";
+    url = "plocal:" + buildDirectory + "/multiThread";
+    //url = "remote:localhost/multiThread";
   }
 
   @Test(enabled = false)
@@ -110,7 +110,6 @@ public class LuceneInsertMultithread {
 
       for (int i = 0; i < cycle; i++) {
         Collection<?> coll = (Collection<?>) idx.get(new OFullTextCompositeKey(keys));
-        System.out.println(coll.size());
       }
 
     }
