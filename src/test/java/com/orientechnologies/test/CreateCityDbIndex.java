@@ -18,22 +18,31 @@
 
 package com.orientechnologies.test;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
+import java.io.*;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import org.testng.annotations.Parameters;
+import com.spatial4j.core.context.SpatialContext;
+import com.spatial4j.core.shape.Shape;
+import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.document.*;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
+import org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
+import org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.NIOFSDirectory;
+import org.apache.lucene.util.Version;
 import org.testng.annotations.Test;
 
 import au.com.bytecode.opencsv.CSVReader;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -42,13 +51,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 /**
  * Created by enricorisa on 07/04/14.
  */
-public class CreateCityDb extends SpeedTestMonoThread {
-  private ODatabaseDocumentTx databaseDocumentTx;
-  private static CSVReader    reader;
-  private static int          cycleNumber;
-  private int                 i = 0;
-  private LineNumberReader    lineReader;
+public class CreateCityDbIndex extends SpeedTestMonoThread {
 
+  private static int                  cycleNumber;
+  private int                         i = 0;
+  private LineNumberReader            lineReader;
+
+  private IndexWriter                 writer;
   static {
 
     try {
@@ -75,7 +84,10 @@ public class CreateCityDb extends SpeedTestMonoThread {
     }
   }
 
-  public CreateCityDb() {
+  private SpatialContext              ctx;
+  private RecursivePrefixTreeStrategy strategy;
+
+  public CreateCityDbIndex() {
     super(cycleNumber);
   }
 
@@ -86,23 +98,6 @@ public class CreateCityDb extends SpeedTestMonoThread {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    String uri = "plocal:" + buildDirectory + "/city";
-    // String uri = "remote:localhost:2425/city";
-    databaseDocumentTx = new ODatabaseDocumentTx(uri);
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
-    }
-    // databaseDocumentTx.open("admin", "admin");
-    databaseDocumentTx.create();
-    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    if (schema.getClass("City") == null) {
-      OClass oClass = schema.createClass("City");
-      oClass.createProperty("latitude", OType.DOUBLE);
-      oClass.createProperty("longitude", OType.DOUBLE);
-      oClass.createProperty("name", OType.STRING);
-      oClass.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
-    }
     ZipFile zipFile = new ZipFile("files/allCountries.zip");
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
 
@@ -112,12 +107,16 @@ public class CreateCityDb extends SpeedTestMonoThread {
       if (entry.getName().equals("allCountries.txt")) {
 
         InputStream stream = zipFile.getInputStream(entry);
-        // reader = new CSVReader(new InputStreamReader(stream), '\t');
         lineReader = new LineNumberReader(new InputStreamReader(stream));
       }
     }
-
-    databaseDocumentTx.declareIntent(new OIntentMassiveInsert());
+    Directory dir = NIOFSDirectory.open(new File("Spatial"));
+    IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_47, new StandardAnalyzer(Version.LUCENE_47));
+    iwc.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+    writer = new IndexWriter(dir, iwc);
+    this.ctx = SpatialContext.GEO;
+    SpatialPrefixTree grid = new GeohashPrefixTree(ctx, 11);
+    this.strategy = new RecursivePrefixTreeStrategy(grid, "location");
   }
 
   @Override
@@ -128,27 +127,41 @@ public class CreateCityDb extends SpeedTestMonoThread {
     String readed = lineReader.readLine();
     String[] nextLine = readed.split("\\t");
     if (readed != null) {
-      ODocument doc = new ODocument("City");
-      doc.field("name", nextLine[1]);
-      doc.field("country", nextLine[8]);
+
       Double lat = ((Double) OType.convert(nextLine[4], Double.class)).doubleValue();
       Double lng = ((Double) OType.convert(nextLine[5], Double.class)).doubleValue();
-      doc.field("latitude", lat);
-      doc.field("longitude", lng);
-      doc.save();
+      Shape shape = ctx.makePoint(lng, lat);
+      try {
+        writer.addDocument(newGeoDocument(i + "", shape));
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+
       if (i % 1000 == 0) {
-        databaseDocumentTx.commit();
-        databaseDocumentTx.begin();
+        writer.commit();
       }
       i++;
     }
 
   }
 
+  private Document newGeoDocument(String rid, Shape shape) {
+
+    Document doc = new Document();
+
+    doc.add(new TextField("id", rid, Field.Store.YES));
+    for (IndexableField f : strategy.createIndexableFields(shape)) {
+      doc.add(f);
+    }
+
+    doc.add(new StoredField(strategy.getFieldName(), ctx.toString(shape)));
+
+    return doc;
+  }
+
   @Override
   @Test(enabled = false)
   public void deinit() throws Exception {
-    databaseDocumentTx.commit();
-    databaseDocumentTx.close();
+
   }
 }

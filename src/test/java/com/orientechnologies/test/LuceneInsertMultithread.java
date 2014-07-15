@@ -105,7 +105,7 @@ public class LuceneInsertMultithread {
       databaseDocumentTx.open("admin", "admin");
       OSchema schema = databaseDocumentTx.getMetadata().getSchema();
       OIndex idx = schema.getClass("City").getClassIndex("City.name");
-      List<String> keys = new ArrayList<>();
+      List<String> keys = new ArrayList<String>();
       keys.add("andato");
 
       for (int i = 0; i < cycle; i++) {

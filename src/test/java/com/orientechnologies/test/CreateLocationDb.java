@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.io.*;
@@ -52,8 +53,10 @@ public class CreateLocationDb extends SpeedTestMonoThread {
     }
   }
 
-  public CreateLocationDb() {
+  @Parameters(value = "url")
+  public CreateLocationDb(String url) {
     super(cycleNumber);
+    System.out.println(url);
   }
 
   @Override

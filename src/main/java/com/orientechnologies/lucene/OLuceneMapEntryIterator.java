@@ -16,17 +16,16 @@
 
 package com.orientechnologies.lucene;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
-
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
 
 public class OLuceneMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> {
 
@@ -79,7 +78,7 @@ public class OLuceneMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
         }
       };
     } catch (IOException e) {
-      e.printStackTrace();
+      OLogManager.instance().error(this, "Error on iterating Lucene result", e);
     }
     return null;
   }
