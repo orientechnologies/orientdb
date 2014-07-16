@@ -15,7 +15,7 @@ public class TestOutInChain {
   @BeforeClass
   public static void before() {
     // generate schema
-    OrientGraphNoTx graph = new OrientGraphNoTx("memory:target/database", "admin", "admin");
+    OrientGraphNoTx graph = new OrientGraphNoTx("memory:" + TestOutInChain.class.getSimpleName(), "admin", "admin");
     graph.command(new OCommandSQL("create class User extends V")).execute();
     graph.command(new OCommandSQL("create class Car extends V")).execute();
     graph.command(new OCommandSQL("create class Owns extends E")).execute();
@@ -24,7 +24,7 @@ public class TestOutInChain {
 
   @Test
   public void t() {
-    OrientGraph graph = new OrientGraph("memory:target/database", "admin", "admin");
+    OrientGraph graph = new OrientGraph("memory:" + TestOutInChain.class.getSimpleName(), "admin", "admin");
 
     Vertex vUser = graph.addVertex("class:User");
     Vertex vCar = graph.addVertex("class:Car");

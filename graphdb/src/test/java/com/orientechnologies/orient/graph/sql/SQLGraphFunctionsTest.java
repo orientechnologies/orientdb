@@ -38,7 +38,7 @@ public class SQLGraphFunctionsTest {
   private OrientGraph graph;
 
   public SQLGraphFunctionsTest() {
-    String url = "memory:testgraph";
+    String url = "memory:" + SQLGraphFunctionsTest.class.getSimpleName();
     graph = new OrientGraph(url);
 
     OrientVertex v1 = graph.addVertex(null, "name", "A");

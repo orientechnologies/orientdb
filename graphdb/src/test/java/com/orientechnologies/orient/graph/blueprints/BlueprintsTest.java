@@ -15,7 +15,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class BlueprintsTest {
-  private static String      DB_URL = "plocal:target/databases/tinkerpop";
+  private static String      DB_URL = "memory:" + BlueprintsTest.class.getSimpleName();
   private static OrientGraph graph;
 
   public BlueprintsTest() {

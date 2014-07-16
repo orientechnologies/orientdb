@@ -15,7 +15,7 @@ import java.util.List;
 import static junit.framework.TestCase.assertEquals;
 
 public class OrderedEdgesGraphTest {
-  private static String      DB_URL = "memory:orderedEdgesDatabase";
+  private static String      DB_URL = "memory:" + OrderedEdgesGraphTest.class.getSimpleName();
   private static OrientGraph graph;
   private final OrientVertex mainPerson;
 

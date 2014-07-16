@@ -139,8 +139,8 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     try {
       final OServerAdmin serverAdmin = new OServerAdmin(url);
       serverAdmin.connect("root", "root");
-      if (!serverAdmin.existsDatabase("plocal"))
-        serverAdmin.createDatabase("graph", "plocal");
+      if (!serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
+        serverAdmin.createDatabase("graph", OrientGraphTest.getStorageType());
 
       serverAdmin.close();
 
@@ -181,8 +181,8 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
       final OServerAdmin serverAdmin = new OServerAdmin(url);
       serverAdmin.connect("root", "root");
 
-      if (serverAdmin.existsDatabase("plocal"))
-        serverAdmin.dropDatabase("plocal");
+      if (serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
+        serverAdmin.dropDatabase(OrientGraphTest.getStorageType());
 
       serverAdmin.close();
     } catch (Exception e) {

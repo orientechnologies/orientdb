@@ -69,10 +69,10 @@ public class OrientDeleteVertexTest {
     // FAILS HERE OUTSIDE OF THE TRANSACTION
     out_edge = g.getVertex(v1.getId()).getProperty("out_edgeType1");
 
-		contains = false;
-		for (OIdentifiable id : out_edge)
-			if (id.equals(v2.getId()))
-				contains = true;
+    contains = false;
+    for (OIdentifiable id : out_edge)
+      if (id.equals(v2.getId()))
+        contains = true;
 
     assertFalse(contains);
   }
@@ -88,7 +88,7 @@ public class OrientDeleteVertexTest {
   }
 
   private OrientGraph createGraph() {
-    return (OrientGraph) new OrientGraph("memory:OrientDeleteVertexTest").setWarnOnForceClosingTx(false);
+    return (OrientGraph) new OrientGraph("memory:" + OrientDeleteVertexTest.class.getSimpleName()).setWarnOnForceClosingTx(false);
   }
 
 }

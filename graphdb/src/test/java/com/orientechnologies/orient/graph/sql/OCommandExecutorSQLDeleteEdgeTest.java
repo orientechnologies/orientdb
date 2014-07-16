@@ -24,7 +24,7 @@ public class OCommandExecutorSQLDeleteEdgeTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    db = Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:target/OCommandExecutorSQLDeleteEdgeTest");
+    db = Orient.instance().getDatabaseFactory().createDatabase("graph", "memory:" + OCommandExecutorSQLDeleteEdgeTest.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();

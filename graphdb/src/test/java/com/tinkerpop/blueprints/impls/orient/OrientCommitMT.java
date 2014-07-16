@@ -51,10 +51,10 @@ public class OrientCommitMT {
       OServerAdmin serverAdmin = new OServerAdmin(DB_URL);
       serverAdmin.connect("root", ODatabaseHelper.getServerRootPassword());
 
-      if (serverAdmin.existsDatabase("plocal")) {
-        serverAdmin.dropDatabase("plocal");
+      if (serverAdmin.existsDatabase(OrientGraphTest.getStorageType())) {
+        serverAdmin.dropDatabase(OrientGraphTest.getStorageType());
       }
-      serverAdmin.createDatabase(DB_URL, "graph", "plocal");
+      serverAdmin.createDatabase(DB_URL, "graph", OrientGraphTest.getStorageType());
     } else {
       OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);
       graph.drop();
@@ -71,8 +71,8 @@ public class OrientCommitMT {
       OServerAdmin serverAdmin = new OServerAdmin(DB_URL);
       serverAdmin.connect("root", ODatabaseHelper.getServerRootPassword());
 
-      if (serverAdmin.existsDatabase("plocal")) {
-        serverAdmin.dropDatabase("plocal");
+      if (serverAdmin.existsDatabase(OrientGraphTest.getStorageType())) {
+        serverAdmin.dropDatabase(OrientGraphTest.getStorageType());
       }
     } else {
       OrientGraph graph = new OrientGraph(DB_URL, DB_USER, DB_PASSWORD);

@@ -43,7 +43,7 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
   public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
     // CHECK IF ALREADY EXISTS IN TX
     String storageType = database.getStorage().getType();
-    if (storageType.equals(OEngineMemory.NAME) || !database.getTransaction().isActive()) {
+    if (!database.getTransaction().isActive()) {
       final OIdentifiable previousRecord = get(iKey);
       if (previousRecord != null && !previousRecord.equals(iRecord))
         throw new ORecordDuplicatedException(String.format(

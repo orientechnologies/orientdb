@@ -30,7 +30,8 @@ public class OCommandExecutorSQLCreateEdgeTest {
 
   @Before
   public void setUp() throws Exception {
-    db = Orient.instance().getDatabaseFactory().createDatabase("graph", "memory:target/testdb");
+    db = Orient.instance().getDatabaseFactory()
+        .createDatabase("graph", "memory:" + OCommandExecutorSQLCreateEdgeTest.class.getSimpleName());
 
     if (db.exists()) {
       db.open("admin", "admin");

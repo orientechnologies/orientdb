@@ -40,7 +40,8 @@ public class SQLCreateVertexAndEdgeTest {
   private String         url;
 
   public SQLCreateVertexAndEdgeTest() {
-    url = "memory:SQLCreateVertexAndEdgeTest";
+    url = "memory:" + SQLCreateVertexAndEdgeTest.class.getSimpleName();
+
     database = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
 		if (database.exists())
 			database.open("admin", "admin");

@@ -134,7 +134,7 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   public Graph generateGraph(final String graphDirectoryName) {
-    final String url = "plocal:" + getWorkingDirectory() + "/" + graphDirectoryName;
+    final String url = getStorageType() + ":" + getWorkingDirectory() + "/" + graphDirectoryName;
 
     OrientGraph graph = currentGraphs.get(url);
 
@@ -171,7 +171,7 @@ public abstract class OrientGraphTest extends GraphTest {
     // while to unlock files
 
     final String graphDirectory = getWorkingDirectory() + "/" + graphDirectoryName;
-    final String url = "plocal:" + graphDirectory;
+    final String url = getStorageType() + ":" + graphDirectory;
     try {
       OrientGraph graph = currentGraphs.remove(url);
       if (graph == null || graph.isClosed())
@@ -189,11 +189,11 @@ public abstract class OrientGraphTest extends GraphTest {
     return this.computeTestDataRoot().getAbsolutePath();
   }
 
-  enum ENV {
+  public static enum ENV {
     DEV, RELEASE, CI
   }
 
-  protected ENV getEnvironment() {
+  public static ENV getEnvironment() {
     String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase();
     ENV result = null;
     try {
@@ -205,5 +205,12 @@ public abstract class OrientGraphTest extends GraphTest {
       result = ENV.DEV;
 
     return result;
+  }
+
+  public static String getStorageType() {
+    if (getEnvironment().equals(ENV.DEV))
+      return "memory";
+
+    return "plocal";
   }
 }

@@ -11,7 +11,7 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 public class GraphFunctionsTest {
-  private static String      DB_URL = "plocal:target/databases/tinkerpop";
+  private static String      DB_URL = "memory:" + GraphFunctionsTest.class.getSimpleName();
   private static OrientGraph graph;
 
   private static Vertex      v1;

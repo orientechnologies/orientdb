@@ -15,8 +15,7 @@ import org.junit.Test;
 public class EdgeIndexingTest {
 	@Test
 	public void testOutLinksUniqueness() {
-		final String buildDirectory = System.getProperty("buildDirectory", ".");
-		final String url = "plocal:" + buildDirectory + "/test-db/" + this.getClass().getSimpleName();
+		final String url = "memory:" + this.getClass().getSimpleName();
 		OrientGraph graph = new OrientGraph(url);
 		graph.drop();
 

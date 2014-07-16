@@ -77,7 +77,7 @@ public class OrientGraphNoTxTest extends GraphTest {
   }
 
   public Graph generateGraph(final String graphDirectoryName) {
-    final String url = "plocal:" + getWorkingDirectory() + "/" + graphDirectoryName;
+    final String url = OrientGraphTest.getStorageType() + ":" + getWorkingDirectory() + "/" + graphDirectoryName;
 
     OrientGraphNoTx graph = currentGraphs.get(url);
 
@@ -115,7 +115,7 @@ public class OrientGraphNoTxTest extends GraphTest {
   @Override
   public void dropGraph(String graphDirectoryName) {
     final String graphDirectory = getWorkingDirectory() + "/" + graphDirectoryName;
-    final String url = "plocal:" + graphDirectory;
+    final String url = OrientGraphTest.getStorageType() +  ":" + graphDirectory;
     try {
       OrientGraphNoTx graph = currentGraphs.remove(url);
       if (graph == null || graph.isClosed())

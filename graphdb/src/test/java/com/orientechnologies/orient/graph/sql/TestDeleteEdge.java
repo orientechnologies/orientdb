@@ -16,7 +16,7 @@ public class TestDeleteEdge {
 
   @Test
   public void t() {
-    final OrientGraph graph = new OrientGraph("memory:localhost/demo", "admin", "admin");
+    final OrientGraph graph = new OrientGraph("memory:" + TestDeleteEdge.class.getSimpleName(), "admin", "admin");
 
     for (int i = 0; i < 10; i++) {
       OrientVertex v1 = graph.addVertex("class:TestVertex");

@@ -23,7 +23,7 @@ public class VertexPredicateTest {
 
   @BeforeClass
   public static void setUp() throws Exception {
-    graph = new OrientGraph("memory:VertexPredicateTest");
+    graph = new OrientGraph("memory:" + VertexPredicateTest.class.getSimpleName());
 		graph.createEdgeType("Friend");
 
     luca = graph.addVertex(null, "name", "Luca");

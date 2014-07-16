@@ -30,7 +30,7 @@ import static org.junit.Assert.assertFalse;
 
 public class IndexAgainstEdges {
 
-  public static final String URL = "plocal:target/databases/indexAgainstEdges";
+  public static final String URL = "memory:" + IndexAgainstEdges.class.getSimpleName();
 
   @Test
   public void indexes() {

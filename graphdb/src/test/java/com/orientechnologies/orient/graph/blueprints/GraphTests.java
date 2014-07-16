@@ -30,7 +30,7 @@ import static org.junit.Assert.fail;
 
 public class GraphTests {
 
-  public static final String URL = "plocal:target/databases/testExceptionOnCommit";
+  public static final String URL = "memory:" + GraphTests.class.getSimpleName();
 
   @Test
   public void indexes() {
