@@ -103,4 +103,12 @@ public class OContextConfiguration {
     final Object v = getValue(iConfig);
     return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
   }
+
+  public int getContextSize() {
+    return config.size();
+  }
+
+  public java.util.Set<String> getContextKeys() {
+    return config.keySet();
+  }
 }

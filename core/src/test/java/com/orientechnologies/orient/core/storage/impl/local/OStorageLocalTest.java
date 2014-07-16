@@ -1,14 +1,13 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.File;
-
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.io.File;
 
 @Test
 public class OStorageLocalTest {
@@ -77,6 +76,12 @@ public class OStorageLocalTest {
     System.out.println("Exists OK!");
     db.drop();
     System.out.println("Delete OK!");
+  }
+
+  public void contextConfiguration() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testCtxCfg").create();
+    db.getConfiguration().setValue(OGlobalConfiguration.USE_WAL, false);
+    Assert.assertFalse(db.getConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL));
   }
 
   private boolean delTree(File directory) {

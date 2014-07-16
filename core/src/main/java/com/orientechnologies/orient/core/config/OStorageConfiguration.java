@@ -15,6 +15,21 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.id.OImmutableRecordId;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.version.OVersionFactory;
+
 import java.io.IOException;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
@@ -23,20 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
-import com.orientechnologies.orient.core.id.OImmutableRecordId;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.version.OVersionFactory;
 
 /**
  * Versions:
@@ -55,42 +56,36 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId                      CONFIG_RID                    = new OImmutableRecordId(0,
-                                                                                       OClusterPositionFactory.INSTANCE.valueOf(0));
+  public static final ORecordId CONFIG_RID = new OImmutableRecordId(0, OClusterPositionFactory.INSTANCE.valueOf(0));
 
-  public static final String                         DEFAULT_CHARSET               = "UTF-8";
-  private String                                     charset                       = DEFAULT_CHARSET;
-  public static final int                            CURRENT_VERSION               = 10;
-  public static final int                            CURRENT_BINARY_FORMAT_VERSION = 11;
-  public volatile int                                version                       = -1;
-
-  public volatile String                             name;
-  public volatile String                             schemaRecordId;
-  public volatile String                             dictionaryRecordId;
-  public volatile String                             indexMgrRecordId;
-  public volatile String                             dateFormat                    = "yyyy-MM-dd";
-  public volatile String                             dateTimeFormat                = "yyyy-MM-dd HH:mm:ss";
-  public volatile int                                binaryFormatVersion;
-  public volatile OStorageSegmentConfiguration       fileTemplate;
-
-  public volatile List<OStorageClusterConfiguration> clusters                      = Collections
-                                                                                       .synchronizedList(new ArrayList<OStorageClusterConfiguration>());
-  public final List<OStorageDataConfiguration>       dataSegments                  = Collections
-                                                                                       .synchronizedList(new ArrayList<OStorageDataConfiguration>());
-  public volatile OStorageTxConfiguration            txSegment                     = new OStorageTxConfiguration();
-  public final List<OStorageEntryConfiguration>      properties                    = Collections
-                                                                                       .synchronizedList(new ArrayList<OStorageEntryConfiguration>());
-
-  protected final transient OStorage                 storage;
-  private volatile String                            localeLanguage                = Locale.getDefault().getLanguage();
-  private volatile String                            localeCountry                 = Locale.getDefault().getCountry();
-  private volatile TimeZone                          timeZone                      = TimeZone.getDefault();
-  private transient volatile Locale                  localeInstance;
-  private transient volatile DecimalFormatSymbols    unusualSymbols;
-  private volatile String                            clusterSelection;
-  private volatile int                               minimumClusters               = 1;
-  private volatile String                            recordSerializer;
-  private volatile int                               recordSerializerVersion;
+  public static final String                           DEFAULT_CHARSET               = "UTF-8";
+  private             String                           charset                       = DEFAULT_CHARSET;
+  public static final int                              CURRENT_VERSION               = 11;
+  public static final int                              CURRENT_BINARY_FORMAT_VERSION = 11;
+  public final        List<OStorageDataConfiguration>  dataSegments                  = Collections.synchronizedList(new ArrayList<OStorageDataConfiguration>());
+  public final        List<OStorageEntryConfiguration> properties                    = Collections.synchronizedList(new ArrayList<OStorageEntryConfiguration>());
+  protected final transient OStorage storage;
+  public volatile int version = -1;
+  public volatile String name;
+  public volatile String schemaRecordId;
+  public volatile String dictionaryRecordId;
+  public volatile String indexMgrRecordId;
+  public volatile String dateFormat     = "yyyy-MM-dd";
+  public volatile String dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+  public volatile int                          binaryFormatVersion;
+  public volatile OStorageSegmentConfiguration fileTemplate;
+  public volatile  List<OStorageClusterConfiguration> clusters       = Collections.synchronizedList(new ArrayList<OStorageClusterConfiguration>());
+  public volatile  OStorageTxConfiguration            txSegment      = new OStorageTxConfiguration();
+  private volatile String                             localeLanguage = Locale.getDefault().getLanguage();
+  private volatile String                             localeCountry  = Locale.getDefault().getCountry();
+  private volatile TimeZone                           timeZone       = TimeZone.getDefault();
+  private transient volatile Locale               localeInstance;
+  private transient volatile DecimalFormatSymbols unusualSymbols;
+  private volatile           String               clusterSelection;
+  private volatile int minimumClusters = 1;
+  private volatile String recordSerializer;
+  private volatile int    recordSerializerVersion;
+  private OContextConfiguration configuration = new OContextConfiguration();
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
@@ -99,10 +94,14 @@ public class OStorageConfiguration implements OSerializableStream {
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
   }
 
+  public OContextConfiguration getContextConfiguration() {
+    return configuration;
+  }
+
   /**
    * This method load the record information by the internal cluster segment. It's for compatibility with older database than
    * 0.9.25.
-   * 
+   *
    * @compatibility 0.9.25
    * @return
    * @throws OSerializationException
@@ -119,8 +118,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void update() throws OSerializationException {
     final byte[] record = toStream();
-    storage.updateRecord(CONFIG_RID, true, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE,
-        0, null);
+    storage.updateRecord(CONFIG_RID, true, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE, 0, null);
   }
 
   public boolean isEmpty() {
@@ -296,6 +294,21 @@ public class OStorageConfiguration implements OSerializableStream {
       recordSerializerVersion = Integer.parseInt(read(values[index++]));
     }
 
+    if (version >= 11) {
+      // READ THE CONFIGURATION
+      final int cfgSize = Integer.parseInt(read(values[index++]));
+      for (int i = 0; i < cfgSize; ++i) {
+        final String key = read(values[index++]);
+        final Object value = read(values[index++]);
+
+        final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
+        if (cfg != null)
+          configuration.setValue(key, OType.convert(value, cfg.getType()));
+        else
+          OLogManager.instance().warn(this, "Ignored storage configuration because not supported: %s=%s.", key, value);
+      }
+    }
+
     return this;
   }
 
@@ -385,7 +398,14 @@ public class OStorageConfiguration implements OSerializableStream {
     write(buffer, recordSerializer);
     write(buffer, recordSerializerVersion);
 
-    // PLAIN: ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
+    // WRITE CONFIGURATION
+    write(buffer, configuration.getContextSize());
+    for (String k : configuration.getContextKeys()) {
+      write(buffer, k);
+      write(buffer, configuration.getValueAsString(OGlobalConfiguration.findByKey(k)));
+    }
+
+    // PLAIN: ALLOCATE ENOUGH SPACE TO REUSE IT EVERY TIME
     buffer.append("|");
 
     return buffer.toString().getBytes();
