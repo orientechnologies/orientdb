@@ -89,7 +89,7 @@ public enum OGlobalConfiguration {
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
-      + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "snappy"),
+      + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "nothing"),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 

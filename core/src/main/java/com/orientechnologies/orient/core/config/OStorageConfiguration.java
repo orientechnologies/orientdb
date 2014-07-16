@@ -196,6 +196,8 @@ public class OStorageConfiguration implements OSerializableStream {
     // PREPARE THE LIST OF CLUSTERS
     clusters.clear();
 
+    String determineStorageCompression = null;
+
     for (int i = 0; i < size; ++i) {
       final int clusterId = Integer.parseInt(read(values[index++]));
 
@@ -227,9 +229,18 @@ public class OStorageConfiguration implements OSerializableStream {
               read(values[index++]), read(values[index++])));
         currentCluster = phyClusterLocal;
       } else if (clusterType.equals("d")) {
-        currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null,
-            Boolean.valueOf(read(values[index++])), Float.valueOf(read(values[index++])), Float.valueOf(read(values[index++])),
-            read(values[index++]));
+        final boolean cc = Boolean.valueOf(read(values[index++]));
+        final float bb = Float.valueOf(read(values[index++]));
+        final float aa = Float.valueOf(read(values[index++]));
+        final String clusterCompression = read(values[index++]);
+
+        if (determineStorageCompression == null)
+          // TRY TO DETERMINE THE STORAGE COMPRESSION. BEFORE VERSION 11 IT WASN'T STORED IN STORAGE CFG, SO GET FROM THE FIRST
+          // CLUSTER
+          determineStorageCompression = clusterCompression;
+
+        currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
+            clusterCompression);
       } else
         throw new IllegalArgumentException("Unsupported cluster type: " + clusterType);
 
@@ -307,7 +318,9 @@ public class OStorageConfiguration implements OSerializableStream {
         else
           OLogManager.instance().warn(this, "Ignored storage configuration because not supported: %s=%s.", key, value);
       }
-    }
+    } else
+      // SAVE STORAGE COMPRESSION METHOD AS PROPERTY
+      configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, determineStorageCompression);
 
     return this;
   }

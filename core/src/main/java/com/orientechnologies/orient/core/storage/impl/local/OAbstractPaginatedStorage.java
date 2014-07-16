@@ -16,22 +16,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
@@ -76,32 +60,29 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTr
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractCheckPointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedCreatedWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageBrokenException;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Andrey Lomakin
@@ -277,7 +258,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
   protected abstract void initWalAndDiskCache() throws IOException;
 
   private void addDefaultClusters() throws IOException {
-    final String storageCompression = OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString();
+    final String storageCompression = getConfiguration().getContextConfiguration().getValueAsString( OGlobalConfiguration.STORAGE_COMPRESSION_METHOD);
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
         OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression));
 
