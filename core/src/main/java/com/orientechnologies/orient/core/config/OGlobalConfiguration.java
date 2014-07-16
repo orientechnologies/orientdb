@@ -251,38 +251,49 @@ public enum OGlobalConfiguration {
   INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 
   // TREEMAP
+  @Deprecated
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
 
+  @Deprecated
   MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
       "Page size of each node. 256 means that 256 entries can be stored inside each node", Integer.class, 256),
 
+  @Deprecated
   MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
 
+  @Deprecated
   MVRBTREE_OPTIMIZE_THRESHOLD(
       "mvrbtree.optimizeThreshold",
       "Auto optimize the TreeMap every X tree rotations. This forces the optimization of the tree after many changes to recompute entry points. -1 means never",
       Integer.class, 100000),
 
+  @Deprecated
   MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
 
+  @Deprecated
   MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
       "Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine optimization is needed",
       Float.class, 1.0f),
 
+  @Deprecated
   MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory", "Keep unserialized keys in memory", Boolean.class, Boolean.FALSE),
 
+  @Deprecated
   MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory", "Keep unserialized values in memory", Boolean.class,
       Boolean.FALSE),
 
   // TREEMAP OF RIDS
+  @Deprecated
   MVRBTREE_RID_BINARY_THRESHOLD(
       "mvrbtree.ridBinaryThreshold",
       "Valid for set of rids. It's the threshold as number of entries to use the binary streaming instead of classic string streaming. -1 means never use binary streaming",
       Integer.class, -1),
 
+  @Deprecated
   MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
       "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 64),
 
+  @Deprecated
   MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
       "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
 
@@ -316,6 +327,7 @@ public enum OGlobalConfiguration {
       Integer.class, -1),
 
   // COLLECTIONS
+  @Deprecated
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
 
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
@@ -331,24 +343,30 @@ public enum OGlobalConfiguration {
       "Max distance in bytes between holes to cause their defrag. Set it to -1 to use dynamic size. Beware that if the db is huge moving blocks to defrag could be expensive",
       Integer.class, 32768),
 
+  @Deprecated
   FILE_MMAP_USE_OLD_MANAGER("file.mmap.useOldManager",
       "Manager that will be used to handle mmap files. true = USE OLD MANAGER, false = USE NEW MANAGER", boolean.class, false),
 
+  @Deprecated
   FILE_MMAP_AUTOFLUSH_TIMER("file.mmap.autoFlush.timer", "Auto flushes memory mapped blocks every X seconds. 0 = disabled",
       int.class, 30),
 
+  @Deprecated
   FILE_MMAP_AUTOFLUSH_UNUSED_TIME("file.mmap.autoFlush.unusedTime",
       "Remove memory mapped blocks with unused time major than this value. Time is in seconds", int.class, 30),
 
+  @Deprecated
   FILE_MMAP_LOCK_MEMORY("file.mmap.lockMemory",
       "When using new map manager this parameter specify prevent memory swap or not. true = LOCK MEMORY, false = NOT LOCK MEMORY",
       boolean.class, true),
 
+  @Deprecated
   FILE_MMAP_STRATEGY(
       "file.mmap.strategy",
       "Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE, 4 = NEVER USE MMAP",
       Integer.class, 0),
 
+  @Deprecated
   FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block, default is 1Mb", Integer.class, 1048576,
       new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
@@ -356,9 +374,11 @@ public enum OGlobalConfiguration {
         }
       }),
 
+  @Deprecated
   FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file through the channel",
       Integer.class, 8192),
 
+  @Deprecated
   FILE_MMAP_MAX_MEMORY(
       "file.mmap.maxMemory",
       "Max memory allocatable by memory mapping manager. Note that on 32bit operating systems, the limit is 2Gb but will vary between operating systems",
@@ -368,6 +388,7 @@ public enum OGlobalConfiguration {
         }
       }),
 
+  @Deprecated
   FILE_MMAP_OVERLAP_STRATEGY(
       "file.mmap.overlapStrategy",
       "Strategy to use when a request overlaps in-memory buffers: 0 = Use the channel access, 1 = force the in-memory buffer and use the channel access, 2 = always create an overlapped in-memory buffer (default)",
@@ -377,9 +398,11 @@ public enum OGlobalConfiguration {
         }
       }),
 
+  @Deprecated
   FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay",
       "Delay time in ms to wait for another forced flush of the memory-mapped block to disk", Integer.class, 10),
 
+  @Deprecated
   FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory-mapped block will try to flush to disk", Integer.class,
       50),
 
@@ -541,7 +564,7 @@ public enum OGlobalConfiguration {
   }
 
   OGlobalConfiguration(final String iKey, final String iDescription, final Class<?> iType, final Object iDefValue,
-      final OConfigurationChangeCallback iChangeAction) {
+      final OConfigurationChangeCallback iChangeActiRIDon) {
     this(iKey, iDescription, iType, iDefValue);
     changeCallback = iChangeAction;
   }
