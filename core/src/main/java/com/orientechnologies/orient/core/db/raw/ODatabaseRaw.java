@@ -381,15 +381,15 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public boolean existsCluster(final String iClusterName) {
-    return storage.getClusterNames().contains(iClusterName);
+    return storage.getClusterNames().contains(iClusterName.toLowerCase());
   }
 
   public String getClusterType(final String iClusterName) {
-    return storage.getClusterTypeByName(iClusterName);
+    return storage.getClusterTypeByName(iClusterName.toLowerCase());
   }
 
   public int getClusterIdByName(final String iClusterName) {
-    return storage.getClusterIdByName(iClusterName);
+    return storage.getClusterIdByName(iClusterName.toLowerCase());
   }
 
   public String getClusterNameById(final int iClusterId) {
