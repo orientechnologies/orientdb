@@ -15,7 +15,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 @Test
 public class LRUListTest {
   public void testSingleAdd() {
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(1);
     OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
@@ -29,7 +29,7 @@ public class LRUListTest {
   }
 
   public void testAddTwo() {
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     ODirectMemoryPointer directMemoryPointerOne = new ODirectMemoryPointer(1);
     ODirectMemoryPointer directMemoryPointerTwo = new ODirectMemoryPointer(1);
@@ -61,7 +61,7 @@ public class LRUListTest {
     OCachePointer cachePointerTwo = new OCachePointer(directMemoryPointerTwo, new OLogSequenceNumber(0, 0));
     OCachePointer cachePointerThree = new OCachePointer(directMemoryPointerThree, new OLogSequenceNumber(0, 0));
 
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne, false));
     lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo, false));
@@ -90,7 +90,7 @@ public class LRUListTest {
     OCachePointer cachePointerTwo = new OCachePointer(directMemoryPointerTwo, new OLogSequenceNumber(0, 0));
     OCachePointer cachePointerThree = new OCachePointer(directMemoryPointerThree, new OLogSequenceNumber(0, 0));
 
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne, false));
     lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo, false));
@@ -123,7 +123,7 @@ public class LRUListTest {
     OCachePointer cachePointerThree = new OCachePointer(directMemoryPointerThree, new OLogSequenceNumber(0, 0));
     OCachePointer cachePointerFour = new OCachePointer(directMemoryPointerFour, new OLogSequenceNumber(0, 0));
 
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne, false));
     lruList.putToMRU(new OCacheEntry(1, 20, cachePointerTwo, false));
@@ -147,7 +147,7 @@ public class LRUListTest {
   }
 
   public void testAddElevenPutMiddleToTopChangePointer() {
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     OCachePointer[] cachePointers = new OCachePointer[11];
 
@@ -183,7 +183,7 @@ public class LRUListTest {
   public void testAddOneRemoveLRU() {
     ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(1);
 
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     OCachePointer cachePointerOne = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
     lruList.putToMRU(new OCacheEntry(1, 10, cachePointerOne, false));
@@ -200,7 +200,7 @@ public class LRUListTest {
   public void testRemoveLRUShouldReturnNullIfAllRecordsAreUsed() {
     ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(1);
 
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     OCachePointer cachePointerOne = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
     OCacheEntry cacheEntry = new OCacheEntry(1, 10, cachePointerOne, false);
@@ -215,7 +215,7 @@ public class LRUListTest {
   }
 
   public void testAddElevenRemoveLRU() {
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     OCachePointer[] cachePointers = new OCachePointer[11];
 
@@ -244,7 +244,7 @@ public class LRUListTest {
   }
 
   public void testAddElevenRemoveMiddle() {
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
     OCachePointer[] cachePointers = new OCachePointer[11];
 
     for (int i = 0; i < 11; i++) {
@@ -274,7 +274,7 @@ public class LRUListTest {
   }
 
   public void testAddElevenGetMiddle() {
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     OCachePointer[] cachePointers = new OCachePointer[11];
 
@@ -304,7 +304,7 @@ public class LRUListTest {
   }
 
   public void testAdd9128() {
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     OCachePointer[] cachePointers = new OCachePointer[9128];
 
@@ -327,7 +327,7 @@ public class LRUListTest {
   }
 
   public void testAdd9128Get() {
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     OCachePointer[] cachePointers = new OCachePointer[9128];
 
@@ -353,7 +353,7 @@ public class LRUListTest {
   }
 
   public void testAdd9128Remove4564() {
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
     OCachePointer[] cachePointers = new OCachePointer[9128];
 
     for (int i = 0; i < 9128; i++) {
@@ -378,7 +378,7 @@ public class LRUListTest {
   }
 
   public void testAdd9128PutLastAndMiddleToTop() {
-    LRUList lruList = new LRUList();
+    LRUList lruList = new HashLRUList();
 
     OCachePointer[] cachePointers = new OCachePointer[9128];
 
