@@ -5,6 +5,7 @@ import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -26,7 +27,7 @@ public class ORecordLazySetTest {
 
   @BeforeClass
   public void before() {
-    db = new ODatabaseDocumentTx("memory:tesLocal");
+    db = new ODatabaseDocumentTx("memory:" + ORecordLazySet.class.getSimpleName());
     db.create();
     doc1 = db.save(new ODocument().field("doc1", "doc1"));
     rid1 = doc1.getIdentity();
