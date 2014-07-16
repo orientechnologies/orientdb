@@ -20,7 +20,7 @@ public class ClassTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    db = new ODatabaseDocumentTx("memory:metadataclasstest");
+    db = new ODatabaseDocumentTx("memory:" + ClassTest.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();
@@ -30,8 +30,10 @@ public class ClassTest {
 
   @AfterClass
   public void tearDown() throws Exception {
-    if (!db.isClosed())
-      db.close();
+    if (db.isClosed())
+      db.open("admin", "admin");
+
+    db.drop();
   }
 
   @Test
@@ -47,10 +49,10 @@ public class ClassTest {
     Assert.assertEquals(shortName, queryShortName());
 
     // FAILS, saves null value and stores "null" string (not null value) internally
-    // shortName = "null";
-    // oClass.setShortName(shortName);
-    // Assert.assertEquals(shortName, oClass.getShortName());
-    // Assert.assertEquals(shortName, queryShortName());
+    shortName = "null";
+    oClass.setShortName(shortName);
+    Assert.assertEquals(shortName, oClass.getShortName());
+    Assert.assertEquals(shortName, queryShortName());
 
     oClass.setShortName(null);
     Assert.assertNull(oClass.getShortName());

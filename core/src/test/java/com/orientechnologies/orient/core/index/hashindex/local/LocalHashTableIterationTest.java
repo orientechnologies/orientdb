@@ -66,10 +66,6 @@ public class LocalHashTableIterationTest {
     databaseDocumentTx.drop();
   }
 
-  @BeforeMethod
-  public void beforeMethod() {
-  }
-
   @AfterMethod
   public void afterMethod() {
     localHashTable.clear();

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -13,7 +14,7 @@ public class OClassImplTest {
 
   @BeforeMethod
   public void setUp() {
-    db = new ODatabaseDocumentTx("memory:OClassImplTest");
+    db = new ODatabaseDocumentTx("memory:" + OClassImplTest.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
     } else
@@ -24,6 +25,12 @@ public class OClassImplTest {
   public void after() {
     db.close();
   }
+
+	@AfterClass
+	public void afterClass() {
+		db.open("admin", "admin");
+		db.drop();
+	}
 
   /**
    * If class was not abstract and we call {@code setAbstract(false)} clusters should not be changed.
