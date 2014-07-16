@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -99,6 +85,9 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.util.*;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
@@ -369,10 +358,18 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   @Override
   public <DB extends ODatabase> DB create() {
+    return create(null);
+  }
+
+    /**
+     * {@inheritDoc}
+     */
+  @Override
+  public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     setCurrentDatabaseinThreadLocal();
 
     try {
-      super.create();
+      super.create(iInitialSettings);
       componentsFactory = getStorage().getComponentsFactory();
 
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(

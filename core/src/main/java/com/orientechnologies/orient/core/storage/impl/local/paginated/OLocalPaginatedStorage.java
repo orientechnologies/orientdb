@@ -59,11 +59,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   private final int                        DELETE_WAIT_TIME;
 
   private final OStorageVariableParser     variableParser;
-
-  private String                           storagePath;
-
   private final OPaginatedStorageDirtyFlag dirtyFlag;
-
+  private String                           storagePath;
   private ScheduledExecutorService         fuzzyCheckpointExecutor;
   private ExecutorService                  checkpointExecutor;
 
@@ -92,6 +89,87 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
+  public void create(final Map<String, Object> iProperties) {
+    final File storageFolder = new File(storagePath);
+    if (!storageFolder.exists())
+      storageFolder.mkdirs();
+
+    super.create(iProperties);
+  }
+
+  public boolean exists() {
+    return exists(storagePath);
+  }
+
+  @Override
+  public String getURL() {
+    return OEngineLocalPaginated.NAME + ":" + url;
+  }
+
+  public String getStoragePath() {
+    return storagePath;
+  }
+
+  public OStorageVariableParser getVariableParser() {
+    return variableParser;
+  }
+
+  public void scheduleFullCheckpoint() {
+    if (checkpointExecutor != null)
+      checkpointExecutor.execute(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            makeFullCheckpoint();
+          } catch (Throwable t) {
+            OLogManager.instance().error(this, "Error during background checkpoint creation for storage " + name, t);
+          }
+        }
+      });
+  }
+
+  @Override
+  public String getType() {
+    return OEngineLocalPaginated.NAME;
+  }
+
+  @Override
+  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iOutput, final int compressionLevel, final int bufferSize) throws IOException {
+    freeze(false);
+    try {
+      if (callable != null)
+        try {
+          callable.call();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error on callback invocation during backup", e);
+        }
+
+      final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
+      try {
+        OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" }, iOutput,
+            compressionLevel);
+      } finally {
+        if (bufferSize > 0) {
+          bo.flush();
+          bo.close();
+        }
+      }
+    } finally {
+      release();
+    }
+  }
+
+  @Override
+  public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
+    if (!isClosed())
+      close();
+
+    OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
+  }
+
+  @Override
   protected void preOpenSteps() throws IOException {
     if (configuration.binaryFormatVersion >= 11) {
       if (dirtyFlag.exits())
@@ -111,21 +189,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   @Override
-  public void create(final Map<String, Object> iProperties) {
-    final File storageFolder = new File(storagePath);
-    if (!storageFolder.exists())
-      storageFolder.mkdirs();
-
-    super.create(iProperties);
-  }
-
-  @Override
   protected void preCreateSteps() throws IOException {
     dirtyFlag.create();
-  }
-
-  public boolean exists() {
-    return exists(storagePath);
   }
 
   @Override
@@ -217,40 +282,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
     return dirtyFlag.isDirty();
   }
 
-  @Override
-  public String getURL() {
-    return OEngineLocalPaginated.NAME + ":" + url;
-  }
-
-  public String getStoragePath() {
-    return storagePath;
-  }
-
-  public OStorageVariableParser getVariableParser() {
-    return variableParser;
-  }
-
-  public void scheduleFullCheckpoint() {
-    if (checkpointExecutor != null)
-      checkpointExecutor.execute(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            makeFullCheckpoint();
-          } catch (Throwable t) {
-            OLogManager.instance().error(this, "Error during background checkpoint creation for storage " + name, t);
-          }
-        }
-      });
-  }
-
-  @Override
-  public String getType() {
-    return OEngineLocalPaginated.NAME;
-  }
-
   protected void initWalAndDiskCache() throws IOException {
-    if( configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL) ){
+    if (configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL)) {
       fuzzyCheckpointExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
@@ -299,41 +332,5 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   private boolean exists(String path) {
     return new File(path + "/" + OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
-  }
-
-  @Override
-  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
-      final OCommandOutputListener iOutput, final int compressionLevel, final int bufferSize) throws IOException {
-    freeze(false);
-    try {
-      if (callable != null)
-        try {
-          callable.call();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on callback invocation during backup", e);
-        }
-
-      final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
-      try {
-        OZIPCompressionUtil.compressDirectory(new File(getStoragePath()).getAbsolutePath(), bo, new String[] { ".wal" }, iOutput,
-            compressionLevel);
-      } finally {
-        if (bufferSize > 0) {
-          bo.flush();
-          bo.close();
-        }
-      }
-    } finally {
-      release();
-    }
-  }
-
-  @Override
-  public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,
-      final OCommandOutputListener iListener) throws IOException {
-    if (!isClosed())
-      close();
-
-    OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
   }
 }

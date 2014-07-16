@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -130,12 +131,24 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public <DB extends ODatabase> DB create() {
+    return create(null);
+  }
+
+  public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     try {
       if (status == STATUS.OPEN)
         throw new IllegalStateException("Database " + getName() + " is already open");
 
       if (storage == null)
         storage = Orient.instance().loadStorage(url);
+
+      if (iInitialSettings != null) {
+        // SETUP INITIAL SETTINGS
+        final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
+        for (Map.Entry<OGlobalConfiguration, Object> e : iInitialSettings.entrySet()) {
+          ctxCfg.setValue(e.getKey(), e.getValue());
+        }
+      }
 
       storage.create(properties);
 

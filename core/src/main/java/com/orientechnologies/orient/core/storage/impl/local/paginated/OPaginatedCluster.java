@@ -116,9 +116,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, cfgCompression);
 
-        // SAVE COMPRESSION IN STORAGE CFG
-        storage.getConfiguration().getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, cfgCompression);
-
         config.name = clusterName;
 
         init((OAbstractPaginatedStorage) storage, config);
@@ -163,7 +160,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         endAtomicOperation(false);
 
-        if (config.root.clusters.size()<= config.id)
+        if (config.root.clusters.size()<=config.id)
           config.root.clusters.add(config);
         else
           config.root.clusters.set(config.id, config);

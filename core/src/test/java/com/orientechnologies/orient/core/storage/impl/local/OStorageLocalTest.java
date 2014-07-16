@@ -78,8 +78,18 @@ public class OStorageLocalTest {
     System.out.println("Delete OK!");
   }
 
-  public void contextConfiguration() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testCtxCfg").create();
+  public void contextConfigurationOnCreation() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testCtxCfgOnCreate");
+    db.setProperty(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey(), "gzip");
+    db.create();
+    db.close();
+
+    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx("memory:testCtxCfgOnCreate").open("admin", "admin");
+    Assert.assertEquals(db2.getConfiguration().getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD), "gzip");
+  }
+
+  public void contextConfigurationAfterCreation() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testCtxCfgAfterCreate").create();
     db.getConfiguration().setValue(OGlobalConfiguration.USE_WAL, false);
     Assert.assertFalse(db.getConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL));
   }

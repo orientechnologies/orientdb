@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,18 +36,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
-
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OLocalRecordCache;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements ODatabase {
@@ -53,7 +54,12 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   }
 
   public <THISDB extends ODatabase> THISDB create() {
-    underlying.create();
+    return create(null);
+  }
+
+
+  public <THISDB extends ODatabase> THISDB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
+    underlying.create(iInitialSettings);
     Orient.instance().getDatabaseFactory().register(databaseOwner);
     return (THISDB) this;
   }

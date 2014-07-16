@@ -65,7 +65,8 @@ public class OStorageConfiguration implements OSerializableStream {
   public final        List<OStorageDataConfiguration>  dataSegments                  = Collections.synchronizedList(new ArrayList<OStorageDataConfiguration>());
   public final        List<OStorageEntryConfiguration> properties                    = Collections.synchronizedList(new ArrayList<OStorageEntryConfiguration>());
   protected final transient OStorage storage;
-  public volatile int version = -1;
+  private final   OContextConfiguration configuration = new OContextConfiguration();
+  public volatile int                   version       = -1;
   public volatile String name;
   public volatile String schemaRecordId;
   public volatile String dictionaryRecordId;
@@ -85,7 +86,6 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile int minimumClusters = 1;
   private volatile String recordSerializer;
   private volatile int    recordSerializerVersion;
-  private OContextConfiguration configuration = new OContextConfiguration();
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;

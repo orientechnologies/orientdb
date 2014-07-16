@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -76,6 +77,13 @@ public interface ODatabase extends OBackupable, Closeable {
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public <DB extends ODatabase> DB create();
+
+  /**
+   * Creates a new database passing initial settings.
+   * 
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabase> DB create(Map<OGlobalConfiguration, Object> iInitialSettings);
 
   /**
    * Reloads the database information like the cluster list.
