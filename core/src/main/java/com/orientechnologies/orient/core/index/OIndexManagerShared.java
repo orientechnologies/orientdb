@@ -19,7 +19,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
-import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -29,20 +28,17 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.engine.local.OEngineLocal;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OClusterLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -51,7 +47,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -83,7 +78,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
   /**
    * Create a new index with default algorithm.
-   * 
+   *
    * @param iName
    *          - name of index
    * @param iType
@@ -105,9 +100,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
   /**
    * Create a new index.
-   * 
+   *
    * May require quite a long time if big amount of data should be indexed.
-   * 
+   *
    * @param iName
    *          name of index
    * @param iType
@@ -212,10 +207,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
   private String chooseTreeAlgorithm(String algorithm, OStorage storage) {
     if (algorithm == null)
-      if ((storage.getType().equals(OEngineLocal.NAME) || storage.getType().equals(OEngineLocalPaginated.NAME)) && useSBTree)
-        algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
-      else
+      if (storage.getType().equals(OEngineMemory.NAME) || !useSBTree)
         algorithm = ODefaultIndexFactory.MVRBTREE_ALGORITHM;
+      else
+        algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
     return algorithm;
   }
 
