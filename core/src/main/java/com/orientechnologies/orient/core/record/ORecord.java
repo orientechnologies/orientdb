@@ -78,6 +78,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    * 
    * @return Data segment name
    */
+  @Deprecated
   public String getDataSegmentName();
 
   /**
@@ -87,6 +88,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    *          Data segment name
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
+  @Deprecated
   public <RET extends ORecord<T>> RET setDataSegmentName(String iName);
 
   /**

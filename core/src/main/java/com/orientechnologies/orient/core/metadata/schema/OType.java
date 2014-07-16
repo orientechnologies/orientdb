@@ -599,6 +599,7 @@ public enum OType {
    *          Any type supported
    * @return The string if the conversion succeed, otherwise the IllegalArgumentException exception
    */
+  @Deprecated
   public String asString(final Object iValue) {
     return iValue.toString();
   }
