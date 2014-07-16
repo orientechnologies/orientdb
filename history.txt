@@ -27,6 +27,11 @@
 This document contains the last changes to OrientDB Community Edition.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 1.7.6 - (July, 16th 2014)
+---------------------------------------------------------------------------------------------------
+Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=23&page=1&state=closed
+
+---------------------------------------------------------------------------------------------------
 VERSION 1.7.5 - (July, 10th 2014)
 ---------------------------------------------------------------------------------------------------
 Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=22&page=1&state=closed
