@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
+@Deprecated
 public final class ODistributedVersion implements ORecordVersion {
   public static final int              STREAMED_SIZE = OBinaryProtocol.SIZE_INT + OBinaryProtocol.SIZE_LONG
                                                          + OBinaryProtocol.SIZE_LONG;
@@ -52,15 +53,18 @@ public final class ODistributedVersion implements ORecordVersion {
   /**
    * Internal constructor needed for serialization.
    */
+  @Deprecated
   public ODistributedVersion() {
   }
 
+  @Deprecated
   public ODistributedVersion(int counter) {
     this.counter = counter;
     this.timestamp = System.currentTimeMillis();
     this.macAddress = OVersionFactory.instance().getMacAddress();
   }
 
+  @Deprecated
   public ODistributedVersion(int counter, long timestamp, long macAddress) {
     this.counter = counter;
     this.timestamp = timestamp;

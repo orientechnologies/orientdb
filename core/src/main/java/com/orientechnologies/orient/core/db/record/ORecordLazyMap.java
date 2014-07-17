@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings({ "serial"})
+@SuppressWarnings({ "serial" })
 public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecordLazyMultiValue {
   final private byte                                      recordType;
   private ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE status              = MULTIVALUE_CONTENT_TYPE.EMPTY;
@@ -126,7 +126,8 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
   }
 
   public void convertLinks2Records() {
-    if (status == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord)
+    if (status == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord
+        || getOwner().getInternalStatus() == STATUS.MARSHALLING)
       // PRECONDITIONS
       return;
     for (Object k : keySet())
