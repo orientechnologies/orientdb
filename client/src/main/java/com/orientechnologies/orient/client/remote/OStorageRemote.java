@@ -76,7 +76,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -315,15 +314,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
-      final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, int iMode,
-      final ORecordCallback<OClusterPosition> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid, final byte[] iContent,
+      ORecordVersion iRecordVersion, final byte iRecordType, int iMode, final ORecordCallback<OClusterPosition> iCallback) {
 
     if (iMode == 1 && iCallback == null)
       // ASYNCHRONOUS MODE NO ANSWER
       iMode = 2;
 
-    final OPhysicalPosition ppos = new OPhysicalPosition(iDataSegmentId, -1, iRecordType);
+    final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
 
     OChannelBinaryAsynchClient lastNetworkUsed = null;
     do {
@@ -332,9 +330,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         lastNetworkUsed = network;
 
         try {
-          if (network.getSrvProtocolVersion() >= 10)
-            // SEND THE DATA SEGMENT ID
-            network.writeInt(iDataSegmentId);
           network.writeShort((short) iRid.clusterId);
           network.writeBytes(iContent);
           network.writeByte(iRecordType);
@@ -407,8 +402,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
-      throws IOException {
+  public boolean updateReplica(ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
     throw new UnsupportedOperationException("updateReplica()");
   }
 
@@ -1171,23 +1165,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  public String getClusterTypeByName(final String iClusterName) {
-    lock.acquireSharedLock();
-    try {
-
-      if (iClusterName == null)
-        return null;
-
-      final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
-      if (cluster == null)
-        return null;
-
-      return cluster.getType();
-    } finally {
-      lock.releaseSharedLock();
-    }
-  }
-
   public int getDefaultClusterId() {
     return defaultClusterId;
   }
@@ -1196,13 +1173,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     this.defaultClusterId = defaultClusterId;
   }
 
-  public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
-      final String iDataSegmentName, boolean forceListBased, final Object... iArguments) {
-    return addCluster(iClusterType, iClusterName, -1, iLocation, iDataSegmentName, forceListBased, iArguments);
+  public int addCluster(final String iClusterName, boolean forceListBased, final Object... iArguments) {
+    return addCluster(iClusterName, -1, forceListBased, iArguments);
   }
 
-  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      boolean forceListBased, Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId, boolean forceListBased, Object... iParameters) {
 
     OChannelBinaryAsynchClient network = null;
     do {
@@ -1211,15 +1186,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD);
 
-          network.writeString(iClusterType);
           network.writeString(iClusterName);
-          if (network.getSrvProtocolVersion() >= 10 || iClusterType.equalsIgnoreCase("PHYSICAL"))
-            network.writeString(iLocation);
-          if (network.getSrvProtocolVersion() >= 10)
-            network.writeString(iDataSegmentName);
-          else
-            network.writeInt(-1);
-
           if (network.getSrvProtocolVersion() >= 18)
             network.writeShort((short) iRequestedId);
         } finally {
@@ -1231,9 +1198,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int clusterId = network.readShort();
 
           final OClusterRemote cluster = new OClusterRemote();
-
-          cluster.setType(iClusterType);
-          cluster.configure(this, clusterId, iClusterName.toLowerCase(), null, 0);
+          cluster.configure(this, clusterId, iClusterName.toLowerCase());
 
           if (clusters.length <= clusterId)
             clusters = Arrays.copyOf(clusters, clusterId + 1);
@@ -1296,68 +1261,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       } finally {
         lock.releaseExclusiveLock();
-      }
-    } while (true);
-  }
-
-  public int addDataSegment(final String iDataSegmentName) {
-    return addDataSegment(iDataSegmentName, null);
-  }
-
-  public int addDataSegment(final String iSegmentName, final String iLocation) {
-
-    OChannelBinaryAsynchClient network = null;
-    do {
-      try {
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD);
-
-          network.writeString(iSegmentName).writeString(iLocation);
-
-        } finally {
-          endRequest(network);
-        }
-
-        try {
-          beginResponse(network);
-          return network.readInt();
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (OModificationOperationProhibitedException mphe) {
-        handleDBFreeze();
-      } catch (Exception e) {
-        handleException(network, "Error on add new data segment", e);
-      }
-    } while (true);
-  }
-
-  public boolean dropDataSegment(final String iSegmentName) {
-
-    OChannelBinaryAsynchClient network = null;
-    do {
-      try {
-        try {
-          network = beginRequest(OChannelBinaryProtocol.REQUEST_DATASEGMENT_DROP);
-
-          network.writeString(iSegmentName);
-
-        } finally {
-          endRequest(network);
-        }
-
-        try {
-          beginResponse(network);
-          return network.readByte() == 1;
-        } finally {
-          endResponse(network);
-        }
-
-      } catch (OModificationOperationProhibitedException mope) {
-        handleDBFreeze();
-      } catch (Exception e) {
-        handleException(network, "Error on remove data segment", e);
       }
     } while (true);
   }
@@ -1500,10 +1403,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       return 0;
 
     throw new UnsupportedOperationException("getDataSegmentIdByName()");
-  }
-
-  public ODataSegment getDataSegmentById(final int iDataSegmentId) {
-    throw new UnsupportedOperationException("getDataSegmentById()");
   }
 
   public int getClusters() {
@@ -1923,8 +1822,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       final OPhysicalPosition position = new OPhysicalPosition();
 
       position.clusterPosition = network.readClusterPosition();
-      position.dataSegmentId = network.readInt();
-      position.dataSegmentPos = network.readLong();
       position.recordSize = network.readInt();
       position.recordVersion = network.readVersion();
 
@@ -2023,11 +1920,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       if (clusterName != null)
         clusterName = clusterName.toLowerCase();
       final int clusterId = network.readShort();
-      final String clusterType = network.readString();
-      final int dataSegmentId = network.getSrvProtocolVersion() >= 12 ? (int) network.readShort() : 0;
 
-      cluster.setType(clusterType);
-      cluster.configure(this, clusterId, clusterName, null, dataSegmentId);
+      if (network.getSrvProtocolVersion() < 24)
+        network.readString();
+
+      final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24 ? (int) network
+          .readShort() : 0;
+
+      cluster.configure(this, clusterId, clusterName);
 
       if (clusterId >= clusters.length)
         clusters = Arrays.copyOf(clusters, clusterId + 1);

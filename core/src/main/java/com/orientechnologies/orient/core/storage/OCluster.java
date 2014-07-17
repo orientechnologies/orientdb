@@ -22,25 +22,13 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-/**
- * Handle the table to resolve logical address to physical address.<br/>
- * <br/>
- * Record structure:<br/>
- * <br/>
- * +---------------------------------------------+<br/>
- * | DATA SEGMENT........ | DATA OFFSET......... |<br/>
- * | 2 bytes = max 2^15-1 | 4 bytes = max 2^31-1 |<br/>
- * +---------------------------------------------+<br/>
- * = 6 bytes<br/>
- */
 public interface OCluster {
 
   public static enum ATTRIBUTES {
-    NAME, DATASEGMENT, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION
+    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION
   }
 
-  public void configure(OStorage iStorage, int iId, String iClusterName, final String iLocation, int iDataSegmentId,
-      Object... iParameters) throws IOException;
+  public void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
 
   public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException;
 
@@ -70,10 +58,6 @@ public interface OCluster {
    * @throws IOException
    */
   public void truncate() throws IOException;
-
-  public String getType();
-
-  public int getDataSegmentId();
 
   public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
 

@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -297,9 +296,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public OStorageOperationResult<ORecordVersion> save(final int iDataSegmentId, final ORecordId iRid, boolean updateContent,
-      final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public OStorageOperationResult<ORecordVersion> save(final ORecordId iRid, boolean updateContent,
+																											final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
+																											final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
 
     // CHECK IF RECORD TYPE IS SUPPORTED
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
@@ -307,8 +306,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     try {
       if (iForceCreate || iRid.clusterPosition.isNew()) {
         // CREATE
-        final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(iDataSegmentId, iRid, iContent, iVersion,
-            iRecordType, iMode, (ORecordCallback<OClusterPosition>) iRecordCreatedCallback);
+        final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(iRid, iContent, iVersion, iRecordType, iMode,
+            (ORecordCallback<OClusterPosition>) iRecordCreatedCallback);
         return new OStorageOperationResult<ORecordVersion>(ppos.getResult().recordVersion, ppos.isMoved());
 
       } else {
@@ -323,8 +322,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content, final ORecordVersion version,
-      final byte recordType) {
+  public boolean updateReplica(final ORecordId rid, final byte[] content, final ORecordVersion version,
+															 final byte recordType) {
     // CHECK IF RECORD TYPE IS SUPPORTED
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(recordType);
 
@@ -333,7 +332,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
         throw new ODatabaseException("Passed in record was not stored and can not be treated as replica.");
       } else {
         // UPDATE REPLICA
-        return storage.updateReplica(dataSegmentId, rid, content, version, recordType);
+        return storage.updateReplica(rid, content, version, recordType);
       }
     } catch (OException e) {
       // PASS THROUGH
@@ -403,20 +402,12 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return url != null ? url : storage.getURL();
   }
 
-  public int getDataSegmentIdByName(final String iDataSegmentName) {
-    return storage.getDataSegmentIdByName(iDataSegmentName);
-  }
-
   public int getClusters() {
     return storage.getClusters();
   }
 
   public boolean existsCluster(final String iClusterName) {
     return storage.getClusterNames().contains(iClusterName);
-  }
-
-  public String getClusterType(final String iClusterName) {
-    return storage.getClusterTypeByName(iClusterName);
   }
 
   public int getClusterIdByName(final String iClusterName) {
@@ -447,18 +438,12 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public int addCluster(String iClusterName, CLUSTER_TYPE iType, Object... iParameters) {
-    return addCluster(iType.toString(), iClusterName, null, null, iParameters);
+  public int addCluster(String iClusterName, Object... iParameters) {
+    return storage.addCluster(iClusterName, false, iParameters);
   }
 
-  public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
-      final Object... iParameters) {
-    return storage.addCluster(iType, iClusterName, iLocation, iDataSegmentName, false, iParameters);
-  }
-
-  public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      Object... iParameters) {
-    return storage.addCluster(iType, iClusterName, iRequestedId, iLocation, iDataSegmentName, false, iParameters);
+  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+    return storage.addCluster(iClusterName, iRequestedId, false, iParameters);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
@@ -467,14 +452,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
   public boolean dropCluster(int iClusterId, final boolean iTruncate) {
     return storage.dropCluster(iClusterId, iTruncate);
-  }
-
-  public int addDataSegment(final String iSegmentName, final String iLocation) {
-    return storage.addDataSegment(iSegmentName, iLocation);
-  }
-
-  public boolean dropDataSegment(final String iName) {
-    return storage.dropDataSegment(iName);
   }
 
   public Collection<String> getClusterNames() {

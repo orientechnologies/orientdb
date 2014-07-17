@@ -214,7 +214,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
       lockManager.acquireLock(Thread.currentThread(), rid, LOCK.SHARED);
       try {
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
-        if (ppos == null || ppos.dataSegmentId < 0)
+        if (ppos == null)
           return null;
 
         return new ORecordMetadata(rid, ppos.recordVersion);

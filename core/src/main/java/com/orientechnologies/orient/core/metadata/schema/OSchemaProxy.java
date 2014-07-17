@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
@@ -77,10 +76,6 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.createClass(iClassName, iSuperClass, (int[]) null);
   }
 
-  public OClass createClass(final String iClassName, final OClass iSuperClass, final CLUSTER_TYPE iType) {
-    setCurrentDatabaseInThreadLocal();
-    return delegate.createClass(iClassName, iSuperClass, iType);
-  }
 
   public OClass createClass(final String iClassName, final int iDefaultClusterId) {
     setCurrentDatabaseInThreadLocal();

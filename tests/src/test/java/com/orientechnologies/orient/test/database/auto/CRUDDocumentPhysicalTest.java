@@ -874,7 +874,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     OClass testClass2 = schema.createClass("testCreateEmbddedClass2");
     testClass2.createProperty("testClass1Property", OType.EMBEDDED, testClass1);
 
-    int clusterId = database.addCluster("testCreateEmbddedClass2" + SUFFIX, OStorage.CLUSTER_TYPE.PHYSICAL);
+    int clusterId = database.addCluster("testCreateEmbddedClass2" + SUFFIX);
     schema.getClass("testCreateEmbddedClass2").addClusterId(clusterId);
 
     testClass1 = schema.getClass("testCreateEmbddedClass1");

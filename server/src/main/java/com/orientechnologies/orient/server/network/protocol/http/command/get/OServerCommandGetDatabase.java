@@ -201,7 +201,6 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
             json.beginObject();
             json.writeAttribute("id", cluster.getId());
             json.writeAttribute("name", clusterName);
-            json.writeAttribute("type", cluster.getType());
             json.writeAttribute("records", cluster.getEntries() - cluster.getTombstonesCount());
             json.writeAttribute("size", "-");
             json.writeAttribute("filled", "-");

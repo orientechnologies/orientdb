@@ -36,8 +36,6 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 public class OClusterRemote implements OCluster {
   private String name;
   private int    id;
-  private int    dataSegmentId;
-  private String type;
 
   /*
    * (non-Javadoc)
@@ -45,11 +43,10 @@ public class OClusterRemote implements OCluster {
    * @see com.orientechnologies.orient.core.storage.OCluster#configure(com.orientechnologies.orient.core.storage.OStorage, int,
    * java.lang.String, java.lang.String, int, java.lang.Object[])
    */
-  public void configure(OStorage iStorage, int iId, String iClusterName, String iLocation, int iDataSegmentId,
-      Object... iParameters) throws IOException {
+  public void configure(OStorage iStorage, int iId, String iClusterName,
+												Object... iParameters) throws IOException {
     id = iId;
     name = iClusterName;
-    dataSegmentId = iDataSegmentId;
   }
 
   /*
@@ -61,7 +58,6 @@ public class OClusterRemote implements OCluster {
   public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException {
     id = iConfig.getId();
     name = iConfig.getName();
-    dataSegmentId = iConfig.getDataSegmentId();
   }
 
   /*
@@ -126,14 +122,6 @@ public class OClusterRemote implements OCluster {
   }
 
   public void truncate() throws IOException {
-  }
-
-  public String getType() {
-    return type;
-  }
-
-  public int getDataSegmentId() {
-    return dataSegmentId;
   }
 
   public boolean addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
@@ -212,10 +200,6 @@ public class OClusterRemote implements OCluster {
 
   public OClusterEntryIterator absoluteIterator() {
     throw new UnsupportedOperationException("getRecordsSize()");
-  }
-
-  public void setType(String type) {
-    this.type = type;
   }
 
   @Override

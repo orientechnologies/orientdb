@@ -5,7 +5,6 @@ import java.io.IOException;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
 import org.testng.annotations.Test;
 
@@ -13,20 +12,20 @@ import org.testng.annotations.Test;
 public class TestClustersLimits {
   @Test
   public void testMemory() throws IOException {
-    executeTest("memory:hugeclusterdb", CLUSTER_TYPE.MEMORY);
+    executeTest("memory:hugeclusterdb");
   }
 
   @Test
   public void testLocal() throws IOException {
-    executeTest("plocal:C:/temp/hugeclusterdb", CLUSTER_TYPE.PHYSICAL);
+    executeTest("plocal:C:/temp/hugeclusterdb");
   }
 
   @Test
   public void testRemote() throws IOException {
-    executeTest("remote:localhost/hugeclusterdb", CLUSTER_TYPE.PHYSICAL);
+    executeTest("remote:localhost/hugeclusterdb");
   }
 
-  protected static void executeTest(String url, CLUSTER_TYPE clusterType) throws IOException {
+  protected static void executeTest(String url) throws IOException {
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 
     if (ODatabaseHelper.existsDatabase(database, "plocal"))
@@ -38,7 +37,7 @@ public class TestClustersLimits {
 
     for (int i = database.getClusters(); i < Short.MAX_VALUE; ++i) {
       System.out.println("Creating cluster: " + i);
-      database.addCluster("cluster" + i, clusterType);
+      database.addCluster("cluster" + i);
       new ODocument().field("id", i).save("cluster" + i);
     }
     database.close();

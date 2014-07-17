@@ -431,7 +431,7 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public void create() throws IOException {
-    storage.createRecord(0, CONFIG_RID, new byte[] { 0, 0, 0, 0 }, OVersionFactory.instance().createVersion(),
+    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, OVersionFactory.instance().createVersion(),
         ORecordBytes.RECORD_TYPE, (byte) 0, null);
   }
 

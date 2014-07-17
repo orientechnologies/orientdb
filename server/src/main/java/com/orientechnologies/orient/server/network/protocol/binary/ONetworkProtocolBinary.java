@@ -83,7 +83,6 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -272,14 +271,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         distributedCluster();
         break;
 
-      case OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD:
-        addDataSegment();
-        break;
-
-      case OChannelBinaryProtocol.REQUEST_DATASEGMENT_DROP:
-        dropDataSegment();
-        break;
-
       case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT:
         countClusters();
         break;
@@ -450,45 +441,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     return database;
   }
 
-  protected void addDataSegment() throws IOException {
-    setDataCommandInfo("Add data segment");
-
-    if (!isConnectionAlive())
-      return;
-
-    final String name = channel.readString();
-    final String location = channel.readString();
-
-    final int num = connection.database.addDataSegment(name, location);
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-      channel.writeInt(num);
-    } finally {
-      endResponse();
-    }
-  }
-
-  protected void dropDataSegment() throws IOException {
-    setDataCommandInfo("Drop data segment");
-
-    if (!isConnectionAlive())
-      return;
-
-    final String name = channel.readString();
-
-    boolean result = connection.database.dropDataSegment(name);
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-      channel.writeByte((byte) (result ? 1 : 0));
-    } finally {
-      endResponse();
-    }
-  }
-
   protected void removeCluster() throws IOException {
     setDataCommandInfo("Remove cluster");
 
@@ -519,22 +471,27 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (!isConnectionAlive())
       return;
 
-    final String type = channel.readString();
+    String type = "";
+    if (connection.data.protocolVersion < 24)
+      type = channel.readString();
+
     final String name = channel.readString();
     int clusterId = -1;
 
     final String location;
-    if (connection.data.protocolVersion >= 10 || type.equalsIgnoreCase("PHYSICAL"))
+    if (connection.data.protocolVersion >= 10 && connection.data.protocolVersion < 24 || type.equalsIgnoreCase("PHYSICAL"))
       location = channel.readString();
     else
       location = null;
 
-    final String dataSegmentName;
-    if (connection.data.protocolVersion >= 10)
-      dataSegmentName = channel.readString();
-    else {
-      channel.readInt(); // OLD INIT SIZE, NOT MORE USED
-      dataSegmentName = null;
+    if (connection.data.protocolVersion < 24) {
+      final String dataSegmentName;
+      if (connection.data.protocolVersion >= 10)
+        dataSegmentName = channel.readString();
+      else {
+        channel.readInt(); // OLD INIT SIZE, NOT MORE USED
+        dataSegmentName = null;
+      }
     }
 
     if (connection.data.protocolVersion >= 18)
@@ -542,9 +499,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final int num;
     if (clusterId < 0)
-      num = connection.database.addCluster(type, name, location, dataSegmentName);
+      num = connection.database.addCluster(name);
     else
-      num = connection.database.addCluster(type, name, clusterId, location, dataSegmentName);
+      num = connection.database.addCluster(name, clusterId, null);
 
     beginResponse();
     try {
@@ -1315,13 +1272,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (!isConnectionAlive())
       return;
 
-    final int dataSegmentId = connection.data.protocolVersion >= 10 ? channel.readInt() : 0;
+    final int dataSegmentId = connection.data.protocolVersion >= 10 && connection.data.protocolVersion < 24 ? channel.readInt() : 0;
+
     final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
     final byte[] buffer = channel.readBytes();
     final byte recordType = channel.readByte();
     final byte mode = channel.readByte();
 
-    final ORecord<?> record = createRecord(connection.database, rid, buffer, recordType, dataSegmentId);
+    final ORecord<?> record = createRecord(connection.database, rid, buffer, recordType);
 
     if (mode < 2) {
       beginResponse();
@@ -1845,8 +1803,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         for (final OPhysicalPosition physicalPosition : previousPositions) {
           channel.writeClusterPosition(physicalPosition.clusterPosition);
-          channel.writeInt(physicalPosition.dataSegmentId);
-          channel.writeLong(physicalPosition.dataSegmentPos);
           channel.writeInt(physicalPosition.recordSize);
           channel.writeVersion(physicalPosition.recordVersion);
         }
@@ -1878,8 +1834,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         for (final OPhysicalPosition physicalPosition : previousPositions) {
           channel.writeClusterPosition(physicalPosition.clusterPosition);
-          channel.writeInt(physicalPosition.dataSegmentId);
-          channel.writeLong(physicalPosition.dataSegmentPos);
           channel.writeInt(physicalPosition.recordSize);
           channel.writeVersion(physicalPosition.recordVersion);
         }
@@ -1911,8 +1865,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeInt(nextPositions.length);
         for (final OPhysicalPosition physicalPosition : nextPositions) {
           channel.writeClusterPosition(physicalPosition.clusterPosition);
-          channel.writeInt(physicalPosition.dataSegmentId);
-          channel.writeLong(physicalPosition.dataSegmentPos);
           channel.writeInt(physicalPosition.recordSize);
           channel.writeVersion(physicalPosition.recordVersion);
         }
@@ -1942,8 +1894,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         for (final OPhysicalPosition physicalPosition : previousPositions) {
           channel.writeClusterPosition(physicalPosition.clusterPosition);
-          channel.writeInt(physicalPosition.dataSegmentId);
-          channel.writeLong(physicalPosition.dataSegmentPos);
           channel.writeInt(physicalPosition.recordSize);
           channel.writeVersion(physicalPosition.recordVersion);
         }
@@ -2001,9 +1951,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (c != null) {
         channel.writeString(c.getName());
         channel.writeShort((short) c.getId());
-        channel.writeString(c.getType());
-        if (connection.data.protocolVersion >= 12)
-          channel.writeShort((short) c.getDataSegmentId());
+        if (connection.data.protocolVersion >= 12 && connection.data.protocolVersion < 24)
+          channel.writeShort((short) -1);
       }
     }
   }

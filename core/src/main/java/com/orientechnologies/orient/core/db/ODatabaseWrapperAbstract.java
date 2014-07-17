@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -206,16 +205,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.getClusterNames();
   }
 
-  public String getClusterType(final String iClusterName) {
-    checkOpeness();
-    return underlying.getClusterType(iClusterName);
-  }
-
-  public int getDataSegmentIdByName(final String iDataSegmentName) {
-    checkOpeness();
-    return underlying.getDataSegmentIdByName(iDataSegmentName);
-  }
-
   public int getClusterIdByName(final String iClusterName) {
     checkOpeness();
     return underlying.getClusterIdByName(iClusterName);
@@ -234,29 +223,14 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.getClusterRecordSizeByName(iClusterName);
   }
 
-  public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
-      final Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+		checkOpeness();
+		return underlying.addCluster(iClusterName, iRequestedId, iParameters);
+  }
+
+  public int addCluster(final String iClusterName, final Object... iParameters) {
     checkOpeness();
-    return underlying.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
-  }
-
-  public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      Object... iParameters) {
-    return underlying.addCluster(iType, iClusterName, iRequestedId, iLocation, iDataSegmentName, iParameters);
-  }
-
-  public int addCluster(final String iClusterName, final CLUSTER_TYPE iType, final Object... iParameters) {
-    checkOpeness();
-    return underlying.addCluster(iType.toString(), iClusterName, null, null, iParameters);
-  }
-
-  public int addCluster(String iClusterName, CLUSTER_TYPE iType) {
-    checkOpeness();
-    return underlying.addCluster(iType.toString(), iClusterName, null, null);
-  }
-
-  public boolean dropDataSegment(final String name) {
-    return underlying.dropDataSegment(name);
+    return underlying.addCluster(iClusterName, iParameters);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
@@ -267,11 +241,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     getLocalCache().freeCluster(iClusterId);
     return underlying.dropCluster(iClusterId, true);
-  }
-
-  public int addDataSegment(final String iSegmentName, final String iLocation) {
-    checkOpeness();
-    return underlying.addDataSegment(iSegmentName, iLocation);
   }
 
   public int getDefaultClusterId() {

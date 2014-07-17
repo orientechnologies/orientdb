@@ -324,23 +324,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\n\nDone.");
   }
 
-  @Deprecated
-  @ConsoleCommand(description = "Create a new data-segment in the current database.")
-  public void createDatasegment(
-      @ConsoleParameter(name = "datasegment-name", description = "The name of the data segment to create") final String iName,
-      @ConsoleParameter(name = "datasegment-location", description = "The directory where to place the files", optional = true) final String iLocation) {
-    checkForDatabase();
-
-    if (iLocation != null)
-      message("\nCreating data-segment [" + iName + "] in database " + currentDatabaseName + " in path: " + iLocation + "...");
-    else
-      message("\nCreating data-segment [" + iName + "] in database directory...");
-
-    currentDatabase.addDataSegment(iName, iLocation);
-
-    updateDatabaseInfo();
-  }
-
   @ConsoleCommand(splitInWords = false, description = "Create a new cluster in the current database. The cluster can be physical or memory")
   public void createCluster(
       @ConsoleParameter(name = "command-text", description = "The command text to execute") String iCommandText) {
@@ -1231,9 +1214,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void listClusters() {
     if (currentDatabaseName != null) {
       message("\n\nCLUSTERS");
-      message("\n----------------------------------------------+-------+---------------------+---------+-----------------+");
-      message("\n NAME                                         |   ID  | TYPE                | DATASEG | RECORDS         |");
-      message("\n----------------------------------------------+-------+---------------------+---------+-----------------+");
+      message("\n----------------------------------------------+-------+-----------------+");
+      message("\n NAME                                         |   ID  | RECORDS         |");
+      message("\n----------------------------------------------+-------+-----------------+");
 
       int clusterId;
       String clusterType;
@@ -1246,23 +1229,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       for (String clusterName : clusters) {
         try {
           clusterId = currentDatabase.getClusterIdByName(clusterName);
-          clusterType = currentDatabase.getClusterType(clusterName);
           final OCluster cluster = currentDatabase.getStorage().getClusterById(clusterId);
 
           count = currentDatabase.countClusterElements(clusterName);
           totalElements += count;
 
-          message("\n %-45s| %5d | %-20s| %7d | %15d |", format(clusterName, 45), clusterId, clusterType,
-              cluster.getDataSegmentId(), count);
+          message("\n %-45s| %5d | %15d |", format(clusterName, 45), clusterId, count);
         } catch (Exception e) {
           if (e instanceof OIOException)
             break;
         }
       }
-      message("\n----------------------------------------------+-------+---------------------+---------+-----------------+");
-      message("\n TOTAL = %-3d                                                                |         | %15s |", clusters.size(),
-          totalElements);
-      message("\n----------------------------------------------------------------------------+---------+-----------------+");
+      message("\n----------------------------------------------+-------+-----------------+");
+      message("\n TOTAL = %-3d                                         | %15s |", clusters.size(), totalElements);
+      message("\n------------------------------------------------------+-----------------+");
     } else
       message("\nNo database selected yet.");
   }

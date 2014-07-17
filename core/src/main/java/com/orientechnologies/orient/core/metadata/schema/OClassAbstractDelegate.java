@@ -185,11 +185,6 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OClass addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType) {
-    return delegate.addCluster(iClusterName, iClusterType);
-  }
-
-  @Override
   public OClass removeClusterId(final int iId) {
     return delegate.removeClusterId(iId);
   }

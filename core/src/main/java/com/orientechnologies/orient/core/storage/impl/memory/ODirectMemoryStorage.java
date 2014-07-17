@@ -45,7 +45,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   protected void postCreateSteps() {
 		ORecordId recordId = new ORecordId();
 		recordId.clusterId = 0;
-    createRecord(-1, recordId, new byte[0], new OSimpleVersion(), ORecordBytes.RECORD_TYPE,
+    createRecord(recordId, new byte[0], new OSimpleVersion(), ORecordBytes.RECORD_TYPE,
         ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
   }
 

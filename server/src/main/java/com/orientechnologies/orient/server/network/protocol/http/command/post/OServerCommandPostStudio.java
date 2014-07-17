@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -196,7 +195,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     if ("add".equals(operation)) {
       iRequest.data.commandInfo = "Studio add cluster";
 
-      int clusterId = db.addCluster(fields.get("name"), CLUSTER_TYPE.valueOf(fields.get("type")));
+      int clusterId = db.addCluster(fields.get("name"));
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Cluster " + fields.get("name")
           + "' created successfully with id=" + clusterId, null);

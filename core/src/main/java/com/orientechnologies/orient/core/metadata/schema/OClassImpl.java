@@ -825,38 +825,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  @Override
-  public OClass addCluster(final String clusterName, final OStorage.CLUSTER_TYPE iClusterType) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-
-    acquireSchemaWriteLock();
-    try {
-      final ODatabaseRecord database = getDatabase();
-      final OStorage storage = database.getStorage();
-
-      if (storage instanceof OStorageProxy) {
-        final String cmd = String.format("alter class %s addcluster %s %s", name, clusterName, iClusterType);
-        database.command(new OCommandSQL(cmd)).execute();
-      } else if (isDistributedCommand()) {
-        final String cmd = String.format("alter class %s addcluster %s %s", name, clusterName, iClusterType);
-        final OCommandSQL commandSQL = new OCommandSQL(cmd);
-        commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-        database.command(commandSQL).execute();
-
-        final int clusterId = database.getClusterIdByName(clusterName);
-
-        addClusterIdInternal(clusterId);
-      } else {
-        final int clusterId = database.getClusterIdByName(clusterName);
-        addClusterIdInternal(clusterId);
-      }
-    } finally {
-      releaseSchemaWriteLock();
-    }
-
-    return this;
-  }
 
   public OClass removeClusterId(final int clusterId) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
@@ -1673,15 +1641,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         clId = Integer.parseInt(parts[0]);
         throw new IllegalArgumentException("Cluster id '" + clId + "' cannot be added");
       } catch (NumberFormatException e) {
-        // CREATE THE CLUSTER AT THE FLY
-        if (parts.length == 1)
-          // SET THE DEFAULT TYPE
-          parts = new String[] {
-              parts[0],
-              getDatabase().getURL().startsWith(OEngineMemory.NAME.toLowerCase()) ? OStorage.CLUSTER_TYPE.MEMORY.toString()
-                  : OStorage.CLUSTER_TYPE.PHYSICAL.toString() };
-
-        clId = getDatabase().addCluster(parts[0], OStorage.CLUSTER_TYPE.valueOf(parts[1]));
+        clId = getDatabase().addCluster(parts[0]);
       }
     }
 
@@ -1799,7 +1759,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
         int clusterId = getDatabase().getClusterIdByName(name);
         if (clusterId == -1)
-          clusterId = getDatabase().addCluster(name, OStorage.CLUSTER_TYPE.PHYSICAL);
+          clusterId = getDatabase().addCluster(name);
 
         this.defaultClusterId = clusterId;
         this.clusterIds[0] = this.defaultClusterId;

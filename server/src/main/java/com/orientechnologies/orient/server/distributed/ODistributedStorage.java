@@ -64,7 +64,6 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -309,12 +308,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     }
   }
 
-  public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRecordId,
-      final byte[] iContent, final ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
+  public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRecordId, final byte[] iContent,
+      final ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
       final ORecordCallback<OClusterPosition> iCallback) {
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
-      return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
+      return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
     Object result = null;
 
@@ -325,7 +324,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
       if (!dbCfg.isReplicationActive(clusterName, dManager.getLocalNodeName()) && dbCfg.getServers(clusterName) == null)
         // DON'T REPLICATE OR DISTRIBUTE
-        return wrapped.createRecord(iDataSegmentId, iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
+        return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
       // REPLICATE IT
       final Collection<String> nodes = dbCfg.getServers(clusterName);
@@ -496,9 +495,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
-      throws IOException {
-    return wrapped.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);
+  public boolean updateReplica(ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
+    return wrapped.updateReplica(rid, content, recordVersion, recordType);
   }
 
   @Override
@@ -706,15 +704,15 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
-      final String iDataSegmentName, boolean forceListBased, final Object... iParameters) {
-    return wrapped.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, false, iParameters);
+  public int addCluster(final String iClusterName, boolean forceListBased,
+												final Object... iParameters) {
+    return wrapped.addCluster(iClusterName, false, iParameters);
   }
 
   @Override
-  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      boolean forceListBased, Object... iParameters) {
-    return wrapped.addCluster(iClusterType, iClusterName, iRequestedId, iLocation, iDataSegmentName, forceListBased, iParameters);
+  public int addCluster(String iClusterName, int iRequestedId, boolean forceListBased,
+												Object... iParameters) {
+    return wrapped.addCluster(iClusterName, iRequestedId, forceListBased, iParameters);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
@@ -724,16 +722,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   @Override
   public boolean dropCluster(final int iId, final boolean iTruncate) {
     return wrapped.dropCluster(iId, iTruncate);
-  }
-
-  @Override
-  public int addDataSegment(final String iDataSegmentName) {
-    return wrapped.addDataSegment(iDataSegmentName);
-  }
-
-  @Override
-  public int addDataSegment(final String iSegmentName, final String iDirectory) {
-    return wrapped.addDataSegment(iSegmentName, iDirectory);
   }
 
   @Override
@@ -778,11 +766,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   @Override
   public int getClusterIdByName(String iClusterName) {
     return wrapped.getClusterIdByName(iClusterName);
-  }
-
-  @Override
-  public String getClusterTypeByName(final String iClusterName) {
-    return wrapped.getClusterTypeByName(iClusterName);
   }
 
   @Override
@@ -843,14 +826,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   @Override
   public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
     return wrapped.callInRecordLock(iCallable, rid, iExclusiveLock);
-  }
-
-  public int getDataSegmentIdByName(final String iDataSegmentName) {
-    return wrapped.getDataSegmentIdByName(iDataSegmentName);
-  }
-
-  public boolean dropDataSegment(final String iName) {
-    return wrapped.dropDataSegment(iName);
   }
 
   public STATUS getStatus() {

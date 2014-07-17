@@ -128,7 +128,6 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
           json.beginObject(2, true, null);
           json.writeAttribute(3, false, "id", cluster.getId());
           json.writeAttribute(3, false, "name", clusterName);
-          json.writeAttribute(3, false, "type", cluster.getType());
           json.writeAttribute(3, false, "records", cluster.getEntries() - cluster.getTombstonesCount());
           json.writeAttribute(3, false, "size", "-");
           json.writeAttribute(3, false, "filled", "-");
