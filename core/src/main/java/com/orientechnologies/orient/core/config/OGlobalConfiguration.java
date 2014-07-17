@@ -20,6 +20,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
 import java.io.PrintStream;
@@ -45,7 +46,8 @@ public enum OGlobalConfiguration {
       "Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management",
       Boolean.class, Boolean.TRUE),
 
-  ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows to shutdown the JVM if needed/requested", Boolean.class, true),
+  ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows to shutdown the JVM if needed/requested", Boolean.class,
+      true),
 
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
@@ -548,7 +550,10 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
 
   DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
-      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l);
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+
+  DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
+      ORecordSerializerSchemaAware2CSV.NAME);
 
   private final String                 key;
   private final Object                 defValue;

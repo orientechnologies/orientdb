@@ -19,6 +19,7 @@ package com.orientechnologies.orient.core.db.document;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordWrapperAbstract;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -40,6 +41,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -55,8 +57,14 @@ import java.util.List;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocument {
-  protected static ORecordSerializer defaultSerializer = ORecordSerializerFactory.instance().getFormat(
-                                                           ORecordSerializerSchemaAware2CSV.NAME);
+  protected static ORecordSerializer defaultSerializer;
+  static {
+    defaultSerializer = ORecordSerializerFactory.instance().getFormat(
+        OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+    if (defaultSerializer == null)
+      throw new ODatabaseException("Impossible to find serializer with name "
+          + OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+  }
 
   /**
    * Creates a new connection to the database.
