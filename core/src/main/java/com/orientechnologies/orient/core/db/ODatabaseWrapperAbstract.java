@@ -18,6 +18,8 @@ package com.orientechnologies.orient.core.db;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -52,7 +54,12 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   }
 
   public <THISDB extends ODatabase> THISDB create() {
-    underlying.create();
+    return create(null);
+  }
+
+
+  public <THISDB extends ODatabase> THISDB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
+    underlying.create(iInitialSettings);
     Orient.instance().getDatabaseFactory().register(databaseOwner);
     return (THISDB) this;
   }
@@ -63,6 +70,11 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
 
   public void reload() {
     underlying.reload();
+  }
+
+  @Override
+  public OContextConfiguration getConfiguration() {
+    return underlying.getConfiguration();
   }
 
   /**

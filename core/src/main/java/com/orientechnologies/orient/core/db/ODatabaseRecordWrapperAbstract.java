@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -62,6 +63,12 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   public <THISDB extends ODatabase> THISDB create() {
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_CREATE);
     return (THISDB) super.create();
+  }
+
+  @Override
+  public <THISDB extends ODatabase> THISDB create(final Map<OGlobalConfiguration,Object> iInitialSettings) {
+    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_CREATE);
+    return (THISDB) super.create(iInitialSettings);
   }
 
   @Override

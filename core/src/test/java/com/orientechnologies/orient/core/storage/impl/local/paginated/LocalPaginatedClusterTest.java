@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
+import com.orientechnologies.orient.core.config.*;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -33,10 +34,6 @@ import com.orientechnologies.orient.core.compression.impl.OHighZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.OLowZIPCompression;
 import com.orientechnologies.orient.core.compression.impl.ONothingCompression;
 import com.orientechnologies.orient.core.compression.impl.OSnappyCompression;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -62,6 +59,7 @@ public class LocalPaginatedClusterTest {
   protected String                   buildDirectory;
   protected OReadWriteDiskCache               diskCache;
   protected OAtomicOperationsManager atomicOperationsManager;
+	private OContextConfiguration contextConfiguration = new OContextConfiguration();
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -76,11 +74,13 @@ public class LocalPaginatedClusterTest {
 
     OLocalPaginatedStorage storage = mock(OLocalPaginatedStorage.class);
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
+
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
     storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
     when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
+		when(storageConfiguration.getContextConfiguration()).thenReturn(contextConfiguration);
 
     diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 2648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
@@ -97,7 +97,7 @@ public class LocalPaginatedClusterTest {
 
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
 
-    paginatedCluster.configure(storage, 5, "paginatedClusterTest", buildDirectory, -1);
+		paginatedCluster.configure(storage, 5, "paginatedClusterTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }
 
@@ -1132,8 +1132,6 @@ public class LocalPaginatedClusterTest {
       Assert.assertEquals(physicalPosition.recordType, position.recordType);
 
       Assert.assertEquals(physicalPosition.recordSize, position.recordSize);
-      Assert.assertEquals(physicalPosition.dataSegmentPos, position.dataSegmentPos);
-      Assert.assertEquals(physicalPosition.dataSegmentId, position.dataSegmentId);
       if (mersenneTwisterFast.nextBoolean()) {
         paginatedCluster.deleteRecord(position.clusterPosition);
         removedPositions.add(position);
@@ -1153,45 +1151,8 @@ public class LocalPaginatedClusterTest {
         Assert.assertEquals(physicalPosition.recordType, position.recordType);
 
         Assert.assertEquals(physicalPosition.recordSize, position.recordSize);
-        Assert.assertEquals(physicalPosition.dataSegmentPos, position.dataSegmentPos);
-        Assert.assertEquals(physicalPosition.dataSegmentId, position.dataSegmentId);
       }
     }
-  }
-
-  @DataProvider(name = "compressions")
-  public Object[][] compressions() {
-    return new Object[][] { { ONothingCompression.INSTANCE }, { OSnappyCompression.INSTANCE }, { OGZIPCompression.INSTANCE },
-        { OLowZIPCompression.INSTANCE }, { OHighZIPCompression.INSTANCE } };
-  }
-
-  @Test(dataProvider = "compressions")
-  public void testCompression(OCompression compressionMethod) throws IOException {
-    paginatedCluster.set(OCluster.ATTRIBUTES.COMPRESSION, compressionMethod.name());
-    paginatedCluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 1);
-
-    byte[] record = new byte[100];
-    Random random = new Random();
-    random.nextBytes(record);
-
-    OPhysicalPosition physicalPosition = paginatedCluster
-        .createRecord(record, OVersionFactory.instance().createVersion(), (byte) 1);
-
-    record = compressionMethod.compress(record);
-
-    OCacheEntry cacheEntry = diskCache.load(1, 1, false);
-    int recordIndex = (int) (physicalPosition.clusterPosition.longValue() & 0xFFFF);
-
-    OClusterPage page = new OClusterPage(cacheEntry, false, ODurablePage.TrackMode.NONE);
-
-    byte[] storedEntity = page.getRecordBinaryValue(recordIndex, 0, page.getRecordSize(recordIndex));
-    byte[] storedRecord = new byte[record.length];
-    System.arraycopy(storedEntity, OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, storedRecord, 0, storedRecord.length);
-
-    Assert.assertEquals(storedRecord, record);
-    diskCache.release(cacheEntry);
-
-    paginatedCluster.set(OCluster.ATTRIBUTES.COMPRESSION, OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString());
   }
 
   @Test(enabled = false)

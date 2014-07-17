@@ -16,21 +16,6 @@
 
 package com.orientechnologies.orient.core.db.raw;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TimeZone;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.lock.ONoLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -38,6 +23,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -64,6 +51,21 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TimeZone;
+import java.util.concurrent.Callable;
 
 /**
  * Lower level ODatabase implementation. It's extended or wrapped by all the others.
@@ -129,12 +131,24 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public <DB extends ODatabase> DB create() {
+    return create(null);
+  }
+
+  public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     try {
       if (status == STATUS.OPEN)
         throw new IllegalStateException("Database " + getName() + " is already open");
 
       if (storage == null)
         storage = Orient.instance().loadStorage(url);
+
+      if (iInitialSettings != null) {
+        // SETUP INITIAL SETTINGS
+        final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
+        for (Map.Entry<OGlobalConfiguration, Object> e : iInitialSettings.entrySet()) {
+          ctxCfg.setValue(e.getKey(), e.getValue());
+        }
+      }
 
       storage.create(properties);
 
@@ -175,16 +189,22 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   @Override
+  public OContextConfiguration getConfiguration() {
+    if (storage != null)
+      return storage.getConfiguration().getContextConfiguration();
+    return null;
+  }
+
+  @Override
   public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
       final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     getStorage().backup(out, options, callable, iListener, compressionLevel, bufferSize);
 
   }
 
-
   /**
    * Executes a restore of a database backup. During the restore the database will be frozen in read-only mode.
-   *
+   * 
    * @param in
    *          InputStream used to read the backup content. Use a FileInputStream to read a backup on a disk
    * @param options

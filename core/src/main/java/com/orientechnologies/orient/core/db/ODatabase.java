@@ -15,13 +15,9 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -29,6 +25,12 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.util.OBackupable;
+
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br/>
@@ -77,6 +79,13 @@ public interface ODatabase extends OBackupable, Closeable {
   public <DB extends ODatabase> DB create();
 
   /**
+   * Creates a new database passing initial settings.
+   * 
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabase> DB create(Map<OGlobalConfiguration, Object> iInitialSettings);
+
+  /**
    * Reloads the database information like the cluster list.
    */
   public void reload();
@@ -88,6 +97,13 @@ public interface ODatabase extends OBackupable, Closeable {
    *           if database is closed.
    */
   public void drop();
+
+  /**
+   * Returns the database configuration settings. If defined, any database configuration overwrites the global one.
+   * 
+   * @return OContextConfiguration
+   */
+  public OContextConfiguration getConfiguration();
 
   /**
    * Declares an intent to the database. Intents aim to optimize common use cases.

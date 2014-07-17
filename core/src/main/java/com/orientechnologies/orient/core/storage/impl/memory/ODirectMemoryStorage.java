@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.storage.impl.memory;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -32,7 +31,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void initWalAndDiskCache() throws IOException {
-    if (OGlobalConfiguration.USE_WAL.getValueAsBoolean()) {
+    if( configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL) ){
       if (writeAheadLog == null)
         writeAheadLog = new OMemoryWriteAheadLog();
     } else
