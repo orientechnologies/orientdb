@@ -71,7 +71,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
   /**
    * Create a new index with default algorithm.
-   * 
+   *
    * @param iName
    *          - name of index
    * @param iType
@@ -93,9 +93,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
   /**
    * Create a new index.
-   * 
+   *
    * May require quite a long time if big amount of data should be indexed.
-   * 
+   *
    * @param iName
    *          name of index
    * @param iType

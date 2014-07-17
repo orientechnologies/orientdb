@@ -613,6 +613,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         flushedLsn = null;
       } else {
 
+        logSize = 0;
+
         for (File walFile : walFiles) {
           LogSegment logSegment = new LogSegment(walFile, maxPagesCacheSize);
           logSegment.init();
@@ -765,7 +767,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         if (first != null) {
           first.stopFlush(false);
 
-          logSize -= first.filledUpTo();
+          recalculateLogSize();
 
           first.delete(false);
           fixMasterRecords();
@@ -803,6 +805,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         logSegment.delete(false);
         iterator.remove();
       }
+
+      recalculateLogSize();
     }
   }
 
@@ -925,6 +929,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         if (logSegment != null)
           logSegment.delete(false);
       }
+
+      recalculateLogSize();
     }
   }
 
@@ -933,6 +939,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       return null;
 
     return logSegments.remove(0);
+  }
+
+  private void recalculateLogSize() throws IOException {
+    logSize = 0;
+
+    for (LogSegment segment : logSegments)
+      logSize += segment.filledUpTo();
   }
 
   private void fixMasterRecords() throws IOException {
