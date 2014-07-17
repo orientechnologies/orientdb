@@ -56,7 +56,8 @@ import java.util.zip.GZIPOutputStream;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  public static final int VERSION = 8;
+  public static final int VERSION = 9;
+
   protected OJSONWriter   writer;
   protected long          recordExported;
 
@@ -275,7 +276,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       writer.writeAttribute(0, false, "name", clusterName);
       writer.writeAttribute(0, false, "id", clusterId);
-      writer.writeAttribute(0, false, "type", database.getClusterType(clusterName));
 
       exportedClusters++;
       writer.endObject(2, false);

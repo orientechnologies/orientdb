@@ -109,8 +109,6 @@ public interface OClass extends Comparable<OClass> {
 
   public OClass addCluster(String iClusterName);
 
-  public OClass addCluster(String iClusterName, OStorage.CLUSTER_TYPE iClusterType);
-
   public OClass removeClusterId(int iId);
 
   public int[] getPolymorphicClusterIds();

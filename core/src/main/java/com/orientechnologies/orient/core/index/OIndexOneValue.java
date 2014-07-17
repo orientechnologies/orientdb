@@ -79,27 +79,9 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 
     // CHECK IF ALREADY EXIST
     final OIdentifiable indexedRID = get(key);
-    if (indexedRID != null && !indexedRID.getIdentity().equals(record.getIdentity())) {
-      // CHECK IF IN THE SAME TX THE ENTRY WAS DELETED
-      String storageType = getDatabase().getStorage().getType();
-      if (storageType.equals(OEngineMemory.NAME)) {
-        final OTransactionIndexChanges indexChanges = ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-            .getIndexChanges(getName());
-        if (indexChanges != null) {
-          final OTransactionIndexChangesPerKey keyChanges = indexChanges.getChangesPerKey(key);
-          if (keyChanges != null) {
-            for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry : keyChanges.entries) {
-              if (entry.operation == OTransactionIndexChanges.OPERATION.REMOVE)
-                // WAS DELETED, OK!
-                return;
-            }
-          }
-        }
-      }
-
+    if (indexedRID != null && !indexedRID.getIdentity().equals(record.getIdentity()))
       throw new OIndexException("Cannot index record : " + record + " found duplicated key '" + key + "' in index " + getName()
           + " previously assigned to the record " + indexedRID);
-    }
   }
 
   public OIndexOneValue create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,

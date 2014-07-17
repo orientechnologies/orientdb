@@ -75,7 +75,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
-    return ppos != null && !ppos.recordVersion.isTombstone() && ppos.dataSegmentId > -1;
+    return ppos != null && !ppos.recordVersion.isTombstone();
   }
 
   public String getName() {

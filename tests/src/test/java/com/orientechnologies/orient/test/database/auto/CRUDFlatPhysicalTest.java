@@ -50,7 +50,7 @@ public class CRUDFlatPhysicalTest extends FlatDBBaseTest {
 
 	public void createRaw() {
 		if (database.getClusterIdByName(CLUSTER_NAME) < 0)
-			database.addCluster(CLUSTER_NAME, OStorage.CLUSTER_TYPE.PHYSICAL);
+			database.addCluster(CLUSTER_NAME);
 
     startRecordNumber = database.countClusterElements(CLUSTER_NAME);
 

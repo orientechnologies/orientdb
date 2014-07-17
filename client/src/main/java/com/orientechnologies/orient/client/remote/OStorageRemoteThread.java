@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -227,12 +226,12 @@ public class OStorageRemoteThread implements OStorageProxy {
     throw new UnsupportedOperationException("restore");
   }
 
-  public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
-      final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
-      ORecordCallback<OClusterPosition> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid,
+																																 final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
+																																 ORecordCallback<OClusterPosition> iCallback) {
     pushSession();
     try {
-      return delegate.createRecord(iDataSegmentId, iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode,
+      return delegate.createRecord(iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode,
 							iCallback);
     } finally {
       popSession();
@@ -285,11 +284,11 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
+  public boolean updateReplica(ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
       throws IOException {
     pushSession();
     try {
-      return delegate.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);
+      return delegate.updateReplica(rid, content, recordVersion, recordType);
     } finally {
       popSession();
     }
@@ -475,15 +474,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public String getClusterTypeByName(final String iClusterName) {
-    pushSession();
-    try {
-      return delegate.getClusterTypeByName(iClusterName);
-    } finally {
-      popSession();
-    }
-  }
-
   public int getDefaultClusterId() {
     pushSession();
     try {
@@ -502,22 +492,22 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
-      final String iDataSegmentName, boolean forceListBased, final Object... iArguments) {
+  public int addCluster(final String iClusterName,
+												boolean forceListBased, final Object... iArguments) {
     pushSession();
     try {
-      return delegate.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, false, iArguments);
+      return delegate.addCluster(iClusterName, false, iArguments);
     } finally {
       popSession();
     }
   }
 
-  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      boolean forceListBased, Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId,
+												boolean forceListBased, Object... iParameters) {
     pushSession();
     try {
       return delegate
-          .addCluster(iClusterType, iClusterName, iRequestedId, iLocation, iDataSegmentName, forceListBased, iParameters);
+          .addCluster(iClusterName, iRequestedId, forceListBased, iParameters);
     } finally {
       popSession();
     }
@@ -527,41 +517,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       return delegate.dropCluster(iClusterId, iTruncate);
-    } finally {
-      popSession();
-    }
-  }
-
-  public ODataSegment getDataSegmentById(final int iDataSegmentId) {
-    return delegate.getDataSegmentById(iDataSegmentId);
-  }
-
-  public int getDataSegmentIdByName(final String iDataSegmentName) {
-    return delegate.getDataSegmentIdByName(iDataSegmentName);
-  }
-
-  public int addDataSegment(final String iDataSegmentName) {
-    pushSession();
-    try {
-      return delegate.addDataSegment(iDataSegmentName);
-    } finally {
-      popSession();
-    }
-  }
-
-  public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
-    pushSession();
-    try {
-      return delegate.addDataSegment(iSegmentName, iSegmentFileName);
-    } finally {
-      popSession();
-    }
-  }
-
-  public boolean dropDataSegment(final String iSegmentName) {
-    pushSession();
-    try {
-      return delegate.dropDataSegment(iSegmentName);
     } finally {
       popSession();
     }

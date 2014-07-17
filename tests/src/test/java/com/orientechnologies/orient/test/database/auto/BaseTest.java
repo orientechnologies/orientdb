@@ -3,7 +3,6 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.testng.annotations.*;
 
@@ -103,12 +102,12 @@ public abstract class BaseTest<T extends ODatabaseComplex> {
     if (database.getMetadata().getSchema().existsClass("Whiz"))
       return;
 
-    database.addCluster("csv", OStorage.CLUSTER_TYPE.PHYSICAL);
-    database.addCluster("flat", OStorage.CLUSTER_TYPE.PHYSICAL);
-    database.addCluster("binary", OStorage.CLUSTER_TYPE.PHYSICAL);
+    database.addCluster("csv");
+    database.addCluster("flat");
+    database.addCluster("binary");
 
     OClass account = database.getMetadata().getSchema()
-        .createClass("Account", database.addCluster("account", OStorage.CLUSTER_TYPE.PHYSICAL));
+        .createClass("Account", database.addCluster("account"));
     account.createProperty("id", OType.INTEGER);
     account.createProperty("birthDate", OType.DATE);
     account.createProperty("binary", OType.BINARY);
@@ -116,7 +115,7 @@ public abstract class BaseTest<T extends ODatabaseComplex> {
     database.getMetadata().getSchema().createClass("Company", account);
 
     OClass profile = database.getMetadata().getSchema()
-        .createClass("Profile", database.addCluster("profile", OStorage.CLUSTER_TYPE.PHYSICAL));
+        .createClass("Profile", database.addCluster("profile"));
     profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.UNIQUE);
     profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");

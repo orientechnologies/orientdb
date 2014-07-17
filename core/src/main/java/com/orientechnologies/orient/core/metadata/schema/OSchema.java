@@ -34,8 +34,6 @@ public interface OSchema {
 
   public OClass createClass(final String iClassName, final OClass iSuperClass);
 
-  public OClass createClass(final String iClassName, final OClass iSuperClass, final OStorage.CLUSTER_TYPE iType);
-
   public OClass createClass(final String iClassName, final int iDefaultClusterId);
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId);

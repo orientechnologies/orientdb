@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -56,7 +55,7 @@ public class TestOrientBulkInsert {
 
     OSchema schema = database.getMetadata().getSchema();
 
-    OClass cBulk = schema.createClass("classBulk", database.addCluster("cluster_bulk", CLUSTER_TYPE.PHYSICAL));
+    OClass cBulk = schema.createClass("classBulk", database.addCluster("cluster_bulk"));
 
     // Declare some fields
     for (int i = 1; i < 10; i++) {
