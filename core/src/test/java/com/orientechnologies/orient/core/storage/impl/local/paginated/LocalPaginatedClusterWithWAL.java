@@ -91,7 +91,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     when(storageConfiguration.getDirectory()).thenReturn(storageDir);
 
     paginatedCluster = new OPaginatedCluster();
-    paginatedCluster.configure(storage, 5, "localPaginatedClusterWithWALTest", buildDirectory, -1);
+    paginatedCluster.configure(storage, 5, "localPaginatedClusterWithWALTest");
     paginatedCluster.create(-1);
   }
 
@@ -133,7 +133,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     when(storageConfiguration.getDirectory()).thenReturn(testStorageDir);
 
     testCluster = new OPaginatedCluster();
-    testCluster.configure(testStorage, 6, "testPaginatedClusterWithWALTest", buildDirectory, -1);
+    testCluster.configure(testStorage, 6, "testPaginatedClusterWithWALTest");
     testCluster.create(-1);
   }
 
@@ -333,12 +333,6 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   @Test(enabled = false)
   public void testGetPhysicalPosition() throws IOException {
     super.testGetPhysicalPosition();
-  }
-
-  @Override
-  @Test(enabled = false, dataProvider = "compressions")
-  public void testCompression(OCompression compressionMethod) throws IOException {
-    super.testCompression(compressionMethod);
   }
 
   @Override
