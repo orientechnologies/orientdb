@@ -469,7 +469,7 @@ database.factory('DatabaseApi', function ($http, $resource) {
     resource.createDatabase = function (name, type, stype, username, password, callback) {
         $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
         $http.post(API + 'database/' + name + "/" + stype + "/" + type).success(function (data) {
-            $http.defaults.headers.common['Authorization'] = null;
+            delete $http.defaults.headers.common['Authorization'];
             callback(data);
         });
     }
@@ -487,10 +487,11 @@ database.factory('DatabaseApi', function ($http, $resource) {
     }
     resource.disconnect = function (callback) {
         $http.get(API + 'disconnect').success(function () {
-            $http.defaults.headers.common['Authorization'] = null;
+
+            delete $http.defaults.headers.common['Authorization'];
             callback();
         }).error(function () {
-                $http.defaults.headers.common['Authorization'] = null;
+                delete $http.defaults.headers.common['Authorization'];
                 callback();
             });
     }
