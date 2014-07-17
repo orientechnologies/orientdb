@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -60,6 +61,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
   protected OJSONWriter   writer;
   protected long          recordExported;
+  protected int           compressionLevel  = Deflater.BEST_SPEED;
+  protected int           compressionBuffer = 16384;              // 16Kb
 
   public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
@@ -77,7 +80,13 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     if (f.exists())
       f.delete();
 
-    writer = new OJSONWriter(new OutputStreamWriter(new GZIPOutputStream(new FileOutputStream(fileName), 16384))); // 16KB
+    final GZIPOutputStream gzipOS = new GZIPOutputStream(new FileOutputStream(fileName), compressionBuffer) {
+      {
+        def.setLevel(compressionLevel);
+      }
+    };
+
+    writer = new OJSONWriter(new OutputStreamWriter(gzipOS));
     writer.beginObject();
     iDatabase.getLocalCache().setEnable(false);
   }
@@ -245,6 +254,16 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
         totalCluster = database.getClusterIdByName(clusterName);
     }
     return totalCluster;
+  }
+
+  @Override
+  protected void parseSetting(final String option, final List<String> items) {
+    if (option.equalsIgnoreCase("-compressionLevel"))
+      compressionLevel = Integer.parseInt(items.get(0));
+    else if (option.equalsIgnoreCase("-compressionBuffer"))
+      compressionBuffer = Integer.parseInt(items.get(0));
+    else
+      super.parseSetting(option, items);
   }
 
   private void exportClusters() throws IOException {
