@@ -8,6 +8,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 @Test
 public class OStorageLocalTest {
@@ -80,8 +82,9 @@ public class OStorageLocalTest {
 
   public void contextConfigurationOnCreation() {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:testCtxCfgOnCreate");
-    db.setProperty(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey(), "gzip");
-    db.create();
+    Map<OGlobalConfiguration, Object> settings = new HashMap<OGlobalConfiguration, Object>();
+    settings.put(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, "gzip");
+    db.create(settings);
     db.close();
 
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx("memory:testCtxCfgOnCreate").open("admin", "admin");
