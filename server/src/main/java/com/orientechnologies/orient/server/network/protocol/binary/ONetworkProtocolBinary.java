@@ -1951,8 +1951,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (c != null) {
         channel.writeString(c.getName());
         channel.writeShort((short) c.getId());
-        if (connection.data.protocolVersion >= 12 && connection.data.protocolVersion < 24)
+
+        if (connection.data.protocolVersion >= 12 && connection.data.protocolVersion < 24) {
+          channel.writeString("none");
           channel.writeShort((short) -1);
+        }
       }
     }
   }
