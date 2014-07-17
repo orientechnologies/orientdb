@@ -238,34 +238,51 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
     }
 }]);
 
-GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside, DocumentApi) {
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', function ($scope, $routeParams, $location, $modal, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService) {
 
 
     var data = [];
 
-
-    $scope.graphOptions = {
-        data: data,
-        onLoad: function (graph) {
-            $scope.graph = graph;
-
-            $scope.graph.on('node/click', function (v) {
-
-                $scope.doc = v.source;
-
-                Aside.show({scope: $scope, template: 'views/database/graph/asideVertex.html', show: true});
-            });
-            $scope.graph.on('node/dblclick', function (v) {
-                console.log(v);
-            });
-
-            $scope.graph.on('node/load', function (v, callback) {
-                DocumentApi.get({ database: $routeParams.database, document: v.source}, function (doc) {
-                    callback(doc);
+    $scope.editorOptions = {
+        lineWrapping: true,
+        lineNumbers: true,
+        readOnly: false,
+        mode: 'text/x-sql',
+        metadata: Database,
+        extraKeys: {
+            "Ctrl-Enter": function (instance) {
+                $scope.$apply(function () {
+                    if ($scope.queryText)
+                        $scope.query();
                 });
-            });
+
+            },
+            "Ctrl-Space": "autocomplete"
+
         },
-        config: {
+        onLoad: function (_cm) {
+            $scope.cm = _cm;
+            if ($routeParams.query) {
+                $scope.queryText = $routeParams.query;
+
+
+                $scope.query();
+            }
+            $scope.cm.on("change", function () { /* script */
+                var wrap = $scope.cm.getWrapperElement();
+                var approp = $scope.cm.getScrollInfo().height > 300 ? "300px" : "auto";
+                if (wrap.style.height != approp) {
+                    wrap.style.height = approp;
+                    $scope.cm.refresh();
+                }
+            });
+
+        }
+    };
+
+    var config = localStorageService.get("graphConfig");
+    if (!config) {
+        config = {
             height: 500,
             width: 1200,
             classes: {
@@ -277,7 +294,75 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
         }
     }
+    $scope.graphOptions = {
+        data: data,
+        onLoad: function (graph) {
+            $scope.graph = graph;
 
+            $scope.graph.on('node/click', function (v) {
+
+//                $scope.doc = v.source;
+//
+//                Aside.show({scope: $scope, template: 'views/database/graph/asideVertex.html', show: true});
+            });
+            $scope.graph.on('node/dblclick', function (v) {
+
+                var q = "select expand(unionAll(bothE(),both()) )  from " + v['@rid'];
+                CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: $scope.language, text: q, limit: -1, shallow: false, verbose: false}, function (data) {
+
+                    $scope.graph.data(data.result).redraw();
+                })
+            });
+
+            $scope.graph.on('node/load', function (v, callback) {
+                DocumentApi.get({ database: $routeParams.database, document: v.source}, function (doc) {
+                    callback(doc);
+                });
+            });
+        },
+        metadata: Database.getMetadata(),
+        config: config,
+        actions: [
+            {
+                name: "Edit",
+                onClick: function (v) {
+                    $scope.showModal(v.source["@rid"]);
+                }
+            },
+            {
+                name: "Out",
+                onClick: function (v) {
+
+                }
+            },
+            {
+                name: "In",
+                onClick: function (v) {
+
+                }
+            },
+            {
+                name: "View",
+                onClick: function (v) {
+                    $scope.doc = v.source;
+                    Aside.show({scope: $scope, template: 'views/database/graph/asideVertex.html', show: true});
+                }
+            }
+        ]
+
+
+    }
+    $scope.showModal = function (rid) {
+        var modalScope = $scope.$new(true);
+        modalScope.db = $routeParams.database;
+        modalScope.database = $routeParams.database;
+        modalScope.rid = rid;
+        $modal({template: 'views/database/modalEdit.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
+
+    };
+    $scope.saveConfig = function () {
+        localStorageService.add("graphConfig", $scope.graph.getConfig());
+    }
     $scope.query = function () {
 
         Spinner.start();
@@ -303,7 +388,8 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         $scope.queryText = $routeParams.q;
         $scope.query();
     }
-}]);
+}])
+;
 GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside) {
 
     $scope.database = $routeParams.database;
