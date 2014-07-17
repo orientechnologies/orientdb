@@ -43,7 +43,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  * 
  */
 public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement {
-  protected boolean                  autoConvertToRecord = true;
+  protected boolean autoConvertToRecord = true;
 
   public ORecordLazySet(final ODocument iSourceRecord) {
     super(iSourceRecord);
@@ -89,7 +89,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
           map.put(iValue.getIdentity(), iValue.getRecord());
         return iValue;
       }
-    }, autoConvertToRecord);
+    }, autoConvertToRecord && getOwner().getInternalStatus() != STATUS.MARSHALLING);
   }
 
   @Override
