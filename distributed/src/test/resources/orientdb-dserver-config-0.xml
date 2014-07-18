@@ -91,7 +91,7 @@
         <!-- LEVEL1 AND 2 CACHE: enable/disable and set the size as number of entries -->
         <entry name="cache.level1.enabled" value="false"/>
         <entry name="cache.level1.size" value="1000"/>
-        <entry name="cache.level2.enabled" value="true"/>
+        <entry name="cache.level2.enabled" value="false"/>
         <entry name="cache.level2.size" value="1000"/>
 
         <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size> -->
