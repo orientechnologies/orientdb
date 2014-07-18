@@ -1449,7 +1449,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
         endStorageTx();
 
-        OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
+        OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), true);
 
       } catch (Exception e) {
         // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
