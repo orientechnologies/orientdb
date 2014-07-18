@@ -460,8 +460,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
       else
         diskCache.delete();
 
-      if (writeAheadLog != null && onDelete)
-        writeAheadLog.delete();
+      if (writeAheadLog != null)
+      {
+    	  writeAheadLog.close();
+    	  if(onDelete) writeAheadLog.delete();
+      }
 
       postCloseSteps(onDelete);
 
