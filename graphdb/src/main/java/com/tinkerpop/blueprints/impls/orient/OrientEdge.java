@@ -482,7 +482,7 @@ public class OrientEdge extends OrientElement implements Edge {
 
     out.writeObject(vOut != null ? vOut.getIdentity() : null);
     out.writeObject(vIn != null ? vIn.getIdentity() : null);
-    out.writeUTF(label);
+    out.writeUTF(label != null ? label : "");
   }
 
   @Override
@@ -492,6 +492,8 @@ public class OrientEdge extends OrientElement implements Edge {
     vOut = (OIdentifiable) in.readObject();
     vIn = (OIdentifiable) in.readObject();
     label = in.readUTF();
+    if( label.isEmpty())
+      label = null;
   }
 
   /**
