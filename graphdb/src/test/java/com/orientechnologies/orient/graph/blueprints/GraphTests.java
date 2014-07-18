@@ -18,13 +18,21 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.Assert.fail;
 
@@ -75,6 +83,46 @@ public class GraphTests {
         // ok
       }
 
+    }
+  }
+
+  @Test
+  public void testEmbeddedListAsVertexProperty() {
+    OrientGraph g = new OrientGraph(URL, "admin", "admin");
+
+    try {
+      OrientVertexType vertexType = g.createVertexType("EmbeddedClass");
+      vertexType.createProperty("embeddedList", OType.EMBEDDEDLIST);
+
+      OrientVertex vertex = g.addVertex("class:EmbeddedClass");
+
+      List<ODocument> embeddedList = new ArrayList<ODocument>();
+      ODocument docOne = new ODocument();
+      docOne.field("prop", "docOne");
+
+      ODocument docTwo = new ODocument();
+      docTwo.field("prop", "docTwo");
+
+      embeddedList.add(docOne);
+      embeddedList.add(docTwo);
+
+      vertex.setProperty("embeddedList", embeddedList);
+
+      final Object id = vertex.getId();
+
+      g.shutdown();
+      g = new OrientGraph(URL, "admin", "admin");
+
+      vertex = g.getVertex(id);
+      embeddedList = vertex.getProperty("embeddedList");
+
+      docOne = embeddedList.get(0);
+      Assert.assertEquals(docOne.field("prop"), "docOne");
+
+      docTwo = embeddedList.get(1);
+      Assert.assertEquals(docTwo.field("prop"), "docTwo");
+    } finally {
+      g.shutdown();
     }
   }
 }
