@@ -1968,8 +1968,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       else
         diskCache.delete();
 
-      if (writeAheadLog != null && onDelete)
-        writeAheadLog.delete();
+      if (writeAheadLog != null) {
+        writeAheadLog.close();
+        if (onDelete)
+          writeAheadLog.delete();
+      }
 
       if (onDelete)
         dirtyFlag.delete();

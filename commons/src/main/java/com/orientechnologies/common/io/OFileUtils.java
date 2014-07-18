@@ -20,10 +20,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.Locale;
 
 public class OFileUtils {
@@ -186,11 +183,15 @@ public class OFileUtils {
     if (useOldFileAPI)
       return file.delete();
 
-    final FileSystem fileSystem = FileSystems.getDefault();
-    final Path path = fileSystem.getPath(file.getAbsolutePath());
+    try {
+      final FileSystem fileSystem = FileSystems.getDefault();
+      final Path path = fileSystem.getPath(file.getAbsolutePath());
 
-    Files.delete(path);
+      Files.delete(path);
 
-    return true;
+      return true;
+    } catch (FileSystemException e) {
+      return false;
+    }
   }
 }
