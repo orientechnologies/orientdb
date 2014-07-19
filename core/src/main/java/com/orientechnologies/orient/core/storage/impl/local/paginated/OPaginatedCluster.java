@@ -270,6 +270,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
           setRecordOverflowGrowFactorInternal(stringValue);
           break;
         case COMPRESSION:
+          if (getEntries() > 0)
+            throw new IllegalArgumentException("Cannot change compression setting on cluster '" + getName()
+                                                 + "' because it is not empty");
           setCompressionInternal(stringValue);
           break;
         default:
