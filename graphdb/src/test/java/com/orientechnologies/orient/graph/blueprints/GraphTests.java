@@ -50,12 +50,6 @@ public class GraphTests {
     g.drop();
   }
 
-  @BeforeClass
-  public static void beforeClass() {
-    OrientGraph g = new OrientGraph(URL, "admin", "admin");
-    g.drop();
-  }
-
   @Test
   public void indexes() {
     OrientGraph g = new OrientGraph(URL, "admin", "admin");

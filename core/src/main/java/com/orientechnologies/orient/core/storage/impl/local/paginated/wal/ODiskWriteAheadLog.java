@@ -847,10 +847,17 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       for (LogSegment logSegment : logSegments)
         logSegment.delete(false);
 
-      boolean deleted = masterRecordFile.delete();
+      boolean deleted = OFileUtils.delete(masterRecordFile);
+      int retryCount = 0;
+
       while (!deleted) {
         OMemoryWatchDog.freeMemoryForResourceCleanup(100);
-        deleted = !masterRecordFile.exists() || masterRecordFile.delete();
+
+        deleted = OFileUtils.delete(masterRecordFile);
+        retryCount++;
+
+        if (retryCount > 10)
+          throw new IOException("Can not delete file. Retry limit exceeded. (" + retryCount + ").");
       }
     }
   }
@@ -907,11 +914,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   public OLogSequenceNumber getFlushedLSN() {
-    synchronized (syncObject) {
-      checkForClose();
-
-      return flushedLsn;
-    }
+    return flushedLsn;
   }
 
   public void cutTill(OLogSequenceNumber lsn) throws IOException {
