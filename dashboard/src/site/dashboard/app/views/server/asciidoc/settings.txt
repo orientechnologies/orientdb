@@ -7,24 +7,13 @@ link:#/dashboard/help[Back to index]
 Settings
 --------
 
-In this panel you can configure some settings for the entire Workbench. There are four tabs:
+In this panel you can configure some settings for the entire Workbench. There are three tabs:
 
-- [BOLD]*Dashboard Configuration*
 - [BOLD]*Metrics Configuration*
 - [BOLD]*Mail Settings*
 - [BOLD]*Global Settings*
 
 
-
-Dashboard Configuration
-~~~~~~~~~~~~~~~~~~~~~~~
-
-At the left of the panel you have a list of all metrics chart that you have configured in the Metrics panel.
-
-Here you can choose a set of it and the layout to componing the Workbench home page (list or a grid).
-
-.List Configuration
-image::{icondir}dashboard_settings.png[width="70%"]
 
 
 .Grid Configuration

@@ -24,7 +24,7 @@ You can also disconnect the Workbench from the monitored cluster.
 With this action Workbench will continue to monitor the single servers of the cluster,
 but will not be able to retrieve runtime configuration of the databases.
 
-image::{icondir}clustermgmt.png[height="20%"]
+image::{icondir}clustermgmt.png[height="20%",width="80%"]
 
 Cluster Overview
 ----------------

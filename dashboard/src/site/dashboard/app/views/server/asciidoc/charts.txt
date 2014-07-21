@@ -37,4 +37,4 @@ If you want to build a new chart:
 NOTE: if you want you can combine more metrics in one configuration
 
 .Metrics builder
-image::{icondir}combinemetrics.png[height="60%"]
+image::{icondir}combinemetrics.png[height="60%",width="80%"]

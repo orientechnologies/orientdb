@@ -78,7 +78,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
                 if (db) {
                     $scope.getDbMetrics(db);
                 }
-                $scope.initMetrics();
+
                 Server.getConfiguration(server, function (data) {
                     $scope.configuration = data.configuration;
                 });
