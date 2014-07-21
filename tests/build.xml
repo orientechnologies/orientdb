@@ -112,7 +112,7 @@
         </exec>
 
     	<!-- workaroud for command line property setting -->
-		<condition property=" " value="-Ddb.document.serializer=${db.document.serializer}" else="-Dnone=none">
+		<condition property="serializer" value="-Ddb.document.serializer=${db.document.serializer}" else="-Dnone=none">
 				<isset property="db.document.serializer" />
 		</condition>
 
@@ -127,7 +127,7 @@
         <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="JAVA_OPTS"
                  value="-Xmx3G -XX:+HeapDumpOnOutOfMemoryError -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false ${serializer}"/>
-            <!--<env key="JAVA_OPTS" value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006 -Xmx3G -XX:+HeapDumpOnOutOfMemoryError -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false"/>-->
+            <!-- <env key="JAVA_OPTS" value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006 -Xmx3G -XX:+HeapDumpOnOutOfMemoryError -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false ${serializer}"/>-->
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./server.sh"/>
         </exec>
@@ -137,7 +137,7 @@
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true">
-            <jvmarg line="-DtestPath=${project.root.dir} -DstorageType=${test.storageType} -XX:+HeapDumpOnOutOfMemoryError -Xmx3G -DbuildDirectory=${buildDirectory} -Djava.rmi.server.hostname=localhost -Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml ${serializer}"/>
+            <jvmarg line="-DtestPath=${project.root.dir} -DstorageType=${test.storageType} -XX:+HeapDumpOnOutOfMemoryError -Xmx3G -DbuildDirectory=${buildDirectory} -Djava.rmi.server.hostname=localhost -Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml ${serializer} "/>
 
             <!-- debug -->
             <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>-->

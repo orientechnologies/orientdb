@@ -1,16 +1,13 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
-import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -32,7 +29,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
@@ -42,8 +38,9 @@ import com.orientechnologies.orient.core.util.ODateHelper;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
-  private static final long MILLISEC_PER_DAY = 86400000;
-  private Charset           utf8;
+  private static final ORecordId NULL_RECORD_ID   = new ORecordId(-2, new OClusterPositionLong(-1));
+  private static final long      MILLISEC_PER_DAY = 86400000;
+  private Charset                utf8;
 
   public ORecordSerializerBinaryV0() {
     utf8 = Charset.forName("UTF-8");
@@ -251,8 +248,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     while ((size--) > 0) {
       OType keyType = readOType(bytes);
       Object key = readSingleValue(bytes, keyType, document);
-      OIdentifiable value = readOptimizedLink(bytes);
-      result.put(key, value);
+      ORecordId value = readOptimizedLink(bytes);
+      if (value.equals(NULL_RECORD_ID))
+        result.put(key, null);
+      else
+        result.put(key, value);
     }
     return result;
   }
@@ -285,11 +285,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   private Collection<OIdentifiable> readLinkCollection(BytesContainer bytes, Collection<OIdentifiable> found) {
     final int items = OVarIntSerializer.readAsInteger(bytes);
     for (int i = 0; i < items; i++) {
-      OIdentifiable identifiable = readLink(bytes);
-      if (ORecordId.EMPTY_RECORD_ID.equals(identifiable))
+      ORecordId id = readOptimizedLink(bytes);
+      if (id.equals(NULL_RECORD_ID))
         found.add(null);
       else
-        found.add(identifiable);
+        found.add(id);
     }
     return found;
   }
@@ -298,7 +298,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return new ORecordId(readInteger(bytes), new OClusterPositionLong(readLong(bytes)));
   }
 
-  private OIdentifiable readOptimizedLink(final BytesContainer bytes) {
+  private ORecordId readOptimizedLink(final BytesContainer bytes) {
     return new ORecordId(OVarIntSerializer.readAsInteger(bytes), new OClusterPositionLong(OVarIntSerializer.readAsLong(bytes)));
   }
 
@@ -341,7 +341,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       pointer = OVarIntSerializer.write(bytes, ((Number) value).longValue());
       break;
     case STRING:
-      pointer = writeString(bytes, (String) value);
+      pointer = writeString(bytes, value.toString());
       break;
     case DOUBLE:
       long dg = Double.doubleToLongBits((Double) value);
@@ -447,7 +447,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       writeOType(bytes, bytes.alloc(1), type);
       writeString(bytes, entry.getKey().toString());
       if (entry.getValue() == null)
-        writeOptimizedLink(bytes, ORecordId.EMPTY_RECORD_ID);
+        writeOptimizedLink(bytes, NULL_RECORD_ID);
       else
         writeOptimizedLink(bytes, entry.getValue());
     }
@@ -529,6 +529,20 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return pos;
   }
 
+  private int writeOptimizedNullLink(BytesContainer bytes) {
+    int pos = OVarIntSerializer.write(bytes, -2);
+    OVarIntSerializer.write(bytes, -1L);
+    return pos;
+  }
+
+  private int writeNullLink(BytesContainer bytes) {
+    int pos = bytes.alloc(OIntegerSerializer.INT_SIZE);
+    OIntegerSerializer.INSTANCE.serialize(-2, bytes.bytes, pos);
+    int posR = bytes.alloc(OLongSerializer.LONG_SIZE);
+    OLongSerializer.INSTANCE.serialize(-1L, bytes.bytes, posR);
+    return pos;
+  }
+
   private int writeLinkCollection(BytesContainer bytes, Collection<OIdentifiable> value) {
     if (value instanceof OMVRBTreeRIDSet) {
       ((OMVRBTreeRIDSet) value).toStream();
@@ -537,9 +551,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     for (OIdentifiable itemValue : value) {
       // TODO: handle the null links
       if (itemValue == null)
-        writeLink(bytes, ORecordId.EMPTY_RECORD_ID);
+        writeOptimizedLink(bytes, NULL_RECORD_ID);
       else
-        writeLink(bytes, itemValue);
+        writeOptimizedLink(bytes, itemValue);
     }
     return pos;
   }
@@ -584,81 +598,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   private OType getTypeFromValue(Object fieldValue, boolean forceEmbedded) {
-    OType type = null;
-    if (fieldValue.getClass() == byte[].class)
-      type = OType.BINARY;
-    else if (fieldValue instanceof ORecord<?>) {
-      if (fieldValue instanceof ODocument && (((ODocument) fieldValue).hasOwners() || forceEmbedded)) {
-        type = OType.EMBEDDED;
-      } else
-        type = OType.LINK;
-    } else if (fieldValue instanceof ODocumentSerializable)
+    OType type = OType.getTypeByValue(fieldValue);
+    if (type == OType.LINK && fieldValue instanceof ODocument && forceEmbedded)
       type = OType.EMBEDDED;
-    else if (fieldValue instanceof ORID)
-      type = OType.LINK;
-    else if (fieldValue instanceof Date)
-      type = OType.DATETIME;
-    else if (fieldValue instanceof String)
-      type = OType.STRING;
-    else if (fieldValue instanceof Integer || fieldValue instanceof BigInteger)
-      type = OType.INTEGER;
-    else if (fieldValue instanceof Long)
-      type = OType.LONG;
-    else if (fieldValue instanceof Float)
-      type = OType.FLOAT;
-    else if (fieldValue instanceof Short)
-      type = OType.SHORT;
-    else if (fieldValue instanceof Byte)
-      type = OType.BYTE;
-    else if (fieldValue instanceof Double)
-      type = OType.DOUBLE;
-    else if (fieldValue instanceof BigDecimal)
-      type = OType.DECIMAL;
-    else if (fieldValue instanceof Boolean)
-      type = OType.BOOLEAN;
-    else if (fieldValue instanceof ORidBag)
-      type = OType.LINKBAG;
-    else if (fieldValue instanceof Map<?, ?>) {
-
-      boolean link = true;
-      if (((Map<?, ?>) fieldValue).size() > 0) {
-        final Iterable<Object> firstValue = OMultiValue.getMultiValueIterable(fieldValue);
-        boolean empty = true;
-        for (Object object : firstValue) {
-          if (!(object instanceof OIdentifiable) && object != null)
-            link = false;
-          else if (object != null)
-            empty = false;
-        }
-        if (empty)
-          link = false;
-      } else
-        link = false;
-      if (link)
-        type = OType.LINKMAP;
-      else
-        type = OType.EMBEDDEDMAP;
-    } else if (fieldValue instanceof OMultiCollectionIterator<?>)
-      type = ((OMultiCollectionIterator<?>) fieldValue).isEmbedded() ? OType.EMBEDDEDLIST : OType.LINKLIST;
-    else if (fieldValue.getClass().isArray()) {
-      type = OType.EMBEDDEDLIST;
-    } else if (fieldValue instanceof Collection<?>) {
-      final Object firstValue = OMultiValue.getFirstValue(fieldValue);
-      if (firstValue instanceof OIdentifiable) {
-        if (fieldValue instanceof Set<?>) {
-          type = OType.LINKSET;
-        } else {
-          type = OType.LINKLIST;
-        }
-      } else {
-        if (fieldValue instanceof Set<?>) {
-          type = OType.EMBEDDEDSET;
-        } else {
-          type = OType.EMBEDDEDLIST;
-        }
-      }
-    } else if (fieldValue instanceof OSerializableStream)
-      type = OType.CUSTOM;
     return type;
   }
 
