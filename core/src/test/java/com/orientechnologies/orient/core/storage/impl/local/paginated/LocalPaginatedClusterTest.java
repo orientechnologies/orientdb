@@ -1161,41 +1161,6 @@ public class LocalPaginatedClusterTest {
     }
   }
 
-  @DataProvider(name = "compressions")
-  public Object[][] compressions() {
-    return new Object[][] { { ONothingCompression.INSTANCE }, { OSnappyCompression.INSTANCE }, { OGZIPCompression.INSTANCE },
-        { OLowZIPCompression.INSTANCE }, { OHighZIPCompression.INSTANCE } };
-  }
-
-  @Test(dataProvider = "compressions")
-  public void testCompression(OCompression compressionMethod) throws IOException {
-    paginatedCluster.set(OCluster.ATTRIBUTES.COMPRESSION, compressionMethod.name());
-    paginatedCluster.set(OCluster.ATTRIBUTES.RECORD_GROW_FACTOR, 1);
-
-    byte[] record = new byte[100];
-    Random random = new Random();
-    random.nextBytes(record);
-
-    OPhysicalPosition physicalPosition = paginatedCluster
-        .createRecord(record, OVersionFactory.instance().createVersion(), (byte) 1);
-
-    record = compressionMethod.compress(record);
-
-    OCacheEntry cacheEntry = diskCache.load(1, 1, false);
-    int recordIndex = (int) (physicalPosition.clusterPosition.longValue() & 0xFFFF);
-
-    OClusterPage page = new OClusterPage(cacheEntry, false, ODurablePage.TrackMode.NONE);
-
-    byte[] storedEntity = page.getRecordBinaryValue(recordIndex, 0, page.getRecordSize(recordIndex));
-    byte[] storedRecord = new byte[record.length];
-    System.arraycopy(storedEntity, OIntegerSerializer.INT_SIZE + OByteSerializer.BYTE_SIZE, storedRecord, 0, storedRecord.length);
-
-    Assert.assertEquals(storedRecord, record);
-    diskCache.release(cacheEntry);
-
-    paginatedCluster.set(OCluster.ATTRIBUTES.COMPRESSION, OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValueAsString());
-  }
-
   @Test(enabled = false)
   public void testRecordGrowFactor() throws Exception {
     paginatedCluster.set(OCluster.ATTRIBUTES.COMPRESSION, ONothingCompression.NAME);
