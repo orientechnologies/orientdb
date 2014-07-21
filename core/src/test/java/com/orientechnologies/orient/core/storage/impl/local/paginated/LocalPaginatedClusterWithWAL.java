@@ -339,12 +339,6 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
   }
 
   @Override
-  @Test(enabled = false, dataProvider = "compressions")
-  public void testCompression(OCompression compressionMethod) throws IOException {
-    super.testCompression(compressionMethod);
-  }
-
-  @Override
   @Test(enabled = false)
   public void testRecordGrowFactor() throws Exception {
     super.testRecordGrowFactor();
