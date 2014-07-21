@@ -333,12 +333,45 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                 name: "Out",
                 onClick: function (v) {
 
+                },
+                actions: function (v) {
+
+                    var acts = [];
+                    var outgoings = Database.getEdge(v.source, 'out_');
+                    outgoings.forEach(function (elem) {
+                        acts.push(
+                            {
+                                name: elem.replace("out_", ""),
+                                onClick: function (label) {
+                                    console.log(label);
+                                }
+                            }
+                        )
+                    })
+                    return acts;
                 }
+
             },
             {
                 name: "In",
                 onClick: function (v) {
 
+                },
+                actions: function (v) {
+
+                    var acts = [];
+                    var outgoings = Database.getEdge(v.source, 'in_');
+                    outgoings.forEach(function (elem) {
+                        acts.push(
+                            {
+                                name: elem.replace("in_", ""),
+                                onClick: function (label) {
+                                    console.log(label);
+                                }
+                            }
+                        )
+                    })
+                    return acts;
                 }
             },
             {
