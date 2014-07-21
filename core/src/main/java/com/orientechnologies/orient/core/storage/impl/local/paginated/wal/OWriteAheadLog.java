@@ -956,11 +956,7 @@ public class OWriteAheadLog {
   }
 
   public OLogSequenceNumber getFlushedLSN() {
-    synchronized (syncObject) {
-      checkForClose();
-
-      return flushedLsn;
-    }
+    return flushedLsn;
   }
 
   public OLogSequenceNumber logFullCheckpointStart() throws IOException {
