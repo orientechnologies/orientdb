@@ -238,7 +238,7 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
     }
 }]);
 
-GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', function ($scope, $routeParams, $location, $modal, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService) {
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService) {
 
 
     var data = [];
@@ -322,60 +322,117 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         },
         metadata: Database.getMetadata(),
         config: config,
-        actions: [
+        menu: [
             {
-                name: "Edit",
+                name: '\uf044',
                 onClick: function (v) {
                     $scope.showModal(v.source["@rid"]);
                 }
             },
+
             {
-                name: "Out",
+                name: "\uf18e",
                 onClick: function (v) {
 
                 },
-                actions: function (v) {
+                submenu: {
+                    type: "tree",
+                    entries: function (v) {
 
-                    var acts = [];
-                    var outgoings = Database.getEdge(v.source, 'out_');
-                    outgoings.forEach(function (elem) {
-                        acts.push(
-                            {
-                                name: elem.replace("out_", ""),
-                                onClick: function (label) {
-                                    console.log(label);
+                        var acts = [];
+                        var outgoings = Database.getEdge(v.source, 'out_');
+                        outgoings.forEach(function (elem) {
+                            acts.push(
+                                {
+                                    name: elem.replace("out_", ""),
+                                    onClick: function (v, label) {
+
+
+                                        var props = { rid: v['@rid'], label: label};
+                                        var query = "select expand(unionAll(outE('{{label}}'),out('{{label}}')) )  from {{rid}}"
+                                        var queryText = S(query).template(props).s;
+                                        CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: $scope.language, text: queryText, limit: -1, shallow: false, verbose: false}, function (data) {
+
+                                            $scope.graph.data(data.result).redraw();
+                                        })
+                                    }
                                 }
-                            }
-                        )
-                    })
-                    return acts;
+                            )
+                        })
+                        return acts;
+                    }
+
                 }
 
             },
             {
-                name: "In",
+                name: "...",
                 onClick: function (v) {
 
                 },
-                actions: function (v) {
+                submenu: {
+                    type: "pie",
+                    entries: [
+                        {
+                            name: "\uf014",
+                            placeholder: "Delete",
+                            onClick: function (v, label) {
 
-                    var acts = [];
-                    var outgoings = Database.getEdge(v.source, 'in_');
-                    outgoings.forEach(function (elem) {
-                        acts.push(
-                            {
-                                name: elem.replace("in_", ""),
-                                onClick: function (label) {
-                                    console.log(label);
-                                }
+                                var recordID = v['@rid']
+                                Utilities.confirm($scope, $modal, $q, {
+                                    title: 'Warning!',
+                                    body: 'You are removing Vertex ' + recordID + '. Are you sure?',
+                                    success: function () {
+                                        $scope.graph.removeVertex(v);
+//                                        var command = "DELETE Vertex " + recordID;
+//                                        CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
+//
+//                                        });
+                                    }
+                                });
                             }
-                        )
-                    })
-                    return acts;
+                        },
+                        {
+                            name: "\uf0c1",
+                            placeholder: "Connect"
+                        }
+                    ]
                 }
             },
             {
-                name: "View",
+                name: "\uf190",
+                onClick: function (v) {
+
+                },
+                submenu: {
+                    type: "tree",
+                    entries: function (v) {
+
+                        var acts = [];
+                        var outgoings = Database.getEdge(v.source, 'in_');
+                        outgoings.forEach(function (elem) {
+                            acts.push(
+                                {
+                                    name: elem.replace("in_", ""),
+                                    onClick: function (v, label) {
+                                        var props = { rid: v['@rid'], label: label};
+                                        var query = "select expand(unionAll(inE('{{label}}'),in('{{label}}')) )  from {{rid}}"
+                                        var queryText = S(query).template(props).s;
+                                        CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: $scope.language, text: queryText, limit: -1, shallow: false, verbose: false}, function (data) {
+
+                                            $scope.graph.data(data.result).redraw();
+                                        })
+                                    }
+                                }
+                            )
+                        })
+                        return acts;
+                    }
+
+                }
+            },
+            {
+                name: "\uf06e",
                 onClick: function (v) {
                     $scope.doc = v.source;
                     Aside.show({scope: $scope, template: 'views/database/graph/asideVertex.html', show: true});

@@ -107,3 +107,16 @@ body div.container-studio {
 .asideVertex {
     width: 320px;
 }
+.panel-orient  .panel-heading {
+    background-color: #222222;
+    background-image: none;
+    /*background-image: linear-gradient(to bottom,#3c3c3c 0,#222 100%);*/
+    /*background-repeat: repeat-x;*/
+    color: white;
+}
+.modal-header {
+    padding: 5px;
+    padding-left: 15px;
+    /*background-color: #c5c5c5;*/
+    /*color: white;*/
+}
