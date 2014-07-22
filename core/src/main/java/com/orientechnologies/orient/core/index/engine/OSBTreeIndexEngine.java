@@ -275,6 +275,25 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
+  public OIndexCursor descCursor(ValuesTransformer<V> valuesTransformer) {
+    acquireSharedLock();
+    try {
+      final Object lastKey = sbTree.lastKey();
+      if (lastKey == null)
+        return new OIndexAbstractCursor() {
+          @Override
+          public Map.Entry<Object, OIdentifiable> nextEntry() {
+            return null;
+          }
+        };
+
+      return new OSBTreeIndexCursor<V>(sbTree.iterateEntriesMinor(lastKey, true, false), valuesTransformer);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
   public OIndexKeyCursor keyCursor() {
     acquireSharedLock();
     try {

@@ -70,6 +70,8 @@ public interface OIndexEngine<V> {
 
   OIndexCursor cursor(ValuesTransformer<V> valuesTransformer);
 
+  OIndexCursor descCursor(ValuesTransformer<V> valuesTransformer);
+
   OIndexKeyCursor keyCursor();
 
   long size(ValuesTransformer<V> transformer);

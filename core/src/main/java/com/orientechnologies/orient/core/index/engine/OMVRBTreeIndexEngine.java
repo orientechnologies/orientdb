@@ -442,6 +442,11 @@ public final class OMVRBTreeIndexEngine<V> extends OSharedResourceAdaptiveExtern
   }
 
   @Override
+  public OIndexCursor descCursor(ValuesTransformer<V> valuesTransformer) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public OIndexKeyCursor keyCursor() {
     acquireExclusiveLock();
     try {

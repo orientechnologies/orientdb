@@ -246,6 +246,18 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   @Override
+  public OIndexCursor descCursor() {
+    checkForRebuild();
+
+    acquireSharedLock();
+    try {
+      return indexEngine.descCursor(null);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
   protected OStreamSerializer determineValueSerializer() {
     return OStreamSerializerRID.INSTANCE;
   }
