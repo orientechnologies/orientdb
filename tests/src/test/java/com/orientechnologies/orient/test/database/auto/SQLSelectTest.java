@@ -1610,9 +1610,6 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   public void testSelectFromIndexValues() {
-    if (database.getURL().startsWith("memory:"))
-      return;
-
     database.command(new OCommandSQL("create index selectFromIndexValues on Profile (name) notunique")).execute();
 
     final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
@@ -1639,9 +1636,6 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
 	public void testSelectFromIndexValuesAsc() {
-		if (database.getURL().startsWith("memory:"))
-			return;
-
 		database.command(new OCommandSQL("create index selectFromIndexValuesAsc on Profile (name) notunique")).execute();
 
 		final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
@@ -1668,9 +1662,6 @@ public class SQLSelectTest extends AbstractSelectTest {
 	}
 
 	public void testSelectFromIndexValuesDesc() {
-		if (database.getURL().startsWith("memory:"))
-			return;
-
 		database.command(new OCommandSQL("create index selectFromIndexValuesDesc on Profile (name) notunique")).execute();
 
 		final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(

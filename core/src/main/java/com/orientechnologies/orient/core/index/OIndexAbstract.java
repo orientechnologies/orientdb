@@ -54,9 +54,7 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
 /**
@@ -525,18 +523,18 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   private void removeValuesContainer() {
     if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
       final OStorage storage = getDatabase().getStorage();
-			if (storage instanceof OStorageLocalAbstract) {
-				final ODiskCache diskCache = ((OStorageLocalAbstract)storage).getDiskCache();
-				try {
-					final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-					if (diskCache.exists(fileName)) {
-						final long fileId = diskCache.openFile(fileName);
-						diskCache.deleteFile(fileId);
-					}
-				} catch (IOException e) {
-					OLogManager.instance().error(this, "Can't delete file for value containers", e);
-				}
-			}
+      if (storage instanceof OAbstractPaginatedStorage) {
+        final ODiskCache diskCache = ((OAbstractPaginatedStorage) storage).getDiskCache();
+        try {
+          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+          if (diskCache.exists(fileName)) {
+            final long fileId = diskCache.openFile(fileName);
+            diskCache.deleteFile(fileId);
+          }
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Can't delete file for value containers", e);
+        }
+      }
     }
   }
 

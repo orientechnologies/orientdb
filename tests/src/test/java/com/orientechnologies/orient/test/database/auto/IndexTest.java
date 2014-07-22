@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -513,10 +515,10 @@ public class IndexTest extends ObjectDBBaseTest {
 
     final List<Profile> result = database
         .command(
-            new OSQLSynchQuery<Profile>(
-                "select * from Profile where "
-                    + "((name = 'Giuseppe' OR name <> 'Napoleone')"
-                    + " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))"))
+								new OSQLSynchQuery<Profile>(
+												"select * from Profile where "
+																+ "((name = 'Giuseppe' OR name <> 'Napoleone')"
+																+ " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))"))
         .execute();
     if (!oldRecording) {
       Orient.instance().getProfiler().stopRecording();
@@ -1291,7 +1293,7 @@ public class IndexTest extends ObjectDBBaseTest {
     indexWithLimitAndOffset.createProperty("index", OType.INTEGER);
 
     databaseDocumentTx.command(new OCommandSQL(
-        "create index IndexWithLimitAndOffset on IndexWithLimitAndOffsetClass (val) notunique"));
+						"create index IndexWithLimitAndOffset on IndexWithLimitAndOffsetClass (val) notunique"));
 
     for (int i = 0; i < 30; i++) {
       final ODocument document = new ODocument("IndexWithLimitAndOffsetClass");
@@ -1519,7 +1521,7 @@ public class IndexTest extends ObjectDBBaseTest {
     metadata.field("ignoreNullValues", false);
 
     clazz.createIndex("NullIndexKeysSupportInTxIndex", INDEX_TYPE.NOTUNIQUE.toString(), null, metadata,
-        new String[] { "nullField" });
+						new String[]{"nullField"});
 
     database.begin();
 
@@ -1639,11 +1641,11 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(resultTwo.get(0), docTwo);
 
     explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryTwo)).execute();
-    Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
+    Assert.assertTrue(explain.<Collection<String>>field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
   }
 
   public void testValuesContainerIsRemovedIfIndexIsRemoved() {
-    if (database.getURL().startsWith("memory:") || database.getURL().startsWith("remote:"))
+    if (database.getURL().startsWith("remote:"))
       return;
 
     final OSchema schema = database.getMetadata().getSchema();
@@ -1664,7 +1666,7 @@ public class IndexTest extends ObjectDBBaseTest {
       }
     }
 
-    final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage();
+    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage();
     final ODiskCache diskCache = storageLocalAbstract.getDiskCache();
 
     Assert.assertTrue(diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
