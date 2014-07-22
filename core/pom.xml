@@ -13,6 +13,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
+    <packaging>pom</packaging>
+    <modules>
+        <module>../test-commons</module>
+    </modules>
 
     <parent>
         <groupId>com.orientechnologies</groupId>
@@ -85,9 +89,15 @@
         </dependency>
 
         <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>5.14.1</version>
+            <version>6.8.8</version>
             <scope>test</scope>
         </dependency>
         <dependency>

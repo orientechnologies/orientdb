@@ -240,11 +240,6 @@ class HashLRUList implements LRUList {
   }
 
   @Override
-  public OCacheEntry getLRU() {
-    return head.cacheEntry;
-  }
-
-  @Override
   public Iterator<OCacheEntry> iterator() {
     return new MRUEntryIterator();
   }
