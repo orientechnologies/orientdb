@@ -1642,6 +1642,38 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
   }
 
+  public void testValuesContainerIsRemovedIfIndexIsRemoved() {
+    if (database.getURL().startsWith("memory:") || database.getURL().startsWith("remote:"))
+      return;
+
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass clazz = schema.createClass("ValuesContainerIsRemovedIfIndexIsRemovedClass");
+    clazz.createProperty("val", OType.STRING);
+
+    database
+        .command(
+            new OCommandSQL(
+                "create index ValuesContainerIsRemovedIfIndexIsRemovedIndex on ValuesContainerIsRemovedIfIndexIsRemovedClass (val) notunique"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 100; j++) {
+        ODocument document = new ODocument("ValuesContainerIsRemovedIfIndexIsRemovedClass");
+        document.field("val", "value" + i);
+        document.save();
+      }
+    }
+
+    final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage();
+    final ODiskCache diskCache = storageLocalAbstract.getDiskCache();
+
+    Assert.assertTrue(diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
+
+    database.command(new OCommandSQL("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex")).execute();
+
+    Assert.assertTrue(!diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
+  }
+
   private List<OClusterPosition> getValidPositions(int clusterId) {
     final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
 
