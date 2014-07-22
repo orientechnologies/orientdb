@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.filter;
 
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -50,7 +51,11 @@ public class OSQLTarget extends OBaseParser {
   protected Iterable<? extends OIdentifiable>    targetRecords;
   protected Map<String, String>                  targetClusters;
   protected Map<OClass, String>                  targetClasses;
+
   protected String                               targetIndex;
+
+  protected String                               targetIndexValues;
+  protected boolean                              targetIndexValuesAsc;
 
   public OSQLTarget(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
     super();
@@ -90,6 +95,14 @@ public class OSQLTarget extends OBaseParser {
 
   public String getTargetIndex() {
     return targetIndex;
+  }
+
+  public String getTargetIndexValues() {
+    return targetIndexValues;
+  }
+
+  public boolean isTargetIndexValuesAsc() {
+    return targetIndexValuesAsc;
   }
 
   @Override
@@ -168,7 +181,7 @@ public class OSQLTarget extends OBaseParser {
       parserMoveCurrentPosition(1);
     } else {
 
-      while (!parserIsEnded() && (targetClasses == null && targetClusters == null && targetIndex == null)) {
+      while (!parserIsEnded() && (targetClasses == null && targetClusters == null && targetIndex == null && targetIndexValues == null)) {
         String originalSubjectName = parserRequiredWord(false, "Target not found");
         String subjectName = originalSubjectName.toUpperCase();
 
@@ -211,6 +224,15 @@ public class OSQLTarget extends OBaseParser {
           if (value != null)
             ((List<OIdentifiable>) targetRecords).add(value);
 
+        } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_VALUES_PREFIX)) {
+          targetIndexValues = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_PREFIX.length());
+          targetIndexValuesAsc = true;
+        } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_VALUES_ASC_PREFIX)) {
+          targetIndexValues = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_ASC_PREFIX.length());
+          targetIndexValuesAsc = true;
+        } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_VALUES_DESC_PREFIX)) {
+          targetIndexValues = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_DESC_PREFIX.length());
+          targetIndexValuesAsc = false;
         } else {
           if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
             // REGISTER AS CLASS

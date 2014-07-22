@@ -30,27 +30,32 @@ import java.util.Set;
  */
 public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstract {
 
-  public static final String KEYWORD_FROM      = "FROM";
-  public static final String KEYWORD_LET       = "LET";
-  public static final String KEYWORD_WHERE     = "WHERE";
-  public static final String KEYWORD_LIMIT     = "LIMIT";
-  public static final String KEYWORD_SKIP      = "SKIP";
-  public static final String KEYWORD_OFFSET    = "OFFSET";
-  public static final String KEYWORD_TIMEOUT   = "TIMEOUT";
-  public static final String KEYWORD_LOCK      = "LOCK";
-  public static final String KEYWORD_RETURN    = "RETURN";
-  public static final String KEYWORD_KEY       = "key";
-  public static final String KEYWORD_RID       = "rid";
-  public static final String CLUSTER_PREFIX    = "CLUSTER:";
-  public static final String CLASS_PREFIX      = "CLASS:";
-  public static final String INDEX_PREFIX      = "INDEX:";
-  public static final String DICTIONARY_PREFIX = "DICTIONARY:";
-  public static final String METADATA_PREFIX   = "METADATA:";
-  public static final String METADATA_SCHEMA   = "SCHEMA";
-  public static final String METADATA_INDEXMGR = "INDEXMANAGER";
+  public static final String KEYWORD_FROM             = "FROM";
+  public static final String KEYWORD_LET              = "LET";
+  public static final String KEYWORD_WHERE            = "WHERE";
+  public static final String KEYWORD_LIMIT            = "LIMIT";
+  public static final String KEYWORD_SKIP             = "SKIP";
+  public static final String KEYWORD_OFFSET           = "OFFSET";
+  public static final String KEYWORD_TIMEOUT          = "TIMEOUT";
+  public static final String KEYWORD_LOCK             = "LOCK";
+  public static final String KEYWORD_RETURN           = "RETURN";
+  public static final String KEYWORD_KEY              = "key";
+  public static final String KEYWORD_RID              = "rid";
+  public static final String CLUSTER_PREFIX           = "CLUSTER:";
+  public static final String CLASS_PREFIX             = "CLASS:";
+  public static final String INDEX_PREFIX             = "INDEX:";
 
-  protected long             timeoutMs         = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
-  protected TIMEOUT_STRATEGY timeoutStrategy   = TIMEOUT_STRATEGY.EXCEPTION;
+  public static final String INDEX_VALUES_PREFIX      = "INDEXVALUES:";
+  public static final String INDEX_VALUES_ASC_PREFIX  = "INDEXVALUESASC:";
+  public static final String INDEX_VALUES_DESC_PREFIX = "INDEXVALUESDESC:";
+
+  public static final String DICTIONARY_PREFIX        = "DICTIONARY:";
+  public static final String METADATA_PREFIX          = "METADATA:";
+  public static final String METADATA_SCHEMA          = "SCHEMA";
+  public static final String METADATA_INDEXMGR        = "INDEXMANAGER";
+
+  protected long             timeoutMs                = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+  protected TIMEOUT_STRATEGY timeoutStrategy          = TIMEOUT_STRATEGY.EXCEPTION;
 
   /**
    * The command is replicated
@@ -118,12 +123,12 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     parserNextWord(true);
     final String lockStrategy = parserGetLastWord();
 
-    if (!lockStrategy.equalsIgnoreCase("DEFAULT") && !lockStrategy.equalsIgnoreCase("NONE") && !lockStrategy.equalsIgnoreCase("RECORD"))
+    if (!lockStrategy.equalsIgnoreCase("DEFAULT") && !lockStrategy.equalsIgnoreCase("NONE")
+        && !lockStrategy.equalsIgnoreCase("RECORD"))
       throwParsingException("Invalid " + KEYWORD_LOCK + " value set to '" + lockStrategy
           + "' but it should be NONE (default) or RECORD. Example: " + KEYWORD_LOCK + " RECORD");
 
     return lockStrategy;
   }
-
 
 }

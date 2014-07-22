@@ -260,6 +260,8 @@ public interface OIndex<T> {
 
   public OIndexCursor cursor();
 
+  public OIndexCursor descCursor();
+
   public OIndexKeyCursor keyCursor();
 
   ODocument getMetadata();
