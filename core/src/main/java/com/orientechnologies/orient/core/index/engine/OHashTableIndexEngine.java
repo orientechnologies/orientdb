@@ -110,8 +110,9 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
       boolean isAutomatic) {
     identity = indexRid;
-    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, (OAbstractPaginatedStorage) getDatabase()
-        .getStorage().getUnderlying(), indexDefinition != null && !indexDefinition.isNullValuesIgnored());
+    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null,
+        (OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying(),
+        indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
   }
 
@@ -288,90 +289,90 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
     };
   }
 
-	@Override
-	public OIndexCursor descCursor(final ValuesTransformer<V> valuesTransformer) {
-		return new OIndexAbstractCursor() {
-			private int                                 nextEntriesIndex;
-			private OHashIndexBucket.Entry<Object, V>[] entries;
+  @Override
+  public OIndexCursor descCursor(final ValuesTransformer<V> valuesTransformer) {
+    return new OIndexAbstractCursor() {
+      private int                                 nextEntriesIndex;
+      private OHashIndexBucket.Entry<Object, V>[] entries;
 
-			private Iterator<OIdentifiable>             currentIterator = new OEmptyIterator<OIdentifiable>();
-			private Object                              currentKey;
+      private Iterator<OIdentifiable>             currentIterator = new OEmptyIterator<OIdentifiable>();
+      private Object                              currentKey;
 
-			{
-				OHashIndexBucket.Entry<Object, V> lastEntry = hashTable.lastEntry();
-				if (lastEntry == null)
-					entries = new OHashIndexBucket.Entry[0];
-				else
-					entries = hashTable.floorEntries(lastEntry.key);
+      {
+        OHashIndexBucket.Entry<Object, V> lastEntry = hashTable.lastEntry();
+        if (lastEntry == null)
+          entries = new OHashIndexBucket.Entry[0];
+        else
+          entries = hashTable.floorEntries(lastEntry.key);
 
-				if (entries.length == 0)
-					currentIterator = null;
-			}
+        if (entries.length == 0)
+          currentIterator = null;
+      }
 
-			@Override
-			public Map.Entry<Object, OIdentifiable> nextEntry() {
-				if (currentIterator == null)
-					return null;
+      @Override
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
+        if (currentIterator == null)
+          return null;
 
-				if (currentIterator.hasNext())
-					return nextCursorValue();
+        if (currentIterator.hasNext())
+          return nextCursorValue();
 
-				while (currentIterator != null && !currentIterator.hasNext()) {
-					if (entries.length == 0) {
-						currentIterator = null;
-						return null;
-					}
+        while (currentIterator != null && !currentIterator.hasNext()) {
+          if (entries.length == 0) {
+            currentIterator = null;
+            return null;
+          }
 
-					final OHashIndexBucket.Entry<Object, V> bucketEntry = entries[nextEntriesIndex];
+          final OHashIndexBucket.Entry<Object, V> bucketEntry = entries[nextEntriesIndex];
 
-					currentKey = bucketEntry.key;
+          currentKey = bucketEntry.key;
 
-					V value = bucketEntry.value;
-					if (valuesTransformer != null) {
-						currentIterator = valuesTransformer.transformFromValue(value).iterator();
-					}	else
-						currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+          V value = bucketEntry.value;
+          if (valuesTransformer != null) {
+            currentIterator = valuesTransformer.transformFromValue(value).iterator();
+          } else
+            currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
 
-					nextEntriesIndex--;
+          nextEntriesIndex--;
 
-					if (nextEntriesIndex < 0) {
-						entries = hashTable.lowerEntries(entries[0].key);
+          if (nextEntriesIndex < 0) {
+            entries = hashTable.lowerEntries(entries[0].key);
 
-						nextEntriesIndex = entries.length - 1;
-					}
-				}
+            nextEntriesIndex = entries.length - 1;
+          }
+        }
 
-				if (currentIterator != null && !currentIterator.hasNext())
-					return nextCursorValue();
+        if (currentIterator != null && !currentIterator.hasNext())
+          return nextCursorValue();
 
-				currentIterator = null;
-				return null;
-			}
+        currentIterator = null;
+        return null;
+      }
 
-			private Map.Entry<Object, OIdentifiable> nextCursorValue() {
-				final OIdentifiable identifiable = currentIterator.next();
+      private Map.Entry<Object, OIdentifiable> nextCursorValue() {
+        final OIdentifiable identifiable = currentIterator.next();
 
-				return new Map.Entry<Object, OIdentifiable>() {
-					@Override
-					public Object getKey() {
-						return currentKey;
-					}
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return currentKey;
+          }
 
-					@Override
-					public OIdentifiable getValue() {
-						return identifiable;
-					}
+          @Override
+          public OIdentifiable getValue() {
+            return identifiable;
+          }
 
-					@Override
-					public OIdentifiable setValue(OIdentifiable value) {
-						throw new UnsupportedOperationException();
-					}
-				};
-			}
-		};
-	}
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+    };
+  }
 
-	@Override
+  @Override
   public OIndexKeyCursor keyCursor() {
     return new OIndexKeyCursor() {
       private int                                 nextEntriesIndex;
@@ -403,7 +404,6 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
       }
     };
   }
-
 
   private ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
