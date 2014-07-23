@@ -85,12 +85,6 @@ public class OrientVertexType extends OrientElementType {
   }
 
   @Override
-  public OrientVertexType addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType) {
-    delegate.addCluster(iClusterName, iClusterType);
-    return this;
-  }
-
-  @Override
   public OrientVertexProperty createProperty(final String iPropertyName, final OType iType, final OClass iLinkedClass) {
     return new OrientVertexProperty(graph, super.createProperty(iPropertyName, iType, iLinkedClass));
   }

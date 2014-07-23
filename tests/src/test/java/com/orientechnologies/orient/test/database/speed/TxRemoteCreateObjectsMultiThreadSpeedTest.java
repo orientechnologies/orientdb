@@ -72,7 +72,7 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
     database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
 
     if (!database.getStorage().getClusterNames().contains("Animal"))
-      database.addCluster("Animal", OStorage.CLUSTER_TYPE.PHYSICAL);
+      database.addCluster("Animal");
 
     foundObjects = database.countClusterElements("Animal");
     System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);

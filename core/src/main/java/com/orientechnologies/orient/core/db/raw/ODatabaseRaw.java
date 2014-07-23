@@ -16,21 +16,6 @@
 
 package com.orientechnologies.orient.core.db.raw;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TimeZone;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.lock.ONoLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -38,6 +23,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -59,11 +46,25 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TimeZone;
+import java.util.concurrent.Callable;
 
 /**
  * Lower level ODatabase implementation. It's extended or wrapped by all the others.
@@ -129,12 +130,24 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public <DB extends ODatabase> DB create() {
+    return create(null);
+  }
+
+  public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     try {
       if (status == STATUS.OPEN)
         throw new IllegalStateException("Database " + getName() + " is already open");
 
       if (storage == null)
         storage = Orient.instance().loadStorage(url);
+
+      if (iInitialSettings != null) {
+        // SETUP INITIAL SETTINGS
+        final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
+        for (Map.Entry<OGlobalConfiguration, Object> e : iInitialSettings.entrySet()) {
+          ctxCfg.setValue(e.getKey(), e.getValue());
+        }
+      }
 
       storage.create(properties);
 
@@ -175,16 +188,22 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   @Override
+  public OContextConfiguration getConfiguration() {
+    if (storage != null)
+      return storage.getConfiguration().getContextConfiguration();
+    return null;
+  }
+
+  @Override
   public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
       final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     getStorage().backup(out, options, callable, iListener, compressionLevel, bufferSize);
 
   }
 
-
   /**
    * Executes a restore of a database backup. During the restore the database will be frozen in read-only mode.
-   *
+   * 
    * @param in
    *          InputStream used to read the backup content. Use a FileInputStream to read a backup on a disk
    * @param options
@@ -277,9 +296,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public OStorageOperationResult<ORecordVersion> save(final int iDataSegmentId, final ORecordId iRid, boolean updateContent,
-      final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public OStorageOperationResult<ORecordVersion> save(final ORecordId iRid, boolean updateContent,
+																											final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
+																											final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
 
     // CHECK IF RECORD TYPE IS SUPPORTED
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
@@ -287,8 +306,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     try {
       if (iForceCreate || iRid.clusterPosition.isNew()) {
         // CREATE
-        final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(iDataSegmentId, iRid, iContent, iVersion,
-            iRecordType, iMode, (ORecordCallback<OClusterPosition>) iRecordCreatedCallback);
+        final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(iRid, iContent, iVersion, iRecordType, iMode,
+            (ORecordCallback<OClusterPosition>) iRecordCreatedCallback);
         return new OStorageOperationResult<ORecordVersion>(ppos.getResult().recordVersion, ppos.isMoved());
 
       } else {
@@ -303,8 +322,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content, final ORecordVersion version,
-      final byte recordType) {
+  public boolean updateReplica(final ORecordId rid, final byte[] content, final ORecordVersion version,
+															 final byte recordType) {
     // CHECK IF RECORD TYPE IS SUPPORTED
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(recordType);
 
@@ -313,7 +332,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
         throw new ODatabaseException("Passed in record was not stored and can not be treated as replica.");
       } else {
         // UPDATE REPLICA
-        return storage.updateReplica(dataSegmentId, rid, content, version, recordType);
+        return storage.updateReplica(rid, content, version, recordType);
       }
     } catch (OException e) {
       // PASS THROUGH
@@ -383,24 +402,16 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return url != null ? url : storage.getURL();
   }
 
-  public int getDataSegmentIdByName(final String iDataSegmentName) {
-    return storage.getDataSegmentIdByName(iDataSegmentName);
-  }
-
   public int getClusters() {
     return storage.getClusters();
   }
 
   public boolean existsCluster(final String iClusterName) {
-    return storage.getClusterNames().contains(iClusterName);
-  }
-
-  public String getClusterType(final String iClusterName) {
-    return storage.getClusterTypeByName(iClusterName);
+    return storage.getClusterNames().contains(iClusterName.toLowerCase());
   }
 
   public int getClusterIdByName(final String iClusterName) {
-    return storage.getClusterIdByName(iClusterName);
+    return storage.getClusterIdByName(iClusterName.toLowerCase());
   }
 
   public String getClusterNameById(final int iClusterId) {
@@ -427,18 +438,12 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public int addCluster(String iClusterName, CLUSTER_TYPE iType, Object... iParameters) {
-    return addCluster(iType.toString(), iClusterName, null, null, iParameters);
+  public int addCluster(String iClusterName, Object... iParameters) {
+    return storage.addCluster(iClusterName, false, iParameters);
   }
 
-  public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
-      final Object... iParameters) {
-    return storage.addCluster(iType, iClusterName, iLocation, iDataSegmentName, false, iParameters);
-  }
-
-  public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      Object... iParameters) {
-    return storage.addCluster(iType, iClusterName, iRequestedId, iLocation, iDataSegmentName, false, iParameters);
+  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+    return storage.addCluster(iClusterName, iRequestedId, false, iParameters);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
@@ -447,14 +452,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
   public boolean dropCluster(int iClusterId, final boolean iTruncate) {
     return storage.dropCluster(iClusterId, iTruncate);
-  }
-
-  public int addDataSegment(final String iSegmentName, final String iLocation) {
-    return storage.addDataSegment(iSegmentName, iLocation);
-  }
-
-  public boolean dropDataSegment(final String iName) {
-    return storage.dropDataSegment(iName);
   }
 
   public Collection<String> getClusterNames() {

@@ -453,9 +453,6 @@ public class SchemaTest extends DocumentDBBaseTest {
   }
 
   public void testExchangeCluster() {
-    if (url.startsWith("memory:"))
-      return;
-
     ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(url);
     databaseDocumentTx.open("admin", "admin");
 

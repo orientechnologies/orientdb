@@ -548,8 +548,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME, true);
 
-    database.getStorage().setDefaultClusterId(
-        database.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, null));
+    database.getStorage().setDefaultClusterId(database.addCluster(OStorage.CLUSTER_DEFAULT_NAME));
 
     // Starting from v4 schema has been moved to internal cluster.
     // Create a stub at #2:0 to prevent cluster position shifting.
@@ -976,9 +975,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           }
         }
 
-      int id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"").readInteger(OJSONReader.COMMA_SEPARATOR);
-      String type = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"")
-          .readString(OJSONReader.NEXT_IN_OBJECT);
+      int id;
+      if (exporterVersion < 9) {
+        id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"").readInteger(OJSONReader.COMMA_SEPARATOR);
+        String type = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"")
+            .readString(OJSONReader.NEXT_IN_OBJECT);
+      } else
+        id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"").readInteger(OJSONReader.NEXT_IN_OBJECT);
 
       if (jsonReader.lastChar() == ',') {
         rid = new ORecordId(jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"rid\"")
@@ -992,12 +995,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (clusterId == -1) {
         // CREATE IT
         if (!preserveClusterIDs)
-          clusterId = database.addCluster(type, name, null, null);
+          clusterId = database.addCluster(name);
         else {
-          clusterId = database.addCluster(type, name, id, null, null);
+          clusterId = database.addCluster(name, id, null);
           assert clusterId == id;
         }
-
       }
 
       if (clusterId != id) {
@@ -1005,8 +1007,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           if (database.countClusterElements(clusterId - 1) == 0) {
             listener.onMessage("Found previous version: migrating old clusters...");
             database.dropCluster(name, true);
-            database.addCluster(type, "temp_" + clusterId, null, null);
-            clusterId = database.addCluster(type, name, null, null);
+            database.addCluster("temp_" + clusterId, null);
+            clusterId = database.addCluster(name);
           } else
             throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId
                 + " different from the original: " + id + ". To continue the import drop the cluster '"
@@ -1014,7 +1016,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                 + " records");
         } else {
           database.dropCluster(clusterId, false);
-          database.addCluster(type, name, id, null, null);
+          database.addCluster(name, id, null);
         }
       }
 
@@ -1063,7 +1065,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nDone " + indexesToRebuild.size() + " indexes were rebuilt.");
 
     if (recreateManualIndex) {
-      database.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, null);
+      database.addCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
       database.getMetadata().getIndexManager().create();
 
       listener.onMessage("\nManual index cluster was recreated.");

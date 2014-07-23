@@ -99,9 +99,6 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
       importDatabase.open("admin", "admin");
       ODatabaseImport impor = new ODatabaseImport(importDatabase, EXPORT_DIR, listener);
 
-      if (url.startsWith("memory:"))
-        impor.setPreserveClusterIDs(false);
-
       // UNREGISTER ALL THE HOOKS
       for (ORecordHook hook : new ArrayList<ORecordHook>(importDatabase.getHooks().keySet())) {
         importDatabase.unregisterHook(hook);

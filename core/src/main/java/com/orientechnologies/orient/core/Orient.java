@@ -33,8 +33,6 @@ import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
-import com.orientechnologies.orient.core.storage.OClusterFactory;
-import com.orientechnologies.orient.core.storage.ODefaultClusterFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 
@@ -60,7 +58,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected final Timer                           timer                  = new Timer(true);
   protected final ThreadGroup                     threadGroup            = new ThreadGroup("OrientDB");
   protected final AtomicInteger                   serialId               = new AtomicInteger();
-  protected OClusterFactory                       clusterFactory         = new ODefaultClusterFactory();
   protected ORecordFactoryManager                 recordFactoryManager   = new ORecordFactoryManager();
   protected OrientShutdownHook                    shutdownHook;
   protected OMemoryWatchDog                       memoryWatchDog;
@@ -469,14 +466,6 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public void setRecordFactoryManager(final ORecordFactoryManager iRecordFactoryManager) {
     recordFactoryManager = iRecordFactoryManager;
-  }
-
-  public OClusterFactory getClusterFactory() {
-    return clusterFactory;
-  }
-
-  public void setClusterFactory(final OClusterFactory clusterFactory) {
-    this.clusterFactory = clusterFactory;
   }
 
   public ODatabaseFactory getDatabaseFactory() {

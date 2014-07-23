@@ -56,12 +56,6 @@ public class OrientEdgeType extends OrientElementType {
   }
 
   @Override
-  public OrientEdgeType addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType) {
-    delegate.addCluster(iClusterName, iClusterType);
-    return this;
-  }
-
-  @Override
   protected String getTypeName() {
     return "edge";
   }

@@ -15,13 +15,22 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
@@ -30,9 +39,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -41,6 +50,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -49,7 +59,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
@@ -506,10 +515,10 @@ public class IndexTest extends ObjectDBBaseTest {
 
     final List<Profile> result = database
         .command(
-            new OSQLSynchQuery<Profile>(
-                "select * from Profile where "
-                    + "((name = 'Giuseppe' OR name <> 'Napoleone')"
-                    + " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))"))
+								new OSQLSynchQuery<Profile>(
+												"select * from Profile where "
+																+ "((name = 'Giuseppe' OR name <> 'Napoleone')"
+																+ " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))"))
         .execute();
     if (!oldRecording) {
       Orient.instance().getProfiler().stopRecording();
@@ -1284,7 +1293,7 @@ public class IndexTest extends ObjectDBBaseTest {
     indexWithLimitAndOffset.createProperty("index", OType.INTEGER);
 
     databaseDocumentTx.command(new OCommandSQL(
-        "create index IndexWithLimitAndOffset on IndexWithLimitAndOffsetClass (val) notunique"));
+						"create index IndexWithLimitAndOffset on IndexWithLimitAndOffsetClass (val) notunique"));
 
     for (int i = 0; i < 30; i++) {
       final ODocument document = new ODocument("IndexWithLimitAndOffsetClass");
@@ -1512,7 +1521,7 @@ public class IndexTest extends ObjectDBBaseTest {
     metadata.field("ignoreNullValues", false);
 
     clazz.createIndex("NullIndexKeysSupportInTxIndex", INDEX_TYPE.NOTUNIQUE.toString(), null, metadata,
-        new String[] { "nullField" });
+						new String[]{"nullField"});
 
     database.begin();
 
@@ -1632,7 +1641,39 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(resultTwo.get(0), docTwo);
 
     explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryTwo)).execute();
-    Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
+    Assert.assertTrue(explain.<Collection<String>>field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
+  }
+
+  public void testValuesContainerIsRemovedIfIndexIsRemoved() {
+    if (database.getURL().startsWith("remote:"))
+      return;
+
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass clazz = schema.createClass("ValuesContainerIsRemovedIfIndexIsRemovedClass");
+    clazz.createProperty("val", OType.STRING);
+
+    database
+        .command(
+            new OCommandSQL(
+                "create index ValuesContainerIsRemovedIfIndexIsRemovedIndex on ValuesContainerIsRemovedIfIndexIsRemovedClass (val) notunique"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 100; j++) {
+        ODocument document = new ODocument("ValuesContainerIsRemovedIfIndexIsRemovedClass");
+        document.field("val", "value" + i);
+        document.save();
+      }
+    }
+
+    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage();
+    final ODiskCache diskCache = storageLocalAbstract.getDiskCache();
+
+    Assert.assertTrue(diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
+
+    database.command(new OCommandSQL("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex")).execute();
+
+    Assert.assertTrue(!diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
   }
 
   private List<OClusterPosition> getValidPositions(int clusterId) {

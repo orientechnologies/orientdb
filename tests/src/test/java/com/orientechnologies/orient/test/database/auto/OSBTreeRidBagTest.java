@@ -90,10 +90,10 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     if (database.getStorage().getType().equals(OEngineRemote.NAME) || database.getStorage().getType().equals(OEngineMemory.NAME))
       return;
 
-    final int clusterIdOne = database.addCluster("clusterOne", OStorage.CLUSTER_TYPE.PHYSICAL);
-    final int clusterIdTwo = database.addCluster("clusterTwo", OStorage.CLUSTER_TYPE.PHYSICAL);
-    final int clusterIdThree = database.addCluster("clusterThree", OStorage.CLUSTER_TYPE.PHYSICAL);
-    final int clusterIdFour = database.addCluster("clusterFour", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterIdOne = database.addCluster("clusterOne");
+    final int clusterIdTwo = database.addCluster("clusterTwo");
+    final int clusterIdThree = database.addCluster("clusterThree");
+    final int clusterIdFour = database.addCluster("clusterFour");
 
     ODocument docClusterOne = new ODocument();
     ORidBag ridBagClusterOne = new ORidBag();
@@ -201,7 +201,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     assertEmbedded(realDocRidBag.isEmbedded());
     realDoc.save();
 
-    final int clusterId = database.addCluster("ridBagDeleteTest", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterId = database.addCluster("ridBagDeleteTest");
 
     ODocument testDocument = crateTestDeleteDoc(realDoc);
     database.freeze();

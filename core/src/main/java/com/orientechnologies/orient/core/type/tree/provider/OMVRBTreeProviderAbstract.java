@@ -189,7 +189,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
       if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
         ((ORecordId) record.getIdentity()).clusterId = clusterId;
 
-      final OPhysicalPosition ppos = iSt.createRecord(0, (ORecordId) record.getIdentity(), record.toStream(),
+      final OPhysicalPosition ppos = iSt.createRecord((ORecordId) record.getIdentity(), record.toStream(),
           OVersionFactory.instance().createVersion(), record.getRecordType(), (byte) 0, null).getResult();
       record.getRecordVersion().copyFrom(ppos.recordVersion);
 

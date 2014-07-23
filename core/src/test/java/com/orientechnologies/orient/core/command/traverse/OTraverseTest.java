@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -24,7 +25,7 @@ public class OTraverseTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    db = new ODatabaseDocumentTx("plocal:OTraverseTest");
+    db = new ODatabaseDocumentTx("memory:" + OTraverseTest.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
       db.drop();

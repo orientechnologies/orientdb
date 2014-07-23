@@ -15,8 +15,8 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents a context configuration where custom setting could be defined for the context only. If not defined, globals will be
@@ -26,7 +26,7 @@ import java.util.Map;
  * 
  */
 public class OContextConfiguration {
-  private Map<String, Object> config = new HashMap<String, Object>(); ;
+  private final ConcurrentHashMap<String, Object> config = new ConcurrentHashMap<String, Object>();
 
   /**
    * Empty constructor to create just a proxy for the OGlobalConfiguration. No values are setted.
@@ -41,7 +41,7 @@ public class OContextConfiguration {
    *          Map of parameters of type Map<String, Object>.
    */
   public OContextConfiguration(final Map<String, Object> iConfig) {
-    this.config = iConfig;
+    this.config.putAll(iConfig);
   }
 
   public OContextConfiguration(final OContextConfiguration iParent) {
@@ -102,5 +102,13 @@ public class OContextConfiguration {
   public float getValueAsFloat(final OGlobalConfiguration iConfig) {
     final Object v = getValue(iConfig);
     return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
+  }
+
+  public int getContextSize() {
+    return config.size();
+  }
+
+  public java.util.Set<String> getContextKeys() {
+    return config.keySet();
   }
 }

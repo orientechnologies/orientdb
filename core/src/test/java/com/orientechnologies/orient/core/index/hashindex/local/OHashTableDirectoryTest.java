@@ -24,7 +24,7 @@ public class OHashTableDirectoryTest {
     if (buildDirectory == null)
       buildDirectory = ".";
 
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/hashTableDirectoryTest");
+    databaseDocumentTx = new ODatabaseDocumentTx("memory:" + OHashTableDirectoryTest.class.getSimpleName());
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();

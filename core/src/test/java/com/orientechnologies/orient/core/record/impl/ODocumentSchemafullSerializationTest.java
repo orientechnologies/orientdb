@@ -78,7 +78,7 @@ public class ODocumentSchemafullSerializationTest {
   public void before() {
     defaultSerializer = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(serializer);
-    databaseDocument = new ODatabaseDocumentTx("memory:ODocumentSchemafullSerializationTest").create();
+    databaseDocument = new ODatabaseDocumentTx("memory:" + ODocumentSchemafullSerializationTest.class.getSimpleName()).create();
     // databaseDocument.getMetadata().
     OSchema schema = databaseDocument.getMetadata().getSchema();
     address = schema.createClass("Address");

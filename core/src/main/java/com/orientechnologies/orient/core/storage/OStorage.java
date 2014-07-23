@@ -42,14 +42,9 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 
 public interface OStorage extends OBackupable, OSharedContainer {
-  public static final String DATA_DEFAULT_NAME    = "default";
   public static final String CLUSTER_DEFAULT_NAME = "default";
 
-  public enum CLUSTER_TYPE {
-    PHYSICAL, MEMORY
-  }
-
-  public enum SIZE {
+	public enum SIZE {
     TINY, MEDIUM, LARGE, HUGE
   }
 
@@ -80,7 +75,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public OSharedResourceAdaptiveExternal getLock();
 
   // CRUD OPERATIONS
-  public OStorageOperationResult<OPhysicalPosition> createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent,
+  public OStorageOperationResult<OPhysicalPosition> createRecord(ORecordId iRecordId, byte[] iContent,
       ORecordVersion iRecordVersion, byte iRecordType, int iMode, ORecordCallback<OClusterPosition> iCallback);
 
   public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
@@ -92,8 +87,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
       ORecordCallback<Boolean> iCallback);
 
-  public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content,
-      final ORecordVersion recordVersion, final byte recordType) throws IOException;
+  public boolean updateReplica(final ORecordId rid, final byte[] content,
+															 final ORecordVersion recordVersion, final byte recordType) throws IOException;
 
   public ORecordMetadata getRecordMetadata(final ORID rid);
 
@@ -118,41 +113,25 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   /**
    * Add a new cluster into the storage.
-   * 
-   * 
-   * @param iClusterType
-   *          Cluster type. Type depends by the implementation.
-   * @param iClusterName
+   *   @param iClusterName
    *          name of the cluster
-   * @param iLocation
-   *          Location where to store the cluster
-   * @param iDataSegmentName
-   *          Name of the data-segment to use. null means 'default'
-   * @param forceListBased
-   * @param iParameters
-   */
-  public int addCluster(String iClusterType, String iClusterName, String iLocation, String iDataSegmentName,
-      boolean forceListBased, Object... iParameters);
+	 * @param forceListBased
+	 * @param iParameters
+	 */
+  public int addCluster(String iClusterName,
+												boolean forceListBased, Object... iParameters);
 
   /**
    * Add a new cluster into the storage.
-   * 
-   * 
-   * @param iClusterType
-   *          Cluster type. Type depends by the implementation.
-   * @param iClusterName
+   *   @param iClusterName
    *          name of the cluster
-   * @param iRequestedId
-   *          requested id of the cluster
-   * @param iLocation
-   *          Location where to store the cluster
-   * @param iDataSegmentName
-   *          Name of the data-segment to use. null means 'default'
-   * @param forceListBased
-   * @param iParameters
-   */
-  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      boolean forceListBased, Object... iParameters);
+	 * @param iRequestedId
+ *          requested id of the cluster
+	 * @param forceListBased
+	 * @param iParameters
+	 */
+  public int addCluster(String iClusterName, int iRequestedId,
+												boolean forceListBased, Object... iParameters);
 
   public boolean dropCluster(String iClusterName, final boolean iTruncate);
 
@@ -164,13 +143,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * @return true if has been removed, otherwise false
    */
   public boolean dropCluster(int iId, final boolean iTruncate);
-
-  /**
-   * Add a new data segment in the default segment directory and with filename equals to the cluster name.
-   */
-  public int addDataSegment(String iDataSegmentName);
-
-  public int addDataSegment(String iSegmentName, String iDirectory);
 
   public long count(int iClusterId);
 
@@ -195,8 +167,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public void setDefaultClusterId(final int defaultClusterId);
 
   public int getClusterIdByName(String iClusterName);
-
-  public String getClusterTypeByName(String iClusterName);
 
   public String getPhysicalClusterNameById(int iClusterId);
 
@@ -233,10 +203,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
   public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock);
-
-  public int getDataSegmentIdByName(String iDataSegmentName);
-
-  public boolean dropDataSegment(String iName);
 
   OPhysicalPosition[] higherPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
 

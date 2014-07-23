@@ -378,10 +378,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             ok = false;
             listener.onMessage("\n- ERR: Entry with key " + key + " is absent in index " + indexOne.getName() + " for DB2.");
             ++differences;
-            continue;
-          }
-
-          if (indexOneValue instanceof Set && indexTwoValue instanceof Set) {
+          } else if (indexOneValue instanceof Set && indexTwoValue instanceof Set) {
             final Set<Object> indexOneValueSet = (Set<Object>) indexOneValue;
             final Set<Object> indexTwoValueSet = (Set<Object>) indexTwoValue;
 

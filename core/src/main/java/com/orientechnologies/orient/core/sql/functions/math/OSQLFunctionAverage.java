@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,7 +122,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
     else if (sum instanceof Double)
       return sum.doubleValue() / total;
     else if (sum instanceof BigDecimal)
-      return ((BigDecimal) sum).divide(new BigDecimal(total));
+      return ((BigDecimal) sum).divide(new BigDecimal(total), RoundingMode.HALF_UP);
 
     return null;
   }

@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -37,14 +23,12 @@ import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
-import com.orientechnologies.orient.core.db.ODefaultDataSegmentStrategy;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
@@ -100,6 +84,9 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
+import java.util.*;
+import java.util.concurrent.Callable;
+
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
@@ -118,7 +105,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   private OLocalRecordCache                                 level1Cache;
   private boolean                                           mvcc;
   private boolean                                           validation;
-  private ODataSegmentStrategy                              dataSegmentStrategy = new ODefaultDataSegmentStrategy();
   private OCurrentStorageComponentsFactory                  componentsFactory;
 
   private class ExecuteReplicaUpdateCallable implements Callable<Boolean> {
@@ -169,8 +155,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         }
 
         byte[] stream = replicaToUpdate.toStream();
-        final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(ODatabaseRecordAbstract.this, replicaToUpdate);
-        result = underlying.updateReplica(dataSegmentId, rid, stream, replicaVersion, recordType);
+        result = underlying.updateReplica(rid, stream, replicaVersion, recordType);
 
         if (loadedRecordMetadata.getRecordVersion().isTombstone() && !replicaVersion.isTombstone()) {
           callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToUpdate);
@@ -215,9 +200,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
         byte[] stream = replicaToAdd.toStream();
 
-        final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(ODatabaseRecordAbstract.this, replicaToAdd);
-
-        result = underlying.updateReplica(dataSegmentId, rid, stream, replicaVersion, replicaToAdd.getRecordType());
+        result = underlying.updateReplica(rid, stream, replicaVersion, replicaToAdd.getRecordType());
 
         if (!replicaVersion.isTombstone()) {
           callbackHooks(TYPE.AFTER_REPLICA_ADD, replicaToAdd);
@@ -369,10 +352,18 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   @Override
   public <DB extends ODatabase> DB create() {
+    return create(null);
+  }
+
+    /**
+     * {@inheritDoc}
+     */
+  @Override
+  public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     setCurrentDatabaseinThreadLocal();
 
     try {
-      super.create();
+      super.create(iInitialSettings);
       componentsFactory = getStorage().getComponentsFactory();
 
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
@@ -1148,10 +1139,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         final ORecordVersion realVersion = !mvcc || iVersion.isUntracked() ? OVersionFactory.instance().createUntrackedVersion()
             : record.getRecordVersion();
 
-        final int dataSegmentId = dataSegmentStrategy.assignDataSegmentId(this, record);
         try {
           // SAVE IT
-          operationResult = underlying.save(dataSegmentId, rid, record.isContentChanged(), stream == null ? new byte[0] : stream,
+          operationResult = underlying.save(rid, record.isContentChanged(), stream == null ? new byte[0] : stream,
               realVersion, record.getRecordType(), iMode.ordinal(), iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
           final ORecordVersion version = operationResult.getResult();
@@ -1536,20 +1526,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   public <DB extends ODatabaseRecord> DB setValidationEnabled(final boolean iEnabled) {
     validation = iEnabled;
     return (DB) this;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public ODataSegmentStrategy getDataSegmentStrategy() {
-    return dataSegmentStrategy;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy) {
-    this.dataSegmentStrategy = dataSegmentStrategy;
   }
 
   // Never used so can be deprecate.

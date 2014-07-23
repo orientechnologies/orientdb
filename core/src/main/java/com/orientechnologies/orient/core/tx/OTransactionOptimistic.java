@@ -16,8 +16,16 @@
 
 package com.orientechnologies.orient.core.tx;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
@@ -40,7 +48,6 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -49,17 +56,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
 
@@ -67,9 +63,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   private int                  txStartCounter;
 
   private class CommitIndexesCallback implements Runnable {
-    private final Map<String, OIndex> indexes;
+    private final Map<String, OIndex<?>> indexes;
 
-    private CommitIndexesCallback(Map<String, OIndex> indexes) {
+    private CommitIndexesCallback(Map<String, OIndex<?>> indexes) {
       this.indexes = indexes;
     }
 
@@ -450,20 +446,17 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     else {
       List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
       try {
-        final Map<String, OIndex> indexes = new HashMap<String, OIndex>();
-        for (OIndex index : database.getMetadata().getIndexManager().getIndexes())
+        final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
+        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
           indexes.put(index.getName(), index);
 
         final Runnable callback = new CommitIndexesCallback(indexes);
 
         final String storageType = database.getStorage().getType();
 
-        if (storageType.equals(OEngineLocalPaginated.NAME))
+        if (storageType.equals(OEngineLocalPaginated.NAME) || storageType.equals(OEngineMemory.NAME))
           database.getStorage().commit(OTransactionOptimistic.this, callback);
-        else if (storageType.equals(OEngineMemory.NAME)) {
-          database.getStorage().commit(OTransactionOptimistic.this, null);
-          callback.run();
-        } else {
+        else {
           database.getStorage().callInLock(new Callable<Object>() {
             @Override
             public Object call() throws Exception {

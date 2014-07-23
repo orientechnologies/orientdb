@@ -23,7 +23,7 @@ public class ClusterMetadataTest extends DocumentDBBaseTest {
   }
 
   public void testMetadataStore() throws Exception {
-    final int clusterId = database.addCluster("clusterTest", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterId = database.addCluster("clusterTest");
     OCluster cluster = database.getStorage().getClusterById(clusterId);
 
     Assert.assertTrue(cluster.useWal());

@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
@@ -189,10 +188,6 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getName();
   }
 
-  public int addCluster(String iType, String iClusterName, String iLocation, String iDataSegmentName, Object... iParameters) {
-    return database.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
-  }
-
   public String getURL() {
     return database.getURL();
   }
@@ -246,20 +241,8 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getClusterNames();
   }
 
-  public int addDataSegment(String iName, String iLocation) {
-    return database.addDataSegment(iName, iLocation);
-  }
-
-  public String getClusterType(String iClusterName) {
-    return database.getClusterType(iClusterName);
-  }
-
   public OTransaction getTransaction() {
     return database.getTransaction();
-  }
-
-  public int getDataSegmentIdByName(String iDataSegmentName) {
-    return database.getDataSegmentIdByName(iDataSegmentName);
   }
 
   public ODatabaseComplex<ORecordInternal<?>> begin() {
@@ -325,10 +308,6 @@ public class OScriptDocumentDatabaseWrapper {
 
   public ODatabaseComplex<ORecordInternal<?>> delete(ORID iRid) {
     return database.delete(iRid);
-  }
-
-  public boolean dropDataSegment(String name) {
-    return database.dropDataSegment(name);
   }
 
   public <RET extends ORecordInternal<?>> RET load(ORID iRecordId) {
@@ -426,14 +405,6 @@ public class OScriptDocumentDatabaseWrapper {
   public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return database.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-  }
-
-  public ODataSegmentStrategy getDataSegmentStrategy() {
-    return database.getDataSegmentStrategy();
-  }
-
-  public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy) {
-    database.setDataSegmentStrategy(dataSegmentStrategy);
   }
 
   public ODatabaseDocumentTx delete(ODocument iRecord) {

@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -152,19 +151,6 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public <DB extends ODatabaseRecord> DB setValidationEnabled(boolean iEnabled);
-
-  /**
-   * @return strategy that is used to assign data segment id for new records in current database.
-   */
-  public ODataSegmentStrategy getDataSegmentStrategy();
-
-  /**
-   * Sets the {@link ODataSegmentStrategy} which will be used for records in this database.
-   * 
-   * @param dataSegmentStrategy
-   *          instance to set
-   */
-  public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy);
 
   /**
    * Internal. Gets an instance of sb-tree collection manager for current database.

@@ -55,7 +55,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   @Test
   public void insertOperator() {
-    final int clId = database.addCluster("anotherdefault", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clId = database.addCluster("anotherdefault");
     final OClass profileClass = database.getMetadata().getSchema().getClass("Account");
     profileClass.addClusterId(clId);
 

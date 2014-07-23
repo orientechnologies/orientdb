@@ -5,6 +5,7 @@ import static org.testng.Assert.assertTrue;
 
 import java.util.*;
 
+import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.annotations.*;
@@ -22,29 +23,17 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
  * @since 15.08.13
  */
 @Test
-public class SBTreeCompositeKeyTest {
-  private ODatabaseDocumentTx                   databaseDocumentTx;
+public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
   private OSBTree<OCompositeKey, OIdentifiable> localSBTree;
-  private String                                buildDirectory;
 
   @BeforeClass
   public void beforeClass() {
-    buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
-
-    databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeCompositeKeyTest");
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
-    }
-
-    databaseDocumentTx.create();
+		super.beforeClass();
 
     localSBTree = new OSBTree<OCompositeKey, OIdentifiable>(".sbt", 2, false, ".nbt");
     localSBTree.create("localSBTreeCompositeKeyTest", OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null,
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage().getUnderlying(), false);
+        (OAbstractPaginatedStorage) database.getStorage().getUnderlying(), false);
   }
 
   @BeforeMethod
@@ -68,7 +57,8 @@ public class SBTreeCompositeKeyTest {
   public void afterClass() throws Exception {
     localSBTree.clear();
     localSBTree.delete();
-    databaseDocumentTx.drop();
+
+		super.afterClass();
   }
 
   public void testIterateBetweenValuesInclusive() {

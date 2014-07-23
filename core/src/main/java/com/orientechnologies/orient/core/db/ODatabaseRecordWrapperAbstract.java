@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -38,7 +39,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -65,23 +65,33 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
+  public <THISDB extends ODatabase> THISDB create(final Map<OGlobalConfiguration,Object> iInitialSettings) {
+    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_CREATE);
+    return (THISDB) super.create(iInitialSettings);
+  }
+
+  @Override
   public void drop() {
     checkOpeness();
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_DELETE);
     super.drop();
   }
 
-  public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
-      final Object... iParameters) {
-    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
-    return super.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
-  }
+	@Override
+	public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+		checkOpeness();
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+		return super.addCluster(iClusterName, iRequestedId, iParameters);
+	}
 
-  public int addCluster(final String iClusterName, final CLUSTER_TYPE iType, final Object... iParameters) {
-    return super.addCluster(iType.toString(), iClusterName, null, null, iParameters);
-  }
+	@Override
+	public int addCluster(String iClusterName, Object... iParameters) {
+		checkOpeness();
+		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+		return super.addCluster(iClusterName, iParameters);
+	}
 
-  @Override
+	@Override
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
     checkClusterBoundedToClass(getClusterIdByName(iClusterName));
@@ -92,18 +102,6 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
     checkClusterBoundedToClass(iClusterId);
     return super.dropCluster(iClusterId, iTruncate);
-  }
-
-  @Override
-  public int addDataSegment(final String iName, final String iLocation) {
-    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
-    return super.addDataSegment(iName, iLocation);
-  }
-
-  @Override
-  public boolean dropDataSegment(final String iName) {
-    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
-    return super.dropDataSegment(iName);
   }
 
   public OBinarySerializerFactory getSerializerFactory() {
@@ -376,14 +374,6 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   public <DBTYPE extends ODatabaseComplex<?>> DBTYPE unregisterHook(final ORecordHook iHookImpl) {
     underlying.unregisterHook(iHookImpl);
     return (DBTYPE) this;
-  }
-
-  public ODataSegmentStrategy getDataSegmentStrategy() {
-    return underlying.getDataSegmentStrategy();
-  }
-
-  public void setDataSegmentStrategy(final ODataSegmentStrategy dataSegmentStrategy) {
-    underlying.setDataSegmentStrategy(dataSegmentStrategy);
   }
 
   /**

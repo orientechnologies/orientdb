@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
@@ -74,11 +73,6 @@ public class OSchemaProxyObject implements OSchema {
   @Override
   public OClass createClass(String iClassName, OClass iSuperClass) {
     return underlying.createClass(iClassName, iSuperClass);
-  }
-
-  @Override
-  public OClass createClass(String iClassName, OClass iSuperClass, CLUSTER_TYPE iType) {
-    return underlying.createClass(iClassName, iSuperClass, iType);
   }
 
   @Override

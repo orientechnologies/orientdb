@@ -56,8 +56,8 @@ public class SQLCreateVertexAndEdgeTest {
 
   @Test
   public void testCreateEdgeDefaultClass() {
-		int vclusterId = database.addCluster("vdefault", OStorage.CLUSTER_TYPE.PHYSICAL);
-		int eclusterId = database.addCluster("edefault", OStorage.CLUSTER_TYPE.PHYSICAL);
+		int vclusterId = database.addCluster("vdefault");
+		int eclusterId = database.addCluster("edefault");
 
     database.command(new OCommandSQL("create class V1 extends V")).execute();
     database.command(new OCommandSQL("alter class V1 addcluster vdefault")).execute();

@@ -44,10 +44,10 @@ import java.util.Set;
 @Test(groups = "sql-select")
 public class SQLFunctionsTest extends DocumentDBBaseTest {
 
-	@Parameters(value = "url")
-	public SQLFunctionsTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public SQLFunctionsTest(@Optional String url) {
+    super(url);
+  }
 
   @Test
   public void queryMax() {
@@ -121,8 +121,8 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     OClass indexed = database.getMetadata().getSchema().getOrCreateClass("Indexed");
     indexed.createProperty("key", OType.STRING);
     indexed.createIndex("keyed", OClass.INDEX_TYPE.NOTUNIQUE, "key");
-    database.<ODocument> newInstance("Indexed").field("key", "one").save();
-    database.<ODocument> newInstance("Indexed").field("key", "two").save();
+    database.newInstance("Indexed").field("key", "one").save();
+    database.newInstance("Indexed").field("key", "two").save();
 
     List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>("select count(*) as total from Indexed where key > 'one'")).execute();

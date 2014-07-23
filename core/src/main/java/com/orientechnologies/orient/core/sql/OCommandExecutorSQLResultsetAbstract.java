@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -22,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
@@ -130,10 +134,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (iArgs != null && iArgs.size() > 0 && compiledFilter != null)
       compiledFilter.bindParameters(iArgs);
 
-    if (target == null)
+    if (target == null) {
       if (parsedTarget.getTargetClasses() != null)
         searchInClasses();
-      else if (parsedTarget.getTargetClusters() != null)
+      else if (parsedTarget.getTargetIndexValues() != null) {
+        target = new IndexValuesIterator(parsedTarget.getTargetIndexValues(), parsedTarget.isTargetIndexValuesAsc());
+      } else if (parsedTarget.getTargetClusters() != null)
         searchInClusters();
       else if (parsedTarget.getTargetRecords() != null) {
         if (parsedTarget.getTargetRecords() instanceof OIterableRecordSource) {
@@ -154,6 +160,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           target = ((Iterable<? extends OIdentifiable>) var).iterator();
       } else
         return false;
+    }
 
     return true;
   }
@@ -557,5 +564,52 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     }
 
     return new ORID[] { beginRange, endRange };
+  }
+
+  private static final class IndexValuesIterator implements Iterator<OIdentifiable> {
+    private OIndexCursor  indexCursor;
+    private OIdentifiable nextValue;
+    private boolean       noItems;
+
+    private IndexValuesIterator(String indexName, boolean ascOrder) {
+      if (ascOrder)
+        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).cursor();
+      else
+        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).descCursor();
+    }
+
+    @Override
+    public boolean hasNext() {
+      if (noItems)
+        return false;
+
+      if (nextValue == null) {
+        final Map.Entry<Object, OIdentifiable> entry = indexCursor.nextEntry();
+        if (entry == null) {
+          noItems = true;
+          return false;
+        }
+
+        nextValue = entry.getValue();
+      }
+
+      return true;
+    }
+
+    @Override
+    public OIdentifiable next() {
+      if (!hasNext())
+        throw new NoSuchElementException();
+
+      final OIdentifiable value = nextValue;
+      nextValue = null;
+
+      return value;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
   }
 }
