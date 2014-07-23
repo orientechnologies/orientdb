@@ -198,7 +198,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
   @Override
   public boolean isRequiredOpenDatabase() {
-    return false;
+    return true;
   }
 
 }

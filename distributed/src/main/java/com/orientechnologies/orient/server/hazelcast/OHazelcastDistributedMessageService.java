@@ -77,6 +77,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), null, DIRECTION.NONE,
           "listening for incoming responses on queue: %s", queueName);
 
+    // TODO: CHECK IF SET TO TRUE (UNQUEUE MSG) WHEN HOT-ALIGNMENT = TRUE
     checkForPendingMessages(nodeResponseQueue, queueName, false);
 
     // CREATE TASK THAT CHECK ASYNCHRONOUS MESSAGE RECEIVED
