@@ -750,7 +750,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
 
-    distrDatabase.configureDatabase(false, false);
+    // CREATE THE DISTRIBUTED QUEUE
+    final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(messageService.manager.getLocalNodeName(),
+        databaseName);
+    messageService.getQueue(queueName);
 
     final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
@@ -834,7 +837,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           }
         }
 
-        installDatabase(distrDatabase, databaseName, dbPath, r.getKey(), fileName);
+        installDatabaseOnLocalNode(distrDatabase, databaseName, dbPath, r.getKey(), fileName);
+        distrDatabase.configureDatabase(false, true);
+
         return true;
 
       } else
@@ -912,8 +917,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return chunk.buffer.length;
   }
 
-  protected void installDatabase(final OHazelcastDistributedDatabase distrDatabase, final String databaseName, final String dbPath,
-      final String iNode, final String iDatabaseCompressedFile) {
+  protected void installDatabaseOnLocalNode(final OHazelcastDistributedDatabase distrDatabase, final String databaseName, final String dbPath, final String iNode, final String iDatabaseCompressedFile) {
     ODistributedServerLog.warn(this, getLocalNodeName(), iNode, DIRECTION.IN, "installing database '%s' to: %s...", databaseName,
         dbPath);
 
@@ -934,10 +938,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       Orient.instance().unregisterStorageByName(db.getURL().substring(db.getStorage().getType().length() + 1));
 
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "installed database '%s'", databaseName);
-
-      distrDatabase.setOnline();
-
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "database '%s' is online", databaseName);
 
     } catch (IOException e) {
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN, "error on copying database '%s' on local server", e,
@@ -984,7 +984,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     if (averageResponseTime > timeout * 75 / 100) {
       long sleep = Math.abs(timeout - averageResponseTime);
-      if( sleep > 3000)
+      if (sleep > 3000)
         sleep = 3000;
 
       ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
