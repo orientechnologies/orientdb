@@ -12,7 +12,9 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -184,9 +186,19 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (fieldValue instanceof OIdentifiable)
       // CONVERT IT TO VERTEX/EDGE
       return (T) graph.getElement(fieldValue);
-    else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable)
+    else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
+      final OIdentifiable firstValue = (OIdentifiable) OMultiValue.getFirstValue(fieldValue);
+
+      if (firstValue instanceof ODocument) {
+        final ODocument document = (ODocument) firstValue;
+
+        if (document.isEmbedded())
+          return (T) fieldValue;
+      }
+
       // CONVERT IT TO ITERABLE<VERTEX/EDGE>
       return (T) new OrientElementIterable<OrientElement>(graph, OMultiValue.getMultiValueIterable(fieldValue));
+    }
 
     return (T) fieldValue;
   }

@@ -129,10 +129,8 @@ public class ODatabaseFactory {
         vertexBaseClass.setOverSize(2);
       }
 
-      if (edgeBaseClass == null) {
-        edgeBaseClass = iDatabase.getMetadata().getSchema().createClass("E");
-        edgeBaseClass.setShortName("E");
-      }
+      if (edgeBaseClass == null)
+        iDatabase.getMetadata().getSchema().createClass("E");
     } finally {
       OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
     }

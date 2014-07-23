@@ -296,7 +296,90 @@ public final class OLocalHashTableIndexEngine<V> implements OIndexEngine<V> {
     };
   }
 
-  @Override
+	@Override
+	public OIndexCursor descCursor(final ValuesTransformer<V> valuesTransformer) {
+		return new OIndexAbstractCursor() {
+			private int                                 nextEntriesIndex;
+			private OHashIndexBucket.Entry<Object, V>[] entries;
+
+			private Iterator<OIdentifiable>             currentIterator = new OEmptyIterator<OIdentifiable>();
+			private Object                              currentKey;
+
+			{
+				OHashIndexBucket.Entry<Object, V> lastEntry = hashTable.lastEntry();
+				if (lastEntry == null)
+					entries = new OHashIndexBucket.Entry[0];
+				else
+					entries = hashTable.floorEntries(lastEntry.key);
+
+				if (entries.length == 0)
+					currentIterator = null;
+			}
+
+			@Override
+			public Map.Entry<Object, OIdentifiable> nextEntry() {
+				if (currentIterator == null)
+					return null;
+
+				if (currentIterator.hasNext())
+					return nextCursorValue();
+
+				while (currentIterator != null && !currentIterator.hasNext()) {
+					if (entries.length == 0) {
+						currentIterator = null;
+						return null;
+					}
+
+					final OHashIndexBucket.Entry<Object, V> bucketEntry = entries[nextEntriesIndex];
+
+					currentKey = bucketEntry.key;
+
+					V value = bucketEntry.value;
+					if (valuesTransformer != null) {
+						currentIterator = valuesTransformer.transformFromValue(value).iterator();
+					}	else
+						currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+
+					nextEntriesIndex--;
+
+					if (nextEntriesIndex < 0) {
+						entries = hashTable.lowerEntries(entries[0].key);
+
+						nextEntriesIndex = entries.length - 1;
+					}
+				}
+
+				if (currentIterator != null && !currentIterator.hasNext())
+					return nextCursorValue();
+
+				currentIterator = null;
+				return null;
+			}
+
+			private Map.Entry<Object, OIdentifiable> nextCursorValue() {
+				final OIdentifiable identifiable = currentIterator.next();
+
+				return new Map.Entry<Object, OIdentifiable>() {
+					@Override
+					public Object getKey() {
+						return currentKey;
+					}
+
+					@Override
+					public OIdentifiable getValue() {
+						return identifiable;
+					}
+
+					@Override
+					public OIdentifiable setValue(OIdentifiable value) {
+						throw new UnsupportedOperationException();
+					}
+				};
+			}
+		};
+	}
+
+	@Override
   public OIndexKeyCursor keyCursor() {
     return new OIndexKeyCursor() {
       private int                                 nextEntriesIndex;

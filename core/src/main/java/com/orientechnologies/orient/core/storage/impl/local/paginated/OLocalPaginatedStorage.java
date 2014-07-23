@@ -1081,7 +1081,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
         endStorageTx();
 
-        OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), false);
+        OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), true);
 
       } catch (Exception e) {
         // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
@@ -1968,8 +1968,11 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       else
         diskCache.delete();
 
-      if (writeAheadLog != null && onDelete)
-        writeAheadLog.delete();
+      if (writeAheadLog != null) {
+        writeAheadLog.close();
+        if (onDelete)
+          writeAheadLog.delete();
+      }
 
       if (onDelete)
         dirtyFlag.delete();

@@ -657,7 +657,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     int lastRealPositionProjection = -1;
 
-    final String projectionString = parserText.substring(parserGetCurrentPosition(), upperBound);
+    int currPos = parserGetCurrentPosition();
+    if (currPos == -1)
+      return -1;
+
+    final String projectionString = parserText.substring(currPos, upperBound);
     if (projectionString.trim().length() > 0) {
       // EXTRACT PROJECTIONS
       projections = new LinkedHashMap<String, Object>();

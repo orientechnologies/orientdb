@@ -538,7 +538,12 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-  @Override
+	@Override
+	public OIndexCursor descCursor() {
+		throw new UnsupportedOperationException("Not allowed operation");
+	}
+
+	@Override
   public OIndexKeyCursor keyCursor() {
     throw new UnsupportedOperationException("Not allowed operation");
   }

@@ -392,7 +392,19 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-  private static final class MultiValuesTransformer implements OIndexEngine.ValuesTransformer<Set<OIdentifiable>> {
+	@Override
+	public OIndexCursor descCursor() {
+		checkForRebuild();
+
+		acquireSharedLock();
+		try {
+			return indexEngine.descCursor(MultiValuesTransformer.INSTANCE);
+		} finally {
+			releaseSharedLock();
+		}
+	}
+
+	private static final class MultiValuesTransformer implements OIndexEngine.ValuesTransformer<Set<OIdentifiable>> {
     private static final MultiValuesTransformer INSTANCE = new MultiValuesTransformer();
 
     @Override

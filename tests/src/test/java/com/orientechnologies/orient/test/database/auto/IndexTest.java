@@ -19,7 +19,9 @@ import java.util.*;
 import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -1652,6 +1654,38 @@ public class IndexTest {
 
     explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryTwo)).execute();
     Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
+  }
+
+  public void testValuesContainerIsRemovedIfIndexIsRemoved() {
+    if (database.getURL().startsWith("memory:") || database.getURL().startsWith("remote:"))
+      return;
+
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass clazz = schema.createClass("ValuesContainerIsRemovedIfIndexIsRemovedClass");
+    clazz.createProperty("val", OType.STRING);
+
+    database
+        .command(
+            new OCommandSQL(
+                "create index ValuesContainerIsRemovedIfIndexIsRemovedIndex on ValuesContainerIsRemovedIfIndexIsRemovedClass (val) notunique"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 100; j++) {
+        ODocument document = new ODocument("ValuesContainerIsRemovedIfIndexIsRemovedClass");
+        document.field("val", "value" + i);
+        document.save();
+      }
+    }
+
+    final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage();
+    final ODiskCache diskCache = storageLocalAbstract.getDiskCache();
+
+    Assert.assertTrue(diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
+
+    database.command(new OCommandSQL("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex")).execute();
+
+    Assert.assertTrue(!diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
   }
 
   private List<OClusterPosition> getValidPositions(int clusterId) {

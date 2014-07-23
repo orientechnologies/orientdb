@@ -977,7 +977,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     }
   }
 
-  public OHashIndexBucket.Entry<K, V>[] lowerEntries(K key) throws IOException {
+  public OHashIndexBucket.Entry<K, V>[] lowerEntries(K key)  {
     acquireSharedLock();
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
@@ -1026,12 +1026,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       } finally {
         diskCache.release(cacheEntry);
       }
+    } catch (IOException ioe) {
+      throw new OIndexException("Exception during data read", ioe);
     } finally {
       releaseSharedLock();
     }
   }
 
-  public OHashIndexBucket.Entry<K, V>[] floorEntries(K key) throws IOException {
+  public OHashIndexBucket.Entry<K, V>[] floorEntries(K key) {
     acquireSharedLock();
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
@@ -1081,7 +1083,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       } finally {
         diskCache.release(cacheEntry);
       }
-    } finally {
+    } catch (IOException ioe) {
+			throw new OIndexException("Exception during data read", ioe);
+		} finally {
       releaseSharedLock();
     }
   }

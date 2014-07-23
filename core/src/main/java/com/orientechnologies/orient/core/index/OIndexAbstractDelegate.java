@@ -228,6 +228,11 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
   }
 
   @Override
+  public OIndexCursor descCursor() {
+    return delegate.descCursor();
+  }
+
+  @Override
   public OIndexKeyCursor keyCursor() {
     return delegate.keyCursor();
   }

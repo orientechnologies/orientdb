@@ -55,6 +55,8 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
 /**
@@ -365,6 +367,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
           // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN ERROR
         }
 
+        removeValuesContainer();
+
         int documentNum = 0;
         long documentTotal = 0;
 
@@ -511,21 +515,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         if (getDatabase().getMetadata() != null)
           getDatabase().getMetadata().getIndexManager().removeClassPropertyIndex(this);
 
-        if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
-          final OStorage storage = getDatabase().getStorage();
-          if (storage instanceof OStorageLocal) {
-            final ODiskCache diskCache = ((OStorageLocal) storage).getDiskCache();
-            try {
-              final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-              if (diskCache.exists(fileName)) {
-                final long fileId = diskCache.openFile(fileName);
-                diskCache.deleteFile(fileId);
-              }
-            } catch (IOException e) {
-              OLogManager.instance().error(this, "Can't delete file for value containers", e);
-            }
-          }
-        }
+        removeValuesContainer();
 
         return this;
 
@@ -534,6 +524,24 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       }
     } finally {
       modificationLock.releaseModificationLock();
+    }
+  }
+
+  private void removeValuesContainer() {
+    if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
+      final OStorage storage = getDatabase().getStorage();
+			if (storage instanceof OStorageLocalAbstract) {
+				final ODiskCache diskCache = ((OStorageLocalAbstract)storage).getDiskCache();
+				try {
+					final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+					if (diskCache.exists(fileName)) {
+						final long fileId = diskCache.openFile(fileName);
+						diskCache.deleteFile(fileId);
+					}
+				} catch (IOException e) {
+					OLogManager.instance().error(this, "Can't delete file for value containers", e);
+				}
+			}
     }
   }
 

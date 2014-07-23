@@ -170,6 +170,11 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
+  public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public OIndexKeyCursor keyCursor() {
     throw new UnsupportedOperationException("keyCursor");
   }

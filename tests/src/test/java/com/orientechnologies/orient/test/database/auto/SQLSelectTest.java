@@ -1196,11 +1196,11 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testTraverse() {
-		OrientGraph graph = new OrientGraph(url);
-		graph.setAutoStartTx(false);
-		graph.commit();
+    OrientGraph graph = new OrientGraph(url);
+    graph.setAutoStartTx(false);
+    graph.commit();
 
-		OClass oc = graph.getVertexType("vertexA");
+    OClass oc = graph.getVertexType("vertexA");
     if (oc == null)
       oc = graph.createVertexType("vertexA");
 
@@ -1217,7 +1217,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     ocb.createProperty("name", OType.STRING);
     ocb.createProperty("map", OType.EMBEDDEDMAP);
     ocb.createIndex("vertexB_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
-		graph.setAutoStartTx(true);
+    graph.setAutoStartTx(true);
 
     // FIRST: create a root vertex
     ODocument docA = graph.addVertex("class:vertexA").getRecord();
@@ -1245,7 +1245,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   private static void createAndLink(final OrientGraph graph, String name, Map<String, String> map, ODocument root) {
-		OrientVertex vertex = graph.addVertex("class:vertexB", "name", name, "map", map);
+    OrientVertex vertex = graph.addVertex("class:vertexB", "name", name, "map", map);
 
     graph.addEdge(null, graph.getVertex(root), vertex, "E");
   }
@@ -1286,7 +1286,6 @@ public class SQLSelectTest extends AbstractSelectTest {
           .getSchemaClass().getName(), "Address");
     }
   }
-
 
   public void testParams() {
     OClass test = database.getMetadata().getSchema().getClass("test");
@@ -1619,4 +1618,91 @@ public class SQLSelectTest extends AbstractSelectTest {
         asynchResultOne, null));
     Assert.assertTrue(ODocumentHelper.compareCollections(database, synchResultTwo, database, asynchResultTwo, null));
   }
+
+  public void testSelectFromIndexValues() {
+    if (database.getURL().startsWith("memory:"))
+      return;
+
+    database.command(new OCommandSQL("create index selectFromIndexValues on Profile (name) notunique")).execute();
+
+    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
+        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+
+    final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
+        "select from indexvalues:selectFromIndexValues where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+
+    Assert.assertEquals(indexValuesResult.size(), classResult.size());
+
+    String lastName = null;
+
+    for (ODocument document : indexValuesResult) {
+      String name = document.field("name");
+
+      if (lastName != null)
+        Assert.assertTrue(lastName.compareTo(name) <= 0);
+
+      lastName = name;
+      Assert.assertTrue(classResult.remove(document));
+    }
+
+    Assert.assertTrue(classResult.isEmpty());
+  }
+
+	public void testSelectFromIndexValuesAsc() {
+		if (database.getURL().startsWith("memory:"))
+			return;
+
+		database.command(new OCommandSQL("create index selectFromIndexValuesAsc on Profile (name) notunique")).execute();
+
+		final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
+						"select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+
+		final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
+						"select from indexvaluesasc:selectFromIndexValuesAsc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+
+		Assert.assertEquals(indexValuesResult.size(), classResult.size());
+
+		String lastName = null;
+
+		for (ODocument document : indexValuesResult) {
+			String name = document.field("name");
+
+			if (lastName != null)
+				Assert.assertTrue(lastName.compareTo(name) <= 0);
+
+			lastName = name;
+			Assert.assertTrue(classResult.remove(document));
+		}
+
+		Assert.assertTrue(classResult.isEmpty());
+	}
+
+	public void testSelectFromIndexValuesDesc() {
+		if (database.getURL().startsWith("memory:"))
+			return;
+
+		database.command(new OCommandSQL("create index selectFromIndexValuesDesc on Profile (name) notunique")).execute();
+
+		final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
+						"select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+
+		final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
+						"select from indexvaluesdesc:selectFromIndexValuesDesc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+
+		Assert.assertEquals(indexValuesResult.size(), classResult.size());
+
+		String lastName = null;
+
+		for (ODocument document : indexValuesResult) {
+			String name = document.field("name");
+
+			if (lastName != null)
+				Assert.assertTrue(lastName.compareTo(name) >= 0);
+
+			lastName = name;
+			Assert.assertTrue(classResult.remove(document));
+		}
+
+		Assert.assertTrue(classResult.isEmpty());
+	}
 }

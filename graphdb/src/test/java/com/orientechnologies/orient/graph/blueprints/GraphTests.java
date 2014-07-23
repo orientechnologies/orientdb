@@ -18,19 +18,37 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import static org.junit.Assert.fail;
 
 public class GraphTests {
 
   public static final String URL = "plocal:target/databases/testExceptionOnCommit";
+
+  @BeforeClass
+  public static void beforeClass() {
+    OrientGraph g = new OrientGraph(URL, "admin", "admin");
+    g.drop();
+  }
 
   @Test
   public void indexes() {
@@ -75,6 +93,101 @@ public class GraphTests {
         // ok
       }
 
+    }
+  }
+
+  @Test
+  public void testEmbeddedListAsVertexProperty() {
+    OrientGraph g = new OrientGraph(URL, "admin", "admin");
+
+    try {
+      OrientVertexType vertexType = g.createVertexType("EmbeddedClass");
+      vertexType.createProperty("embeddedList", OType.EMBEDDEDLIST);
+
+      OrientVertex vertex = g.addVertex("class:EmbeddedClass");
+
+      List<ODocument> embeddedList = new ArrayList<ODocument>();
+      ODocument docOne = new ODocument();
+      docOne.field("prop", "docOne");
+
+      ODocument docTwo = new ODocument();
+      docTwo.field("prop", "docTwo");
+
+      embeddedList.add(docOne);
+      embeddedList.add(docTwo);
+
+      vertex.setProperty("embeddedList", embeddedList);
+
+      final Object id = vertex.getId();
+
+      g.shutdown();
+      g = new OrientGraph(URL, "admin", "admin");
+
+      vertex = g.getVertex(id);
+      embeddedList = vertex.getProperty("embeddedList");
+
+      docOne = embeddedList.get(0);
+      Assert.assertEquals(docOne.field("prop"), "docOne");
+
+      docTwo = embeddedList.get(1);
+      Assert.assertEquals(docTwo.field("prop"), "docTwo");
+    } finally {
+      g.shutdown();
+    }
+  }
+
+  @Test
+  public void testGetEdgesUpdate() {
+    OrientGraph g = new OrientGraph(URL, "admin", "admin");
+    try {
+      g.createVertexType("GetEdgesUpdate");
+      g.createEdgeType("getEdgesUpdateEdge");
+
+      OrientVertex vertexOne = g.addVertex("class:GetEdgesUpdate");
+
+      OrientVertex vertexTwo = g.addVertex("class:GetEdgesUpdate");
+      OrientVertex vertexThree = g.addVertex("class:GetEdgesUpdate");
+      OrientVertex vertexFour = g.addVertex("class:GetEdgesUpdate");
+
+      vertexOne.addEdge("getEdgesUpdateEdge", vertexTwo);
+      vertexOne.addEdge("getEdgesUpdateEdge", vertexThree);
+      vertexOne.addEdge("getEdgesUpdateEdge", vertexFour);
+
+      g.commit();
+
+      Iterable<Edge> iterable = vertexOne.getEdges(Direction.OUT, "getEdgesUpdateEdge");
+      Iterator<Edge> iterator = iterable.iterator();
+
+      int counter = 0;
+      while (iterator.hasNext()) {
+        iterator.next();
+        counter++;
+      }
+
+      Assert.assertEquals(3, counter);
+
+      iterable = vertexOne.getEdges(Direction.OUT, "getEdgesUpdateEdge");
+      iterator = iterable.iterator();
+
+      Edge deleteEdge = (Edge) iterator.next();
+
+      Vertex deleteVertex = deleteEdge.getVertex(Direction.IN);
+      deleteVertex.remove();
+
+      g.commit();
+
+      iterable = vertexOne.getEdges(Direction.OUT, "getEdgesUpdateEdge");
+      iterator = iterable.iterator();
+
+      counter = 0;
+      while (iterator.hasNext()) {
+        iterator.next();
+        counter++;
+      }
+
+      Assert.assertEquals(2, counter);
+    } finally {
+      g.shutdown();
     }
   }
 }

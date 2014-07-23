@@ -46,6 +46,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   protected Set<String>         clustersToIndex;
 
   protected final static String QUERY_ENTRIES                                     = "select key, rid from index:%s";
+  protected final static String QUERY_ENTRIES_DESC                                = "select key, rid from index:%s order by key desc";
 
   private final static String   QUERY_GET_ENTRIES                                 = "select from index:%s where key in [%s]";
 
@@ -389,6 +390,41 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       }
     };
 
+  }
+
+  @Override
+  public OIndexCursor descCursor() {
+    final OCommandRequest cmd = formatCommand(QUERY_ENTRIES_DESC, name);
+    final Collection<ODocument> result = getDatabase().command(cmd).execute();
+
+    return new OIndexAbstractCursor() {
+      private final Iterator<ODocument> documentIterator = result.iterator();
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
+        if (!documentIterator.hasNext())
+          return null;
+
+        final ODocument value = documentIterator.next();
+
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return value.field("key");
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return value.field("rid");
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException("setValue");
+          }
+        };
+      }
+    };
   }
 
   @Override

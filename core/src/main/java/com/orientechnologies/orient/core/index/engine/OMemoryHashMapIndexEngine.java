@@ -147,6 +147,11 @@ public class OMemoryHashMapIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
+  public OIndexCursor descCursor(ValuesTransformer<V> valuesTransformer) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public OIndexKeyCursor keyCursor() {
     return new OIndexKeyCursor() {
       private Iterator<Object> keysIterator = concurrentHashMap.keySet().iterator();

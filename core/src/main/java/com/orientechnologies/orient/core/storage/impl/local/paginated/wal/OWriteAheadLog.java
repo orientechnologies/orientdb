@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 import java.util.zip.CRC32;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -285,10 +286,17 @@ public class OWriteAheadLog {
     public void delete(boolean flush) throws IOException {
       close(flush);
 
-      boolean deleted = file.delete();
+      boolean deleted = OFileUtils.delete(file);
+      int retryCount = 0;
+
       while (!deleted) {
         OMemoryWatchDog.freeMemoryForResourceCleanup(100);
-        deleted = !file.exists() || file.delete();
+
+        deleted = OFileUtils.delete(file);
+        retryCount++;
+
+        if (retryCount > 10)
+          throw new IOException("Can not delete file. Retry limit exceeded. (" + retryCount + ").");
       }
     }
 
@@ -617,7 +625,7 @@ public class OWriteAheadLog {
         flushedLsn = null;
       } else {
 
-				logSize = 0;
+        logSize = 0;
 
         for (File walFile : walFiles) {
           LogSegment logSegment = new LogSegment(walFile, maxPagesCacheSize);
@@ -838,7 +846,7 @@ public class OWriteAheadLog {
         iterator.remove();
       }
 
-			recalculateLogSize();
+      recalculateLogSize();
     }
   }
 
@@ -948,11 +956,7 @@ public class OWriteAheadLog {
   }
 
   public OLogSequenceNumber getFlushedLSN() {
-    synchronized (syncObject) {
-      checkForClose();
-
-      return flushedLsn;
-    }
+    return flushedLsn;
   }
 
   public OLogSequenceNumber logFullCheckpointStart() throws IOException {
