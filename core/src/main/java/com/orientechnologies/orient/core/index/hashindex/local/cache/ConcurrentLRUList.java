@@ -206,6 +206,11 @@ public class ConcurrentLRUList implements LRUList {
 
       return entry;
     }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
   }
 
   private static class CacheKey {
