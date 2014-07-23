@@ -1,26 +1,32 @@
 var aside = angular.module('aside.services', []);
 
-notification.factory('Aside', function ($aside) {
+aside.factory('Aside', function () {
 
+    var params = {
+        cls: ""
+    }
     return {
-        aside: null,
-
+        params: params,
         show: function (params) {
-            if (!params && aside) {
-                //aside.show();
-            } else {
-                aside = $aside({ scope: params.scope, template: params.template, show: params.show, placement: 'left', animation: 'am-slide-left'})
+
+
+            this.params.scope = params.scope;
+            this.params.tpl = params.template;
+            this.params.title = params.title;
+
+            if (params.show)
+                this.params.cls = 'show';
+            this.params.loading = true;
+            if (!this.params.scope.$$phase && !this.params.scope.$root.$$phase) {
+                this.params.scope.$apply();
             }
         },
         hide: function () {
-            if (aside) {
-                aside.$hide();
-            }
+            this.params.cls = "";
         },
         toggle: function () {
-            if (aside) {
-                aside.toggle();
-            }
+            this.params.cls = (this.params.cls == "" ? "show" : "");
+
         }
 
     }

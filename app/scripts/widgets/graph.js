@@ -115,3 +115,30 @@ graph.directive('ngOGraph', function () {
         link: linker
     }
 });
+graph.directive('aside', function ($http, $compile) {
+
+    var linker = function (scope, element, attrs) {
+
+
+        scope.$watch("model.loading", function (s) {
+
+
+            if (s) {
+                $http.get(scope.model.tpl).then(function (response) {
+                    var el = angular.element($compile(response.data)(scope.model.scope));
+                    element.empty();
+                    element.append(el);
+                    scope.model.loading = false;
+                });
+
+
+            }
+        })
+
+
+    }
+    return {
+        restrict: 'A',
+        link: linker
+    }
+});

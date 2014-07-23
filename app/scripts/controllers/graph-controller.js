@@ -326,7 +326,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             {
                 name: '\uf044',
                 onClick: function (v) {
-                    $scope.showModal(v.source["@rid"]);
+                    $scope.showModal(v, v.source["@rid"]);
                 }
             },
 
@@ -435,18 +435,38 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                 name: "\uf06e",
                 onClick: function (v) {
                     $scope.doc = v.source;
-                    Aside.show({scope: $scope, template: 'views/database/graph/asideVertex.html', show: true});
+                    var title = $scope.doc['@class'] + "-" + $scope.doc['@rid'] + "- Version " + $scope.doc['@version'];
+                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideVertex.html', show: true});
+
                 }
             }
         ]
 
 
     }
-    $scope.showModal = function (rid) {
+    $scope.showModalNew = function (clazz) {
+        var modalScope = $scope.$new(true);
+        modalScope.db = $routeParams.database;
+        modalScope.database = $routeParams.database;
+        modalScope.doc = DocumentApi.createNewDoc(clazz);
+        modalScope.isNew = true;
+        modalScope.confirmSave = function (doc) {
+            $scope.graph.data([doc]).redraw();
+        }
+        $modal({template: 'views/database/modalNew.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
+
+    };
+    $scope.addNode = function () {
+        $scope.showModalNew("Dir");
+    }
+    $scope.showModal = function (v, rid) {
         var modalScope = $scope.$new(true);
         modalScope.db = $routeParams.database;
         modalScope.database = $routeParams.database;
         modalScope.rid = rid;
+        modalScope.confirmSave = function (doc) {
+            v.source = doc;
+        }
         $modal({template: 'views/database/modalEdit.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
 
     };
@@ -481,6 +501,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 }])
 ;
 GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside) {
+
 
     $scope.database = $routeParams.database;
     $scope.headers = Database.getPropertyFromDoc($scope.doc);

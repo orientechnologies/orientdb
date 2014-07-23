@@ -87,9 +87,28 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
         });
     }
     $scope.save = function () {
-        DocumentApi.updateDocument($scope.db, $scope.rid, $scope.doc, function (data) {
-            Notification.push({content: data});
-        });
+
+        if ($scope.isNew) {
+            DocumentApi.createDocument($scope.db, $scope.doc['@rid'], $scope.doc, function (data) {
+                if ($scope.confirmSave) {
+                    $scope.confirmSave(data)
+                } else {
+                    Notification.push({content: JSON.stringify(data)});
+
+                    $location.path('#/database/' + $scope.db + '/browse/edit/' + data['@rid'].replace('#', ''));
+                }
+
+            });
+        } else {
+            DocumentApi.updateDocument($scope.db, $scope.rid, $scope.doc, function (data) {
+
+                if ($scope.confirmSave) {
+                    if ($scope.confirmSave(data));
+                } else {
+                    Notification.push({content: data});
+                }
+            });
+        }
 
     }
     $scope.addField = function (name, type) {
@@ -111,7 +130,12 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
         var idx = $scope.headers.indexOf(name);
         $scope.headers.splice(idx, 1);
     }
-    $scope.reload();
+    if (!$scope.doc) {
+        $scope.reload();
+    } else {
+        $scope.headers = Database.getPropertyFromDoc($scope.doc);
+    }
+
 }]);
 DocController.controller("EditController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {
 
