@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.test.internal.index;
 
-import junit.framework.Assert;
-
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
