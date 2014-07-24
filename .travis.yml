@@ -1,0 +1,11 @@
+language: java
+
+# whitelist
+branches:
+  only:
+    - developer
+jdk:
+  - openjdk7
+  - oraclejdk7
+  
+script: ant clean installg
