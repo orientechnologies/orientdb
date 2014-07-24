@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -145,7 +146,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   public ORecordAbstract<T> fromStream(final byte[] iRecordBuffer) {
     _dirty = false;
     _contentChanged = false;
-    _source = iRecordBuffer;
+    if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null) {
+      ONetworkThreadLocalSerializer.getNetworkSerializer().fromStream(iRecordBuffer, this, null);
+      _source = null;
+    } else
+      _source = iRecordBuffer;
     _size = iRecordBuffer != null ? iRecordBuffer.length : 0;
     _status = ORecordElement.STATUS.LOADED;
 

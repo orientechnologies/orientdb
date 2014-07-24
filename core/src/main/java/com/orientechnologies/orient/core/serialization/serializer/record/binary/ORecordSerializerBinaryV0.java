@@ -499,15 +499,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     } else if (link instanceof ORecordInternal<?>) {
       ORID rid = link.getIdentity();
       if (((ORecordInternal<?>) link).isDirty() || (rid.isTemporary())) {
-        final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-        if (database != null) {
-          if (link instanceof ODocument) {
-            final OClass schemaClass = ((ODocument) link).getSchemaClass();
-            database.save((ORecordInternal<?>) link,
-                schemaClass != null ? database.getClusterNameById(schemaClass.getClusterForNewInstance()) : null);
-          } else
-            database.save((ORecordInternal<?>) link);
-        }
+        ((ORecordInternal<?>) link).save();
       }
     }
     return link;

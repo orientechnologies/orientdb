@@ -42,6 +42,8 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
@@ -282,7 +284,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   protected ORecordInternal<?> createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
-																						final byte recordType) {
+      final byte recordType) {
     final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     fillRecord(rid, buffer, OVersionFactory.instance().createVersion(), record, iDatabase);
     iDatabase.save(record);
@@ -361,16 +363,19 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
   }
 
-  private void fillRecord(final ORecordId rid, final byte[] buffer, final ORecordVersion version, final ORecordInternal<?> record,
+  public void fillRecord(final ORecordId rid, final byte[] buffer, final ORecordVersion version, final ORecordInternal<?> record,
       ODatabaseRecord iDatabase) {
     String dbSerializerName = "";
     if (iDatabase != null)
       dbSerializerName = iDatabase.getSerializer().toString();
-    
+
     String name = getRecordSerializerName();
     if (record.getRecordType() == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
       record.fill(rid, version, null, true);
-      ORecordSerializerFactory.instance().getFormat(name).fromStream(buffer, record, null);
+      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+      ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
+      record.fromStream(buffer);
+      ONetworkThreadLocalSerializer.setNetworkSerializer(null);
       record.setDirty();
     } else
       record.fill(rid, version, buffer, true);
@@ -378,13 +383,21 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
   protected byte[] getRecordBytes(final ORecordInternal<?> iRecord) {
 
-    String dbSerializerName = iRecord.getDatabase().getSerializer().toString();
+    String dbSerializerName = null;
+    if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
+      dbSerializerName = iRecord.getDatabase().getSerializer().toString();
     final byte[] stream;
     String name = getRecordSerializerName();
-    if (iRecord.getRecordType() == ODocument.RECORD_TYPE && !dbSerializerName.equals(name))
-      stream = ORecordSerializerFactory.instance().getFormat(name).toStream(iRecord, false);
-    else
-      stream = iRecord.toStream();
+    if (iRecord.getRecordType() == ODocument.RECORD_TYPE && (dbSerializerName == null ||!dbSerializerName.equals(name))) {
+      // Waste of time to be sure that recursive save is done with the database serializer.
+      // iRecord.toStream();
+      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+      ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
+      if (iRecord instanceof ODocument)
+        ((ODocument) iRecord).deserializeFields();
+    }
+    stream = iRecord.toStream();
+    ONetworkThreadLocalSerializer.setNetworkSerializer(null);
     return stream;
   }
 

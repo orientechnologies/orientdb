@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 
 import java.text.ParseException;
 import java.util.Collection;
@@ -416,9 +417,17 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
   }
 
   public byte[] toStream(final boolean iOnlyDelta) {
-    if (_source == null)
-      _source = _recordFormat.toStream(this, iOnlyDelta);
+    STATUS prev = _status;
+    _status = STATUS.MARSHALLING;
+    try {
+      if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null)
+        return ONetworkThreadLocalSerializer.getNetworkSerializer().toStream(this, iOnlyDelta);
 
+      if (_source == null)
+        _source = _recordFormat.toStream(this, iOnlyDelta);
+    } finally {
+      _status = prev;
+    }
     invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
     return _source;
@@ -433,8 +442,11 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
       return false;
 
     _status = ORecordElement.STATUS.UNMARSHALLING;
-    _recordFormat.fromStream(_source, this, iFields);
-    _status = ORecordElement.STATUS.LOADED;
+    try {
+      _recordFormat.fromStream(_source, this, iFields);
+    } finally {
+      _status = ORecordElement.STATUS.LOADED;
+    }
 
     return true;
   }

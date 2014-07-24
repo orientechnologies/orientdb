@@ -75,6 +75,9 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
@@ -994,7 +997,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
 
     final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy((ODatabaseRecordTx) connection.database.getUnderlying(),
-        channel, connection.data.protocolVersion);
+        channel, connection.data.protocolVersion, this);
 
     try {
       connection.database.begin(tx);
@@ -1055,9 +1058,16 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Execute remote command");
 
     final boolean asynch = channel.readByte() == 'a';
+    String dbSerializerName = connection.database.getSerializer().toString();
+    String name = getRecordSerializerName();
 
+    if (!dbSerializerName.equals(name)) {
+      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+      ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
+    }
     final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel
         .readBytes());
+    ONetworkThreadLocalSerializer.setNetworkSerializer(null);
 
     connection.data.commandDetail = command.getText();
 
@@ -1970,7 +1980,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     beginResponse();
     try {
       sendOk(clientTxId);
-      channel.writeBytes(result.toStream());
+      byte [] stream = getRecordBytes(result);
+      channel.writeBytes(stream);
     } finally {
       endResponse();
     }
