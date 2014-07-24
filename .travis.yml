@@ -3,7 +3,7 @@ language: java
 # whitelist
 branches:
   only:
-    - developer
+    - develop
 jdk:
   - openjdk7
   - oraclejdk7
