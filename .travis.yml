@@ -8,4 +8,4 @@ jdk:
   - openjdk7
   - oraclejdk7
   
-script: ant clean installg
+script: ant clean installg test test-local test-plocal test-remote
