@@ -27,6 +27,9 @@ aside.factory('Aside', function () {
         toggle: function () {
             this.params.cls = (this.params.cls == "" ? "show" : "");
 
+        },
+        isOpen: function () {
+            return this.params.cls == "show";
         }
 
     }

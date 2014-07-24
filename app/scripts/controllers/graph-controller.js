@@ -301,9 +301,15 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
             $scope.graph.on('node/click', function (v) {
 
-//                $scope.doc = v.source;
-//
-//                Aside.show({scope: $scope, template: 'views/database/graph/asideVertex.html', show: true});
+                if (Aside.isOpen()) {
+                    $scope.doc = v.source;
+                    var title = $scope.doc['@class'] + "-" + $scope.doc['@rid'] + "- Version " + $scope.doc['@version'];
+                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideVertex.html', show: true});
+                }
+            });
+            $scope.graph.on('edge/create', function (v1, v2) {
+
+                $scope.showModalNewEdge(v1, v2);
             });
             $scope.graph.on('node/dblclick', function (v) {
 
@@ -342,16 +348,24 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                         var acts = [];
                         var outgoings = Database.getEdge(v.source, 'out_');
                         outgoings.forEach(function (elem) {
+                            var name = elem.replace("out_", "");
                             acts.push(
                                 {
-                                    name: elem.replace("out_", ""),
+                                    name: (name != "" ? name : "E"),
                                     onClick: function (v, label) {
 
+                                        if (label == "E") {
+                                            label = "";
+                                        }
+                                        else {
+                                            label = "'" + label + "'";
+                                        }
 
-                                        var props = { rid: v['@rid'], label: label};
-                                        var query = "select expand(unionAll(outE('{{label}}'),out('{{label}}')) )  from {{rid}}"
+                                        var props = { rid: v['@rid'], label: label };
+                                        var query = "select expand(unionAll(outE({{label}}),out({{label}})) )  from {{rid}}"
                                         var queryText = S(query).template(props).s;
-                                        CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: $scope.language, text: queryText, limit: -1, shallow: false, verbose: false}, function (data) {
+
+                                        CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: 'sql', text: queryText, limit: -1, shallow: false, verbose: false}, function (data) {
 
                                             $scope.graph.data(data.result).redraw();
                                         })
@@ -394,7 +408,11 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                         },
                         {
                             name: "\uf0c1",
-                            placeholder: "Connect"
+                            placeholder: "Connect",
+                            onClick: function (v) {
+
+                                $scope.graph.startEdge();
+                            }
                         }
                     ]
                 }
@@ -411,14 +429,23 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                         var acts = [];
                         var outgoings = Database.getEdge(v.source, 'in_');
                         outgoings.forEach(function (elem) {
+                            var name = elem.replace("in_", "");
+
                             acts.push(
                                 {
-                                    name: elem.replace("in_", ""),
+                                    name: (name != "" ? name : "E"),
                                     onClick: function (v, label) {
+                                        if (label == "E") {
+                                            label = "";
+                                        }
+                                        else {
+                                            label = "'" + label + "'";
+                                        }
+
                                         var props = { rid: v['@rid'], label: label};
-                                        var query = "select expand(unionAll(inE('{{label}}'),in('{{label}}')) )  from {{rid}}"
+                                        var query = "select expand(unionAll(inE({{label}}),in({{label}})) )  from {{rid}}"
                                         var queryText = S(query).template(props).s;
-                                        CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: $scope.language, text: queryText, limit: -1, shallow: false, verbose: false}, function (data) {
+                                        CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: 'sql', text: queryText, limit: -1, shallow: false, verbose: false}, function (data) {
 
                                             $scope.graph.data(data.result).redraw();
                                         })
@@ -444,11 +471,24 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
 
     }
-    $scope.showModalNew = function (clazz) {
+    $scope.showModalNewEdge = function (source, target) {
         var modalScope = $scope.$new(true);
         modalScope.db = $routeParams.database;
         modalScope.database = $routeParams.database;
-        modalScope.doc = DocumentApi.createNewDoc(clazz);
+        modalScope.isNew = true;
+        modalScope.source = source;
+        modalScope.target = target;
+        modalScope.confirmSave = function (docs) {
+            $scope.graph.endEdgeCreation();
+            $scope.graph.data(docs).redraw();
+        }
+        $modal({template: 'views/database/modalNewEdge.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
+
+    };
+    $scope.showModalNew = function () {
+        var modalScope = $scope.$new(true);
+        modalScope.db = $routeParams.database;
+        modalScope.database = $routeParams.database;
         modalScope.isNew = true;
         modalScope.confirmSave = function (doc) {
             $scope.graph.data([doc]).redraw();

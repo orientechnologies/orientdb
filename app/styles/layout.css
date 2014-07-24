@@ -118,6 +118,10 @@ body div.container-studio {
     color: white;
 }
 
+.navbar-nav li.active {
+    border-bottom: 3px solid #FF6600;
+}
+
 .modal-header {
     padding: 5px;
     padding-left: 15px;
@@ -155,12 +159,14 @@ body div.container-studio {
     color: #c5c5c5;
 }
 
-.oaside-title  {
+.oaside-title {
     color: #c5c5c5;
 }
+
 .vertex-aside .title-tab {
     color: #c5c5c5;
 }
+
 .show {
     -webkit-transform: translateX(0px);
     transform: translateX(0px);
@@ -193,4 +199,21 @@ body div.container-studio {
     100% {
         -webkit-transform: translateX(0px);
     }
+}
+
+input.search-query {
+    padding-right: 14px;
+    padding-right: 4px \9;
+    padding-left: 14px;
+    padding-left: 4px \9;
+    /* IE7-8 doesn't have border-radius, so don't indent the padding */
+
+    margin-bottom: 0;
+    -webkit-border-radius: 15px;
+    -moz-border-radius: 15px;
+
+    border-radius: 15px;
+}
+.search-bookmarks {
+    padding-top: 5px;
 }

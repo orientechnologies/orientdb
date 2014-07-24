@@ -1,17 +1,41 @@
-<div class="aside" role="dialog" tabindex="-1">
-    <div class="aside-dialog">
-        <div class="aside-content">
-            <div class="aside-header">
-                <button class="close" ng-click="$hide()" type="button">×</button>
-                <h4 class="aside-title ng-binding">Bookmarks</h4>
-            </div>
-            <div class="aside-body">
-            </div>
-            <div ng-include="'views/database/context/bookmarks.html'">
+<div ng-controller="BookmarkController" class="container-fluid bookmarks-container">
+    <div ng-keydown="closeIfReturn($event)">
 
-            </div>
-            <div class="aside-footer">
-            </div>
+
+        <div class="row">
+            <form class="form-search search-bookmarks">
+                <div class="form-group col-md-10 col-md-offset-1">
+                    <input type="text" class="form-control search-query" ng-model="searchText"
+                           placeholder="Search bookmarks">
+                </div>
+            </form>
+        </div>
+        <div class="row">
+
+            <ul class="nav nav-tabs nav-stacked bookmarks-list">
+                <li class="bookmarks-item" ng-mouseover="hover(bk)" ng-repeat="bk in bks | filter:searchText">
+                    <div class="bookmarks-actions" ng-class="{ true : 'visible', false : 'invisible' }[bk == selected]">
+                        <a href="javascript:void(0)" data-placement="right"
+                           bs-popover="'views/database/bookmarkEdit.html'" data-title="Edit bookmark">
+                            <i class="fa fa-edit"></i>
+                        </a>
+                        <a class="" ng-click="remove(bk)" href="javascript:void(0)">
+                            <i class="fa fa-times-circle-o"></i>
+                        </a>
+                    </div>
+                    <a href="javascript:void(0)" ng-click="run(bk)" data-placement="right" bs-tooltip="bk.query">
+                        {{bk.name}}
+                        <br>
+
+                        <div class="pull-right">
+                            <span ng-repeat="b in bk.tags" ng-click=" search = b " class="badge book-badge">{{b}}</span>
+                        </div>
+
+                    </a>
+
+
+                </li>
+            </ul>
         </div>
     </div>
 </div>

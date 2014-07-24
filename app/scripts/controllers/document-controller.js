@@ -125,17 +125,60 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
             $scope.headers.push(name);
         }
     }
+    $scope.setSelectClass = function (cls) {
+        $scope.doc = DocumentApi.createNewDoc(cls);
+        $scope.headers = Database.getPropertyFromDoc($scope.doc);
+        $scope.selectClass = false;
+    }
     $scope.deleteField = function (name) {
         delete $scope.doc[name];
         var idx = $scope.headers.indexOf(name);
         $scope.headers.splice(idx, 1);
     }
-    if (!$scope.doc) {
+    if (!$scope.doc && !$scope.isNew) {
+        $scope.selectClass = false;
         $scope.reload();
     } else {
-        $scope.headers = Database.getPropertyFromDoc($scope.doc);
+        $scope.selectClass = true;
+        $scope.listClasses = Database.listNameOfClasses();
+
     }
 
+}]);
+DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams', '$location', 'CommandApi', 'Database', 'Notification', '$controller', function ($scope, $routeParams, $location, CommandApi, Database, Notification, $controller) {
+
+    $controller('DocumentModalController', { $scope: $scope });
+    $scope.listClasses = Database.getClazzEdge();
+
+    $scope.lightweight = false;
+    $scope.save = function (cls) {
+
+        if (!cls) {
+            var cls = $scope.doc["@class"];
+            delete $scope.doc["@class"];
+            delete $scope.doc["@rid"];
+            delete $scope.doc["@version"];
+        }
+
+        var params = { label: cls, source: $scope.source["@rid"], target: $scope.target["@rid"], json: JSON.stringify($scope.doc)};
+        var command = "CREATE EDGE {{label}} FROM {{source}} TO {{target}}"
+        if (!cls) {
+            command += "content {{json}}";
+        }
+
+        var queryText = S(command).template(params).s;
+
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: queryText, verbose: false}, function (data) {
+            $scope.confirmSave(data.result);
+        });
+    }
+    $scope.createLightEdge = function (cls) {
+        $scope.save(cls);
+        $scope.$hide();
+    }
+    $scope.showEdgeForm = function () {
+        return $scope.selectClass && !$scope.lightweight;
+    }
 }]);
 DocController.controller("EditController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {
 

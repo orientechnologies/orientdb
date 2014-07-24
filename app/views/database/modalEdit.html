@@ -2,7 +2,8 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×</button>
+                <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
+                </button>
                 <h5>Edit {{rid}}</h5>
             </div>
             <div class="modal-body document">
@@ -11,7 +12,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-sm pull-left" data-placement="right"
-                        bs-popover="'views/database/newFieldPopOver.html'">Add Field
+                        data-template="views/database/newFieldPopOver.html" bs-popover>Add Field
                 </button>
                 <button type="button" class="btn btn-sm" ng-click="$hide()">Close</button>
                 <button class="btn btn-primary btn-sm" ng-click="modal.saved=true;$hide();save()">Save changes</button>
