@@ -1,3 +1,8 @@
+# Travis script for (only) develop branch.
+# Compiles OrientDB against openjdk and oraclejdk 7.
+# Installs OrientDB
+# Tests embedded and remote databases
+
 language: java
 
 # whitelist
@@ -8,4 +13,4 @@ jdk:
   - openjdk7
   - oraclejdk7
   
-script: ant clean installg test test-local test-plocal test-remote
+script: ant clean installg test
