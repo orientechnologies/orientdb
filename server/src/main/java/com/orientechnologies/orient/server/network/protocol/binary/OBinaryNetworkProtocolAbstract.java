@@ -372,10 +372,13 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     String name = getRecordSerializerName();
     if (record.getRecordType() == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
       record.fill(rid, version, null, true);
-      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-      ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
-      record.fromStream(buffer);
-      ONetworkThreadLocalSerializer.setNetworkSerializer(null);
+      try {
+        ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+        ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
+        record.fromStream(buffer);
+      } finally {
+        ONetworkThreadLocalSerializer.setNetworkSerializer(null);
+      }
       record.setDirty();
     } else
       record.fill(rid, version, buffer, true);
@@ -383,21 +386,23 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
   protected byte[] getRecordBytes(final ORecordInternal<?> iRecord) {
 
-    String dbSerializerName = null;
-    if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
-      dbSerializerName = iRecord.getDatabase().getSerializer().toString();
     final byte[] stream;
-    String name = getRecordSerializerName();
-    if (iRecord.getRecordType() == ODocument.RECORD_TYPE && (dbSerializerName == null ||!dbSerializerName.equals(name))) {
-      // Waste of time to be sure that recursive save is done with the database serializer.
-      // iRecord.toStream();
-      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
-      ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
-      if (iRecord instanceof ODocument)
+    try {
+      String dbSerializerName = null;
+      if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
+        dbSerializerName = iRecord.getDatabase().getSerializer().toString();
+      String name = getRecordSerializerName();
+      if (iRecord.getRecordType() == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName.equals(name))) {
+        ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(dbSerializerName);
+        ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
         ((ODocument) iRecord).deserializeFields();
+        ser = ORecordSerializerFactory.instance().getFormat(name);
+        ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
+      }
+      stream = iRecord.toStream();
+    } finally {
+      ONetworkThreadLocalSerializer.setNetworkSerializer(null);
     }
-    stream = iRecord.toStream();
-    ONetworkThreadLocalSerializer.setNetworkSerializer(null);
     return stream;
   }
 
