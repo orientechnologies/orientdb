@@ -102,7 +102,7 @@ graph.directive('ngOGraph', function () {
 
 
         var opts = angular.extend({}, scope.$eval(attrs.ngOGraph));
-        var ograph = OrientGraph.create(element[0], opts.config, opts.metadata, opts.menu);
+        var ograph = OrientGraph.create(element[0], opts.config, opts.metadata, opts.menu,opts.edgeMenu);
 
         ograph.data(opts.data).draw();
 

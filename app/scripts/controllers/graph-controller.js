@@ -311,6 +311,13 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
                 $scope.showModalNewEdge(v1, v2);
             });
+            $scope.graph.on('edge/click', function (e) {
+
+
+                var title = "Edge (" + e.label + ")";
+                $scope.doc = e.edge;
+                Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideEdge.html', show: true});
+            });
             $scope.graph.on('node/dblclick', function (v) {
 
                 var q = "select expand(unionAll(bothE(),both()) )  from " + v['@rid'];
@@ -328,6 +335,14 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         },
         metadata: Database.getMetadata(),
         config: config,
+        edgeMenu: [
+            {
+                name: '\uf044',
+                onClick: function (v) {
+                    console.log(v);
+                }
+            }
+        ],
         menu: [
             {
                 name: '\uf044',
@@ -397,24 +412,33 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                                     title: 'Warning!',
                                     body: 'You are removing Vertex ' + recordID + '. Are you sure?',
                                     success: function () {
-                                        $scope.graph.removeVertex(v);
-//                                        var command = "DELETE Vertex " + recordID;
-//                                        CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
-//
-//                                        });
+                                        var command = "DELETE Vertex " + recordID;
+                                        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: command, verbose: false}, function (data) {
+                                            $scope.graph.removeVertex(v);
+                                        });
                                     }
                                 });
                             }
                         },
                         {
-                            name: "\uf0c1",
-                            placeholder: "Connect",
-                            onClick: function (v) {
+                            name: "\uf12d",
+                            placeholder: "Remove from canvas",
+                            onClick: function (v, label) {
+                                $scope.graph.removeVertex(v);
 
-                                $scope.graph.startEdge();
                             }
                         }
+
                     ]
+                }
+            },
+            {
+                name: "\uf0c1",
+                placeholder: "Connect",
+                onClick: function (v) {
+
+                    console.log(v);
+                    $scope.graph.startEdge();
                 }
             },
             {
@@ -570,4 +594,38 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
             $scope.graph.changeClazzConfig($scope.doc['@class'], 'r', val);
         }
     })
+}]);
+GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside) {
+
+
+    $scope.database = $routeParams.database;
+
+    if ($scope.doc) {
+        $scope.headers = Database.getPropertyFromDoc($scope.doc);
+        $scope.active = 'properties';
+        if ($scope.doc['@class']) {
+            $scope.config = $scope.graph.getClazzConfig($scope.doc['@class']);
+        }
+
+        $scope.$watch('config.display', function (val) {
+            if (val) {
+                $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
+            }
+        })
+        $scope.$watch('config.fill', function (val) {
+            if (val) {
+                $scope.graph.changeClazzConfig($scope.doc['@class'], 'fill', val);
+            }
+        })
+        $scope.$watch('config.stroke', function (val) {
+            if (val) {
+                $scope.graph.changeClazzConfig($scope.doc['@class'], 'stroke', val);
+            }
+        })
+        $scope.$watch('config.r', function (val) {
+            if (val) {
+                $scope.graph.changeClazzConfig($scope.doc['@class'], 'r', val);
+            }
+        })
+    }
 }]);
