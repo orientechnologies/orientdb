@@ -84,51 +84,45 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
       doc.put("total", total);
       return doc;
     } else {
-      if (sum instanceof Integer)
-        return sum.intValue() / total;
-      else if (sum instanceof Long)
-        return sum.longValue() / total;
-      else if (sum instanceof Float)
-        return sum.floatValue() / total;
-      else if (sum instanceof Double)
-        return sum.doubleValue() / total;
-      else if (sum instanceof BigDecimal)
-        return ((BigDecimal) sum).divide(new BigDecimal(total));
+    	return computeAverage(sum, total);
     }
-    return null;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    Number sum = null;
-    int total = 0;
+    Number dSum = null;
+    int dTotal = 0;
     for (Object iParameter : resultsToMerge) {
       final Map<String, Object> item = (Map<String, Object>) iParameter;
-      if (sum == null)
-        sum = (Number) item.get("sum");
+      if (dSum == null)
+        dSum = (Number) item.get("sum");
       else
-        sum = OType.increment(sum, (Number) item.get("sum"));
+        dSum = OType.increment(dSum, (Number) item.get("sum"));
 
-      total += (Integer) item.get("total");
+      dTotal += (Integer) item.get("total");
     }
 
-    if (sum instanceof Integer)
-      return sum.intValue() / total;
-    else if (sum instanceof Long)
-      return sum.longValue() / total;
-    else if (sum instanceof Float)
-      return sum.floatValue() / total;
-    else if (sum instanceof Double)
-      return sum.doubleValue() / total;
-    else if (sum instanceof BigDecimal)
-      return ((BigDecimal) sum).divide(new BigDecimal(total), RoundingMode.HALF_UP);
-
-    return null;
+    return computeAverage(dSum, dTotal);
   }
 
   @Override
   public boolean aggregateResults() {
     return configuredParameters.length == 1;
+  }
+  
+  private Object computeAverage(Number iSum, int iTotal) {
+  	if (iSum instanceof Integer)
+      return iSum.intValue() / iTotal;
+    else if (iSum instanceof Long)
+      return iSum.longValue() / iTotal;
+    else if (iSum instanceof Float)
+      return iSum.floatValue() / iTotal;
+    else if (iSum instanceof Double)
+      return iSum.doubleValue() / iTotal;
+    else if (iSum instanceof BigDecimal)
+      return ((BigDecimal) iSum).divide(new BigDecimal(iTotal), RoundingMode.HALF_UP);
+  	
+  	return null;
   }
 }
