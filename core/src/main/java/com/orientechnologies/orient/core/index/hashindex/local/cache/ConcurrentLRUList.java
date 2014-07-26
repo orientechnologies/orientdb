@@ -1,10 +1,12 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import java.util.Iterator;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Concurrent implementation of {@link LRUList}.
@@ -12,37 +14,55 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class ConcurrentLRUList implements LRUList {
-  private final AtomicReference<ListNode>       tailReference   = new AtomicReference<ListNode>();
-  private ConcurrentHashMap<CacheKey, LRUEntry> cache           = new ConcurrentHashMap<CacheKey, LRUEntry>();
-  private AtomicReference<ListNode>             headReference   = new AtomicReference<ListNode>();
-  private ConcurrentLinkedQueue<ListNode>       trash           = new ConcurrentLinkedQueue<ListNode>();
-  private AtomicBoolean                         purgeInProgress = new AtomicBoolean(false);
+
+  private final ConcurrentHashMap<CacheKey, LRUEntry> cache           = new ConcurrentHashMap<CacheKey, LRUEntry>();
+  private final ListNode                              headReference   = new ListNode(null, true);
+  private final AtomicReference<ListNode>             tailReference   = new AtomicReference<ListNode>(headReference);
+
+  private final ConcurrentLinkedQueue<ListNode>       trash           = new ConcurrentLinkedQueue<ListNode>();
+
+  private final int                                   minTrashSize    = Runtime.getRuntime().availableProcessors() * 4;
+  private final AtomicBoolean                         purgeInProgress = new AtomicBoolean();
+  private final AtomicInteger                         trashSize       = new AtomicInteger();
+
+  public ConcurrentLRUList() {
+  }
 
   @Override
   public OCacheEntry get(long fileId, long pageIndex) {
+    final LRUEntry lruEntry = cache.get(new CacheKey(fileId, pageIndex));
+
     purge();
 
-    return cache.get(new CacheKey(fileId, pageIndex)).entry;
+    if (lruEntry == null)
+      return null;
+
+    return lruEntry.entry;
   }
 
   @Override
   public OCacheEntry remove(long fileId, long pageIndex) {
     CacheKey key = new CacheKey(fileId, pageIndex);
-    final LRUEntry valueToRemove = cache.get(key);
+    final LRUEntry valueToRemove = cache.remove(key);
 
-    if (valueToRemove == null) {
+    if (valueToRemove == null)
       return null;
-    } else {
-      ListNode listNode = valueToRemove.listNode.getAndSet(null);
-      if (listNode == null)
-        return null;
 
-      listNode.entry = null;
-      trash.add(listNode);
+    valueToRemove.removeLock.writeLock().lock();
+    try {
+      valueToRemove.removed = true;
+      ListNode node = valueToRemove.listNode.get();
+      valueToRemove.listNode.set(null);
 
-      cache.remove(key);
-      return valueToRemove.entry;
+      if (node != null)
+        addToTrash(node);
+    } finally {
+      valueToRemove.removeLock.writeLock().unlock();
     }
+
+    purge();
+
+    return valueToRemove.entry;
   }
 
   @Override
@@ -50,83 +70,104 @@ public class ConcurrentLRUList implements LRUList {
     final CacheKey key = new CacheKey(cacheEntry.getFileId(), cacheEntry.getPageIndex());
     LRUEntry value = new LRUEntry(key, cacheEntry);
     final LRUEntry existingValue = cache.putIfAbsent(key, value);
+
     if (existingValue != null) {
       existingValue.entry = cacheEntry;
-      offer(existingValue, false);
+      offer(existingValue);
     } else
-      offer(value, true);
+      offer(value);
+
+    purge();
   }
 
-  private void offer(LRUEntry lruEntry, boolean freshEntry) {
-    ListNode tail = tailReference.get();
-    if (tail == null || !lruEntry.equals(tail.entry)) {
-      final ListNode newNode = new ListNode(lruEntry);
+  private void offer(LRUEntry lruEntry) {
+    lruEntry.removeLock.readLock().lock();
+    try {
+      if (lruEntry.removed)
+        return;
 
-      final ListNode oldNode = lruEntry.listNode.getAndSet(newNode);
-      if (oldNode != null) {
-        oldNode.entry = null;
-        trash.add(oldNode);
-      } else {
-        if (!freshEntry) {
-          // Some other thread removed this entry from cache concurrently.
-          return;
+      ListNode tail = tailReference.get();
+
+      if (!lruEntry.equals(tail.entry)) {
+        final ListNode oldNode = lruEntry.listNode.get();
+
+        ListNode newNode = new ListNode(lruEntry, false);
+        if (lruEntry.listNode.compareAndSet(oldNode, newNode)) {
+
+          while (true) {
+            newNode.previous = tail;
+
+            if (tail.next.compareAndSet(null, newNode)) {
+              tailReference.compareAndSet(tail, newNode);
+              break;
+            }
+
+            tail = tailReference.get();
+          }
+
+          if (oldNode != null)
+            addToTrash(oldNode);
         }
       }
 
-      do {
-        tail = tailReference.get();
-        newNode.prev = tail;
-      } while (!tailReference.compareAndSet(tail, newNode));
-
-      if (tail != null)
-        tail.next = newNode;
-      else {
-        boolean casResult = headReference.compareAndSet(null, newNode);
-        assert casResult;
-      }
+    } finally {
+      lruEntry.removeLock.readLock().unlock();
     }
   }
 
   @Override
   public OCacheEntry removeLRU() {
-    ListNode head = headReference.get();
-    ListNode current = head;
+    ListNode current = headReference;
 
-    if (current == null)
-      return null;
+    boolean removed = false;
 
+    LRUEntry currentEntry = null;
+    int inUseCounter = 0;
     do {
-      while (currentEntryDeletedOrInUse(current)) {
-        ListNode next = current.next;
-        if (next == null)
-          return null;
+      while (current.isDummy || (currentEntry = current.entry) == null || (isInUse(currentEntry.entry))) {
+        if (currentEntry != null && isInUse(currentEntry.entry))
+          inUseCounter++;
+
+        ListNode next = current.next.get();
+
+        if (next == null) {
+          if (cache.size() == inUseCounter)
+            return null;
+
+          current = headReference;
+          inUseCounter = 0;
+          continue;
+        }
 
         current = next;
       }
-      headReference.compareAndSet(head, current);
 
-      final LRUEntry oldEntry = current.entry;
-      if (oldEntry == null || !oldEntry.listNode.compareAndSet(current, null)) {
-        continue;
+      if (cache.remove(currentEntry.key, currentEntry)) {
+        currentEntry.removeLock.writeLock().lock();
+        try {
+          currentEntry.removed = true;
+          ListNode node = currentEntry.listNode.get();
+
+          currentEntry.listNode.set(null);
+          addToTrash(node);
+          removed = true;
+        } finally {
+          currentEntry.removeLock.writeLock().unlock();
+        }
+      } else {
+        current = headReference;
+        inUseCounter = 0;
       }
-      current.entry = null;
-      trash.add(current);
 
-      cache.remove(oldEntry.key);
-      purge();
-      return oldEntry.entry;
+    } while (!removed);
 
-    } while (true);
-  }
+    purge();
 
-  private boolean currentEntryDeletedOrInUse(ListNode current) {
-    LRUEntry entry = current.entry;
-    return entry == null || isInUse(entry.entry);
+    return currentEntry.entry;
   }
 
   private void purge() {
     if (purgeInProgress.compareAndSet(false, true)) {
-
       purgeSomeFromTrash();
 
       purgeInProgress.set(false);
@@ -134,37 +175,57 @@ public class ConcurrentLRUList implements LRUList {
   }
 
   private void purgeSomeFromTrash() {
-    for (int i = 0; i < 15; i++) {
-      ListNode node = trash.poll();
+    int additionalSize = 0;
+
+    while (trashSize.get() >= minTrashSize + additionalSize) {
+
+      final ListNode node = trash.poll();
+      trashSize.decrementAndGet();
+
       if (node == null)
         return;
 
-      if (tailReference.get() == node) {
+      if (node.next.get() == null) {
         trash.add(node);
-        return;
+        trashSize.incrementAndGet();
+        additionalSize++;
+        continue;
       }
 
-      if (node.next != null)
-        node.next.prev = node.prev;
+      ListNode previous = node.previous;
+      ListNode next = node.next.get();
 
-      if (node.prev == null) {
-        headReference.compareAndSet(node, node.next);
-      } else {
-        node.prev.next = node.next;
-      }
+      assert previous.next.get() == node;
+      assert next == null || next.previous == node;
+
+      boolean success = previous.next.compareAndSet(node, next);
+      assert success;
+
+      if (next != null)
+        next.previous = previous;
+
+      node.previous = null;
     }
   }
 
   @Override
   public void clear() {
     cache.clear();
-    headReference.set(null);
-    tailReference.set(null);
+
+    headReference.next.set(null);
+    tailReference.set(headReference);
   }
 
   @Override
   public boolean contains(long fileId, long filePosition) {
     return cache.containsKey(new CacheKey(fileId, filePosition));
+  }
+
+  private void addToTrash(ListNode node) {
+    node.entry = null;
+
+    trash.add(node);
+    trashSize.incrementAndGet();
   }
 
   @Override
@@ -188,7 +249,7 @@ public class ConcurrentLRUList implements LRUList {
     public OCacheEntryIterator(ListNode start) {
       current = start;
       while (current != null && current.entry == null)
-        current = current.prev;
+        current = current.previous;
     }
 
     @Override
@@ -201,7 +262,7 @@ public class ConcurrentLRUList implements LRUList {
       final OCacheEntry entry = current.entry.entry;
 
       do
-        current = current.prev;
+        current = current.previous;
       while (current != null && current.entry == null);
 
       return entry;
@@ -248,9 +309,12 @@ public class ConcurrentLRUList implements LRUList {
   }
 
   private static class LRUEntry {
-    private final AtomicReference<ListNode> listNode = new AtomicReference<ListNode>();
+    private final AtomicReference<ListNode> listNode   = new AtomicReference<ListNode>();
     private final CacheKey                  key;
-    private OCacheEntry                     entry;
+    private volatile OCacheEntry            entry;
+
+    private boolean                         removed    = false;
+    private final ReadWriteLock             removeLock = new ReentrantReadWriteLock();
 
     private LRUEntry(CacheKey key, OCacheEntry entry) {
       this.key = key;
@@ -259,12 +323,15 @@ public class ConcurrentLRUList implements LRUList {
   }
 
   private static class ListNode {
-    private volatile LRUEntry entry;
-    private volatile ListNode prev;
-    private volatile ListNode next;
+    private volatile LRUEntry               entry;
+    private final AtomicReference<ListNode> next = new AtomicReference<ListNode>();
+    private volatile ListNode               previous;
 
-    private ListNode(LRUEntry key) {
+    private final boolean                   isDummy;
+
+    private ListNode(LRUEntry key, boolean isDummy) {
       this.entry = key;
+      this.isDummy = isDummy;
     }
   }
 }

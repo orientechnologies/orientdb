@@ -50,7 +50,7 @@ public class ConcurrentTestHelper<T> {
   private Collection<T> assertSuccess() {
     try {
       executor.shutdown();
-      assertTrue(executor.awaitTermination(1, TimeUnit.MINUTES), "Test threads hanged");
+      assertTrue(executor.awaitTermination(30, TimeUnit.MINUTES), "Test threads hanged");
 
       List<T> results = new ArrayList<T>(futures.size());
       List<Exception> exceptions = new ArrayList<Exception>();

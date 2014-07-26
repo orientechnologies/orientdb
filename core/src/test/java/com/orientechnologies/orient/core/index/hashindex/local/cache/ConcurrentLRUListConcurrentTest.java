@@ -32,7 +32,6 @@ public class ConcurrentLRUListConcurrentTest {
 
   @Test
   public void testConcurrentAdd() throws Exception {
-
     ConcurrentTestHelper.test(THREAD_COUNT, new AdderFactory());
 
     int expectedSize = AMOUNT_OF_OPERATIONS * THREAD_COUNT;
@@ -41,7 +40,6 @@ public class ConcurrentLRUListConcurrentTest {
 
   @Test
   public void testConcurrentAddAndRemove() throws Exception {
-
     Collection<Integer> res = ConcurrentTestHelper.<Integer> build().add(THREAD_COUNT, new AdderFactory())
         .add(THREAD_COUNT, new RemoveLRUFactory()).go();
 
@@ -55,7 +53,6 @@ public class ConcurrentLRUListConcurrentTest {
 
   @Test
   public void testAddRemoveSameEntries() throws Exception {
-
     ConcurrentTestHelper.<Integer> build().add(THREAD_COUNT, new AddSameFactory()).add(THREAD_COUNT, new RemoveLRUFactory()).go();
 
     assertListConsistency();
@@ -63,7 +60,6 @@ public class ConcurrentLRUListConcurrentTest {
 
   @Test
   public void testAllOperationsRandomEntries() throws Exception {
-
     ConcurrentTestHelper.<Integer> build().add(THREAD_COUNT, new RandomAdderFactory()).add(THREAD_COUNT, new RandomRemoveFactory())
         .add(THREAD_COUNT, new RemoveLRUFactory()).go();
 

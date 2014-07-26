@@ -83,9 +83,9 @@ public class OReadWriteDiskCache implements ODiskCache {
     K_IN = maxSize >> 2;
     K_OUT = maxSize >> 1;
 
-    am = new HashLRUList();
-    a1out = new HashLRUList();
-    a1in = new HashLRUList();
+    am = new ConcurrentLRUList();
+    a1out = new ConcurrentLRUList();
+    a1in = new ConcurrentLRUList();
 
     syncObject = new Object();
   }
