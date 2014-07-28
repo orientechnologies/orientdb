@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -26,6 +24,8 @@ import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Set;
 
 /**
  * Checks the access against restricted resources. Restricted resources are those documents of classes that implement ORestricted
@@ -56,9 +56,11 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
       final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
       ODocument identity = null;
-      if (identityType.equals("user"))
-        identity = db.getUser().getDocument();
-      else if (identityType.equals("role")) {
+      if (identityType.equals("user")) {
+        final OUser user = db.getUser();
+        if (user != null)
+          identity = user.getDocument();
+      } else if (identityType.equals("role")) {
         final Set<ORole> roles = db.getUser().getRoles();
         if (!roles.isEmpty())
           identity = roles.iterator().next().getDocument();

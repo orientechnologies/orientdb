@@ -220,7 +220,7 @@ public class OJSONReader {
   /**
    * Returns the next character from the input stream. Handles Unicode decoding.
    */
-  private char nextChar() throws IOException {
+  public char nextChar() throws IOException {
     if (missedChar != null) {
       // RETURNS THE PREVIOUS PARSED CHAR
       c = missedChar.charValue();
