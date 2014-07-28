@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
@@ -293,6 +294,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
                   // CONVERT IT TO A LAZY MAP
                   map = new ORecordLazyMap(iSourceDocument, ODocument.RECORD_TYPE);
                   ((ORecordElement) map).setInternalStatus(STATUS.UNMARSHALLING);
+                } else if (map instanceof ORecordLazyMap && linkedType != OType.LINK) {
+                  map = new OTrackedMap<Object>(iSourceDocument, map, null);
                 }
               } else
                 linkedType = OType.EMBEDDED;
@@ -438,7 +441,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         // FIRST TIME: CONVERT THE ENTIRE COLLECTION
         coll = new OMVRBTreeRIDSet(iRecord, (Collection<OIdentifiable>) iValue);
 
-        iRecord.field(iName, coll);
+        if (!(iValue instanceof ORecordLazySet))
+          iRecord.field(iName, coll);
       } else
         // LAZY SET
         coll = (OStringBuilderSerializable) iValue;

@@ -151,6 +151,13 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
+  public boolean exists(long fileId) {
+    synchronized (syncObject) {
+      return writeCache.exists(fileId);
+    }
+  }
+
+  @Override
   public String fileNameById(long fileId) {
     synchronized (syncObject) {
       return writeCache.fileNameById(fileId);
@@ -548,13 +555,6 @@ public class OReadWriteDiskCache implements ODiskCache {
   public Set<ODirtyPage> logDirtyPagesTable() throws IOException {
     synchronized (syncObject) {
       return writeCache.logDirtyPagesTable();
-    }
-  }
-
-  @Override
-  public void forceSyncStoredChanges() throws IOException {
-    synchronized (syncObject) {
-      writeCache.forceSyncStoredChanges();
     }
   }
 
