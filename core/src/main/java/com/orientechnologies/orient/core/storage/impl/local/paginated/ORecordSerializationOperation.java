@@ -16,10 +16,13 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 11/26/13
  */
 public interface ORecordSerializationOperation {
-  void execute(OLocalPaginatedStorage paginatedStorage);
+  void execute(OAbstractPaginatedStorage paginatedStorage);
 }

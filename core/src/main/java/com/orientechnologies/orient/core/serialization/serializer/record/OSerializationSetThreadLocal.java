@@ -34,4 +34,23 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Set<ODocument>> {
   protected Set<ODocument> initialValue() {
     return Collections.newSetFromMap(new IdentityHashMap<ODocument, Boolean>());
   }
+
+  public static boolean check(final ODocument document) {
+    return INSTANCE.get().contains(document);
+  }
+
+  public static boolean checkAndAdd(final ODocument document) {
+    Set<ODocument> iMarshalledRecords = INSTANCE.get();
+    // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
+    if (iMarshalledRecords.contains(document)) {
+      return false;
+    } else
+      iMarshalledRecords.add((ODocument) document);
+    return true;
+  }
+
+  public static void removeCheck(ODocument document) {
+    INSTANCE.get().remove(document);
+  }
+
 }

@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -35,6 +32,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Database based authenticated command. Authenticats against the database taken as second parameter of the URL. The URL must be in
@@ -80,6 +80,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (currentSession == null) {
       // NO SESSION
       if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
+        iResponse.setSessionId(SESSIONID_UNAUTHORIZED);
         sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
         return false;
       } else
@@ -132,7 +133,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       iRequest.data.currentUserId = db.getUser() == null ? "<server user>" : db.getUser().getDocument().getIdentity().toString();
 
       // AUTHENTICATED: CREATE THE SESSION
-      iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0));
+      iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0),
+          iAuthenticationParts.get(1));
       iResponse.sessionId = iRequest.sessionId;
       return true;
 
@@ -161,15 +163,17 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   }
 
   protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
-    if (iRequest.authorization == null)
-      throw new OSecurityAccessException(iRequest.databaseName, "No user and password received");
+    final OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
+
+    if (session == null)
+      throw new OSecurityAccessException(iRequest.databaseName, "No session active");
 
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
     ODatabaseRecord localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
     if (localDatabase == null) {
-      final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
-      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, parts.get(0), parts.get(1));
+      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, session.getUserName(),
+          session.getUserPassword());
     } else {
 
       String currentUserId = iRequest.data.currentUserId;

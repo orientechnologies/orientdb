@@ -21,12 +21,13 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.common.concur.resource.OResourcePool;
+import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -64,6 +65,11 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
     return false;
   }
 
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
+
   protected void writeProperties(final OJSONWriter json) throws IOException {
     json.beginCollection(2, true, "properties");
     for (OServerEntryConfiguration entry : server.getConfiguration().properties) {
@@ -83,7 +89,7 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
       writeField(json, 2, "name", s.getName());
       writeField(json, 2, "type", s.getClass().getSimpleName());
       writeField(json, 2, "path",
-          s instanceof OStorageLocalAbstract ? ((OStorageLocalAbstract) s).getStoragePath().replace('\\', '/') : "");
+          s instanceof OLocalPaginatedStorage ? ((OLocalPaginatedStorage) s).getStoragePath().replace('\\', '/') : "");
       writeField(json, 2, "activeUsers", s.getUsers());
       json.endObject(2);
     }
@@ -92,8 +98,8 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
 
   protected void writeDatabases(final OJSONWriter json) throws IOException {
     json.beginCollection(1, true, "dbs");
-    Map<String, OResourcePool<String, ODatabaseDocumentTx>> dbPool = server.getDatabasePool().getPools();
-    for (Entry<String, OResourcePool<String, ODatabaseDocumentTx>> entry : dbPool.entrySet()) {
+    Map<String, OReentrantResourcePool<String, ODatabaseDocumentTx>> dbPool = server.getDatabasePool().getPools();
+    for (Entry<String, OReentrantResourcePool<String, ODatabaseDocumentTx>> entry : dbPool.entrySet()) {
       for (ODatabaseDocumentTx db : entry.getValue().getResources()) {
 
         json.beginObject(2);
@@ -106,11 +112,6 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
       }
     }
     json.endCollection(1, false);
-  }
-
-  @Override
-  public String[] getNames() {
-    return NAMES;
   }
 
   private void writeField(final OJSONWriter json, final int iLevel, final String iAttributeName, final Object iAttributeValue)

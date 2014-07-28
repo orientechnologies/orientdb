@@ -24,6 +24,7 @@ package com.orientechnologies.orient.core.id;
  * @author Andrey Lomakin
  * @since 12.11.12
  */
+@Deprecated
 public final class OClusterPositionNodeId extends OClusterPosition {
   private static final ONodeId INVALID_NODE_ID = ONodeId.valueOf(-1);
   private final ONodeId        nodeId;
@@ -32,6 +33,7 @@ public final class OClusterPositionNodeId extends OClusterPosition {
     return nodeId;
   }
 
+  @Deprecated
   public OClusterPositionNodeId(ONodeId nodeId) {
     this.nodeId = nodeId;
   }

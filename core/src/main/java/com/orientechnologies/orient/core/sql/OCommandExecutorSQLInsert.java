@@ -15,22 +15,26 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * SQL INSERT command.
@@ -38,13 +42,19 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
  * @author Luca Garulli
  * @author Johann Sorel (Geomatys)
  */
-public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
-  public static final String        KEYWORD_INSERT = "INSERT";
-  private static final String       KEYWORD_VALUES = "VALUES";
-  private String                    className      = null;
-  private String                    clusterName    = null;
-  private String                    indexName      = null;
-  private List<Map<String, Object>> newRecords;
+public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest,
+    OCommandResultListener {
+  public static final String             KEYWORD_INSERT   = "INSERT";
+  protected static final String          KEYWORD_RETURN   = "RETURN";
+  private static final String            KEYWORD_VALUES   = "VALUES";
+  private String                         className        = null;
+  private String                         clusterName      = null;
+  private String                         indexName        = null;
+  private List<Map<String, Object>>      newRecords;
+  private OSQLAsynchQuery<OIdentifiable> subQuery         = null;
+  private AtomicLong                     saved            = new AtomicLong(0);
+  private Object                         returnExpression = null;
+  private List<ODocument>                queryResult      = null;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLInsert parse(final OCommandRequest iRequest) {
@@ -95,22 +105,167 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       parserGoBack();
 
     newRecords = new ArrayList<Map<String, Object>>();
+    Boolean sourceClauseProcessed = false;
     if (parserGetCurrentChar() == '(') {
       parseValues();
+      parserNextWord(true, " \r\n");
+      sourceClauseProcessed = true;
     } else {
       parserNextWord(true, " ,\r\n");
 
       if (parserGetLastWord().equals(KEYWORD_CONTENT)) {
         newRecords = null;
         parseContent();
+        sourceClauseProcessed = true;
       } else if (parserGetLastWord().equals(KEYWORD_SET)) {
         final LinkedHashMap<String, Object> fields = new LinkedHashMap<String, Object>();
         newRecords.add(fields);
         parseSetFields(fields);
+        sourceClauseProcessed = true;
+      }
+    }
+    if (sourceClauseProcessed)
+      parserNextWord(true, " \r\n");
+    // it has to be processed before KEYWORD_FROM in order to not be taken as part of SELECT
+    if (parserGetLastWord().equals(KEYWORD_RETURN)) {
+      parseReturn(!sourceClauseProcessed);
+      parserNextWord(true, " \r\n");
+    }
+
+    if (!sourceClauseProcessed) {
+      if (parserGetLastWord().equals(KEYWORD_FROM)) {
+        newRecords = null;
+        subQuery = new OSQLAsynchQuery<OIdentifiable>(parserText.substring(parserGetCurrentPosition()), this);
       }
     }
 
     return this;
+  }
+
+  /**
+   * Execute the INSERT and return the ODocument object created.
+   */
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (newRecords == null && content == null && subQuery == null)
+      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+
+    final OCommandParameters commandParameters = new OCommandParameters(iArgs);
+    if (indexName != null) {
+      if (newRecords == null)
+        throw new OCommandExecutionException("No key/value found");
+
+      final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
+      if (index == null)
+        throw new OCommandExecutionException("Target index '" + indexName + "' not found");
+
+      // BIND VALUES
+      Map<String, Object> result = null;
+
+      for (Map<String, Object> candidate : newRecords) {
+        index.put(getIndexKeyValue(commandParameters, candidate), getIndexValue(commandParameters, candidate));
+        result = candidate;
+      }
+
+      // RETURN LAST ENTRY
+      return prepareReturnItem(new ODocument(result));
+    } else {
+
+      // CREATE NEW DOCUMENTS
+      final List<ODocument> docs = new ArrayList<ODocument>();
+      if (newRecords != null) {
+        for (Map<String, Object> candidate : newRecords) {
+          final ODocument doc = className != null ? new ODocument(className) : new ODocument();
+          OSQLHelper.bindParameters(doc, candidate, commandParameters, context);
+
+          saveRecord(doc);
+          docs.add(doc);
+        }
+
+        if (docs.size() == 1)
+          return prepareReturnItem(docs.get(0));
+        else
+          return prepareReturnResult(docs);
+      } else if (content != null) {
+        final ODocument doc = className != null ? new ODocument(className) : new ODocument();
+        doc.merge(content, true, false);
+        saveRecord(doc);
+        return prepareReturnItem(doc);
+      } else if (subQuery != null) {
+        subQuery.execute();
+        if (queryResult != null)
+          return prepareReturnResult(queryResult);
+
+        return saved.longValue();
+      }
+    }
+    return null;
+  }
+
+  public boolean isReplicated() {
+    return indexName != null;
+  }
+
+  @Override
+  public String getSyntax() {
+    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]|CONTENT {<JSON>} [RETURN <expression>] [FROM select-query]";
+  }
+
+  @Override
+  public boolean result(final Object iRecord) {
+    final ORecord<?> rec = ((OIdentifiable) iRecord).getRecord().copy();
+
+    // RESET THE IDENTITY TO AVOID UPDATE
+    rec.getIdentity().reset();
+
+    if (rec instanceof ODocument && className != null)
+      ((ODocument) rec).setClassName(className);
+
+    rec.setDirty();
+    synchronized (this) {
+      saveRecord(rec);
+      if (queryResult != null)
+        queryResult.add(((ODocument) rec));
+    }
+
+    return true;
+  }
+
+  @Override
+  public void end() {
+
+  }
+
+  protected Object prepareReturnResult(List<ODocument> res) {
+    if (returnExpression == null)
+      return res;// No transformation
+    final ArrayList<Object> ret = new ArrayList<Object>();
+    for (ODocument resItem : (List<ODocument>) res)
+      ret.add(prepareReturnItem(resItem));
+    return ret;
+  }
+
+  protected Object prepareReturnItem(ODocument item) {
+    if (returnExpression == null)
+      return item;// No transformation
+
+    this.getContext().setVariable("current", item);
+    final Object res = OSQLHelper.getValue(returnExpression, item, this.getContext());
+    if (res instanceof OIdentifiable)
+      return res;
+    else {// wrapping doc
+      final ODocument wrappingDoc = new ODocument("result", res);
+      wrappingDoc.field("rid", item.getIdentity());// passing record id.In many cases usable on client side
+      wrappingDoc.field("version", item.getVersion());// passing record version
+      return wrappingDoc;
+    }
+  }
+
+  protected void saveRecord(final ORecord<?> rec) {
+    if (clusterName != null)
+      rec.save(clusterName);
+    else
+      rec.save();
+    saved.incrementAndGet();
   }
 
   protected void parseValues() {
@@ -167,60 +322,18 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   }
 
   /**
-   * Execute the INSERT and return the ODocument object created.
+   * Parses the returning keyword if found.
    */
-  public Object execute(final Map<Object, Object> iArgs) {
-    if (newRecords == null && content == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+  protected void parseReturn(Boolean subQueryExpected) throws OCommandSQLParsingException {
+    parserNextWord(false, " ");
+    String returning = parserGetLastWord().trim();
+    if (returning.startsWith("$") || returning.startsWith("@")) {
+      if (subQueryExpected)
+        queryResult = new ArrayList<ODocument>();
+      returnExpression = (returning.length() > 0) ? OSQLHelper.parseValue(this, returning, this.getContext()) : null;
+    } else
+      throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
 
-    final OCommandParameters commandParameters = new OCommandParameters(iArgs);
-    if (indexName != null) {
-      if (newRecords == null)
-        throw new OCommandExecutionException("No key/value found");
-
-      final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
-      if (index == null)
-        throw new OCommandExecutionException("Target index '" + indexName + "' not found");
-
-      // BIND VALUES
-      Map<String, Object> result = null;
-
-      for (Map<String, Object> candidate : newRecords) {
-        index.put(getIndexKeyValue(commandParameters, candidate), getIndexValue(commandParameters, candidate));
-        result = candidate;
-      }
-
-      // RETURN LAST ENTRY
-      return new ODocument(result);
-    } else {
-
-      // CREATE NEW DOCUMENTS
-      final List<ODocument> docs = new ArrayList<ODocument>();
-      if (newRecords != null) {
-        for (Map<String, Object> candidate : newRecords) {
-          final ODocument doc = className != null ? new ODocument(className) : new ODocument();
-          OSQLHelper.bindParameters(doc, candidate, commandParameters, context);
-
-          if (clusterName != null) {
-            doc.save(clusterName);
-          } else {
-            doc.save();
-          }
-          docs.add(doc);
-        }
-
-        if (docs.size() == 1)
-          return docs.get(0);
-        else
-          return docs;
-      } else if (content != null) {
-        final ODocument doc = className != null ? new ODocument(className) : new ODocument();
-        doc.merge(content, true, false);
-        doc.save();
-        return doc;
-      }
-    }
-    return null;
   }
 
   private Object getIndexKeyValue(OCommandParameters commandParameters, Map<String, Object> candidate) {
@@ -251,12 +364,4 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     return (OIdentifiable) parsedRid;
   }
 
-  public boolean isReplicated() {
-    return indexName != null;
-  }
-
-  @Override
-  public String getSyntax() {
-    return "INSERT INTO [class:]<class>|cluster:<cluster>|index:<index> [(<field>[,]*) VALUES (<expression>[,]*)[,]*]|[SET <field> = <expression>|<sub-command>[,]*]|CONTENT {<JSON>}";
-  }
 }

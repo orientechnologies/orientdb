@@ -21,22 +21,23 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import java.util.Collection;
 
 /**
- * Generic cache interface that should be implemented in order to plug-in custom cache.
- * Also implementing class has to have public one-arg constructor to set cache limit.
- * For example, next class can be safely used as plug-in cache:
+ * Generic cache interface that should be implemented in order to plug-in custom cache. Also implementing class has to have public
+ * one-arg constructor to set cache limit. For example, next class can be safely used as plug-in cache:
+ * 
  * <pre>
  *   public class CustomCache implements OCache {
  *     public CustomCache(int initialLimit) {
  *       // some actions to do basic initialization of cache instance
  *       ...
  *     }
- *
+ * 
  *     //implementation of interface
  *     ...
  *   }
  * </pre>
- * As reference implementation used {@link ODefaultCache}
- *
+ * 
+ * As reference implementation used {@link com.orientechnologies.orient.core.cache.OUnboundedWeakCache}
+ * 
  * @author Maxim Fedorov
  */
 public interface OCache {
@@ -52,46 +53,49 @@ public interface OCache {
 
   /**
    * Tell whether cache is enabled
-   *
+   * 
    * @return {@code true} if cache enabled at call time, otherwise - {@code false}
    */
   boolean isEnabled();
 
   /**
    * Enable cache
-   *
+   * 
    * @return {@code true} - if enabled, {@code false} - otherwise (already enabled)
    */
   boolean enable();
 
   /**
-   * Disable cache. None of record management methods will cause effect on cache in disabled state.
-   * Only cache info methods available at that state.
-   *
+   * Disable cache. None of record management methods will cause effect on cache in disabled state. Only cache info methods
+   * available at that state.
+   * 
    * @return {@code true} - if disabled, {@code false} - otherwise (already disabled)
    */
   boolean disable();
 
   /**
    * Look up for record in cache by it's identifier
-   *
-   * @param id unique identifier of record
+   * 
+   * @param id
+   *          unique identifier of record
    * @return record stored in cache if any, otherwise - {@code null}
    */
   ORecordInternal<?> get(ORID id);
 
   /**
    * Push record to cache. Identifier of record used as access key
-   *
-   * @param record record that should be cached
+   * 
+   * @param record
+   *          record that should be cached
    * @return previous version of record
    */
   ORecordInternal<?> put(ORecordInternal<?> record);
 
   /**
    * Remove record with specified identifier
-   *
-   * @param id unique identifier of record
+   * 
+   * @param id
+   *          unique identifier of record
    * @return record stored in cache if any, otherwise - {@code null}
    */
   ORecordInternal<?> remove(ORID id);
@@ -103,37 +107,22 @@ public interface OCache {
 
   /**
    * Total number of stored records
-   *
+   * 
    * @return non-negative number
    */
   int size();
 
   /**
    * Maximum number of items cache should keep
-   *
+   * 
    * @return non-negative number
    */
   int limit();
 
   /**
    * Keys of all stored in cache records
-   *
+   * 
    * @return keys of records
    */
   Collection<ORID> keys();
-
-  /**
-   * Lock the item with given id, even if item does not exist all read/update
-   * operations for given item should be locked.
-   * 
-   * @param id Item to lock.
-   */
-  void lock(ORID id);
-
-  /**
-   * Unlock item.
-   *
-   * @param id item to unlock;
-   */
-  void unlock(ORID id);
 }

@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 @Test
 public class WriteAheadLogTest {
   private static final int ONE_KB = 1024;
-  private OWriteAheadLog   writeAheadLog;
+  private ODiskWriteAheadLog writeAheadLog;
   private File             testDir;
 
   @BeforeClass
@@ -51,16 +51,16 @@ public class WriteAheadLogTest {
     writeAheadLog = createWAL();
   }
 
-  private OWriteAheadLog createWAL() throws IOException {
+  private ODiskWriteAheadLog createWAL() throws IOException {
     return createWAL(2, OWALPage.PAGE_SIZE * 4);
   }
 
-  private OWriteAheadLog createWAL(int maxPagesCacheSize, int maxSegmentSize) throws IOException {
+  private ODiskWriteAheadLog createWAL(int maxPagesCacheSize, int maxSegmentSize) throws IOException {
     OLocalPaginatedStorage paginatedStorage = mock(OLocalPaginatedStorage.class);
     when(paginatedStorage.getName()).thenReturn("WriteAheadLogTest");
     when(paginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
 
-    return new OWriteAheadLog(maxPagesCacheSize, -1, maxSegmentSize, 100L * 1024L * 1024L * 1024L, paginatedStorage);
+    return new ODiskWriteAheadLog(maxPagesCacheSize, -1, maxSegmentSize, 100L * 1024L * 1024L * 1024L, paginatedStorage);
   }
 
   @AfterMethod
@@ -944,7 +944,7 @@ public class WriteAheadLogTest {
     when(paginatedStorage.getName()).thenReturn("WriteAheadLogTest");
     when(paginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
 
-    writeAheadLog = new OWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
+    writeAheadLog = new ODiskWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     long seed = System.currentTimeMillis();
@@ -987,7 +987,7 @@ public class WriteAheadLogTest {
     when(paginatedStorage.getName()).thenReturn("WriteAheadLogTest");
     when(paginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
 
-    writeAheadLog = new OWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
+    writeAheadLog = new ODiskWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
@@ -1039,7 +1039,7 @@ public class WriteAheadLogTest {
     when(paginatedStorage.getName()).thenReturn("WriteAheadLogTest");
     when(paginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
 
-    writeAheadLog = new OWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
+    writeAheadLog = new ODiskWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     long seed = System.currentTimeMillis();
@@ -1093,7 +1093,7 @@ public class WriteAheadLogTest {
     when(paginatedStorage.getName()).thenReturn("WriteAheadLogTest");
     when(paginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
 
-    writeAheadLog = new OWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
+    writeAheadLog = new ODiskWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     long seed = System.currentTimeMillis();
@@ -1145,7 +1145,7 @@ public class WriteAheadLogTest {
     OLocalPaginatedStorage paginatedStorage = mock(OLocalPaginatedStorage.class);
     when(paginatedStorage.getName()).thenReturn("WriteAheadLogTest");
     when(paginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
-    writeAheadLog = new OWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
+    writeAheadLog = new ODiskWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     Random rnd = new Random();
@@ -1201,7 +1201,7 @@ public class WriteAheadLogTest {
     when(paginatedStorage.getName()).thenReturn("WriteAheadLogTest");
     when(paginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
 
-    writeAheadLog = new OWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
+    writeAheadLog = new ODiskWriteAheadLog(2, -1, 2 * OWALPage.PAGE_SIZE, 4 * OWALPage.PAGE_SIZE, paginatedStorage);
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     Random rnd = new Random();
@@ -1867,7 +1867,62 @@ public class WriteAheadLogTest {
     }
   }
 
-  private void assertLogContent(OWriteAheadLog writeAheadLog, List<? extends OWALRecord> writtenRecords) throws Exception {
+  public void testTruncateFirstSegment() throws IOException {
+    writeAheadLog.close();
+    writeAheadLog = createWAL(6, 3 * OWALPage.PAGE_SIZE);
+
+    OWALRecord walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(2 * (OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET), false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord((OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET) / 2, false);
+    OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+
+    writeAheadLog.cutTill(lsn);
+
+    final OLogSequenceNumber startLSN = writeAheadLog.begin();
+    Assert.assertEquals(startLSN, lsn);
+  }
+
+  public void testTruncateLastSegment() throws IOException {
+    writeAheadLog.close();
+    writeAheadLog = createWAL(6, 3 * OWALPage.PAGE_SIZE);
+
+    OWALRecord walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(2 * (OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET), false);
+    writeAheadLog.log(walRecord);
+
+    // second segment
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    walRecord = new TestRecord(OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET, false);
+    writeAheadLog.log(walRecord);
+
+    // last segment
+    walRecord = new TestRecord((OWALPage.PAGE_SIZE - OWALPage.RECORDS_OFFSET) / 2, false);
+    OLogSequenceNumber lsn = writeAheadLog.log(walRecord);
+
+    writeAheadLog.cutTill(lsn);
+
+    final OLogSequenceNumber startLSN = writeAheadLog.begin();
+    Assert.assertEquals(startLSN, lsn);
+  }
+
+  private void assertLogContent(ODiskWriteAheadLog writeAheadLog, List<? extends OWALRecord> writtenRecords) throws Exception {
     Iterator<? extends OWALRecord> iterator = writtenRecords.iterator();
 
     OWALRecord writtenRecord = iterator.next();

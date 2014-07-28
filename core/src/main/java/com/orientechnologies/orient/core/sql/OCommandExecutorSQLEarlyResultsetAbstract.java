@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -30,23 +31,16 @@ public abstract class OCommandExecutorSQLEarlyResultsetAbstract extends OCommand
   private Iterator<OIdentifiable> iterator;
 
   public Iterator<OIdentifiable> iterator() {
+    return iterator(null);
+  }
+
+  @Override
+  public Iterator<OIdentifiable> iterator(Map<Object, Object> iArgs) {
     if (iterator == null) {
       if (tempResult == null)
-        tempResult = (List<OIdentifiable>) execute(null);
+        tempResult = (List<OIdentifiable>) execute(iArgs);
       iterator = tempResult.iterator();
     }
     return iterator;
-  }
-
-  public void remove() {
-    iterator().remove();
-  }
-
-  public boolean hasNext() {
-    return iterator().hasNext();
-  }
-
-  public OIdentifiable next() {
-    return iterator().next();
   }
 }

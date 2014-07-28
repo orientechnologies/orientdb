@@ -15,12 +15,11 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Iterator;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 
 /**
@@ -50,7 +49,8 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
+  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
+      boolean isAutomatic) {
   }
 
   @Override
@@ -73,60 +73,7 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public Iterator<Map.Entry> iterator() {
-    return null;
-  }
-
-  @Override
-  public Iterator<Map.Entry> inverseIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterator valuesIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterator inverseValuesIterator() {
-    return null;
-  }
-
-  @Override
-  public Iterable<Object> keys() {
-    return null;
-  }
-
-  @Override
-  public void unload() {
-  }
-
-  @Override
-  public void startTransaction() {
-  }
-
-  @Override
-  public void stopTransaction() {
-  }
-
-  @Override
-  public void afterTxRollback() {
-  }
-
-  @Override
-  public void afterTxCommit() {
-  }
-
-  @Override
-  public void closeDb() {
-  }
-
-  @Override
   public void close() {
-  }
-
-  @Override
-  public void beforeTxBegin() {
   }
 
   @Override
@@ -139,33 +86,44 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      ValuesTransformer transformer, ValuesResultListener resultListener) {
+  public Object getFirstKey() {
+    return null;
   }
 
   @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, ValuesTransformer transformer,
-      ValuesResultListener valuesResultListener) {
+  public Object getLastKey() {
+    return null;
   }
 
   @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, ValuesTransformer transformer,
-      ValuesResultListener valuesResultListener) {
+  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer transformer) {
+    return new OIndexAbstractCursor() {
+      @Override
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
+        return null;
+      }
+    };
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return new OIndexAbstractCursor() {
+      @Override
+      public Map.Entry nextEntry() {
+        return null;
+      }
+    };
   }
 
   @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
-  }
-
-  @Override
-  public void getEntriesBetween(Object iRangeFrom, Object iRangeTo, boolean iInclusive, ValuesTransformer transformer,
-      EntriesResultListener entriesResultListener) {
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer transformer) {
+    return new OIndexAbstractCursor() {
+      @Override
+      public Map.Entry nextEntry() {
+        return null;
+      }
+    };
   }
 
   @Override
@@ -174,13 +132,22 @@ public class ORemoteIndexEngine implements OIndexEngine {
   }
 
   @Override
-  public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer transformer) {
-    return 0;
+  public boolean hasRangeQuerySupport() {
+    return false;
   }
 
   @Override
-  public boolean hasRangeQuerySupport() {
-    return false;
+  public OIndexCursor cursor(ValuesTransformer valuesTransformer) {
+    throw new UnsupportedOperationException("cursor");
+  }
+
+  @Override
+  public OIndexCursor descCursor(ValuesTransformer valuesTransformer) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    throw new UnsupportedOperationException("keyCursor");
   }
 }

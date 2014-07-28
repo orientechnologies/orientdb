@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -135,19 +135,28 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   }
 
   @Override
-  public void putAll(Map<? extends Object, ? extends T> m) {
-    super.putAll(m);
+  public void putAll(Map<?, ? extends T> m) {
+    for (Map.Entry<?, ? extends T> entry : m.entrySet()) {
+      put(entry.getKey(), entry.getValue());
+    }
   }
 
   @SuppressWarnings({ "unchecked" })
   public OTrackedMap<T> setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null
+        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
       sourceRecord.setDirty();
     return this;
   }
 
-  public void onBeforeIdentityChanged(final ORID iRID) {
-    remove(iRID);
+  @Override
+  public void setDirtyNoChanged() {
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+      sourceRecord.setDirtyNoChanged();
+  }
+
+  public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
+    remove(iRecord.getIdentity());
   }
 
   @SuppressWarnings("unchecked")

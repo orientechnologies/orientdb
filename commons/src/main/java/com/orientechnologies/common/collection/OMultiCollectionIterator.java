@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.common.collection;
 
+import com.orientechnologies.common.util.OResettable;
+import com.orientechnologies.common.util.OSizeable;
+
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-
-import com.orientechnologies.common.util.OResettable;
-import com.orientechnologies.common.util.OSizeable;
 
 /**
  * Iterator that allow to iterate against multiple collection of elements.
@@ -193,5 +193,10 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   public OMultiCollectionIterator<T> setEmbedded(final boolean embedded) {
     this.embedded = embedded;
     return this;
+  }
+
+  @Override
+  public String toString() {
+    return "[" + size() + "]";
   }
 }

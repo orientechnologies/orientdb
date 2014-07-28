@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -24,15 +25,13 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.database.base.SetupTest;
 
 @Test(groups = "db")
-public class DbClosedTest {
-  final private String url;
+public class DbClosedTest extends DocumentDBBaseTest {
+	@Parameters(value = { "url" })
+	public DbClosedTest(@Optional String url) {
+		super(url);
+	}
 
-  @Parameters(value = { "url" })
-  public DbClosedTest(final String iURL) {
-    url = iURL;
-  }
-
-  public void testDoubleDb() {
+	public void testDoubleDb() {
     OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 
     // now I am getting another db instance

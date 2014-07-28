@@ -39,6 +39,16 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 public class ORecordSerializerDocument2Binary implements ORecordSerializer {
   public static final String NAME = "ORecordDocument2binary";
 
+  @Override
+  public int getCurrentVersion() {
+    return 0;
+  }
+
+  @Override
+  public int getMinSupportedVersion() {
+    return 0;
+  }
+
   protected ORecordSchemaAware<?> newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException,
       IllegalAccessException {
     return new ODocument();

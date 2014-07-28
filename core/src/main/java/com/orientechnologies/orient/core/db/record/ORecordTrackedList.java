@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
@@ -41,7 +40,7 @@ public class ORecordTrackedList extends OTrackedList<OIdentifiable> {
 	/**
 	 * The item's identity does not affect nothing.
 	 */
-	public void onBeforeIdentityChanged(final ORID iRID) {
+	public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
 	}
 
 	/**

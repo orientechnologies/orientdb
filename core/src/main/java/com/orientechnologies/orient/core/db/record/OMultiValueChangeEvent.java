@@ -51,17 +51,27 @@ public class OMultiValueChangeEvent<K, V> {
    */
   private V                 oldValue;
 
-  public OMultiValueChangeEvent(final OChangeType changeType, final K key, final V value) {
+  private boolean           changesOwnerContent = true;
+
+  public OMultiValueChangeEvent(OChangeType changeType, K key, V value) {
     this.changeType = changeType;
     this.key = key;
     this.value = value;
   }
 
-  public OMultiValueChangeEvent(final OChangeType changeType, final K key, final V value, final V oldValue) {
+  public OMultiValueChangeEvent(OChangeType changeType, K key, V value, V oldValue) {
     this.changeType = changeType;
     this.key = key;
     this.value = value;
     this.oldValue = oldValue;
+  }
+
+  public OMultiValueChangeEvent(OChangeType changeType, K key, V value, V oldValue, boolean changesOwnerContent) {
+    this.changeType = changeType;
+    this.key = key;
+    this.value = value;
+    this.oldValue = oldValue;
+    this.changesOwnerContent = changesOwnerContent;
   }
 
   public K getKey() {
@@ -80,39 +90,33 @@ public class OMultiValueChangeEvent<K, V> {
     return oldValue;
   }
 
+  public boolean isChangesOwnerContent() {
+    return changesOwnerContent;
+  }
+
   @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
+  public boolean equals(Object o) {
+    if (this == o)
       return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
+    if (o == null || getClass() != o.getClass())
       return false;
-    }
 
-    final OMultiValueChangeEvent<?, ?> that = (OMultiValueChangeEvent<?, ?>) o;
+    OMultiValueChangeEvent that = (OMultiValueChangeEvent) o;
 
-    if (changeType != that.changeType) {
-      return false;
-    }
-    if (!key.equals(that.key)) {
-      return false;
-    }
-    if (oldValue != null ? !oldValue.equals(that.oldValue) : that.oldValue != null) {
-      return false;
-    }
-    if (value != null ? !value.equals(that.value) : that.value != null) {
-      return false;
-    }
+    return changesOwnerContent == that.changesOwnerContent && changeType == that.changeType
+        && !(key != null ? !key.equals(that.key) : that.key != null)
+        && !(oldValue != null ? !oldValue.equals(that.oldValue) : that.oldValue != null)
+        && !(value != null ? !value.equals(that.value) : that.value != null);
 
-    return true;
   }
 
   @Override
   public int hashCode() {
-    int result = changeType.hashCode();
-    result = 31 * result + key.hashCode();
+    int result = changeType != null ? changeType.hashCode() : 0;
+    result = 31 * result + (key != null ? key.hashCode() : 0);
     result = 31 * result + (value != null ? value.hashCode() : 0);
     result = 31 * result + (oldValue != null ? oldValue.hashCode() : 0);
+    result = 31 * result + (changesOwnerContent ? 1 : 0);
     return result;
   }
 

@@ -2,10 +2,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import static org.testng.Assert.assertEquals;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -18,24 +15,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 @Test(groups = { "index" })
-public class IndexClusterTest {
+public class IndexClusterTest extends DocumentDBBaseTest {
 
-  private ODatabaseDocument database;
+	@Parameters(value = "url")
+	public IndexClusterTest(@Optional String url) {
+		super(url);
+	}
 
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
-  }
-
-  @Parameters(value = "url")
-  public IndexClusterTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
 
   @Test
   public void indexAfterRebuildShouldIncludeAllClusters() {
@@ -48,12 +34,12 @@ public class IndexClusterTest {
     oclass.createProperty("value", OType.INTEGER);
     oclass.createIndex(className + "index1", OClass.INDEX_TYPE.NOTUNIQUE, "key");
 
-    database.<ODocument> newInstance(className).field("key", "a").field("value", 1).save();
+    database.newInstance(className).field("key", "a").field("value", 1).save();
 
-    int clId = database.addCluster(className + "secondCluster", OStorage.CLUSTER_TYPE.PHYSICAL);
+    int clId = database.addCluster(className + "secondCluster");
     oclass.addClusterId(clId);
 
-    database.<ODocument> newInstance(className).field("key", "a").field("value", 2).save(className + "secondCluster");
+    database.newInstance(className).field("key", "a").field("value", 2).save(className + "secondCluster");
 
     // when
     database.command(new OCommandSQL("rebuild index " + className + "index1")).execute();

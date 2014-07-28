@@ -15,23 +15,14 @@
  */
 package com.orientechnologies.common.collection;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
+
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Handles Multi-value types such as Arrays, Collections and Maps. It recognizes special Orient collections.
@@ -206,8 +197,12 @@ public class OMultiValue {
             : (Iterator<Object>) iObject;
         for (int i = 0; it.hasNext(); ++i) {
           final Object o = it.next();
-          if (i == iIndex)
+          if (i == iIndex) {
+            if (it instanceof OResettable)
+              ((OResettable) it).reset();
+
             return o;
+          }
         }
 
         if (it instanceof OResettable)
@@ -261,9 +256,6 @@ public class OMultiValue {
 
     if (iObject instanceof Iterator<?>)
       return (Iterator<Object>) iObject;
-
-    if (!isMultiValue(iObject))
-      return null;
 
     if (iObject instanceof Iterable<?>)
       return ((Iterable<Object>) iObject).iterator();
@@ -336,6 +328,11 @@ public class OMultiValue {
    */
   public static Object add(final Object iObject, final Object iToAdd) {
     if (iObject != null) {
+      if (!isMultiValue(iObject)) {
+        final List<Object> result = new ArrayList<Object>();
+        result.add(iObject);
+      }
+
       if (iObject instanceof Collection<?> || iObject instanceof OCollection<?>) {
         // COLLECTION - ?
         final OCollection<Object> coll;
@@ -419,9 +416,7 @@ public class OMultiValue {
           copy[copy.length - 1] = iToAdd;
         }
         return copy;
-
-      } else
-        throw new IllegalArgumentException("Object " + iObject + " is not a multi value");
+      }
     }
 
     return iObject;

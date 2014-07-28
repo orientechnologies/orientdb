@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import java.util.Arrays;
-import java.util.NoSuchElementException;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -25,6 +22,10 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 /**
  * Iterator to browse multiple clusters forward and backward. Once browsed in a direction, the iterator cannot change it. This
@@ -43,15 +44,15 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
   protected ORID       endRange;
 
   public ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final int[] iClusterIds,
-      final boolean iUseCache, final boolean iterateThroughTombstones) {
-    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
+      final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
     clusterIds = iClusterIds;
     config();
   }
 
   protected ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase,
-      final boolean iUseCache, final boolean iterateThroughTombstones) {
-    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
+      final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
   }
 
   public ORecordIteratorClusters<REC> setRange(final ORID iBegin, final ORID iEnd) {
@@ -304,7 +305,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     if (liveUpdated)
       updateClusterRange();
 
-    current.clusterId = currentClusterIdx;
+    current.clusterId = clusterIds[currentClusterIdx];
 
     resetCurrentPosition();
     prevPosition();

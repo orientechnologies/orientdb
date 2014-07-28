@@ -15,9 +15,17 @@
  */
 package com.orientechnologies.orient.core.memory;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
+import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.MemoryUsage;
+import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
@@ -26,38 +34,49 @@ import java.util.Map;
 import java.util.TimerTask;
 import java.util.WeakHashMap;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
-import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-
 /**
  * This memory warning system will call the listener when we exceed the percentage of available memory specified. There should only
  * be one instance of this object created, since the usage threshold can only be set to one number.
  */
 public class OMemoryWatchDog extends Thread {
-  private final Map<ListenerWrapper, Object> listeners    = new WeakHashMap<ListenerWrapper, Object>(128);
-  private static long                        lastGC       = 0;
-  private int                                alertTimes   = 0;
-  protected final ReferenceQueue<Object>     monitorQueue = new ReferenceQueue<Object>();
-  protected SoftReference<Object>            monitorRef   = new SoftReference<Object>(new Object(), monitorQueue);
-
-  protected final MemoryUsage                heapMemory;
-  protected final MemoryUsage                nonheapMemory;
-
-  private long                               autoFreeCheckEveryMs;
+  public static final int                    CHECK_TIMEOUT = 3000;
+  private static long                        lastGC        = 0;
+  protected final ReferenceQueue<Object>     monitorQueue  = new ReferenceQueue<Object>();
+  protected SoftReference<Object>            monitorRef    = new SoftReference<Object>(new Object(), monitorQueue);
+  protected final MemoryMXBean               memBean;
+  private final Map<ListenerWrapper, Object> listeners     = new WeakHashMap<ListenerWrapper, Object>(128);
+  private int                                alertTimes    = 0;
   private long                               autoFreeHeapThreshold;
+
+  public static interface Listener {
+    /**
+     * Called when free memory is getting lower.
+     * 
+     * @param iFreeMemory
+     *          Current used memory
+     * @param iFreeMemoryPercentage
+     *          Max memory
+     */
+    public void lowMemory(long iFreeMemory, long iFreeMemoryPercentage);
+  }
 
   /**
    * we want properties of both IdentityHashMap and WeakHashMap
    */
-  private static class ListenerWrapper {
-    final Listener listener;
+  public static class ListenerWrapper implements Listener {
+    protected final Listener listener;
 
     private ListenerWrapper(Listener listener) {
       this.listener = listener;
+    }
+
+    public Listener getListener() {
+      return listener;
+    }
+
+    @Override
+    public void lowMemory(long iFreeMemory, long iFreeMemoryPercentage) {
+      listener.lowMemory(iFreeMemory, iFreeMemoryPercentage);
     }
 
     @Override
@@ -76,29 +95,13 @@ public class OMemoryWatchDog extends Thread {
     }
   }
 
-  public static interface Listener {
-    /**
-     * Called when free memory is getting lower.
-     * 
-     * @param iFreeMemory
-     *          Current used memory
-     * @param iFreeMemoryPercentage
-     *          Max memory
-     */
-    public void lowMemory(long iFreeMemory, long iFreeMemoryPercentage);
-  }
-
   /**
    * Create the memory watch dog with the default memory threshold.
-   * 
-   * @param iThreshold
    */
   public OMemoryWatchDog() {
     super("OrientDB MemoryWatchDog");
 
-    final MemoryMXBean memBean = ManagementFactory.getMemoryMXBean();
-    heapMemory = memBean.getHeapMemoryUsage();
-    nonheapMemory = memBean.getNonHeapMemoryUsage();
+    memBean = ManagementFactory.getMemoryMXBean();
 
     final String size = OGlobalConfiguration.MEMORY_AUTOFREE_HEAP_THRESHOLD.getValueAsString();
     autoFreeHeapThreshold = OFileUtils.getSizeAsNumber(size);
@@ -107,6 +110,30 @@ public class OMemoryWatchDog extends Thread {
     start();
   }
 
+  public static void freeMemoryForOptimization(final long iDelayTime) {
+    freeMemory(iDelayTime, OGlobalConfiguration.JVM_GC_DELAY_FOR_OPTIMIZE.getValueAsLong());
+  }
+
+  public static void freeMemoryForResourceCleanup(final long iDelayTime) {
+    freeMemory(iDelayTime, 0);
+  }
+
+  private static void freeMemory(final long iDelayTime, final long minimalTimeAmount) {
+    final long dateLastGC = System.currentTimeMillis();
+    if (dateLastGC - lastGC > minimalTimeAmount * 1000) {
+      lastGC = dateLastGC;
+      System.gc();
+
+      if (iDelayTime > 0)
+        try {
+          Thread.sleep(iDelayTime);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+    }
+  }
+
+  @Override
   public void run() {
     Orient
         .instance()
@@ -127,12 +154,13 @@ public class OMemoryWatchDog extends Thread {
               }
             });
 
-    autoFreeCheckEveryMs = OGlobalConfiguration.MEMORY_AUTOFREE_CHECK_EVERY.getValueAsLong();
+    long autoFreeCheckEveryMs = OGlobalConfiguration.MEMORY_AUTOFREE_CHECK_EVERY.getValueAsLong();
     Orient.instance().getTimer().schedule(new TimerTask() {
 
       @Override
       public void run() {
         // CHECK MEMORY
+        MemoryUsage heapMemory = memBean.getHeapMemoryUsage();
         final long usedHeap = heapMemory.getUsed();
         final long maxHeap = heapMemory.getMax();
         final int usedMemoryPer = (int) (usedHeap * 100 / maxHeap);
@@ -149,7 +177,7 @@ public class OMemoryWatchDog extends Thread {
               try {
                 listener.listener.lowMemory(maxHeap - usedHeap, 100 - usedMemoryPer);
               } catch (Exception e) {
-                e.printStackTrace();
+                OLogManager.instance().error(this, "Error on freeing memory against listener: %s", e, listener.listener);
               }
             }
           }
@@ -159,38 +187,42 @@ public class OMemoryWatchDog extends Thread {
     while (true) {
       try {
         // WAITS FOR THE GC FREE
-        monitorQueue.remove();
+        final Reference<?> res = monitorQueue.remove(CHECK_TIMEOUT);
 
+        // CHECK IF HAS BEEN INTERRUPTED
         if (Thread.interrupted())
+          // INTERRUPTED, EXIT FROM THE THREAD'S LOOP!
           break;
 
-        // GC is freeing memory!
-        alertTimes++;
-        final long usedHeap = heapMemory.getUsed();
-        final long maxHeap = heapMemory.getMax();
-        final int usedMemoryPer = (int) (usedHeap * 100 / maxHeap);
+        if (res != null) { // GC is freeing memory!
+          alertTimes++;
+          MemoryUsage heapMemory = memBean.getHeapMemoryUsage();
+          final long usedHeap = heapMemory.getUsed();
+          final long maxHeap = heapMemory.getMax();
+          final int usedMemoryPer = (int) (usedHeap * 100 / maxHeap);
 
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "Free memory is low %s of %s (%d%%), calling listeners to free memory...",
-              OFileUtils.getSizeAsString(maxHeap - usedHeap), OFileUtils.getSizeAsString(maxHeap), 100 - usedMemoryPer);
+          if (OLogManager.instance().isDebugEnabled())
+            OLogManager.instance().debug(this, "Free memory is low %s of %s (%d%%), calling listeners to free memory...",
+                OFileUtils.getSizeAsString(maxHeap - usedHeap), OFileUtils.getSizeAsString(maxHeap), 100 - usedMemoryPer);
 
-        final long timer = Orient.instance().getProfiler().startChrono();
+          final long timer = Orient.instance().getProfiler().startChrono();
 
-        synchronized (listeners) {
-          for (ListenerWrapper listener : listeners.keySet()) {
-            try {
-              listener.listener.lowMemory(maxHeap - usedHeap, 100 - usedMemoryPer);
-            } catch (Exception e) {
-              e.printStackTrace();
+          synchronized (listeners) {
+            for (ListenerWrapper listener : listeners.keySet()) {
+              try {
+                listener.listener.lowMemory(maxHeap - usedHeap, 100 - usedMemoryPer);
+              } catch (Exception e) {
+                OLogManager.instance().error(this, "Error on freeing memory against listener: %s", e, listener.listener);
+              }
             }
           }
-        }
 
-        Orient.instance().getProfiler().stopChrono("OMemoryWatchDog.freeResources", "WatchDog free resources", timer);
+          Orient.instance().getProfiler().stopChrono("OMemoryWatchDog.freeResources", "WatchDog free resources", timer);
+        }
 
       } catch (InterruptedException e) {
         break;
-      } catch (Exception e) {
+      } catch (Exception ignored) {
       } finally {
         // RE-INSTANTIATE THE MONITOR REF
         monitorRef = new SoftReference<Object>(new Object(), monitorQueue);
@@ -211,11 +243,17 @@ public class OMemoryWatchDog extends Thread {
     return getUsedHeapMemoryInPercentage() < autoFreeHeapThreshold * -1;
   }
 
+  /**
+   * Important : callers <b>must</b> reference (with a strong ref) the returned Listener, otherwise this listener will be discarded.
+   * 
+   * @return The Listener to reference with a strong ref..
+   */
   public Listener addListener(final Listener listener) {
+    ListenerWrapper wrapper = new ListenerWrapper(listener);
     synchronized (listeners) {
-      listeners.put(new ListenerWrapper(listener), listener);
+      listeners.put(wrapper, listener);
     }
-    return listener;
+    return wrapper;
   }
 
   public boolean removeListener(final Listener listener) {
@@ -234,35 +272,25 @@ public class OMemoryWatchDog extends Thread {
     }
   }
 
-  public static void freeMemoryForOptimization(final long iDelayTime) {
-    freeMemory(iDelayTime, OGlobalConfiguration.JVM_GC_DELAY_FOR_OPTIMIZE.getValueAsLong());
-  }
-
-  public static void freeMemoryForResourceCleanup(final long iDelayTime) {
-    freeMemory(iDelayTime, 0);
-  }
-
   public long getUsedHeapMemory() {
+    MemoryUsage heapMemory = memBean.getHeapMemoryUsage();
     return heapMemory.getUsed();
   }
 
   public int getUsedHeapMemoryInPercentage() {
+    MemoryUsage heapMemory = memBean.getHeapMemoryUsage();
     return (int) (heapMemory.getUsed() * 100 / heapMemory.getMax());
   }
 
-  private static void freeMemory(final long iDelayTime, final long minimalTimeAmount) {
-    final long dateLastGC = System.currentTimeMillis();
-    if (dateLastGC - lastGC > minimalTimeAmount * 1000) {
-      lastGC = dateLastGC;
-      System.gc();
-
-      if (iDelayTime > 0)
-        try {
-          Thread.sleep(iDelayTime);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-        }
-    }
+  public void sendShutdown() {
+    interrupt();
   }
 
+  @Override
+  public void interrupt() {
+    super.interrupt();
+    synchronized (monitorQueue) {
+      monitorQueue.notifyAll();
+    }
+  }
 }

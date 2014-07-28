@@ -19,6 +19,8 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 
@@ -30,9 +32,11 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
  */
 public class ODocumentComparator implements Comparator<OIdentifiable> {
   private List<OPair<String, String>> orderCriteria;
+  private OCommandContext context;
 
-  public ODocumentComparator(final List<OPair<String, String>> iOrderCriteria) {
+  public ODocumentComparator(final List<OPair<String, String>> iOrderCriteria, OCommandContext iContext) {
     this.orderCriteria = iOrderCriteria;
+    this.context = iContext;
   }
 
   @SuppressWarnings("unchecked")
@@ -63,11 +67,17 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
       if (fieldValue2 == null)
         return factor(1, ordering);
 
-      if (!(fieldValue1 instanceof Comparable<?>))
-        throw new IllegalArgumentException("Cannot sort documents because the field '" + fieldName + "' is not comparable");
-
-      partialResult = ((Comparable<Object>) fieldValue1).compareTo(fieldValue2);
-
+      if (!(fieldValue1 instanceof Comparable<?>)) {
+				context.incrementVariable(OBasicCommandContext.INVALID_COMPARE_COUNT);
+				partialResult =  ("" + fieldValue1).compareTo("" + fieldValue2);
+			} else {
+				try {
+					partialResult = ((Comparable<Object>) fieldValue1).compareTo(fieldValue2);
+				} catch (Exception x) {
+					context.incrementVariable(OBasicCommandContext.INVALID_COMPARE_COUNT);
+					partialResult =  ("" + fieldValue1).compareTo("" + fieldValue2);
+				}
+			}
       partialResult = factor(partialResult, ordering);
 
       if (partialResult != 0)

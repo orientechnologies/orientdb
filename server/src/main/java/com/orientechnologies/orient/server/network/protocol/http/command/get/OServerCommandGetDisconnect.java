@@ -15,13 +15,14 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+
+import java.io.IOException;
 
 public class OServerCommandGetDisconnect extends OServerCommandAbstract {
   private static final String[] NAMES = { "GET|disconnect" };
@@ -41,7 +42,8 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
 
     if (iRequest.sessionId != null) {
       OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
-      iRequest.sessionId = "!";
+      iRequest.sessionId = OServerCommandAuthenticatedDbAbstract.SESSIONID_UNAUTHORIZED;
+      iResponse.setSessionId(iRequest.sessionId);
     }
 
     iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, "Logged out",

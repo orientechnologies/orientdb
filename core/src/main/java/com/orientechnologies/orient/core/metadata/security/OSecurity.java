@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Manages users and roles.
@@ -72,7 +72,9 @@ public interface OSecurity {
 
   public OUser repair();
 
-  public void close();
-  
+  public void close(boolean onDelete);
+
   public void createClassTrigger();
+
+  public OSecurity getUnderlying();
 }

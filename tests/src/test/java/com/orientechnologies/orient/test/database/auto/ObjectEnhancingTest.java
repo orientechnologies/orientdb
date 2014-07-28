@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.lang.reflect.Method;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -30,18 +31,15 @@ import com.orientechnologies.orient.object.enhancement.OObjectMethodFilter;
 import com.orientechnologies.orient.test.domain.base.CustomMethodFilterTestClass;
 
 @Test(groups = { "object" })
-public class ObjectEnhancingTest {
-  private String url;
+public class ObjectEnhancingTest extends ObjectDBBaseTest {
 
-  @Parameters(value = "url")
-  public ObjectEnhancingTest(String iURL) {
-    url = iURL;
-  }
+	@Parameters(value = "url")
+	public ObjectEnhancingTest(@Optional String url) {
+		super(url);
+	}
 
   @Test()
   public void testCustomMethodFilter() {
-    OObjectDatabaseTx database = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-    try {
       OObjectEntityEnhancer.getInstance().registerClassMethodFilter(CustomMethodFilterTestClass.class, new CustomMethodFilter());
       CustomMethodFilterTestClass testClass = database.newInstance(CustomMethodFilterTestClass.class);
       testClass.setStandardField("testStandard");
@@ -60,9 +58,6 @@ public class ObjectEnhancingTest {
       Assert.assertNull(testClass.getStandardFieldAsMap());
       ODocument doc = database.getRecordByUserObject(testClass, false);
       Assert.assertTrue(!doc.containsField("transientNotDefinedField"));
-    } finally {
-      database.close();
-    }
   }
 
   public class CustomMethodFilter extends OObjectMethodFilter {

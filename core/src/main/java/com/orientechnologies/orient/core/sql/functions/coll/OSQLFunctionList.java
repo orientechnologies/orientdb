@@ -15,16 +15,17 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * This operator add an item in a list. The list accepts duplicates.
@@ -39,26 +40,29 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
     super(NAME, 1, -1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    if (iParameters.length > 1)
+    if (iParams.length > 1)
       // IN LINE MODE
       context = new ArrayList<Object>();
 
-    for (Object value : iParameters) {
+    for (Object value : iParams) {
       if (value != null) {
-        if (iParameters.length == 1 && context == null)
+        if (iParams.length == 1 && context == null)
           // AGGREGATION MODE (STATEFULL)
           context = new ArrayList<Object>();
 
-        OMultiValue.add(context, value);
+        if (value instanceof ODocument)
+          context.add(value);
+        else
+          OMultiValue.add(context, value);
       }
     }
     return prepareResult(context);
   }
 
   public String getSyntax() {
-    return "Syntax error: list(<value>*)";
+    return "list(<value>*)";
   }
 
   public boolean aggregateResults(final Object[] configuredParameters) {
@@ -70,17 +74,6 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
     final List<Object> res = context;
     context = null;
     return prepareResult(res);
-  }
-
-  protected List<Object> prepareResult(List<Object> res) {
-    if (returnDistributedResult()) {
-      final Map<String, Object> doc = new HashMap<String, Object>();
-      doc.put("node", getDistributedStorageId());
-      doc.put("context", res);
-      return Collections.<Object> singletonList(doc);
-    } else {
-      return res;
-    }
   }
 
   @SuppressWarnings("unchecked")
@@ -96,5 +89,16 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
       result.addAll(chunk);
     }
     return result;
+  }
+
+  protected List<Object> prepareResult(List<Object> res) {
+    if (returnDistributedResult()) {
+      final Map<String, Object> doc = new HashMap<String, Object>();
+      doc.put("node", getDistributedStorageId());
+      doc.put("context", res);
+      return Collections.<Object> singletonList(doc);
+    } else {
+      return res;
+    }
   }
 }

@@ -48,12 +48,7 @@ public interface OIndex<T> {
   OIndex<T> create(String name, OIndexDefinition indexDefinition, String clusterIndexName, Set<String> clustersToIndex,
       boolean rebuild, OProgressListener progressListener);
 
-  /**
-   * Unloads the index freeing the resource in memory.
-   */
-  void unload();
-
-  String getDatabaseName();
+	String getDatabaseName();
 
   /**
    * Types of the keys that index can accept, if index contains composite key, list of types of elements from which this index
@@ -69,17 +64,6 @@ public interface OIndex<T> {
    * @return The Record set if found, otherwise an empty Set
    */
   T get(Object iKey);
-
-  /**
-   * Counts the elements associated with the passed key, if any.
-   * 
-   * @param iKey
-   *          The key to count
-   * @return The size of found records, otherwise 0 if the key is not found
-   */
-  long count(Object iKey);
-
-  public long count(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive, int maxValuesToFetch);
 
   /**
    * Tells if a key is contained in the index.
@@ -204,26 +188,15 @@ public interface OIndex<T> {
   OIndexInternal<T> getInternal();
 
   /**
-   * Returns set of records with keys in specific set
+   * Returns cursor which presents data associated with passed in keys.
    * 
-   * @param iKeys
-   *          Set of keys
-   * @return
+   * @param keys
+   *          Keys data of which should be returned.
+   * @param ascSortOrder
+   *          Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @return cursor which presents data associated with passed in keys.
    */
-  Collection<OIdentifiable> getValues(Collection<?> iKeys);
-
-  void getValues(Collection<?> iKeys, IndexValuesResultListener resultListener);
-
-  /**
-   * Returns a set of documents with keys in specific set
-   * 
-   * @param iKeys
-   *          Set of keys
-   * @return
-   */
-  Collection<ODocument> getEntries(Collection<?> iKeys);
-
-  void getEntries(Collection<?> iKeys, IndexEntriesResultListener resultListener);
+  OIndexCursor iterateEntries(Collection<?> keys, boolean ascSortOrder);
 
   OIndexDefinition getDefinition();
 
@@ -235,156 +208,48 @@ public interface OIndex<T> {
   Set<String> getClusters();
 
   /**
-   * Returns an iterator to walk across all the index items from the first to the latest one.
-   * 
-   * @return
-   */
-  public Iterator<Entry<Object, T>> iterator();
-
-  /**
-   * Returns an iterator to walk across all the index items from the last to the first one.
-   * 
-   * @return
-   */
-  public Iterator<Entry<Object, T>> inverseIterator();
-
-  /**
-   * Returns an iterator to walk across all the index values from the first to the latest one.
-   * 
-   * @return
-   */
-  public Iterator<OIdentifiable> valuesIterator();
-
-  /**
-   * Returns an iterator to walk across all the index values from the last to the first one.
-   * 
-   * @return
-   */
-  public Iterator<OIdentifiable> valuesInverseIterator();
-
-  /**
-   * Returns an Iterable instance of all the keys contained in the index.
-   * 
-   * @return A Iterable<Object> that lazy load the entries once fetched
-   */
-  public Iterable<Object> keys();
-
-  /**
-   * Returns a set of records with key between the range passed as parameter. Range bounds are included.
-   * 
-   * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
-   * 
-   * @param iRangeFrom
-   *          Starting range
-   * @param iRangeTo
-   *          Ending range
-   * 
-   * @return a set of records with key between the range passed as parameter. Range bounds are included.
-   * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
-   * @see #getValuesBetween(Object, boolean, Object, boolean)
-   */
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, Object iRangeTo);
-
-  /**
-   * Returns a set of records with key between the range passed as parameter.
-   * 
-   * In case of {@link com.orientechnologies.common.collection.OCompositeKey}s partial keys can be used as values boundaries.
-   * 
-   * @param iRangeFrom
-   *          Starting range
-   * @param iFromInclusive
-   *          Indicates whether start range boundary is included in result.
-   * @param iRangeTo
-   *          Ending range
-   * @param iToInclusive
-   *          Indicates whether end range boundary is included in result.
-   * 
-   * @return Returns a set of records with key between the range passed as parameter.
-   * 
-   * @see com.orientechnologies.common.collection.OCompositeKey#compareTo(com.orientechnologies.common.collection.OCompositeKey)
-   * 
-   */
-  public Collection<OIdentifiable> getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive);
-
-  public void getValuesBetween(Object iRangeFrom, boolean iFromInclusive, Object iRangeTo, boolean iToInclusive,
-      IndexValuesResultListener resultListener);
-
-  /**
-   * Returns a set of records with keys greater than passed parameter.
+   * Returns cursor which presents subset of index data between passed in keys.
    * 
    * @param fromKey
-   *          Starting key.
-   * @param isInclusive
-   *          Indicates whether record with passed key will be included.
-   * 
-   * @return set of records with keys greater than passed parameter.
-   */
-  public abstract Collection<OIdentifiable> getValuesMajor(Object fromKey, boolean isInclusive);
-
-  public abstract void getValuesMajor(Object fromKey, boolean isInclusive, IndexValuesResultListener valuesResultListener);
-
-  /**
-   * Returns a set of records with keys less than passed parameter.
-   * 
+   *          Lower border of index data.
+   * @param fromInclusive
+   *          Indicates whether lower border should be inclusive or exclusive.
    * @param toKey
-   *          Ending key.
-   * @param isInclusive
-   *          Indicates whether record with passed key will be included.
-   * 
-   * @return set of records with keys less than passed parameter.
+   *          Upper border of index data.
+   * @param toInclusive
+   *          Indicates whether upper border should be inclusive or exclusive.
+   * @param ascOrder
+   *          Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @return Cursor which presents subset of index data between passed in keys.
    */
-  public abstract Collection<OIdentifiable> getValuesMinor(Object toKey, boolean isInclusive);
-
-  public abstract void getValuesMinor(Object toKey, boolean isInclusive, IndexValuesResultListener valuesResultListener);
+  public OIndexCursor iterateEntriesBetween(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+      boolean ascOrder);
 
   /**
-   * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
-   * greater than passed parameter.
+   * Returns cursor which presents subset of data which associated with key which is greater than passed in key.
    * 
    * @param fromKey
-   *          Starting key.
-   * @param isInclusive
-   *          Indicates whether record with passed key will be included.
-   * 
-   * @return set of records with key greater than passed parameter.
+   *          Lower border of index data.
+   * @param fromInclusive
+   *          Indicates whether lower border should be inclusive or exclusive.
+   * @param ascOrder
+   *          Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @return cursor which presents subset of data which associated with key which is greater than passed in key.
    */
-  public abstract Collection<ODocument> getEntriesMajor(Object fromKey, boolean isInclusive);
-
-  public abstract void getEntriesMajor(Object fromKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener);
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean fromInclusive, boolean ascOrder);
 
   /**
-   * Returns a set of documents that contains fields ("key", "rid") where "key" - index key, "rid" - record id of records with keys
-   * less than passed parameter.
+   * Returns cursor which presents subset of data which associated with key which is less than passed in key.
    * 
    * @param toKey
-   *          Ending key.
-   * @param isInclusive
-   *          Indicates whether record with passed key will be included.
-   * 
-   * @return set of records with key greater than passed parameter.
+   *          Upper border of index data.
+   * @param toInclusive
+   *          Indicates Indicates whether upper border should be inclusive or exclusive.
+   * @param ascOrder
+   *          Flag which determines whether data iterated by cursor should be in ascending or descending order.
+   * @return cursor which presents subset of data which associated with key which is less than passed in key.
    */
-  public abstract Collection<ODocument> getEntriesMinor(Object toKey, boolean isInclusive);
-
-  public abstract void getEntriesMinor(Object toKey, boolean isInclusive, IndexEntriesResultListener entriesResultListener);
-
-  /**
-   * Returns a set of documents with key between the range passed as parameter.
-   * 
-   * @param iRangeFrom
-   *          Starting range
-   * @param iRangeTo
-   *          Ending range
-   * @param iInclusive
-   *          Include from/to bounds
-   * @see #getEntriesBetween(Object, Object)
-   * @return
-   */
-  public abstract Collection<ODocument> getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive);
-
-  public abstract void getEntriesBetween(final Object iRangeFrom, final Object iRangeTo, final boolean iInclusive,
-      IndexEntriesResultListener entriesResultListener);
-
-  public Collection<ODocument> getEntriesBetween(Object iRangeFrom, Object iRangeTo);
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean toInclusive, boolean ascOrder);
 
   /**
    * Returns the Record Identity of the index if persistent.
@@ -393,17 +258,19 @@ public interface OIndex<T> {
    */
   public ORID getIdentity();
 
+  public OIndexCursor cursor();
+
+  public OIndexCursor descCursor();
+
+  public OIndexKeyCursor keyCursor();
+
   ODocument getMetadata();
 
   public boolean supportsOrderedIterations();
 
   public boolean isRebuiding();
 
-  public interface IndexValuesResultListener {
-    boolean addResult(OIdentifiable value);
-  }
+  public Object getFirstKey();
 
-  public interface IndexEntriesResultListener {
-    boolean addResult(ODocument entry);
-  }
+  public Object getLastKey();
 }

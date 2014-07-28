@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Wrapper to use the HTTP response in functions and scripts. This class mimics the J2EE HTTPResponse class.
@@ -32,15 +32,15 @@ import com.orientechnologies.orient.core.record.ORecord;
 public class OHttpResponseWrapper {
   private final OHttpResponse response;
 
-  public OHttpResponse getResponse() {
-    return response;
-  }
-
   /**
    * @param iResponse
    */
   public OHttpResponseWrapper(final OHttpResponse iResponse) {
     response = iResponse;
+  }
+
+  public OHttpResponse getResponse() {
+    return response;
   }
 
   /**
@@ -76,8 +76,8 @@ public class OHttpResponseWrapper {
   /**
    * Sets the response's character set.
    * 
-   * @param iHeader
-   *          String containing the header
+   * @param iCharacterSet
+   *          String containing the charset to use
    * @return The object itself for fluent chained calls
    */
   public OHttpResponseWrapper setCharacterSet(final String iCharacterSet) {
@@ -165,7 +165,7 @@ public class OHttpResponseWrapper {
   /**
    * Writes records as response. The records are serialized in JSON format.
    * 
-   * @param iContent
+   * @param iRecords
    *          List of records to serialize
    * @return The object itself for fluent chained calls
    */
@@ -177,13 +177,13 @@ public class OHttpResponseWrapper {
   /**
    * Writes records as response specifying a fetch-plan to serialize nested records. The records are serialized in JSON format.
    * 
-   * @param iContent
+   * @param iRecords
    *          List of records to serialize
    * @param iFetchPlan
    *          Fetch plan to specify nested records
    * @return The object itself for fluent chained calls
    */
-  public OHttpResponseWrapper writeRecords(final List<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
+  public OHttpResponseWrapper writeRecords(final Object iRecords, final String iFetchPlan) throws IOException {
     response.writeRecords(iRecords, iFetchPlan);
     return this;
   }
@@ -191,7 +191,7 @@ public class OHttpResponseWrapper {
   /**
    * Writes a record as response. The record is serialized in JSON format.
    * 
-   * @param iContent
+   * @param iRecord
    *          Record to serialize
    * @return The object itself for fluent chained calls
    */
@@ -203,7 +203,7 @@ public class OHttpResponseWrapper {
   /**
    * Writes a record as response. The record is serialized in JSON format.
    * 
-   * @param iContent
+   * @param iRecord
    *          Record to serialize
    * @param iFetchPlan
    *          Fetch plan to specify nested records

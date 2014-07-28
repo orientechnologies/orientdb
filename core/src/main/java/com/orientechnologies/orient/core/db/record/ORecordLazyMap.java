@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 
 /**
  * Lazy implementation of LinkedHashMap. It's bound to a source ORecord object to keep track of changes. This avoid to call the
@@ -35,7 +34,7 @@ import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-@SuppressWarnings({ "serial", "unchecked" })
+@SuppressWarnings({ "serial" })
 public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecordLazyMultiValue {
   final private byte                                      recordType;
   private ORecordMultiValueHelper.MULTIVALUE_CONTENT_TYPE status              = MULTIVALUE_CONTENT_TYPE.EMPTY;
@@ -127,7 +126,8 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
   }
 
   public void convertLinks2Records() {
-    if (status == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord)
+    if (status == MULTIVALUE_CONTENT_TYPE.ALL_RECORDS || !autoConvertToRecord
+        || getOwner().getInternalStatus() == STATUS.MARSHALLING)
       // PRECONDITIONS
       return;
     for (Object k : keySet())
@@ -218,6 +218,12 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
       return super.setDirty();
 
     return this;
+  }
+
+  @Override
+  public void setDirtyNoChanged() {
+    if (!marshalling)
+      super.setDirtyNoChanged();
   }
 
   @Override

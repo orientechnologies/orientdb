@@ -15,43 +15,35 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 @Test(groups = "security")
-public class RestrictedTest {
-  private ODatabaseDocumentTx database;
+public class RestrictedTest extends DocumentDBBaseTest {
   private ODocument           adminRecord;
   private ODocument           writerRecord;
 
-  @Parameters(value = "url")
-  public RestrictedTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public RestrictedTest(@Optional String url) {
+		super(url);
+	}
 
-  @AfterMethod
-  protected void closeDb() {
-    database.close();
-  }
-
-  @Test
+	@Test
   public void testCreateRestrictedClass() {
     database.open("admin", "admin");
     database.getMetadata().getSchema().createClass("CMSDocument", database.getMetadata().getSchema().getClass("ORestricted"));
@@ -201,7 +193,52 @@ public class RestrictedTest {
     Assert.assertNotNull(database.load(writerRecord.getIdentity()));
   }
 
-  @Test(dependsOnMethods = "testWriterAddReaderUserOnlyForRead")
+  /***** TESTS FOR #1980: Record Level Security: permissions don't follow role's inheritance *****/
+  @Test(dependsOnMethods = "testReaderCanSeeWriterDocument")
+  public void testWriterRemoveReaderUserOnlyForRead() throws IOException {
+    database.open("writer", "writer");
+    database.getMetadata().getSecurity().disallowUser(writerRecord, OSecurityShared.ALLOW_READ_FIELD, "reader");
+    writerRecord.save();
+  }
+
+  @Test(dependsOnMethods = "testWriterRemoveReaderUserOnlyForRead")
+  public void testReaderCannotSeeWriterDocumentAgain() throws IOException {
+    database.open("reader", "reader");
+    Assert.assertNull(database.load(writerRecord.getIdentity()));
+  }
+
+  @Test(dependsOnMethods = "testReaderCannotSeeWriterDocumentAgain")
+  public void testReaderRoleInheritsFromWriterRole() throws IOException {
+    database.open("admin", "admin");
+    ORole reader = database.getMetadata().getSecurity().getRole("reader");
+    reader.setParentRole(database.getMetadata().getSecurity().getRole("writer"));
+    reader.save();
+  }
+
+  @Test(dependsOnMethods = "testReaderRoleInheritsFromWriterRole")
+  public void testWriterRoleCanSeeWriterDocument() throws IOException {
+    database.open("writer", "writer");
+    database.getMetadata().getSecurity().allowRole(writerRecord, OSecurityShared.ALLOW_READ_FIELD, "writer");
+    writerRecord.save();
+  }
+
+  @Test(dependsOnMethods = "testWriterRoleCanSeeWriterDocument")
+  public void testReaderRoleCanSeeInheritedDocument() {
+    database.open("reader", "reader");
+    Assert.assertNotNull(database.load(writerRecord.getIdentity()));
+  }
+
+  @Test(dependsOnMethods = "testReaderRoleCanSeeInheritedDocument")
+  public void testReaderRoleDesntInheritsFromWriterRole() throws IOException {
+    database.open("admin", "admin");
+    ORole reader = database.getMetadata().getSecurity().getRole("reader");
+    reader.setParentRole(null);
+    reader.save();
+  }
+
+  /**** END TEST FOR #1980: Record Level Security: permissions don't follow role's inheritance ****/
+
+  @Test(dependsOnMethods = "testReaderRoleDesntInheritsFromWriterRole")
   public void testTruncateClass() {
     database.open("admin", "admin");
     try {
@@ -226,5 +263,10 @@ public class RestrictedTest {
 
     }
 
+  }
+
+  @BeforeMethod
+  protected void closeDb() {
+    database.close();
   }
 }

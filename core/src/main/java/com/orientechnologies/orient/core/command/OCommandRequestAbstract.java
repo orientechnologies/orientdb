@@ -15,13 +15,13 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
 
 /**
  * Text based Command Request abstract class.
@@ -30,16 +30,19 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  * 
  */
 @SuppressWarnings("serial")
-public abstract class OCommandRequestAbstract implements OCommandRequestInternal {
-  protected OCommandResultListener resultListener;
-  protected OProgressListener      progressListener;
-  protected int                    limit           = -1;
-  protected long                   timeoutMs       = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
-  protected TIMEOUT_STRATEGY       timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
-  protected Map<Object, Object>    parameters;
-  protected String                 fetchPlan       = null;
-  protected boolean                useCache        = false;
-  protected OCommandContext        context;
+public abstract class OCommandRequestAbstract implements OCommandRequestInternal, ODistributedCommand {
+  protected OCommandResultListener    resultListener;
+  protected OProgressListener         progressListener;
+  protected int                       limit           = -1;
+  protected long                      timeoutMs       = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+  protected TIMEOUT_STRATEGY          timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
+  protected OStorage.LOCKING_STRATEGY lockStrategy    = OStorage.LOCKING_STRATEGY.NONE;
+  protected Map<Object, Object>       parameters;
+  protected String                    fetchPlan       = null;
+  protected boolean                   useCache        = false;
+  protected OCommandContext           context;
+
+  private final Set<String>           nodesToExclude  = new HashSet<String>();
 
   protected OCommandRequestAbstract() {
   }
@@ -137,12 +140,33 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
     return timeoutMs;
   }
 
-  public void setTimeout(final long timeout, TIMEOUT_STRATEGY strategy) {
+  public void setTimeout(final long timeout, final TIMEOUT_STRATEGY strategy) {
     this.timeoutMs = timeout;
     this.timeoutStrategy = strategy;
   }
 
   public TIMEOUT_STRATEGY getTimeoutStrategy() {
     return timeoutStrategy;
+  }
+
+  public OStorage.LOCKING_STRATEGY getLockingStrategy() {
+    return lockStrategy;
+  }
+
+  public void setLockStrategy(final OStorage.LOCKING_STRATEGY lockStrategy) {
+    this.lockStrategy = lockStrategy;
+  }
+
+  @Override
+  public Set<String> nodesToExclude() {
+    return Collections.unmodifiableSet(nodesToExclude);
+  }
+
+  public void addExcludedNode(String node) {
+    nodesToExclude.add(node);
+  }
+
+  public void removeExcludedNode(String node) {
+    nodesToExclude.remove(node);
   }
 }

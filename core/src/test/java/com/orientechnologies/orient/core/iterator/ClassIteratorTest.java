@@ -18,9 +18,9 @@ import org.testng.annotations.Test;
  */
 @Test
 public class ClassIteratorTest {
-  private static final boolean RECREATE_DATABASE = true;
-  private static ODatabaseDocumentTx db = null;
-  private Set<String> names;
+  private static final boolean       RECREATE_DATABASE = true;
+  private static ODatabaseDocumentTx db                = null;
+  private Set<String>                names;
 
   @BeforeMethod
   public void setUp() throws Exception {
@@ -33,7 +33,7 @@ public class ClassIteratorTest {
     names.add("Calvin");
     names.add("Daniel");
 
-    for (String name : names){
+    for (String name : names) {
       createPerson(name);
     }
   }
@@ -79,7 +79,7 @@ public class ClassIteratorTest {
 
     // Shorthand iterator loop.
     int docNum = 0;
-    for (final ODocument personDoc : personIter){
+    for (final ODocument personDoc : personIter) {
       Assert.assertTrue(names.contains(personDoc.field("First")));
       Assert.assertTrue(names.remove(personDoc.field("First")));
 
@@ -90,7 +90,7 @@ public class ClassIteratorTest {
   }
 
   private static void initializeDatabase() {
-    db = new ODatabaseDocumentTx("memory:temp");
+    db = new ODatabaseDocumentTx("memory:" + ClassIteratorTest.class.getSimpleName());
     if (db.exists() && RECREATE_DATABASE) {
       db.open("admin", "admin");
       db.drop();
@@ -104,8 +104,7 @@ public class ClassIteratorTest {
 
       // Create Person class
       final OClass personClass = schema.createClass("Person");
-      personClass.createProperty("First", OType.STRING).setMandatory(true).setNotNull(true).setMin(
-          "1");
+      personClass.createProperty("First", OType.STRING).setMandatory(true).setNotNull(true).setMin("1");
 
       System.out.println("Created schema.");
     } else {

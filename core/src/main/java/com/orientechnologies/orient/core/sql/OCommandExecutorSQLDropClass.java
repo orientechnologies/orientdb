@@ -78,60 +78,7 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
     if (oClass == null)
       return null;
 
-    for (final OIndex<?> oIndex : oClass.getClassIndexes()) {
-      database.getMetadata().getIndexManager().dropIndex(oIndex.getName());
-    }
-
-    final OClass superClass = oClass.getSuperClass();
-    final int[] clustersToIndex = oClass.getPolymorphicClusterIds();
-
-    final String[] clusterNames = new String[clustersToIndex.length];
-    for (int i = 0; i < clustersToIndex.length; i++) {
-      clusterNames[i] = database.getClusterNameById(clustersToIndex[i]);
-    }
-
-    final int clusterId = oClass.getDefaultClusterId();
-
-    ((OSchemaProxy) database.getMetadata().getSchema()).dropClassInternal(className);
-    ((OSchemaProxy) database.getMetadata().getSchema()).saveInternal();
-    database.getMetadata().getSchema().reload();
-
-    deleteDefaultCluster(clusterId);
-
-    if (superClass == null)
-      return true;
-
-    final OIndexManagerProxy indexManagerProxy = getDatabase().getMetadata().getIndexManager();
-    for (final OIndex<?> oIndex : superClass.getIndexes()) {
-      for (final String clusterName : clusterNames)
-        indexManagerProxy.removeClusterFromIndex(clusterName, oIndex.getName());
-
-      OLogManager.instance()
-          .info(this, "Index %s is used in super class of %s and should be rebuilt.", oIndex.getName(), className);
-      oIndex.rebuild();
-    }
-
-    return true;
-  }
-
-  protected void deleteDefaultCluster(int clusterId) {
-    final ODatabaseRecord database = getDatabase();
-    OCluster cluster = database.getStorage().getClusterById(clusterId);
-    if (cluster.getName().equalsIgnoreCase(className)) {
-      if (isClusterDeletable(clusterId)) {
-        database.getStorage().dropCluster(clusterId, true);
-      }
-    }
-  }
-
-  protected boolean isClusterDeletable(int clusterId) {
-    final ODatabaseRecord database = getDatabase();
-    for (OClass iClass : database.getMetadata().getSchema().getClasses()) {
-      for (int i : iClass.getClusterIds()) {
-        if (i == clusterId)
-          return false;
-      }
-    }
+    database.getMetadata().getSchema().dropClass(className);
     return true;
   }
 

@@ -15,9 +15,8 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
@@ -27,10 +26,14 @@ import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class OCommandManager {
-  private Map<String, Class<? extends OCommandRequest>>                            commandRequesters = new HashMap<String, Class<? extends OCommandRequest>>();
-  private Map<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>> commandReqExecMap = new HashMap<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>>();
   private static OCommandManager                                                   instance          = new OCommandManager();
+  private Map<String, Class<? extends OCommandRequest>>                            commandRequesters = new HashMap<String, Class<? extends OCommandRequest>>();
+  private Map<Class<? extends OCommandRequest>, OCallable<Void, OCommandRequest>>  configCallbacks   = new HashMap<Class<? extends OCommandRequest>, OCallable<Void, OCommandRequest>>();
+  private Map<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>> commandReqExecMap = new HashMap<Class<? extends OCommandRequest>, Class<? extends OCommandExecutor>>();
 
   protected OCommandManager() {
     registerRequester("sql", OCommandSQL.class);
@@ -40,6 +43,11 @@ public class OCommandManager {
     registerExecutor(OSQLSynchQuery.class, OCommandExecutorSQLDelegate.class);
     registerExecutor(OCommandSQL.class, OCommandExecutorSQLDelegate.class);
     registerExecutor(OCommandSQLResultset.class, OCommandExecutorSQLResultsetDelegate.class);
+    registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
+  }
+
+  public static OCommandManager instance() {
+    return instance;
   }
 
   public OCommandManager registerRequester(final String iType, final Class<? extends OCommandRequest> iRequest) {
@@ -65,6 +73,13 @@ public class OCommandManager {
   }
 
   public OCommandManager registerExecutor(final Class<? extends OCommandRequest> iRequest,
+      final Class<? extends OCommandExecutor> iExecutor, final OCallable<Void, OCommandRequest> iConfigCallback) {
+    registerExecutor(iRequest, iExecutor);
+    configCallbacks.put(iRequest, iConfigCallback);
+    return this;
+  }
+
+  public OCommandManager registerExecutor(final Class<? extends OCommandRequest> iRequest,
       final Class<? extends OCommandExecutor> iExecutor) {
     commandReqExecMap.put(iRequest, iExecutor);
     return this;
@@ -72,6 +87,7 @@ public class OCommandManager {
 
   public OCommandManager unregisterExecutor(final Class<? extends OCommandRequest> iRequest) {
     commandReqExecMap.remove(iRequest);
+    configCallbacks.remove(iRequest);
     return this;
   }
 
@@ -82,14 +98,17 @@ public class OCommandManager {
       throw new OCommandExecutorNotFoundException("Cannot find a command executor for the command request: " + iCommand);
 
     try {
-      return executorClass.newInstance();
+      final OCommandExecutor exec = executorClass.newInstance();
+
+      final OCallable<Void, OCommandRequest> callback = configCallbacks.get(iCommand.getClass());
+      if (callback != null)
+        callback.call(iCommand);
+
+      return exec;
+
     } catch (Exception e) {
       throw new OCommandExecutionException("Cannot create the command executor of class " + executorClass
           + " for the command request: " + iCommand, e);
     }
-  }
-
-  public static OCommandManager instance() {
-    return instance;
   }
 }

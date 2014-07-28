@@ -23,7 +23,7 @@ import java.util.Comparator;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public interface OCollate extends Comparator<Object> {
+public interface OCollate {
   public String getName();
 
   public Object transform(Object obj);

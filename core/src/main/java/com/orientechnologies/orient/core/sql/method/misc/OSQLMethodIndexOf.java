@@ -18,28 +18,26 @@ package com.orientechnologies.orient.core.sql.method.misc;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
- *
+ * 
  * @author Johann Sorel (Geomatys)
  * @author Luca Garulli
  */
 public class OSQLMethodIndexOf extends OAbstractSQLMethod {
 
-    public static final String NAME = "indexof";
+  public static final String NAME = "indexof";
 
-    public OSQLMethodIndexOf() {
-        super(NAME, 1, 2);
-    }
+  public OSQLMethodIndexOf() {
+    super(NAME, 1, 2);
+  }
 
-    @Override
-    public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-        final String param0 = iMethodParams[0].toString();
-        if (param0.length() > 2) {
-            String toFind = param0.substring(1, param0.length() - 1);
-            int startIndex = iMethodParams.length > 1 ? Integer.parseInt(iMethodParams[1].toString()) : 0;
-            ioResult = ioResult != null ? ioResult.toString().indexOf(toFind, startIndex) : null;
-        }
-        return ioResult;
-    }
+  @Override
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    final String toFind = OStringSerializerHelper.getStringContent(iParams[0].toString());
+    int startIndex = iParams.length > 1 ? Integer.parseInt(iParams[1].toString()) : 0;
+
+    return iThis != null ? iThis.toString().indexOf(toFind, startIndex) : null;
+  }
 }

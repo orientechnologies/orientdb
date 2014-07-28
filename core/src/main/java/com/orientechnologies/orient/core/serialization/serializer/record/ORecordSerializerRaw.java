@@ -21,27 +21,42 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class ORecordSerializerRaw implements ORecordSerializer {
-	public static final String	NAME	= "ORecordDocumentRaw";
+  public static final String NAME = "ORecordDocumentRaw";
 
-	public ORecordInternal<?> fromStream(final byte[] iSource) {
-		return new ORecordBytes(iSource);
-	}
+  public ORecordInternal<?> fromStream(final byte[] iSource) {
+    return new ORecordBytes(iSource);
+  }
 
-	public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord, String[] iFields) {
-		final ORecordBytes record = (ORecordBytes) iRecord;
-		record.fromStream(iSource);
-		record.reset(iSource);
+  @Override
+  public int getCurrentVersion() {
+    return 0;
+  }
 
-		return record;
-	}
+  @Override
+  public int getMinSupportedVersion() {
+    return 0;
+  }
 
-	public byte[] toStream(final ORecordInternal<?> iSource, boolean iOnlyDelta) {
-		try {
-			return iSource.toStream();
-		} catch (Exception e) {
-			OLogManager.instance().error(this, "Error on unmarshalling object in binary format: " + iSource.getIdentity(), e,
-					OSerializationException.class);
-		}
-		return null;
-	}
+  @Override
+  public String toString() {
+    return NAME;
+  }
+
+  public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord, String[] iFields) {
+    final ORecordBytes record = (ORecordBytes) iRecord;
+    record.fromStream(iSource);
+    record.reset(iSource);
+
+    return record;
+  }
+
+  public byte[] toStream(final ORecordInternal<?> iSource, boolean iOnlyDelta) {
+    try {
+      return iSource.toStream();
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on unmarshalling object in binary format: " + iSource.getIdentity(), e,
+          OSerializationException.class);
+    }
+    return null;
+  }
 }

@@ -147,7 +147,15 @@ public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> im
       return;
 
     Object o = underlying.get(String.valueOf(iKey));
-    super.put(iKey, OObjectEntitySerializer.deserializeFieldValue(deserializeClass, o));
+		if (o != null)
+    	super.put(iKey, OObjectEntitySerializer.deserializeFieldValue(deserializeClass, o));
+		else {
+			o = underlying.get(iKey);
+
+			if (o != null)
+				super.put(iKey, OObjectEntitySerializer.deserializeFieldValue(deserializeClass, o));
+		}
+
   }
 
   public void detach() {

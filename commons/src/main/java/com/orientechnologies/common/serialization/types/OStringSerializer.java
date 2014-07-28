@@ -157,7 +157,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
   }
 
   public int getFixedLength() {
-    return 0;
+    throw new UnsupportedOperationException("Length of serialized string is not fixed.");
   }
 
   @Override

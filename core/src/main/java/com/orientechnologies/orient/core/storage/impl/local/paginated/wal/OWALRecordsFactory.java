@@ -49,6 +49,8 @@ public class OWALRecordsFactory {
       content[0] = 8;
     else if (walRecord instanceof OAtomicUnitEndRecord)
       content[0] = 9;
+    else if (walRecord instanceof OFileCreatedCreatedWALRecord)
+      content[0] = 10;
     else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
     } else
@@ -85,6 +87,9 @@ public class OWALRecordsFactory {
       break;
     case 9:
       walRecord = new OAtomicUnitEndRecord();
+      break;
+    case 10:
+      walRecord = new OFileCreatedCreatedWALRecord();
       break;
     default:
       if (idToTypeMap.containsKey(content[0]))

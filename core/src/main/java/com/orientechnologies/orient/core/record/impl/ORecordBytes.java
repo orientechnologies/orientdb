@@ -59,6 +59,7 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
   public ORecordBytes(final byte[] iSource) {
     super(iSource);
     _dirty = true;
+    _contentChanged = true;
     setup();
   }
 

@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -31,18 +32,15 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
 @Test(groups = "sql-select")
-public class DateTest {
-  private ODatabaseDocument database;
+public class DateTest extends DocumentDBBaseTest {
 
-  @Parameters(value = "url")
-  public DateTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public DateTest(@Optional String url) {
+		super(url);
+	}
 
-  @Test
+	@Test
   public void testDateConversion() throws ParseException {
-    database.open("admin", "admin");
-
     final long begin = System.currentTimeMillis();
 
     ODocument doc1 = new ODocument("Order");
@@ -65,13 +63,10 @@ public class DateTest {
         new OSQLSynchQuery<ODocument>("select * from Order where date >= ? and context = 'test'")).execute(begin);
 
     Assert.assertEquals(result.size(), 2);
-    database.close();
   }
 
   @Test
   public void testDatePrecision() throws ParseException {
-    database.open("admin", "admin");
-
     final long begin = System.currentTimeMillis();
 
     String dateAsString = database.getStorage().getConfiguration().getDateFormatInstance().format(begin);
@@ -85,7 +80,6 @@ public class DateTest {
         new OSQLSynchQuery<ODocument>("select * from Order where date >= ? and context = 'testPrecision'")).execute(dateAsString);
 
     Assert.assertEquals(result.size(), 1);
-    database.close();
   }
 
   @Test

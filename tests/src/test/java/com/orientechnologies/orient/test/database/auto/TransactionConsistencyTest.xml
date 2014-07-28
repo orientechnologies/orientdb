@@ -1,7 +1,7 @@
 <!DOCTYPE suite SYSTEM "http://beust.com/testng/testng-1.0.dtd">
 <suite name="TransactionConsistencyTest" verbose="2" parallel="false">
 
-	<parameter name="url" value="local:D:\OrientDb\TransactionConsistencyTest" />
+	<parameter name="url" value="plocal:D:\OrientDb\TransactionConsistencyTest" />
 
 	<test name="TransactionConsistencyTest">
 		<classes>

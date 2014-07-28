@@ -35,16 +35,8 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     super(iDatabase);
   }
 
-  protected OIndex<?> getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, Set<String> clustersToIndex,
-      OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
-    if (isMultiValueIndex)
-      return new OIndexRemoteMultiValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
-
-    return new OIndexRemoteOneValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
-  }
-
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition iIndexDefinition,
-      final int[] iClusterIdsToIndex, final OProgressListener iProgressListener, ODocument metadata) {
+      final int[] iClusterIdsToIndex, final OProgressListener progressListener, ODocument metadata, String engine) {
 
     String createIndexDDL;
     if (iIndexDefinition != null)
@@ -52,26 +44,35 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
     else
       createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType);
 
+    if (engine != null)
+      createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_ENGINE + " " + engine;
+
     if (metadata != null)
       createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
 
     acquireExclusiveLock();
     try {
-      if (iProgressListener != null)
-        iProgressListener.onBegin(this, 0);
+      if (progressListener != null)
+        progressListener.onBegin(this, 0, false);
 
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
       document.setIdentity(new ORecordId(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId));
 
-      if (iProgressListener != null)
-        iProgressListener.onCompletition(this, true);
+      if (progressListener != null)
+        progressListener.onCompletition(this, true);
 
       reload();
       return preProcessBeforeReturn(indexes.get(iName.toLowerCase()));
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  @Override
+  public OIndex<?> createIndex(String iName, String iType, OIndexDefinition indexDefinition, int[] clusterIdsToIndex,
+      OProgressListener progressListener, ODocument metadata) {
+    return createIndex(iName, iType, indexDefinition, clusterIdsToIndex, progressListener, metadata, null);
   }
 
   public OIndexManager dropIndex(final String iIndexName) {
@@ -85,34 +86,6 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       reload();
 
       return this;
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
-  @Override
-  protected void fromStream() {
-    acquireExclusiveLock();
-    try {
-      clearMetadata();
-
-      final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
-      if (idxs != null) {
-        for (ODocument d : idxs) {
-          try {
-            OIndexInternal<?> newIndex = OIndexes.createIndex(getDatabase(), (String) d.field(OIndexInternal.CONFIG_TYPE),
-                document.<String> field(OIndexInternal.ALGORITHM),
-                document.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
-            OIndexInternal.IndexMetadata newIndexMetadata = newIndex.loadMetadata(d);
-
-            addIndexInternal(getRemoteIndexInstance(newIndex instanceof OIndexMultiValues, newIndexMetadata.getType(),
-                newIndexMetadata.getName(), newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(),
-                (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID, OType.LINK), d));
-          } catch (Exception e) {
-            OLogManager.instance().error(this, "Error on loading of index by configuration: %s", e, d);
-          }
-        }
-      }
     } finally {
       releaseExclusiveLock();
     }
@@ -135,5 +108,46 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
   @Override
   public boolean autoRecreateIndexesAfterCrash() {
     return false;
+  }
+
+  @Override
+  public void removeClassPropertyIndex(OIndex<?> idx) {
+  }
+
+  protected OIndex<?> getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, Set<String> clustersToIndex,
+      OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
+    if (isMultiValueIndex)
+      return new OIndexRemoteMultiValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
+
+    return new OIndexRemoteOneValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
+  }
+
+  @Override
+  protected void fromStream() {
+    acquireExclusiveLock();
+    try {
+      clearMetadata();
+
+      final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
+      if (idxs != null) {
+        for (ODocument d : idxs) {
+          try {
+            final boolean isMultiValue = ODefaultIndexFactory.isMultiValueIndex((String) d.field(OIndexInternal.CONFIG_TYPE));
+
+            final OIndexInternal.IndexMetadata newIndexMetadata = OIndexAbstract.loadMetadataInternal(d,
+                (String) d.field(OIndexInternal.CONFIG_TYPE), d.<String> field(OIndexInternal.ALGORITHM),
+                d.<String> field(OIndexInternal.VALUE_CONTAINER_ALGORITHM));
+
+            addIndexInternal(getRemoteIndexInstance(isMultiValue, newIndexMetadata.getType(), newIndexMetadata.getName(),
+                newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(),
+                (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID, OType.LINK), d));
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on loading of index by configuration: %s", e, d);
+          }
+        }
+      }
+    } finally {
+      releaseExclusiveLock();
+    }
   }
 }

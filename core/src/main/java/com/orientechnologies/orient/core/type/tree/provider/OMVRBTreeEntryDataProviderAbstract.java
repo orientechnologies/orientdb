@@ -17,11 +17,11 @@ package com.orientechnologies.orient.core.type.tree.provider;
 
 import java.lang.ref.WeakReference;
 
-import com.orientechnologies.common.collection.OMVRBTree;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordListener;
 import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
@@ -62,7 +62,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
     leftRid = new ORecordId();
     rightRid = new ORecordId();
 
-    record = (ORecordBytesLazy) new ORecordBytesLazy(this).unpin();
+    record = (ORecordBytesLazy) new ORecordBytesLazy(this);
     if (iRID != null) {
       record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
       if (treeDataProvider.storage == null)
@@ -88,7 +88,8 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
   }
 
   protected void load(final OStorage iStorage) {
-    final ORawBuffer raw = iStorage.readRecord((ORecordId) record.getIdentity(), null, false, null, false).getResult();
+    final ORawBuffer raw = iStorage.readRecord((ORecordId) record.getIdentity(), null, false, null, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
     record.fill((ORecordId) record.getIdentity(), raw.version, raw.buffer, false);
     fromStream(raw.buffer);
   }
@@ -174,14 +175,14 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
     if (record.getIdentity().isValid())
       // UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
       record.getRecordVersion().copyFrom(
-          iStorage.updateRecord((ORecordId) record.getIdentity(), record.toStream(),
+          iStorage.updateRecord((ORecordId) record.getIdentity(), true, record.toStream(),
               OVersionFactory.instance().createUntrackedVersion(), record.getRecordType(), (byte) 0, null).getResult());
     else {
       // CREATE IT
       if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
         ((ORecordId) record.getIdentity()).clusterId = treeDataProvider.clusterId;
 
-      final OPhysicalPosition ppos = iStorage.createRecord(0, (ORecordId) record.getIdentity(), record.toStream(),
+      final OPhysicalPosition ppos = iStorage.createRecord((ORecordId) record.getIdentity(), record.toStream(),
           OVersionFactory.instance().createVersion(), record.getRecordType(), (byte) 0, null).getResult();
 
       record.setIdentity(record.getIdentity().getClusterId(), ppos.clusterPosition);

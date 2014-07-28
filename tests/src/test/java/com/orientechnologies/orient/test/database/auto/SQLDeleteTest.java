@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -29,20 +30,15 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "sql-delete")
-public class SQLDeleteTest {
-	private ODatabaseDocument	database;
-	private String						url;
+public class SQLDeleteTest extends DocumentDBBaseTest {
 
 	@Parameters(value = "url")
-	public SQLDeleteTest(String iURL) {
-		url = iURL;
-		database = new ODatabaseDocumentTx(iURL);
+	public SQLDeleteTest(@Optional String url) {
+		super(url);
 	}
 
 	@Test
 	public void deleteWithWhereOperator() {
-		database.open("admin", "admin");
-
 		database.command(new OCommandSQL("insert into Profile (sex, salary) values ('female', 2100)")).execute();
 
 		final Long total = database.countClass("Profile");
@@ -56,8 +52,6 @@ public class SQLDeleteTest {
 		Assert.assertEquals(records.intValue(), resultset.size());
 
 		Assert.assertEquals(database.countClass("Profile"), total - records.intValue());
-
-		database.close();
 	}
 
 	@Test

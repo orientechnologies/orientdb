@@ -25,49 +25,46 @@ import java.util.Map.Entry;
  * 
  * @author Luca Garulli
  * 
- * @param <K>
- * @param <V>
  */
 public class OCommandParameters implements Iterable<Map.Entry<Object, Object>> {
-	private final Map<Object, Object>	parameters;
-	private int												counter	= 0;
+  private final Map<Object, Object> parameters;
+  private int                       counter = 0;
 
-	public OCommandParameters() {
-		parameters = new HashMap<Object, Object>();
-	}
+  public OCommandParameters() {
+    parameters = new HashMap<Object, Object>();
+  }
 
-	public OCommandParameters(final Map<Object, Object> iArgs) {
-		if (iArgs != null)
-			parameters = iArgs;
-		else
-			parameters = new HashMap<Object, Object>();
-	}
+  public OCommandParameters(final Map<Object, Object> iArgs) {
+    if (iArgs != null)
+      parameters = iArgs;
+    else
+      parameters = new HashMap<Object, Object>();
+  }
 
-	public void putArgument(final Object k, final Object v) {
-		parameters.put(k, v);
-	}
+  public void set(final Object k, final Object v) {
+    parameters.put(k, v);
+  }
 
-	public Object getByName(final Object iName) {
-		return parameters.get(iName);
-	}
+  public Object getByName(final Object iName) {
+    return parameters.get(iName);
+  }
 
-	public Object getNext() {
-		if (parameters.size() <= counter)
-			throw new IndexOutOfBoundsException("No enough parameters are passed. You requested parameter " + counter + " but only "
-					+ parameters.size() + " was found");
+  public Object getNext() {
+    if (parameters.size() <= counter)
+      throw new IndexOutOfBoundsException("Parameter " + counter + " not found. Total parameters received: " + parameters.size());
 
-		return parameters.get(counter++);
-	}
+    return parameters.get(counter++);
+  }
 
-	public Iterator<Entry<Object, Object>> iterator() {
-		return parameters.entrySet().iterator();
-	}
+  public Iterator<Entry<Object, Object>> iterator() {
+    return parameters.entrySet().iterator();
+  }
 
-	public int size() {
-		return parameters.size();
-	}
+  public int size() {
+    return parameters.size();
+  }
 
-	public void reset() {
-		counter = 0;
-	}
+  public void reset() {
+    counter = 0;
+  }
 }

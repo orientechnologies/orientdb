@@ -109,7 +109,8 @@ public class OMetadataDefault implements OMetadata {
 
     schema = new OSchemaProxy(database.getStorage().getResource(OSchema.class.getSimpleName(), new Callable<OSchemaShared>() {
       public OSchemaShared call() {
-        final OSchemaShared instance = new OSchemaShared(schemaClusterId);
+        ODatabaseRecord database = getDatabase();
+        final OSchemaShared instance = new OSchemaShared(database.getStorageVersions().classesAreDetectedByClusterId());
         if (iLoad)
           instance.load();
         return instance;
@@ -195,7 +196,7 @@ public class OMetadataDefault implements OMetadata {
     if (schema != null)
       schema.close();
     if (security != null)
-      security.close();
+      security.close(false);
   }
 
   protected ODatabaseRecord getDatabase() {

@@ -1,28 +1,18 @@
 {
-    "replication": true,
     "autoDeploy": true,
-    "hotAlignment": true,
-    "resyncEvery": 15,
+    "hotAlignment": false,
+    "offlineMsgQueueSize" : 0,
+    "readQuorum": 1,
+    "writeQuorum": 2,
+    "failureAvailableNodesLessQuorum": false,
+    "readYourWrites": true,
     "clusters": {
         "internal": {
-            "replication": false
         },
         "index": {
-            "replication": false
         },
         "*": {
-            "replication": true,
-            "readQuorum": 1,
-            "writeQuorum": 2,
-            "failureAvailableNodesLessQuorum": false,
-            "readYourWrites": true,
-            "partitioning": {
-                "strategy": "round-robin",
-                "default": 0,
-                "partitions": [
-                    [ "<NEW_NODE>" ]
-                ]
-            }
+            "servers" : [ "<NEW_NODE>" ]
         }
     }
 }

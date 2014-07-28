@@ -5,12 +5,9 @@ import java.util.Date;
 import java.util.List;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
-import com.orientechnologies.common.collection.OCompositeKey;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -24,17 +21,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @since 10/21/13
  */
 @Test(groups = { "index" })
-public class DateIndexTest {
-  private ODatabaseDocumentTx database;
+public class DateIndexTest  extends DocumentDBBaseTest {
 
-  @Parameters(value = "url")
-  public DateIndexTest(String url) {
-    database = new ODatabaseDocumentTx(url);
-  }
+	@Parameters(value = "url")
+	public DateIndexTest(@Optional String url) {
+		super(url);
+	}
 
-  @BeforeClass
-  public void beforeClass() {
-    database.open("admin", "admin");
+	@BeforeClass
+  public void beforeClass() throws Exception {
+		super.beforeClass();
 
     final OSchema schema = database.getMetadata().getSchema();
 
@@ -68,18 +64,9 @@ public class DateIndexTest {
         "dateTimeList");
 
     schema.save();
-
-    database.close();
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-    database.close();
   }
 
   public void testDateIndexes() {
-    database.open("admin", "admin");
-
     final Date dateOne = new Date();
 
     final Date dateTwo = new Date(dateOne.getTime() + 24 * 60 * 60 * 1000 + 100);

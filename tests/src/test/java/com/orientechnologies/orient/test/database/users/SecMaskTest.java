@@ -18,7 +18,7 @@ public class SecMaskTest {
 
 	@Test
 	public static void main(String[] args) {
-		database = new ODatabaseDocumentTx("local:/tmp/secmask/secmask");
+		database = new ODatabaseDocumentTx("plocal:/tmp/secmask/secmask");
 		if (database.exists())
 			database.open("admin", "admin");
 		else {
@@ -94,7 +94,7 @@ public class SecMaskTest {
 
 	public static void create() {
 		OClass account = database.getMetadata().getSchema()
-				.createClass("Account", database.addCluster("account", OStorage.CLUSTER_TYPE.PHYSICAL));
+				.createClass("Account", database.addCluster("account"));
 		account.createProperty("id", OType.LONG);
 		account.createProperty("val1", OType.DOUBLE);
 		account.createProperty("val2", OType.DOUBLE);

@@ -15,21 +15,20 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OBaseParser;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -67,17 +66,18 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     final int pos = parseFields();
     if (pos == -1)
       throw new OCommandSQLParsingException("Traverse must have the field list. Use " + getSyntax());
+    parserSetCurrentPosition(pos);
 
     int endPosition = parserText.length();
-    int endP = parserTextUpperCase.indexOf(" " + OCommandExecutorSQLTraverse.KEYWORD_LIMIT, parserGetCurrentPosition());
-    if (endP > -1 && endP < endPosition)
-      endPosition = endP;
 
     parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(pos, endPosition), getContext(), KEYWORD_WHILE);
 
-    if (!parsedTarget.parserIsEnded()) {
-      parserSetCurrentPosition(parsedTarget.parserGetCurrentPosition() + pos);
+    if (parsedTarget.parserIsEnded())
+      parserSetCurrentPosition(endPosition);
+    else
+      parserMoveCurrentPosition(parsedTarget.parserGetCurrentPosition());
 
+    if (!parserIsEnded()) {
       parserNextWord(true);
 
       if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE))
@@ -95,9 +95,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
             + parserGetCurrentPosition());
       } else
         parserGoBack();
-
-    } else
-      parserSetCurrentPosition(-1);
+    }
 
     parserSkipWhiteSpaces();
 
@@ -120,9 +118,48 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     else
       traverse.limit(limit);
 
-    ((OCommandRequestText) iRequest).getContext().setChild(traverse.getContext());
+    iRequest.getContext().setChild(traverse.getContext());
 
     return this;
+  }
+
+  public Object execute(final Map<Object, Object> iArgs) {
+    if (!assignTarget(iArgs))
+      throw new OQueryParsingException("No source found in query: specify class, cluster(s) or single record(s)");
+
+    context = traverse.getContext();
+    context.beginExecution(timeoutMs, timeoutStrategy);
+
+    try {
+      // BROWSE ALL THE RECORDS AND COLLECTS RESULT
+      final List<OIdentifiable> result = traverse.execute();
+      for (OIdentifiable r : result)
+        if (!handleResult(r))
+          // LIMIT REACHED
+          break;
+
+      return getResult();
+    } finally {
+      request.getResultListener().end();
+    }
+  }
+
+  @Override
+  public OCommandContext getContext() {
+    return traverse.getContext();
+  }
+
+  public Iterator<OIdentifiable> iterator() {
+    return iterator(null);
+  }
+
+  public Iterator<OIdentifiable> iterator(final Map<Object, Object> iArgs) {
+    assignTarget(iArgs);
+    return traverse;
+  }
+
+  public String getSyntax() {
+    return "TRAVERSE <field>* FROM <target> [WHILE <condition>] [STRATEGY <strategy>]";
   }
 
   protected void warnDeprecatedWhere() {
@@ -140,52 +177,6 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       return true;
     }
     return false;
-  }
-
-  public Object execute(final Map<Object, Object> iArgs) {
-    if (!assignTarget(iArgs))
-      throw new OQueryParsingException("No source found in query: specify class, cluster(s) or single record(s)");
-
-    context = traverse.getContext();
-    context.beginExecution(timeoutMs, timeoutStrategy);
-
-    // BROWSE ALL THE RECORDS AND COLLECTS RESULT
-    final List<OIdentifiable> result = (List<OIdentifiable>) traverse.execute();
-    for (OIdentifiable r : result)
-      handleResult(r, true);
-
-    return getResult();
-  }
-
-  public boolean hasNext() {
-    if (target == null)
-      assignTarget(null);
-
-    return traverse.hasNext();
-  }
-
-  @Override
-  public OCommandContext getContext() {
-    return traverse.getContext();
-  }
-
-  public OIdentifiable next() {
-    if (target == null)
-      assignTarget(null);
-
-    return traverse.next();
-  }
-
-  public void remove() {
-    throw new UnsupportedOperationException("remove()");
-  }
-
-  public Iterator<OIdentifiable> iterator() {
-    return this;
-  }
-
-  public String getSyntax() {
-    return "TRAVERSE <field>* FROM <target> [WHILE <condition>] [STRATEGY <strategy>]";
   }
 
   protected int parseFields() {
@@ -211,7 +202,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
         final String fieldName = field.trim();
 
         if (fieldName.contains("("))
-          fields.add(OSQLHelper.parseValue((OBaseParser) null, fieldName, context));
+          fields.add(OSQLHelper.parseValue(null, fieldName, context));
         else
           fields.add(fieldName);
       }
@@ -238,7 +229,7 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     try {
       traverse.setStrategy(OTraverse.STRATEGY.valueOf(strategyWord.toUpperCase()));
     } catch (IllegalArgumentException e) {
-      throwParsingException("Invalid " + KEYWORD_STRATEGY + ". Use one between " + OTraverse.STRATEGY.values());
+      throwParsingException("Invalid " + KEYWORD_STRATEGY + ". Use one between " + Arrays.toString(OTraverse.STRATEGY.values()));
     }
     return true;
   }

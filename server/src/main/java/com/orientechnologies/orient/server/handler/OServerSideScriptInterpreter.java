@@ -16,12 +16,19 @@
 package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Allow the execution of server-side scripting. This could be a security hole in your configuration if users have access to the
@@ -31,7 +38,8 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  * 
  */
 public class OServerSideScriptInterpreter extends OServerPluginAbstract {
-  private boolean enabled = false;
+  protected boolean     enabled          = false;
+  protected Set<String> allowedLanguages = new HashSet<String>();
 
   @Override
   public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
@@ -40,6 +48,8 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
         if (Boolean.parseBoolean(param.value))
           // ENABLE IT
           enabled = true;
+      } else if (param.name.equalsIgnoreCase("allowedLanguages")) {
+        allowedLanguages = new HashSet<String>(Arrays.asList(param.value.toLowerCase().split(",")));
       }
     }
   }
@@ -51,14 +61,30 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
 
   @Override
   public void startup() {
+    OCommandManager.instance().unregisterExecutor(OCommandScript.class);
+
     if (!enabled)
       return;
 
-    OLogManager.instance().info(this,
-        "Installing Script interpreter. WARN: authenticated clients can execute any kind of code into the server.");
+    OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class,
+        new OCallable<Void, OCommandRequest>() {
+          @Override
+          public Void call(OCommandRequest iArgument) {
+            final String language = ((OCommandScript) iArgument).getLanguage().toLowerCase();
 
-    // REGISTER THE SECURE COMMAND SCRIPT
-    OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class);
+            if (!allowedLanguages.contains(language))
+              throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
+
+            return null;
+          }
+        });
+
+    OLogManager
+        .instance()
+        .info(
+            this,
+            "Installing Script interpreter. WARN: authenticated clients can execute any kind of code into the server by using the following allowed languages: "
+                + allowedLanguages);
   }
 
   @Override

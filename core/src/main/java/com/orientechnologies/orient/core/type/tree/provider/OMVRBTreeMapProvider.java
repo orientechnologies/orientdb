@@ -56,7 +56,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
   public OMVRBTreeMapProvider(final OStorage iStorage, final String iClusterName, final OBinarySerializer<K> iKeySerializer,
       final OStreamSerializer iValueSerializer) {
-    super(new ORecordBytesLazy().unpin(), iStorage, iClusterName);
+    super(new ORecordBytesLazy(), iStorage, iClusterName);
     ((ORecordBytesLazy) record).recycle(this);
     stream = new OMemoryStream();
     keySerializer = iKeySerializer;
@@ -170,7 +170,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
         keySerializer = createRelatedSerializer(streamKeySerializer);
       } else {
-        keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.INSTANCE.getObjectSerializer(stream.getAsByte());
+        keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance().getObjectSerializer(stream.getAsByte());
         valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
 
         final String oldKeySerializerName = stream.getAsString();

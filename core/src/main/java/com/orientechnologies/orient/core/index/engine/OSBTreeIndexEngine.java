@@ -16,11 +16,6 @@
 
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -28,28 +23,31 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.ODocumentFieldsHashSet;
+import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
-import com.orientechnologies.orient.core.index.sbtree.OSBTreeInverseMapEntryIterator;
-import com.orientechnologies.orient.core.index.sbtree.OSBTreeMapEntryIterator;
-import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
  * @since 8/30/13
  */
 public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
-  public static final String DATA_FILE_EXTENSION = ".sbt";
+  public static final String DATA_FILE_EXTENSION        = ".sbt";
+  public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
   private ORID               identity;
   private OSBTree<Object, V> sbTree;
@@ -78,39 +76,51 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       OStreamSerializer valueSerializer, boolean isAutomatic) {
     acquireExclusiveLock();
     try {
-      final OBinarySerializer keySerializer;
-      if (indexDefinition != null) {
-        if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
-          sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1,
-              OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
-          keySerializer = ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();
-        } else {
-          if (indexDefinition.getTypes().length > 1) {
-            keySerializer = OCompositeKeySerializer.INSTANCE;
-          } else {
-            keySerializer = OBinarySerializerFactory.INSTANCE.getObjectSerializer(indexDefinition.getTypes()[0]);
-          }
-          sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, indexDefinition.getTypes().length,
-              OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
-        }
-      } else {
-        sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1,
-            OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
-        keySerializer = new OSimpleKeySerializer();
-      }
+
+      final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
+      final int keySize = determineKeySize(indexDefinition);
+
+      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, keySize,
+          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
 
       final ORecordBytes identityRecord = new ORecordBytes();
       ODatabaseRecord database = getDatabase();
-      final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
+      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       database.save(identityRecord, clusterIndexName);
       identity = identityRecord.getIdentity();
 
       sbTree.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
-          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract);
+          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, indexDefinition != null
+              && !indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }
+  }
+
+  private int determineKeySize(OIndexDefinition indexDefinition) {
+    if (indexDefinition == null || indexDefinition instanceof ORuntimeKeyIndexDefinition)
+      return 1;
+    else
+      return indexDefinition.getTypes().length;
+  }
+
+  private OBinarySerializer determineKeySerializer(OIndexDefinition indexDefinition) {
+    final OBinarySerializer keySerializer;
+    if (indexDefinition != null) {
+      if (indexDefinition instanceof ORuntimeKeyIndexDefinition) {
+        keySerializer = ((ORuntimeKeyIndexDefinition) indexDefinition).getSerializer();
+      } else {
+        if (indexDefinition.getTypes().length > 1) {
+          keySerializer = OCompositeKeySerializer.INSTANCE;
+        } else {
+          keySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(indexDefinition.getTypes()[0]);
+        }
+      }
+    } else {
+      keySerializer = new OSimpleKeySerializer();
+    }
+    return keySerializer;
   }
 
   @Override
@@ -128,9 +138,10 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     acquireExclusiveLock();
     try {
       final ODatabaseRecord database = getDatabase();
-      final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
+      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
-      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1, OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1,
+          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
       sbTree.deleteWithoutLoad(indexName, storageLocalAbstract);
     } finally {
       releaseExclusiveLock();
@@ -138,22 +149,19 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, boolean isAutomatic) {
+  public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
+      boolean isAutomatic) {
     acquireExclusiveLock();
     try {
-      final int keySize;
-      if (indexDefinition == null || indexDefinition instanceof ORuntimeKeyIndexDefinition)
-        keySize = 1;
-      else
-        keySize = indexDefinition.getTypes().length;
-
-      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, keySize,
-          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, determineKeySize(indexDefinition),
+          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
 
       ODatabaseRecord database = getDatabase();
-      final OStorageLocalAbstract storageLocalAbstract = (OStorageLocalAbstract) database.getStorage().getUnderlying();
+      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
-      sbTree.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract);
+      sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
+          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, indexDefinition != null
+              && indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }
@@ -199,137 +207,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     }
   }
 
-  @Override
-  public Iterator<Map.Entry<Object, V>> iterator() {
-    acquireSharedLock();
-    try {
-      return new OSBTreeMapEntryIterator<Object, V>(sbTree);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public Iterator<Map.Entry<Object, V>> inverseIterator() {
-    acquireSharedLock();
-    try {
-      return new OSBTreeInverseMapEntryIterator<Object, V>(sbTree);
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public Iterator<V> valuesIterator() {
-    acquireSharedLock();
-    try {
-      return new Iterator<V>() {
-        private final OSBTreeMapEntryIterator<Object, V> entryIterator = new OSBTreeMapEntryIterator<Object, V>(sbTree);
-
-        @Override
-        public boolean hasNext() {
-          return entryIterator.hasNext();
-        }
-
-        @Override
-        public V next() {
-          return entryIterator.next().getValue();
-        }
-
-        @Override
-        public void remove() {
-          entryIterator.remove();
-        }
-      };
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public Iterator<V> inverseValuesIterator() {
-    acquireSharedLock();
-    try {
-      return new Iterator<V>() {
-        private final OSBTreeInverseMapEntryIterator<Object, V> entryIterator = new OSBTreeInverseMapEntryIterator<Object, V>(
-                                                                                  sbTree);
-
-        @Override
-        public boolean hasNext() {
-          return entryIterator.hasNext();
-        }
-
-        @Override
-        public V next() {
-          return entryIterator.next().getValue();
-        }
-
-        @Override
-        public void remove() {
-          entryIterator.remove();
-        }
-      };
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public Iterable<Object> keys() {
-    acquireSharedLock();
-    try {
-      return new Iterable<Object>() {
-        @Override
-        public Iterator<Object> iterator() {
-          return new Iterator<Object>() {
-
-            final OSBTreeMapEntryIterator<Object, V> entryIterator = new OSBTreeMapEntryIterator<Object, V>(sbTree);
-
-            @Override
-            public boolean hasNext() {
-              return entryIterator.hasNext();
-            }
-
-            @Override
-            public Object next() {
-              return entryIterator.next().getKey();
-            }
-
-            @Override
-            public void remove() {
-              entryIterator.remove();
-            }
-          };
-        }
-      };
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public void unload() {
-  }
-
-  @Override
-  public void startTransaction() {
-  }
-
-  @Override
-  public void stopTransaction() {
-  }
-
-  @Override
-  public void afterTxRollback() {
-  }
-
-  @Override
-  public void afterTxCommit() {
-  }
-
-  @Override
-  public void closeDb() {
-  }
 
   @Override
   public void close() {
@@ -341,15 +218,67 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     }
   }
 
-  @Override
-  public void beforeTxBegin() {
-  }
 
   @Override
   public V get(Object key) {
     acquireSharedLock();
     try {
       return sbTree.get(key);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OIndexCursor cursor(ValuesTransformer<V> valuesTransformer) {
+    acquireSharedLock();
+    try {
+      final Object firstKey = sbTree.firstKey();
+      if (firstKey == null)
+        return new OIndexAbstractCursor() {
+          @Override
+          public Map.Entry<Object, OIdentifiable> nextEntry() {
+            return null;
+          }
+        };
+
+      return new OSBTreeIndexCursor<V>(sbTree.iterateEntriesMajor(firstKey, true, true), valuesTransformer);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OIndexCursor descCursor(ValuesTransformer<V> valuesTransformer) {
+    acquireSharedLock();
+    try {
+      final Object lastKey = sbTree.lastKey();
+      if (lastKey == null)
+        return new OIndexAbstractCursor() {
+          @Override
+          public Map.Entry<Object, OIdentifiable> nextEntry() {
+            return null;
+          }
+        };
+
+      return new OSBTreeIndexCursor<V>(sbTree.iterateEntriesMinor(lastKey, true, false), valuesTransformer);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OIndexKeyCursor keyCursor() {
+    acquireSharedLock();
+    try {
+      return new OIndexKeyCursor() {
+        private final OSBTree.OSBTreeKeyCursor<Object> sbTreeKeyCursor = sbTree.keyCursor();
+
+        @Override
+        public Object next(int prefetchSize) {
+          return sbTreeKeyCursor.next(prefetchSize);
+        }
+      };
     } finally {
       releaseSharedLock();
     }
@@ -366,108 +295,54 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void getValuesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
-      final ValuesTransformer<V> transformer, final ValuesResultListener valuesResultListener) {
+  public Object getFirstKey() {
     acquireSharedLock();
     try {
-      sbTree.loadEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, new OSBTree.RangeResultListener<Object, V>() {
-        @Override
-        public boolean addResult(Map.Entry<Object, V> entry) {
-          return addToResult(transformer, valuesResultListener, entry.getValue());
-        }
-      });
+      return sbTree.firstKey();
     } finally {
       releaseSharedLock();
     }
   }
 
   @Override
-  public void getValuesMajor(Object fromKey, boolean isInclusive, final ValuesTransformer<V> transformer,
-      final ValuesResultListener valuesResultListener) {
+  public Object getLastKey() {
     acquireSharedLock();
     try {
-      sbTree.loadEntriesMajor(fromKey, isInclusive, new OSBTree.RangeResultListener<Object, V>() {
-        @Override
-        public boolean addResult(Map.Entry<Object, V> entry) {
-          return addToResult(transformer, valuesResultListener, entry.getValue());
-        }
-      });
+      return sbTree.lastKey();
     } finally {
       releaseSharedLock();
     }
   }
 
   @Override
-  public void getValuesMinor(Object toKey, boolean isInclusive, final ValuesTransformer<V> transformer,
-      final ValuesResultListener valuesResultListener) {
+  public OIndexCursor iterateEntriesBetween(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive,
+      boolean ascSortOrder, ValuesTransformer<V> transformer) {
     acquireSharedLock();
     try {
-      sbTree.loadEntriesMinor(toKey, isInclusive, new OSBTree.RangeResultListener<Object, V>() {
-        @Override
-        public boolean addResult(Map.Entry<Object, V> entry) {
-          return addToResult(transformer, valuesResultListener, entry.getValue());
-        }
-      });
+      return new OSBTreeIndexCursor<V>(sbTree.iterateEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, ascSortOrder),
+          transformer);
     } finally {
       releaseSharedLock();
     }
   }
 
   @Override
-  public void getEntriesMajor(Object fromKey, boolean isInclusive, final ValuesTransformer<V> transformer,
-      final EntriesResultListener entriesResultListener) {
+  public OIndexCursor iterateEntriesMajor(Object fromKey, boolean isInclusive, boolean ascSortOrder,
+      ValuesTransformer<V> transformer) {
     acquireSharedLock();
     try {
-      sbTree.loadEntriesMajor(fromKey, isInclusive, new OTreeInternal.RangeResultListener<Object, V>() {
-        @Override
-        public boolean addResult(Map.Entry<Object, V> entry) {
-          final Object key = entry.getKey();
-          final V value = entry.getValue();
-
-          return addToEntriesResult(transformer, entriesResultListener, key, value);
-        }
-      });
+      return new OSBTreeIndexCursor<V>(sbTree.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder), transformer);
     } finally {
       releaseSharedLock();
     }
   }
 
   @Override
-  public void getEntriesMinor(Object toKey, boolean isInclusive, final ValuesTransformer<V> transformer,
-      final EntriesResultListener entriesResultListener) {
+  public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
     acquireSharedLock();
     try {
-      sbTree.loadEntriesMinor(toKey, isInclusive, new OTreeInternal.RangeResultListener<Object, V>() {
-        @Override
-        public boolean addResult(Map.Entry<Object, V> entry) {
-          final Object key = entry.getKey();
-          final V value = entry.getValue();
+      return new OSBTreeIndexCursor<V>(sbTree.iterateEntriesMinor(toKey, isInclusive, ascSortOrder), transformer);
 
-          return addToEntriesResult(transformer, entriesResultListener, key, value);
-
-        }
-      });
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public void getEntriesBetween(Object rangeFrom, Object rangeTo, boolean inclusive, final ValuesTransformer<V> transformer,
-      final EntriesResultListener entriesResultListener) {
-    acquireSharedLock();
-    try {
-      final Set<ODocument> result = new ODocumentFieldsHashSet();
-
-      sbTree.loadEntriesBetween(rangeFrom, inclusive, rangeTo, inclusive, new OTreeInternal.RangeResultListener<Object, V>() {
-        @Override
-        public boolean addResult(Map.Entry<Object, V> entry) {
-          final Object key = entry.getKey();
-          final V value = entry.getValue();
-
-          return addToEntriesResult(transformer, entriesResultListener, key, value);
-        }
-      });
     } finally {
       releaseSharedLock();
     }
@@ -480,37 +355,24 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       if (transformer == null)
         return sbTree.size();
       else {
-
-        final ItemsCounter<V> counter = new ItemsCounter<V>(transformer, -1);
-
         final Object firstKey = sbTree.firstKey();
         final Object lastKey = sbTree.lastKey();
 
         if (firstKey != null && lastKey != null) {
-          sbTree.loadEntriesBetween(firstKey, true, lastKey, true, counter);
-          return counter.count;
+          int counter = 0;
+
+          final OSBTree.OSBTreeCursor<Object, V> cursor = sbTree.iterateEntriesBetween(firstKey, true, lastKey, true, true);
+          Map.Entry<Object, V> entry = cursor.next(-1);
+          while (entry != null) {
+            counter += transformer.transformFromValue(entry.getValue()).size();
+            entry = cursor.next(-1);
+          }
+
+          return counter;
         }
 
         return 0;
       }
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
-  @Override
-  public long count(Object rangeFrom, boolean fromInclusive, Object rangeTo, boolean toInclusive, int maxValuesToFetch,
-      ValuesTransformer<V> transformer) {
-    acquireSharedLock();
-    try {
-      final ItemsCounter<V> itemsCounter = new ItemsCounter<V>(transformer, maxValuesToFetch);
-
-      if (rangeTo != null)
-        sbTree.loadEntriesBetween(rangeFrom, fromInclusive, rangeTo, toInclusive, itemsCounter);
-      else
-        sbTree.loadEntriesMajor(rangeFrom, fromInclusive, itemsCounter);
-
-      return itemsCounter.count;
     } finally {
       releaseSharedLock();
     }
@@ -525,70 +387,55 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  private boolean addToResult(ValuesTransformer<V> transformer, ValuesResultListener resultListener, V value) {
-    if (transformer != null) {
-      Collection<OIdentifiable> transformResult = transformer.transformFromValue(value);
-      for (OIdentifiable transformedValue : transformResult) {
+  private static final class OSBTreeIndexCursor<V> extends OIndexAbstractCursor {
+    private final OSBTree.OSBTreeCursor<Object, V> treeCursor;
+    private final ValuesTransformer<V>             valuesTransformer;
 
-        boolean cont = resultListener.addResult(transformedValue);
-        if (!cont)
-          return false;
-      }
+    private Iterator<OIdentifiable>                currentIterator = OEmptyIterator.IDENTIFIABLE_INSTANCE;
+    private Object                                 currentKey      = null;
 
-      return true;
-    } else
-      return resultListener.addResult((OIdentifiable) value);
-  }
-
-  private boolean addToEntriesResult(ValuesTransformer<V> transformer, EntriesResultListener entriesResultListener, Object key,
-      V value) {
-    if (transformer != null) {
-      Collection<OIdentifiable> transformResult = transformer.transformFromValue(value);
-      for (OIdentifiable transformedValue : transformResult) {
-        final ODocument document = new ODocument();
-        document.field("key", key);
-        document.field("rid", transformedValue.getIdentity());
-        document.unsetDirty();
-
-        boolean cont = entriesResultListener.addResult(document);
-
-        if (!cont)
-          return false;
-      }
-
-      return true;
-    } else {
-      final ODocument document = new ODocument();
-      document.field("key", key);
-      document.field("rid", ((OIdentifiable) value).getIdentity());
-      document.unsetDirty();
-
-      return entriesResultListener.addResult(document);
-    }
-  }
-
-  private static final class ItemsCounter<V> implements OSBTree.RangeResultListener<Object, V> {
-    private final ValuesTransformer<V> valuesTransformer;
-    private final int                  maxValuesToFetch;
-
-    private ItemsCounter(ValuesTransformer<V> valuesTransformer, int maxValuesToFetch) {
+    private OSBTreeIndexCursor(OSBTree.OSBTreeCursor<Object, V> treeCursor, ValuesTransformer<V> valuesTransformer) {
+      this.treeCursor = treeCursor;
       this.valuesTransformer = valuesTransformer;
-      this.maxValuesToFetch = maxValuesToFetch;
     }
-
-    private int count;
 
     @Override
-    public boolean addResult(Map.Entry<Object, V> entry) {
-      if (valuesTransformer != null)
-        count += valuesTransformer.transformFromValue(entry.getValue()).size();
-      else
-        count++;
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
+      if (valuesTransformer == null)
+        return (Map.Entry<Object, OIdentifiable>) treeCursor.next(getPrefetchSize());
 
-      if (maxValuesToFetch > 0 && count >= maxValuesToFetch)
-        return false;
+      if (currentIterator == null)
+        return null;
 
-      return true;
+      while (!currentIterator.hasNext()) {
+        Map.Entry<Object, V> entry = treeCursor.next(getPrefetchSize());
+        if (entry == null) {
+          currentIterator = null;
+          return null;
+        }
+
+        currentKey = entry.getKey();
+        currentIterator = valuesTransformer.transformFromValue(entry.getValue()).iterator();
+      }
+
+      final OIdentifiable value = currentIterator.next();
+
+      return new Map.Entry<Object, OIdentifiable>() {
+        @Override
+        public Object getKey() {
+          return currentKey;
+        }
+
+        @Override
+        public OIdentifiable getValue() {
+          return value;
+        }
+
+        @Override
+        public OIdentifiable setValue(OIdentifiable value) {
+          throw new UnsupportedOperationException("setValue");
+        }
+      };
     }
   }
 }

@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.text.ParseException;
 import java.util.Arrays;
 
@@ -26,7 +26,7 @@ public class OJSONReader {
   private int                cursor            = 0;
   private int                lineNumber        = 0;
   private int                columnNumber      = 0;
-  private StringBuilder      buffer            = new StringBuilder();
+  private StringBuilder      buffer            = new StringBuilder(16384); //16KB
   private String             value;
   private char               c;
   private Character          missedChar;
@@ -45,7 +45,7 @@ public class OJSONReader {
   public static final char[] BEGIN_COLLECTION  = new char[] { '[' };
   public static final char[] END_COLLECTION    = new char[] { ']' };
 
-  public OJSONReader(InputStreamReader iIn) {
+  public OJSONReader(Reader iIn) {
     this.in = new BufferedReader(iIn);
   }
 
@@ -220,7 +220,7 @@ public class OJSONReader {
   /**
    * Returns the next character from the input stream. Handles Unicode decoding.
    */
-  private char nextChar() throws IOException {
+  public char nextChar() throws IOException {
     if (missedChar != null) {
       // RETURNS THE PREVIOUS PARSED CHAR
       c = missedChar.charValue();

@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -36,6 +32,10 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
@@ -115,64 +115,9 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
     if (cls == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
 
-    cls.setInternalAndSave(attribute, value);
-
-    if (OClass.ATTRIBUTES.NAME.equals(attribute)) {
-      final OStorage storage = database.getStorage();
-
-      for (int clusterId : cls.getClusterIds()) {
-        OClusterPosition[] range = storage.getClusterDataRange(clusterId);
-
-        OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(range[0]));
-        do {
-          for (OPhysicalPosition position : positions) {
-            final ORecordId identity = new ORecordId(clusterId, position.clusterPosition);
-            final ORawBuffer record = storage.readRecord(identity, null, true, null, false).getResult();
-
-            if (record.recordType == ODocument.RECORD_TYPE) {
-              final ORecordSerializerSchemaAware2CSV serializer = (ORecordSerializerSchemaAware2CSV) ORecordSerializerFactory
-                  .instance().getFormat(ORecordSerializerSchemaAware2CSV.NAME);
-
-              if (serializer.getClassName(OBinaryProtocol.bytes2string(record.buffer)).equalsIgnoreCase(className)) {
-                final ODocument document = new ODocument();
-                document.setLazyLoad(false);
-                document.fromStream(record.buffer);
-                document.getRecordVersion().copyFrom(record.version);
-                document.setIdentity(identity);
-                document.setClassName(cls.getName());
-                document.setDirty();
-                document.save();
-              }
-            }
-
-            if (positions.length > 0)
-              positions = storage.higherPhysicalPositions(clusterId, positions[positions.length - 1]);
-          }
-        } while (positions.length > 0);
-      }
-    }
-
-    renameCluster();
+    cls.set(attribute, value);
 
     return null;
-  }
-
-  private void renameCluster() {
-    final ODatabaseRecord database = getDatabase();
-    if (attribute.equals(OClass.ATTRIBUTES.NAME) && checkClusterRenameOk(database.getStorage().getClusterIdByName(value))) {
-      database.command(new OCommandSQL("alter cluster " + className + " name " + value)).execute();
-    }
-  }
-
-  private boolean checkClusterRenameOk(int clusterId) {
-    final ODatabaseRecord database = getDatabase();
-    for (OClass clazz : database.getMetadata().getSchema().getClasses()) {
-      if (clazz.getName().equals(value))
-        continue;
-      else if (clazz.getDefaultClusterId() == clusterId || Arrays.asList(clazz.getClusterIds()).contains(clusterId))
-        return false;
-    }
-    return true;
   }
 
   public String getSyntax() {

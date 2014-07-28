@@ -15,85 +15,99 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.IOException;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
-
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.OImmutableRecordId;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
+import java.io.IOException;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+
 /**
- * Versions:<li>
+ * Versions:
  * <ul>
- * 3 = introduced file directory in physical segments and data-segment id in clusters
+ * <li>3 = introduced file directory in physical segments and data-segment id in clusters</li>
+ * <li>4 = ??</li>
+ * <li>5 = ??</li>
+ * <li>6 = ??</li>
+ * <li>7 = ??</li>
+ * <li>8 = introduced cluster selection strategy as string</li>
+ * <li>9 = introduced minimumclusters as string</li>
  * </ul>
- * </li>
  * 
- * @author Luca
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId             CONFIG_RID      = new OImmutableRecordId(0, OClusterPositionFactory.INSTANCE.valueOf(0));
+  public static final ORecordId CONFIG_RID = new OImmutableRecordId(0, OClusterPositionFactory.INSTANCE.valueOf(0));
 
-  public static final String                DEFAULT_CHARSET = "UTF-8";
-
-  public static final int                   CURRENT_VERSION = 6;
-
-  public int                                version         = -1;
-  public String                             name;
-  public String                             schemaRecordId;
-  public String                             dictionaryRecordId;
-  public String                             indexMgrRecordId;
-
-  private String                            localeLanguage  = Locale.getDefault().getLanguage();
-  private String                            localeCountry   = Locale.getDefault().getCountry();
-  public String                             dateFormat      = "yyyy-MM-dd";
-  public String                             dateTimeFormat  = "yyyy-MM-dd HH:mm:ss";
-  private TimeZone                          timeZone        = TimeZone.getDefault();
-  private String                            charset         = DEFAULT_CHARSET;
-
-  public OStorageSegmentConfiguration       fileTemplate;
-
-  public List<OStorageClusterConfiguration> clusters        = new ArrayList<OStorageClusterConfiguration>();
-  public List<OStorageDataConfiguration>    dataSegments    = new ArrayList<OStorageDataConfiguration>();
-
-  public OStorageTxConfiguration            txSegment       = new OStorageTxConfiguration();
-
-  public List<OStorageEntryConfiguration>   properties      = new ArrayList<OStorageEntryConfiguration>();
-
-  private transient Locale                  localeInstance;
-  private transient DecimalFormatSymbols    unusualSymbols;
-  protected transient OStorage              storage;
+  public static final String                           DEFAULT_CHARSET               = "UTF-8";
+  private             String                           charset                       = DEFAULT_CHARSET;
+  public static final int                              CURRENT_VERSION               = 11;
+  public static final int                              CURRENT_BINARY_FORMAT_VERSION = 11;
+  public final        List<OStorageDataConfiguration>  dataSegments                  = Collections.synchronizedList(new ArrayList<OStorageDataConfiguration>());
+  public final        List<OStorageEntryConfiguration> properties                    = Collections.synchronizedList(new ArrayList<OStorageEntryConfiguration>());
+  protected final transient OStorage storage;
+  private final   OContextConfiguration configuration = new OContextConfiguration();
+  public volatile int                   version       = -1;
+  public volatile String name;
+  public volatile String schemaRecordId;
+  public volatile String dictionaryRecordId;
+  public volatile String indexMgrRecordId;
+  public volatile String dateFormat     = "yyyy-MM-dd";
+  public volatile String dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
+  public volatile int                          binaryFormatVersion;
+  public volatile OStorageSegmentConfiguration fileTemplate;
+  public volatile  List<OStorageClusterConfiguration> clusters       = Collections.synchronizedList(new ArrayList<OStorageClusterConfiguration>());
+  public volatile  OStorageTxConfiguration            txSegment      = new OStorageTxConfiguration();
+  private volatile String                             localeLanguage = Locale.getDefault().getLanguage();
+  private volatile String                             localeCountry  = Locale.getDefault().getCountry();
+  private volatile TimeZone                           timeZone       = TimeZone.getDefault();
+  private transient volatile Locale               localeInstance;
+  private transient volatile DecimalFormatSymbols unusualSymbols;
+  private volatile           String               clusterSelection;
+  private volatile int minimumClusters = 1;
+  private volatile String recordSerializer;
+  private volatile int    recordSerializerVersion;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
     fileTemplate = new OStorageSegmentConfiguration();
+
+    binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
+  }
+
+  public OContextConfiguration getContextConfiguration() {
+    return configuration;
   }
 
   /**
    * This method load the record information by the internal cluster segment. It's for compatibility with older database than
    * 0.9.25.
-   * 
+   *
    * @compatibility 0.9.25
    * @return
    * @throws OSerializationException
    */
   public OStorageConfiguration load() throws OSerializationException {
-    final byte[] record = storage.readRecord(CONFIG_RID, null, false, null, false).getResult().buffer;
+    final byte[] record = storage.readRecord(CONFIG_RID, null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult().buffer;
 
     if (record == null)
       throw new OStorageException("Cannot load database's configuration. The database seems to be corrupted.");
@@ -104,8 +118,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void update() throws OSerializationException {
     final byte[] record = toStream();
-    storage
-        .updateRecord(CONFIG_RID, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE, 0, null);
+    storage.updateRecord(CONFIG_RID, true, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE, 0, null);
   }
 
   public boolean isEmpty() {
@@ -113,7 +126,7 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public String getDirectory() {
-    return fileTemplate.location != null ? fileTemplate.getLocation() : ((OStorageLocalAbstract) storage).getStoragePath();
+    return fileTemplate.location != null ? fileTemplate.getLocation() : ((OLocalPaginatedStorage) storage).getStoragePath();
   }
 
   public Locale getLocaleInstance() {
@@ -181,7 +194,9 @@ public class OStorageConfiguration implements OSerializableStream {
     int size = Integer.parseInt(read(values[index++]));
 
     // PREPARE THE LIST OF CLUSTERS
-    clusters = new ArrayList<OStorageClusterConfiguration>(size);
+    clusters.clear();
+
+    String determineStorageCompression = null;
 
     for (int i = 0; i < size; ++i) {
       final int clusterId = Integer.parseInt(read(values[index++]));
@@ -213,13 +228,19 @@ public class OStorageConfiguration implements OSerializableStream {
           phyClusterLocal.setHoleFile(new OStorageClusterHoleConfiguration(phyClusterLocal, read(values[index++]),
               read(values[index++]), read(values[index++])));
         currentCluster = phyClusterLocal;
-      } else if (clusterType.equals("m"))
-        // MEMORY CLUSTER
-        currentCluster = new OStorageMemoryClusterConfiguration(clusterName, clusterId, targetDataSegmentId);
-      else if (clusterType.equals("d")) {
-        currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null,
-            Boolean.valueOf(read(values[index++])), Float.valueOf(read(values[index++])), Float.valueOf(read(values[index++])),
-            read(values[index++]));
+      } else if (clusterType.equals("d")) {
+        final boolean cc = Boolean.valueOf(read(values[index++]));
+        final float bb = Float.valueOf(read(values[index++]));
+        final float aa = Float.valueOf(read(values[index++]));
+        final String clusterCompression = read(values[index++]);
+
+        if (determineStorageCompression == null)
+          // TRY TO DETERMINE THE STORAGE COMPRESSION. BEFORE VERSION 11 IT WASN'T STORED IN STORAGE CFG, SO GET FROM THE FIRST
+          // CLUSTER
+          determineStorageCompression = clusterCompression;
+
+        currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
+            clusterCompression);
       } else
         throw new IllegalArgumentException("Unsupported cluster type: " + clusterType);
 
@@ -232,7 +253,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
     // PREPARE THE LIST OF DATA SEGS
     size = Integer.parseInt(read(values[index++]));
-    dataSegments = new ArrayList<OStorageDataConfiguration>(size);
+    dataSegments.clear();
     for (int i = 0; i < size; ++i)
       dataSegments.add(null);
 
@@ -255,10 +276,51 @@ public class OStorageConfiguration implements OSerializableStream {
         read(values[index++]), read(values[index++]));
 
     size = Integer.parseInt(read(values[index++]));
-    properties = new ArrayList<OStorageEntryConfiguration>(size);
+    properties.clear();
     for (int i = 0; i < size; ++i) {
       properties.add(new OStorageEntryConfiguration(read(values[index++]), read(values[index++])));
     }
+
+    if (version >= 7)
+      binaryFormatVersion = Integer.parseInt(read(values[index++]));
+    else if (version == 6)
+      binaryFormatVersion = 9;
+    else
+      binaryFormatVersion = 8;
+
+    if (version >= 8)
+      clusterSelection = read(values[index++]);
+    else
+      // DEFAULT = ROUND-ROBIN
+      clusterSelection = ORoundRobinClusterSelectionStrategy.NAME;
+
+    if (version >= 9)
+      minimumClusters = Integer.parseInt(read(values[index++]));
+    else
+      // DEFAULT = 1
+      minimumClusters = 1;
+
+    if (version >= 10) {
+      recordSerializer = read(values[index++]);
+      recordSerializerVersion = Integer.parseInt(read(values[index++]));
+    }
+
+    if (version >= 11) {
+      // READ THE CONFIGURATION
+      final int cfgSize = Integer.parseInt(read(values[index++]));
+      for (int i = 0; i < cfgSize; ++i) {
+        final String key = read(values[index++]);
+        final Object value = read(values[index++]);
+
+        final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey(key);
+        if (cfg != null)
+          configuration.setValue(key, OType.convert(value, cfg.getType()));
+        else
+          OLogManager.instance().warn(this, "Ignored storage configuration because not supported: %s=%s.", key, value);
+      }
+    } else
+      // SAVE STORAGE COMPRESSION METHOD AS PROPERTY
+      configuration.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, determineStorageCompression);
 
     return this;
   }
@@ -308,11 +370,6 @@ public class OStorageConfiguration implements OSerializableStream {
         if (holeFile != null)
           fileToStream(buffer, holeFile);
 
-      } else if (c instanceof OStorageMemoryClusterConfiguration) {
-        // MEMORY
-        write(buffer, "m");
-      } else if (c instanceof OStorageEHClusterConfiguration) {
-        write(buffer, "h");
       } else if (c instanceof OStoragePaginatedClusterConfiguration) {
         write(buffer, "d");
 
@@ -347,10 +404,138 @@ public class OStorageConfiguration implements OSerializableStream {
     for (OStorageEntryConfiguration e : properties)
       entryToStream(buffer, e);
 
-    // PLAIN: ALLOCATE ENOUGHT SPACE TO REUSE IT EVERY TIME
+    write(buffer, binaryFormatVersion);
+    write(buffer, clusterSelection);
+    write(buffer, minimumClusters);
+
+    write(buffer, recordSerializer);
+    write(buffer, recordSerializerVersion);
+
+    // WRITE CONFIGURATION
+    write(buffer, configuration.getContextSize());
+    for (String k : configuration.getContextKeys()) {
+      write(buffer, k);
+      write(buffer, configuration.getValueAsString(OGlobalConfiguration.findByKey(k)));
+    }
+
+    // PLAIN: ALLOCATE ENOUGH SPACE TO REUSE IT EVERY TIME
     buffer.append("|");
 
     return buffer.toString().getBytes();
+  }
+
+  public void lock() throws IOException {
+  }
+
+  public void unlock() throws IOException {
+  }
+
+  public void create() throws IOException {
+    storage.createRecord(CONFIG_RID, new byte[] { 0, 0, 0, 0 }, OVersionFactory.instance().createVersion(),
+        ORecordBytes.RECORD_TYPE, (byte) 0, null);
+  }
+
+  public void synch() throws IOException {
+  }
+
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+  }
+
+  public void close() throws IOException {
+  }
+
+  public void setCluster(final OStorageClusterConfiguration config) {
+    while (config.getId() >= clusters.size())
+      clusters.add(null);
+    clusters.set(config.getId(), config);
+  }
+
+  public void dropCluster(final int iClusterId) {
+    if (iClusterId < clusters.size()) {
+      clusters.set(iClusterId, null);
+      update();
+    }
+  }
+
+  public void dropDataSegment(final int iId) {
+    if (iId < dataSegments.size()) {
+      dataSegments.set(iId, null);
+      update();
+    }
+  }
+
+  public TimeZone getTimeZone() {
+    return timeZone;
+  }
+
+  public void setTimeZone(final TimeZone timeZone) {
+    this.timeZone = timeZone;
+  }
+
+  public String getLocaleLanguage() {
+    return localeLanguage;
+  }
+
+  public void setLocaleLanguage(final String iValue) {
+    localeLanguage = iValue;
+    localeInstance = null;
+  }
+
+  public String getLocaleCountry() {
+    return localeCountry;
+  }
+
+  public void setLocaleCountry(final String iValue) {
+    localeCountry = iValue;
+    localeInstance = null;
+  }
+
+  public String getCharset() {
+    return charset;
+  }
+
+  public void setCharset(String charset) {
+    this.charset = charset;
+  }
+
+  public String getDateFormat() {
+    return dateFormat;
+  }
+
+  public String getDateTimeFormat() {
+    return dateTimeFormat;
+  }
+
+  public String getClusterSelection() {
+    return clusterSelection;
+  }
+
+  public void setClusterSelection(final String clusterSelection) {
+    this.clusterSelection = clusterSelection;
+  }
+
+  public int getMinimumClusters() {
+    return minimumClusters;
+  }
+
+  public void setMinimumClusters(final int minimumClusters) {
+    this.minimumClusters = minimumClusters;
+  }
+
+  public String getRecordSerializer() {
+    return recordSerializer;
+  }
+
+  public void setRecordSerializer(String recordSerializer) {
+    this.recordSerializer = recordSerializer;
+  }
+
+  public int getRecordSerializerVersion() {
+    return recordSerializerVersion;
+  }
+
+  public void setRecordSerializerVersion(int recordSerializerVersion) {
+    this.recordSerializerVersion = recordSerializerVersion;
   }
 
   private int phySegmentFromStream(final String[] values, int index, final OStorageSegmentConfiguration iSegment) {
@@ -418,81 +603,5 @@ public class OStorageConfiguration implements OSerializableStream {
     if (iBuffer.length() > 0)
       iBuffer.append('|');
     iBuffer.append(iValue != null ? iValue.toString() : ' ');
-  }
-
-  public void create() throws IOException {
-    storage.createRecord(0, CONFIG_RID, new byte[] { 0, 0, 0, 0 }, OVersionFactory.instance().createVersion(),
-        ORecordBytes.RECORD_TYPE, (byte) 0, null);
-  }
-
-  public void synch() throws IOException {
-  }
-
-  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-  }
-
-  public void close() throws IOException {
-  }
-
-  public void setCluster(final OStorageClusterConfiguration config) {
-    while (config.getId() >= clusters.size())
-      clusters.add(null);
-    clusters.set(config.getId(), config);
-  }
-
-  public void dropCluster(final int iClusterId) {
-    if (iClusterId < clusters.size()) {
-      clusters.set(iClusterId, null);
-      update();
-    }
-  }
-
-  public void dropDataSegment(final int iId) {
-    if (iId < dataSegments.size()) {
-      dataSegments.set(iId, null);
-      update();
-    }
-  }
-
-  public TimeZone getTimeZone() {
-    return timeZone;
-  }
-
-  public void setTimeZone(final TimeZone timeZone) {
-    this.timeZone = timeZone;
-  }
-
-  public String getLocaleLanguage() {
-    return localeLanguage;
-  }
-
-  public String getLocaleCountry() {
-    return localeCountry;
-  }
-
-  public String getCharset() {
-    return charset;
-  }
-
-  public void setCharset(String charset) {
-    this.charset = charset;
-  }
-
-  public void setLocaleLanguage(final String iValue) {
-    localeLanguage = iValue;
-    localeInstance = null;
-  }
-
-  public void setLocaleCountry(final String iValue) {
-    localeCountry = iValue;
-    localeInstance = null;
-  }
-
-  public String getDateFormat() {
-    return dateFormat;
-  }
-
-  public String getDateTimeFormat() {
-    return dateTimeFormat;
   }
 }

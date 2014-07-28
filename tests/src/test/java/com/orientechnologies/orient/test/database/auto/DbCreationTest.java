@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.Locale;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
@@ -35,36 +27,59 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import org.testng.Assert;
+import org.testng.annotations.*;
+
+import java.io.IOException;
+import java.util.Locale;
 
 @Test(groups = "db")
-public class DbCreationTest {
-  private String            url;
-  private OObjectDatabaseTx database;
+public class DbCreationTest extends ObjectDBBaseTest {
 
   @Parameters(value = "url")
-  public DbCreationTest(String iURL) {
-    url = iURL;
+  public DbCreationTest(@Optional String url) {
+    super(url);
+
     Orient.instance().getProfiler().startRecording();
   }
 
-  public void testDbCreationNoSecurity() throws IOException {
-    if (url.startsWith(OEngineMemory.NAME))
-      OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
+	@BeforeClass
+	@Override
+	public void beforeClass() throws Exception {
+	}
 
+	@AfterClass
+	@Override
+	public void afterClass() throws Exception {
+	}
+
+	@BeforeMethod
+	@Override
+	public void beforeMethod() throws Exception {
+	}
+
+	@AfterMethod
+	@Override
+	public void afterMethod() throws Exception {
+	}
+
+	public void testDbCreationNoSecurity() throws IOException {
     if (!url.startsWith(OEngineRemote.NAME)) {
       ODatabaseDocument db = new ODatabaseDocumentTx(url);
       db.setProperty("security", Boolean.FALSE);
 
-      ODatabaseHelper.dropDatabase(db, "server", "plocal");
-      ODatabaseHelper.createDatabase(db, url, "plocal");
-      ODatabaseHelper.dropDatabase(db, "server", "plocal");
+      ODatabaseHelper.dropDatabase(db, "server", getStorageType());
+      ODatabaseHelper.createDatabase(db, url, getStorageType());
+      ODatabaseHelper.dropDatabase(db, "server", getStorageType());
 
       database = new OObjectDatabaseTx(url);
       database.setProperty("security", Boolean.FALSE);
 
-      ODatabaseHelper.dropDatabase(database, "server", "plocal");
-      ODatabaseHelper.createDatabase(database, url, "plocal");
-      ODatabaseHelper.dropDatabase(database, "server", "plocal");
+      ODatabaseHelper.dropDatabase(database, "server", getStorageType());
+      ODatabaseHelper.createDatabase(database, url, getStorageType());
+      ODatabaseHelper.dropDatabase(database, "server", getStorageType());
     }
   }
 
@@ -76,15 +91,15 @@ public class DbCreationTest {
 
   @Test(dependsOnMethods = { "testDbCreationNoSecurity" })
   public void testDbCreationDefault() throws IOException {
-    if (url.startsWith(OEngineMemory.NAME))
-      OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
+    if (ODatabaseHelper.existsDatabase(url))
+      ODatabaseHelper.dropDatabase(new OObjectDatabaseTx(url), url, getStorageType());
 
-    ODatabaseHelper.createDatabase(new OObjectDatabaseTx(url), url, "plocal");
+    ODatabaseHelper.createDatabase(new OObjectDatabaseTx(url), url, getStorageType());
   }
 
   @Test(dependsOnMethods = { "testDbCreationDefault" })
   public void testDbExists() throws IOException {
-    Assert.assertTrue(ODatabaseHelper.existsDatabase(new ODatabaseDocumentTx(url), "plocal"));
+    Assert.assertTrue(ODatabaseHelper.existsDatabase(new ODatabaseDocumentTx(url), getStorageType()));
   }
 
   @Test(dependsOnMethods = { "testDbExists" })
@@ -130,8 +145,8 @@ public class DbCreationTest {
   @Test(dependsOnMethods = { "testChangeLocale" })
   public void testSubFolderDbCreate() throws IOException {
     int pos = url.lastIndexOf("/");
-    String u = url;
 
+    final String u;
     if (pos > -1)
       u = url.substring(0, pos) + "/sub/subTest";
     else {
@@ -141,23 +156,19 @@ public class DbCreationTest {
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
-    try {
-      ODatabaseHelper.dropDatabase(db, "plocal");
-    } catch (OStorageException e) {
-      Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
-    }
-    ODatabaseHelper.createDatabase(db, u, "plocal");
+    ODatabaseHelper.dropDatabase(db, getStorageType());
+    ODatabaseHelper.createDatabase(db, u, getStorageType());
     db.open("admin", "admin");
     db.close();
 
-    ODatabaseHelper.dropDatabase(db, "plocal");
+    ODatabaseHelper.dropDatabase(db, getStorageType());
   }
 
   @Test(dependsOnMethods = { "testChangeLocale" })
   public void testSubFolderDbCreateConnPool() throws IOException {
     int pos = url.lastIndexOf("/");
-    String u = url;
 
+    final String u;
     if (pos > -1)
       u = url.substring(0, pos) + "/sub/subTest";
     else {
@@ -167,27 +178,23 @@ public class DbCreationTest {
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(u);
 
-    try {
-      ODatabaseHelper.dropDatabase(db, "plocal");
-    } catch (OStorageException e) {
-      Assert.assertTrue(e.getCause().getMessage().equals("Database with name 'sub/subTest' doesn't exits."));
-    }
-    ODatabaseHelper.createDatabase(db, u, "plocal");
+    ODatabaseHelper.dropDatabase(db, getStorageType());
+    ODatabaseHelper.createDatabase(db, u, getStorageType());
 
     db = ODatabaseDocumentPool.global().acquire(u, "admin", "admin");
     if (u.startsWith("remote:"))
       db.close();
 
-    ODatabaseHelper.dropDatabase(db, "plocal");
+    ODatabaseHelper.dropDatabase(db, getStorageType());
   }
 
   @Test
   public void testCreateAndConnectionPool() throws IOException {
     ODatabaseDocument db = new ODatabaseDocumentTx(url);
 
-    ODatabaseHelper.dropDatabase(db, "plocal");
+    ODatabaseHelper.dropDatabase(db, getStorageType());
 
-    ODatabaseHelper.createDatabase(db, url, "plocal");
+    ODatabaseHelper.createDatabase(db, url, getStorageType());
     db.close();
     // Get connection from pool
     db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
@@ -195,11 +202,11 @@ public class DbCreationTest {
 
     // Destroy db in the back of the pool
     db = new ODatabaseDocumentTx(url);
-    ODatabaseHelper.dropDatabase(db, "plocal");
+    ODatabaseHelper.dropDatabase(db, getStorageType());
 
     // Re-create it so that the db exists for the pool
     db = new ODatabaseDocumentTx(url);
-    ODatabaseHelper.createDatabase(db, url, "plocal");
+    ODatabaseHelper.createDatabase(db, url, getStorageType());
     db.close();
 
     ODatabaseDocumentPool.global().close();
@@ -208,8 +215,8 @@ public class DbCreationTest {
   @Test
   public void testOpenCloseConnectionPool() throws IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    if (!ODatabaseHelper.existsDatabase(db, "plocal")) {
-      ODatabaseHelper.createDatabase(db, url, "plocal");
+    if (!ODatabaseHelper.existsDatabase(db, null)) {
+      ODatabaseHelper.createDatabase(db, url, getStorageType());
       db.close();
     }
 
@@ -235,22 +242,39 @@ public class DbCreationTest {
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(ur);
 
       try {
-        ODatabaseHelper.dropDatabase(db, "plocal");
+        ODatabaseHelper.dropDatabase(db, getStorageType());
       } catch (OStorageException e) {
         Assert.assertTrue(e.getCause().getMessage().contains("doesn't exits."));
       }
-      ODatabaseHelper.createDatabase(db, ur, "plocal");
-      Assert.assertTrue(ODatabaseHelper.existsDatabase(db, "plocal"));
+      ODatabaseHelper.createDatabase(db, ur, getStorageType());
+      Assert.assertTrue(ODatabaseHelper.existsDatabase(db, getStorageType()));
       db.open("admin", "admin");
     }
 
     for (int i = 0; i < 3; ++i) {
       String ur = u + "/" + i + "$db";
       ODatabaseDocumentTx db = new ODatabaseDocumentTx(ur);
-      Assert.assertTrue(ODatabaseHelper.existsDatabase(db, "plocal"));
-      ODatabaseHelper.dropDatabase(db, "plocal");
-      Assert.assertFalse(ODatabaseHelper.existsDatabase(db, "plocal"));
+      Assert.assertTrue(ODatabaseHelper.existsDatabase(db, getStorageType()));
+      ODatabaseHelper.dropDatabase(db, getStorageType());
+      Assert.assertFalse(ODatabaseHelper.existsDatabase(db, getStorageType()));
     }
-
   }
+
+  public void testZipCompression() {
+    if (database == null || !database.getURL().startsWith("plocal:"))
+      return;
+
+    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("gzip");
+
+    final String buildDirectory = System.getProperty("buildDirectory", ".");
+    String dburl = "plocal:" + buildDirectory + "/test-db/" + this.getClass().getSimpleName();
+
+    final OrientGraphFactory factory = new OrientGraphFactory(dburl, "admin", "admin");
+    if (factory.exists())
+      factory.drop();
+    OrientGraphNoTx db = factory.getNoTx();
+    db.drop();
+    OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
+  }
+
 }

@@ -150,7 +150,8 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
     if (!record.getIdentity().isValid())
       // NOTHING TO LOAD
       return;
-    ORawBuffer raw = iSt.readRecord((ORecordId) record.getIdentity(), null, false, null, false).getResult();
+    ORawBuffer raw = iSt.readRecord((ORecordId) record.getIdentity(), null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+        .getResult();
     if (raw == null)
       throw new OConfigurationException("Cannot load map with id " + record.getIdentity());
     record.getRecordVersion().copyFrom(raw.version);
@@ -181,14 +182,14 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
     if (record.getIdentity().isValid())
       // UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
       record.getRecordVersion().copyFrom(
-          iSt.updateRecord((ORecordId) record.getIdentity(), record.toStream(),
+          iSt.updateRecord((ORecordId) record.getIdentity(), true, record.toStream(),
               OVersionFactory.instance().createUntrackedVersion(), record.getRecordType(), (byte) 0, null).getResult());
     else {
       // CREATE IT
       if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
         ((ORecordId) record.getIdentity()).clusterId = clusterId;
 
-      final OPhysicalPosition ppos = iSt.createRecord(0, (ORecordId) record.getIdentity(), record.toStream(),
+      final OPhysicalPosition ppos = iSt.createRecord((ORecordId) record.getIdentity(), record.toStream(),
           OVersionFactory.instance().createVersion(), record.getRecordType(), (byte) 0, null).getResult();
       record.getRecordVersion().copyFrom(ppos.recordVersion);
 

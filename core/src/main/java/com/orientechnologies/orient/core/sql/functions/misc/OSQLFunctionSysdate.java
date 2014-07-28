@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.sql.functions.misc;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Returns the current date time.
@@ -45,15 +45,15 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
     now = new Date();
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    if (iParameters.length == 0)
+    if (iParams.length == 0)
       return now;
 
     if (format == null) {
-      format = new SimpleDateFormat((String) iParameters[0]);
-      if (iParameters.length == 2)
-        format.setTimeZone(TimeZone.getTimeZone(iParameters[1].toString()));
+      format = new SimpleDateFormat((String) iParams[0]);
+      if (iParams.length == 2)
+        format.setTimeZone(TimeZone.getTimeZone(iParams[1].toString()));
       else
         format.setTimeZone(ODateHelper.getDatabaseTimeZone());
     }
@@ -66,7 +66,7 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: sysdate([<format>] [,<timezone>])";
+    return "sysdate([<format>] [,<timezone>])";
   }
 
   @Override

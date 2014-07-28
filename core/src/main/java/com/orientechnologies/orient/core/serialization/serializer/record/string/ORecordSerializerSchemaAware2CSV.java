@@ -17,20 +17,25 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -44,9 +49,9 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
-  private static final long                            serialVersionUID = 1L;
   public static final String                           NAME             = "ORecordDocument2csv";
   public static final ORecordSerializerSchemaAware2CSV INSTANCE         = new ORecordSerializerSchemaAware2CSV();
+  private static final long                            serialVersionUID = 1L;
 
   @Override
   public ORecordSchemaAware<?> newObject(String iClassName) {
@@ -56,6 +61,221 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   @Override
   public String toString() {
     return NAME;
+  }
+
+  @Override
+  public int getCurrentVersion() {
+    return 0;
+  }
+
+  @Override
+  public int getMinSupportedVersion() {
+    return 0;
+  }
+
+  public String getClassName(String content) {
+    content = content.trim();
+
+    if (content.length() == 0)
+      return null;
+
+    final int posFirstValue = content.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
+    final int pos = content.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+
+    if (pos > -1 && (pos < posFirstValue || posFirstValue == -1))
+      return content.substring(0, pos);
+
+    return null;
+  }
+
+  @Override
+  public ORecordInternal<?> fromString(String iContent, final ORecordInternal<?> iRecord, final String[] iFields) {
+    iContent = iContent.trim();
+
+    if (iContent.length() == 0)
+      return iRecord;
+
+    // UNMARSHALL THE CLASS NAME
+    final ODocument record = (ODocument) iRecord;
+
+    int pos;
+    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
+    pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
+    if (pos > -1 && (pos < posFirstValue || posFirstValue == -1)) {
+      if ((record.getIdentity().getClusterId() < 0 || database == null || !database.getStorageVersions()
+          .classesAreDetectedByClusterId()))
+        record.setClassNameIfExists(iContent.substring(0, pos));
+      iContent = iContent.substring(pos + 1);
+    } else
+      record.setClassNameIfExists(null);
+
+    if (iFields != null && iFields.length == 1 && iFields[0].equals("@class"))
+      // ONLY THE CLASS NAME HAS BEEN REQUESTED: RETURN NOW WITHOUT UNMARSHALL THE ENTIRE RECORD
+      return iRecord;
+
+    final List<String> fields = OStringSerializerHelper.smartSplit(iContent, OStringSerializerHelper.RECORD_SEPARATOR, true, true);
+
+    String fieldName = null;
+    String fieldValue;
+    OType type;
+    OClass linkedClass;
+    OType linkedType;
+    OProperty prop;
+
+    final Set<String> fieldSet;
+
+    if (iFields != null && iFields.length > 0) {
+      fieldSet = new HashSet<String>(iFields.length);
+      for (String f : iFields)
+        fieldSet.add(f);
+    } else
+      fieldSet = null;
+
+    // UNMARSHALL ALL THE FIELDS
+    for (String fieldEntry : fields) {
+      fieldEntry = fieldEntry.trim();
+      boolean uncertainType = false;
+
+      try {
+        pos = fieldEntry.indexOf(FIELD_VALUE_SEPARATOR);
+        if (pos > -1) {
+          // GET THE FIELD NAME
+          fieldName = fieldEntry.substring(0, pos);
+
+          // CHECK IF THE FIELD IS REQUESTED TO BEING UNMARSHALLED
+          if (fieldSet != null && !fieldSet.contains(fieldName))
+            continue;
+
+          if (record.containsField(fieldName))
+            // ALREADY UNMARSHALLED: DON'T OVERWRITE IT
+            continue;
+
+          // GET THE FIELD VALUE
+          fieldValue = fieldEntry.length() > pos + 1 ? fieldEntry.substring(pos + 1) : null;
+
+          boolean setFieldType = false;
+
+          // SEARCH FOR A CONFIGURED PROPERTY
+          prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
+          if (prop != null && prop.getType() != OType.ANY) {
+            // RECOGNIZED PROPERTY
+            type = prop.getType();
+            linkedClass = prop.getLinkedClass();
+            linkedType = prop.getLinkedType();
+
+          } else {
+            // SCHEMA PROPERTY NOT FOUND FOR THIS FIELD: TRY TO AUTODETERMINE THE BEST TYPE
+            type = record.fieldType(fieldName);
+            if (type == OType.ANY)
+              type = null;
+            if (type != null)
+              setFieldType = true;
+            linkedClass = null;
+            linkedType = null;
+
+            // NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
+            if (fieldValue != null && type == null) {
+              if (fieldValue.length() > 1 && fieldValue.charAt(0) == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
+                type = OType.STRING;
+              } else if (fieldValue.startsWith(OStringSerializerHelper.LINKSET_PREFIX)) {
+                type = OType.LINKSET;
+              } else if (fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
+                  && fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.LIST_END
+                  || fieldValue.charAt(0) == OStringSerializerHelper.SET_BEGIN
+                  && fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.SET_END) {
+                // EMBEDDED LIST/SET
+                type = fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN ? OType.EMBEDDEDLIST : OType.EMBEDDEDSET;
+
+                final String value = fieldValue.substring(1, fieldValue.length() - 1);
+
+                if (!value.isEmpty()) {
+                  if (value.charAt(0) == OStringSerializerHelper.LINK) {
+                    // TODO replace with regex
+                    // ASSURE ALL THE ITEMS ARE RID
+                    int max = value.length();
+                    boolean allLinks = true;
+                    boolean checkRid = true;
+                    for (int i = 0; i < max; ++i) {
+                      char c = value.charAt(i);
+                      if (checkRid) {
+                        if (c != '#') {
+                          allLinks = false;
+                          break;
+                        }
+                        checkRid = false;
+                      } else if (c == ',')
+                        checkRid = true;
+                    }
+
+                    if (allLinks) {
+                      type = fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN ? OType.LINKLIST : OType.LINKSET;
+                      linkedType = OType.LINK;
+                    }
+                  } else if (value.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
+                    linkedType = OType.EMBEDDED;
+                  } else if (value.charAt(0) == OStringSerializerHelper.CUSTOM_TYPE) {
+                    linkedType = OType.CUSTOM;
+                  } else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
+                    String[] items = value.split(",");
+                    linkedType = getType(items[0]);
+                  } else if (value.charAt(0) == '\'' || value.charAt(0) == '"')
+                    linkedType = OType.STRING;
+                } else
+                  uncertainType = true;
+
+              } else if (fieldValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
+                  && fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.MAP_END) {
+                type = OType.EMBEDDEDMAP;
+              } else if (fieldValue.charAt(0) == OStringSerializerHelper.LINK)
+                type = OType.LINK;
+              else if (fieldValue.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
+                // TEMPORARY PATCH
+                if (fieldValue.startsWith("(ORIDs"))
+                  type = OType.LINKSET;
+                else
+                  type = OType.EMBEDDED;
+              } else if (fieldValue.charAt(0) == OStringSerializerHelper.BAG_BEGIN) {
+                type = OType.LINKBAG;
+              } else if (fieldValue.equals("true") || fieldValue.equals("false"))
+                type = OType.BOOLEAN;
+              else
+                type = getType(fieldValue);
+            }
+          }
+
+          if (setFieldType || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP
+              || type == OType.EMBEDDED)
+            // SAVE THE TYPE AS EMBEDDED
+            record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue), type);
+          else
+            record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue));
+
+          if (uncertainType)
+            record.setFieldType(fieldName, null);
+        }
+      } catch (Exception e) {
+        throw new OSerializationException("Error on unmarshalling field '" + fieldName + "' in record " + iRecord.getIdentity()
+            + " with value: " + fieldEntry, e);
+      }
+    }
+
+    return iRecord;
+  }
+
+  @Override
+  public byte[] toStream(ORecordInternal<?> iRecord, boolean iOnlyDelta) {
+    final byte[] result = super.toStream(iRecord, iOnlyDelta);
+    if (result == null || result.length > 0)
+      return result;
+
+    // Fix of nasty IBM JDK bug. In case of very depth recursive graph serialization
+    // ORecordSchemaAware#_source property may be initialized incorrectly.
+    final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
+    if (recordSchemaAware.fields() > 0)
+      return null;
+
+    return result;
   }
 
   @Override
@@ -78,7 +298,6 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
         iMarshalledRecords.add(record);
 
     if (!iOnlyDelta && record.getSchemaClass() != null) {
-      // MARSHALL THE CLASSNAME
       iOutput.append(record.getSchemaClass().getStreamableName());
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
     }
@@ -106,10 +325,13 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       fieldClassName = getClassName(fieldValue);
 
       type = record.fieldType(fieldName);
+      if (type == OType.ANY)
+        type = null;
+
       linkedClass = null;
       linkedType = null;
 
-      if (prop != null) {
+      if (prop != null && prop.getType() != OType.ANY) {
         // RECOGNIZED PROPERTY
         type = prop.getType();
         linkedClass = prop.getLinkedClass();
@@ -219,7 +441,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                   }
 
                   if (type == null)
-                    if (fieldValue instanceof OMVRBTreeRIDSet)
+                    if (fieldValue instanceof OMVRBTreeRIDSet || fieldValue instanceof ORecordLazySet)
                       type = OType.LINKSET;
                     else if (fieldValue instanceof Set<?>)
                       type = OType.EMBEDDEDSET;
@@ -348,189 +570,5 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     }
 
     return linkedClass;
-  }
-
-  public String getClassName(String content) {
-    content = content.trim();
-
-    if (content.length() == 0)
-      return null;
-
-    final int posFirstValue = content.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
-    final int pos = content.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-
-    if (pos > -1 && (pos < posFirstValue || posFirstValue == -1))
-      return content.substring(0, pos);
-
-    return null;
-  }
-
-  @Override
-  public ORecordInternal<?> fromString(String iContent, final ORecordInternal<?> iRecord, final String[] iFields) {
-    iContent = iContent.trim();
-
-    if (iContent.length() == 0)
-      return iRecord;
-
-    // UNMARSHALL THE CLASS NAME
-    final ODocument record = (ODocument) iRecord;
-
-    final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
-    int pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
-    if (pos > -1 && (pos < posFirstValue || posFirstValue == -1)) {
-      record.setClassNameIfExists(iContent.substring(0, pos));
-      iContent = iContent.substring(pos + 1);
-    } else
-      record.setClassNameIfExists(null);
-
-    if (iFields != null && iFields.length == 1 && iFields[0].equals("@class"))
-      // ONLY THE CLASS NAME HAS BEEN REQUESTED: RETURN NOW WITHOUT UNMARSHALL THE ENTIRE RECORD
-      return iRecord;
-
-    final List<String> fields = OStringSerializerHelper.smartSplit(iContent, OStringSerializerHelper.RECORD_SEPARATOR, true, true);
-
-    String fieldName = null;
-    String fieldValue;
-    OType type;
-    OClass linkedClass;
-    OType linkedType;
-    OProperty prop;
-    final List<String> fieldList = (iFields != null && iFields.length > 0) ? Arrays.asList(iFields) : null;
-
-    // UNMARSHALL ALL THE FIELDS
-    for (String field : fields) {
-      field = field.trim();
-      boolean uncertainType = false;
-
-      try {
-        pos = field.indexOf(FIELD_VALUE_SEPARATOR);
-        if (pos > -1) {
-          // GET THE FIELD NAME
-          fieldName = field.substring(0, pos);
-
-          if (record.containsField(fieldName))
-            // ALREADY UNMARSHALLED: DON'T OVERWRITE IT
-            continue;
-
-          // CHECK IF THE FIELS IS REQUESTED TO BEING UNMARSHALLED
-          if (fieldList != null && !fieldList.contains(fieldName))
-            continue;
-
-          // GET THE FIELD VALUE
-          fieldValue = field.length() > pos + 1 ? field.substring(pos + 1) : null;
-
-          boolean setFieldType = false;
-
-          // SEARCH FOR A CONFIGURED PROPERTY
-          prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
-          if (prop != null) {
-            // RECOGNIZED PROPERTY
-            type = prop.getType();
-            linkedClass = prop.getLinkedClass();
-            linkedType = prop.getLinkedType();
-
-          } else {
-            // SCHEMA PROPERTY NOT FOUND FOR THIS FIELD: TRY TO AUTODETERMINE THE BEST TYPE
-            type = record.fieldType(fieldName);
-            if (type != null)
-              setFieldType = true;
-            linkedClass = null;
-            linkedType = null;
-
-            // NOT FOUND: TRY TO DETERMINE THE TYPE FROM ITS CONTENT
-            if (fieldValue != null && type == null) {
-              if (fieldValue.length() > 1 && fieldValue.charAt(0) == '"' && fieldValue.charAt(fieldValue.length() - 1) == '"') {
-                type = OType.STRING;
-              } else if (fieldValue.startsWith(OStringSerializerHelper.LINKSET_PREFIX)) {
-                type = OType.LINKSET;
-              } else if (fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
-                  && fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.LIST_END
-                  || fieldValue.charAt(0) == OStringSerializerHelper.SET_BEGIN
-                  && fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.SET_END) {
-                // EMBEDDED LIST/SET
-                type = fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN ? OType.EMBEDDEDLIST : OType.EMBEDDEDSET;
-
-                final String value = fieldValue.substring(1, fieldValue.length() - 1);
-
-                if (!value.isEmpty()) {
-                  if (value.charAt(0) == OStringSerializerHelper.LINK) {
-                    // TODO replace with regex
-                    // ASSURE ALL THE ITEMS ARE RID
-                    final List<String> items = OStringSerializerHelper.smartSplit(value, ',');
-                    boolean allLinks = true;
-                    for (String it : items)
-                      if (!it.startsWith("#")) {
-                        allLinks = false;
-                        break;
-                      }
-
-                    if (allLinks) {
-                      type = fieldValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN ? OType.LINKLIST : OType.LINKSET;
-                      linkedType = OType.LINK;
-                    }
-                  } else if (value.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
-                    linkedType = OType.EMBEDDED;
-                  } else if (value.charAt(0) == OStringSerializerHelper.CUSTOM_TYPE) {
-                    linkedType = OType.CUSTOM;
-                  } else if (Character.isDigit(value.charAt(0)) || value.charAt(0) == '+' || value.charAt(0) == '-') {
-                    String[] items = value.split(",");
-                    linkedType = getType(items[0]);
-                  } else if (value.charAt(0) == '\'' || value.charAt(0) == '"')
-                    linkedType = OType.STRING;
-                } else
-                  uncertainType = true;
-
-              } else if (fieldValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
-                  && fieldValue.charAt(fieldValue.length() - 1) == OStringSerializerHelper.MAP_END) {
-                type = OType.EMBEDDEDMAP;
-              } else if (fieldValue.charAt(0) == OStringSerializerHelper.LINK)
-                type = OType.LINK;
-              else if (fieldValue.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN) {
-                // TEMPORARY PATCH
-                if (fieldValue.startsWith("(ORIDs"))
-                  type = OType.LINKSET;
-                else
-                  type = OType.EMBEDDED;
-              } else if (fieldValue.charAt(0) == OStringSerializerHelper.BAG_BEGIN) {
-                type = OType.LINKBAG;
-              } else if (fieldValue.equals("true") || fieldValue.equals("false"))
-                type = OType.BOOLEAN;
-              else
-                type = getType(fieldValue);
-            }
-          }
-
-          if (setFieldType || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP
-              || type == OType.EMBEDDED)
-            // SAVE THE TYPE AS EMBEDDED
-            record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue), type);
-          else
-            record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue));
-
-          if (uncertainType)
-            record.setFieldType(fieldName, null);
-        }
-      } catch (Exception e) {
-        OLogManager.instance().exception("Error on unmarshalling field '%s' in record %s with value: ", e,
-            OSerializationException.class, fieldName, iRecord.getIdentity(), field);
-      }
-    }
-
-    return iRecord;
-  }
-
-  @Override
-  public byte[] toStream(ORecordInternal<?> iRecord, boolean iOnlyDelta) {
-    final byte[] result = super.toStream(iRecord, iOnlyDelta);
-    if (result == null || result.length > 0)
-      return result;
-
-    // Fix of nasty IBM JDK bug. In case of very depth recursive graph serialization
-    // ORecordSchemaAware#_source property may be initialized incorrectly.
-    final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
-    if (recordSchemaAware.fields() > 0)
-      return null;
-
-    return result;
   }
 }

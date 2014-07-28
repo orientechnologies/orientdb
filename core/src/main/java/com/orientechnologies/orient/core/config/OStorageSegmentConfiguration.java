@@ -21,14 +21,14 @@ import java.io.Serializable;
 public class OStorageSegmentConfiguration implements Serializable {
   public transient OStorageConfiguration root;
 
-  public int                             id;
-  public String                          name;
-  public String                          maxSize           = "0";
-  public String                          fileType          = "mmap";
-  public String                          fileStartSize     = "500Kb";
-  public String                          fileMaxSize       = "500Mb";
-  public String                          fileIncrementSize = "50%";
-  public String                          defrag            = "auto";
+  public volatile int                    id;
+  public volatile String                 name;
+  public volatile String                 maxSize           = "0";
+  public volatile String                 fileType          = "mmap";
+  public volatile String                 fileStartSize     = "500Kb";
+  public volatile String                 fileMaxSize       = "500Mb";
+  public volatile String                 fileIncrementSize = "50%";
+  public volatile String                 defrag            = "auto";
 
   public OStorageFileConfiguration[]     infoFiles;
   String                                 location;

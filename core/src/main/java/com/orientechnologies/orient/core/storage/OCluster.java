@@ -22,25 +22,13 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-/**
- * Handle the table to resolve logical address to physical address.<br/>
- * <br/>
- * Record structure:<br/>
- * <br/>
- * +---------------------------------------------+<br/>
- * | DATA SEGMENT........ | DATA OFFSET......... |<br/>
- * | 2 bytes = max 2^15-1 | 4 bytes = max 2^31-1 |<br/>
- * +---------------------------------------------+<br/>
- * = 6 bytes<br/>
- */
 public interface OCluster {
 
   public static enum ATTRIBUTES {
-    NAME, DATASEGMENT, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION
+    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION
   }
 
-  public void configure(OStorage iStorage, int iId, String iClusterName, final String iLocation, int iDataSegmentId,
-      Object... iParameters) throws IOException;
+  public void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
 
   public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException;
 
@@ -70,10 +58,6 @@ public interface OCluster {
    * @throws IOException
    */
   public void truncate() throws IOException;
-
-  public String getType();
-
-  public int getDataSegmentId();
 
   public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
 
@@ -119,20 +103,6 @@ public interface OCluster {
 
   public OClusterPosition getLastPosition() throws IOException;
 
-  /**
-   * Lets to an external actor to lock the cluster in shared mode. Useful for range queries to avoid atomic locking.
-   * 
-   * @see #unlock();
-   */
-  public void lock();
-
-  /**
-   * Lets to an external actor to unlock the shared mode lock acquired by the lock().
-   * 
-   * @see #lock();
-   */
-  public void unlock();
-
   public int getId();
 
   public void synch() throws IOException;
@@ -169,4 +139,18 @@ public interface OCluster {
   public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException;
 
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException;
+
+  /**
+   * Hides records content by putting tombstone on the records position but does not delete record itself.
+   * 
+   * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method.
+   * 
+   * @param position
+   *          Position of record in cluster
+   * @throws java.lang.UnsupportedOperationException
+   *           In case current version of cluster does not support given operation.
+   * 
+   * @return false if record does not exist.
+   */
+  public boolean hideRecord(OClusterPosition position) throws IOException;
 }

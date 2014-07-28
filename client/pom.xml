@@ -35,6 +35,7 @@
     <properties>
         <osgi.import>*</osgi.import>
         <osgi.export>com.orientechnologies.orient.client.*</osgi.export>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
@@ -42,6 +43,19 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-enterprise</artifactId>
             <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>5.14.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.5</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

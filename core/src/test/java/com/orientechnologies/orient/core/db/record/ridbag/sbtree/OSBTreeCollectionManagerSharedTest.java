@@ -1,34 +1,23 @@
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.DatabaseAbstractTest;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
+
 @Test
-public class OSBTreeCollectionManagerSharedTest {
-  private String                         buildDirectory;
-  private ODatabaseDocumentTx            databaseDocumentTx;
+public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
   private OSBTreeCollectionManagerShared sbTreeCollectionManager;
-
-  @BeforeClass
-  public void setUp() {
-    buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
-
-    databaseDocumentTx = new ODatabaseDocumentTx("local:" + buildDirectory + "/localSBTreeCompositeKeyTest");
-    if (databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
-    }
-
-    databaseDocumentTx.create();
-  }
 
   @BeforeMethod
   public void beforeMethod() {
@@ -37,21 +26,16 @@ public class OSBTreeCollectionManagerSharedTest {
 
   @AfterMethod
   public void afterMethod() {
-    sbTreeCollectionManager.close();
-  }
-
-  @AfterClass
-  public void tearDown() {
-    databaseDocumentTx.drop();
+    sbTreeCollectionManager.close(false);
   }
 
   public void testEvictionAllReleased() {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
-    final int clusterId = databaseDocumentTx.getDefaultClusterId();
+    final int clusterId = database.getDefaultClusterId();
 
     for (int i = 0; i < 10; i++) {
-      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(clusterId);
+      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(clusterId);
       createdTrees.add(tree);
       sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
     }
@@ -65,7 +49,7 @@ public class OSBTreeCollectionManagerSharedTest {
       sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(clusterId);
+    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(clusterId);
     sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 6);
@@ -95,7 +79,7 @@ public class OSBTreeCollectionManagerSharedTest {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
     for (int i = 0; i < 10; i++) {
-      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
+      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(database.getDefaultClusterId());
       createdTrees.add(tree);
       sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
     }
@@ -114,7 +98,7 @@ public class OSBTreeCollectionManagerSharedTest {
         sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
+    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(database.getDefaultClusterId());
     sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 8);
@@ -164,7 +148,7 @@ public class OSBTreeCollectionManagerSharedTest {
     List<OSBTreeBonsai<OIdentifiable, Integer>> createdTrees = new ArrayList<OSBTreeBonsai<OIdentifiable, Integer>>();
 
     for (int i = 0; i < 10; i++) {
-      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
+      OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(database.getDefaultClusterId());
       createdTrees.add(tree);
       sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
     }
@@ -182,7 +166,7 @@ public class OSBTreeCollectionManagerSharedTest {
         sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createSBTree(databaseDocumentTx.getDefaultClusterId());
+    OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(database.getDefaultClusterId());
     sbTreeCollectionManager.releaseSBTree(new OBonsaiCollectionPointer(tree.getFileId(), tree.getRootBucketPointer()));
 
     Assert.assertEquals(sbTreeCollectionManager.size(), 11);

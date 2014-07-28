@@ -15,17 +15,16 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.IdentityHashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.common.collection.OLazyIterator;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
 /**
  * Lazy implementation of Set. Can be bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty()
@@ -43,396 +42,115 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORecordLazySet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement, ORecordLazyListener {
-  public static final ORecordLazySet            EMPTY_SET    = new ORecordLazySet();
-  private static final Object                   NEWMAP_VALUE = new Object();
-  protected final ORecordLazyList               delegate;
-  protected IdentityHashMap<ORecord<?>, Object> newItems;
-  protected boolean                             sorted       = true;
-
-  public ORecordLazySet() {
-    delegate = new ORecordLazyList().setListener(this);
-  }
+public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement {
+  protected boolean autoConvertToRecord = true;
 
   public ORecordLazySet(final ODocument iSourceRecord) {
-    delegate = new ORecordLazyList(iSourceRecord).setListener(this);
+    super(iSourceRecord);
   }
 
   @Override
-  public ORecordElement getOwner() {
-    return delegate.getOwner();
+  public boolean detach() {
+    return convertRecords2Links();
   }
 
-  public ORecordLazySet(final ODocument iSourceRecord, final ORecordLazySet iSource) {
-    delegate = iSource.delegate.copy(iSourceRecord).setListener(this);
-    sorted = iSource.sorted;
-    if (iSource.newItems != null)
-      newItems = new IdentityHashMap<ORecord<?>, Object>(iSource.newItems);
-  }
-
-  public ORecordLazySet(final ODocument iSourceRecord, final Collection<OIdentifiable> iValues) {
-    this(iSourceRecord);
-    addAll(iValues);
-  }
-
-  public void onBeforeIdentityChanged(final ORID iRID) {
-    delegate.onBeforeIdentityChanged(iRID);
-  }
-
-  public void onAfterIdentityChanged(final ORecord<?> iRecord) {
-    delegate.onAfterIdentityChanged(iRecord);
-  }
-
-  @SuppressWarnings("unchecked")
-  public <RET> RET setDirty() {
-    delegate.setDirty();
-    return (RET) this;
-  }
-
+  @Override
   public Iterator<OIdentifiable> iterator() {
-    if (hasNewItems()) {
-      lazyLoad(false);
-      return new OLazyRecordMultiIterator(delegate.sourceRecord,
-          new Object[] { delegate.iterator(), newItems.keySet().iterator() }, delegate.autoConvertToRecord);
-    }
-    return delegate.iterator();
+    return new OLazyRecordIterator(new OLazyIterator<OIdentifiable>() {
+      {
+        if (OSerializationSetThreadLocal.check((ODocument) sourceRecord)) {
+          iter = new HashSet<Entry<OIdentifiable, Object>>(ORecordLazySet.super.map.entrySet()).iterator();
+        } else
+          iter = ORecordLazySet.super.map.entrySet().iterator();
+      }
+      private Iterator<Entry<OIdentifiable, Object>> iter;
+
+      @Override
+      public boolean hasNext() {
+        return iter.hasNext();
+      }
+
+      @Override
+      public OIdentifiable next() {
+        Entry<OIdentifiable, Object> entry = iter.next();
+        if (entry.getValue() != ENTRY_REMOVAL)
+          return (OIdentifiable) entry.getValue();
+        return entry.getKey();
+      }
+
+      @Override
+      public void remove() {
+        iter.remove();
+      }
+
+      @Override
+      public OIdentifiable update(OIdentifiable iValue) {
+        if (iValue != null)
+          map.put(iValue.getIdentity(), iValue.getRecord());
+        return iValue;
+      }
+    }, autoConvertToRecord && getOwner().getInternalStatus() != STATUS.MARSHALLING);
   }
 
+  @Override
   public Iterator<OIdentifiable> rawIterator() {
-    if (hasNewItems()) {
-      lazyLoad(false);
-      return new OLazyRecordMultiIterator(delegate.sourceRecord, new Object[] { delegate.rawIterator(),
-          newItems.keySet().iterator() }, false);
-    }
-    return delegate.rawIterator();
+    return new OLazyRecordIterator(super.iterator(), false);
   }
 
-  public Iterator<OIdentifiable> newItemsIterator() {
-    if (hasNewItems())
-      return new OLazyRecordIterator(delegate.sourceRecord, newItems.keySet().iterator(), false);
-
-    return null;
-  }
-
-  public boolean convertRecords2Links() {
-    savedAllNewItems();
-    return delegate.convertRecords2Links();
-  }
-
-  public boolean isAutoConvertToRecord() {
-    return delegate.isAutoConvertToRecord();
-  }
-
-  public void setAutoConvertToRecord(final boolean convertToRecord) {
-    delegate.setAutoConvertToRecord(convertToRecord);
-  }
-
-  public int size() {
-    int tot = delegate.size();
-    if (newItems != null)
-      tot += newItems.size();
-    return tot;
-  }
-
-  public boolean isEmpty() {
-    boolean empty = delegate.isEmpty();
-
-    if (empty && newItems != null)
-      empty = newItems.isEmpty();
-
-    return empty;
-  }
-
-  public boolean contains(final Object o) {
-    boolean found;
-
-    final OIdentifiable obj = (OIdentifiable) o;
-
-    if (OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean() && getStreamedContent() != null) {
-      found = getStreamedContent().indexOf(obj.getIdentity().toString()) > -1;
-    } else {
-      lazyLoad(false);
-      found = indexOf((OIdentifiable) o) > -1;
-    }
-
-    if (!found && hasNewItems())
-      // SEARCH INSIDE NEW ITEMS MAP
-      found = newItems.containsKey(o);
-
-    return found;
-  }
-
-  public Object[] toArray() {
-    Object[] result = delegate.toArray();
-
-    if (newItems != null && !newItems.isEmpty()) {
-      int start = result.length;
-      result = Arrays.copyOf(result, start + newItems.size());
-
-      for (ORecord<?> r : newItems.keySet()) {
-        result[start++] = r;
-      }
-    }
-
-    return result;
-  }
-
-  @SuppressWarnings("unchecked")
-  public <T> T[] toArray(final T[] a) {
-    T[] result = delegate.toArray(a);
-
-    if (newItems != null && !newItems.isEmpty()) {
-      int start = result.length;
-      result = Arrays.copyOf(result, start + newItems.size());
-
-      for (ORecord<?> r : newItems.keySet()) {
-        result[start++] = (T) r;
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * Adds the item in the underlying List preserving the order of the collection.
-   */
-  public boolean add(final OIdentifiable e) {
-    if (e.getIdentity().isNew()) {
-      final ORecord<?> record = e.getRecord();
-
-      // ADD IN TEMP LIST
-      if (newItems == null)
-        newItems = new IdentityHashMap<ORecord<?>, Object>();
-      else if (newItems.containsKey(record))
-        return false;
-      newItems.put(record, NEWMAP_VALUE);
-      setDirty();
-      return true;
-    } else if (OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean() && getStreamedContent() != null) {
-      // FAST INSERT
-      final String ridString = e.getIdentity().toString();
-      final StringBuilder buffer = getStreamedContent();
-      if (buffer.indexOf(ridString) < 0) {
-        if (buffer.length() > 0)
-          buffer.append(',');
-        e.getIdentity().toString(buffer);
-        setDirty();
-        return true;
-      }
+  @Override
+  public boolean add(OIdentifiable e) {
+    if (map.containsKey(e))
       return false;
-    } else {
-      final int pos = indexOf(e);
+    if (e instanceof ORecord)
+      map.put(e, e);
+    else
+      map.put(e, ENTRY_REMOVAL);
+    setDirty();
 
-      if (pos < 0) {
-        // FOUND
-        delegate.add(pos * -1 - 1, e);
-        return true;
-      }
-      return false;
-    }
-  }
-
-  /**
-   * Returns the position of the element in the set. Execute a binary search since the elements are always ordered.
-   * 
-   * @param iElement
-   *          element to find
-   * @return The position of the element if found, otherwise false
-   */
-  public int indexOf(final OIdentifiable iElement) {
-    if (delegate.isEmpty())
-      return -1;
-
-    final boolean prevConvert = delegate.isAutoConvertToRecord();
-    if (prevConvert)
-      delegate.setAutoConvertToRecord(false);
-
-    final int pos = Collections.binarySearch(delegate, iElement);
-
-    if (prevConvert)
-      // RESET PREVIOUS SETTINGS
-      delegate.setAutoConvertToRecord(true);
-
-    return pos;
-  }
-
-  public boolean remove(final Object o) {
-    if (OGlobalConfiguration.LAZYSET_WORK_ON_STREAM.getValueAsBoolean() && getStreamedContent() != null) {
-      // WORK ON STREAM
-      if (delegate.remove(o))
-        return true;
-    } else {
-      lazyLoad(true);
-      final int pos = indexOf((OIdentifiable) o);
-      if (pos > -1) {
-        delegate.remove(pos);
-        return true;
-      }
-    }
-
-    if (hasNewItems()) {
-      // SEARCH INSIDE NEW ITEMS MAP
-      final boolean removed = newItems.remove(o) != null;
-      if (newItems.size() == 0)
-        // EARLY REMOVE THE MAP TO SAVE MEMORY
-        newItems = null;
-
-      if (removed)
-        setDirty();
-
-      return removed;
-    }
-
-    return false;
-  }
-
-  public boolean containsAll(final Collection<?> c) {
-    lazyLoad(false);
-    return delegate.containsAll(c);
-  }
-
-  @SuppressWarnings("unchecked")
-  public boolean addAll(Collection<? extends OIdentifiable> c) {
-    final Iterator<OIdentifiable> it = (Iterator<OIdentifiable>) (c instanceof ORecordLazyMultiValue ? ((ORecordLazyMultiValue) c)
-        .rawIterator() : c.iterator());
-
-    while (it.hasNext())
-      add(it.next());
+    if (e instanceof ODocument)
+      ((ODocument) e).addOwner(this);
+    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
+        e));
 
     return true;
   }
 
-  public boolean retainAll(final Collection<?> c) {
-    if (hasNewItems()) {
-      final Collection<Object> v = newItems.values();
-      v.retainAll(c);
-      if (newItems.size() == 0)
-        newItems = null;
+  public void convertLinks2Records() {
+    Iterator<Entry<OIdentifiable, Object>> all = map.entrySet().iterator();
+    while (all.hasNext()) {
+      Entry<OIdentifiable, Object> entry = all.next();
+      if (entry.getValue() == ENTRY_REMOVAL) {
+        try {
+          entry.setValue(entry.getKey().getRecord());
+        } catch (ORecordNotFoundException e) {
+          // IGNORE THIS
+        }
+      }
     }
-    return delegate.retainAll(c);
-  }
 
-  public boolean removeAll(final Collection<?> c) {
-    if (hasNewItems()) {
-      final Collection<Object> v = newItems.values();
-      v.removeAll(c);
-      if (newItems.size() == 0)
-        newItems = null;
-    }
-    return delegate.removeAll(c);
-  }
-
-  public void clear() {
-    delegate.clear();
-    if (newItems != null) {
-      newItems.clear();
-      newItems = null;
-    }
-  }
-
-  public byte getRecordType() {
-    return delegate.getRecordType();
   }
 
   @Override
-  public String toString() {
-    final StringBuilder buffer = new StringBuilder(delegate.toString());
-    if (hasNewItems()) {
-      for (ORecord<?> item : newItems.keySet()) {
-        if (buffer.length() > 2)
-          buffer.insert(buffer.length() - 1, ", ");
-
-        buffer.insert(buffer.length() - 1, item.toString());
-      }
-      return buffer.toString();
-    }
-    return buffer.toString();
+  public void onAfterIdentityChanged(ORecord<?> iRecord) {
+    if (iRecord instanceof ORecord)
+      map.put(iRecord, iRecord);
+    else
+      map.put(iRecord, ENTRY_REMOVAL);
   }
 
-  public void sort() {
-    if (!sorted && !delegate.isEmpty()) {
-      final boolean prevConvert = delegate.isAutoConvertToRecord();
-      if (prevConvert)
-        delegate.setAutoConvertToRecord(false);
-
-      delegate.marshalling = true;
-      Collections.sort(delegate);
-      delegate.marshalling = false;
-
-      if (prevConvert)
-        // RESET PREVIOUS SETTINGS
-        delegate.setAutoConvertToRecord(true);
-
-      sorted = true;
-    }
+  @Override
+  public boolean convertRecords2Links() {
+    return true;
   }
 
-  public ORecordLazySet setStreamedContent(final StringBuilder iStream) {
-    delegate.setStreamedContent(iStream);
-    return this;
+  @Override
+  public boolean isAutoConvertToRecord() {
+    return autoConvertToRecord;
   }
 
-  public StringBuilder getStreamedContent() {
-    return delegate.getStreamedContent();
+  @Override
+  public void setAutoConvertToRecord(boolean convertToRecord) {
+    this.autoConvertToRecord = convertToRecord;
   }
 
-  public boolean lazyLoad(final boolean iNotIdempotent) {
-    if (delegate.lazyLoad(iNotIdempotent)) {
-      sort();
-      return true;
-    }
-    return false;
-  }
-
-  public void convertLinks2Records() {
-    delegate.convertLinks2Records();
-  }
-
-  private boolean hasNewItems() {
-    return newItems != null && !newItems.isEmpty();
-  }
-
-  public void savedAllNewItems() {
-    if (hasNewItems()) {
-      for (ORecord<?> record : newItems.keySet()) {
-        if (record.getIdentity().isNew() || getStreamedContent() == null
-            || getStreamedContent().indexOf(record.getIdentity().toString()) == -1)
-          // NEW ITEM OR NOT CONTENT IN STREAMED BUFFER
-          add(record.getIdentity());
-      }
-
-      newItems.clear();
-      newItems = null;
-    }
-  }
-
-  public ORecordLazySet copy(final ODocument iSourceRecord) {
-    return new ORecordLazySet(iSourceRecord, this);
-  }
-
-  public void onLazyLoad() {
-    sorted = false;
-    sort();
-  }
-
-  public STATUS getInternalStatus() {
-    return delegate.getInternalStatus();
-  }
-
-  public void setInternalStatus(final STATUS iStatus) {
-    delegate.setInternalStatus(iStatus);
-  }
-
-  public boolean isRidOnly() {
-    return delegate.isRidOnly();
-  }
-
-  public ORecordLazySet setRidOnly(final boolean ridOnly) {
-    delegate.setRidOnly(ridOnly);
-    return this;
-  }
-
-  public boolean detach() {
-    return convertRecords2Links();
-  }
 }

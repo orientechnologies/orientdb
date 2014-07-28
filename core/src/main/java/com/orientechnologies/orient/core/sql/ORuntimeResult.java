@@ -15,17 +15,24 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
+import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Handles runtime results.
@@ -97,17 +104,40 @@ public class ORuntimeResult {
           projectionValue = null;
         } else if (v instanceof OSQLFilterItemVariable) {
           // RETURN A VARIABLE FROM THE CONTEXT
-          projectionValue = ((OSQLFilterItemVariable) v).getValue(inputDocument, iContext);
+          projectionValue = ((OSQLFilterItemVariable) v).getValue(inputDocument, iValue, iContext);
         } else if (v instanceof OSQLFilterItemField)
-          projectionValue = ((OSQLFilterItemField) v).getValue(inputDocument, iContext);
+          projectionValue = ((OSQLFilterItemField) v).getValue(inputDocument, iValue, iContext);
         else if (v instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
-          projectionValue = f.execute(inputDocument, iValue, iContext);
+          projectionValue = f.execute(inputDocument, inputDocument, iValue, iContext);
         } else
           projectionValue = v;
 
         if (projectionValue != null)
-          iValue.field(projection.getKey(), projectionValue);
+          if (projectionValue instanceof ORidBag)
+            iValue.field(projection.getKey(), new ORidBag((ORidBag) projectionValue));
+          else if (projectionValue instanceof OIdentifiable && !(projectionValue instanceof ORID)
+              && !(projectionValue instanceof ORecord))
+            iValue.field(projection.getKey(), ((OIdentifiable) projectionValue).getRecord());
+          else if (projectionValue instanceof Iterator) {
+            // make temporary value typical case graph database elemenet's iterator edges
+						if(projectionValue instanceof OResettable)
+							((OResettable)projectionValue).reset();
+
+            final List<Object> iteratorValues = new ArrayList<Object>();
+            final Iterator projectionValueIterator = (Iterator) projectionValue;
+            while (projectionValueIterator.hasNext()) {
+              final Object value = projectionValueIterator.next();
+              if (value instanceof OIdentifiable && !(value instanceof ORID) && !(value instanceof ORecord))
+                iteratorValues.add(((OIdentifiable) value).getRecord());
+              else
+                iteratorValues.add(value);
+            }
+
+            iValue.field(projection.getKey(), iteratorValues);
+          } else
+            iValue.field(projection.getKey(), projectionValue);
+
       }
     }
 

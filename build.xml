@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project basedir="." default="install" name="orient-ant">
-    <!-- Copyright (c) 1999-2011 Luca Garulli - LICENSE: Apache 2.0 -->
+<project basedir="." default="installg" name="orient-ant">
+    <!-- Copyright (c) 1999-2013 Orient Technologies LTD - LICENSE: Apache 2.0 -->
 
     <property environment="env"/>
-    <property name="vendor" value="NuvolaBase Ltd"/>
+    <property name="vendor" value="Orient Technologies Ltd"/>
     <property name="product" value="OrientDB"/>
     <property name="version" value="2.0-SNAPSHOT"/>
     <condition property="community.release" value="${releaseHome}/orientdb-community-${version}"
@@ -31,44 +31,45 @@
                 <fileset dir="server" includes="build.xml"/>
                 <fileset dir="distributed" includes="build.xml"/>
                 <fileset dir="tools" includes="build.xml"/>
+                <fileset dir="graphdb" includes="build.xml"/>
                 <fileset dir="tests" includes="build.xml"/>
             </subant>
 
-            <echo>___ ___ ____ _</echo>
-            <echo>.' `.|_ ||_ _| | |</echo>
-            <echo>/ .-. \ | |_/ / | |</echo>
-            <echo>| | | | | __'. |_|</echo>
-            <echo>\ `-' /_| | \ \_ _</echo>
-            <echo>`.___.'|____||____| (_)</echo>
+           <echo>   ___   ___  ____    _  </echo>
+           <echo> .'   `.|_  ||_  _|  | | </echo>
+           <echo>/  .-.  \ | |_/ /    | | </echo>
+           <echo>| |   | | |  __'.    |_| </echo>
+           <echo>\  `-'  /_| |  \ \_   _  </echo>
+           <echo> `.___.'|____||____| (_) </echo>
         </sequential>
 
     </macrodef>
 
     <target name="init">
-        <echo>.</echo>
-        <echo>.` `</echo>
-        <echo>, `:.</echo>
-        <echo>`,` ,:`</echo>
-        <echo>.,. :,,</echo>
-        <echo>.,, ,,,</echo>
-        <echo>. .,.::::: ```` ::::::::: :::::::::</echo>
-        <echo>,` .::,,,,::.,,,,,,`;; .: :::::::::: ::: :::</echo>
-        <echo>`,. ::,,,,,,,:.,,.` ` .: ::: ::: ::: :::</echo>
-        <echo>,,:,:,,,,,,,,::. ` ` `` .: ::: ::: ::: :::</echo>
-        <echo>,,:.,,,,,,,,,: `::, ,, ::,::` : :,::` :::: ::: ::: ::: :::</echo>
-        <echo>,:,,,,,,,,,,::,: ,, :. : :: : .: ::: ::: :::::::</echo>
-        <echo>:,,,,,,,,,,:,:: ,, : : : : .: ::: ::: :::::::::</echo>
-        <echo>` :,,,,,,,,,,:,::, ,, .:::::::: : : .: ::: ::: ::: :::</echo>
-        <echo>`,...,,:,,,,,,,,,: .:,. ,, ,, : : .: ::: ::: ::: :::</echo>
-        <echo>.,,,,::,,,,,,,: `: , ,, : ` : : .: ::: ::: ::: :::</echo>
-        <echo>...,::,,,,::.. `: .,, :, : : : .: ::::::::::: ::: :::</echo>
-        <echo>,::::,,,. `: ,, ::::: : : .: ::::::::: ::::::::::</echo>
-        <echo>,,:` `,,.</echo>
-        <echo>,,, .,`</echo>
-        <echo>,,. `, GRAPH DATABASE</echo>
-        <echo>`` `. COMMUNITY EDITION</echo>
-        <echo>`` www.orientdb.org</echo>
-        <echo>`</echo>
+     <echo>           .                                          </echo>
+     <echo>          .`        `                                 </echo>
+     <echo>          ,      `:.                                  </echo>
+     <echo>         `,`    ,:`                                   </echo>
+     <echo>         .,.   :,,                                    </echo>
+     <echo>         .,,  ,,,                                     </echo>
+     <echo>    .    .,.:::::  ````                                 :::::::::     :::::::::</echo>
+     <echo>    ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::</echo>
+     <echo>    `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::</echo>
+     <echo>     ,,:,:,,,,,,,,::.   `        `         ``     .:    :::      :::  :::     :::</echo>
+     <echo>      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::   :::      :::  :::    :::</echo>
+     <echo>       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::</echo>
+     <echo>        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::</echo>
+     <echo>  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     :::</echo>
+     <echo>  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     :::</echo>
+     <echo>    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::</echo>
+     <echo>      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::</echo>
+     <echo>           ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::</echo>
+     <echo>           ,,:` `,,.                                  </echo>
+     <echo>          ,,,    .,`                                  </echo>
+     <echo>         ,,.     `,                                          GRAPH DATABASE</echo>
+     <echo>       ``        `.                                        COMMUNITY  EDITION</echo>
+     <echo>                 ``                                         www.orientdb.org</echo>
+     <echo>                 `                                    </echo>
 
         <mkdir dir="${community.release}"/>
         <mkdir dir="${community.release}/log"/>
@@ -88,7 +89,7 @@
     <target name="javadoc" depends="init">
         <!-- YOU NEED TO INSTALL GRAPH-VIZ TO GENERATE UML DIAGRAMS, OTHERWISE DISABLE IT TO HAVE PLAIN JAVADOCS -->
         <javadoc sourcepath="." packagenames="com.orientechnologies.*,com.tinkerpop.blueprints.*"
-                 excludepackagenames="com.orientechnologies.core.storage.*,com.orientechnologies.core.iterator.*,,com.orientechnologies.core.processor.*"
+                 excludepackagenames="com.orientechnologies.core.storage.*,com.orientechnologies.core.iterator.*,com.orientechnologies.core.processor.*"
                  destdir="${community.release}/javadoc"
                  public="true"
                  useexternalfile="yes" linksource="yes" author="true" version="true" use="yes" verbose="no"
@@ -106,7 +107,7 @@
                 <include name="core/src/main/java/**/*.java"/>
                 <include name="object/src/main/java/**/*.java"/>
                 <include name="../../os/tinkerpop/blueprints/blueprints-core/src/main/java/**/*.java"/>
-                <include name="../../os/tinkerpop/blueprints/blueprints-orient-graph/src/main/java/**/*.java"/>
+                <include name="graphdb/src/main/java/**/*.java"/>
             </fileset>
             <doclet name="org.umlgraph.doclet.UmlGraphDoc" path="_base/lib/UmlGraph.jar">
                 <param name="-hide" value="java.*"/>
@@ -128,12 +129,6 @@
 
     <target name="install" depends="init">
         <delegate target="install"/>
-        <subant target="install">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="version" value="${version}"/>
-
-            <fileset dir="graphdb" includes="build.xml"/>
-        </subant>
 
         <copy todir="${community.release}/" flatten="true">
             <fileset dir="." includes="*.txt"/>
@@ -179,10 +174,22 @@
         </copy>
 
         <delete dir="${community.release}/databases"/>
+
+        <condition property="test.storageType" value="plocal" else="memory">
+            <and>
+                <or>
+                    <equals arg1="${orientdb.test.env}" arg2="ci" casesensitive="false"/>
+                    <equals arg1="${orientdb.test.env}" arg2="release" casesensitive="false"/>
+                </or>
+            </and>
+        </condition>
+
         <java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.blueprints.TestLoadGraph">
+	    <jvmarg value="-Djava.awt.headless=true"/>
             <classpath>
                 <fileset dir="${community.release}/lib" includes="*.jar"/>
             </classpath>
+            <jvmarg value="-DstorageType=${test.storageType}"/>
         </java>
 
         <copy todir="${community.release}/databases/GratefulDeadConcerts" failonerror="false">
@@ -214,23 +221,16 @@
     <target name="test" depends="install">
         <subant target="test">
             <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="orient.path" value="${community.release}"/>
+            <property name="orient.path" value="../${community.release}"/>
             <fileset dir="tests" includes="build.xml"/>
         </subant>
     </target>
 
-    <target name="test-local" depends="install">
-        <subant target="test-local">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="orient.path" value="${community.release}"/>
-            <fileset dir="tests" includes="build.xml"/>
-        </subant>
-    </target>
 
-    <target name="test-plocal" depends="install">
-        <subant target="test-plocal">
+    <target name="test-embedded" depends="install">
+        <subant target="test-embedded">
             <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="orient.path" value="${community.release}"/>
+            <property name="orient.path" value="../${community.release}"/>
             <fileset dir="tests" includes="build.xml"/>
         </subant>
     </target>
@@ -239,15 +239,7 @@
     <target name="test-remote" depends="install">
         <subant target="test-remote">
             <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="orient.path" value="${community.release}"/>
-            <fileset dir="tests" includes="build.xml"/>
-        </subant>
-    </target>
-
-    <target name="stress-test">
-        <subant target="stress-test">
-            <property name="global.lib" value="../${community.release}/lib"/>
-            <property name="orient.path" value="${community.release}"/>
+            <property name="orient.path" value="../${community.release}"/>
             <fileset dir="tests" includes="build.xml"/>
         </subant>
     </target>

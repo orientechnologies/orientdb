@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -26,74 +27,53 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
-public class BinaryTest {
-	private ODatabaseDocument	database;
-	private ORID							rid;
+public class BinaryTest extends DocumentDBBaseTest {
+  private ORID rid;
 
-	@Parameters(value = "url")
-	public BinaryTest(String iURL) {
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  @Parameters(value = "url")
+  public BinaryTest(@Optional String url) {
+    super(url);
+  }
 
-	@Test
-	public void testMixedCreateEmbedded() {
-		database.open("admin", "admin");
+  @Test
+  public void testMixedCreateEmbedded() {
+    ODocument doc = new ODocument();
+    doc.field("binary", "Binary data".getBytes());
 
-		ODocument doc = new ODocument();
-		doc.field("binary", "Binary data".getBytes());
+    doc.save();
 
-		doc.save();
+    doc.reload();
+    Assert.assertEquals(new String((byte[]) doc.field("binary", OType.BINARY)), "Binary data");
+  }
 
-		doc.reload();
-		Assert.assertEquals(new String((byte[]) doc.field("binary", OType.BINARY)), "Binary data");
+  @Test
+  public void testBasicCreateExternal() {
+    ORecordBytes record = new ORecordBytes(database, "This is a test".getBytes());
+    record.save();
+    rid = record.getIdentity();
+  }
 
-		database.close();
-	}
+  @Test(dependsOnMethods = "testBasicCreateExternal")
+  public void testBasicReadExternal() {
+    ORecordBytes record = database.load(rid);
 
-	@Test
-	public void testBasicCreateExternal() {
-		database.open("admin", "admin");
+    Assert.assertEquals("This is a test", new String(record.toStream()));
+  }
 
-		ORecordBytes record = new ORecordBytes(database, "This is a test".getBytes());
-		record.save();
-		rid = record.getIdentity();
+  @Test(dependsOnMethods = "testBasicReadExternal")
+  public void testMixedCreateExternal() {
+    ODocument doc = new ODocument();
+    doc.field("binary", new ORecordBytes(database, "Binary data".getBytes()));
 
-		database.close();
-	}
+    doc.save();
+    rid = doc.getIdentity();
+  }
 
-	@Test(dependsOnMethods = "testBasicCreateExternal")
-	public void testBasicReadExternal() {
-		database.open("admin", "admin");
+  @Test(dependsOnMethods = "testMixedCreateExternal")
+  public void testMixedReadExternal() {
+    ODocument doc = new ODocument(rid);
+    doc.reload();
 
-		ORecordBytes record = database.load(rid);
-
-		Assert.assertEquals("This is a test", new String(record.toStream()));
-
-		database.close();
-	}
-
-	@Test(dependsOnMethods = "testBasicReadExternal")
-	public void testMixedCreateExternal() {
-		database.open("admin", "admin");
-
-		ODocument doc = new ODocument();
-		doc.field("binary", new ORecordBytes(database, "Binary data".getBytes()));
-
-		doc.save();
-		rid = doc.getIdentity();
-
-		database.close();
-	}
-
-	@Test(dependsOnMethods = "testMixedCreateExternal")
-	public void testMixedReadExternal() {
-		database.open("admin", "admin");
-
-		ODocument doc = new ODocument(rid);
-		doc.reload();
-
-		Assert.assertEquals("Binary data", new String(((ORecordBytes) doc.field("binary")).toStream()));
-
-		database.close();
-	}
+    Assert.assertEquals("Binary data", new String(((ORecordBytes) doc.field("binary")).toStream()));
+  }
 }

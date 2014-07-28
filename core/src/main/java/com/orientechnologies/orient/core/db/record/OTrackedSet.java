@@ -15,10 +15,14 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
@@ -26,6 +30,7 @@ import java.util.WeakHashMap;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -38,11 +43,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @SuppressWarnings("serial")
 public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
   protected final ORecord<?>                   sourceRecord;
+  private final boolean                        embeddedCollection;
+  protected Class<?>                           genericClass;
   private STATUS                               status          = STATUS.NOT_LOADED;
   private Set<OMultiValueChangeListener<T, T>> changeListeners = Collections
                                                                    .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<T, T>, Boolean>());
-  protected Class<?>                           genericClass;
-  private final boolean                        embeddedCollection;
 
   public OTrackedSet(final ORecord<?> iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
     this(iRecord);
@@ -61,6 +66,29 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     return sourceRecord;
   }
 
+  @Override
+  public Iterator<T> iterator() {
+    return new Iterator<T>() {
+      private final Iterator<T> underlying = OTrackedSet.super.iterator();
+
+      @Override
+      public boolean hasNext() {
+        return underlying.hasNext();
+      }
+
+      @Override
+      public T next() {
+        return underlying.next();
+      }
+
+      @Override
+      public void remove() {
+        underlying.remove();
+        setDirty();
+      }
+    };
+  }
+
   public boolean add(final T e) {
     if (super.add(e)) {
       addOwnerToEmbeddedDoc(e);
@@ -70,11 +98,6 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     }
 
     return false;
-  }
-
-  private void addOwnerToEmbeddedDoc(T e) {
-    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
-      ((ODocument) e).addOwner(this);
   }
 
   @SuppressWarnings("unchecked")
@@ -121,12 +144,19 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   @SuppressWarnings("unchecked")
   public OTrackedSet<T> setDirty() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null && !sourceRecord.isDirty())
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null
+        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
       sourceRecord.setDirty();
     return this;
   }
 
-  public void onBeforeIdentityChanged(ORID iRID) {
+  @Override
+  public void setDirtyNoChanged() {
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
+      sourceRecord.setDirtyNoChanged();
+  }
+
+  public void onBeforeIdentityChanged(ORecord<?> iRecord) {
   }
 
   public void onAfterIdentityChanged(ORecord<?> iRecord) {
@@ -171,6 +201,14 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     return reverted;
   }
 
+  public Class<?> getGenericClass() {
+    return genericClass;
+  }
+
+  public void setGenericClass(Class<?> genericClass) {
+    this.genericClass = genericClass;
+  }
+
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
     if (status == STATUS.UNMARSHALLING)
       return;
@@ -182,12 +220,9 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     }
   }
 
-  public Class<?> getGenericClass() {
-    return genericClass;
-  }
-
-  public void setGenericClass(Class<?> genericClass) {
-    this.genericClass = genericClass;
+  private void addOwnerToEmbeddedDoc(T e) {
+    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
+      ((ODocument) e).addOwner(this);
   }
 
   private Object writeReplace() {

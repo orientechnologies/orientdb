@@ -18,7 +18,10 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.storage.OStorage;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -26,22 +29,28 @@ import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 @Test(groups = { "crud", "record-csv" }, sequential = true)
-public class CRUDFlatPhysicalTest {
+public class CRUDFlatPhysicalTest extends FlatDBBaseTest {
   private static final String CLUSTER_NAME = "binary";
   protected static final int  TOT_RECORDS  = 100;
+
   protected long              startRecordNumber;
-  private ODatabaseFlat       database;
   private ORecordFlat         record;
 
   @Parameters(value = "url")
-  public CRUDFlatPhysicalTest(String iURL) {
-
-    database = new ODatabaseFlat(iURL);
-    record = database.newInstance();
+  public CRUDFlatPhysicalTest(@Optional String url) {
+    super(url);
   }
 
-  public void createRaw() {
-    database.open("admin", "admin");
+	@BeforeClass
+	@Override
+	public void beforeClass() throws Exception {
+		super.beforeClass();
+		record = database.newInstance();
+	}
+
+	public void createRaw() {
+		if (database.getClusterIdByName(CLUSTER_NAME) < 0)
+			database.addCluster(CLUSTER_NAME);
 
     startRecordNumber = database.countClusterElements(CLUSTER_NAME);
 
@@ -49,23 +58,15 @@ public class CRUDFlatPhysicalTest {
       record.reset();
       record.value(i + "-binary test").save(CLUSTER_NAME);
     }
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "createRaw")
   public void testCreateRaw() {
-    database.open("admin", "admin");
-
     Assert.assertEquals(database.countClusterElements(CLUSTER_NAME) - startRecordNumber, TOT_RECORDS);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testCreateRaw")
   public void readRawWithExpressiveForwardIterator() {
-    database.open("admin", "admin");
-
     String[] fields;
 
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
@@ -80,14 +81,10 @@ public class CRUDFlatPhysicalTest {
     }
 
     Assert.assertTrue(ids.isEmpty());
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "readRawWithExpressiveForwardIterator")
   public void updateRaw() {
-    database.open("admin", "admin");
-
     String[] fields;
 
     for (ORecordFlat rec : database.browseCluster(CLUSTER_NAME)) {
@@ -98,14 +95,10 @@ public class CRUDFlatPhysicalTest {
         rec.save();
       }
     }
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "updateRaw")
   public void testUpdateRaw() {
-    database.open("admin", "admin");
-
     String[] fields;
 
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
@@ -125,7 +118,5 @@ public class CRUDFlatPhysicalTest {
     }
 
     Assert.assertTrue(ids.isEmpty());
-
-    database.close();
   }
 }

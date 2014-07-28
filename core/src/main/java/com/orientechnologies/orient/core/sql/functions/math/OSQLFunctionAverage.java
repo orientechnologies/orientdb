@@ -15,15 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Compute the average value for a field. Uses the context to save the last average number. When different Number class are used,
@@ -42,18 +43,19 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
     super(NAME, 1, -1);
   }
 
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    if (iParameters.length == 1) {
-      if (iParameters[0] instanceof Number)
-        sum((Number) iParameters[0]);
-      else if (OMultiValue.isMultiValue(iParameters[0]))
-        for (Object n : OMultiValue.getMultiValueIterable(iParameters[0]))
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
+      OCommandContext iContext) {
+    if (iParams.length == 1) {
+      if (iParams[0] instanceof Number)
+        sum((Number) iParams[0]);
+      else if (OMultiValue.isMultiValue(iParams[0]))
+        for (Object n : OMultiValue.getMultiValueIterable(iParams[0]))
           sum((Number) n);
 
     } else {
       sum = null;
-      for (int i = 0; i < iParameters.length; ++i)
-        sum((Number) iParameters[i]);
+      for (int i = 0; i < iParams.length; ++i)
+        sum((Number) iParams[i]);
     }
 
     return getResult();
@@ -71,7 +73,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
   }
 
   public String getSyntax() {
-    return "Syntax error: avg(<field> [,<field>*])";
+    return "avg(<field> [,<field>*])";
   }
 
   @Override
@@ -82,51 +84,45 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
       doc.put("total", total);
       return doc;
     } else {
-      if (sum instanceof Integer)
-        return sum.intValue() / total;
-      else if (sum instanceof Long)
-        return sum.longValue() / total;
-      else if (sum instanceof Float)
-        return sum.floatValue() / total;
-      else if (sum instanceof Double)
-        return sum.doubleValue() / total;
-      else if (sum instanceof BigDecimal)
-        return ((BigDecimal) sum).divide(new BigDecimal(total));
+    	return computeAverage(sum, total);
     }
-    return null;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    Number sum = null;
-    int total = 0;
+    Number dSum = null;
+    int dTotal = 0;
     for (Object iParameter : resultsToMerge) {
       final Map<String, Object> item = (Map<String, Object>) iParameter;
-      if (sum == null)
-        sum = (Number) item.get("sum");
+      if (dSum == null)
+        dSum = (Number) item.get("sum");
       else
-        sum = OType.increment(sum, (Number) item.get("sum"));
+        dSum = OType.increment(dSum, (Number) item.get("sum"));
 
-      total += (Integer) item.get("total");
+      dTotal += (Integer) item.get("total");
     }
 
-    if (sum instanceof Integer)
-      return sum.intValue() / total;
-    else if (sum instanceof Long)
-      return sum.longValue() / total;
-    else if (sum instanceof Float)
-      return sum.floatValue() / total;
-    else if (sum instanceof Double)
-      return sum.doubleValue() / total;
-    else if (sum instanceof BigDecimal)
-      return ((BigDecimal) sum).divide(new BigDecimal(total));
-
-    return null;
+    return computeAverage(dSum, dTotal);
   }
 
   @Override
   public boolean aggregateResults() {
     return configuredParameters.length == 1;
+  }
+  
+  private Object computeAverage(Number iSum, int iTotal) {
+  	if (iSum instanceof Integer)
+      return iSum.intValue() / iTotal;
+    else if (iSum instanceof Long)
+      return iSum.longValue() / iTotal;
+    else if (iSum instanceof Float)
+      return iSum.floatValue() / iTotal;
+    else if (iSum instanceof Double)
+      return iSum.doubleValue() / iTotal;
+    else if (iSum instanceof BigDecimal)
+      return ((BigDecimal) iSum).divide(new BigDecimal(iTotal), RoundingMode.HALF_UP);
+  	
+  	return null;
   }
 }

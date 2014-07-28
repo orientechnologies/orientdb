@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -30,22 +31,21 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 
 @Test(groups = { "db", "import-export" })
-public class DbImportExportTest implements OCommandOutputListener {
+public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOutputListener {
   public static final String EXPORT_FILE_PATH = "target/db.export.gz";
   public static final String NEW_DB_PATH      = "target/test-import";
   public static final String NEW_DB_URL       = "target/test-import";
 
-  private String             url;
+
   private String             testPath;
 
-  @Parameters(value = { "url", "testPath" })
-  public DbImportExportTest(String iURL, String iTestPath) {
-    url = iURL;
-    testPath = iTestPath;
-    Orient.instance().getProfiler().startRecording();
-  }
+	@Parameters(value = { "url", "testPath" })
+	public DbImportExportTest(@Optional String url, String testPath) {
+		super(url);
+		this.testPath = testPath;
+	}
 
-  @Test
+	@Test
   public void testDbExport() throws IOException {
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
@@ -66,23 +66,15 @@ public class DbImportExportTest implements OCommandOutputListener {
     else
       importDir.mkdir();
 
-    ODatabaseDocumentTx database;
-    if (url.startsWith("plocal:") || url.startsWith("remote:"))
-      database = new ODatabaseDocumentTx("plocal:" + testPath + "/" + NEW_DB_URL);
-    else
-      database = new ODatabaseDocumentTx("local:" + testPath + "/" + NEW_DB_URL);
-
+    ODatabaseDocumentTx database = new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
     database.create();
 
     ODatabaseImport dbImport = new ODatabaseImport(database, testPath + "/" + EXPORT_FILE_PATH, this);
 
     // UNREGISTER ALL THE HOOKS
-    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks())) {
+    for (ORecordHook hook : new ArrayList<ORecordHook>(database.getHooks().keySet())) {
       database.unregisterHook(hook);
     }
-
-    if (url.startsWith("local:") || url.startsWith("memory:"))
-      dbImport.setPreserveClusterIDs(false);
 
     dbImport.setPreserveRids(true);
     dbImport.setDeleteRIDMapping(false);

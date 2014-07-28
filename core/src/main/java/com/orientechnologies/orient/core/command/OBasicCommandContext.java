@@ -15,12 +15,13 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.OTimeoutException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Basic implementation of OCommandContext interface that stores variables in a map. Supports parent/child context to build a tree
@@ -33,6 +34,7 @@ public class OBasicCommandContext implements OCommandContext {
   public static final String                                                         EXECUTION_BEGUN  = "EXECUTION_BEGUN";
   public static final String                                                         TIMEOUT_MS       = "TIMEOUT_MS";
   public static final String                                                         TIMEOUT_STRATEGY = "TIMEOUT_STARTEGY";
+  public static final String                                                         INVALID_COMPARE_COUNT = "INVALID_COMPARE_COUNT";
 
   protected boolean                                                                  recordMetrics    = false;
   protected OCommandContext                                                          parent;
@@ -133,6 +135,32 @@ public class OBasicCommandContext implements OCommandContext {
         ((OCommandContext) nested).setVariable(iName.substring(pos + 1), iValue);
     } else
       variables.put(iName, iValue);
+    return this;
+  }
+
+  @Override
+  public OCommandContext incrementVariable(String iName) {
+    if (iName != null) {
+      if (iName.startsWith("$"))
+        iName = iName.substring(1);
+
+      init();
+
+      int pos = OStringSerializerHelper.getHigherIndexOf(iName, 0, ".", "[");
+      if (pos > -1) {
+        Object nested = getVariable(iName.substring(0, pos));
+        if (nested != null && nested instanceof OCommandContext)
+          ((OCommandContext) nested).incrementVariable(iName.substring(pos + 1));
+      } else {
+        final Object v = variables.get(iName);
+        if (v == null)
+          variables.put(iName, 1);
+        else if (v instanceof Number)
+          variables.put(iName, OType.increment((Number) v, 1));
+        else
+          throw new IllegalArgumentException("Variable '" + iName + "' is not a number, but: " + v.getClass());
+      }
+    }
     return this;
   }
 

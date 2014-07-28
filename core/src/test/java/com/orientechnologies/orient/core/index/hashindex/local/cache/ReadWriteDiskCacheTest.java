@@ -1,19 +1,5 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-import java.util.zip.CRC32;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
@@ -22,10 +8,23 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageSegmentConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import com.orientechnologies.orient.core.storage.fs.OFileFactory;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.zip.CRC32;
 
 @Test
 public class ReadWriteDiskCacheTest {
@@ -35,7 +34,7 @@ public class ReadWriteDiskCacheTest {
   private OLocalPaginatedStorage storageLocal;
   private String                 fileName;
   private byte                   seed;
-  private OWriteAheadLog         writeAheadLog;
+  private ODiskWriteAheadLog writeAheadLog;
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -46,6 +45,8 @@ public class ReadWriteDiskCacheTest {
       buildDirectory = ".";
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/ReadWriteDiskCacheTest");
+    storageLocal.create(null);
+    storageLocal.close(true, false);
 
     fileName = "readWriteDiskCacheTest.tst";
 
@@ -73,12 +74,12 @@ public class ReadWriteDiskCacheTest {
       writeAheadLog = null;
     }
 
-    File testFile = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteDiskCacheTest.tst");
+    File testFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "readWriteDiskCacheTest.tst");
     if (testFile.exists()) {
       Assert.assertTrue(testFile.delete());
     }
 
-    File idMapFile = new File(storageLocal.getConfiguration().getDirectory() + "/name_id_map.cm");
+    File idMapFile = new File(storageLocal.getConfiguration().getDirectory() + File.separator + "name_id_map.cm");
     if (idMapFile.exists()) {
       Assert.assertTrue(idMapFile.delete());
     }
@@ -87,7 +88,7 @@ public class ReadWriteDiskCacheTest {
   @AfterClass
   public void afterClass() throws IOException {
     if (buffer != null) {
-      buffer.close();
+      buffer.delete();
       buffer = null;
     }
 
@@ -739,11 +740,11 @@ public class ReadWriteDiskCacheTest {
     if (!file.exists())
       file.mkdir();
 
-    writeAheadLog = new OWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
+    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
         "readWriteDiskCacheTest.tst", 0);
-    segmentConfiguration.fileType = OFileFactory.CLASSIC;
+    segmentConfiguration.fileType = OFileClassic.NAME;
 
     buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 2 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
         writeAheadLog, true, false);
@@ -778,13 +779,13 @@ public class ReadWriteDiskCacheTest {
     if (!file.exists())
       file.mkdir();
 
-    writeAheadLog = new OWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
+    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
     writeAheadLog.logFuzzyCheckPointStart();
     OLogSequenceNumber pageLSN = writeAheadLog.logFuzzyCheckPointEnd();
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
         "readWriteDiskCacheTest.tst", 0);
-    segmentConfiguration.fileType = OFileFactory.CLASSIC;
+    segmentConfiguration.fileType = OFileClassic.NAME;
 
     buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 2 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
         writeAheadLog, true, false);

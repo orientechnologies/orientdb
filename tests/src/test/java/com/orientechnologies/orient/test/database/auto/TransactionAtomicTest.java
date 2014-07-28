@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.IOException;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -36,12 +37,10 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "dictionary")
-public class TransactionAtomicTest {
-  private String url;
-
+public class TransactionAtomicTest extends DocumentDBBaseTest {
   @Parameters(value = "url")
-  public TransactionAtomicTest(String iURL) {
-    url = iURL;
+  public TransactionAtomicTest(@Optional String url) {
+    super(url);
   }
 
   @Test
@@ -72,8 +71,6 @@ public class TransactionAtomicTest {
 
   @Test
   public void testMVCC() throws IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
 
     ODocument doc = new ODocument("Account");
     doc.field("version", 0);
@@ -90,8 +87,6 @@ public class TransactionAtomicTest {
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
     }
-
-    db.close();
   }
 
   @Test(expectedExceptions = OTransactionException.class)
@@ -147,6 +142,7 @@ public class TransactionAtomicTest {
       }
     });
 
+    db.begin();
     db.commit();
 
     db.close();
@@ -154,24 +150,21 @@ public class TransactionAtomicTest {
 
   @Test
   public void testTransactionWithDuplicateUniqueIndexValues() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
-
-    OClass fruitClass = db.getMetadata().getSchema().getClass("Fruit");
+    OClass fruitClass = database.getMetadata().getSchema().getClass("Fruit");
 
     if (fruitClass == null) {
-      fruitClass = db.getMetadata().getSchema().createClass("Fruit");
+      fruitClass = database.getMetadata().getSchema().createClass("Fruit");
 
       fruitClass.createProperty("name", OType.STRING);
       fruitClass.createProperty("color", OType.STRING);
 
-      db.getMetadata().getSchema().getClass("Fruit").getProperty("color").createIndex(OClass.INDEX_TYPE.UNIQUE);
+      database.getMetadata().getSchema().getClass("Fruit").getProperty("color").createIndex(OClass.INDEX_TYPE.UNIQUE);
     }
 
-    Assert.assertEquals(db.countClusterElements("Fruit"), 0);
+    Assert.assertEquals(database.countClusterElements("Fruit"), 0);
 
     try {
-      db.begin();
+      database.begin();
 
       ODocument apple = new ODocument("Fruit").field("name", "Apple").field("color", "Red");
       ODocument orange = new ODocument("Fruit").field("name", "Orange").field("color", "Orange");
@@ -190,57 +183,45 @@ public class TransactionAtomicTest {
       kumquat.save();
       Assert.assertEquals(kumquat.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
 
-      db.commit();
+      database.commit();
       Assert.assertTrue(false);
 
     } catch (OResponseProcessingException e) {
       Assert.assertTrue(e.getCause() instanceof ORecordDuplicatedException);
-      db.rollback();
+      database.rollback();
     } catch (ORecordDuplicatedException e) {
       Assert.assertTrue(true);
-      db.rollback();
-
+      database.rollback();
     }
 
-    Assert.assertEquals(db.countClusterElements("Fruit"), 0);
-
-    db.close();
+    Assert.assertEquals(database.countClusterElements("Fruit"), 0);
   }
 
   @Test
   public void testTransactionalSQL() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
+    long prev = database.countClusterElements("Account");
 
-    long prev = db.countClusterElements("Account");
+    database.command(new OCommandSQL("transactional insert into Account set name = 'txTest1'")).execute();
 
-    db.command(new OCommandSQL("transactional insert into Account set name = 'txTest1'")).execute();
-
-    Assert.assertEquals(db.countClusterElements("Account"), prev + 1);
-    db.close();
+    Assert.assertEquals(database.countClusterElements("Account"), prev + 1);
   }
 
   @Test
   public void testTransactionalSQLJoinTx() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
+    long prev = database.countClusterElements("Account");
 
-    long prev = db.countClusterElements("Account");
+    database.begin();
 
-    db.begin();
+    database.command(new OCommandSQL("transactional insert into Account set name = 'txTest2'")).execute();
 
-    db.command(new OCommandSQL("transactional insert into Account set name = 'txTest2'")).execute();
-
-    Assert.assertTrue(db.getTransaction().isActive());
+    Assert.assertTrue(database.getTransaction().isActive());
 
     if (!url.startsWith("remote"))
-      Assert.assertEquals(db.countClusterElements("Account"), prev);
+      Assert.assertEquals(database.countClusterElements("Account"), prev);
 
-    db.commit();
+    database.commit();
 
-    Assert.assertFalse(db.getTransaction().isActive());
-    Assert.assertEquals(db.countClusterElements("Account"), prev + 1);
-
-    db.close();
+    Assert.assertFalse(database.getTransaction().isActive());
+    Assert.assertEquals(database.countClusterElements("Account"), prev + 1);
   }
 }

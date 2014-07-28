@@ -1,14 +1,5 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.Future;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -19,9 +10,19 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.Future;
 
 /**
  * @author Andrey Lomakin
@@ -57,14 +58,14 @@ public class OReadWriteDiskCache implements ODiskCache {
   private static String                               METRIC_MISSED_METADATA;
 
   public OReadWriteDiskCache(final long readCacheMaxMemory, final long writeCacheMaxMemory, final int pageSize,
-      final long writeGroupTTL, final int pageFlushInterval, final OStorageLocalAbstract storageLocal,
+      final long writeGroupTTL, final int pageFlushInterval, final OLocalPaginatedStorage storageLocal,
       final OWriteAheadLog writeAheadLog, final boolean syncOnPageFlush, final boolean checkMinSize) {
     this(null, readCacheMaxMemory, writeCacheMaxMemory, pageSize, writeGroupTTL, pageFlushInterval, storageLocal, writeAheadLog,
         syncOnPageFlush, checkMinSize);
   }
 
   public OReadWriteDiskCache(final String storageName, final long readCacheMaxMemory, final long writeCacheMaxMemory,
-      final int pageSize, final long writeGroupTTL, final int pageFlushInterval, final OStorageLocalAbstract storageLocal,
+      final int pageSize, final long writeGroupTTL, final int pageFlushInterval, final OLocalPaginatedStorage storageLocal,
       final OWriteAheadLog writeAheadLog, final boolean syncOnPageFlush, final boolean checkMinSize) {
     this.storageName = storageName;
     this.pageSize = pageSize;
@@ -128,9 +129,32 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
+  public void openFile(String fileName, long fileId) throws IOException {
+    synchronized (syncObject) {
+      long existingFileId = writeCache.isOpen(fileName);
+
+      if (fileId == existingFileId)
+        return;
+      else if (existingFileId >= 0)
+        throw new OStorageException("File with given name already exists but has different id " + existingFileId + " vs. proposed "
+            + fileId);
+
+      writeCache.openFile(fileName, fileId);
+      filePages.put(fileId, new HashSet<Long>());
+    }
+  }
+
+  @Override
   public boolean exists(final String fileName) {
     synchronized (syncObject) {
       return writeCache.exists(fileName);
+    }
+  }
+
+  @Override
+  public boolean exists(long fileId) {
+    synchronized (syncObject) {
+      return writeCache.exists(fileId);
     }
   }
 
@@ -139,6 +163,16 @@ public class OReadWriteDiskCache implements ODiskCache {
     synchronized (syncObject) {
       return writeCache.fileNameById(fileId);
     }
+  }
+
+  @Override
+  public void lock() throws IOException {
+    writeCache.lock();
+  }
+
+  @Override
+  public void unlock() throws IOException {
+    writeCache.unlock();
   }
 
   @Override
@@ -312,7 +346,6 @@ public class OReadWriteDiskCache implements ODiskCache {
     writeCache.flush();
   }
 
-  @Override
   public void clear() throws IOException {
     writeCache.flush();
 
@@ -523,13 +556,6 @@ public class OReadWriteDiskCache implements ODiskCache {
   public Set<ODirtyPage> logDirtyPagesTable() throws IOException {
     synchronized (syncObject) {
       return writeCache.logDirtyPagesTable();
-    }
-  }
-
-  @Override
-  public void forceSyncStoredChanges() throws IOException {
-    synchronized (syncObject) {
-      writeCache.forceSyncStoredChanges();
     }
   }
 

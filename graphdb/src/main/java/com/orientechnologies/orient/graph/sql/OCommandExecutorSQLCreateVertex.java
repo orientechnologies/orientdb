@@ -15,15 +15,13 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
 import com.orientechnologies.orient.core.sql.OCommandParameters;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -32,12 +30,16 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 /**
  * SQL CREATE VERTEX command.
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware {
+public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware implements OCommandDistributedReplicateRequest {
   public static final String            NAME = "CREATE VERTEX";
   private OClass                        clazz;
   private String                        clusterName;
@@ -94,33 +96,35 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     if (clazz == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph();
+    return OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<ODocument>() {
+      @Override
+      public ODocument call(OrientBaseGraph graph) {
+        final OrientVertex vertex = graph.addTemporaryVertex(clazz.getName());
 
-    final OrientVertex vertex = graph.addTemporaryVertex(clazz.getName());
+        if (fields != null)
+          // EVALUATE FIELDS
+          for (Entry<String, Object> f : fields.entrySet()) {
+            if (f.getValue() instanceof OSQLFunctionRuntime)
+              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), null, context));
+          }
 
-    if (fields != null)
-      // EVALUATE FIELDS
-      for (Entry<String, Object> f : fields.entrySet()) {
-        if (f.getValue() instanceof OSQLFunctionRuntime)
-          fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), context));
+        OSQLHelper.bindParameters(vertex.getRecord(), fields, new OCommandParameters(iArgs), context);
+
+        if (content != null)
+          vertex.getRecord().merge(content, true, false);
+
+        if (clusterName != null)
+          vertex.save(clusterName);
+        else
+          vertex.save();
+
+        return vertex.getRecord();
       }
-
-    OSQLHelper.bindParameters(vertex.getRecord(), fields, new OCommandParameters(iArgs), context);
-
-    if (content != null)
-      vertex.getRecord().merge(content, true, false);
-
-    if (clusterName != null)
-      vertex.save(clusterName);
-    else
-      vertex.save();
-
-    return vertex.getRecord();
+    });
   }
 
   @Override
   public String getSyntax() {
     return "CREATE VERTEX [<class>] [CLUSTER <cluster>] [SET <field> = <expression>[,]*]";
   }
-
 }

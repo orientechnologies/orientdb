@@ -35,14 +35,17 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
  * 
  */
 public class OFixTxTask extends OAbstractRemoteTask {
-  private static final long                   serialVersionUID = 1L;
-
-  private List<OAbstractRecordReplicatedTask> tasks            = new ArrayList<OAbstractRecordReplicatedTask>();
+  private static final long         serialVersionUID = 1L;
+  private List<OAbstractRemoteTask> tasks            = new ArrayList<OAbstractRemoteTask>();
 
   public OFixTxTask() {
   }
 
-  public void add(final OAbstractRecordReplicatedTask iTask) {
+  public List<OAbstractRemoteTask> getTasks() {
+    return tasks;
+  }
+
+  public void add(final OAbstractRemoteTask iTask) {
     tasks.add(iTask);
   }
 
@@ -50,12 +53,12 @@ public class OFixTxTask extends OAbstractRemoteTask {
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN,
-        "fixing conflicts found during committing transaction against db=%s...", database.getName());
+        "fixing %d conflicts found during committing transaction against db=%s...", tasks.size(), database.getName());
 
     ODatabaseRecordThreadLocal.INSTANCE.set(database);
     try {
 
-      for (OAbstractRecordReplicatedTask task : tasks) {
+      for (OAbstractRemoteTask task : tasks) {
         task.execute(iServer, iManager, database);
       }
 
@@ -74,7 +77,7 @@ public class OFixTxTask extends OAbstractRemoteTask {
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeInt(tasks.size());
-    for (OAbstractRecordReplicatedTask task : tasks)
+    for (OAbstractRemoteTask task : tasks)
       out.writeObject(task);
   }
 

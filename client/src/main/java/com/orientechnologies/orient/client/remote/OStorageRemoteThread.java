@@ -26,14 +26,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -77,6 +86,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.isDistributed();
   }
 
+  @Override
+  public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass() {
+    return delegate.getCollectionManagerClass();
+  }
+
   public void create(final Map<String, Object> iOptions) {
     pushSession();
     try {
@@ -86,10 +100,10 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public void close(boolean iForce) {
+  public void close(boolean iForce, boolean onDelete) {
     pushSession();
     try {
-      delegate.close(iForce);
+      delegate.close(iForce, false);
       Orient.instance().unregisterStorage(this);
     } finally {
       popSession();
@@ -169,6 +183,8 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       delegate.close();
+
+      Orient.instance().unregisterStorage(this);
     } finally {
       popSession();
     }
@@ -199,42 +215,44 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
     throw new UnsupportedOperationException("backup");
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable) throws IOException {
+  public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,
+      final OCommandOutputListener iListener) throws IOException {
     throw new UnsupportedOperationException("restore");
   }
 
-  public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
-      final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
-      ORecordCallback<OClusterPosition> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid,
+																																 final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
+																																 ORecordCallback<OClusterPosition> iCallback) {
     pushSession();
     try {
-      return delegate.createRecord(iDataSegmentId, iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode,
-          iCallback);
+      return delegate.createRecord(iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode,
+							iCallback);
     } finally {
       popSession();
     }
   }
 
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, boolean iIgnoreCache,
-      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones) {
+      ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     pushSession();
     try {
-      return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones);
+      return delegate.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones, LOCKING_STRATEGY.DEFAULT);
     } finally {
       popSession();
     }
   }
 
-  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, final byte[] iContent,
+  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, boolean updateContent, final byte[] iContent,
       final ORecordVersion iVersion, final byte iRecordType, final int iMode, ORecordCallback<ORecordVersion> iCallback) {
     pushSession();
     try {
-      return delegate.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, iCallback);
+      return delegate.updateRecord(iRid, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
     } finally {
       popSession();
     }
@@ -251,11 +269,26 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
+  public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
+    pushSession();
+    try {
+      return delegate.hideRecord(recordId, mode, callback);
+    } finally {
+      popSession();
+    }
+  }
+
+  @Override
+  public OCluster getClusterByName(String clusterName) {
+    return delegate.getClusterByName(clusterName);
+  }
+
+  @Override
+  public boolean updateReplica(ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
       throws IOException {
     pushSession();
     try {
-      return delegate.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);
+      return delegate.updateReplica(rid, content, recordVersion, recordType);
     } finally {
       popSession();
     }
@@ -441,15 +474,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public String getClusterTypeByName(final String iClusterName) {
-    pushSession();
-    try {
-      return delegate.getClusterTypeByName(iClusterName);
-    } finally {
-      popSession();
-    }
-  }
-
   public int getDefaultClusterId() {
     pushSession();
     try {
@@ -468,22 +492,22 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
-      final String iDataSegmentName, boolean forceListBased, final Object... iArguments) {
+  public int addCluster(final String iClusterName,
+												boolean forceListBased, final Object... iArguments) {
     pushSession();
     try {
-      return delegate.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, false, iArguments);
+      return delegate.addCluster(iClusterName, false, iArguments);
     } finally {
       popSession();
     }
   }
 
-  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      boolean forceListBased, Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId,
+												boolean forceListBased, Object... iParameters) {
     pushSession();
     try {
       return delegate
-          .addCluster(iClusterType, iClusterName, iRequestedId, iLocation, iDataSegmentName, forceListBased, iParameters);
+          .addCluster(iClusterName, iRequestedId, forceListBased, iParameters);
     } finally {
       popSession();
     }
@@ -493,41 +517,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       return delegate.dropCluster(iClusterId, iTruncate);
-    } finally {
-      popSession();
-    }
-  }
-
-  public ODataSegment getDataSegmentById(final int iDataSegmentId) {
-    return delegate.getDataSegmentById(iDataSegmentId);
-  }
-
-  public int getDataSegmentIdByName(final String iDataSegmentName) {
-    return delegate.getDataSegmentIdByName(iDataSegmentName);
-  }
-
-  public int addDataSegment(final String iDataSegmentName) {
-    pushSession();
-    try {
-      return delegate.addDataSegment(iDataSegmentName);
-    } finally {
-      popSession();
-    }
-  }
-
-  public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
-    pushSession();
-    try {
-      return delegate.addDataSegment(iSegmentName, iSegmentFileName);
-    } finally {
-      popSession();
-    }
-  }
-
-  public boolean dropDataSegment(final String iSegmentName) {
-    pushSession();
-    try {
-      return delegate.dropDataSegment(iSegmentName);
     } finally {
       popSession();
     }
@@ -649,8 +638,14 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public OLevel2RecordCache getLevel2Cache() {
-    return delegate.getLevel2Cache();
+  @Override
+  public OCurrentStorageComponentsFactory getComponentsFactory() {
+    return delegate.getComponentsFactory();
+  }
+
+  @Override
+  public long getLastOperationId() {
+    return 0;
   }
 
   public boolean existsResource(final String iName) {
@@ -709,7 +704,13 @@ public class OStorageRemoteThread implements OStorageProxy {
 
   @Override
   public boolean equals(final Object iOther) {
-    return iOther == this || iOther == delegate;
+    if (iOther instanceof OStorageRemoteThread)
+      return iOther == this;
+
+    if (iOther instanceof OStorageRemote)
+      return iOther == delegate;
+
+    return false;
   }
 
   protected void pushSession() {

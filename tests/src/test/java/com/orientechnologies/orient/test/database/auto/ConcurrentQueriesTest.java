@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.testng.Assert;
@@ -27,100 +28,80 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.test.ConcurrentTestHelper;
 
 @Test
-public class ConcurrentQueriesTest {
-  private final static int    THREADS      = 10;
-  private final static int    CYCLES       = 50;
-  private final static int    MAX_RETRIES  = 50;
+public class ConcurrentQueriesTest extends DocumentDBBaseTest {
+  private final static int THREADS      = 10;
+  private final static int CYCLES       = 50;
+  private final static int MAX_RETRIES  = 50;
 
-  protected String            url;
-  private ODatabaseDocumentTx db;
-  private final AtomicLong    counter      = new AtomicLong();
-  private final AtomicLong    totalRetries = new AtomicLong();
+  private final AtomicLong counter      = new AtomicLong();
+  private final AtomicLong totalRetries = new AtomicLong();
 
-  class CommandExecutor implements Runnable {
+	@Parameters(value = "url")
+  public ConcurrentQueriesTest(@Optional String url) {
+    super(url);
+  }
+
+  class CommandExecutor implements Callable<Void> {
 
     String url;
-    String threadName;
 
-    public CommandExecutor(String url, String iThreadName) {
-      super();
+    public CommandExecutor(String url) {
       this.url = url;
-      threadName = iThreadName;
     }
 
     @Override
-    public void run() {
-      try {
-        for (int i = 0; i < CYCLES; i++) {
-          ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
-          try {
-            for (int retry = 0; retry < MAX_RETRIES; ++retry) {
-              try {
-                db.command(new OCommandSQL("select from Concurrent")).execute();
+    public Void call() {
+      for (int i = 0; i < CYCLES; i++) {
+        ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
+        try {
+          for (int retry = 0; retry < MAX_RETRIES; ++retry) {
+            try {
+              db.command(new OCommandSQL("select from Concurrent")).execute();
 
-                counter.incrementAndGet();
-                totalRetries.addAndGet(retry);
-                break;
-              } catch (ONeedRetryException e) {
-                System.out.println("Retry " + retry + "/" + MAX_RETRIES + "...");
+              counter.incrementAndGet();
+              totalRetries.addAndGet(retry);
+              break;
+            } catch (ONeedRetryException e) {
+              try {
                 Thread.sleep(retry * 10);
+              } catch (InterruptedException e1) {
+                throw new RuntimeException(e1);
               }
             }
-          } finally {
-            db.close();
           }
+        } finally {
+          db.close();
         }
-
-      } catch (Throwable e) {
-        e.printStackTrace();
-        Assert.assertTrue(false);
       }
+      return null;
     }
-  }
-
-  @Parameters(value = "url")
-  public ConcurrentQueriesTest(@Optional(value = "memory:test") String iURL) {
-    url = iURL;
   }
 
   @BeforeClass
   public void init() {
-    if ("memory:test".equals(url))
-      new ODatabaseDocumentTx(url).create().close();
+    if (database.getMetadata().getSchema().existsClass("Concurrent"))
+      database.getMetadata().getSchema().dropClass("Concurrent");
 
-    db = new ODatabaseDocumentTx(url).open("admin", "admin");
-    db.getMetadata().getSchema().createClass("Concurrent");
+    database.getMetadata().getSchema().createClass("Concurrent");
 
     for (int i = 0; i < 1000; ++i) {
-      db.newInstance("Concurrent").field("test", i).save();
+      database.newInstance("Concurrent").field("test", i).save();
     }
-  }
-
-  @AfterClass
-  public void deinit() {
-    if (!db.isClosed())
-      db.close();
   }
 
   @Test
   public void concurrentCommands() throws Exception {
-    Thread[] threads = new Thread[THREADS];
     System.out.println("Spanning " + THREADS + " threads...");
-    for (int i = 0; i < THREADS; ++i) {
-      threads[i] = new Thread(new CommandExecutor(url, "thread" + i), "ConcurrentTest1");
-    }
 
-    System.out.println("Starting " + THREADS + " threads...");
-    for (int i = 0; i < THREADS; ++i) {
-      threads[i].start();
-    }
-
-    System.out.println("Waiting for " + THREADS + " threads...");
-    for (int i = 0; i < THREADS; ++i) {
-      threads[i].join();
-    }
+    ConcurrentTestHelper.test(THREADS, new ConcurrentTestHelper.TestFactory<Void>() {
+      @Override
+      public Callable<Void> createWorker() {
+        return new CommandExecutor(url);
+      }
+    });
 
     System.out.println("Done! Total queries executed in parallel: " + counter.get() + " average retries: "
         + ((float) totalRetries.get() / (float) counter.get()));

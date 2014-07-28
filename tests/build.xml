@@ -9,55 +9,85 @@
 
     <taskdef resource="testngtasks" classpath="lib/testng-5.10-jdk15.jar"/>
 
+
     <target name="test"
-            depends="test-memory, test-local, test-plocal, test-remote">
+            depends="test-embedded, test-remote">
     </target>
 
     <target name="test-init">
+
+        <pathconvert property="buildDirectory" targetos="unix">
+            <path location="./target"/>
+        </pathconvert>
+        <pathconvert property="buildDirectory" targetos="windows">
+            <path location=".\\target"/>
+        </pathconvert>
+
+        <pathconvert property="project.root.dir" targetos="unix">
+            <path location="."/>
+        </pathconvert>
+
+        <pathconvert property="test.db.path" targetos="unix">
+            <path location="${orient.path}/databases/demo"/>
+        </pathconvert>
+
+        <pathconvert property="project.root.dir" targetos="windows" dirsep="/">
+            <path location="."/>
+        </pathconvert>
+
+        <pathconvert property="test.db.path" targetos="windows" dirsep="/">
+            <path location="${orient.path}/databases/demo"/>
+        </pathconvert>
+        <echo>Normalized paths</echo>
+        <echo>project.root.dir=${project.root.dir}</echo>
+        <echo>test.path=${test.path}</echo>
+
+        <condition property="test.storageType" value="plocal" else="memory">
+            <and>
+                <or>
+                    <equals arg1="${orientdb.test.env}" arg2="ci" casesensitive="false"/>
+                    <equals arg1="${orientdb.test.env}" arg2="release" casesensitive="false"/>
+                </or>
+            </and>
+        </condition>
+
         <copy todir="${project.build}">
             <fileset dir="src/test/java">
                 <include name="**/*.xml"/>
             </fileset>
         </copy>
-
-        <replace dir="${project.build}/com/orientechnologies/orient/test/database/auto">
-            <include name="*-test-db-from-scratch.xml"/>
-            <exclude name="paginated-local-test-db-from-scratch.xml"/>
-
-            <replacefilter token="@PATH@" value="${orient.path}/databases/demo"/>
-            <replacefilter token="@URL@" value="local:${orient.path}/databases/demo"/>
-        </replace>
-
-        <replace dir="${project.build}/com/orientechnologies/orient/test/database/auto">
-            <include name="paginated-local-test-db-from-scratch.xml"/>
-
-            <replacefilter token="@PATH@" value="${orient.path}/databases/demo"/>
-            <replacefilter token="@URL@" value="plocal:${orient.path}/databases/demo"/>
-        </replace>
-
-    </target>
-
-    <target name="test-memory" depends="test-init">
-        <echo>EXECUTING TESTS USING MEMORY DATABASE: memory:demo</echo>
-        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Xmx2G" />
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="memory-test-db-from-scratch.xml"/>
-        </testng>
     </target>
 
 
-    <target name="test-local" depends="test-init">
-        <echo>EXECUTING TESTS USING LOCAL DATABASE: local:${orient.path}/databases/demo</echo>
+    <target name="test-embedded" depends="test-init">
+        <echo>REMOVE FIlES OF PREVIOUS INSTANCE OF TEST DATABASE</echo>
+        <delete failonerror="false">
+            <fileset dir="${test.db.path}" includes="**/*"/>
+        </delete>
+    	<!-- workaroud for command line property setting -->
+		<condition property="serializer" value="-Ddb.document.serializer=${db.document.serializer}" else="-Dnone=none">
+				<isset property="db.document.serializer" />
+		</condition>
+
+        <echo>EXECUTING TESTS USING EMBEDDED DATABASE ${test.storageType}:${test.db.path}</echo>
+
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Xmx2G" />
+            <jvmarg value="-Xmx2G"/>
+            <jvmarg value="-XX:+HeapDumpOnOutOfMemoryError"/>
             <jvmarg value="-Dstorage.lockTimeout=60000"/>
+            <jvmarg value="-Dstorage.makeFullCheckpointAfterCreate=false"/>
+            <jvmarg value="-Dstorage.makeFullCheckpointAfterClusterCreate=false"/>
+            <jvmarg value="-Dstorage.wal.syncOnPageFlush=false"/>
+            <jvmarg value="-Dstorage.configuration.syncOnUpdate=false"/>
+            <jvmarg value="-Dindex.flushAfterCreate=false"/>
+            <jvmarg value="-DbuildDirectory=${buildDirectory}"/>
+            <jvmarg value="-Durl=${test.storageType}:${test.db.path}"/>
+            <jvmarg value="-DstorageType=${test.storageType}"/>
+        	<jvmarg value="${serializer}" />
+            <jvmarg value="-DtestPath=${project.root.dir}"/>
+            <!-- debug -->
+            <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>-->
+
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">
@@ -65,56 +95,43 @@
                 </fileset>
             </classpath>
             <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="local-test-db-from-scratch.xml"/>
+                        includes="embedded-test-db-from-scratch.xml"/>
         </testng>
     </target>
-
-    <target name="test-plocal" depends="test-init">
-        <echo>EXECUTING TESTS USING PAGINATED LOCAL DATABASE: plocal:${orient.path}/databases/demo</echo>
-        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Xmx2G" />
-            <jvmarg value="-Dstorage.lockTimeout=60000"/>
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="paginated-local-test-db-from-scratch.xml"/>
-        </testng>
-    </target>
-
-
-    <target name="test-local-lh" depends="test-init">
-        <echo>EXECUTING TESTS USING LOCAL DATABASE and LH data cluster: local:${orient.path}/databases/demo</echo>
-        <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
-            <jvmarg value="-Xmx2G" />
-            <jvmarg value="-Dfile.cluster.useLHPEPS=true"/>
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
-                        includes="local-test-db-from-scratch.xml"/>
-        </testng>
-    </target>
-
 
     <target name="test-remote" depends="test-init">
+        <echo>REMOVE FIlES OF PREVIOUS INSTANCE OF TEST DATABASE</echo>
+        <delete failonerror="false">
+            <fileset dir="${test.db.path}" includes="**/*"/>
+        </delete>
+
+        <echo>KILLING HANGING REMOTE ORIENTDB SERVER INSTANCES...</echo>
+
+        <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+            <arg value="pkill -9 -f OServerMain"/>
+        </exec>
+
+    	<!-- workaroud for command line property setting -->
+		<condition property="serializer" value="-Ddb.document.serializer=${db.document.serializer}" else="-Dnone=none">
+				<isset property="db.document.serializer" />
+		</condition>
+		
+    	<condition property="spareSerailizer" value="-Ddb.document.serializer=ORecordSerializerBinary" else="-Dnone=none">
+			<isset property="spareSerialization" />
+		</condition>
+    	
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
-        <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
+        <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="JAVA_OPTS"
-                 value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
+                 value="-Xmx3G -XX:+HeapDumpOnOutOfMemoryError -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false ${serializer}"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c start server.bat"/>
         </exec>
 
-        <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+        <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="JAVA_OPTS"
-                 value="-Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
+                 value="-Xmx3G -XX:+HeapDumpOnOutOfMemoryError -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false ${serializer} ${spareSerailizer} "/>
+            <!-- <env key="JAVA_OPTS" value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006 -Xmx3G -XX:+HeapDumpOnOutOfMemoryError -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false ${serializer} ${spareSerailizer} "/>-->
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./server.sh"/>
         </exec>
@@ -124,8 +141,11 @@
 
         <echo>EXECUTING TESTS USING REMOTE DATABASE: remote:localhost/demo</echo>
         <testng outputDir="target/test-output" haltOnFailure="true">
-            <jvmarg value="-Xmx2G" />
-            <jvmarg line="-Djava.rmi.server.hostname=localhost -Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml"/>
+            <jvmarg line="-DtestPath=${project.root.dir} -DstorageType=${test.storageType} -XX:+HeapDumpOnOutOfMemoryError -Xmx3G -DbuildDirectory=${buildDirectory} -Djava.rmi.server.hostname=localhost -Dorientdb.config.file=${basedir}/src/test/resources/orientdb-server-config.xml ${serializer} "/>
+
+            <!-- debug -->
+            <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>-->
+
             <classpath>
                 <pathelement location="${project.build}"/>
                 <fileset dir="${global.lib}">
@@ -137,54 +157,15 @@
         </testng>
 
         <echo>SHUTDOWNING THE SERVER...</echo>
-        <exec dir="../${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
+        <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c shutdown.bat"/>
         </exec>
 
-        <exec dir="../${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
+        <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./shutdown.sh"/>
         </exec>
-    </target>
-
-    <target name="stress-test">
-        <echo>MASSIVE INSERT 1,000,000 FLAT RECORDS</echo>
-        <java classname="com.orientechnologies.orient.test.database.speed.LocalCreateFlatSpeedTest" fork="yes">
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <sysproperty key="url" value="local:../${orient.path}/databases/demo"/>
-            <jvmarg value="-server"/>
-        </java>
-
-        <echo>MASSIVE INSERT 1,000,000 DOCUMENT RECORDS</echo>
-        <java classname="com.orientechnologies.orient.test.database.speed.LocalCreateDocumentSpeedTest" fork="yes">
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <sysproperty key="url" value="local:../${orient.path}/databases/demo"/>
-            <jvmarg value="-server"/>
-        </java>
-
-        <echo>MASSIVE INSERT 20,000 POJOs</echo>
-        <java classname="com.orientechnologies.orient.test.database.speed.LocalCreateObjectSpeedTest" fork="yes">
-            <classpath>
-                <pathelement location="${project.build}"/>
-                <fileset dir="${global.lib}">
-                    <include name="*.jar"/>
-                </fileset>
-            </classpath>
-            <sysproperty key="url" value="local:../${orient.path}/databases/demo"/>
-            <jvmarg value="-server"/>
-        </java>
-
     </target>
 
     <target name="reports" depends="test">

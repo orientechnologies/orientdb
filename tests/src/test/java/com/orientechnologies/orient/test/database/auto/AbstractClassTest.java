@@ -26,20 +26,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 @Test(groups = "schema")
-public class AbstractClassTest {
-  private ODatabaseDocumentTx database;
-  private String              url;
+public class AbstractClassTest extends DocumentDBBaseTest {
+	@Parameters(value = "url")
+	public AbstractClassTest(@Optional String url) {
+		super(url);
+	}
 
-  @Parameters(value = "url")
-  public AbstractClassTest(String iURL) {
-    url = iURL;
-  }
-
-  @BeforeClass
+	@BeforeClass
   public void createSchema() throws IOException {
     database = new ODatabaseDocumentTx(url);
     if (ODatabaseHelper.existsDatabase(database, "plocal"))
@@ -59,31 +57,4 @@ public class AbstractClassTest {
   public void testCannotCreateInstances() {
     new ODocument("AbstractPerson").save();
   }
-  //
-  // @Test
-  // public void testAlterClass() {
-  // OClass abstractPerson = database.getMetadata().getSchema().getClass("AbstractPerson");
-  // Assert.assertNotNull(abstractPerson);
-  //
-  // abstractPerson.setAbstract(false);
-  // ODocument doc = new ODocument("AbstractPerson").save();
-  //
-  // try {
-  // abstractPerson.setAbstract(true);
-  // Assert.assertTrue(false);
-  // } catch (OCommandExecutionException e) {
-  // Assert.assertTrue(e.getCause() instanceof IllegalStateException);
-  // }
-  //
-  // doc.delete();
-  //
-  // abstractPerson.setAbstract(true);
-  //
-  // try {
-  // doc.load();
-  // Assert.assertTrue(false);
-  // } catch (ORecordNotFoundException e) {
-  // Assert.assertTrue(true);
-  // }
-  // }
 }

@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -29,21 +30,20 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "query", sequential = true)
-public class FetchPlanTest {
-  private ODatabaseDocument database;
+public class FetchPlanTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
-  public FetchPlanTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public FetchPlanTest(@Optional String url) {
+    super(url);
   }
 
   @Test
   public void queryNoFetchPlan() {
-    database.open("admin", "admin");
+		createBasicTestSchema();
 
     final long times = Orient.instance().getProfiler().getCounter("Cache.reused");
 
-    database.getLevel1Cache().clear();
+    database.getLocalCache().clear();
     List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile"));
     Assert.assertEquals(Orient.instance().getProfiler().getCounter("Cache.reused"), times);
 
@@ -51,16 +51,13 @@ public class FetchPlanTest {
     for (ODocument d : resultset) {
       linked = ((ORID) d.field("location", ORID.class));
       if (linked != null)
-        Assert.assertNull(database.getLevel1Cache().findRecord(linked));
+        Assert.assertNull(database.getLocalCache().findRecord(linked));
     }
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "queryNoFetchPlan")
   public void queryWithFetchPlan() {
-    database.open("admin", "admin");
-    database.getLevel1Cache().setEnable(true);
+    database.getLocalCache().setEnable(true);
 
     final long times = Orient.instance().getProfiler().getCounter("Cache.reused");
     List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile").setFetchPlan("*:-1"));
@@ -70,9 +67,7 @@ public class FetchPlanTest {
     for (ODocument d : resultset) {
       linked = ((ODocument) d.field("location"));
       if (linked != null)
-        Assert.assertNotNull(database.getLevel1Cache().findRecord(linked.getIdentity()));
+        Assert.assertNotNull(database.getLocalCache().findRecord(linked.getIdentity()));
     }
-
-    database.close();
   }
 }

@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -105,13 +105,16 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   /**
    * Loads a record using a fetch plan.
    * 
+   * 
    * @param iObject
    *          Record to load
    * @param iFetchPlan
    *          Fetch plan used
+   * @param iLockingStrategy
    * @return The record received
    */
-  public <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone);
+  public <RET extends T> RET load(T iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   /**
    * Loads a record using a fetch plan.
@@ -142,11 +145,11 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   /**
    * Loads the entity by the Record ID.
    * 
-   * @param iRecordId
+   * @param recordId
    *          The unique record id of the entity to load.
    * @return The loaded entity
    */
-  public <RET extends T> RET load(ORID iRecordId);
+  public <RET extends T> RET load(ORID recordId);
 
   /**
    * Loads the entity by the Record ID using a fetch plan.
@@ -172,7 +175,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    */
   public <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache);
 
-  public <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone);
+  public <RET extends T> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy);
 
   /**
    * Saves an entity in synchronous mode. If the entity is not dirty, then the operation will be ignored. For custom entity
@@ -263,6 +267,26 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    */
   public ODatabaseComplex<T> delete(ORID iRID, ORecordVersion iVersion);
 
+  /**
+   * Hides records content by putting tombstone on the records position but does not delete record itself.
+   * 
+   * This method is used in case of record content itself is broken and can not be read or deleted. So it is emergence method. This
+   * method can be used only if there is no active transaction in database.
+   * 
+   * 
+   * 
+   * @param rid
+   *          record id.
+   * @throws java.lang.UnsupportedOperationException
+   *           In case current version of cluster does not support given operation.
+   * @throws com.orientechnologies.orient.core.exception.ORecordNotFoundException
+   *           if record is already deleted/hidden.
+   * 
+   * @return <code>true</code> if record was hidden and <code>false</code> if record does not exits in database.
+   */
+
+  public boolean hide(ORID rid);
+
   public ODatabaseComplex<T> cleanOutRecord(ORID rid, ORecordVersion version);
 
   /**
@@ -306,6 +330,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    */
   public ODatabaseComplex<T> commit() throws OTransactionException;
 
+  public ODatabaseComplex<T> commit(boolean force) throws OTransactionException;
+
   /**
    * Aborts the current running transaction. All the pending changed entities will be restored in the datastore. Memory instances
    * are not guaranteed to being restored as well.
@@ -313,6 +339,8 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * @return
    */
   public ODatabaseComplex<T> rollback() throws OTransactionException;
+
+  public ODatabaseComplex<T> rollback(boolean force) throws OTransactionException;
 
   /**
    * Execute a query against the database.
@@ -332,7 +360,6 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * @param iCommand
    *          Command request to execute.
    * @return The same Command request received as parameter.
-   * @see OStorageRemote
    */
   public <RET extends OCommandRequest> RET command(OCommandRequest iCommand);
 
@@ -381,9 +408,9 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   /**
    * Retrieves all the registered hooks.
    * 
-   * @return A not-null unmodifiable set of ORecordHook instances. If there are no hooks registered, the Set is empty.
+   * @return A not-null unmodifiable map of ORecordHook and position instances. If there are no hooks registered, the Map is empty.
    */
-  public Set<ORecordHook> getHooks();
+  public Map<ORecordHook, HOOK_POSITION> getHooks();
 
   /**
    * Unregisters a previously registered hook.

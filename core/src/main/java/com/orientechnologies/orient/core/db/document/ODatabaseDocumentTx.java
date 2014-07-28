@@ -16,17 +16,18 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import java.util.*;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordWrapperAbstract;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -38,64 +39,77 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocument {
-  public ODatabaseDocumentTx(final String iURL) {
-    super(new ODatabaseRecordTx(iURL, ODocument.RECORD_TYPE));
+  protected static ORecordSerializer defaultSerializer;
+  static {
+    defaultSerializer = ORecordSerializerFactory.instance().getFormat(
+        OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+    if (defaultSerializer == null)
+      throw new ODatabaseException("Impossible to find serializer with name "
+          + OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
   }
 
+  /**
+   * Creates a new connection to the database.
+   * 
+   * @param iURL
+   *          of the database
+   */
+  public ODatabaseDocumentTx(final String iURL) {
+    super(new ODatabaseRecordTx(iURL, ODocument.RECORD_TYPE));
+    underlying.setSerializer(defaultSerializer);
+  }
+
+  /**
+   * For internal usage. Creates a new instance with specific {@link ODatabaseRecordTx}.
+   * 
+   * @param iSource
+   *          to wrap
+   */
   public ODatabaseDocumentTx(final ODatabaseRecordTx iSource) {
     super(iSource);
   }
 
-  private void freezeIndexes(final List<OIndexAbstract<?>> indexesToFreeze, boolean throwException) {
-    if (indexesToFreeze != null) {
-      for (OIndexAbstract<?> indexToLock : indexesToFreeze) {
-        indexToLock.freeze(throwException);
-      }
-    }
+  /**
+   * @return default serializer which is used to serialize documents. Default serializer is common for all database instances.
+   */
+  public static ORecordSerializer getDefaultSerializer() {
+    return defaultSerializer;
   }
 
-  private void flushIndexes(List<OIndexAbstract<?>> indexesToFlush) {
-    for (OIndexAbstract<?> index : indexesToFlush) {
-      index.flush();
-    }
+  /**
+   * Sets default serializer. The default serializer is common for all database instances.
+   * 
+   * @param iDefaultSerializer
+   *          new default serializer value
+   */
+  public static void setDefaultSerializer(ORecordSerializer iDefaultSerializer) {
+    defaultSerializer = iDefaultSerializer;
   }
 
-  private List<OIndexAbstract<?>> prepareIndexesToFreeze(Collection<? extends OIndex<?>> indexes) {
-    List<OIndexAbstract<?>> indexesToFreeze = null;
-    if (indexes != null && !indexes.isEmpty()) {
-      indexesToFreeze = new ArrayList<OIndexAbstract<?>>(indexes.size());
-      for (OIndex<?> index : indexes) {
-        indexesToFreeze.add((OIndexAbstract<?>) index.getInternal());
-      }
-
-      Collections.sort(indexesToFreeze, new Comparator<OIndex<?>>() {
-        public int compare(OIndex<?> o1, OIndex<?> o2) {
-          return o1.getName().compareTo(o2.getName());
-        }
-      });
-
-    }
-    return indexesToFreeze;
-  }
-
-  private void releaseIndexes(Collection<? extends OIndex<?>> indexesToRelease) {
-    if (indexesToRelease != null) {
-      Iterator<? extends OIndex<?>> it = indexesToRelease.iterator();
-      while (it.hasNext()) {
-        it.next().getInternal().release();
-        it.remove();
-      }
-    }
-  }
-
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void freeze(final boolean throwException) {
+    checkOpeness();
     if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
           "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
@@ -117,8 +131,12 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
         .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void freeze() {
+    checkOpeness();
     if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
           "We can not freeze non local storage. " + "If you use remote client please use OServerAdmin instead.");
@@ -140,8 +158,12 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
         .stopChrono("db." + getName() + ".freeze", "Time to freeze the database", startTime, "db.*.freeze");
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public void release() {
+    checkOpeness();
     if (!(getStorage() instanceof OFreezableStorage)) {
       OLogManager.instance().error(this,
           "We can not release non local storage. " + "If you use remote client please use OServerAdmin instead.");
@@ -167,15 +189,28 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return new ODocument();
   }
 
+  /**
+   * Creates a document with specific class.
+   * 
+   * @param iClassName
+   *          the name of class that should be used as a class of created document.
+   * @return new instance of document.
+   */
+  @Override
   public ODocument newInstance(final String iClassName) {
-    checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
     return new ODocument(iClassName);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public ORecordIteratorClass<ODocument> browseClass(final String iClassName) {
     return browseClass(iClassName, true);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   public ORecordIteratorClass<ODocument> browseClass(final String iClassName, final boolean iPolymorphic) {
     if (getMetadata().getSchema().getClass(iClassName) == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
@@ -185,6 +220,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return new ORecordIteratorClass<ODocument>(this, underlying, iClassName, iPolymorphic, true, false);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ORecordIteratorCluster<ODocument> browseCluster(final String iClusterName) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
@@ -192,13 +230,16 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName), true);
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, OClusterPosition startClusterPosition,
       OClusterPosition endClusterPosition, boolean loadTombstones) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName), startClusterPosition,
-        endClusterPosition, true, loadTombstones);
+        endClusterPosition, true, loadTombstones, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   /**
@@ -246,7 +287,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
+   *          callback that is called after creation of new record
    * @param iRecordUpdatedCallback
+   *          callback that is called after record update
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
@@ -258,6 +301,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    checkOpeness();
     if (!(iRecord instanceof ODocument))
       return (RET) super.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
@@ -271,9 +315,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
         if (doc.getClassName() != null)
           checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
 
-        if (doc.getSchemaClass() != null && doc.getIdentity().getClusterId() < 0) {
+        final OClass schemaClass = doc.getSchemaClass();
+
+        if (schemaClass != null && doc.getIdentity().getClusterId() < 0) {
           // CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
-          String clusterName = getClusterNameById(doc.getSchemaClass().getDefaultClusterId());
+          final String clusterName = getClusterNameById(doc.getSchemaClass().getClusterForNewInstance());
 
           return (RET) super.save(doc, clusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
         }
@@ -289,8 +335,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on saving record %s of class '%s'", e, ODatabaseException.class,
-          iRecord.getIdentity(), (doc.getClassName() != null ? doc.getClassName() : "?"));
+      throw new ODatabaseException("Error on saving record " + iRecord.getIdentity() + " of class  '"
+          + (doc.getClassName() != null ? doc.getClassName() : "?") + "'", e);
     }
     return (RET) doc;
   }
@@ -345,7 +391,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @param iForceCreate
    *          Flag that indicates that record should be created. If record with current rid already exists, exception is thrown
    * @param iRecordCreatedCallback
+   *          callback that is called after creation of new record
    * @param iRecordUpdatedCallback
+   *          callback that is called after record update
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @throws OConcurrentModificationException
    *           if the version of the document is different by the version contained in the database.
@@ -357,6 +405,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, String iClusterName,
       final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+    checkOpeness();
     if (!(iRecord instanceof ODocument))
       return (RET) super.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
@@ -366,18 +415,20 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
       if (doc.getClassName() != null)
         checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
 
-      if (iClusterName == null && doc.getSchemaClass() != null)
+      final OClass schemaClass = doc.getSchemaClass();
+
+      if (iClusterName == null && schemaClass != null)
         // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-        iClusterName = getClusterNameById(doc.getSchemaClass().getDefaultClusterId());
+        iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance());
 
       int id = getClusterIdByName(iClusterName);
       if (id == -1)
         throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured");
 
       final int[] clusterIds;
-      if (doc.getSchemaClass() != null) {
+      if (schemaClass != null) {
         // CHECK IF THE CLUSTER IS PART OF THE CONFIGURED CLUSTERS
-        clusterIds = doc.getSchemaClass().getClusterIds();
+        clusterIds = schemaClass.getClusterIds();
         int i = 0;
         for (; i < clusterIds.length; ++i)
           if (clusterIds[i] == id)
@@ -412,27 +463,29 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * If MVCC is enabled and the version of the document is different by the version stored in the database, then a
    * {@link OConcurrentModificationException} exception is thrown.
    * 
-   * @param iRecord
+   * @param record
+   *          record to delete
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
-  public ODatabaseDocumentTx delete(final ORecordInternal<?> iRecord) {
-    if (iRecord == null)
+  public ODatabaseDocumentTx delete(final ORecordInternal<?> record) {
+    checkOpeness();
+    if (record == null)
       throw new ODatabaseException("Cannot delete null document");
 
     // CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
-    if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null)
-      checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_DELETE, ((ODocument) iRecord).getClassName());
+    if (record instanceof ODocument && ((ODocument) record).getClassName() != null)
+      checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_DELETE, ((ODocument) record).getClassName());
 
     try {
-      underlying.delete(iRecord);
+      underlying.delete(record);
 
     } catch (Exception e) {
-      if (iRecord instanceof ODocument)
-        OLogManager.instance().exception("Error on deleting record %s of class '%s'", e, ODatabaseException.class,
-            iRecord.getIdentity(), ((ODocument) iRecord).getClassName());
+      if (record instanceof ODocument)
+        throw new ODatabaseException("Error on deleting record " + record.getIdentity() + " of class '"
+            + ((ODocument) record).getClassName() + "'", e);
       else
-        OLogManager.instance().exception("Error on deleting record %s", e, ODatabaseException.class, iRecord.getIdentity());
+        throw new ODatabaseException("Error on deleting record " + record.getIdentity());
     }
     return this;
   }
@@ -441,36 +494,133 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * Returns the number of the records of the class iClassName.
    */
   public long countClass(final String iClassName) {
+    return countClass(iClassName, true);
+  }
+
+  /**
+   * Returns the number of the records of the class iClassName considering also sub classes if polymorphic is true.
+   */
+  public long countClass(final String iClassName, final boolean iPolymorphic) {
     final OClass cls = getMetadata().getSchema().getClass(iClassName);
 
     if (cls == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");
 
-    return cls.count();
+    return cls.count(iPolymorphic);
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public ODatabaseComplex<ORecordInternal<?>> commit() {
-    try {
-      return underlying.commit();
-    } finally {
-      getTransaction().close();
-    }
+    return commit(false);
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public ODatabaseComplex<ORecordInternal<?>> commit(boolean force) throws OTransactionException {
+    return underlying.commit(force);
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
   public ODatabaseComplex<ORecordInternal<?>> rollback() {
-    try {
-      return underlying.rollback();
-    } finally {
-      getTransaction().close();
-    }
+    return rollback(false);
   }
 
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public ODatabaseComplex<ORecordInternal<?>> rollback(final boolean force) throws OTransactionException {
+    return underlying.rollback(force);
+  }
+
+  /**
+   * Returns "document".
+   */
   public String getType() {
     return TYPE;
   }
 
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public OSBTreeCollectionManager getSbTreeCollectionManager() {
     return underlying.getSbTreeCollectionManager();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public OCurrentStorageComponentsFactory getStorageVersions() {
+    return underlying.getStorageVersions();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public ORecordSerializer getSerializer() {
+    return underlying.getSerializer();
+  }
+
+  /**
+   * Sets serializer for the database which will be used for document serialization.
+   * 
+   * @param iSerializer
+   *          the serializer to set.
+   */
+  public void setSerializer(final ORecordSerializer iSerializer) {
+    underlying.setSerializer(iSerializer);
+  }
+
+  private void freezeIndexes(final List<OIndexAbstract<?>> indexesToFreeze, final boolean throwException) {
+    if (indexesToFreeze != null) {
+      for (OIndexAbstract<?> indexToLock : indexesToFreeze) {
+        indexToLock.freeze(throwException);
+      }
+    }
+  }
+
+  private void flushIndexes(final List<OIndexAbstract<?>> indexesToFlush) {
+    for (OIndexAbstract<?> index : indexesToFlush) {
+      index.flush();
+    }
+  }
+
+  private List<OIndexAbstract<?>> prepareIndexesToFreeze(final Collection<? extends OIndex<?>> indexes) {
+    List<OIndexAbstract<?>> indexesToFreeze = null;
+    if (indexes != null && !indexes.isEmpty()) {
+      indexesToFreeze = new ArrayList<OIndexAbstract<?>>(indexes.size());
+      for (OIndex<?> index : indexes) {
+        indexesToFreeze.add((OIndexAbstract<?>) index.getInternal());
+      }
+
+      Collections.sort(indexesToFreeze, new Comparator<OIndex<?>>() {
+        public int compare(OIndex<?> o1, OIndex<?> o2) {
+          return o1.getName().compareTo(o2.getName());
+        }
+      });
+
+    }
+    return indexesToFreeze;
+  }
+
+  private void releaseIndexes(final Collection<? extends OIndex<?>> indexesToRelease) {
+    if (indexesToRelease != null) {
+      Iterator<? extends OIndex<?>> it = indexesToRelease.iterator();
+      while (it.hasNext()) {
+        it.next().getInternal().release();
+        it.remove();
+      }
+    }
   }
 }

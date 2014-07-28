@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
+
 import java.io.PrintStream;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.Map;
@@ -22,14 +30,6 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
-
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.ODefaultCache;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -46,6 +46,9 @@ public enum OGlobalConfiguration {
       "Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management",
       Boolean.class, Boolean.TRUE),
 
+  ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows to shutdown the JVM if needed/requested", Boolean.class,
+      true),
+
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
 
@@ -56,11 +59,11 @@ public enum OGlobalConfiguration {
       "Maximum size of used heap to let caches to keep records in RAM. Can be expressed in terms of absolute bytes or percentage in comparison to the maximum heap. For example 80% means that caches stop collecting records in RAM when free heap is lower than 20%",
       String.class, "70%"),
 
-  DIRECT_MEMORY_UNSAFE_MODE(
-      "memory.directMemory.unsafeMode",
-      "Indicates whether to do perform range check before each direct memory update, it is false by default, "
-          + "but usually it can be safely put to true. It is needed to set to true only after dramatic changes in storage structures.",
-      Boolean.class, false),
+  DIRECT_MEMORY_SAFE_MODE(
+      "memory.directMemory.safeMode",
+      "Indicates whether to do perform range check before each direct memory update, it is true by default, "
+          + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
+      Boolean.class, true),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
@@ -76,19 +79,29 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL("storage.diskCache.writeCachePageFlushInterval",
       "Interval between flushing of pages from write cache in ms.", Integer.class, 100),
 
+  DISK_WRITE_CACHE_FLUSH_WRITE_INACTIVITY_INTERVAL("storage.diskCache.writeCacheFlushInactivityInterval",
+      "Interval between 2 writes to the disk cache,"
+          + " if writes are done with interval more than provided all files will be fsynced before next write,"
+          + " which allows do not do data restore after server crash (in ms).", Long.class, 60 * 1000),
+
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
 
+  STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
+      "Should we perform force sync of storage configuration for each update", Boolean.class, true),
+
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
-      + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "snappy"),
+      + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "nothing"),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
+
+  WAL_SYNC_ON_PAGE_FLUSH("storage.wal.syncOnPageFlush", "Should we perform force sync during WAL page flush", Boolean.class, true),
 
   WAL_CACHE_SIZE("storage.wal.cacheSize",
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
       Integer.class, 3000),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes.", Integer.class, 256),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes.", Integer.class, 64),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 4 * 1024),
 
@@ -122,7 +135,8 @@ public enum OGlobalConfiguration {
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate",
       "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
 
-  DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes", Integer.class, 64),
+  DISK_CACHE_PAGE_SIZE("storage.diskCache.pageSize", "Size of page of disk buffer in kilobytes,!!! NEVER CHANGE THIS VALUE !!!",
+      Integer.class, 64),
 
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
       + " in page which is tracked in paginated storage", Integer.class, 16),
@@ -130,15 +144,18 @@ public enum OGlobalConfiguration {
   USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
       + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),
 
+  STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
+      "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
+
   STORAGE_KEEP_OPEN(
       "storage.keepOpen",
       "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
       Boolean.class, Boolean.TRUE),
 
-  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 600000),
+  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 30000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 300000),
+      Integer.class, 30000),
 
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
@@ -150,27 +167,7 @@ public enum OGlobalConfiguration {
       Boolean.class, true),
 
   // CACHE
-  CACHE_LEVEL1_ENABLED("cache.level1.enabled", "Use the level-1 cache", Boolean.class, true),
-
-  CACHE_LEVEL1_SIZE("cache.level1.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
-
-  CACHE_LEVEL2_ENABLED("cache.level2.enabled", "Use the level-2 cache", Boolean.class, true),
-
-  CACHE_LEVEL2_SIZE("cache.level2.size", "Size of the cache that keeps the record in memory", Integer.class, -1),
-
-  CACHE_LEVEL2_IMPL("cache.level2.impl", "Actual implementation of secondary cache", String.class, ODefaultCache.class
-      .getCanonicalName()),
-
-  CACHE_LEVEL2_STRATEGY("cache.level2.strategy",
-      "Strategy to use when a database requests a record: 0 = pop the record, 1 = copy the record", Integer.class, 0,
-      new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          // UPDATE ALL THE OPENED STORAGES SETTING THE NEW STRATEGY
-          // for (OStorage s : com.orientechnologies.orient.core.Orient.instance().getStorages()) {
-          // s.getCache().setStrategy((Integer) iNewValue);
-          // }
-        }
-      }),
+  CACHE_LOCAL_ENABLED("cache.local.enabled", "Use the local cache", Boolean.class, true),
 
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
@@ -178,11 +175,11 @@ public enum OGlobalConfiguration {
   // DATABASE
   DB_POOL_MIN("db.pool.min", "Default database pool minimum size", Integer.class, 1),
 
-  DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 20),
+  DB_POOL_MAX("db.pool.max", "Default database pool maximum size", Integer.class, 100),
 
-  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Default database pool maximum size", Integer.class, 0),
+  DB_POOL_IDLE_TIMEOUT("db.pool.idleTimeout", "Timeout for checking of free database in the pool", Integer.class, 0),
 
-  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Default database pool maximum size", Integer.class, 0),
+  DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
 
   @Deprecated
   DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
@@ -239,6 +236,8 @@ public enum OGlobalConfiguration {
       "Configure the TreeMaps for automatic indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 10000),
 
+  INDEX_FLUSH_AFTER_CREATE("index.flushAfterCreate", "Flush storage buffer after index creation", Boolean.class, true),
+
   INDEX_MANUAL_LAZY_UPDATES("index.manual.lazyUpdates",
       "Configure the TreeMaps for manual indexes as buffered or not. -1 means buffered until tx.commit() or db.close() are called",
       Integer.class, 1),
@@ -251,45 +250,52 @@ public enum OGlobalConfiguration {
       "Indicates index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
       "ROLLBACK_ONLY"),
 
-  INDEX_USE_SBTREE_BY_DEFAULT("index.useSBTreeByDefault",
-      "Whether new SBTree index implementation should be used instead of old MVRB-Tree", Boolean.class, true),
-
-  INDEX_NOTUNIQUE_USE_SBTREE_CONTAINER_BY_DEFAULT("index.notunique.useSBTreeContainerByDefault",
-      "Prefer SBTree based algorithm instead MVRBTree for storing sets of RID", Boolean.class, true),
+  INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 
   // TREEMAP
+  @Deprecated
   MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
 
+  @Deprecated
   MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
       "Page size of each node. 256 means that 256 entries can be stored inside each node", Integer.class, 256),
 
+  @Deprecated
   MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
 
+  @Deprecated
   MVRBTREE_OPTIMIZE_THRESHOLD(
       "mvrbtree.optimizeThreshold",
       "Auto optimize the TreeMap every X tree rotations. This forces the optimization of the tree after many changes to recompute entry points. -1 means never",
       Integer.class, 100000),
 
+  @Deprecated
   MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
 
+  @Deprecated
   MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
       "Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine optimization is needed",
       Float.class, 1.0f),
 
+  @Deprecated
   MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory", "Keep unserialized keys in memory", Boolean.class, Boolean.FALSE),
 
+  @Deprecated
   MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory", "Keep unserialized values in memory", Boolean.class,
       Boolean.FALSE),
 
   // TREEMAP OF RIDS
+  @Deprecated
   MVRBTREE_RID_BINARY_THRESHOLD(
       "mvrbtree.ridBinaryThreshold",
       "Valid for set of rids. It's the threshold as number of entries to use the binary streaming instead of classic string streaming. -1 means never use binary streaming",
-      Integer.class, 8),
+      Integer.class, -1),
 
+  @Deprecated
   MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
       "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 64),
 
+  @Deprecated
   MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
       "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
 
@@ -319,9 +325,11 @@ public enum OGlobalConfiguration {
       "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 80),
 
   RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
-      "Amount of values after which LINKBAG implementation will use embedded values container", Integer.class, 60),
+      "Amount of values after which LINKBAG implementation will use embedded values container (disabled by default)",
+      Integer.class, -1),
 
   // COLLECTIONS
+  @Deprecated
   LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
 
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
@@ -337,24 +345,30 @@ public enum OGlobalConfiguration {
       "Max distance in bytes between holes to cause their defrag. Set it to -1 to use dynamic size. Beware that if the db is huge moving blocks to defrag could be expensive",
       Integer.class, 32768),
 
+  @Deprecated
   FILE_MMAP_USE_OLD_MANAGER("file.mmap.useOldManager",
       "Manager that will be used to handle mmap files. true = USE OLD MANAGER, false = USE NEW MANAGER", boolean.class, false),
 
+  @Deprecated
   FILE_MMAP_AUTOFLUSH_TIMER("file.mmap.autoFlush.timer", "Auto flushes memory mapped blocks every X seconds. 0 = disabled",
       int.class, 30),
 
+  @Deprecated
   FILE_MMAP_AUTOFLUSH_UNUSED_TIME("file.mmap.autoFlush.unusedTime",
       "Remove memory mapped blocks with unused time major than this value. Time is in seconds", int.class, 30),
 
+  @Deprecated
   FILE_MMAP_LOCK_MEMORY("file.mmap.lockMemory",
       "When using new map manager this parameter specify prevent memory swap or not. true = LOCK MEMORY, false = NOT LOCK MEMORY",
       boolean.class, true),
 
+  @Deprecated
   FILE_MMAP_STRATEGY(
       "file.mmap.strategy",
       "Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE, 4 = NEVER USE MMAP",
       Integer.class, 0),
 
+  @Deprecated
   FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block, default is 1Mb", Integer.class, 1048576,
       new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
@@ -362,9 +376,11 @@ public enum OGlobalConfiguration {
         }
       }),
 
+  @Deprecated
   FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file through the channel",
       Integer.class, 8192),
 
+  @Deprecated
   FILE_MMAP_MAX_MEMORY(
       "file.mmap.maxMemory",
       "Max memory allocatable by memory mapping manager. Note that on 32bit operating systems, the limit is 2Gb but will vary between operating systems",
@@ -374,6 +390,7 @@ public enum OGlobalConfiguration {
         }
       }),
 
+  @Deprecated
   FILE_MMAP_OVERLAP_STRATEGY(
       "file.mmap.overlapStrategy",
       "Strategy to use when a request overlaps in-memory buffers: 0 = Use the channel access, 1 = force the in-memory buffer and use the channel access, 2 = always create an overlapped in-memory buffer (default)",
@@ -383,9 +400,11 @@ public enum OGlobalConfiguration {
         }
       }),
 
+  @Deprecated
   FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay",
       "Delay time in ms to wait for another forced flush of the memory-mapped block to disk", Integer.class, 10),
 
+  @Deprecated
   FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory-mapped block will try to flush to disk", Integer.class,
       50),
 
@@ -482,6 +501,16 @@ public enum OGlobalConfiguration {
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
       "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),
 
+  CLIENT_USE_SSL("client.ssl.enabled", "Use SSL for client connections", Boolean.class, false),
+
+  CLIENT_SSL_KEYSTORE("client.ssl.keyStore", "Use SSL for client connections", String.class, null),
+
+  CLIENT_SSL_KEYSTORE_PASSWORD("client.ssl.keyStorePass", "Use SSL for client connections", String.class, null),
+
+  CLIENT_SSL_TRUSTSTORE("client.ssl.trustStore", "Use SSL for client connections", String.class, null),
+
+  CLIENT_SSL_TRUSTSTORE_PASSWORD("client.ssl.trustStorePass", "Use SSL for client connections", String.class, null),
+
   // SERVER
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,
       5000),
@@ -502,14 +531,17 @@ public enum OGlobalConfiguration {
       "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
 
   // DISTRIBUTED
-  DISTRIBUTED_THREAD_QUEUE_SIZE("distributed.threadQueueSize", "Size of the queue for internal thread dispatching", Integer.class,
-      10000),
-
   DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT("distributed.crudTaskTimeout",
       "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
       "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 5000l),
+
+  DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
+      "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
+
+  DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression",
+      "Compression level between 0 and 9 to use in backup for database deployment", Integer.class, 7),
 
   DISTRIBUTED_QUEUE_TIMEOUT("distributed.queueTimeout", "Maximum timeout in milliseconds to wait for the response in replication",
       Integer.class, 5000l),
@@ -518,7 +550,10 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
 
   DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
-      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l);
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+
+  DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
+      ORecordSerializerSchemaAware2CSV.NAME);
 
   private final String                 key;
   private final Object                 defValue;
@@ -546,65 +581,6 @@ public enum OGlobalConfiguration {
     type = iType;
   }
 
-  public void setValue(final Object iValue) {
-    Object oldValue = value;
-
-    if (iValue != null)
-      if (type == Boolean.class)
-        value = Boolean.parseBoolean(iValue.toString());
-      else if (type == Integer.class)
-        value = Integer.parseInt(iValue.toString());
-      else if (type == Float.class)
-        value = Float.parseFloat(iValue.toString());
-      else if (type == String.class)
-        value = iValue.toString();
-      else
-        value = iValue;
-
-    if (changeCallback != null)
-      changeCallback.change(oldValue, value);
-  }
-
-  public Object getValue() {
-    return value != null ? value : defValue;
-  }
-
-  public boolean getValueAsBoolean() {
-    final Object v = value != null ? value : defValue;
-    return v instanceof Boolean ? ((Boolean) v).booleanValue() : Boolean.parseBoolean(v.toString());
-  }
-
-  public String getValueAsString() {
-    return value != null ? value.toString() : defValue != null ? defValue.toString() : null;
-  }
-
-  public int getValueAsInteger() {
-    final Object v = value != null ? value : defValue;
-    return (int) (v instanceof Number ? ((Number) v).intValue() : OFileUtils.getSizeAsNumber(v.toString()));
-  }
-
-  public long getValueAsLong() {
-    final Object v = value != null ? value : defValue;
-    return v instanceof Number ? ((Number) v).longValue() : OFileUtils.getSizeAsNumber(v.toString());
-  }
-
-  public float getValueAsFloat() {
-    final Object v = value != null ? value : defValue;
-    return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
-  }
-
-  public String getKey() {
-    return key;
-  }
-
-  public Class<?> getType() {
-    return type;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
   public static void dumpConfiguration(final PrintStream out) {
     out.print("OrientDB ");
     out.print(OConstants.getVersion());
@@ -628,7 +604,7 @@ public enum OGlobalConfiguration {
 
   /**
    * Find the OGlobalConfiguration instance by the key. Key is case insensitive.
-   * 
+   *
    * @param iKey
    *          Key to find. It's case insensitive.
    * @return OGlobalConfiguration instance if found, otherwise null
@@ -695,6 +671,65 @@ public enum OGlobalConfiguration {
     }
 
     System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
-    System.setProperty(DIRECT_MEMORY_UNSAFE_MODE.getKey(), DIRECT_MEMORY_UNSAFE_MODE.getValueAsString());
+    System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
+  }
+
+  public Object getValue() {
+    return value != null ? value : defValue;
+  }
+
+  public void setValue(final Object iValue) {
+    Object oldValue = value;
+
+    if (iValue != null)
+      if (type == Boolean.class)
+        value = Boolean.parseBoolean(iValue.toString());
+      else if (type == Integer.class)
+        value = Integer.parseInt(iValue.toString());
+      else if (type == Float.class)
+        value = Float.parseFloat(iValue.toString());
+      else if (type == String.class)
+        value = iValue.toString();
+      else
+        value = iValue;
+
+    if (changeCallback != null)
+      changeCallback.change(oldValue, value);
+  }
+
+  public boolean getValueAsBoolean() {
+    final Object v = value != null ? value : defValue;
+    return v instanceof Boolean ? ((Boolean) v).booleanValue() : Boolean.parseBoolean(v.toString());
+  }
+
+  public String getValueAsString() {
+    return value != null ? value.toString() : defValue != null ? defValue.toString() : null;
+  }
+
+  public int getValueAsInteger() {
+    final Object v = value != null ? value : defValue;
+    return (int) (v instanceof Number ? ((Number) v).intValue() : OFileUtils.getSizeAsNumber(v.toString()));
+  }
+
+  public long getValueAsLong() {
+    final Object v = value != null ? value : defValue;
+    return v instanceof Number ? ((Number) v).longValue() : OFileUtils.getSizeAsNumber(v.toString());
+  }
+
+  public float getValueAsFloat() {
+    final Object v = value != null ? value : defValue;
+    return v instanceof Float ? ((Float) v).floatValue() : Float.parseFloat(v.toString());
+  }
+
+  public String getKey() {
+    return key;
+  }
+
+  public Class<?> getType() {
+    return type;
+  }
+
+  public String getDescription() {
+    return description;
   }
 }

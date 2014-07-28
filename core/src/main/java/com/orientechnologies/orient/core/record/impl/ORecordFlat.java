@@ -91,6 +91,7 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
     cloned.value = value;
     cloned._recordId = _recordId.copy();
     cloned._dirty = _dirty;
+    cloned._contentChanged = _contentChanged;
     cloned._recordVersion = _recordVersion.copy();
     return cloned;
   }

@@ -5,8 +5,21 @@ import java.io.IOException;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 
 /**
+ * <p>
+ * A system bucket for bonsai tree pages. Single per file.
+ * </p>
+ * <p>
+ * Holds an information about:
+ * </p>
+ * <ul>
+ * <li>head of free list</li>
+ * <li>length of free list</li>
+ * <li>pointer to free space</li>
+ * </ul>
+ * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSysBucket extends OBonsaiBucketAbstract {
@@ -15,10 +28,13 @@ public class OSysBucket extends OBonsaiBucketAbstract {
   private static final int  FREE_LIST_HEAD_OFFSET   = FREE_SPACE_OFFSET + OBonsaiBucketPointer.SIZE;
   private static final int  FREE_LIST_LENGTH_OFFSET = FREE_LIST_HEAD_OFFSET + OBonsaiBucketPointer.SIZE;
 
+  /**
+   * Magic number to check if the sys bucket is initialized.
+   */
   private static final byte SYS_MAGIC               = (byte) 41;
 
-  public OSysBucket(ODirectMemoryPointer pagePointer, TrackMode trackMode) {
-    super(pagePointer, trackMode);
+  public OSysBucket(OCacheEntry cacheEntry, TrackMode trackMode) {
+    super(cacheEntry, trackMode);
   }
 
   public void init() throws IOException {

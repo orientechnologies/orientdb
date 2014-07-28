@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.IOException;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -29,18 +30,16 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 @Test(groups = "dictionary")
-public class DictionaryTest {
-  private String url;
+public class DictionaryTest extends DocumentDBBaseTest {
+	public DictionaryTest() {
+	}
 
-  public DictionaryTest() {
-  }
+	@Parameters(value = "url")
+	public DictionaryTest(@Optional String url) {
+		super(url);
+	}
 
-  @Parameters(value = "url")
-  public DictionaryTest(String iURL) {
-    url = iURL;
-  }
-
-  public void testDictionaryCreate() throws IOException {
+	public void testDictionaryCreate() throws IOException {
     ODatabaseFlat database = new ODatabaseFlat(url);
     database.open("admin", "admin");
     ORecordFlat record = database.newInstance();

@@ -16,6 +16,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -30,6 +32,10 @@ public class ORecordSerializationContext {
                                                                                                        return new ArrayDeque<ORecordSerializationContext>();
                                                                                                      }
                                                                                                    };
+
+  public static int getDepth() {
+    return ORecordSerializationContext.SERIALIZATION_CONTEXT_STACK.get().size();
+  }
 
   public static ORecordSerializationContext pushContext() {
     final Deque<ORecordSerializationContext> stack = SERIALIZATION_CONTEXT_STACK.get();
@@ -61,7 +67,7 @@ public class ORecordSerializationContext {
     operations.push(operation);
   }
 
-  void executeOperations(OLocalPaginatedStorage storage) {
+  public void executeOperations(OAbstractPaginatedStorage storage) {
     for (ORecordSerializationOperation operation : operations) {
       operation.execute(storage);
     }

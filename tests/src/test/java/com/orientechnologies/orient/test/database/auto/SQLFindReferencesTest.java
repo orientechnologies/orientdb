@@ -20,10 +20,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -35,13 +32,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test(groups = "sql-findReferences")
-public class SQLFindReferencesTest {
+public class SQLFindReferencesTest extends DocumentDBBaseTest {
 
   private static final String WORKPLACE = "Workplace";
   private static final String WORKER    = "Worker";
   private static final String CAR       = "Car";
-
-  private ODatabaseDocument   database;
 
   private ORID                carID;
   private ORID                johnDoeID;
@@ -51,17 +46,14 @@ public class SQLFindReferencesTest {
   private ORID                ctuID;
   private ORID                fbiID;
 
-  @Parameters(value = "url")
-  public SQLFindReferencesTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public SQLFindReferencesTest(@Optional String url) {
+		super(url);
+	}
 
   @SuppressWarnings("unchecked")
   @Test
   public void findSimpleReference() {
-    if (database.isClosed())
-      database.open("admin", "admin");
-
     Collection<ODocument> result = database.command(new OCommandSQL("find references " + carID)).execute();
 
     Assert.assertEquals(result.size(), 1);
@@ -86,16 +78,11 @@ public class SQLFindReferencesTest {
 
     result.clear();
     result = null;
-
-    database.close();
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void findReferenceByClassAndClusters() {
-    if (database.isClosed())
-      database.open("admin", "admin");
-
     Collection<ODocument> result = database.command(new OCommandSQL("find references " + janeDoeID + " [" + WORKPLACE + "]"))
         .execute();
 
@@ -120,17 +107,12 @@ public class SQLFindReferencesTest {
 
     result.clear();
     result = null;
-
-    database.close();
   }
 
   @BeforeClass
   public void createTestEnviroment() {
-    if (database.isClosed())
-      database.open("admin", "admin");
     createSchema();
     populateDatabase();
-    database.close();
   }
 
   private void createSchema() {
@@ -209,8 +191,8 @@ public class SQLFindReferencesTest {
 
   @AfterClass
   public void deleteTestEnviroment() {
-    if (database.isClosed())
-      database.open("admin", "admin");
+		database.open("admin", "admin");
+
     carID.reset();
     carID = null;
     johnDoeID.reset();
@@ -226,7 +208,8 @@ public class SQLFindReferencesTest {
     fbiID.reset();
     fbiID = null;
     deleteSchema();
-    database.close();
+
+		database.close();
   }
 
   private void deleteSchema() {

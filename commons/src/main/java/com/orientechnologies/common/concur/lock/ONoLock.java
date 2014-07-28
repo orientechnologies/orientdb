@@ -22,9 +22,15 @@ package com.orientechnologies.common.concur.lock;
  * 
  */
 public class ONoLock extends OAbstractLock {
+  @Override
   public void lock() {
   }
 
+  @Override
   public void unlock() {
+  }
+
+  @Override
+  public void close() {
   }
 }

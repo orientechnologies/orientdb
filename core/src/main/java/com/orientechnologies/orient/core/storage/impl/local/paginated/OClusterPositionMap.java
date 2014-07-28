@@ -19,17 +19,14 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 import java.io.IOException;
 import java.util.Arrays;
 
-import com.orientechnologies.common.concur.resource.OSharedResourceAdaptive;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
@@ -43,15 +40,14 @@ public class OClusterPositionMap extends ODurableComponent {
   private long               fileId;
   private boolean            useWal;
 
-  public OClusterPositionMap(ODiskCache diskCache, String name, OWriteAheadLog writeAheadLog,
-      OAtomicOperationsManager atomicOperationsManager, boolean useWal) {
+  public OClusterPositionMap(OAbstractPaginatedStorage storage, ODiskCache diskCache, String name, boolean useWal) {
     acquireExclusiveLock();
     try {
       this.diskCache = diskCache;
       this.name = name;
       this.useWal = useWal;
 
-      init(atomicOperationsManager, writeAheadLog);
+      init(storage);
     } finally {
       releaseExclusiveLock();
     }
@@ -93,10 +89,10 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public void close() throws IOException {
+  public void close(boolean flush) throws IOException {
     acquireExclusiveLock();
     try {
-      diskCache.closeFile(fileId);
+      diskCache.closeFile(fileId, flush);
     } finally {
       releaseExclusiveLock();
     }
@@ -123,7 +119,7 @@ public class OClusterPositionMap extends ODurableComponent {
   public void rename(String newName) throws IOException {
     acquireExclusiveLock();
     try {
-      diskCache.renameFile(fileId, this.name, newName);
+      diskCache.renameFile(fileId, this.name + DEF_EXTENSION, newName + DEF_EXTENSION);
       name = newName;
     } finally {
       releaseExclusiveLock();
@@ -142,24 +138,22 @@ public class OClusterPositionMap extends ODurableComponent {
       }
 
       OCacheEntry cacheEntry = diskCache.load(fileId, lastPage, false);
-      OCachePointer cachePointer = cacheEntry.getCachePointer();
-      cachePointer.acquireExclusiveLock();
+      cacheEntry.acquireExclusiveLock();
       try {
         startAtomicOperation();
 
         final ODurablePage.TrackMode trackMode = getTrackMode();
 
-        OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cachePointer.getDataPointer(), trackMode);
+        OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, trackMode);
         if (bucket.isFull()) {
-          cachePointer.releaseExclusiveLock();
+          cacheEntry.releaseExclusiveLock();
           diskCache.release(cacheEntry);
 
           isNewPage = true;
           cacheEntry = diskCache.allocateNewPage(fileId);
-          cachePointer = cacheEntry.getCachePointer();
 
-          cachePointer.acquireExclusiveLock();
-          bucket = new OClusterPositionMapBucket(cachePointer.getDataPointer(), trackMode);
+          cacheEntry.acquireExclusiveLock();
+          bucket = new OClusterPositionMapBucket(cacheEntry, trackMode);
         }
 
         final long index = bucket.add(pageIndex, recordPosition);
@@ -175,7 +169,7 @@ public class OClusterPositionMap extends ODurableComponent {
         endAtomicOperation(true);
         throw new OStorageException("Error during creation of mapping between logical adn physical record position.", e);
       } finally {
-        cachePointer.releaseExclusiveLock();
+        cacheEntry.releaseExclusiveLock();
         diskCache.release(cacheEntry);
       }
     } finally {
@@ -191,12 +185,12 @@ public class OClusterPositionMap extends ODurableComponent {
       long pageIndex = position / OClusterPositionMapBucket.MAX_ENTRIES;
       int index = (int) (position % OClusterPositionMapBucket.MAX_ENTRIES);
 
-      final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
-      final OCachePointer cachePointer = cacheEntry.getCachePointer();
+      if (pageIndex >= diskCache.getFilledUpTo(fileId))
+        return null;
 
+      final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
       try {
-        final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cachePointer.getDataPointer(),
-            ODurablePage.TrackMode.NONE);
+        final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, ODurablePage.TrackMode.NONE);
         return bucket.get(index);
       } finally {
         diskCache.release(cacheEntry);
@@ -215,12 +209,11 @@ public class OClusterPositionMap extends ODurableComponent {
       int index = (int) (position % OClusterPositionMapBucket.MAX_ENTRIES);
 
       final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
-      final OCachePointer cachePointer = cacheEntry.getCachePointer();
-      cachePointer.acquireExclusiveLock();
+      cacheEntry.acquireExclusiveLock();
       try {
         startAtomicOperation();
         final ODurablePage.TrackMode trackMode = getTrackMode();
-        final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cachePointer.getDataPointer(), trackMode);
+        final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, trackMode);
 
         OClusterPositionMapBucket.PositionEntry positionEntry = bucket.remove(index);
         if (positionEntry == null)
@@ -237,7 +230,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
         throw new OStorageException("Error during removal of mapping between logical and physical record position.", e);
       } finally {
-        cachePointer.releaseExclusiveLock();
+        cacheEntry.releaseExclusiveLock();
         diskCache.release(cacheEntry);
       }
     } finally {
@@ -276,14 +269,13 @@ public class OClusterPositionMap extends ODurableComponent {
       OClusterPosition[] result = null;
       do {
         OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
-        OCachePointer cachePointer = cacheEntry.getCachePointer();
-
-        OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
+        OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, ODurablePage.TrackMode.NONE);
         int resultSize = bucket.getSize() - index;
 
         if (resultSize <= 0) {
           diskCache.release(cacheEntry);
           pageIndex++;
+          index = 0;
         } else {
           int entriesCount = 0;
           long startIndex = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES + index;
@@ -349,9 +341,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
       do {
         OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
-        OCachePointer cachePointer = cacheEntry.getCachePointer();
-
-        OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cachePointer.getDataPointer(), ODurablePage.TrackMode.NONE);
+        OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, ODurablePage.TrackMode.NONE);
         if (index == Integer.MIN_VALUE)
           index = bucket.getSize() - 1;
 
@@ -393,10 +383,8 @@ public class OClusterPositionMap extends ODurableComponent {
       final long filledUpTo = diskCache.getFilledUpTo(fileId);
       for (long pageIndex = 0; pageIndex < filledUpTo; pageIndex++) {
         OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
-        OCachePointer cachePointer = cacheEntry.getCachePointer();
         try {
-          OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cachePointer.getDataPointer(),
-              ODurablePage.TrackMode.NONE);
+          OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, ODurablePage.TrackMode.NONE);
           int bucketSize = bucket.getSize();
 
           for (int index = 0; index < bucketSize; index++) {
@@ -420,10 +408,8 @@ public class OClusterPositionMap extends ODurableComponent {
       final long filledUpTo = diskCache.getFilledUpTo(fileId);
       for (long pageIndex = filledUpTo - 1; pageIndex >= 0; pageIndex--) {
         OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
-        OCachePointer cachePointer = cacheEntry.getCachePointer();
         try {
-          OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cachePointer.getDataPointer(),
-              ODurablePage.TrackMode.NONE);
+          OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, ODurablePage.TrackMode.NONE);
           final int bucketSize = bucket.getSize();
 
           for (int index = bucketSize - 1; index >= 0; index--) {

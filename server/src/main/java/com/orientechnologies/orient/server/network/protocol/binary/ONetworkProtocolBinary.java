@@ -19,15 +19,26 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
+import com.orientechnologies.common.serialization.types.OByteSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.ONullSerializer;
+import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
+import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -36,10 +47,17 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
@@ -48,6 +66,8 @@ import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
+import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -55,13 +75,19 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.memory.OStorageMemory;
+import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -69,7 +95,9 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServ
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
@@ -77,8 +105,6 @@ import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
   protected OUser             account;
-
-  private String              dbType;
 
   public ONetworkProtocolBinary() {
     super("OrientDB <- BinaryClient/?");
@@ -89,15 +115,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   @Override
-  public void config(final OServer iServer, final Socket iSocket, final OContextConfiguration iConfig,
-      final List<?> iStatelessCommands, List<?> iStatefulCommands) throws IOException {
+  public void config(final OServerNetworkListener iListener, final OServer iServer, final Socket iSocket,
+      final OContextConfiguration iConfig) throws IOException {
     // CREATE THE CLIENT CONNECTION
     connection = OClientConnectionManager.instance().connect(this);
 
-    super.config(iServer, iSocket, iConfig, iStatelessCommands, iStatefulCommands);
+    super.config(iListener, iServer, iSocket, iConfig);
 
     // SEND PROTOCOL VERSION
-    channel.writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
+    channel.writeShort((short) getVersion());
 
     channel.flush();
     start();
@@ -106,15 +132,29 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   @Override
-  public int getVersion() {
-    return OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION;
+  public void startup() {
+    super.startup();
+    OServerPluginHelper.invokeHandlerCallbackOnClientConnection(server, connection);
+  }
+
+  @Override
+  public void shutdown() {
+    sendShutdown();
+    super.shutdown();
+
+    if (connection == null)
+      return;
+
+    OServerPluginHelper.invokeHandlerCallbackOnClientDisconnection(server, connection);
+
+    OClientConnectionManager.instance().disconnect(connection);
   }
 
   @Override
   protected void onBeforeRequest() throws IOException {
     waitNodeIsOnline();
 
-    connection = OClientConnectionManager.instance().getConnection(clientTxId);
+    connection = OClientConnectionManager.instance().getConnection(clientTxId, this);
 
     if (clientTxId < 0) {
       short protocolId = 0;
@@ -143,6 +183,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       connection.data.commandDetail = "-";
       connection.data.lastCommandReceived = System.currentTimeMillis();
     } else {
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
       if (requestType != OChannelBinaryProtocol.REQUEST_DB_CLOSE && requestType != OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
         OLogManager.instance().debug(this, "Found unknown session %d, shutdown current connection", clientTxId);
         shutdown();
@@ -160,7 +201,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection != null) {
       if (connection.database != null)
         if (!connection.database.isClosed())
-          connection.database.getLevel1Cache().clear();
+          connection.database.getLocalCache().clear();
 
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
       connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
@@ -174,302 +215,198 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected boolean executeRequest() throws IOException {
-    switch (requestType) {
-
-    case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
-      shutdownConnection();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_CONNECT:
-      connect();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_LIST:
-      listDatabases();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_OPEN:
-      openDatabase();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
-      reloadDatabase();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_CREATE:
-      createDatabase();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
-      closeDatabase();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_EXIST:
-      existsDatabase();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_DROP:
-      dropDatabase();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_SIZE:
-      sizeDatabase();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
-      countDatabaseRecords();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_COPY:
-      copyDatabase();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_REPLICATION:
-      replicationDatabase();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_CLUSTER:
-      distributedCluster();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DATASEGMENT_ADD:
-      addDataSegment();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DATASEGMENT_DROP:
-      dropDataSegment();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT:
-      countClusters();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE:
-      rangeCluster();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
-      addCluster();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP:
-      removeCluster();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
-      readRecordMetadata();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
-      readRecord();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
-      createRecord();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
-      updateRecord();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
-      deleteRecord();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
-      higherPositions();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
-      ceilingPositions();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
-      lowerPositions();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
-      floorPositions();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_COUNT:
-      throw new UnsupportedOperationException("Operation OChannelBinaryProtocol.REQUEST_COUNT has been deprecated");
-
-    case OChannelBinaryProtocol.REQUEST_COMMAND:
-      command();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
-      commit();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
-      configGet();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
-      configSet();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
-      configList();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
-      freezeDatabase();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
-      releaseDatabase();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE:
-      freezeCluster();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE:
-      releaseCluster();
-      break;
-
-    case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
-      cleanOutRecord();
-      break;
-
-    default:
-      setDataCommandInfo("Command not supported");
-      return false;
-    }
-
-    return true;
-  }
-
-  private void lowerPositions() throws IOException {
-    setDataCommandInfo("Retrieve lower positions");
-
-    final int clusterId = channel.readInt();
-    final OClusterPosition clusterPosition = channel.readClusterPosition();
-
-    beginResponse();
     try {
-      sendOk(clientTxId);
+      switch (requestType) {
 
-      final OPhysicalPosition[] previousPositions = connection.database.getStorage().lowerPhysicalPositions(clusterId,
-          new OPhysicalPosition(clusterPosition));
+      case OChannelBinaryProtocol.REQUEST_SHUTDOWN:
+        shutdownConnection();
+        break;
 
-      if (previousPositions != null) {
-        channel.writeInt(previousPositions.length);
+      case OChannelBinaryProtocol.REQUEST_CONNECT:
+        connect();
+        break;
 
-        for (final OPhysicalPosition physicalPosition : previousPositions) {
-          channel.writeClusterPosition(physicalPosition.clusterPosition);
-          channel.writeInt(physicalPosition.dataSegmentId);
-          channel.writeLong(physicalPosition.dataSegmentPos);
-          channel.writeInt(physicalPosition.recordSize);
-          channel.writeVersion(physicalPosition.recordVersion);
-        }
+      case OChannelBinaryProtocol.REQUEST_DB_LIST:
+        listDatabases();
+        break;
 
-      } else {
-        channel.writeInt(0); // NO MORE RECORDS
+      case OChannelBinaryProtocol.REQUEST_DB_OPEN:
+        openDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_RELOAD:
+        reloadDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_CREATE:
+        createDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_CLOSE:
+        closeDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_EXIST:
+        existsDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_DROP:
+        dropDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_SIZE:
+        sizeDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_COUNTRECORDS:
+        countDatabaseRecords();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_COPY:
+        copyDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_REPLICATION:
+        replicationDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_CLUSTER:
+        distributedCluster();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT:
+        countClusters();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DATARANGE:
+        rangeCluster();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD:
+        addCluster();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_DROP:
+        removeCluster();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_RECORD_METADATA:
+        readRecordMetadata();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_RECORD_LOAD:
+        readRecord();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_RECORD_CREATE:
+        createRecord();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_RECORD_UPDATE:
+        updateRecord();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_RECORD_DELETE:
+        deleteRecord();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_RECORD_HIDE:
+        hideRecord();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER:
+        higherPositions();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING:
+        ceilingPositions();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER:
+        lowerPositions();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR:
+        floorPositions();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_COUNT:
+        throw new UnsupportedOperationException("Operation OChannelBinaryProtocol.REQUEST_COUNT has been deprecated");
+
+      case OChannelBinaryProtocol.REQUEST_COMMAND:
+        command();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_TX_COMMIT:
+        commit();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_CONFIG_GET:
+        configGet();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_CONFIG_SET:
+        configSet();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_CONFIG_LIST:
+        configList();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_FREEZE:
+        freezeDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DB_RELEASE:
+        releaseDatabase();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE:
+        freezeCluster();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE:
+        releaseCluster();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_RECORD_CLEAN_OUT:
+        cleanOutRecord();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI:
+        createSBTreeBonsai();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET:
+        sbTreeBonsaiGet();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_FIRST_KEY:
+        sbTreeBonsaiFirstKey();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_SBTREE_BONSAI_GET_ENTRIES_MAJOR:
+        sbTreeBonsaiGetEntriesMajor();
+        break;
+
+      case OChannelBinaryProtocol.REQUEST_RIDBAG_GET_SIZE:
+        ridBagSize();
+        break;
+
+      default:
+        setDataCommandInfo("Command not supported");
+        return false;
       }
 
-    } finally {
-      endResponse();
-    }
-  }
-
-  private void floorPositions() throws IOException {
-    setDataCommandInfo("Retrieve floor positions");
-
-    final int clusterId = channel.readInt();
-    final OClusterPosition clusterPosition = channel.readClusterPosition();
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-
-      final OPhysicalPosition[] previousPositions = connection.database.getStorage().floorPhysicalPositions(clusterId,
-							new OPhysicalPosition(clusterPosition));
-
-      if (previousPositions != null) {
-        channel.writeInt(previousPositions.length);
-
-        for (final OPhysicalPosition physicalPosition : previousPositions) {
-          channel.writeClusterPosition(physicalPosition.clusterPosition);
-          channel.writeInt(physicalPosition.dataSegmentId);
-          channel.writeLong(physicalPosition.dataSegmentPos);
-          channel.writeInt(physicalPosition.recordSize);
-          channel.writeVersion(physicalPosition.recordVersion);
-        }
-
-      } else {
-        channel.writeInt(0); // NO MORE RECORDS
+      return true;
+    } catch (RuntimeException e) {
+      if (connection != null && connection.database != null) {
+        final OSBTreeCollectionManager collectionManager = connection.database.getSbTreeCollectionManager();
+        if (collectionManager != null)
+          collectionManager.clearChangedIds();
       }
 
-    } finally {
-      endResponse();
-    }
-  }
-
-  private void higherPositions() throws IOException {
-    setDataCommandInfo("Retrieve higher positions");
-
-    final int clusterId = channel.readInt();
-    final OClusterPosition clusterPosition = channel.readClusterPosition();
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-
-      OPhysicalPosition[] nextPositions = connection.database.getStorage().higherPhysicalPositions(clusterId,
-							new OPhysicalPosition(clusterPosition));
-
-      if (nextPositions != null) {
-
-        channel.writeInt(nextPositions.length);
-        for (final OPhysicalPosition physicalPosition : nextPositions) {
-          channel.writeClusterPosition(physicalPosition.clusterPosition);
-          channel.writeInt(physicalPosition.dataSegmentId);
-          channel.writeLong(physicalPosition.dataSegmentPos);
-          channel.writeInt(physicalPosition.recordSize);
-          channel.writeVersion(physicalPosition.recordVersion);
-        }
-      } else {
-        channel.writeInt(0); // NO MORE RECORDS
-      }
-    } finally {
-      endResponse();
-    }
-  }
-
-  private void ceilingPositions() throws IOException {
-    setDataCommandInfo("Retrieve ceiling positions");
-
-    final int clusterId = channel.readInt();
-    final OClusterPosition clusterPosition = channel.readClusterPosition();
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-
-      final OPhysicalPosition[] previousPositions = connection.database.getStorage().ceilingPhysicalPositions(clusterId,
-							new OPhysicalPosition(clusterPosition));
-
-      if (previousPositions != null) {
-        channel.writeInt(previousPositions.length);
-
-        for (final OPhysicalPosition physicalPosition : previousPositions) {
-          channel.writeClusterPosition(physicalPosition.clusterPosition);
-          channel.writeInt(physicalPosition.dataSegmentId);
-          channel.writeLong(physicalPosition.dataSegmentPos);
-          channel.writeInt(physicalPosition.recordSize);
-          channel.writeVersion(physicalPosition.recordVersion);
-        }
-
-      } else {
-        channel.writeInt(0); // NO MORE RECORDS
-      }
-
-    } finally {
-      endResponse();
+      throw e;
     }
   }
 
@@ -485,7 +422,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected ODatabaseComplex<?> openDatabase(final ODatabaseComplex<?> database, final String iUser, final String iPassword) {
 
     if (database.isClosed())
-      if (database.getStorage() instanceof OStorageMemory && !database.exists())
+      if (database.getStorage() instanceof ODirectMemoryStorage && !database.exists())
         database.create();
       else {
         try {
@@ -505,45 +442,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     return database;
-  }
-
-  protected void addDataSegment() throws IOException {
-    setDataCommandInfo("Add data segment");
-
-    if (!isConnectionAlive())
-      return;
-
-    final String name = channel.readString();
-    final String location = channel.readString();
-
-    final int num = connection.database.addDataSegment(name, location);
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-      channel.writeInt(num);
-    } finally {
-      endResponse();
-    }
-  }
-
-  protected void dropDataSegment() throws IOException {
-    setDataCommandInfo("Drop data segment");
-
-    if (!isConnectionAlive())
-      return;
-
-    final String name = channel.readString();
-
-    boolean result = connection.database.dropDataSegment(name);
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-      channel.writeByte((byte) (result ? 1 : 0));
-    } finally {
-      endResponse();
-    }
   }
 
   protected void removeCluster() throws IOException {
@@ -576,35 +474,37 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (!isConnectionAlive())
       return;
 
-    final String type = channel.readString();
+    String type = "";
+    if (connection.data.protocolVersion < 24)
+      type = channel.readString();
+
     final String name = channel.readString();
     int clusterId = -1;
 
     final String location;
-    if (connection.data.protocolVersion >= 10 || type.equalsIgnoreCase("PHYSICAL"))
+    if (connection.data.protocolVersion >= 10 && connection.data.protocolVersion < 24 || type.equalsIgnoreCase("PHYSICAL"))
       location = channel.readString();
     else
       location = null;
 
-    final String dataSegmentName;
-    if (connection.data.protocolVersion >= 10)
-      dataSegmentName = channel.readString();
-    else {
-      channel.readInt(); // OLD INIT SIZE, NOT MORE USED
-      dataSegmentName = null;
+    if (connection.data.protocolVersion < 24) {
+      final String dataSegmentName;
+      if (connection.data.protocolVersion >= 10)
+        dataSegmentName = channel.readString();
+      else {
+        channel.readInt(); // OLD INIT SIZE, NOT MORE USED
+        dataSegmentName = null;
+      }
     }
 
     if (connection.data.protocolVersion >= 18)
       clusterId = channel.readShort();
 
-    Object[] params = null;
-
     final int num;
-
     if (clusterId < 0)
-      num = connection.database.addCluster(type, name, location, dataSegmentName, params);
+      num = connection.database.addCluster(name);
     else
-      num = connection.database.addCluster(type, name, clusterId, location, dataSegmentName, params);
+      num = connection.database.addCluster(name, clusterId, null);
 
     beginResponse();
     try {
@@ -682,7 +582,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     final String dbURL = channel.readString();
 
-    dbType = ODatabaseDocument.TYPE;
+    String dbType = ODatabaseDocument.TYPE;
     if (connection.data.protocolVersion >= 8)
       // READ DB-TYPE FROM THE CLIENT
       dbType = channel.readString();
@@ -691,7 +591,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String passwd = channel.readString();
 
     connection.database = (ODatabaseDocumentTx) server.openDatabase(dbType, dbURL, user, passwd);
-    connection.rawDatabase = ((ODatabaseRaw) ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
+    connection.rawDatabase = ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying();
 
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
       sendError(clientTxId, new OSecurityAccessException(connection.database.getName(),
@@ -736,11 +636,53 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
+  protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
+    channel.acquireWriteLock();
+    try {
+
+      channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
+      channel.writeInt(iClientTxId);
+
+      final Throwable current;
+      if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
+        // BYPASS THE DB POOL EXCEPTION TO PROPAGATE THE RIGHT SECURITY ONE
+        current = t.getCause();
+      else
+        current = t;
+
+      sendErrorDetails(current);
+
+      if (connection != null && connection.data.protocolVersion >= 19) {
+        serializeExceptionObject(current);
+      }
+
+      channel.flush();
+
+      if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
+        if (logClientFullStackTrace)
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t,
+              channel.socket.getRemoteSocketAddress(), t.toString());
+        else
+          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null,
+              channel.socket.getRemoteSocketAddress(), t.toString());
+      }
+    } catch (Exception e) {
+      if (e instanceof SocketException)
+        shutdown();
+      else
+        OLogManager.instance().error(this, "Error during sending an error to client", e);
+    } finally {
+      if (channel.getLockWrite().isHeldByCurrentThread())
+        // NO EXCEPTION SO FAR: UNLOCK IT
+        channel.releaseWriteLock();
+    }
+  }
+
   protected void shutdownConnection() throws IOException {
     setDataCommandInfo("Shutdowning");
 
     OLogManager.instance().info(this, "Received shutdown command from the remote client %s:%d", channel.socket.getInetAddress(),
-						channel.socket.getPort());
+        channel.socket.getPort());
 
     final String user = channel.readString();
     final String passwd = channel.readString();
@@ -756,8 +698,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         endResponse();
       }
       channel.close();
-      server.shutdown();
-      System.exit(0);
+      runShutdownInNonDaemonThread();
     }
 
     OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.",
@@ -915,7 +856,22 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     checkServerAccess("database.exists");
 
-    connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
+    if (storageType != null)
+      connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);
+    else {
+      // CHECK AGAINST ALL THE ENGINE TYPES, BUT REMOTE
+      for (String engine : Orient.instance().getEngines()) {
+        if (!engine.equalsIgnoreCase(OEngineRemote.NAME)) {
+          connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, engine);
+          if (connection.database.exists())
+            // FOUND
+            break;
+
+          // NOT FOUND: ASSURE TO UNREGISTER IT TO AVOID CACHING
+          Orient.instance().unregisterStorage(connection.database.getStorage());
+        }
+      }
+    }
 
     beginResponse();
     try {
@@ -1041,7 +997,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       return;
 
     final OTransactionOptimisticProxy tx = new OTransactionOptimisticProxy((ODatabaseRecordTx) connection.database.getUnderlying(),
-        channel);
+        channel, connection.data.protocolVersion, this);
 
     try {
       connection.database.begin(tx);
@@ -1069,19 +1025,31 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             channel.writeRID(entry.getKey());
             channel.writeVersion(entry.getValue().getRecordVersion());
           }
+
+          if (connection.data.protocolVersion >= 20)
+            sendCollectionChanges();
         } finally {
           endResponse();
         }
       } catch (Exception e) {
-        connection.database.rollback();
+        if (connection != null && connection.database != null) {
+          if (connection.database.getTransaction().isActive())
+            connection.database.rollback(true);
+
+          final OSBTreeCollectionManager collectionManager = connection.database.getSbTreeCollectionManager();
+          if (collectionManager != null)
+            collectionManager.clearChangedIds();
+        }
+
         sendError(clientTxId, e);
       }
     } catch (OTransactionAbortedException e) {
       // TX ABORTED BY THE CLIENT
     } catch (Exception e) {
       // Error during TX initialization, possibly index constraints violation.
-      tx.rollback();
-      tx.close();
+      if (tx.isActive())
+        tx.rollback(true, -1);
+
       sendError(clientTxId, e);
     }
   }
@@ -1090,20 +1058,27 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Execute remote command");
 
     final boolean asynch = channel.readByte() == 'a';
+    String dbSerializerName = connection.database.getSerializer().toString();
+    String name = getRecordSerializerName();
 
+    if (!dbSerializerName.equals(name)) {
+      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
+      ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
+    }
     final OCommandRequestText command = (OCommandRequestText) OStreamSerializerAnyStreamable.INSTANCE.fromStream(channel
         .readBytes());
+    ONetworkThreadLocalSerializer.setNetworkSerializer(null);
 
     connection.data.commandDetail = command.getText();
 
     // ENABLES THE CACHE TO IMPROVE PERFORMANCE OF COMPLEX COMMANDS LIKE TRAVERSE
-    // connection.database.getLevel1Cache().setEnable(true);
+    // connection.database.getLocalCache().setEnable(true);
     beginResponse();
     try {
       final OAbstractCommandResultListener listener;
 
       if (asynch) {
-        listener = new OAsyncCommandResultListener(this, clientTxId);
+        listener = new OAsyncCommandResultListener(this, clientTxId, command.getResultListener());
         command.setResultListener(listener);
       } else
         listener = new OSyncCommandResultListener();
@@ -1118,17 +1093,21 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         return;
 
       // ASSIGNED THE PARSED FETCHPLAN
-      listener.setFetchPlan(((OCommandRequestInternal) connection.database.command(command)).getFetchPlan());
+      listener.setFetchPlan(connection.database.command(command).getFetchPlan());
 
-      final Object result = ((OCommandRequestInternal) connection.database.command(command)).execute();
+      final Object result = connection.database.command(command).execute();
+
+      // FETCHPLAN HAS TO BE ASSIGNED AGAIN, because it can be changed by SQL statement
+      listener.setFetchPlan(command.getFetchPlan());
 
       if (asynch) {
         // ASYNCHRONOUS
         if (listener.isEmpty())
           try {
             sendOk(clientTxId);
-          } catch (IOException e1) {
+          } catch (IOException ignored) {
           }
+        channel.writeByte((byte) 0); // NO MORE RECORDS
 
       } else {
         // SYNCHRONOUS
@@ -1142,12 +1121,24 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           channel.writeByte((byte) 'r');
           listener.result(result);
           writeIdentifiable((OIdentifiable) result);
+        } else if (result instanceof ODocumentWrapper) {
+          // RECORD
+          channel.writeByte((byte) 'r');
+          final ODocument doc = ((ODocumentWrapper) result).getDocument();
+          listener.result(doc);
+          writeIdentifiable(doc);
         } else if (OMultiValue.isMultiValue(result)) {
           channel.writeByte((byte) 'l');
           channel.writeInt(OMultiValue.getSize(result));
           for (Object o : OMultiValue.getMultiValueIterable(result)) {
-            listener.result(o);
-            writeIdentifiable((OIdentifiable) o);
+            try {
+              listener.result(o);
+              writeIdentifiable((OIdentifiable) o);
+            } catch (Exception e) {
+              OLogManager.instance().warn(this, "Cannot serialize record: " + o);
+              // WRITE NULL RECORD TO AVOID BREAKING PROTOCOL
+              writeIdentifiable(null);
+            }
           }
         } else {
           // ANY OTHER (INCLUDING LITERALS)
@@ -1157,32 +1148,23 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
           channel.writeString(value.toString());
         }
-      }
 
-      if (asynch || connection.data.protocolVersion >= 17) {
-        // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
-        for (ODocument doc : listener.getFetchedRecordsToSend()) {
-          channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
-          // ISN'T PART OF THE
-          // RESULT SET
-          writeIdentifiable(doc);
+        if (connection.data.protocolVersion >= 17) {
+          // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
+          for (ORecord<?> rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
+            channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
+            // ISN'T PART OF THE
+            // RESULT SET
+            writeIdentifiable(rec);
+          }
+
+          channel.writeByte((byte) 0); // NO MORE RECORDS
         }
-
-        channel.writeByte((byte) 0); // NO MORE RECORDS
       }
 
     } finally {
       endResponse();
     }
-  }
-
-  private boolean isConnectionAlive() {
-    if (connection == null || connection.database == null) {
-      // CONNECTION/DATABASE CLOSED, KILL IT
-      OClientConnectionManager.instance().kill(connection);
-      return false;
-    }
-    return true;
   }
 
   protected void deleteRecord() throws IOException {
@@ -1196,6 +1178,28 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final byte mode = channel.readByte();
 
     final int result = deleteRecord(connection.database, rid, version);
+
+    if (mode < 2) {
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeByte((byte) result);
+      } finally {
+        endResponse();
+      }
+    }
+  }
+
+  protected void hideRecord() throws IOException {
+    setDataCommandInfo("Hide record");
+
+    if (!isConnectionAlive())
+      return;
+
+    final ORID rid = channel.readRID();
+    final byte mode = channel.readByte();
+
+    final int result = hideRecord(connection.database, rid);
 
     if (mode < 2) {
       beginResponse();
@@ -1247,22 +1251,25 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (!isConnectionAlive())
       return;
 
-    if (!isConnectionAlive())
-      return;
-
     final ORecordId rid = channel.readRID();
+    boolean updateContent = true;
+    if (connection.data.protocolVersion >= 23)
+      updateContent = channel.readBoolean();
     final byte[] buffer = channel.readBytes();
     final ORecordVersion version = channel.readVersion();
     final byte recordType = channel.readByte();
     final byte mode = channel.readByte();
 
-    final ORecordVersion newVersion = updateRecord(connection.database, rid, buffer, version, recordType);
+    final ORecordVersion newVersion = updateRecord(connection.database, rid, buffer, version, recordType, updateContent);
 
     if (mode < 2) {
       beginResponse();
       try {
         sendOk(clientTxId);
         channel.writeVersion(newVersion);
+
+        if (connection.data.protocolVersion >= 20)
+          sendCollectionChanges();
       } finally {
         endResponse();
       }
@@ -1275,13 +1282,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (!isConnectionAlive())
       return;
 
-    final int dataSegmentId = connection.data.protocolVersion >= 10 ? channel.readInt() : 0;
+    final int dataSegmentId = connection.data.protocolVersion >= 10 && connection.data.protocolVersion < 24 ? channel.readInt() : 0;
+
     final ORecordId rid = new ORecordId(channel.readShort(), ORID.CLUSTER_POS_INVALID);
     final byte[] buffer = channel.readBytes();
     final byte recordType = channel.readByte();
     final byte mode = channel.readByte();
 
-    final ORecord<?> record = createRecord(connection.database, rid, buffer, recordType, dataSegmentId);
+    final ORecord<?> record = createRecord(connection.database, rid, buffer, recordType);
 
     if (mode < 2) {
       beginResponse();
@@ -1290,6 +1298,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeClusterPosition(record.getIdentity().getClusterPosition());
         if (connection.data.protocolVersion >= 11)
           channel.writeVersion(record.getRecordVersion());
+
+        if (connection.data.protocolVersion >= 20)
+          sendCollectionChanges();
       } finally {
         endResponse();
       }
@@ -1346,7 +1357,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } else {
-      final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones);
+      final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
+          OStorage.LOCKING_STRATEGY.DEFAULT);
 
       beginResponse();
       try {
@@ -1354,7 +1366,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         if (record != null) {
           channel.writeByte((byte) 1); // HAS RECORD
-          channel.writeBytes(record.toStream());
+          channel.writeBytes(getRecordBytes(record));
           channel.writeVersion(record.getRecordVersion());
           channel.writeByte(record.getRecordType());
 
@@ -1364,14 +1376,19 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             if (record instanceof ODocument) {
               final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
 
-              final Set<ODocument> recordsToSend = new HashSet<ODocument>();
+              final Set<ORecord<?>> recordsToSend = new HashSet<ORecord<?>>();
               final ODocument doc = (ODocument) record;
-              final OFetchListener listener = new ORemoteFetchListener(recordsToSend);
+              final OFetchListener listener = new ORemoteFetchListener() {
+                @Override
+                protected void sendRecord(ORecord<?> iLinked) {
+                  recordsToSend.add(iLinked);
+                }
+              };
               final OFetchContext context = new ORemoteFetchContext();
               OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
 
               // SEND RECORDS TO LOAD IN CLIENT CACHE
-              for (ODocument d : recordsToSend) {
+              for (ORecord<?> d : recordsToSend) {
                 if (d.getIdentity().isValid()) {
                   channel.writeByte((byte) 2); // CLIENT CACHE
                   // RECORD. IT ISN'T PART OF THE RESULT SET
@@ -1395,6 +1412,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected void endResponse() throws IOException {
+    // resetting transaction state. Commands are stateless and connection should be cleared
+    // otherwise reused connection (connections pool) may lead to unpredicted errors
+    if (connection != null && connection.database != null && connection.database.getTransaction() != null)
+      connection.database.getTransaction().rollback();
     channel.flush();
     channel.releaseWriteLock();
   }
@@ -1409,49 +1430,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     connection.data.driverVersion = channel.readString();
     connection.data.protocolVersion = channel.readShort();
     connection.data.clientId = channel.readString();
-  }
-
-  private void sendDatabaseInformation() throws IOException {
-    final Collection<? extends OCluster> clusters = connection.database.getStorage().getClusterInstances();
-    int clusterCount = 0;
-    for (OCluster c : clusters) {
-      if (c != null) {
-        ++clusterCount;
-      }
-    }
-    if (connection.data.protocolVersion >= 7)
-      channel.writeShort((short) clusterCount);
+    if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_21)
+      connection.data.serializationImpl = channel.readString();
     else
-      channel.writeInt(clusterCount);
-
-    for (OCluster c : clusters) {
-      if (c != null) {
-        channel.writeString(c.getName());
-        channel.writeShort((short) c.getId());
-        channel.writeString(c.getType());
-        if (connection.data.protocolVersion >= 12)
-          channel.writeShort((short) c.getDataSegmentId());
-      }
-    }
-  }
-
-  @Override
-  public void startup() {
-    super.startup();
-    OServerPluginHelper.invokeHandlerCallbackOnClientConnection(server, connection);
-  }
-
-  @Override
-  public void shutdown() {
-    sendShutdown();
-    super.shutdown();
-
-    if (connection == null)
-      return;
-
-    OServerPluginHelper.invokeHandlerCallbackOnClientDisconnection(server, connection);
-
-    OClientConnectionManager.instance().disconnect(connection);
+      connection.data.serializationImpl = ORecordSerializerSchemaAware2CSV.NAME;
   }
 
   protected void sendOk(final int iClientTxId) throws IOException {
@@ -1459,92 +1441,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     channel.writeInt(iClientTxId);
   }
 
-  private void listDatabases() throws IOException {
-    checkServerAccess("server.dblist");
-    final ODocument result = new ODocument();
-    result.field("databases", server.getAvailableStorageNames());
-
-    setDataCommandInfo("List databases");
-
-    beginResponse();
-    try {
-      sendOk(clientTxId);
-      channel.writeBytes(result.toStream());
-    } finally {
-      endResponse();
-    }
-  }
-
-  protected void sendError(final int iClientTxId, final Throwable t) throws IOException {
-    channel.acquireWriteLock();
-    try {
-
-      channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
-      channel.writeInt(iClientTxId);
-
-      Throwable current;
-      if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
-        // BYPASS THE DB POOL EXCEPTION TO PROPAGATE THE RIGHT SECURITY ONE
-        current = t.getCause();
-      else
-        current = t;
-
-      final Throwable original = current;
-      while (current != null) {
-        // MORE DETAILS ARE COMING AS EXCEPTION
-        channel.writeByte((byte) 1);
-
-        channel.writeString(current.getClass().getName());
-        channel.writeString(current != null ? current.getMessage() : null);
-
-        current = current.getCause();
-      }
-      channel.writeByte((byte) 0);
-
-      if (connection != null && connection.data.protocolVersion >= 19) {
-        final OMemoryStream memoryStream = new OMemoryStream();
-        final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
-
-        objectOutputStream.writeObject(original);
-        objectOutputStream.flush();
-
-        final byte[] result = memoryStream.toByteArray();
-        objectOutputStream.close();
-
-        channel.writeBytes(result);
-      }
-
-      channel.flush();
-
-      if (OLogManager.instance().isLevelEnabled(logClientExceptions)) {
-        if (logClientFullStackTrace)
-          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", t,
-              channel.socket.getRemoteSocketAddress(), t.toString());
-        else
-          OLogManager.instance().log(this, logClientExceptions, "Sent run-time exception to the client %s: %s", null,
-              channel.socket.getRemoteSocketAddress(), t.toString());
-      }
-    } catch (Exception e) {
-      if (e instanceof SocketException)
-        shutdown();
-    } finally {
-      channel.releaseWriteLock();
-    }
-  }
-
-  private boolean loadUserFromSchema(final String iUserName, final String iUserPassword) {
-    account = connection.database.getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
-    return true;
-  }
-
   @Override
   protected void handleConnectionError(final OChannelBinaryServer iChannel, final Throwable e) {
     super.handleConnectionError(channel, e);
     OServerPluginHelper.invokeHandlerCallbackOnClientError(server, connection, e);
-  }
-
-  public String getType() {
-    return "binary";
   }
 
   protected void sendResponse(final ODocument iResponse) throws IOException {
@@ -1694,4 +1594,407 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       endResponse();
     }
   }
+
+  private void sendErrorDetails(Throwable current) throws IOException {
+    while (current != null) {
+      // MORE DETAILS ARE COMING AS EXCEPTION
+      channel.writeByte((byte) 1);
+
+      channel.writeString(current.getClass().getName());
+      channel.writeString(current.getMessage());
+
+      current = current.getCause();
+    }
+    channel.writeByte((byte) 0);
+  }
+
+  private void serializeExceptionObject(Throwable original) throws IOException {
+    try {
+      final OMemoryStream memoryStream = new OMemoryStream();
+      final ObjectOutputStream objectOutputStream = new ObjectOutputStream(memoryStream);
+
+      objectOutputStream.writeObject(original);
+      objectOutputStream.flush();
+
+      final byte[] result = memoryStream.toByteArray();
+      objectOutputStream.close();
+
+      channel.writeBytes(result);
+    } catch (Exception e) {
+      OLogManager.instance().warn(this, "Can't serialize an exception object", e);
+
+      // Write empty stream for binary compatibility
+      channel.writeBytes(new byte[0]);
+    }
+  }
+
+  /**
+   * Due to protocol thread is daemon, shutdown should be executed in separate thread to guarantee its complete execution.
+   * 
+   * This method never returns normally.
+   */
+  private void runShutdownInNonDaemonThread() {
+    Thread shutdownThread = new Thread("OrientDB server shutdown thread") {
+      public void run() {
+        server.shutdown();
+        ShutdownHelper.shutdown(1);
+      }
+    };
+    shutdownThread.setDaemon(false);
+    shutdownThread.start();
+    try {
+      shutdownThread.join();
+    } catch (InterruptedException ignored) {
+    }
+  }
+
+  private void ridBagSize() throws IOException {
+    setDataCommandInfo("RidBag get size");
+
+    OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
+    final byte[] changeStream = channel.readBytes();
+
+    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
+    final Map<OIdentifiable, OSBTreeRidBag.Change> changes = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE.deserializeChanges(
+        changeStream, 0);
+
+    int realSize = tree.getRealBagSize(changes);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeInt(realSize);
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void sbTreeBonsaiGetEntriesMajor() throws IOException {
+    setDataCommandInfo("SB-Tree bonsai get values major");
+
+    OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
+    byte[] keyStream = channel.readBytes();
+    boolean inclusive = channel.readBoolean();
+    int pageSize = 128;
+
+    if (connection.data.protocolVersion >= 21)
+      pageSize = channel.readInt();
+
+    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
+
+    final OBinarySerializer<OIdentifiable> keySerializer = tree.getKeySerializer();
+    OIdentifiable key = keySerializer.deserialize(keyStream, 0);
+
+    final OBinarySerializer<Integer> valueSerializer = tree.getValueSerializer();
+
+    OTreeInternal.AccumulativeListener<OIdentifiable, Integer> listener = new OTreeInternal.AccumulativeListener<OIdentifiable, Integer>(
+        pageSize);
+    tree.loadEntriesMajor(key, inclusive, true, listener);
+    List<Entry<OIdentifiable, Integer>> result = listener.getResult();
+    byte[] stream = serializeSBTreeEntryCollection(result, keySerializer, valueSerializer);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeBytes(stream);
+    } finally {
+      endResponse();
+    }
+  }
+
+  private byte[] serializeSBTreeEntryCollection(List<Entry<OIdentifiable, Integer>> collection,
+      OBinarySerializer<OIdentifiable> keySerializer, OBinarySerializer<Integer> valueSerializer) {
+    byte[] stream = new byte[OIntegerSerializer.INT_SIZE + collection.size()
+        * (keySerializer.getFixedLength() + valueSerializer.getFixedLength())];
+    int offset = 0;
+
+    OIntegerSerializer.INSTANCE.serialize(collection.size(), stream, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    for (Entry<OIdentifiable, Integer> entry : collection) {
+      keySerializer.serialize(entry.getKey(), stream, offset);
+      offset += keySerializer.getObjectSize(entry.getKey());
+
+      valueSerializer.serialize(entry.getValue(), stream, offset);
+      offset += valueSerializer.getObjectSize(entry.getValue());
+    }
+    return stream;
+  }
+
+  private void sbTreeBonsaiFirstKey() throws IOException {
+    setDataCommandInfo("SB-Tree bonsai get first key");
+
+    OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
+    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
+
+    OIdentifiable result = tree.firstKey();
+    final OBinarySerializer<? super OIdentifiable> keySerializer;
+    if (result == null) {
+      keySerializer = ONullSerializer.INSTANCE;
+    } else {
+      keySerializer = tree.getKeySerializer();
+    }
+
+    byte[] stream = new byte[OByteSerializer.BYTE_SIZE + keySerializer.getObjectSize(result)];
+    OByteSerializer.INSTANCE.serialize(keySerializer.getId(), stream, 0);
+    keySerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeBytes(stream);
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void sbTreeBonsaiGet() throws IOException {
+    setDataCommandInfo("SB-Tree bonsai get");
+
+    OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
+    final byte[] keyStream = channel.readBytes();
+
+    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
+
+    final OIdentifiable key = tree.getKeySerializer().deserialize(keyStream, 0);
+
+    Integer result = tree.get(key);
+    final OBinarySerializer<? super Integer> valueSerializer;
+    if (result == null) {
+      valueSerializer = ONullSerializer.INSTANCE;
+    } else {
+      valueSerializer = tree.getValueSerializer();
+    }
+
+    byte[] stream = new byte[OByteSerializer.BYTE_SIZE + valueSerializer.getObjectSize(result)];
+    OByteSerializer.INSTANCE.serialize(valueSerializer.getId(), stream, 0);
+    valueSerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      channel.writeBytes(stream);
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void createSBTreeBonsai() throws IOException {
+    setDataCommandInfo("Create SB-Tree bonsai instance");
+
+    int clusterId = channel.readInt();
+
+    OBonsaiCollectionPointer collectionPointer = connection.database.getSbTreeCollectionManager().createSBTree(clusterId, null);
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(channel, collectionPointer);
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void lowerPositions() throws IOException {
+    setDataCommandInfo("Retrieve lower positions");
+
+    final int clusterId = channel.readInt();
+    final OClusterPosition clusterPosition = channel.readClusterPosition();
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+
+      final OPhysicalPosition[] previousPositions = connection.database.getStorage().lowerPhysicalPositions(clusterId,
+          new OPhysicalPosition(clusterPosition));
+
+      if (previousPositions != null) {
+        channel.writeInt(previousPositions.length);
+
+        for (final OPhysicalPosition physicalPosition : previousPositions) {
+          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeInt(physicalPosition.recordSize);
+          channel.writeVersion(physicalPosition.recordVersion);
+        }
+
+      } else {
+        channel.writeInt(0); // NO MORE RECORDS
+      }
+
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void floorPositions() throws IOException {
+    setDataCommandInfo("Retrieve floor positions");
+
+    final int clusterId = channel.readInt();
+    final OClusterPosition clusterPosition = channel.readClusterPosition();
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+
+      final OPhysicalPosition[] previousPositions = connection.database.getStorage().floorPhysicalPositions(clusterId,
+          new OPhysicalPosition(clusterPosition));
+
+      if (previousPositions != null) {
+        channel.writeInt(previousPositions.length);
+
+        for (final OPhysicalPosition physicalPosition : previousPositions) {
+          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeInt(physicalPosition.recordSize);
+          channel.writeVersion(physicalPosition.recordVersion);
+        }
+
+      } else {
+        channel.writeInt(0); // NO MORE RECORDS
+      }
+
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void higherPositions() throws IOException {
+    setDataCommandInfo("Retrieve higher positions");
+
+    final int clusterId = channel.readInt();
+    final OClusterPosition clusterPosition = channel.readClusterPosition();
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+
+      OPhysicalPosition[] nextPositions = connection.database.getStorage().higherPhysicalPositions(clusterId,
+          new OPhysicalPosition(clusterPosition));
+
+      if (nextPositions != null) {
+
+        channel.writeInt(nextPositions.length);
+        for (final OPhysicalPosition physicalPosition : nextPositions) {
+          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeInt(physicalPosition.recordSize);
+          channel.writeVersion(physicalPosition.recordVersion);
+        }
+      } else {
+        channel.writeInt(0); // NO MORE RECORDS
+      }
+    } finally {
+      endResponse();
+    }
+  }
+
+  private void ceilingPositions() throws IOException {
+    setDataCommandInfo("Retrieve ceiling positions");
+
+    final int clusterId = channel.readInt();
+    final OClusterPosition clusterPosition = channel.readClusterPosition();
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+
+      final OPhysicalPosition[] previousPositions = connection.database.getStorage().ceilingPhysicalPositions(clusterId,
+          new OPhysicalPosition(clusterPosition));
+
+      if (previousPositions != null) {
+        channel.writeInt(previousPositions.length);
+
+        for (final OPhysicalPosition physicalPosition : previousPositions) {
+          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeInt(physicalPosition.recordSize);
+          channel.writeVersion(physicalPosition.recordVersion);
+        }
+
+      } else {
+        channel.writeInt(0); // NO MORE RECORDS
+      }
+
+    } finally {
+      endResponse();
+    }
+  }
+
+  private boolean isConnectionAlive() {
+    if (connection == null || connection.database == null) {
+      // CONNECTION/DATABASE CLOSED, KILL IT
+      OClientConnectionManager.instance().kill(connection);
+      return false;
+    }
+    return true;
+  }
+
+  private void sendCollectionChanges() throws IOException {
+    OSBTreeCollectionManager collectionManager = connection.database.getSbTreeCollectionManager();
+    if (collectionManager != null) {
+      Map<UUID, OBonsaiCollectionPointer> changedIds = collectionManager.changedIds();
+
+      channel.writeInt(changedIds.size());
+
+      for (Entry<UUID, OBonsaiCollectionPointer> entry : changedIds.entrySet()) {
+        UUID id = entry.getKey();
+        channel.writeLong(id.getMostSignificantBits());
+        channel.writeLong(id.getLeastSignificantBits());
+
+        OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(channel, entry.getValue());
+      }
+      collectionManager.clearChangedIds();
+    }
+  }
+
+  private void sendDatabaseInformation() throws IOException {
+    final Collection<? extends OCluster> clusters = connection.database.getStorage().getClusterInstances();
+    int clusterCount = 0;
+    for (OCluster c : clusters) {
+      if (c != null) {
+        ++clusterCount;
+      }
+    }
+    if (connection.data.protocolVersion >= 7)
+      channel.writeShort((short) clusterCount);
+    else
+      channel.writeInt(clusterCount);
+
+    for (OCluster c : clusters) {
+      if (c != null) {
+        channel.writeString(c.getName());
+        channel.writeShort((short) c.getId());
+
+        if (connection.data.protocolVersion >= 12 && connection.data.protocolVersion < 24) {
+          channel.writeString("none");
+          channel.writeShort((short) -1);
+        }
+      }
+    }
+  }
+
+  private void listDatabases() throws IOException {
+    checkServerAccess("server.dblist");
+    final ODocument result = new ODocument();
+    result.field("databases", server.getAvailableStorageNames());
+
+    setDataCommandInfo("List databases");
+
+    beginResponse();
+    try {
+      sendOk(clientTxId);
+      byte [] stream = getRecordBytes(result);
+      channel.writeBytes(stream);
+    } finally {
+      endResponse();
+    }
+  }
+
+  private boolean loadUserFromSchema(final String iUserName, final String iUserPassword) {
+    account = connection.database.getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
+    return true;
+  }
+
+  @Override
+  protected String getRecordSerializerName() {
+    return connection.data.serializationImpl;
+  }
+
 }

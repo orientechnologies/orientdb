@@ -7,10 +7,9 @@ import java.math.BigDecimal;
 
 public class SpeedTestData {
   protected static final int TIME_WAIT           = 200;
+  protected final static int DUMP_PERCENT        = 10;
   protected long             cycles              = 1;
   protected long             cyclesDone          = 0;
-  protected final static int DUMP_PERCENT        = 10;
-
   protected String           currentTestName;
   protected long             currentTestTimer;
 
@@ -39,6 +38,26 @@ public class SpeedTestData {
 
   protected SpeedTestData(final SpeedTestGroup iGroup) {
     setTestGroup(iGroup);
+  }
+
+  protected static boolean executeInit(final SpeedTest iTarget, final Object... iArgs) {
+    try {
+      iTarget.init();
+      return true;
+    } catch (Throwable t) {
+      System.err.println("Exception caught when executing INIT: " + iTarget.getClass().getSimpleName());
+      t.printStackTrace();
+      return false;
+    }
+  }
+
+  protected static void executeDeinit(final SpeedTest iTarget, final Object... iArgs) {
+    try {
+      iTarget.deinit();
+    } catch (Throwable t) {
+      System.err.println("Exception caught when executing DEINIT: " + iTarget.getClass().getSimpleName());
+      t.printStackTrace();
+    }
   }
 
   public SpeedTestData config(final Object... iArgs) {
@@ -138,7 +157,8 @@ public class SpeedTestData {
       System.out.println("   Cycles done.......................: " + cyclesDone + "/" + cycles);
       System.out.println("   Cycles Elapsed....................: " + cyclesElapsed + " ms");
       System.out.println("   Elapsed...........................: " + elapsed + " ms");
-      System.out.println("   Medium cycle elapsed:.............: " + new BigDecimal((float) elapsed / cyclesDone).toPlainString());
+      System.out.println("   Medium cycle elapsed:.............: "
+          + (cyclesDone > 0 && elapsed > 0 ? new BigDecimal((float) elapsed / cyclesDone).toPlainString() : 0));
       System.out.println("   Cycles per second.................: "
           + new BigDecimal((float) cyclesDone / elapsed * 1000).toPlainString());
       System.out.println("   Committed heap memory diff........: " + heapCommittedMemory + " (" + currentTestHeapCommittedMemory
@@ -222,15 +242,8 @@ public class SpeedTestData {
     return configuration;
   }
 
-  protected static boolean executeInit(final SpeedTest iTarget, final Object... iArgs) {
-    try {
-      iTarget.init();
-      return true;
-    } catch (Throwable t) {
-      System.err.println("Exception caught when executing INIT: " + iTarget.getClass().getSimpleName());
-      t.printStackTrace();
-      return false;
-    }
+  public long getCyclesDone() {
+    return cyclesDone;
   }
 
   protected long executeTest(final SpeedTest iTarget, final Object... iArgs) {
@@ -273,18 +286,5 @@ public class SpeedTestData {
       t.printStackTrace();
     }
     return -1;
-  }
-
-  protected static void executeDeinit(final SpeedTest iTarget, final Object... iArgs) {
-    try {
-      iTarget.deinit();
-    } catch (Throwable t) {
-      System.err.println("Exception caught when executing DEINIT: " + iTarget.getClass().getSimpleName());
-      t.printStackTrace();
-    }
-  }
-
-  public long getCyclesDone() {
-    return cyclesDone;
   }
 }

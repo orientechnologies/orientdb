@@ -15,40 +15,37 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocator;
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
+
 public abstract class OStorageAbstract extends OSharedContainerImpl implements OStorage {
-  protected final String                          url;
-  protected final String                          mode;
-  protected OStorageConfiguration                 configuration;
-  protected String                                name;
-  protected AtomicLong                            version = new AtomicLong();
-  protected OLevel2RecordCache                    level2Cache;
+  protected final String                              url;
+  protected final String                              mode;
+  protected final OSharedResourceAdaptiveExternal     lock;
+  protected volatile OStorageConfiguration            configuration;
+  protected volatile OCurrentStorageComponentsFactory componentsFactory;
+  protected String                                    name;
+  protected AtomicLong                                version = new AtomicLong();
+  protected volatile STATUS                           status  = STATUS.CLOSED;
 
-  protected volatile STATUS                       status  = STATUS.CLOSED;
-  protected final OSharedResourceAdaptiveExternal lock;
-
-  public OStorageAbstract(final String name, final String URL, final String mode, final int timeout,
-      final OCacheLevelTwoLocator cacheLocator) {
+  public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
     if (OStringSerializerHelper.contains(name, '/'))
       this.name = name.substring(name.lastIndexOf("/") + 1);
     else
@@ -57,14 +54,13 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     if (OStringSerializerHelper.contains(name, ','))
       throw new IllegalArgumentException("Invalid character in storage name: " + this.name);
 
-    level2Cache = new OLevel2RecordCache(this, cacheLocator);
-    level2Cache.startup();
-
-    url = URL;
+    url = iURL;
     this.mode = mode;
 
     lock = new OSharedResourceAdaptiveExternal(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), timeout, true);
   }
+
+  public abstract OCluster getClusterByName(final String iClusterName);
 
   public OStorage getUnderlying() {
     return this;
@@ -79,20 +75,11 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
-    return ppos != null && !ppos.recordVersion.isTombstone() && ppos.dataSegmentId > -1;
+    return ppos != null && !ppos.recordVersion.isTombstone();
   }
 
   public String getName() {
     return name;
-  }
-
-  /**
-   * Returns the configured local Level-2 cache component. Cache component is always created even if not used.
-   * 
-   * @return
-   */
-  public OLevel2RecordCache getLevel2Cache() {
-    return level2Cache;
   }
 
   public String getURL() {
@@ -100,13 +87,10 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   }
 
   public void close() {
-    close(false);
+    close(false, false);
   }
 
-  public void close(final boolean iForce) {
-    if (!checkForClose(iForce))
-      return;
-
+  public void close(final boolean iForce, boolean onDelete) {
     lock.acquireExclusiveLock();
     try {
       for (Object resource : sharedResources.values()) {
@@ -114,12 +98,9 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
           ((OSharedResource) resource).releaseExclusiveLock();
 
         if (resource instanceof OCloseable)
-          ((OCloseable) resource).close();
+          ((OCloseable) resource).close(onDelete);
       }
       sharedResources.clear();
-
-      Orient.instance().unregisterStorage(this);
-
     } finally {
       lock.releaseExclusiveLock();
     }
@@ -134,20 +115,6 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     return dropCluster(getClusterIdByName(iClusterName), iTruncate);
-  }
-
-  protected boolean checkForClose(final boolean iForce) {
-    lock.acquireSharedLock();
-    try {
-      if (status == STATUS.CLOSED)
-        return false;
-
-      final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
-
-      return iForce || (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && remainingUsers == 0);
-    } finally {
-      lock.releaseSharedLock();
-    }
   }
 
   public int getUsers() {
@@ -221,5 +188,33 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   @Override
   public boolean isDistributed() {
     return false;
+  }
+
+  @Override
+  public OCurrentStorageComponentsFactory getComponentsFactory() {
+    return componentsFactory;
+  }
+
+  @Override
+  public long getLastOperationId() {
+    return 0;
+  }
+
+  protected boolean checkForClose(final boolean force) {
+    if (status == STATUS.CLOSED)
+      return false;
+
+    lock.acquireSharedLock();
+    try {
+      if (status == STATUS.CLOSED)
+        return false;
+
+      final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
+
+      return force
+          || (!(OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean() && this instanceof OStorageEmbedded) && remainingUsers == 0);
+    } finally {
+      lock.releaseSharedLock();
+    }
   }
 }

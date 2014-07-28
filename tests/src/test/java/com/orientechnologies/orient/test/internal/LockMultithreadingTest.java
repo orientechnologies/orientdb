@@ -29,7 +29,7 @@ public class LockMultithreadingTest {
   private static final int               UPDATER_THREAD_COUNT       = 10;
   private static final int               DELETOR_THREAD_COUNT       = 10;
   private static final int               DOCUMENT_COUNT             = 10000000;
-  private static final String            URL                        = "local:megatest1";
+  private static final String            URL                        = "plocal:megatest1";
   private ODatabaseDocumentTx            db;
 
   private static final String            STUDENT_CLASS_NAME         = "Student";

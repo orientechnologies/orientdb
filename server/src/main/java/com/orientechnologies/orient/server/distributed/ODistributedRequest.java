@@ -25,19 +25,17 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 public interface ODistributedRequest {
   enum EXECUTION_MODE {
     RESPONSE, NO_RESPONSE
-  };
+  }
 
   long getId();
+
+  void setId(long iId);
 
   EXECUTION_MODE getExecutionMode();
 
   String getDatabaseName();
 
   ODistributedRequest setDatabaseName(final String databaseName);
-
-  String getClusterName();
-
-  ODistributedRequest setClusterName(final String clusterName);
 
   String getSenderNodeName();
 
@@ -47,5 +45,7 @@ public interface ODistributedRequest {
 
   ODistributedRequest setTask(final OAbstractRemoteTask payload);
 
-  void undo();
+  String getUserName();
+
+  void setUserName(String userName);
 }

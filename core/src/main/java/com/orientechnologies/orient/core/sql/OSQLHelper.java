@@ -15,18 +15,12 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
@@ -51,8 +45,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-import com.orientechnologies.orient.core.sql.method.OSQLMethod;
-import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 
 /**
  * SQL Helper class
@@ -61,27 +53,17 @@ import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
  * 
  */
 public class OSQLHelper {
-  public static final String                  NAME              = "sql";
+  public static final String NAME              = "sql";
 
-  public static final String                  VALUE_NOT_PARSED  = "_NOT_PARSED_";
-  public static final String                  NOT_NULL          = "_NOT_NULL_";
-  public static final String                  DEFINED           = "_DEFINED_";
+  public static final String VALUE_NOT_PARSED  = "_NOT_PARSED_";
+  public static final String NOT_NULL          = "_NOT_NULL_";
+  public static final String DEFINED           = "_DEFINED_";
 
-  private static ClassLoader                  orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
-  private static ArrayList<OSQLMethodFactory> CACHED_METHODS;
-
-  static {
-    CACHED_METHODS = new ArrayList<OSQLMethodFactory>();
-
-    final Iterator<OSQLMethodFactory> ite = lookupProviderWithOrientClassLoader(OSQLMethodFactory.class, orientClassLoader);
-    while (ite.hasNext())
-      CACHED_METHODS.add(ite.next());
-  }
+  private static ClassLoader orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
 
   /**
    * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and NULL.
    * 
-   * @param iDatabase
    * @param iValue
    *          Value to convert.
    * @return The value converted if recognized, otherwise VALUE_NOT_PARSED
@@ -141,20 +123,19 @@ public class OSQLHelper {
       fieldValue = new ORecordId(iValue.trim());
     else {
 
-      final String upperCase = iValue.toUpperCase(Locale.ENGLISH);
-      if (upperCase.equals("NULL"))
+      if (iValue.equalsIgnoreCase("null"))
         // NULL
         fieldValue = null;
-      else if (upperCase.equals("NOT NULL"))
+      else if (iValue.equalsIgnoreCase("not null"))
         // NULL
         fieldValue = NOT_NULL;
-      else if (upperCase.equals("DEFINED"))
+      else if (iValue.equalsIgnoreCase("defined"))
         // NULL
         fieldValue = DEFINED;
-      else if (upperCase.equals("TRUE"))
+      else if (iValue.equalsIgnoreCase("true"))
         // BOOLEAN, TRUE
         fieldValue = Boolean.TRUE;
-      else if (upperCase.equals("FALSE"))
+      else if (iValue.equalsIgnoreCase("false"))
         // BOOLEAN, FALSE
         fieldValue = Boolean.FALSE;
       else {
@@ -243,17 +224,7 @@ public class OSQLHelper {
       return null;
 
     if (iObject instanceof OSQLFilterItem)
-      return ((OSQLFilterItem) iObject).getValue(null, null);
-
-    return iObject;
-  }
-
-  public static Object getValue(final Object iObject, final ORecordInternal<?> iRecord) {
-    if (iObject == null)
-      return null;
-
-    if (iObject instanceof OSQLFilterItem)
-      return ((OSQLFilterItem) iObject).getValue(iRecord, null);
+      return ((OSQLFilterItem) iObject).getValue(null, null, null);
 
     return iObject;
   }
@@ -263,7 +234,7 @@ public class OSQLHelper {
       return null;
 
     if (iObject instanceof OSQLFilterItem)
-      return ((OSQLFilterItem) iObject).getValue(iRecord, iContext);
+      return ((OSQLFilterItem) iObject).getValue(iRecord, null, iContext);
     else if (iObject instanceof String) {
       final String s = ((String) iObject).trim();
       if (!s.isEmpty() && !OIOUtils.isStringContent(iObject) && !Character.isDigit(s.charAt(0)))
@@ -275,7 +246,7 @@ public class OSQLHelper {
   }
 
   public static Object resolveFieldValue(final ODocument iDocument, final String iFieldName, final Object iFieldValue,
-      final OCommandParameters iArguments) {
+      final OCommandParameters iArguments, final OCommandContext iContext) {
     if (iFieldValue instanceof OSQLFilterItemField) {
       final OSQLFilterItemField f = (OSQLFilterItemField) iFieldValue;
       if (f.getRoot().equals("?"))
@@ -290,15 +261,19 @@ public class OSQLHelper {
       // EMBEDDED DOCUMENT
       ((ODocument) iFieldValue).addOwner(iDocument);
 
-    return OSQLHelper.getValue(iFieldValue, iDocument);
+    // can't use existing getValue with iContext
+    if (iFieldValue == null)
+      return null;
+    if (iFieldValue instanceof OSQLFilterItem)
+      return ((OSQLFilterItem) iFieldValue).getValue(iDocument, null, iContext);
+
+    return iFieldValue;
   }
 
-  public static Set<ODocument> bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
+  public static ODocument bindParameters(final ODocument iDocument, final Map<String, Object> iFields,
       final OCommandParameters iArguments, final OCommandContext iContext) {
     if (iFields == null)
       return null;
-
-    Set<ODocument> changedDocuments = null;
 
     // BIND VALUES
     for (Entry<String, Object> field : iFields.entrySet()) {
@@ -316,9 +291,15 @@ public class OSQLHelper {
             final OProperty prop = iDocument.getSchemaClass().getProperty(fieldName);
             if (prop != null) {
               if (prop.getType() == OType.LINK) {
-                if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getSize(fieldValue) == 1)
-                  // GET THE FIRST ITEM AS UNIQUE LINK
-                  fieldValue = OMultiValue.getFirstValue(fieldValue);
+                if (OMultiValue.isMultiValue(fieldValue)) {
+                  final int size = OMultiValue.getSize(fieldValue);
+                  if (size == 1)
+                    // GET THE FIRST ITEM AS UNIQUE LINK
+                    fieldValue = OMultiValue.getFirstValue(fieldValue);
+                  else if (size == 0)
+                    // NO ITEMS, SET IT AS NULL
+                    fieldValue = null;
+                }
               }
             }
           }
@@ -344,7 +325,8 @@ public class OSQLHelper {
                     tempColl.add(doc);
                   }
                 }
-              }
+              } else
+                tempColl.add(o);
             }
 
             fieldValue = tempColl;
@@ -352,31 +334,8 @@ public class OSQLHelper {
         }
       }
 
-      final ODocument doc = iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments));
-      if (doc != null) {
-        if (changedDocuments == null)
-          changedDocuments = new HashSet<ODocument>();
-        changedDocuments.add(doc);
-      }
+      iDocument.field(fieldName, resolveFieldValue(iDocument, fieldName, fieldValue, iArguments, iContext));
     }
-    return changedDocuments;
-  }
-
-  public static String[] getAllMethodNames() {
-    final List<String> methods = new ArrayList<String>();
-
-    for (OSQLMethodFactory factory : CACHED_METHODS)
-      methods.addAll(factory.getMethodNames());
-
-    return methods.toArray(new String[methods.size()]);
-  }
-
-  public static OSQLMethod getMethodByName(String name) {
-    name = name.toLowerCase();
-    for (OSQLMethodFactory factory : CACHED_METHODS) {
-      if (factory.hasMethod(name))
-        return factory.createMethod(name);
-    }
-    return null;
+    return iDocument;
   }
 }

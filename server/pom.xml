@@ -35,8 +35,13 @@
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
-        <osgi.import>*</osgi.import>
+        <osgi.import>
+            javax.mail.*;resolution:=optional,
+            orient.client.*;resolution:=optional,
+            *
+        </osgi.import>
         <osgi.export>com.orientechnologies.orient.server.*</osgi.export>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <dependencies>
@@ -84,7 +89,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.13</version>
                 <configuration>
-                    <argLine>-Xmx2048m</argLine>
+                    <argLine>-ea -Xmx2048m</argLine>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                     </systemPropertyVariables>

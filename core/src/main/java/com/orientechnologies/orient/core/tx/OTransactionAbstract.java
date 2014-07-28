@@ -15,36 +15,33 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
+import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class OTransactionAbstract implements OTransaction {
-  protected final ODatabaseRecordTx database;
-  protected TXSTATUS                status = TXSTATUS.INVALID;
+  protected final ODatabaseRecordTx                  database;
+  protected TXSTATUS                                 status = TXSTATUS.INVALID;
+  protected HashMap<ORID, OStorage.LOCKING_STRATEGY> locks  = new HashMap<ORID, OStorage.LOCKING_STRATEGY>();
 
   protected OTransactionAbstract(final ODatabaseRecordTx iDatabase) {
     database = iDatabase;
   }
 
-  public boolean isActive() {
-    return status != TXSTATUS.INVALID;
-  }
-
-  public TXSTATUS getStatus() {
-    return status;
-  }
-
-  public ODatabaseRecordTx getDatabase() {
-    return database;
-  }
-
   public static void updateCacheFromEntries(final OTransaction tx, final Iterable<? extends ORecordOperation> entries,
       final boolean updateStrategy) {
-    final OLevel1RecordCache dbCache = tx.getDatabase().getLevel1Cache();
+    final OLocalRecordCache dbCache = tx.getDatabase().getLocalCache();
 
     for (ORecordOperation txEntry : entries) {
       if (!updateStrategy)
@@ -57,6 +54,80 @@ public abstract class OTransactionAbstract implements OTransaction {
         // UDPATE OR CREATE
         dbCache.updateRecord(txEntry.getRecord());
     }
+  }
+
+  public boolean isActive() {
+    return status != TXSTATUS.INVALID && status != TXSTATUS.COMPLETED && status != TXSTATUS.ROLLED_BACK;
+  }
+
+  public TXSTATUS getStatus() {
+    return status;
+  }
+
+  public ODatabaseRecordTx getDatabase() {
+    return database;
+  }
+
+  /**
+   * Closes the transaction and releases all the acquired locks.
+   */
+  @Override
+  public void close() {
+    for (Map.Entry<ORID, OStorage.LOCKING_STRATEGY> lock : locks.entrySet()) {
+      try {
+        if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK))
+          ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
+        else if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK))
+          ((OStorageEmbedded) getDatabase().getStorage()).releaseReadLock(lock.getKey());
+      } catch (Exception e) {
+        OLogManager.instance().debug(this, "Error on releasing lock against record " + lock.getKey());
+      }
+    }
+    locks.clear();
+  }
+
+  @Override
+  public OTransaction lockRecord(final OIdentifiable iRecord, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    final OStorage stg = database.getStorage();
+    if (!(stg.getUnderlying() instanceof OStorageEmbedded))
+      throw new OLockException("Cannot lock record across remote connections");
+
+    final ORID rid = iRecord.getIdentity();
+    // if (locks.containsKey(rid))
+    // throw new IllegalStateException("Record " + rid + " is already locked");
+
+    if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+      ((OStorageEmbedded) stg.getUnderlying()).acquireWriteLock(rid);
+    else
+      ((OStorageEmbedded) stg.getUnderlying()).acquireReadLock(rid);
+
+    locks.put(rid, iLockingStrategy);
+    return this;
+  }
+
+  @Override
+  public OTransaction unlockRecord(final OIdentifiable iRecord) {
+    final OStorage stg = database.getStorage();
+    if (!(stg.getUnderlying() instanceof OStorageEmbedded))
+      throw new OLockException("Cannot lock record across remote connections");
+
+    final ORID rid = iRecord.getIdentity();
+
+    final OStorage.LOCKING_STRATEGY lock = locks.remove(rid);
+
+    if (lock == null)
+      throw new OLockException("Cannot unlock a never acquired lock");
+    else if (lock == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
+      ((OStorageEmbedded) stg.getUnderlying()).releaseWriteLock(rid);
+    else
+      ((OStorageEmbedded) stg.getUnderlying()).releaseReadLock(rid);
+
+    return this;
+  }
+
+  @Override
+  public HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords() {
+    return locks;
   }
 
   protected void invokeCommitAgainstListeners() {

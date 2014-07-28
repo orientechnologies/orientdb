@@ -15,16 +15,15 @@
         -->
         <fileSet>
             <directory>${basedir}/../server/benchmarks</directory>
-            <outputDirectory>benchmark</outputDirectory>
+            <outputDirectory>benchmarks</outputDirectory>
             <excludes>
                 <exclude>*.sh</exclude>
             </excludes>
-            <fileMode>644</fileMode>
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../server/benchmarks</directory>
-            <outputDirectory>benchmark</outputDirectory>
+            <outputDirectory>benchmarks</outputDirectory>
             <includes>
                 <include>*.sh</include>
             </includes>
@@ -126,23 +125,23 @@
         <fileSet>
             <directory>${basedir}/../server/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../tools/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../distributed/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
             <directory>${basedir}/../graphdb/config</directory>
             <outputDirectory>config</outputDirectory>
-            <fileMode>600</fileMode>
         </fileSet>
+        <fileSet>
+            <directory>${basedir}/../server/config/cert</directory>
+            <outputDirectory>config/cert</outputDirectory>
+        </fileSet>        
 
         <!--
          | Plugins
@@ -203,7 +202,6 @@
     -->
     <dependencySets>
         <dependencySet>
-            <!--useTransitiveDependencies>false</useTransitiveDependencies-->
             <outputDirectory>lib</outputDirectory>
             <includes>
                 <include>*:jar:*</include>
@@ -211,7 +209,6 @@
             <excludes>
                 <exclude>*:ant:*</exclude>
                 <exclude>*:ant-launcher:*</exclude>
-                <exclude>*:antlr:*</exclude>
                 <exclude>*:ivy:*</exclude>
             </excludes>
         </dependencySet>

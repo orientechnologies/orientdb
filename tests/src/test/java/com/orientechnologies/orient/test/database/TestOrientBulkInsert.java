@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -32,10 +31,7 @@ public class TestOrientBulkInsert {
     // this.dbWrapper.setMassiveInserts();
     // wurde es besser aber immer noch nicht 100%
     //
-    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false); // Turn off cache
-    OGlobalConfiguration.CACHE_LEVEL1_SIZE.setValue(0); // Turn off cache
-    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false); // Turn off cache
-    OGlobalConfiguration.CACHE_LEVEL2_SIZE.setValue(0); // Turn off cache
+    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false); // Turn off cache
 
     OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.setValue(0); // Turn off cache
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(0);
@@ -51,7 +47,7 @@ public class TestOrientBulkInsert {
 
     OGlobalConfiguration.setConfiguration(defaultsMap);
 
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx("local:/temp/databases/bulktest");
+    ODatabaseDocumentTx database = new ODatabaseDocumentTx("plocal:/temp/databases/bulktest");
     if (database.exists())
       database.open("admin", "admin").drop();
 
@@ -59,7 +55,7 @@ public class TestOrientBulkInsert {
 
     OSchema schema = database.getMetadata().getSchema();
 
-    OClass cBulk = schema.createClass("classBulk", database.addCluster("cluster_bulk", CLUSTER_TYPE.PHYSICAL));
+    OClass cBulk = schema.createClass("classBulk", database.addCluster("cluster_bulk"));
 
     // Declare some fields
     for (int i = 1; i < 10; i++) {
@@ -105,9 +101,9 @@ public class TestOrientBulkInsert {
     return document;
   }
 
-  static final String AB = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  static Random rnd = new Random();
-  static int counter = 0;
+  static final String AB      = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  static Random       rnd     = new Random();
+  static int          counter = 0;
 
   private String getRandomText(int len) {
 

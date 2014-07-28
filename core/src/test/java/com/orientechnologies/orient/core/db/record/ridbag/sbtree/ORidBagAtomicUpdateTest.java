@@ -1,8 +1,23 @@
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+import com.orientechnologies.DatabaseAbstractTest;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -10,35 +25,15 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
-import java.util.*;
 
 @Test
-public class ORidBagAtomicUpdateTest {
-  private ODatabaseDocumentTx db;
-  private int                 topThreshold;
-  private int                 bottomThreshold;
+public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
+  private int topThreshold;
+  private int bottomThreshold;
 
   @BeforeClass
   public void setUp() throws Exception {
-    final String buildDirectory = System.getProperty("buildDirectory", ".");
-
-    db = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/testdb/ORidBagAtomicUpdateTest");
-    if (db.exists()) {
-      db.open("admin", "admin");
-      db.drop();
-    }
-
-    db.create();
-    db.declareIntent(new OIntentMassiveInsert());
-  }
-
-  @AfterClass
-  public void tearDown() throws Exception {
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    db.drop();
+    database.declareIntent(new OIntentMassiveInsert());
   }
 
   @BeforeMethod
@@ -57,16 +52,16 @@ public class ORidBagAtomicUpdateTest {
   }
 
   public void testAddTwoNewDocuments() {
-    db.begin();
+    database.begin();
     ODocument rootDoc = new ODocument();
 
     ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     rootDoc.save();
-    db.commit();
+    database.commit();
 
-    db.begin();
+    database.begin();
 
     ODocument docOne = new ODocument();
     ODocument docTwo = new ODocument();
@@ -76,9 +71,9 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    db.rollback();
+    database.rollback();
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
     Assert.assertEquals(ridBag.size(), 0);
@@ -88,21 +83,21 @@ public class ORidBagAtomicUpdateTest {
     final ODocument cmeDoc = new ODocument();
     cmeDoc.save();
 
-    db.begin();
+    database.begin();
     ODocument rootDoc = new ODocument();
 
     ORidBag ridBag = new ORidBag();
     rootDoc.field("ridBag", ridBag);
 
     rootDoc.save();
-    db.commit();
+    database.commit();
 
-    ODocument staleCMEDoc = db.load(cmeDoc.getIdentity());
+    ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
     cmeDoc.save();
 
-    db.begin();
+    database.begin();
 
     ODocument docOne = new ODocument();
     ODocument docTwo = new ODocument();
@@ -114,19 +109,19 @@ public class ORidBagAtomicUpdateTest {
     staleCMEDoc.save();
 
     try {
-      db.commit();
+      database.commit();
       Assert.fail();
     } catch (OConcurrentModificationException e) {
     }
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
     Assert.assertEquals(ridBag.size(), 0);
   }
 
   public void testAddTwoAdditionalNewDocuments() {
-    db.begin();
+    database.begin();
 
     ODocument rootDoc = new ODocument();
 
@@ -141,14 +136,14 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    db.commit();
+    database.commit();
 
-    long recordsCount = db.countClusterElements(db.getDefaultClusterId());
+    long recordsCount = database.countClusterElements(database.getDefaultClusterId());
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
-    db.begin();
+    database.begin();
 
     ODocument docThree = new ODocument();
     ODocument docFour = new ODocument();
@@ -158,11 +153,11 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    db.rollback();
+    database.rollback();
 
-    Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
     Assert.assertEquals(ridBag.size(), 2);
@@ -178,7 +173,7 @@ public class ORidBagAtomicUpdateTest {
     final ODocument cmeDoc = new ODocument();
     cmeDoc.save();
 
-    db.begin();
+    database.begin();
 
     ODocument rootDoc = new ODocument();
 
@@ -193,19 +188,19 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    db.commit();
+    database.commit();
 
-    long recordsCount = db.countClusterElements(db.getDefaultClusterId());
+    long recordsCount = database.countClusterElements(database.getDefaultClusterId());
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
-    ODocument staleCMEDoc = db.load(cmeDoc.getIdentity());
+    ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
     cmeDoc.save();
 
-    db.begin();
+    database.begin();
 
     ODocument docThree = new ODocument();
     ODocument docFour = new ODocument();
@@ -219,14 +214,14 @@ public class ORidBagAtomicUpdateTest {
     staleCMEDoc.save();
 
     try {
-      db.commit();
+      database.commit();
       Assert.fail();
     } catch (OConcurrentModificationException e) {
     }
 
-    Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
     Assert.assertEquals(ridBag.size(), 2);
@@ -239,9 +234,9 @@ public class ORidBagAtomicUpdateTest {
   }
 
   public void testAddTwoSavedDocuments() {
-    long recordsCount = db.countClusterElements(db.getDefaultClusterId());
+    long recordsCount = database.countClusterElements(database.getDefaultClusterId());
 
-    db.begin();
+    database.begin();
 
     ODocument rootDoc = new ODocument();
 
@@ -258,13 +253,13 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    db.rollback();
+    database.rollback();
 
-    Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
   }
 
   public void testAddTwoAdditionalSavedDocuments() {
-    db.begin();
+    database.begin();
 
     ODocument rootDoc = new ODocument();
 
@@ -279,14 +274,14 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    db.commit();
+    database.commit();
 
-    long recordsCount = db.countClusterElements(db.getDefaultClusterId());
+    long recordsCount = database.countClusterElements(database.getDefaultClusterId());
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
-    db.begin();
+    database.begin();
 
     ODocument docThree = new ODocument();
     docThree.save();
@@ -298,11 +293,11 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    db.rollback();
+    database.rollback();
 
-    Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
     Assert.assertEquals(ridBag.size(), 2);
@@ -318,7 +313,7 @@ public class ORidBagAtomicUpdateTest {
     final ODocument cmeDoc = new ODocument();
     cmeDoc.save();
 
-    db.begin();
+    database.begin();
 
     ODocument rootDoc = new ODocument();
 
@@ -333,19 +328,19 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    db.commit();
+    database.commit();
 
-    long recordsCount = db.countClusterElements(db.getDefaultClusterId());
+    long recordsCount = database.countClusterElements(database.getDefaultClusterId());
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
-    ODocument staleCMEDoc = db.load(cmeDoc.getIdentity());
+    ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
     cmeDoc.save();
 
-    db.begin();
+    database.begin();
 
     ODocument docThree = new ODocument();
     docThree.save();
@@ -361,14 +356,14 @@ public class ORidBagAtomicUpdateTest {
     staleCMEDoc.save();
 
     try {
-      db.commit();
+      database.commit();
       Assert.fail();
     } catch (OConcurrentModificationException e) {
     }
 
-    Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
     Assert.assertEquals(ridBag.size(), 2);
@@ -381,7 +376,7 @@ public class ORidBagAtomicUpdateTest {
   }
 
   public void testAddInternalDocumentsAndSubDocuments() {
-    db.begin();
+    database.begin();
 
     ODocument rootDoc = new ODocument();
 
@@ -399,13 +394,13 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    db.commit();
+    database.commit();
 
-    long recordsCount = db.countClusterElements(db.getDefaultClusterId());
-    rootDoc = db.load(rootDoc.getIdentity());
+    long recordsCount = database.countClusterElements(database.getDefaultClusterId());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
-    db.begin();
+    database.begin();
 
     ODocument docThree = new ODocument();
     docThree.save();
@@ -445,12 +440,12 @@ public class ORidBagAtomicUpdateTest {
 
     docFour.save();
 
-    db.rollback();
+    database.rollback();
 
-    Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
     List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(Arrays.asList(docOne, docTwo));
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
     Iterator<OIdentifiable> iterator = ridBag.iterator();
@@ -462,7 +457,7 @@ public class ORidBagAtomicUpdateTest {
     final ODocument cmeDoc = new ODocument();
     cmeDoc.save();
 
-    db.begin();
+    database.begin();
 
     ODocument rootDoc = new ODocument();
 
@@ -480,18 +475,18 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    db.commit();
+    database.commit();
 
-    long recordsCount = db.countClusterElements(db.getDefaultClusterId());
-    rootDoc = db.load(rootDoc.getIdentity());
+    long recordsCount = database.countClusterElements(database.getDefaultClusterId());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
-    ODocument staleCMEDoc = db.load(cmeDoc.getIdentity());
+    ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
     cmeDoc.save();
 
-    db.begin();
+    database.begin();
 
     ODocument docThree = new ODocument();
     docThree.save();
@@ -535,15 +530,15 @@ public class ORidBagAtomicUpdateTest {
     staleCMEDoc.save();
 
     try {
-      db.commit();
+      database.commit();
       Assert.fail();
     } catch (OConcurrentModificationException e) {
     }
 
-    Assert.assertEquals(db.countClusterElements(db.getDefaultClusterId()), recordsCount);
+    Assert.assertEquals(database.countClusterElements(database.getDefaultClusterId()), recordsCount);
     List<OIdentifiable> addedDocs = new ArrayList<OIdentifiable>(Arrays.asList(docOne, docTwo));
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
     Iterator<OIdentifiable> iterator = ridBag.iterator();
@@ -551,6 +546,10 @@ public class ORidBagAtomicUpdateTest {
     Assert.assertTrue(addedDocs.remove(iterator.next()));
   }
 
+  /**
+   * This test is no longer useful
+   */
+  @Test(enabled = false)
   public void testAddTwoSavedDocumentsWithoutTx() {
     ODocument docOne = new ODocument();
     ODocument docTwo = new ODocument();
@@ -562,7 +561,7 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    ODocument staleRooDoc = db.load(rootDoc.getIdentity());
+    ODocument staleRooDoc = database.load(rootDoc.getIdentity());
     ORidBag staleRidBag = staleRooDoc.field("ridBag");
 
     staleRidBag.add(docOne);
@@ -576,12 +575,16 @@ public class ORidBagAtomicUpdateTest {
     } catch (OConcurrentModificationException e) {
     }
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
     Assert.assertEquals(ridBag.size(), 0);
   }
 
+  /**
+   * This test is no longer useful
+   */
+  @Test(enabled = false)
   public void testAddOneSavedDocumentsAndDeleteOneWithoutTx() {
     ODocument docOne = new ODocument();
     docOne.save();
@@ -602,7 +605,7 @@ public class ORidBagAtomicUpdateTest {
 
     rootDoc.save();
 
-    ODocument staleRooDoc = db.load(rootDoc.getIdentity());
+    ODocument staleRooDoc = database.load(rootDoc.getIdentity());
     ORidBag staleRidBag = staleRooDoc.field("ridBag");
 
     Iterator<OIdentifiable> iterator = staleRidBag.iterator();
@@ -619,7 +622,7 @@ public class ORidBagAtomicUpdateTest {
     } catch (OConcurrentModificationException e) {
     }
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
     Assert.assertEquals(ridBag.size(), 2);
@@ -657,7 +660,7 @@ public class ORidBagAtomicUpdateTest {
 
       document.save();
 
-      ODocument staleDocument = db.load(document.getIdentity());
+      ODocument staleDocument = database.load(document.getIdentity());
       ORidBag staleRidBag = staleDocument.field("ridBag");
 
       Assert.assertNotSame(document, staleDocument);
@@ -681,27 +684,22 @@ public class ORidBagAtomicUpdateTest {
         docToAdd.save();
 
         staleRidBag.add(docToAdd);
+        addedDocuments.add(docToAdd);
       }
 
-      Assert.assertEquals(addedDocuments.size() - amountOfDeletedDocs + amountOfAddedDocsAfterSave, staleRidBag.size());
+      Assert.assertEquals(staleRidBag.size(), addedDocuments.size() - amountOfDeletedDocs);
 
       document.setDirty();
       document.save();
-      try {
-        staleDocument.save();
-        Assert.fail();
-      } catch (OConcurrentModificationException e) {
-      }
+      staleDocument.save();
 
-      document = db.load(document.getIdentity());
+      document = database.load(document.getIdentity());
       ridBag = document.field("ridBag");
 
-      Assert.assertEquals(ridBag.size(), addedDocuments.size());
+      Assert.assertEquals(ridBag.size(), addedDocuments.size() - amountOfDeletedDocs);
       iterator = ridBag.iterator();
       while (iterator.hasNext())
-        Assert.assertTrue(addedDocuments.remove(iterator.next()));
-
-      Assert.assertEquals(addedDocuments.size(), 0);
+        Assert.assertTrue(addedDocuments.contains(iterator.next()));
     }
   }
 
@@ -721,8 +719,8 @@ public class ORidBagAtomicUpdateTest {
 
     document.save();
 
-    ODocument copyOne = db.load(document.getIdentity());
-    ODocument copyTwo = db.load(document.getIdentity());
+    ODocument copyOne = database.load(document.getIdentity());
+    ODocument copyTwo = database.load(document.getIdentity());
 
     Assert.assertNotSame(copyOne, copyTwo);
 
@@ -759,20 +757,20 @@ public class ORidBagAtomicUpdateTest {
       amountOfDeletedDocsPerLevel.add(rnd.nextInt(5) + 5);
     }
 
-    db.begin();
+    database.begin();
     ODocument rootDoc = new ODocument();
     createDocsForLevel(amountOfAddedDocsPerLevel, 0, levels, addedDocPerLevel, rootDoc);
-    db.commit();
+    database.commit();
 
     addedDocPerLevel = new HashMap<LevelKey, List<OIdentifiable>>(addedDocPerLevel);
 
-    rootDoc = db.load(rootDoc.getIdentity());
-    db.begin();
+    rootDoc = database.load(rootDoc.getIdentity());
+    database.begin();
     deleteDocsForLevel(amountOfDeletedDocsPerLevel, 0, levels, rootDoc, rnd);
     addDocsForLevel(amountOfAddedDocsAfterSavePerLevel, 0, levels, rootDoc);
-    db.rollback();
+    database.rollback();
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     assertDocsAfterRollback(0, levels, addedDocPerLevel, rootDoc);
   }
 
@@ -794,20 +792,20 @@ public class ORidBagAtomicUpdateTest {
       amountOfDeletedDocsPerLevel.add(rnd.nextInt(5) + 5);
     }
 
-    ODocument staleCMEDoc = db.load(cmeDoc.getIdentity());
+    ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
     cmeDoc.save();
 
-    db.begin();
+    database.begin();
     ODocument rootDoc = new ODocument();
     createDocsForLevel(amountOfAddedDocsPerLevel, 0, levels, addedDocPerLevel, rootDoc);
-    db.commit();
+    database.commit();
 
     addedDocPerLevel = new HashMap<LevelKey, List<OIdentifiable>>(addedDocPerLevel);
 
-    rootDoc = db.load(rootDoc.getIdentity());
-    db.begin();
+    rootDoc = database.load(rootDoc.getIdentity());
+    database.begin();
     deleteDocsForLevel(amountOfDeletedDocsPerLevel, 0, levels, rootDoc, rnd);
     addDocsForLevel(amountOfAddedDocsAfterSavePerLevel, 0, levels, rootDoc);
 
@@ -815,12 +813,12 @@ public class ORidBagAtomicUpdateTest {
     staleCMEDoc.save();
 
     try {
-      db.commit();
+      database.commit();
       Assert.fail();
     } catch (OConcurrentModificationException e) {
     }
 
-    rootDoc = db.load(rootDoc.getIdentity());
+    rootDoc = database.load(rootDoc.getIdentity());
     assertDocsAfterRollback(0, levels, addedDocPerLevel, rootDoc);
   }
 
@@ -836,7 +834,7 @@ public class ORidBagAtomicUpdateTest {
     document.field("ridBag", ridBag);
     document.save();
 
-    db.begin();
+    database.begin();
 
     for (int i = 0; i < 3; i++) {
       ODocument docToAdd = new ODocument();
@@ -847,15 +845,15 @@ public class ORidBagAtomicUpdateTest {
 
     document.save();
 
-    db.commit();
+    database.commit();
 
     Assert.assertEquals(docsToAdd.size(), 3);
     Assert.assertTrue(ridBag.isEmbedded());
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
-    db.begin();
+    database.begin();
     for (int i = 0; i < 3; i++) {
       ODocument docToAdd = new ODocument();
       docToAdd.save();
@@ -865,9 +863,9 @@ public class ORidBagAtomicUpdateTest {
     Assert.assertTrue(document.isDirty());
 
     document.save();
-    db.rollback();
+    database.rollback();
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(ridBag.isEmbedded());
@@ -893,7 +891,7 @@ public class ORidBagAtomicUpdateTest {
     document.field("ridBag", ridBag);
     document.save();
 
-    db.begin();
+    database.begin();
 
     for (int i = 0; i < 3; i++) {
       ODocument docToAdd = new ODocument();
@@ -904,21 +902,21 @@ public class ORidBagAtomicUpdateTest {
 
     document.save();
 
-    db.commit();
+    database.commit();
 
     Assert.assertEquals(docsToAdd.size(), 3);
     Assert.assertTrue(ridBag.isEmbedded());
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
-    ODocument staleDocument = db.load(cmeDocument.getIdentity());
+    ODocument staleDocument = database.load(cmeDocument.getIdentity());
     Assert.assertNotSame(staleDocument, cmeDocument);
 
     cmeDocument.field("v", "v234");
     cmeDocument.save();
 
-    db.begin();
+    database.begin();
     for (int i = 0; i < 3; i++) {
       ODocument docToAdd = new ODocument();
       docToAdd.save();
@@ -932,12 +930,12 @@ public class ORidBagAtomicUpdateTest {
     staleDocument.save();
 
     try {
-      db.commit();
+      database.commit();
       Assert.fail();
     } catch (OConcurrentModificationException e) {
     }
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(ridBag.isEmbedded());
@@ -971,10 +969,10 @@ public class ORidBagAtomicUpdateTest {
     Assert.assertEquals(docsToAdd.size(), 3);
     Assert.assertTrue(ridBag.isEmbedded());
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
-    ODocument cmeDocument = db.load(document.getIdentity());
+    ODocument cmeDocument = database.load(document.getIdentity());
     Assert.assertNotSame(cmeDocument, document);
     cmeDocument.field("v", "v1");
     cmeDocument.save();
@@ -993,7 +991,7 @@ public class ORidBagAtomicUpdateTest {
     } catch (OConcurrentModificationException e) {
     }
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(ridBag.isEmbedded());
@@ -1015,7 +1013,7 @@ public class ORidBagAtomicUpdateTest {
     document.field("ridBag", ridBag);
     document.save();
 
-    db.begin();
+    database.begin();
 
     for (int i = 0; i < 10; i++) {
       ODocument docToAdd = new ODocument();
@@ -1026,15 +1024,15 @@ public class ORidBagAtomicUpdateTest {
 
     document.save();
 
-    db.commit();
+    database.commit();
 
     Assert.assertEquals(docsToAdd.size(), 10);
     Assert.assertTrue(!ridBag.isEmbedded());
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
-    db.begin();
+    database.begin();
     for (int i = 0; i < 4; i++) {
       OIdentifiable docToRemove = docsToAdd.get(i);
       ridBag.remove(docToRemove);
@@ -1043,9 +1041,9 @@ public class ORidBagAtomicUpdateTest {
     Assert.assertTrue(document.isDirty());
 
     document.save();
-    db.rollback();
+    database.rollback();
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(!ridBag.isEmbedded());
@@ -1071,7 +1069,7 @@ public class ORidBagAtomicUpdateTest {
     document.field("ridBag", ridBag);
     document.save();
 
-    db.begin();
+    database.begin();
 
     for (int i = 0; i < 10; i++) {
       ODocument docToAdd = new ODocument();
@@ -1082,21 +1080,21 @@ public class ORidBagAtomicUpdateTest {
 
     document.save();
 
-    db.commit();
+    database.commit();
 
     Assert.assertEquals(docsToAdd.size(), 10);
     Assert.assertTrue(!ridBag.isEmbedded());
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
-    ODocument staleDoc = db.load(cmeDoc.getIdentity());
+    ODocument staleDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleDoc, cmeDoc);
 
     cmeDoc.field("v", "sd");
     cmeDoc.save();
 
-    db.begin();
+    database.begin();
     for (int i = 0; i < 4; i++) {
       OIdentifiable docToRemove = docsToAdd.get(i);
       ridBag.remove(docToRemove);
@@ -1110,12 +1108,12 @@ public class ORidBagAtomicUpdateTest {
     staleDoc.save();
 
     try {
-      db.commit();
+      database.commit();
       Assert.fail();
     } catch (OConcurrentModificationException e) {
     }
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(!ridBag.isEmbedded());
@@ -1126,6 +1124,10 @@ public class ORidBagAtomicUpdateTest {
     Assert.assertTrue(docsToAdd.isEmpty());
   }
 
+  /**
+   * This test is no longer useful
+   */
+  @Test(enabled = false)
   public void testFromSBTreeToEmbeddedWithCME() {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(7);
@@ -1150,10 +1152,10 @@ public class ORidBagAtomicUpdateTest {
     Assert.assertEquals(docsToAdd.size(), 10);
     Assert.assertTrue(!ridBag.isEmbedded());
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
-    ODocument cmeDoc = db.load(document.getIdentity());
+    ODocument cmeDoc = database.load(document.getIdentity());
     cmeDoc.field("v", "v1");
     cmeDoc.save();
 
@@ -1170,7 +1172,7 @@ public class ORidBagAtomicUpdateTest {
     } catch (OConcurrentModificationException e) {
     }
 
-    document = db.load(document.getIdentity());
+    document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(!ridBag.isEmbedded());

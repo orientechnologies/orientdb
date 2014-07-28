@@ -15,17 +15,18 @@
  */
 package com.orientechnologies.orient.core.processor.block;
 
-import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 public class OFunctionBlock extends OAbstractBlock {
   public static final String NAME = "function";
@@ -86,8 +87,8 @@ public class OFunctionBlock extends OAbstractBlock {
             } catch (IllegalArgumentException e1) {
               // DO NOTHING, LOOK FOR ANOTHER METHOD
             } catch (Exception e1) {
-              e1.printStackTrace();
-              throw new OProcessException("Error on call function '" + function + "'", e);
+              OLogManager.instance().error(this, "Error on calling function '%s'", e, function);
+              throw new OProcessException("Error on calling function '" + function + "'", e);
             }
           }
         }
@@ -109,7 +110,7 @@ public class OFunctionBlock extends OAbstractBlock {
       } catch (ClassNotFoundException e) {
         throw new OProcessException("Function '" + function + "' was not found because the class '" + clsName + "' was not found");
       } catch (Exception e) {
-        e.printStackTrace();
+        OLogManager.instance().error(this, "Error on executing function block", e);
       }
     }
 

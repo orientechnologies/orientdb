@@ -19,6 +19,7 @@ package com.orientechnologies.orient.core.sql.method.misc;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
+import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 
 /**
  * Delegates the execution to a function.
@@ -27,17 +28,37 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
  */
 public class OSQLMethodFunctionDelegate extends OAbstractSQLMethod {
 
-  public static final String NAME = "function";
-  private OSQLFunction       func;
+  public static final String  NAME = "function";
+  private OSQLFunctionRuntime func;
 
   public OSQLMethodFunctionDelegate(final OSQLFunction f) {
     super(NAME);
-    func = f;
+    func = new OSQLFunctionRuntime(f);
   }
 
   @Override
-  public Object execute(final OIdentifiable iCurrentRecord, final OCommandContext iContext, final Object ioResult,
-      final Object[] iMethodParams) {
-    return func.execute(null, ioResult, iMethodParams, iContext);
+  public int getMinParams() {
+    final int min = func.getFunction().getMinParams();
+    return min == -1 ? -1 : min - 1;
+  }
+
+  @Override
+  public int getMaxParams() {
+    final int max = func.getFunction().getMaxParams();
+    return max == -1 ? -1 : max - 1;
+  }
+
+  @Override
+  public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext,
+      final Object ioResult, final Object[] iParams) {
+
+    func.setParameters(iParams, false);
+
+    return func.execute(iThis, iCurrentRecord, ioResult, iContext);
+  }
+
+  @Override
+  public String toString() {
+    return "function " + func;
   }
 }

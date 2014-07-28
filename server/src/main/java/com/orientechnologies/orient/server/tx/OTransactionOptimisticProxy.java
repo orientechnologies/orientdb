@@ -16,20 +16,26 @@
 package com.orientechnologies.orient.server.tx;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.common.collection.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionAbortedException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -39,20 +45,28 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final Map<ORID, ORecordOperation>        tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
   private final Map<ORecordId, ORecordInternal<?>> createdRecords = new HashMap<ORecordId, ORecordInternal<?>>();
   private final Map<ORecordId, ORecordInternal<?>> updatedRecords = new HashMap<ORecordId, ORecordInternal<?>>();
+  @Deprecated
   private final int                                clientTxId;
   private final OChannelBinary                     channel;
+  private final short                              protocolVersion;
+  private ONetworkProtocolBinary                   oNetworkProtocolBinary;
 
-  public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel) throws IOException {
+  public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel, short protocolVersion,
+      ONetworkProtocolBinary oNetworkProtocolBinary) throws IOException {
     super(iDatabase);
     channel = iChannel;
     clientTxId = iChannel.readInt();
+    this.protocolVersion = protocolVersion;
+    this.oNetworkProtocolBinary = oNetworkProtocolBinary;
   }
 
   @Override
@@ -74,15 +88,19 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         switch (recordStatus) {
         case ORecordOperation.CREATED:
-          entry.getRecord().fill(rid, OVersionFactory.instance().createVersion(), channel.readBytes(), true);
+          oNetworkProtocolBinary.fillRecord(rid, channel.readBytes(), OVersionFactory.instance().createVersion(),
+              entry.getRecord(), database);
 
           // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
           createdRecords.put(rid.copy(), entry.getRecord());
           break;
 
         case ORecordOperation.UPDATED:
-          entry.getRecord().fill(rid, channel.readVersion(), channel.readBytes(), true);
-
+          ORecordVersion version = channel.readVersion();
+          byte[] bytes = channel.readBytes();
+          oNetworkProtocolBinary.fillRecord(rid, bytes, version, entry.getRecord(), database);
+          if (protocolVersion >= 23)
+            entry.getRecord().setContentChanged(channel.readBoolean());
           break;
 
         case ORecordOperation.DELETED:
@@ -168,7 +186,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         indexEntries.put(indexEntry.getKey(), transactionIndexChanges);
       }
 
-      final Boolean clearAll = (Boolean) indexDoc.field("clear");
+      final Boolean clearAll = indexDoc.field("clear");
       if (clearAll != null && clearAll)
         transactionIndexChanges.setCleared();
 
@@ -177,7 +195,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         continue;
 
       for (final ODocument entry : entries) {
-        final List<ODocument> operations = (List<ODocument>) entry.field("ops");
+        final List<ODocument> operations = entry.field("ops");
         if (operations == null)
           continue;
 
@@ -244,8 +262,11 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       ((ODocument) iRecord).deserializeFields();
 
       for (Entry<String, Object> field : ((ODocument) iRecord)) {
-        if (field.getValue() instanceof ORecordLazyList)
+        final Object value = field.getValue();
+        if (value instanceof ORecordLazyList)
           ((ORecordLazyList) field.getValue()).lazyLoad(true);
+        else if (value instanceof ORidBag)
+          ((ORidBag) value).convertLinks2Records();
       }
     }
   }

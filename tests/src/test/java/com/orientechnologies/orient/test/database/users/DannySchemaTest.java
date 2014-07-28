@@ -17,7 +17,7 @@ public class DannySchemaTest {
 	@Test
 	public void test1() {
 
-		db = new ODatabaseDocumentTx("local:C:/work/dev/orientechnologies/orientdb/temp/danny/library/library");
+		db = new ODatabaseDocumentTx("plocal:C:/work/dev/orientechnologies/orientdb/temp/danny/library/library");
 
 		try {
 			db.create();

@@ -16,10 +16,44 @@
 
 package com.orientechnologies.orient.core.db.raw;
 
+import com.orientechnologies.common.concur.lock.ONoLock;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.listener.OListenerManger;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.fetch.OFetchHelper;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,40 +66,6 @@ import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
-import com.orientechnologies.common.concur.lock.ONoLock;
-import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.listener.OListenerManger;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.cache.OLevel1RecordCache;
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
-import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.fetch.OFetchHelper;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-
 /**
  * Lower level ODatabase implementation. It's extended or wrapped by all the others.
  * 
@@ -74,13 +74,12 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 @SuppressWarnings("unchecked")
 public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements ODatabase {
+  private final Map<String, Object> properties = new HashMap<String, Object>();
   protected String                  url;
   protected OStorage                storage;
   protected STATUS                  status;
   protected OIntent                 currentIntent;
-
   private ODatabaseRecord           databaseOwner;
-  private final Map<String, Object> properties = new HashMap<String, Object>();
 
   public ODatabaseRaw(final String iURL) {
     super(Collections.newSetFromMap(new IdentityHashMap<ODatabaseListener, Boolean>(64)), new ONoLock());
@@ -106,12 +105,20 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
       if (storage == null)
         storage = Orient.instance().loadStorage(url);
+
       storage.open(iUserName, iUserPassword, properties);
 
       status = STATUS.OPEN;
 
       // WAKE UP LISTENERS
       callOnOpenListeners();
+
+    } catch (OStorageException e) {
+      // UNREGISTER STORAGE
+      Orient.instance().unregisterStorage(storage);
+
+      // PASS THROUGH
+      throw e;
 
     } catch (OException e) {
       // PASS THROUGH
@@ -123,12 +130,25 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public <DB extends ODatabase> DB create() {
+    return create(null);
+  }
+
+  public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     try {
       if (status == STATUS.OPEN)
         throw new IllegalStateException("Database " + getName() + " is already open");
 
       if (storage == null)
         storage = Orient.instance().loadStorage(url);
+
+      if (iInitialSettings != null) {
+        // SETUP INITIAL SETTINGS
+        final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
+        for (Map.Entry<OGlobalConfiguration, Object> e : iInitialSettings.entrySet()) {
+          ctxCfg.setValue(e.getKey(), e.getValue());
+        }
+      }
+
       storage.create(properties);
 
       status = STATUS.OPEN;
@@ -140,7 +160,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
   public void drop() {
     final Iterable<ODatabaseListener> tmpListeners = getListenersCopy();
-    close();
+    closeOnDelete();
 
     try {
       if (storage == null)
@@ -168,16 +188,40 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   @Override
-  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable) throws IOException {
-    getStorage().backup(out, options, callable);
+  public OContextConfiguration getConfiguration() {
+    if (storage != null)
+      return storage.getConfiguration().getContextConfiguration();
+    return null;
   }
 
   @Override
-  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable) throws IOException {
+  public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable,
+      final OCommandOutputListener iListener, int compressionLevel, int bufferSize) throws IOException {
+    getStorage().backup(out, options, callable, iListener, compressionLevel, bufferSize);
+
+  }
+
+  /**
+   * Executes a restore of a database backup. During the restore the database will be frozen in read-only mode.
+   * 
+   * @param in
+   *          InputStream used to read the backup content. Use a FileInputStream to read a backup on a disk
+   * @param options
+   *          Backup options as Map<String, Object> object
+   * @param callable
+   *          Callback to execute when the database is locked
+   * @param iListener
+   *          Listener called for backup messages
+   * @throws IOException
+   * @see ODatabaseImport
+   */
+  @Override
+  public void restore(InputStream in, Map<String, Object> options, Callable<Object> callable, final OCommandOutputListener iListener)
+      throws IOException {
     if (storage == null)
       storage = Orient.instance().loadStorage(url);
 
-    getStorage().restore(in, options, callable);
+    getStorage().restore(in, options, callable, iListener);
   }
 
   public void reload() {
@@ -234,14 +278,14 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public OStorageOperationResult<ORawBuffer> read(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
-      boolean loadTombstones) {
+      final boolean loadTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     if (!iRid.isValid())
       return new OStorageOperationResult<ORawBuffer>(null);
 
     OFetchHelper.checkFetchPlanValid(iFetchPlan);
 
     try {
-      return storage.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones);
+      return storage.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones, iLockingStrategy);
 
     } catch (Throwable t) {
       if (iRid.isTemporary())
@@ -252,9 +296,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public OStorageOperationResult<ORecordVersion> save(final int iDataSegmentId, final ORecordId iRid, final byte[] iContent,
-      final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public OStorageOperationResult<ORecordVersion> save(final ORecordId iRid, boolean updateContent,
+																											final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
+																											final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
 
     // CHECK IF RECORD TYPE IS SUPPORTED
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
@@ -262,13 +306,13 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     try {
       if (iForceCreate || iRid.clusterPosition.isNew()) {
         // CREATE
-        final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(iDataSegmentId, iRid, iContent, iVersion,
-            iRecordType, iMode, (ORecordCallback<OClusterPosition>) iRecordCreatedCallback);
+        final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(iRid, iContent, iVersion, iRecordType, iMode,
+            (ORecordCallback<OClusterPosition>) iRecordCreatedCallback);
         return new OStorageOperationResult<ORecordVersion>(ppos.getResult().recordVersion, ppos.isMoved());
 
       } else {
         // UPDATE
-        return storage.updateRecord(iRid, iContent, iVersion, iRecordType, iMode, iRecordUpdatedCallback);
+        return storage.updateRecord(iRid, updateContent, iContent, iVersion, iRecordType, iMode, iRecordUpdatedCallback);
       }
     } catch (OException e) {
       // PASS THROUGH
@@ -278,8 +322,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content, final ORecordVersion version,
-      final byte recordType) {
+  public boolean updateReplica(final ORecordId rid, final byte[] content, final ORecordVersion version,
+															 final byte recordType) {
     // CHECK IF RECORD TYPE IS SUPPORTED
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(recordType);
 
@@ -288,7 +332,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
         throw new ODatabaseException("Passed in record was not stored and can not be treated as replica.");
       } else {
         // UPDATE REPLICA
-        return storage.updateReplica(dataSegmentId, rid, content, version, recordType);
+        return storage.updateReplica(rid, content, version, recordType);
       }
     } catch (OException e) {
       // PASS THROUGH
@@ -298,34 +342,43 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public OStorageOperationResult<Boolean> delete(final ORecordId iRid, final ORecordVersion iVersion, final boolean iRequired,
+  public OStorageOperationResult<Boolean> delete(final ORecordId rid, final ORecordVersion iVersion, final boolean iRequired,
       final int iMode) {
     try {
-      final OStorageOperationResult<Boolean> result = storage.deleteRecord(iRid, iVersion, iMode, null);
+      final OStorageOperationResult<Boolean> result = storage.deleteRecord(rid, iVersion, iMode, null);
       if (!result.getResult() && iRequired)
-        throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
+        throw new ORecordNotFoundException("The record with id " + rid + " was not found");
       return result;
     } catch (OException e) {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on deleting record " + iRid, e, ODatabaseException.class);
-      return new OStorageOperationResult<Boolean>(Boolean.FALSE);
+      throw new ODatabaseException("Error on deleting record " + rid, e);
     }
   }
 
-  public boolean cleanOutRecord(final ORecordId iRid, final ORecordVersion iVersion, final boolean iRequired, final int iMode) {
+  public OStorageOperationResult<Boolean> hide(final ORecordId rid, final int mode) {
     try {
-      final boolean result = storage.cleanOutRecord(iRid, iVersion, iMode, null);
+      return storage.hideRecord(rid, mode, null);
+    } catch (OException e) {
+      // PASS THROUGH
+      throw e;
+    } catch (Exception e) {
+      throw new ODatabaseException("Error on deleting record " + rid, e);
+    }
+  }
+
+  public boolean cleanOutRecord(final ORecordId rid, final ORecordVersion iVersion, final boolean iRequired, final int iMode) {
+    try {
+      final boolean result = storage.cleanOutRecord(rid, iVersion, iMode, null);
       if (!result && iRequired)
-        throw new ORecordNotFoundException("The record with id " + iRid + " was not found");
+        throw new ORecordNotFoundException("The record with id " + rid + " was not found");
       return result;
     } catch (OException e) {
       // PASS THROUGH
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on deleting record " + iRid, e, ODatabaseException.class);
-      return false;
+      throw new ODatabaseException("Error on deleting record " + rid, e);
     }
   }
 
@@ -349,28 +402,16 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return url != null ? url : storage.getURL();
   }
 
-  public int getDataSegmentIdByName(final String iDataSegmentName) {
-    return storage.getDataSegmentIdByName(iDataSegmentName);
-  }
-
-  public String getDataSegmentNameById(final int dataSegmentId) {
-    return storage.getDataSegmentById(dataSegmentId).getName();
-  }
-
   public int getClusters() {
     return storage.getClusters();
   }
 
   public boolean existsCluster(final String iClusterName) {
-    return storage.getClusterNames().contains(iClusterName);
-  }
-
-  public String getClusterType(final String iClusterName) {
-    return storage.getClusterTypeByName(iClusterName);
+    return storage.getClusterNames().contains(iClusterName.toLowerCase());
   }
 
   public int getClusterIdByName(final String iClusterName) {
-    return storage.getClusterIdByName(iClusterName);
+    return storage.getClusterIdByName(iClusterName.toLowerCase());
   }
 
   public String getClusterNameById(final int iClusterId) {
@@ -381,38 +422,28 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return storage.getPhysicalClusterNameById(iClusterId);
   }
 
-  public long getClusterRecordSizeById(final int iClusterId) {
+  public long getClusterRecordSizeById(final int clusterId) {
     try {
-      return storage.getClusterById(iClusterId).getRecordsSize();
+      return storage.getClusterById(clusterId).getRecordsSize();
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on reading records size for cluster with id '" + iClusterId + "'", e,
-          ODatabaseException.class);
+      throw new ODatabaseException("Error on reading records size for cluster with id '" + clusterId + "'", e);
     }
-    return 0l;
   }
 
-  public long getClusterRecordSizeByName(final String iClusterName) {
+  public long getClusterRecordSizeByName(final String clusterName) {
     try {
-      return storage.getClusterById(getClusterIdByName(iClusterName)).getRecordsSize();
+      return storage.getClusterById(getClusterIdByName(clusterName)).getRecordsSize();
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on reading records size for cluster '" + iClusterName + "'", e,
-          ODatabaseException.class);
+      throw new ODatabaseException("Error on reading records size for cluster '" + clusterName + "'", e);
     }
-    return 0l;
   }
 
-  public int addCluster(String iClusterName, CLUSTER_TYPE iType, Object... iParameters) {
-    return addCluster(iType.toString(), iClusterName, null, null, iParameters);
+  public int addCluster(String iClusterName, Object... iParameters) {
+    return storage.addCluster(iClusterName, false, iParameters);
   }
 
-  public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
-      final Object... iParameters) {
-    return storage.addCluster(iType, iClusterName, iLocation, iDataSegmentName, false, iParameters);
-  }
-
-  public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      Object... iParameters) {
-    return storage.addCluster(iType, iClusterName, iRequestedId, iLocation, iDataSegmentName, false, iParameters);
+  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+    return storage.addCluster(iClusterName, iRequestedId, false, iParameters);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
@@ -423,24 +454,14 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return storage.dropCluster(iClusterId, iTruncate);
   }
 
-  public int addDataSegment(final String iSegmentName, final String iLocation) {
-    return storage.addDataSegment(iSegmentName, iLocation);
-  }
-
-  public boolean dropDataSegment(final String iName) {
-    return storage.dropDataSegment(iName);
-  }
-
   public Collection<String> getClusterNames() {
     return storage.getClusterNames();
   }
 
   /**
-   * Returns always null
-   * 
-   * @return
+   * @return always null
    */
-  public OLevel1RecordCache getLevel1Cache() {
+  public OLocalRecordCache getLocalCache() {
     return null;
   }
 
@@ -490,10 +511,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return properties.entrySet().iterator();
   }
 
-  public OLevel2RecordCache getLevel2Cache() {
-    return storage.getLevel2Cache();
-  }
-
   public void close() {
     if (status != STATUS.OPEN)
       return;
@@ -507,6 +524,24 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
     if (storage != null)
       storage.close();
+
+    storage = null;
+    status = STATUS.CLOSED;
+  }
+
+  public void closeOnDelete() {
+    if (status != STATUS.OPEN)
+      return;
+
+    if (currentIntent != null) {
+      currentIntent.end(this);
+      currentIntent = null;
+    }
+
+    resetListeners();
+
+    if (storage != null)
+      storage.close(true, true);
 
     storage = null;
     status = STATUS.CLOSED;
@@ -536,11 +571,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     case DEFAULTCLUSTERID:
       return getDefaultClusterId();
     case TYPE:
-      ODatabaseRecord db;
-      if (getDatabaseOwner() instanceof ODatabaseRecord)
-        db = ((ODatabaseRecord) getDatabaseOwner());
-      else
-        db = new OGraphDatabase(url);
+      final ODatabaseRecord db = getDatabaseOwner();
 
       return db.getMetadata().getSchema().existsClass("V") ? "graph" : "document";
     case DATEFORMAT:
@@ -563,6 +594,12 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
     case CUSTOM:
       return storage.getConfiguration().properties;
+
+    case CLUSTERSELECTION:
+      return storage.getConfiguration().getClusterSelection();
+
+    case MINIMUMCLUSTERS:
+      return storage.getConfiguration().getMinimumClusters();
     }
 
     return null;
@@ -576,6 +613,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
     switch (iAttribute) {
     case STATUS:
+      if (stringValue == null)
+        throw new IllegalArgumentException("DB status can't be null");
       setStatus(STATUS.valueOf(stringValue.toUpperCase(Locale.ENGLISH)));
       break;
 
@@ -589,16 +628,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case TYPE:
-      if (stringValue.equalsIgnoreCase("graph")) {
-        if (getDatabaseOwner() instanceof OGraphDatabase)
-          ((OGraphDatabase) getDatabaseOwner()).checkForGraphSchema();
-        else if (getDatabaseOwner() instanceof ODatabaseRecordTx)
-          new OGraphDatabase((ODatabaseRecordTx) getDatabaseOwner()).checkForGraphSchema();
-        else
-          new OGraphDatabase(url).checkForGraphSchema();
-      } else
-        throw new IllegalArgumentException("Database type '" + stringValue + "' is not supported");
-      break;
+      throw new IllegalArgumentException("Database type property is not supported");
 
     case DATEFORMAT:
       storage.getConfiguration().dateFormat = stringValue;
@@ -611,6 +641,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case TIMEZONE:
+      if (stringValue == null)
+        throw new IllegalArgumentException("Timezone can't be null");
+
       storage.getConfiguration().setTimeZone(TimeZone.getTimeZone(stringValue.toUpperCase()));
       storage.getConfiguration().update();
       break;
@@ -631,7 +664,10 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case CUSTOM:
-      if (iValue.toString().indexOf("=") == -1) {
+      if (iValue == null)
+        throw new IllegalArgumentException("CUSTOM attribute value can't be null. expected <name> = <value> or clear");
+
+      if (!iValue.toString().contains("=")) {
         if (iValue.toString().equalsIgnoreCase("clear")) {
           clearCustomInternal();
         } else
@@ -640,6 +676,24 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
         final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
         setCustomInternal(words.get(0).trim(), words.get(1).trim());
       }
+      break;
+
+    case CLUSTERSELECTION:
+      storage.getConfiguration().setClusterSelection(stringValue);
+      storage.getConfiguration().update();
+      break;
+
+    case MINIMUMCLUSTERS:
+      if (iValue != null) {
+        if (iValue instanceof Number)
+          storage.getConfiguration().setMinimumClusters(((Number) iValue).intValue());
+        else
+          storage.getConfiguration().setMinimumClusters(Integer.parseInt(stringValue));
+      } else
+        // DEFAULT = 1
+        storage.getConfiguration().setMinimumClusters(1);
+
+      storage.getConfiguration().update();
       break;
 
     default:
@@ -651,9 +705,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public String getCustom(final String iName) {
-    if (storage.getConfiguration().properties == null)
-      return null;
-
     for (OStorageEntryConfiguration e : storage.getConfiguration().properties) {
       if (e.name.equals(iName))
         return e.value;
@@ -664,21 +715,16 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   public void setCustomInternal(final String iName, final String iValue) {
     if (iValue == null || "null".equalsIgnoreCase(iValue)) {
       // REMOVE
-      if (storage.getConfiguration().properties != null) {
-        for (Iterator<OStorageEntryConfiguration> it = storage.getConfiguration().properties.iterator(); it.hasNext();) {
-          final OStorageEntryConfiguration e = it.next();
-          if (e.name.equals(iName)) {
-            it.remove();
-            break;
-          }
+      for (Iterator<OStorageEntryConfiguration> it = storage.getConfiguration().properties.iterator(); it.hasNext();) {
+        final OStorageEntryConfiguration e = it.next();
+        if (e.name.equals(iName)) {
+          it.remove();
+          break;
         }
       }
 
     } else {
       // SET
-      if (storage.getConfiguration().properties == null)
-        storage.getConfiguration().properties = new ArrayList<OStorageEntryConfiguration>();
-
       boolean found = false;
       for (OStorageEntryConfiguration e : storage.getConfiguration().properties) {
         if (e.name.equals(iName)) {
@@ -697,7 +743,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   }
 
   public void clearCustomInternal() {
-    storage.getConfiguration().properties = null;
+    storage.getConfiguration().properties.clear();
   }
 
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
@@ -724,7 +770,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       try {
         listener.onOpen(getDatabaseOwner());
       } catch (Throwable t) {
-        t.printStackTrace();
+        OLogManager.instance().error(this, "Error on invoking onOpen() against listener: %s", t, listener);
       }
   }
 
@@ -738,12 +784,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       try {
         listener.onClose(getDatabaseOwner());
       } catch (Throwable t) {
-        t.printStackTrace();
+        OLogManager.instance().error(this, "Error on invoking onClose() against listener: %s", t, listener);
       }
-  }
-
-  protected boolean isClusterBoundedToClass(final int iClusterId) {
-    return false;
   }
 
   public long getSize() {
@@ -768,16 +810,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     final OFreezableStorage storage = getFreezableStorage();
     if (storage != null) {
       storage.release();
-    }
-  }
-
-  private OFreezableStorage getFreezableStorage() {
-    OStorage s = getStorage();
-    if (s instanceof OFreezableStorage)
-      return (OFreezableStorage) s;
-    else {
-      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation.");
-      return null;
     }
   }
 
@@ -806,6 +838,20 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       paginatedStorage.freeze(throwException, iClusterId);
     } else {
       OLogManager.instance().error(this, "Only local paginated storage supports cluster freeze.");
+    }
+  }
+
+  protected boolean isClusterBoundedToClass(final int iClusterId) {
+    return false;
+  }
+
+  private OFreezableStorage getFreezableStorage() {
+    OStorage s = getStorage();
+    if (s instanceof OFreezableStorage)
+      return (OFreezableStorage) s;
+    else {
+      OLogManager.instance().error(this, "Storage of type " + s.getType() + " does not support freeze operation.");
+      return null;
     }
   }
 }

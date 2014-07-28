@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -27,6 +25,8 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+
+import java.util.List;
 
 /**
  * MAJOR operator.
@@ -58,15 +58,13 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
   }
 
   @Override
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      List<Object> keyParams, IndexResultListener resultListener, int fetchLimit) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
+		OIndexCursor cursor;
     final OIndexInternal<?> internalIndex = index.getInternal();
     if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
       return null;
-
-    final Object result;
 
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
@@ -78,13 +76,7 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
       if (key == null)
         return null;
 
-      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.count(key, false, null, false, fetchLimit);
-      else if (resultListener != null) {
-        index.getValuesMajor(key, false, resultListener);
-        result = resultListener.getResult();
-      } else
-        result = index.getValuesMajor(key, false);
+      cursor = index.iterateEntriesMajor(key, false, ascSortOrder);
     } else {
       // if we have situation like "field1 = 1 AND field2 > 2"
       // then we fetch collection which left not included boundary is the smallest composite key in the
@@ -103,17 +95,11 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      if (INDEX_OPERATION_TYPE.COUNT.equals(iOperationType))
-        result = index.count(keyOne, false, keyTwo, true, fetchLimit);
-      else if (resultListener != null) {
-        index.getValuesBetween(keyOne, false, keyTwo, true, resultListener);
-        result = resultListener.getResult();
-      } else
-        result = index.getValuesBetween(keyOne, false, keyTwo, true);
+      cursor = index.iterateEntriesBetween(keyOne, false, keyTwo, true, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
-    return result;
+    return cursor;
   }
 
   @Override
@@ -122,8 +108,9 @@ public class OQueryOperatorMajor extends OQueryOperatorEqualityNotNulls {
       if (iRight instanceof ORID)
         return new ORecordId(((ORID) iRight).next());
       else {
-        if (iRight instanceof OSQLFilterItemParameter && ((OSQLFilterItemParameter) iRight).getValue(null, null) instanceof ORID)
-          return new ORecordId(((ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null)).next());
+        if (iRight instanceof OSQLFilterItemParameter
+            && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID)
+          return new ORecordId(((ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null)).next());
       }
     return null;
   }

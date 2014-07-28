@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.graph.blueprints;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -11,23 +11,25 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class BlueprintsTest {
-  private static String DB_URL = "local:target/databases/tinkerpop";
-  private OrientGraph   graph;
+  private static String      DB_URL = "memory:" + BlueprintsTest.class.getSimpleName();
+  private static OrientGraph graph;
 
   public BlueprintsTest() {
   }
 
   @BeforeClass
-  public void before() {
+  public static void before() {
     graph = new OrientGraph(DB_URL);
   }
 
   @AfterClass
-  public void after() {
-    graph.shutdown();
+  public static void after() {
+    graph.drop();
+    graph = null;
   }
 
   @Test
@@ -38,6 +40,18 @@ public class BlueprintsTest {
     Vertex v = graph.addVertex("class:SubVertex");
     v.setProperty("key", "subtype");
     Assert.assertEquals(((OrientVertex) v).getRecord().getSchemaClass().getName(), "SubVertex");
+
+    // TEST QUERY AGAINST SUB-TYPE IN TX
+    Iterable<Vertex> vertices = ((OrientGraphQuery) graph.query()).labels("SubVertex").vertices();
+    Assert.assertTrue(vertices.iterator().hasNext());
+    Assert.assertEquals(vertices.iterator().next().getProperty("key"), "subtype");
+
+    graph.commit();
+
+    // TEST QUERY AGAINST SUB-TYPE NON IN TX
+    vertices = ((OrientGraphQuery) graph.query()).labels("SubVertex").vertices();
+    Assert.assertTrue(vertices.iterator().hasNext());
+    Assert.assertEquals(vertices.iterator().next().getProperty("key"), "subtype");
   }
 
   @Test

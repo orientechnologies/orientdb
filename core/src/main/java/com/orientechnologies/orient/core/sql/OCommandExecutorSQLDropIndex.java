@@ -15,12 +15,13 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OIndex;
+
+import java.util.Map;
 
 /**
  * SQL REMOVE INDEX command: Remove an index
@@ -67,12 +68,23 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract im
     if (name == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    getDatabase().getMetadata().getIndexManager().dropIndex(name);
-    return null;
+    if (name.equals("*")) {
+      long totalIndexed = 0;
+      for (OIndex<?> idx : getDatabase().getMetadata().getIndexManager().getIndexes()) {
+        getDatabase().getMetadata().getIndexManager().dropIndex(idx.getName());
+        totalIndexed++;
+      }
+
+      return totalIndexed;
+
+    } else
+      getDatabase().getMetadata().getIndexManager().dropIndex(name);
+
+    return 1;
   }
 
   @Override
   public String getSyntax() {
-    return "DROP INDEX <index-name>|<class>.<property>";
+    return "DROP INDEX <index-name>|<class>.<property>|*";
   }
 }

@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
@@ -74,11 +73,6 @@ public class OSchemaProxyObject implements OSchema {
   @Override
   public OClass createClass(String iClassName, OClass iSuperClass) {
     return underlying.createClass(iClassName, iSuperClass);
-  }
-
-  @Override
-  public OClass createClass(String iClassName, OClass iSuperClass, CLUSTER_TYPE iType) {
-    return underlying.createClass(iClassName, iSuperClass, iType);
   }
 
   @Override
@@ -181,6 +175,11 @@ public class OSchemaProxyObject implements OSchema {
     return underlying;
   }
 
+  @Override
+  public OClass getClassByClusterId(int clusterId) {
+    return underlying.getClassByClusterId(clusterId);
+  }
+
   /**
    * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
    * 
@@ -257,13 +256,15 @@ public class OSchemaProxyObject implements OSchema {
         switch (t) {
 
         case LINK:
-          Class<?> linkedClazz = f.getType();
+          Class<?> linkedClazz = OObjectEntitySerializer.getSpecifiedLinkedType(f);
+           if (linkedClazz==null)  linkedClazz = f.getType();
           generateLinkProperty(database, schema, field, t, linkedClazz);
           break;
         case LINKLIST:
         case LINKMAP:
         case LINKSET:
-          linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
+           linkedClazz= OObjectEntitySerializer.getSpecifiedMultiLinkedType(f);
+          if (linkedClazz==null) linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
           if (linkedClazz != null)
             generateLinkProperty(database, schema, field, t, linkedClazz);
           break;

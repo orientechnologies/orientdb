@@ -15,8 +15,10 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OBaseParser;
@@ -37,6 +39,10 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   protected int                 limit = -1;
   protected Map<Object, Object> parameters;
   protected OCommandContext     context;
+
+  public static ODatabaseRecord getDatabase() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
 
   public OCommandExecutorAbstract init(final OCommandRequestText iRequest) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
@@ -87,7 +93,8 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     context = iContext;
   }
 
-  public static ODatabaseRecord getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  @Override
+  public Set<String> getInvolvedClusters() {
+    return Collections.EMPTY_SET;
   }
 }

@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.GZIPOutputStream;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -37,6 +23,21 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Maintains information about current HTTP response.
@@ -47,14 +48,14 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 public class OHttpResponse {
   public static final String JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
   public static final char[] URL_SEPARATOR = { '/' };
-
-  private final OutputStream out;
   public final String        httpVersion;
+  private final OutputStream out;
   public String              headers;
   public String[]            additionalHeaders;
   public String              characterSet;
   public String              contentType;
   public String              serverInfo;
+
   public String              sessionId;
   public String              callbackFunction;
   public String              contentEncoding;
@@ -170,58 +171,45 @@ public class OHttpResponse {
     if (iResult == null)
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
     else {
-      if (iResult instanceof Map<?, ?>) {
-        iResult = ((Map<?, ?>) iResult).entrySet().iterator();
+      final Object newResult;
+      if (isJSObject(iResult)) {
+        newResult = Collections.singleton(new ODocument().field("value", iResult)).iterator();
+      } else if (iResult instanceof Map<?, ?>) {
+        newResult = ((Map<?, ?>) iResult).entrySet().iterator();
       } else if (OMultiValue.isMultiValue(iResult)
           && (OMultiValue.getSize(iResult) > 0 && !(OMultiValue.getFirstValue(iResult) instanceof OIdentifiable))) {
-        final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
-        resultSet.add(new ODocument().field("value", iResult));
-        iResult = resultSet.iterator();
-
+        newResult = Collections.singleton(new ODocument().field("value", iResult)).iterator();
       } else if (iResult instanceof OIdentifiable) {
         // CONVERT SIGLE VALUE IN A COLLECTION
-        final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
-        resultSet.add((OIdentifiable) iResult);
-        iResult = resultSet.iterator();
+        newResult = Collections.singleton(iResult).iterator();
       } else if (iResult instanceof Iterable<?>)
-        iResult = ((Iterable<OIdentifiable>) iResult).iterator();
+        newResult = ((Iterable<OIdentifiable>) iResult).iterator();
       else if (OMultiValue.isMultiValue(iResult))
-        iResult = OMultiValue.getMultiValueIterator(iResult);
+        newResult = OMultiValue.getMultiValueIterator(iResult);
       else {
-        final List<OIdentifiable> resultSet = new ArrayList<OIdentifiable>();
-        resultSet.add(new ODocument().field("value", iResult));
-        iResult = resultSet.iterator();
+        newResult = Collections.singleton(new ODocument().field("value", iResult)).iterator();
       }
 
-      if (iResult == null)
+      if (newResult == null)
         send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null, true);
-      else if (iResult instanceof Iterator<?>)
-        writeRecords((Iterator<OIdentifiable>) iResult, null, iFormat, accept);
+      else
+        writeRecords(newResult, null, iFormat, accept);
     }
   }
 
-  public void writeRecords(final Iterable<OIdentifiable> iRecords) throws IOException {
-    if (iRecords == null)
-      return;
-
-    writeRecords(iRecords.iterator(), null, null, null);
-  }
-
-  public void writeRecords(final Iterable<OIdentifiable> iRecords, final String iFetchPlan) throws IOException {
-    if (iRecords == null)
-      return;
-
-    writeRecords(iRecords.iterator(), iFetchPlan, null, null);
-  }
-
-  public void writeRecords(final Iterator<OIdentifiable> iRecords) throws IOException {
+  public void writeRecords(final Object iRecords) throws IOException {
     writeRecords(iRecords, null, null, null);
   }
 
-  public void writeRecords(final Iterator<OIdentifiable> iRecords, final String iFetchPlan, String iFormat, final String accept)
-      throws IOException {
+  public void writeRecords(final Object iRecords, final String iFetchPlan) throws IOException {
+    writeRecords(iRecords, iFetchPlan, null, null);
+  }
+
+  public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept) throws IOException {
     if (iRecords == null)
       return;
+
+    final Iterator<Object> it = OMultiValue.getMultiValueIterator(iRecords);
 
     if (accept != null && accept.contains("text/csv")) {
       sendStream(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, "data.csv", new OCallable<Void, OChunkedResponse>() {
@@ -233,10 +221,10 @@ public class OHttpResponse {
 
           // BROWSE ALL THE RECORD TO HAVE THE COMPLETE COLUMN
           // NAMES LIST
-          while (iRecords.hasNext()) {
-            final OIdentifiable r = iRecords.next();
-            if (r != null) {
-              final ORecord<?> rec = r.getRecord();
+          while (it.hasNext()) {
+            final Object r = it.next();
+            if (r != null && r instanceof OIdentifiable) {
+              final ORecord<?> rec = ((OIdentifiable) r).getRecord();
               if (rec != null) {
                 if (rec instanceof ODocument) {
                   final ODocument doc = (ODocument) rec;
@@ -279,7 +267,7 @@ public class OHttpResponse {
             iArgument.flush();
 
           } catch (IOException e) {
-            e.printStackTrace();
+            OLogManager.instance().error(this, "HTTP response: error on writing records", e);
           }
 
           return null;
@@ -299,7 +287,7 @@ public class OHttpResponse {
 
       // WRITE RECORDS
       json.beginCollection(-1, true, "result");
-      formatMultiValue(iRecords, buffer, format);
+      formatMultiValue(it, buffer, format);
       json.endCollection(-1, true);
 
       json.endObject();
@@ -320,13 +308,14 @@ public class OHttpResponse {
 
           if (entry instanceof OIdentifiable) {
             ORecord<?> rec = ((OIdentifiable) entry).getRecord();
-            try {
-              objectJson = rec.getRecord().toJSON(format);
+            if (rec != null)
+              try {
+                objectJson = rec.toJSON(format);
 
-              buffer.append(objectJson);
-            } catch (Exception e) {
-              OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
-            }
+                buffer.append(objectJson);
+              } catch (Exception e) {
+                OLogManager.instance().error(this, "Error transforming record " + rec.getIdentity() + " to JSON", e);
+              }
           } else if (OMultiValue.isMultiValue(entry))
             formatMultiValue(OMultiValue.getMultiValueIterator(entry), buffer, format);
           else
@@ -346,7 +335,8 @@ public class OHttpResponse {
 
     final String format = iFetchPlan != null ? iFormat + ",fetchPlan:" + iFetchPlan : iFormat;
     if (iRecord != null)
-      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format), null);
+      send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, iRecord.toJSON(format),
+          OHttpUtils.HEADER_ETAG + iRecord.getVersion());
   }
 
   public void sendStream(final int iCode, final String iReason, final String iContentType, InputStream iContent, long iSize)
@@ -423,7 +413,7 @@ public class OHttpResponse {
       gout.finish();
       return baos.toByteArray();
     } catch (Exception ex) {
-      ex.printStackTrace();
+      OLogManager.instance().error(this, "Error on compressing HTTP response", ex);
     } finally {
       try {
         if (gout != null)
@@ -431,7 +421,6 @@ public class OHttpResponse {
         if (baos != null)
           baos.close();
       } catch (Exception ex) {
-        ex.printStackTrace();
       }
     }
     return null;
@@ -469,4 +458,13 @@ public class OHttpResponse {
   public void setContentEncoding(String contentEncoding) {
     this.contentEncoding = contentEncoding;
   }
+
+  public void setSessionId(String sessionId) {
+    this.sessionId = sessionId;
+  }
+
+  private boolean isJSObject(Object iResult) {
+    return iResult.getClass().getName().equals("jdk.nashorn.api.scripting.ScriptObjectMirror");
+  }
+
 }

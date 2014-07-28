@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -25,9 +22,14 @@ import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.net.InetSocketAddress;
+
 public class OClientConnection {
   public final int                         id;
-  public final ONetworkProtocol            protocol;
+  public volatile ONetworkProtocol         protocol;
   public final long                        since;
   public volatile ODatabaseDocumentTx      database;
   public volatile ODatabaseRaw             rawDatabase;
@@ -35,24 +37,28 @@ public class OClientConnection {
 
   public ONetworkProtocolData              data = new ONetworkProtocolData();
 
-  public OClientConnection(final int iId, final ONetworkProtocol iProtocol) throws IOException {
-    this.id = iId;
-    this.protocol = iProtocol;
+  public OClientConnection(final int id, final ONetworkProtocol protocol) throws IOException {
+    this.id = id;
+    this.protocol = protocol;
     this.since = System.currentTimeMillis();
   }
 
   public void close() {
     if (database != null) {
-      database.close();
+      if (!database.isClosed())
+        database.close();
+
       database = null;
     }
   }
 
   @Override
   public String toString() {
-    return "OClientConnection [id=" + id + ", source="
-        + (protocol != null && protocol.getChannel() != null ? protocol.getChannel().socket.getRemoteSocketAddress() : "?")
-        + ", since=" + since + "]";
+    return "OClientConnection [id="
+        + id
+        + ", source="
+        + (protocol != null && protocol.getChannel() != null && protocol.getChannel().socket != null ? protocol.getChannel().socket
+            .getRemoteSocketAddress() : "?") + ", since=" + since + "]";
   }
 
   /**

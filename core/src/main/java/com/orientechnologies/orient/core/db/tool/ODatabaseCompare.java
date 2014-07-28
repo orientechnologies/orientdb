@@ -15,14 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -32,6 +25,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -42,6 +36,13 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private OStorage              storage1;
@@ -94,12 +95,12 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     return compareEntriesForAutomaticIndexes;
   }
 
-  public void setAutoDetectExportImportMap(boolean autoDetectExportImportMap) {
-    this.autoDetectExportImportMap = autoDetectExportImportMap;
-  }
-
   public void setCompareEntriesForAutomaticIndexes(boolean compareEntriesForAutomaticIndexes) {
     this.compareEntriesForAutomaticIndexes = compareEntriesForAutomaticIndexes;
+  }
+
+  public void setAutoDetectExportImportMap(boolean autoDetectExportImportMap) {
+    this.autoDetectExportImportMap = autoDetectExportImportMap;
   }
 
   public boolean compare() {
@@ -158,8 +159,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         return false;
       }
     } catch (Exception e) {
-      e.printStackTrace();
-      throw new ODatabaseExportException("Error on compare of database '" + storage1.getName() + "' against '" + storage2.getName()
+      OLogManager.instance()
+          .error(this, "Error on comparing database '%s' against '%s'", e, storage1.getName(), storage2.getName());
+      throw new ODatabaseExportException("Error on comparing database '" + storage1.getName() + "' against '" + storage2.getName()
           + "'", e);
     } finally {
       storage1.close();
@@ -344,40 +346,31 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
 
       if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY")) || !indexOne.isAutomatic())) {
-        final Iterator<Map.Entry<Object, Object>> indexIteratorOne = makeDbCall(databaseDocumentTxOne,
-            new ODbRelatedCall<Iterator<Map.Entry<Object, Object>>>() {
-              public Iterator<Map.Entry<Object, Object>> call() {
-                return indexOne.iterator();
-              }
-            });
-
-        while (makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Boolean>() {
-          public Boolean call() {
-            return indexIteratorOne.hasNext();
+        final OIndexKeyCursor indexKeyCursorOne = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<OIndexKeyCursor>() {
+          public OIndexKeyCursor call() {
+            return indexOne.keyCursor();
           }
-        })) {
-          final Map.Entry<Object, Object> indexOneEntry = makeDbCall(databaseDocumentTxOne,
-              new ODbRelatedCall<Map.Entry<Object, Object>>() {
-                public Map.Entry<Object, Object> call() {
-                  return indexIteratorOne.next();
-                }
-              });
+        });
 
-          final Object key = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
-            public Object call() {
-              return indexOneEntry.getKey();
-            }
-          });
+        Object key = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
+          @Override
+          public Object call() {
+            return indexKeyCursorOne.next(-1);
+          }
+        });
+
+        while (key != null) {
+          final Object indexKey = key;
 
           Object indexOneValue = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
             public Object call() {
-              return indexOneEntry.getValue();
+              return indexOne.get(indexKey);
             }
           });
 
           final Object indexTwoValue = makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Object>() {
             public Object call() {
-              return indexTwo.get(key);
+              return indexTwo.get(indexKey);
             }
           });
 
@@ -385,10 +378,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             ok = false;
             listener.onMessage("\n- ERR: Entry with key " + key + " is absent in index " + indexOne.getName() + " for DB2.");
             ++differences;
-            continue;
-          }
-
-          if (indexOneValue instanceof Set && indexTwoValue instanceof Set) {
+          } else if (indexOneValue instanceof Set && indexTwoValue instanceof Set) {
             final Set<Object> indexOneValueSet = (Set<Object>) indexOneValue;
             final Set<Object> indexTwoValueSet = (Set<Object>) indexTwoValue;
 
@@ -412,6 +402,13 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             ok = false;
             reportIndexDiff(indexOne, key, indexOneValue, indexTwoValue);
           }
+
+          key = makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call() {
+              return indexKeyCursorOne.next(-1);
+            }
+          });
         }
       }
     }
@@ -530,16 +527,18 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
               && rid.equals(new ORecordId(storage2.getConfiguration().indexMgrRecordId)))
             continue;
 
-          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null, false).getResult();
+          final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+              .getResult();
           final ORawBuffer buffer2;
           if (ridMapper == null)
-            buffer2 = storage2.readRecord(rid, null, true, null, false).getResult();
+            buffer2 = storage2.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
           else {
             final ORID newRid = ridMapper.map(rid);
             if (newRid == null)
-              buffer2 = storage2.readRecord(rid, null, true, null, false).getResult();
+              buffer2 = storage2.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
             else
-              buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null, false).getResult();
+              buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+                  .getResult();
           }
 
           if (buffer1 == null && buffer2 == null)

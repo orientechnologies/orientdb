@@ -33,32 +33,54 @@ public class OTransactionIndexChanges {
     PUT, REMOVE, CLEAR
   }
 
-  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey = new TreeMap<Object, OTransactionIndexChangesPerKey>(
-                                                                                ODefaultComparator.INSTANCE);
+  public NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey  = new TreeMap<Object, OTransactionIndexChangesPerKey>(
+                                                                                 ODefaultComparator.INSTANCE);
 
-  public boolean                                              cleared       = false;
+  public OTransactionIndexChangesPerKey                       nullKeyChanges = new OTransactionIndexChangesPerKey(null);
 
-  public OTransactionIndexChangesPerKey getChangesPerKey(final Object iKey) {
-    OTransactionIndexChangesPerKey changes = changesPerKey.get(iKey);
+  public boolean                                              cleared        = false;
+
+  public OTransactionIndexChangesPerKey getChangesPerKey(final Object key) {
+    if (key == null)
+      return nullKeyChanges;
+
+    OTransactionIndexChangesPerKey changes = changesPerKey.get(key);
     if (changes == null) {
-      changes = new OTransactionIndexChangesPerKey(iKey);
-      changesPerKey.put(iKey, changes);
+      changes = new OTransactionIndexChangesPerKey(key);
+      changesPerKey.put(key, changes);
     }
 
     return changes;
   }
 
-  public Collection<OTransactionIndexChangesPerKey> getChangesForKeys(final Object firstKey, final Object lastKey) {
-    return changesPerKey.subMap(firstKey, lastKey).values();
-  }
-
   public void setCleared() {
     changesPerKey.clear();
+    nullKeyChanges.entries.clear();
+
     cleared = true;
   }
 
-  public boolean containsChangesPerKey(final Object iKey) {
-    return changesPerKey.containsKey(iKey);
+  public Object getFirstKey() {
+    return changesPerKey.firstKey();
   }
 
+  public Object getLastKey() {
+    return changesPerKey.lastKey();
+  }
+
+  public Object getLowerKey(Object key) {
+    return changesPerKey.lowerKey(key);
+  }
+
+  public Object getHigherKey(Object key) {
+    return changesPerKey.higherKey(key);
+  }
+
+  public Object getCeilingKey(Object key) {
+    return changesPerKey.ceilingKey(key);
+  }
+
+  public Object getFloorKey(Object key) {
+    return changesPerKey.floorKey(key);
+  }
 }

@@ -15,15 +15,12 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -32,6 +29,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.sun.jna.platform.win32.DBT;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Remote administration class of OrientDB Server instances.
@@ -54,7 +56,7 @@ public class OServerAdmin {
     if (!iURL.contains("/"))
       iURL += "/";
 
-    storage = new OStorageRemote(null, iURL, "");
+    storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN);
   }
 
   /**
@@ -77,7 +79,6 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
-    storage.createConnectionPool();
     storage.setSessionId(null, -1);
 
     try {
@@ -101,25 +102,21 @@ public class OServerAdmin {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Cannot connect to the remote server: " + storage.getName(), e, OStorageException.class);
-      storage.close(true);
+      OLogManager.instance().error(this, "Cannot connect to the remote server/database '%s'", e, OStorageException.class,
+          storage.getURL());
+      storage.close(true, false);
     }
     return this;
   }
 
   /**
-   * List the databases on a remote server.
+   * Returns the list of databases on the connected remote server.
    * 
-   * @param iUserName
-   *          Server's user name
-   * @param iUserPassword
-   *          Server's password for the user name used
-   * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
   @SuppressWarnings("unchecked")
   public synchronized Map<String, String> listDatabases() throws IOException {
-    storage.checkConnection();
+
     final ODocument result = new ODocument();
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_LIST);
@@ -133,8 +130,8 @@ public class OServerAdmin {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
+      throw new OStorageException("Cannot retrieve the configuration list", e);
     }
     return (Map<String, String>) result.field("databases");
   }
@@ -179,7 +176,6 @@ public class OServerAdmin {
    */
   public synchronized OServerAdmin createDatabase(final String iDatabaseName, final String iDatabaseType, String iStorageMode)
       throws IOException {
-    storage.checkConnection();
 
     try {
       if (iDatabaseName == null || iDatabaseName.length() <= 0) {
@@ -204,7 +200,7 @@ public class OServerAdmin {
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Cannot create the remote storage: " + storage.getName(), e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
     }
     return this;
   }
@@ -213,11 +209,20 @@ public class OServerAdmin {
    * Checks if a database exists in the remote server.
    * 
    * @return true if exists, otherwise false
+   */
+  public synchronized boolean existsDatabase() throws IOException {
+    return existsDatabase(null);
+  }
+
+  /**
+   * Checks if a database exists in the remote server.
+   * 
+   * @return true if exists, otherwise false
    * @throws IOException
    * @param storageType
+   *          The storage type to check between memory, local and plocal.
    */
-  public synchronized boolean existsDatabase(String storageType) throws IOException {
-    storage.checkConnection();
+  public synchronized boolean existsDatabase(final String storageType) throws IOException {
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_EXIST);
@@ -236,11 +241,9 @@ public class OServerAdmin {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Error on checking existence of the remote storage: " + storage.getName(), e,
-          OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
+      throw new OStorageException("Error on checking existence of the remote storage: " + storage.getName(), e);
     }
-    return false;
   }
 
   /**
@@ -265,7 +268,7 @@ public class OServerAdmin {
    * @param storageType
    */
   public synchronized OServerAdmin dropDatabase(String storageType) throws IOException {
-    storage.checkConnection();
+
     boolean retry = true;
 
     while (retry)
@@ -284,7 +287,7 @@ public class OServerAdmin {
       } catch (OModificationOperationProhibitedException oope) {
         retry = handleDBFreeze();
       } catch (Exception e) {
-        OLogManager.instance().exception("Cannot delete the remote storage: " + storage.getName(), e, OStorageException.class);
+        throw new OStorageException("Cannot delete the remote storage: " + storage.getName(), e);
       }
 
     for (OStorage s : Orient.instance().getStorages()) {
@@ -300,23 +303,8 @@ public class OServerAdmin {
     return this;
   }
 
-  private boolean handleDBFreeze() {
-    boolean retry;
-    OLogManager.instance().warn(this,
-        "DB is frozen will wait for " + OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValue() + " ms. and then retry.");
-    retry = true;
-    try {
-      Thread.sleep(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValueAsInteger());
-    } catch (InterruptedException ie) {
-      retry = false;
-
-      Thread.currentThread().interrupt();
-    }
-    return retry;
-  }
-
   public synchronized OServerAdmin freezeDatabase(String storageType) throws IOException {
-    storage.checkConnection();
+
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_FREEZE);
 
@@ -329,14 +317,14 @@ public class OServerAdmin {
 
       storage.getResponse(network);
     } catch (Exception e) {
-      OLogManager.instance().exception("Cannot freeze the remote storage: " + storage.getName(), e, OStorageException.class);
+      throw new OStorageException("Cannot freeze the remote storage: " + storage.getName(), e);
     }
 
     return this;
   }
 
   public synchronized OServerAdmin releaseDatabase(String storageType) throws IOException {
-    storage.checkConnection();
+
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_RELEASE);
 
@@ -349,14 +337,14 @@ public class OServerAdmin {
 
       storage.getResponse(network);
     } catch (Exception e) {
-      OLogManager.instance().exception("Cannot release the remote storage: " + storage.getName(), e, OStorageException.class);
+      throw new OStorageException("Cannot release the remote storage: " + storage.getName(), e);
     }
 
     return this;
   }
 
   public synchronized OServerAdmin freezeCluster(int clusterId, String storageType) throws IOException {
-    storage.checkConnection();
+
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_FREEZE);
 
@@ -372,15 +360,14 @@ public class OServerAdmin {
     } catch (IllegalArgumentException e) {
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().exception("Cannot freeze the remote cluster " + clusterId + " on storage: " + storage.getName(), e,
-          OStorageException.class);
+      throw new OStorageException("Cannot freeze the remote cluster " + clusterId + " on storage: " + storage.getName(), e);
     }
 
     return this;
   }
 
   public synchronized OServerAdmin releaseCluster(int clusterId, String storageType) throws IOException {
-    storage.checkConnection();
+
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_RELEASE);
 
@@ -396,8 +383,7 @@ public class OServerAdmin {
     } catch (IllegalArgumentException e) {
       throw e;
     } catch (Exception e) {
-      OLogManager.instance().exception("Cannot release the remote cluster " + clusterId + " on storage: " + storage.getName(), e,
-          OStorageException.class);
+      throw new OStorageException("Cannot release the remote cluster " + clusterId + " on storage: " + storage.getName(), e);
     }
 
     return this;
@@ -419,7 +405,7 @@ public class OServerAdmin {
   /**
    * Copies a database to a remote server instance.
    * 
-   * @param iDatabaseName
+   * @param databaseName
    * @param iDatabaseUserName
    * @param iDatabaseUserPassword
    * @param iRemoteName
@@ -427,15 +413,14 @@ public class OServerAdmin {
    * @return The instance itself. Useful to execute method in chain
    * @throws IOException
    */
-  public synchronized OServerAdmin copyDatabase(final String iDatabaseName, final String iDatabaseUserName,
+  public synchronized OServerAdmin copyDatabase(final String databaseName, final String iDatabaseUserName,
       final String iDatabaseUserPassword, final String iRemoteName, final String iRemoteEngine) throws IOException {
-    storage.checkConnection();
 
     try {
 
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_COPY);
       try {
-        network.writeString(iDatabaseName);
+        network.writeString(databaseName);
         network.writeString(iDatabaseUserName);
         network.writeString(iDatabaseUserPassword);
         network.writeString(iRemoteName);
@@ -446,17 +431,16 @@ public class OServerAdmin {
 
       storage.getResponse(network);
 
-      OLogManager.instance().debug(this, "Database '%s' has been copied to the server '%s'", iDatabaseName, iRemoteName);
+      OLogManager.instance().debug(this, "Database '%s' has been copied to the server '%s'", databaseName, iRemoteName);
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Cannot copy the database: " + iDatabaseName, e, OStorageException.class);
+      throw new OStorageException("Cannot copy the database: " + databaseName, e);
     }
 
     return this;
   }
 
   public synchronized Map<String, String> getGlobalConfigurations() throws IOException {
-    storage.checkConnection();
 
     final Map<String, String> config = new HashMap<String, String>();
 
@@ -474,18 +458,18 @@ public class OServerAdmin {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Cannot retrieve the configuration list", e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
+      throw new OStorageException("Cannot retrieve the configuration list", e);
     }
     return config;
   }
 
-  public synchronized String getGlobalConfiguration(final OGlobalConfiguration iConfig) throws IOException {
-    storage.checkConnection();
+  public synchronized String getGlobalConfiguration(final OGlobalConfiguration config) throws IOException {
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_GET);
-      network.writeString(iConfig.getKey());
+      network.writeString(config.getKey());
+      network.endRequest();
 
       try {
         storage.beginResponse(network);
@@ -495,25 +479,24 @@ public class OServerAdmin {
       }
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Cannot retrieve the configuration value: " + iConfig.getKey(), e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
+      throw new OStorageException("Cannot retrieve the configuration value: " + config.getKey(), e);
     }
-    return null;
   }
 
-  public synchronized OServerAdmin setGlobalConfiguration(final OGlobalConfiguration iConfig, final Object iValue)
+  public synchronized OServerAdmin setGlobalConfiguration(final OGlobalConfiguration config, final Object iValue)
       throws IOException {
-    storage.checkConnection();
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONFIG_SET);
-      network.writeString(iConfig.getKey());
+      network.writeString(config.getKey());
       network.writeString(iValue != null ? iValue.toString() : "");
+      storage.endRequest(network);
       storage.getResponse(network);
 
     } catch (Exception e) {
-      OLogManager.instance().exception("Cannot set the configuration value: " + iConfig.getKey(), e, OStorageException.class);
-      storage.close(true);
+      storage.close(true, false);
+      throw new OStorageException("Cannot set the configuration value: " + config.getKey(), e);
     }
     return this;
   }
@@ -526,11 +509,15 @@ public class OServerAdmin {
   }
 
   public synchronized void close(boolean iForce) {
-    storage.close(iForce);
+    storage.close(iForce, false);
   }
 
   public synchronized String getURL() {
     return storage != null ? storage.getURL() : null;
+  }
+
+  public boolean isConnected() {
+    return storage != null && !storage.isClosed();
   }
 
   protected ODocument sendRequest(final byte iRequest, final ODocument iPayLoad, final String iActivity) {
@@ -555,12 +542,23 @@ public class OServerAdmin {
       } catch (OModificationOperationProhibitedException ompe) {
         retry = handleDBFreeze();
       } catch (Exception e) {
-        OLogManager.instance().exception("Error on executing '%s'", e, OStorageException.class, iActivity);
+        throw new OStorageException("Error on executing  '" + iActivity + "'", e);
       }
     return null;
   }
 
-  public boolean isConnected() {
-    return storage != null && !storage.isClosed();
+  private boolean handleDBFreeze() {
+    boolean retry;
+    OLogManager.instance().warn(this,
+        "DB is frozen will wait for " + OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValue() + " ms. and then retry.");
+    retry = true;
+    try {
+      Thread.sleep(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.getValueAsInteger());
+    } catch (InterruptedException ie) {
+      retry = false;
+
+      Thread.currentThread().interrupt();
+    }
+    return retry;
   }
 }

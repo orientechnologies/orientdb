@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.type.tree;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
@@ -36,11 +36,11 @@ public class OMVRBTreeStorage<K, V> extends OMVRBTreePersistent<K, V> {
     super(iProvider);
   }
 
-  public OMVRBTreeStorage(final OStorageLocalAbstract iStorage, final String iClusterName, final ORID iRID) {
+  public OMVRBTreeStorage(final OAbstractPaginatedStorage iStorage, final String iClusterName, final ORID iRID) {
     super(new OMVRBTreeMapProvider<K, V>(iStorage, iClusterName, iRID));
   }
 
-  public OMVRBTreeStorage(final OStorageLocalAbstract iStorage, String iClusterName, final OBinarySerializer<K> iKeySerializer,
+  public OMVRBTreeStorage(final OAbstractPaginatedStorage iStorage, String iClusterName, final OBinarySerializer<K> iKeySerializer,
       final OStreamSerializer iValueSerializer) {
     super(new OMVRBTreeMapProvider<K, V>(iStorage, iClusterName, iKeySerializer, iValueSerializer));
   }

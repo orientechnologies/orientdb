@@ -47,11 +47,11 @@ public class OSQLFunctionCoalesce extends OSQLFunctionAbstract {
   }
 
   @Override
-  public Object execute(OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
-    int length = iParameters.length;
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams, OCommandContext iContext) {
+    int length = iParams.length;
     for (int i = 0; i < length; i++) {
-      if (iParameters[i] != null)
-        return iParameters[i];
+      if (iParams[i] != null)
+        return iParams[i];
     }
     return null;
   }

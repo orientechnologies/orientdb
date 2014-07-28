@@ -15,22 +15,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
@@ -38,17 +22,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedList;
-import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -62,6 +38,13 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
+
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Helper class to manage documents.
@@ -82,9 +65,10 @@ public class ODocumentHelper {
   public static final String ATTRIBUTE_FIELDS             = "@fields";
   public static final String ATTRIBUTE_RAW                = "@raw";
 
-  public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria) {
+  public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria,
+      OCommandContext context) {
     if (ioResultSet != null)
-      Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria));
+      Collections.sort(ioResultSet, new ODocumentComparator(iOrderCriteria, context));
   }
 
   @SuppressWarnings("unchecked")
@@ -112,7 +96,7 @@ public class ODocumentHelper {
         final Collection<?> newValue;
 
         if (iValue instanceof ORecordLazyList || iValue instanceof ORecordLazyMap)
-          newValue = new OMVRBTreeRIDSet(iDocument);
+          newValue = new ORecordLazySet(iDocument);
         else
           newValue = new OTrackedSet<Object>(iDocument);
 
@@ -147,7 +131,7 @@ public class ODocumentHelper {
         // CONVERT IT TO LIST
         final Collection<?> newValue;
 
-        if (iValue instanceof OMVRBTreeRIDSet || iValue instanceof ORecordLazyMap)
+        if (iValue instanceof OMVRBTreeRIDSet || iValue instanceof ORecordLazyMap || iValue instanceof ORecordLazySet)
           newValue = new ORecordLazyList(iDocument);
         else
           newValue = new OTrackedList<Object>(iDocument);
@@ -528,6 +512,9 @@ public class ODocumentHelper {
 
         Object fieldValue = doc.field(iConditionFieldName);
 
+        if (iConditionFieldValue == null)
+          return fieldValue == null ? doc : null;
+
         fieldValue = OType.convert(fieldValue, iConditionFieldValue.getClass());
         if (fieldValue != null && fieldValue.equals(iConditionFieldValue))
           return doc;
@@ -730,7 +717,7 @@ public class ODocumentHelper {
       } else {
         final OSQLFunctionRuntime f = OSQLHelper.getFunction(null, iFunction);
         if (f != null)
-          result = f.execute(currentRecord, null, iContext);
+          result = f.execute(currentRecord, currentRecord, null, iContext);
       }
     }
 
@@ -904,6 +891,9 @@ public class ODocumentHelper {
             return false;
         } else if (myFieldValue instanceof Collection && otherFieldValue instanceof Collection) {
           if (!compareCollections(iMyDb, (Collection<?>) myFieldValue, iOtherDb, (Collection<?>) otherFieldValue, ridMapper))
+            return false;
+        } else if (myFieldValue instanceof ORidBag && otherFieldValue instanceof ORidBag) {
+          if (!compareBags(iMyDb, (ORidBag) myFieldValue, iOtherDb, (ORidBag) otherFieldValue, ridMapper))
             return false;
         } else if (myFieldValue instanceof Map && otherFieldValue instanceof Map) {
           if (!compareMaps(iMyDb, (Map<Object, Object>) myFieldValue, iOtherDb, (Map<Object, Object>) otherFieldValue, ridMapper))
@@ -1158,6 +1148,99 @@ public class ODocumentHelper {
 
       if (otherSet instanceof ORecordLazyMultiValue)
         ((ORecordLazyMultiValue) otherSet).setAutoConvertToRecord(oldOtherAutoConvert);
+    }
+  }
+
+  public static boolean compareBags(ODatabaseRecord iMyDb, ORidBag myFieldValue, ODatabaseRecord iOtherDb, ORidBag otherFieldValue,
+      RIDMapper ridMapper) {
+    final ORidBag myBag = myFieldValue;
+    final ORidBag otherBag = otherFieldValue;
+
+    final int mySize = makeDbCall(iMyDb, new ODbRelatedCall<Integer>() {
+      public Integer call() {
+        return myBag.size();
+      }
+    });
+
+    final int otherSize = makeDbCall(iOtherDb, new ODbRelatedCall<Integer>() {
+      public Integer call() {
+        return otherBag.size();
+      }
+    });
+
+    if (mySize != otherSize)
+      return false;
+
+    boolean oldMyAutoConvert;
+    boolean oldOtherAutoConvert;
+
+    oldMyAutoConvert = myBag.isAutoConvertToRecord();
+    myBag.setAutoConvertToRecord(false);
+
+    oldOtherAutoConvert = otherBag.isAutoConvertToRecord();
+    otherBag.setAutoConvertToRecord(false);
+
+    final ORidBag otherBagCopy = makeDbCall(iOtherDb, new ODbRelatedCall<ORidBag>() {
+      @Override
+      public ORidBag call() {
+        final ORidBag otherRidBag = new ORidBag();
+        otherRidBag.setAutoConvertToRecord(false);
+
+        for (OIdentifiable identifiable : otherBag)
+          otherRidBag.add(identifiable);
+
+        return otherRidBag;
+      }
+    });
+
+    try {
+      final Iterator<OIdentifiable> myIterator = makeDbCall(iMyDb, new ODbRelatedCall<Iterator<OIdentifiable>>() {
+        public Iterator<OIdentifiable> call() {
+          return myBag.iterator();
+        }
+      });
+
+      while (makeDbCall(iMyDb, new ODbRelatedCall<Boolean>() {
+        public Boolean call() {
+          return myIterator.hasNext();
+        }
+      })) {
+        final OIdentifiable myIdentifiable = makeDbCall(iMyDb, new ODbRelatedCall<OIdentifiable>() {
+          @Override
+          public OIdentifiable call() {
+            return myIterator.next();
+          }
+        });
+
+        final ORID otherRid;
+        if (ridMapper != null) {
+          ORID convertedRid = ridMapper.map(myIdentifiable.getIdentity());
+          if (convertedRid != null)
+            otherRid = convertedRid;
+          else
+            otherRid = myIdentifiable.getIdentity();
+        } else
+          otherRid = myIdentifiable.getIdentity();
+
+        makeDbCall(iOtherDb, new ODbRelatedCall<Object>() {
+          @Override
+          public Object call() {
+            otherBagCopy.remove(otherRid);
+            return null;
+          }
+        });
+
+      }
+
+      return makeDbCall(iOtherDb, new ODbRelatedCall<Boolean>() {
+        @Override
+        public Boolean call() {
+          return otherBagCopy.isEmpty();
+        }
+      });
+    } finally {
+      myBag.setAutoConvertToRecord(oldMyAutoConvert);
+      otherBag.setAutoConvertToRecord(oldOtherAutoConvert);
     }
   }
 

@@ -74,10 +74,10 @@ import com.orientechnologies.orient.object.serialization.OObjectLazyCustomSerial
  */
 public class OObjectProxyMethodHandler implements MethodHandler {
 
-  protected ODocument                         doc;
-  protected ProxyObject                       parentObject;
   protected final Map<String, ORecordVersion> loadedFields;
   protected final Set<ORID>                   orphans = new HashSet<ORID>();
+  protected ODocument                         doc;
+  protected ProxyObject                       parentObject;
 
   public OObjectProxyMethodHandler(ODocument iDocument) {
     doc = iDocument;
@@ -132,7 +132,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     final Class<?> selfClass = self.getClass();
 
     for (String fieldName : doc.fieldNames()) {
-      Object value = getValue(self, fieldName, false, null);
+      Object value = getValue(self, fieldName, false, null, true);
       if (value instanceof OObjectLazyMultivalueElement) {
         ((OObjectLazyMultivalueElement<?>) value).detach(nonProxiedInstance);
         if (nonProxiedInstance)
@@ -160,7 +160,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     for (String fieldName : doc.fieldNames()) {
       final Field field = OObjectEntitySerializer.getField(fieldName, selfClass);
       if (field != null) {
-        Object value = getValue(self, fieldName, false, null);
+        Object value = getValue(self, fieldName, false, null, true);
         if (value instanceof OObjectLazyMultivalueElement) {
           ((OObjectLazyMultivalueElement<?>) value).detachAll(nonProxiedInstance);
           if (nonProxiedInstance)
@@ -225,16 +225,23 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       ((OObjectProxyMethodHandler) parentObject.getHandler()).setDirty();
   }
 
-  public void updateLoadedFieldMap(Object proxiedObject) {
+  public void updateLoadedFieldMap(final Object proxiedObject, final boolean iReload) {
     final Set<String> fields = new HashSet<String>(loadedFields.keySet());
-    for (String key : fields) {
+    for (String fieldName : fields) {
       try {
-        Object value = getValue(proxiedObject, key, false, null);
-        if (value instanceof OObjectLazyMultivalueElement) {
-          if (((OObjectLazyMultivalueElement<?>) value).getUnderlying() != doc.field(key))
-            loadedFields.remove(key);
+        if (iReload) {
+          // FORCE POJO FIELD VALUE TO NULL
+          final Field f = OObjectEntitySerializer.getField(fieldName, proxiedObject.getClass());
+          OObjectEntitySerializer.setFieldValue(f, proxiedObject, null);
         } else {
-          loadedFields.put(key, doc.getRecordVersion().copy());
+          final Object value = getValue(proxiedObject, fieldName, false, null);
+
+          if (value instanceof OObjectLazyMultivalueElement) {
+            if (((OObjectLazyMultivalueElement<?>) value).getUnderlying() != doc.field(fieldName))
+              loadedFields.remove(fieldName);
+          } else {
+            loadedFields.put(fieldName, doc.getRecordVersion().copy());
+          }
         }
       } catch (IllegalArgumentException e) {
         throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
@@ -246,6 +253,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
         throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
       }
     }
+
+    if (iReload)
+      // RESET LOADED FIELDS
+      loadedFields.clear();
   }
 
   protected Object manageGetMethod(final Object self, final Method m, final Method proceed, final Object[] args)
@@ -277,14 +288,24 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     return value;
   }
 
-  @SuppressWarnings({ "rawtypes", "unchecked" })
   protected Object getValue(final Object self, final String fieldName, final boolean idOrVersionField, Object value)
       throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+    return getValue(self, fieldName, idOrVersionField, value, false);
+  }
+
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  protected Object getValue(final Object self, final String fieldName, final boolean idOrVersionField, Object value,
+      final boolean iIgnoreLoadedFields) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     if (!idOrVersionField) {
       if (value == null) {
-        final Object docValue = getDocFieldValue(self, fieldName);
-        if (docValue != null) {
-          value = lazyLoadField(self, fieldName, docValue, value);
+        if (!iIgnoreLoadedFields && loadedFields.containsKey(fieldName)
+            && loadedFields.get(fieldName).compareTo(doc.getRecordVersion()) == 0) {
+          return null;
+        } else {
+          final Object docValue = getDocFieldValue(self, fieldName);
+          if (docValue != null) {
+            value = lazyLoadField(self, fieldName, docValue, value);
+          }
         }
       } else {
         if (((value instanceof Collection<?> || value instanceof Map<?, ?>) && !(value instanceof OObjectLazyMultivalueElement))

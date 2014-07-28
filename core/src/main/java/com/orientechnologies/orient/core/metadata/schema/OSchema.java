@@ -34,8 +34,6 @@ public interface OSchema {
 
   public OClass createClass(final String iClassName, final OClass iSuperClass);
 
-  public OClass createClass(final String iClassName, final OClass iSuperClass, final OStorage.CLUSTER_TYPE iType);
-
   public OClass createClass(final String iClassName, final int iDefaultClusterId);
 
   public OClass createClass(final String iClassName, final OClass iSuperClass, final int iDefaultClusterId);
@@ -88,6 +86,7 @@ public interface OSchema {
    * 
    * @COMPATIBILITY 1.0rc1
    */
+  @Deprecated
   public <RET extends ODocumentWrapper> RET save();
 
   /**
@@ -97,4 +96,6 @@ public interface OSchema {
    *          Cluster name
    */
   public Set<OClass> getClassesRelyOnCluster(String iClusterName);
+
+	public OClass getClassByClusterId(int clusterId);
 }

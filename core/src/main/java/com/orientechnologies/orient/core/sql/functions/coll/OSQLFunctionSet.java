@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.core.sql.functions.coll;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,10 +27,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
  * This operator add an item in a set. The set doesn't accept duplicates, so adding multiple times the same value has no effect: the
@@ -41,19 +42,22 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
     super(NAME, 1, -1);
   }
 
-  public Object execute(final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParameters,
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    if (iParameters.length > 1)
+    if (iParams.length > 1)
       // IN LINE MODE
       context = new HashSet<Object>();
 
-    for (Object value : iParameters) {
+    for (Object value : iParams) {
       if (value != null) {
-        if (iParameters.length == 1 && context == null)
+        if (iParams.length == 1 && context == null)
           // AGGREGATION MODE (STATEFULL)
           context = new HashSet<Object>();
 
-        OMultiValue.add(context, value);
+        if (value instanceof ODocument)
+          context.add(value);
+        else
+          OMultiValue.add(context, value);
       }
     }
 
@@ -61,7 +65,7 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
   }
 
   public String getSyntax() {
-    return "Syntax error: set(<value>*)";
+    return "set(<value>*)";
   }
 
   public boolean aggregateResults(final Object[] configuredParameters) {
@@ -73,17 +77,6 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
     final Set<Object> res = context;
     context = null;
     return prepareResult(res);
-  }
-
-  protected Set<Object> prepareResult(Set<Object> res) {
-    if (returnDistributedResult()) {
-      final Map<String, Object> doc = new HashMap<String, Object>();
-      doc.put("node", getDistributedStorageId());
-      doc.put("context", context);
-      return Collections.<Object> singleton(doc);
-    } else {
-      return res;
-    }
   }
 
   @SuppressWarnings("unchecked")
@@ -99,5 +92,16 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
       result.addAll(chunk);
     }
     return result;
+  }
+
+  protected Set<Object> prepareResult(Set<Object> res) {
+    if (returnDistributedResult()) {
+      final Map<String, Object> doc = new HashMap<String, Object>();
+      doc.put("node", getDistributedStorageId());
+      doc.put("context", context);
+      return Collections.<Object> singleton(doc);
+    } else {
+      return res;
+    }
   }
 }

@@ -1,11 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -15,31 +11,25 @@ import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
-public class IndexTxAwareOneValueGetTest {
-  private final ODatabaseDocumentTx database;
+public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest  {
 
-  @Parameters(value = "url")
-  public IndexTxAwareOneValueGetTest(final String iURL) {
-    this.database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public IndexTxAwareOneValueGetTest(@Optional String url) {
+		super(url);
+	}
 
   @BeforeClass
-  public void beforeClass() {
-    database.open("admin", "admin");
+  public void beforeClass() throws Exception {
+    super.beforeClass();
 
     database.command(new OCommandSQL("create index idxTxAwareOneValueGetTest unique")).execute();
-    database.close();
-  }
-
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
   }
 
   @AfterMethod
-  public void afterMethod() {
+  public void afterMethod() throws Exception {
     database.command(new OCommandSQL("delete from index:idxTxAwareOneValueGetTest")).execute();
-    database.close();
+
+		super.afterMethod();
   }
 
   @Test

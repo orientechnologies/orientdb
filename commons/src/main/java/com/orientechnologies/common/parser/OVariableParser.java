@@ -26,6 +26,11 @@ import com.orientechnologies.common.log.OLogManager;
 public class OVariableParser {
   public static Object resolveVariables(final String iText, final String iBegin, final String iEnd,
       final OVariableParserListener iListener) {
+    return resolveVariables(iText, iBegin, iEnd, iListener, null);
+  }
+
+  public static Object resolveVariables(final String iText, final String iBegin, final String iEnd,
+      final OVariableParserListener iListener, final Object iDefaultValue) {
     if (iListener == null)
       throw new IllegalArgumentException("Missed VariableParserListener listener");
 
@@ -44,8 +49,10 @@ public class OVariableParser {
     Object resolved = iListener.resolve(var);
 
     if (resolved == null) {
-      OLogManager.instance().warn(null, "[OVariableParser.resolveVariables] Error on resolving property: %s", var);
-      // resolved = "null";
+      if (iDefaultValue == null)
+        OLogManager.instance().warn(null, "[OVariableParser.resolveVariables] Error on resolving property: %s", var);
+      else
+        resolved = iDefaultValue;
     }
 
     if (pre.length() > 0 || post.length() > 0) {

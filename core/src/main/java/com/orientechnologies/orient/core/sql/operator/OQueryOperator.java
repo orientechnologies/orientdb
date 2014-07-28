@@ -23,8 +23,11 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.math.*;
 
@@ -52,10 +55,6 @@ public abstract class OQueryOperator {
      * Used when this operator is equal the other one
      */
     EQUAL
-  }
-
-  public static enum INDEX_OPERATION_TYPE {
-    GET, COUNT
   }
 
   /**
@@ -109,8 +108,16 @@ public abstract class OQueryOperator {
    */
   public abstract OIndexReuseType getIndexReuseType(Object iLeft, Object iRight);
 
+  public OIndexSearchResult getOIndexSearchResult(OClass iSchemaClass, OSQLFilterCondition iCondition,
+      List<OIndexSearchResult> iIndexSearchResults, OCommandContext context) {
+
+    return null;
+  }
+
   /**
-   * Performs index query to calculate result of execution of given operator.
+   * Performs index query and returns index cursor which presents subset of index data which corresponds to result of execution of
+   * given operator.
+   * 
    * <p/>
    * Query that should be executed can be presented like: [[property0 = keyParam0] and [property1 = keyParam1] and] propertyN
    * operator keyParamN.
@@ -121,22 +128,17 @@ public abstract class OQueryOperator {
    * Multiple parameters are passed in to implement composite indexes support.
    * 
    * 
-   * 
-   * 
    * @param iContext
-   *          TODO
    * @param index
    *          Instance of index that will be used to calculate result of operator execution.
-   * @param iOperationType
-   *          TODO
    * @param keyParams
    *          Parameters of query is used to calculate query result.
-   * @param resultListener
-   * @param fetchLimit
-   * @return Result of execution of given operator or {@code null} if given index can not be used to calculate operator result.
+   * @param ascSortOrder
+   *          Data returned by cursors should be sorted in ascending or descending order.
+   * @return Cursor instance if index can be used to evaluate result of execution of given operator and <code>null</code> otherwise.
    */
-  public Object executeIndexQuery(OCommandContext iContext, OIndex<?> index, INDEX_OPERATION_TYPE iOperationType,
-      final List<Object> keyParams, final IndexResultListener resultListener, int fetchLimit) {
+  public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, final List<Object> keyParams,
+      boolean ascSortOrder) {
     return null;
   }
 
@@ -223,9 +225,5 @@ public abstract class OQueryOperator {
             + params + " params and " + keyParams.size() + " keys", +1);
       }
     }
-  }
-
-  public interface IndexResultListener extends OIndex.IndexValuesResultListener {
-    Object getResult();
   }
 }

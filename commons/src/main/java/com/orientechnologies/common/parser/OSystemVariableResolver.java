@@ -22,25 +22,29 @@ package com.orientechnologies.common.parser;
  * 
  */
 public class OSystemVariableResolver implements OVariableParserListener {
-	public static final String							VAR_BEGIN	= "${";
-	public static final String							VAR_END		= "}";
+  public static final String             VAR_BEGIN = "${";
+  public static final String             VAR_END   = "}";
 
-	private static OSystemVariableResolver	instance	= new OSystemVariableResolver();
+  private static OSystemVariableResolver instance  = new OSystemVariableResolver();
 
-	public static String resolveSystemVariables(final String iPath) {
-		if (iPath == null)
-			return null;
+  public static String resolveSystemVariables(final String iPath) {
+    return resolveSystemVariables(iPath, null);
+  }
 
-		return (String) OVariableParser.resolveVariables(iPath, VAR_BEGIN, VAR_END, instance);
-	}
+  public static String resolveSystemVariables(final String iPath, final String iDefault) {
+    if (iPath == null)
+      return iDefault;
 
-	public String resolve(final String variable) {
-		String resolved = System.getProperty(variable);
+    return (String) OVariableParser.resolveVariables(iPath, VAR_BEGIN, VAR_END, instance, iDefault);
+  }
 
-		if (resolved == null)
-			// TRY TO FIND THE VARIABLE BETWEEN SYSTEM'S ENVIRONMENT PROPERTIES
-			resolved = System.getenv(variable);
+  public String resolve(final String variable) {
+    String resolved = System.getProperty(variable);
 
-		return resolved;
-	}
+    if (resolved == null)
+      // TRY TO FIND THE VARIABLE BETWEEN SYSTEM'S ENVIRONMENT PROPERTIES
+      resolved = System.getenv(variable);
+
+    return resolved;
+  }
 }

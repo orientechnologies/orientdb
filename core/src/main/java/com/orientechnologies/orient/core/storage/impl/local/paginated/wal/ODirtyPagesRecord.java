@@ -3,16 +3,20 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OStringSerializer;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 
 /**
  * @author Andrey Lomakin
  * @since 5/1/13
  */
 public class ODirtyPagesRecord extends OAbstractWALRecord {
-  private Set<ODirtyPage> dirtyPages;
+  private Set<ODirtyPage>                 dirtyPages;
+  private final OBinarySerializer<String> stringSerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(
+                                                               OType.STRING);
 
   public ODirtyPagesRecord() {
   }
@@ -34,8 +38,8 @@ public class ODirtyPagesRecord extends OAbstractWALRecord {
       OLongSerializer.INSTANCE.serializeNative(dirtyPage.getPageIndex(), content, offset);
       offset += OLongSerializer.LONG_SIZE;
 
-      OStringSerializer.INSTANCE.serializeNative(dirtyPage.getFileName(), content, offset);
-      offset += OStringSerializer.INSTANCE.getObjectSize(dirtyPage.getFileName());
+      stringSerializer.serializeNative(dirtyPage.getFileName(), content, offset);
+      offset += stringSerializer.getObjectSize(dirtyPage.getFileName());
 
       OLongSerializer.INSTANCE.serializeNative(dirtyPage.getLsn().getSegment(), content, offset);
       offset += OLongSerializer.LONG_SIZE;
@@ -58,8 +62,8 @@ public class ODirtyPagesRecord extends OAbstractWALRecord {
       long pageIndex = OLongSerializer.INSTANCE.deserializeNative(content, offset);
       offset += OLongSerializer.LONG_SIZE;
 
-      String fileName = OStringSerializer.INSTANCE.deserializeNative(content, offset);
-      offset += OStringSerializer.INSTANCE.getObjectSize(fileName);
+      String fileName = stringSerializer.deserializeNative(content, offset);
+      offset += stringSerializer.getObjectSize(fileName);
 
       long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);
       offset += OLongSerializer.LONG_SIZE;
@@ -79,7 +83,7 @@ public class ODirtyPagesRecord extends OAbstractWALRecord {
 
     for (ODirtyPage dirtyPage : dirtyPages) {
       size += 3 * OLongSerializer.LONG_SIZE;
-      size += OStringSerializer.INSTANCE.getObjectSize(dirtyPage.getFileName());
+      size += stringSerializer.getObjectSize(dirtyPage.getFileName());
     }
 
     return size;

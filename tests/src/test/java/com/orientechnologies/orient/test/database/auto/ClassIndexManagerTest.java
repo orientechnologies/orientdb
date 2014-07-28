@@ -1,12 +1,22 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-import com.orientechnologies.common.collection.OCompositeKey;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -19,18 +29,16 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = { "index" })
-public class ClassIndexManagerTest {
-  private final ODatabaseDocumentTx database;
+public class ClassIndexManagerTest  extends DocumentDBBaseTest {
 
-  @Parameters(value = "url")
-  public ClassIndexManagerTest(final String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
-  }
+	@Parameters(value = "url")
+	public ClassIndexManagerTest(@Optional String url) {
+		super(url);
+	}
 
-  @BeforeClass
-  public void beforeClass() {
-    if (database.isClosed())
-      database.open("admin", "admin");
+	@BeforeClass
+  public void beforeClass() throws Exception {
+		super.beforeClass();
 
     final OSchema schema = database.getMetadata().getSchema();
     final OClass superClass = schema.createClass("classIndexManagerTestSuperClass");
@@ -76,30 +84,13 @@ public class ClassIndexManagerTest {
     database.close();
   }
 
-  @BeforeMethod
-  public void beforeMethod() {
-    if (database.isClosed())
-      database.open("admin", "admin");
-  }
-
   @AfterMethod
-  public void afterMethod() {
-    database.command(new OCommandSQL("delete from classIndexManagerTestClass")).execute();
-    database.command(new OCommandSQL("delete from classIndexManagerTestClassTwo")).execute();
-    database.command(new OCommandSQL("delete from classIndexManagerTestSuperClass")).execute();
-    database.close();
-  }
+  public void afterMethod() throws Exception {
+		database.command(new OCommandSQL("delete from classIndexManagerTestClass")).execute();
+		database.command(new OCommandSQL("delete from classIndexManagerTestClassTwo")).execute();
+		database.command(new OCommandSQL("delete from classIndexManagerTestSuperClass")).execute();
 
-  @AfterClass
-  public void afterClass() {
-    if (database.isClosed())
-      database.open("admin", "admin");
-    database.command(new OCommandSQL("drop class classIndexManagerTestClass")).execute();
-    database.command(new OCommandSQL("drop class classIndexManagerTestClassTwo")).execute();
-    database.command(new OCommandSQL("drop class classIndexManagerTestSuperClass")).execute();
-    database.getMetadata().getSchema().reload();
-    database.getLevel2Cache().clear();
-    database.close();
+		super.afterMethod();
   }
 
   public void testPropertiesCheckUniqueIndexDubKeysCreate() {

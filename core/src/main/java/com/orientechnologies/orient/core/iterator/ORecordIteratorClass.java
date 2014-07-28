@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
@@ -35,7 +36,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecordIteratorClusters<REC> {
   protected final OClass targetClass;
   protected boolean      polymorphic;
-  protected boolean      useCache;
 
   /**
    * This method is only to maintain the retro compatibility with TinkerPop BP 2.2
@@ -52,7 +52,14 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
 
   public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final String iClassName,
       final boolean iPolymorphic, final boolean iUseCache, final boolean iterateThroughTombstones) {
-    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones);
+    this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iUseCache, iterateThroughTombstones,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
+  }
+
+  public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final String iClassName,
+      final boolean iPolymorphic, final boolean iUseCache, final boolean iterateThroughTombstones,
+      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+    super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
 
     targetClass = database.getMetadata().getSchema().getClass(iClassName);
     if (targetClass == null)

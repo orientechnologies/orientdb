@@ -23,11 +23,14 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OTraverseRecordSetProcess extends OTraverseAbstractProcess<Iterator<OIdentifiable>> {
-  protected OIdentifiable record;
-  protected int           index = -1;
+  private final OTraversePath path;
+  protected OIdentifiable     record;
+  protected int               index = -1;
 
-  public OTraverseRecordSetProcess(final OTraverse iCommand, final Iterator<OIdentifiable> iTarget) {
+  public OTraverseRecordSetProcess(final OTraverse iCommand, final Iterator<OIdentifiable> iTarget, OTraversePath parentPath) {
     super(iCommand, iTarget);
+    this.path = parentPath.appendRecordSet();
+    command.getContext().push(this);
   }
 
   @SuppressWarnings("unchecked")
@@ -43,26 +46,17 @@ public class OTraverseRecordSetProcess extends OTraverseAbstractProcess<Iterator
           // EXTRACT THE FIELD CONTEXT
           Object fieldvalue = doc.field(doc.fieldNames()[0]);
           if (fieldvalue instanceof Collection<?>) {
-            final OTraverseRecordSetProcess subProcess = new OTraverseRecordSetProcess(command,
-                ((Collection<OIdentifiable>) fieldvalue).iterator());
-            final OIdentifiable subValue = subProcess.process();
-            if (subValue != null)
-              return subValue;
+            command.getContext().push(
+                new OTraverseRecordSetProcess(command, ((Collection<OIdentifiable>) fieldvalue).iterator(), getPath()));
 
           } else if (fieldvalue instanceof ODocument) {
-            final OTraverseRecordProcess subProcess = new OTraverseRecordProcess(command, (ODocument) rec);
-            final OIdentifiable subValue = subProcess.process();
-            if (subValue != null)
-              return subValue;
+            command.getContext().push(new OTraverseRecordProcess(command, (ODocument) rec, getPath()));
           }
-
         } else {
-          final OTraverseRecordProcess subProcess = new OTraverseRecordProcess(command, (ODocument) rec);
-
-          final OIdentifiable subValue = subProcess.process();
-          if (subValue != null)
-            return subValue;
+          command.getContext().push(new OTraverseRecordProcess(command, (ODocument) rec, getPath()));
         }
+
+        return null;
       }
     }
 
@@ -70,8 +64,8 @@ public class OTraverseRecordSetProcess extends OTraverseAbstractProcess<Iterator
   }
 
   @Override
-  public String getStatus() {
-    return null;
+  public OTraversePath getPath() {
+    return path;
   }
 
   @Override

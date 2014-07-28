@@ -18,15 +18,14 @@ package com.orientechnologies.orient.test.database.auto;
 import java.io.IOException;
 import java.util.*;
 
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.cache.OLevel2RecordCache.STRATEGY;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -45,24 +44,15 @@ import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
 
 @Test
-public class TransactionConsistencyTest {
+public class TransactionConsistencyTest extends DocumentDBBaseTest {
   protected ODatabaseDocumentTx database1;
   protected ODatabaseDocumentTx database2;
-
-  protected String              url;
 
   public static final String    NAME = "name";
 
   @Parameters(value = "url")
-  public TransactionConsistencyTest(@Optional(value = "memory:test") String iURL) throws IOException {
-    url = iURL;
-  }
-
-  @BeforeClass
-  public void init() {
-    ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
-    if ("memory:test".equals(database.getURL()))
-      database.create();
+  public TransactionConsistencyTest(@Optional String url) {
+    super(url);
   }
 
   @Test
@@ -155,7 +145,6 @@ public class TransactionConsistencyTest {
     // Create docA.
     ODocument vDocA_db1 = database1.newInstance();
     vDocA_db1.field(NAME, "docA");
-    vDocA_db1.unpin();
     database1.save(vDocA_db1);
 
     // Keep the IDs.
@@ -205,8 +194,6 @@ public class TransactionConsistencyTest {
   public void test3RollbackWithCopyCacheStrategy() throws IOException {
     database1 = new ODatabaseDocumentTx(url).open("admin", "admin");
     database2 = new ODatabaseDocumentTx(url).open("admin", "admin");
-
-    database1.getLevel2Cache().setStrategy(STRATEGY.COPY_RECORD);
 
     // Create docA.
     ODocument vDocA_db1 = database1.newInstance();
@@ -291,10 +278,7 @@ public class TransactionConsistencyTest {
   @SuppressWarnings("unchecked")
   @Test
   public void checkVersionsInConnectedDocuments() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
-
-    db.begin();
+    database.begin();
 
     ODocument kim = new ODocument("Profile").field("name", "Kim").field("surname", "Bauer");
     ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
@@ -306,40 +290,38 @@ public class TransactionConsistencyTest {
 
     jack.save();
 
-    db.commit();
+    database.commit();
 
-    db.close();
-    db.open("admin", "admin");
+    database.close();
+    database.open("admin", "admin");
 
-    ODocument loadedJack = db.load(jack.getIdentity());
+    ODocument loadedJack = database.load(jack.getIdentity());
 
     ORecordVersion jackLastVersion = loadedJack.getRecordVersion().copy();
-    db.begin();
+    database.begin();
     loadedJack.field("occupation", "agent");
     loadedJack.save();
-    db.commit();
+    database.commit();
     Assert.assertTrue(!jackLastVersion.equals(loadedJack.getRecordVersion()));
 
-    loadedJack = db.load(jack.getIdentity());
+    loadedJack = database.load(jack.getIdentity());
     Assert.assertTrue(!jackLastVersion.equals(loadedJack.getRecordVersion()));
 
-    db.close();
+    database.close();
 
-    db.open("admin", "admin");
-    loadedJack = db.load(jack.getIdentity());
+    database.open("admin", "admin");
+    loadedJack = database.load(jack.getIdentity());
     Assert.assertTrue(!jackLastVersion.equals(loadedJack.getRecordVersion()));
-    db.close();
+    database.close();
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void createLinkInTx() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
-
-    OClass profile = db.getMetadata().getSchema()
-        .createClass("MyProfile", db.addCluster("myprofile", OStorage.CLUSTER_TYPE.PHYSICAL));
-    OClass edge = db.getMetadata().getSchema().createClass("MyEdge", db.addCluster("myedge", OStorage.CLUSTER_TYPE.PHYSICAL));
+    OClass profile = database.getMetadata().getSchema()
+        .createClass("MyProfile", database.addCluster("myprofile"));
+    OClass edge = database.getMetadata().getSchema()
+        .createClass("MyEdge", database.addCluster("myedge"));
     profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
     profile.createProperty("in", OType.LINKSET, edge);
@@ -347,7 +329,7 @@ public class TransactionConsistencyTest {
     edge.createProperty("in", OType.LINK, profile);
     edge.createProperty("out", OType.LINK, profile);
 
-    db.begin();
+    database.begin();
 
     ODocument kim = new ODocument("MyProfile").field("name", "Kim").field("surname", "Bauer");
     ODocument teri = new ODocument("MyProfile").field("name", "Teri").field("surname", "Bauer");
@@ -362,98 +344,84 @@ public class TransactionConsistencyTest {
     kim.save();
     teri.save();
 
-    db.commit();
+    database.commit();
 
-    db.close();
+    database.close();
 
-    db.open("admin", "admin");
-    List<ODocument> result = db.command(new OSQLSynchQuery<ODocument>("select from MyProfile ")).execute();
+    database.open("admin", "admin");
+    List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from MyProfile ")).execute();
 
     Assert.assertTrue(result.size() != 0);
-
-    db.close();
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void loadRecordTest() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
+    database.begin();
 
-    try {
-      db.begin();
+    ODocument kim = new ODocument("Profile").field("name", "Kim").field("surname", "Bauer");
+    ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
+    ODocument jack = new ODocument("Profile").field("name", "Jack").field("surname", "Bauer");
+    ODocument chloe = new ODocument("Profile").field("name", "Chloe").field("surname", "O'Brien");
 
-      ODocument kim = new ODocument("Profile").field("name", "Kim").field("surname", "Bauer");
-      ODocument teri = new ODocument("Profile").field("name", "Teri").field("surname", "Bauer");
-      ODocument jack = new ODocument("Profile").field("name", "Jack").field("surname", "Bauer");
-      ODocument chloe = new ODocument("Profile").field("name", "Chloe").field("surname", "O'Brien");
+    ((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
+    ((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
+    ((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following")).add(jack);
+    ((HashSet<ODocument>) teri.field("following")).add(kim);
+    ((HashSet<ODocument>) chloe.field("following", new HashSet<ODocument>()).field("following")).add(jack);
+    ((HashSet<ODocument>) chloe.field("following")).add(teri);
+    ((HashSet<ODocument>) chloe.field("following")).add(kim);
 
-      ((HashSet<ODocument>) jack.field("following", new HashSet<ODocument>()).field("following")).add(kim);
-      ((HashSet<ODocument>) kim.field("following", new HashSet<ODocument>()).field("following")).add(teri);
-      ((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following")).add(jack);
-      ((HashSet<ODocument>) teri.field("following")).add(kim);
-      ((HashSet<ODocument>) chloe.field("following", new HashSet<ODocument>()).field("following")).add(jack);
-      ((HashSet<ODocument>) chloe.field("following")).add(teri);
-      ((HashSet<ODocument>) chloe.field("following")).add(kim);
+    int profileClusterId = database.getClusterIdByName("Profile");
 
-      int profileClusterId = db.getClusterIdByName("Profile");
+    jack.save();
+    Assert.assertEquals(jack.getIdentity().getClusterId(), profileClusterId);
 
-      jack.save();
-      Assert.assertEquals(jack.getIdentity().getClusterId(), profileClusterId);
+    kim.save();
+    Assert.assertEquals(kim.getIdentity().getClusterId(), profileClusterId);
 
-      kim.save();
-      Assert.assertEquals(kim.getIdentity().getClusterId(), profileClusterId);
+    teri.save();
+    Assert.assertEquals(teri.getIdentity().getClusterId(), profileClusterId);
 
-      teri.save();
-      Assert.assertEquals(teri.getIdentity().getClusterId(), profileClusterId);
+    chloe.save();
+    Assert.assertEquals(chloe.getIdentity().getClusterId(), profileClusterId);
 
-      chloe.save();
-      Assert.assertEquals(chloe.getIdentity().getClusterId(), profileClusterId);
+    database.commit();
 
-      db.commit();
+    Assert.assertEquals(jack.getIdentity().getClusterId(), profileClusterId);
+    Assert.assertEquals(kim.getIdentity().getClusterId(), profileClusterId);
+    Assert.assertEquals(teri.getIdentity().getClusterId(), profileClusterId);
+    Assert.assertEquals(chloe.getIdentity().getClusterId(), profileClusterId);
 
-      Assert.assertEquals(jack.getIdentity().getClusterId(), profileClusterId);
-      Assert.assertEquals(kim.getIdentity().getClusterId(), profileClusterId);
-      Assert.assertEquals(teri.getIdentity().getClusterId(), profileClusterId);
-      Assert.assertEquals(chloe.getIdentity().getClusterId(), profileClusterId);
+    database.close();
+    database.open("admin", "admin");
 
-      db.close();
-      db.open("admin", "admin");
-
-      ODocument loadedChloe = db.load(chloe.getIdentity());
-      System.out.println(loadedChloe);
-    } finally {
-      db.close();
-    }
+    ODocument loadedChloe = database.load(chloe.getIdentity());
   }
 
   @Test
   public void testTransactionPopulateDelete() {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
-
-    if (!db.getMetadata().getSchema().existsClass("MyFruit")) {
-      OClass fruitClass = db.getMetadata().getSchema().createClass("MyFruit");
+    if (!database.getMetadata().getSchema().existsClass("MyFruit")) {
+      OClass fruitClass = database.getMetadata().getSchema().createClass("MyFruit");
       fruitClass.createProperty("name", OType.STRING);
       fruitClass.createProperty("color", OType.STRING);
       fruitClass.createProperty("flavor", OType.STRING);
 
-      db.getMetadata().getSchema().getClass("MyFruit").getProperty("name").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-      db.getMetadata().getSchema().getClass("MyFruit").getProperty("color").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
-      db.getMetadata().getSchema().getClass("MyFruit").getProperty("flavor").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+      database.getMetadata().getSchema().getClass("MyFruit").getProperty("name").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+      database.getMetadata().getSchema().getClass("MyFruit").getProperty("color").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+      database.getMetadata().getSchema().getClass("MyFruit").getProperty("flavor").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     }
-    db.close();
+    database.close();
 
-    db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
+    database.open("admin", "admin");
     int chunkSize = 500;
     for (int initialValue = 0; initialValue < 10; initialValue++) {
       System.out.println("initialValue = " + initialValue);
-      Assert.assertEquals(db.countClusterElements("MyFruit"), 0);
+      Assert.assertEquals(database.countClusterElements("MyFruit"), 0);
 
       // do insert
       Vector<ODocument> v = new Vector<ODocument>();
-      db.begin();
+      database.begin();
       for (int i = initialValue * chunkSize; i < (initialValue * chunkSize) + chunkSize; i++) {
         ODocument d = new ODocument("MyFruit").field("name", "" + i).field("color", "FOO").field("flavor", "BAR" + i);
         d.save();
@@ -461,140 +429,131 @@ public class TransactionConsistencyTest {
 
       }
       System.out.println("populate commit");
-      db.commit();
+      database.commit();
 
       // do delete
-      db.begin();
+      database.begin();
       System.out.println("vector size = " + v.size());
       for (int i = 0; i < v.size(); i++) {
-        db.delete(v.elementAt(i));
+        database.delete(v.elementAt(i));
       }
       System.out.println("delete commit");
-      db.commit();
+      database.commit();
 
-      Assert.assertEquals(db.countClusterElements("MyFruit"), 0);
+      Assert.assertEquals(database.countClusterElements("MyFruit"), 0);
     }
 
-    db.close();
+    database.close();
   }
 
   @Test
   public void testConsistencyOnDelete() {
-    OGraphDatabase db = new OGraphDatabase(url);
-    db.open("admin", "admin");
+    final OrientGraph graph = new OrientGraph(url);
 
-    if (db.getVertexType("Foo") == null)
-      db.createVertexType("Foo");
+    if (graph.getVertexType("Foo") == null)
+      graph.createVertexType("Foo");
 
     try {
       // Step 1
       // Create several foo's
-      db.createVertex("Foo").field("address", "test1").save();
-      db.createVertex("Foo").field("address", "test2").save();
-      db.createVertex("Foo").field("address", "test3").save();
+      graph.addVertex("class:Foo", "address", "test1");
+      graph.addVertex("class:Foo", "address", "test2");
+      graph.addVertex("class:Foo", "address", "test3");
+      graph.commit();
 
       // just show what is there
-      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo"));
+      List<ODocument> result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select * from Foo"));
 
       for (ODocument d : result) {
         System.out.println("Vertex: " + d);
       }
 
       // remove those foos in a transaction
-      // Step 2
-      db.begin(TXTYPE.OPTIMISTIC);
-
       // Step 3a
-      result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test1'"));
+      result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test1'"));
       Assert.assertEquals(result.size(), 1);
       // Step 4a
-      db.removeVertex(result.get(0));
+      graph.removeVertex(graph.getVertex(result.get(0)));
 
       // Step 3b
-      result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test2'"));
+      result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test2'"));
       Assert.assertEquals(result.size(), 1);
       // Step 4b
-      db.removeVertex(result.get(0));
+      graph.removeVertex(graph.getVertex(result.get(0)));
 
       // Step 3c
-      result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test3'"));
+      result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select * from Foo where address = 'test3'"));
       Assert.assertEquals(result.size(), 1);
       // Step 4c
-      db.removeVertex(result.get(0));
+      graph.removeVertex(graph.getVertex(result.get(0)));
 
       // Step 6
-      db.commit();
+      graph.commit();
 
       // just show what is there
-      result = db.query(new OSQLSynchQuery<ODocument>("select * from Foo"));
+      result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select * from Foo"));
 
       for (ODocument d : result) {
         System.out.println("Vertex: " + d);
       }
 
     } finally {
-      db.close();
+      graph.shutdown();
     }
   }
 
   @Test
   public void deletesWithinTransactionArentWorking() throws IOException {
-    OGraphDatabase db = new OGraphDatabase(url);
-    db.open("admin", "admin");
-
+    OrientGraph graph = new OrientGraph(url);
+    graph.setUseLightweightEdges(false);
     try {
-      if (db.getVertexType("Foo") == null)
-        db.createVertexType("Foo");
-      if (db.getVertexType("Bar") == null)
-        db.createVertexType("Bar");
-      if (db.getVertexType("Sees") == null)
-        db.createEdgeType("Sees");
+      if (graph.getVertexType("Foo") == null)
+        graph.createVertexType("Foo");
+      if (graph.getVertexType("Bar") == null)
+        graph.createVertexType("Bar");
+      if (graph.getVertexType("Sees") == null)
+        graph.createEdgeType("Sees");
 
       // Commenting out the transaction will result in the test succeeding.
-      db.begin(TXTYPE.OPTIMISTIC);
-      ODocument foo = db.createVertex("Foo").field("prop", "test1").save();
+      ODocument foo = graph.addVertex("class:Foo", "prop", "test1").getRecord();
 
       // Comment out these two lines and the test will succeed. The issue appears to be related to an edge
       // connecting a deleted vertex during a transaction
-      ODocument bar = db.createVertex("Bar").field("prop", "test1").save();
-      ODocument sees = db.createEdge(foo, bar, "Sees");
-      db.commit();
+      ODocument bar = graph.addVertex("class:Bar", "prop", "test1").getRecord();
+      ODocument sees = graph.addEdge(null, graph.getVertex(foo), graph.getVertex(bar), "Sees").getRecord();
+      graph.commit();
 
-      List<ODocument> foos = db.query(new OSQLSynchQuery("select * from Foo"));
+      List<ODocument> foos = graph.getRawGraph().query(new OSQLSynchQuery("select * from Foo"));
       Assert.assertEquals(foos.size(), 1);
 
-      db.begin(TXTYPE.OPTIMISTIC);
-      db.removeVertex(foos.get(0));
-      db.commit();
-
+      graph.removeVertex(graph.getVertex(foos.get(0)));
     } finally {
-      db.close();
+      graph.shutdown();
     }
   }
 
   public void TransactionRollbackConstistencyTest() {
     System.out.println("**************************TransactionRollbackConsistencyTest***************************************");
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
-    db.open("admin", "admin");
-    OClass vertexClass = db.getMetadata().getSchema().createClass("TRVertex");
-    OClass edgeClass = db.getMetadata().getSchema().createClass("TREdge");
+
+    OClass vertexClass = database.getMetadata().getSchema().createClass("TRVertex");
+    OClass edgeClass = database.getMetadata().getSchema().createClass("TREdge");
     vertexClass.createProperty("in", OType.LINKSET, edgeClass);
     vertexClass.createProperty("out", OType.LINKSET, edgeClass);
     edgeClass.createProperty("in", OType.LINK, vertexClass);
     edgeClass.createProperty("out", OType.LINK, vertexClass);
 
-    OClass personClass = db.getMetadata().getSchema().createClass("TRPerson", vertexClass);
+    OClass personClass = database.getMetadata().getSchema().createClass("TRPerson", vertexClass);
     personClass.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);
     personClass.createProperty("surname", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     personClass.createProperty("version", OType.INTEGER);
 
-    db.getMetadata().getSchema().save();
-    db.close();
+    database.getMetadata().getSchema().save();
+    database.close();
 
     final int cnt = 4;
 
-    db.open("admin", "admin");
-    db.begin();
+    database.open("admin", "admin");
+    database.begin();
     Vector inserted = new Vector();
 
     for (int i = 0; i < cnt; i++) {
@@ -616,9 +575,9 @@ public class TransactionConsistencyTest {
       inserted.add(person);
       person.save();
     }
-    db.commit();
+    database.commit();
 
-    final List<ODocument> result1 = db.command(new OCommandSQL("select from TRPerson")).execute();
+    final List<ODocument> result1 = database.command(new OCommandSQL("select from TRPerson")).execute();
     Assert.assertNotNull(result1);
     Assert.assertEquals(result1.size(), cnt);
     System.out.println("Before transaction commit");
@@ -626,7 +585,7 @@ public class TransactionConsistencyTest {
       System.out.println(d);
 
     try {
-      db.begin();
+      database.begin();
       Vector inserted2 = new Vector();
 
       for (int i = 0; i < cnt; i++) {
@@ -659,51 +618,46 @@ public class TransactionConsistencyTest {
       ((ODocument) inserted.elementAt(cnt - 1)).delete();
       ((ODocument) inserted.elementAt(cnt - 2)).getRecordVersion().reset();
       ((ODocument) inserted.elementAt(cnt - 2)).save();
-      db.commit();
+      database.commit();
       Assert.assertTrue(false);
     } catch (OResponseProcessingException e) {
       Assert.assertTrue(e.getCause() instanceof OConcurrentModificationException);
-      db.rollback();
+      database.rollback();
     } catch (OConcurrentModificationException e) {
       Assert.assertTrue(true);
-      db.rollback();
+      database.rollback();
     }
 
-    final List<ODocument> result2 = db.command(new OCommandSQL("select from TRPerson")).execute();
+    final List<ODocument> result2 = database.command(new OCommandSQL("select from TRPerson")).execute();
     Assert.assertNotNull(result2);
     System.out.println("After transaction commit failure/rollback");
     for (ODocument d : result2)
       System.out.println(d);
     Assert.assertEquals(result2.size(), cnt);
 
-    db.close();
     System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
   }
 
   @Test
   public void testQueryIsolation() {
-    OGraphDatabase db = new OGraphDatabase(url);
-    db.open("admin", "admin");
-
+    OrientGraph graph = new OrientGraph(url);
     try {
-      db.begin();
-
-      ODocument v1 = db.createVertex();
-      v1.field("purpose", "testQueryIsolation");
-      v1.save();
+      graph.addVertex(null, "purpose", "testQueryIsolation");
 
       if (!url.startsWith("remote")) {
-        List<OIdentifiable> result = db.query(new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
+        List<OIdentifiable> result = graph.getRawGraph().query(
+            new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
         Assert.assertEquals(result.size(), 1);
       }
 
-      db.commit();
+      graph.commit();
 
-      List<OIdentifiable> result = db.query(new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
+      List<OIdentifiable> result = graph.getRawGraph().query(
+          new OSQLSynchQuery<Object>("select from V where purpose = 'testQueryIsolation'"));
       Assert.assertEquals(result.size(), 1);
 
     } finally {
-      db.close();
+      graph.shutdown();
     }
   }
 

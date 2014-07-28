@@ -33,9 +33,10 @@ public class OSQLMethodJavaType extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
-    if (ioResult == null)
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
+    if (ioResult == null) {
       return null;
+    }
     return ioResult.getClass().getName();
   }
 }

@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -25,6 +23,8 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+
+import java.util.Map;
 
 /**
  * SQL CREATE CLASS command: Creates a new property in the target class.
@@ -138,12 +138,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseRecord database = getDatabase();
-    if (database.getMetadata().getSchema().existsClass(className))
-      throw new OCommandExecutionException("Class " + className + " already exists");
-
-    final OClassImpl sourceClass = (OClassImpl) ((OSchemaProxy) database.getMetadata().getSchema()).createClassInternal(className,
-        superClass, clusterIds);
-    sourceClass.saveInternal();
+    database.getMetadata().getSchema().createClass(className, superClass, clusterIds);
 
     return database.getMetadata().getSchema().getClasses().size();
   }

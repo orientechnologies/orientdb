@@ -20,12 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -37,41 +32,28 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.whiz.Collector;
 
 @Test(groups = { "index" })
-public class CollectionIndexTest {
-  private final OObjectDatabaseTx database;
+public class CollectionIndexTest extends ObjectDBBaseTest {
 
-  @Parameters(value = "url")
-  public CollectionIndexTest(final String iURL) {
-    database = new OObjectDatabaseTx(iURL);
-  }
+	@Parameters(value = "url")
+	public CollectionIndexTest(@Optional String url) {
+		super(url);
+	}
 
-  @BeforeClass
+	@BeforeClass
   public void setupSchema() {
-    database.open("admin", "admin");
+		database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.whiz");
+
     final OClass collector = database.getMetadata().getSchema().getClass("Collector");
     collector.createProperty("id", OType.STRING);
     collector.createProperty("stringCollection", OType.EMBEDDEDLIST, OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
     database.getMetadata().getSchema().save();
-    database.close();
   }
-
-  @AfterClass
-  public void destroySchema() {
-    database.open("admin", "admin");
-    database.getMetadata().getSchema().dropClass("Collector");
-    database.close();
-  }
-
-  @BeforeMethod
-  public void beforeMethod() {
-    database.open("admin", "admin");
-  }
-
   @AfterMethod
   public void afterMethod() throws Exception {
     database.command(new OCommandSQL("delete from Collector")).execute();
-    database.close();
+
+		super.afterMethod();
   }
 
   public void testIndexCollection() {

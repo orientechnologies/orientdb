@@ -16,16 +16,14 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.common.util.OSizeable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Transforms current value in a List.
@@ -42,31 +40,37 @@ public class OSQLMethodAsList extends OAbstractSQLMethod {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
     if (ioResult instanceof List)
-      // ALREADY A LIST
+    // ALREADY A LIST
+    {
       return ioResult;
+    }
 
     if (ioResult == null)
-      // NULL VALUE, RETURN AN EMPTY SET
+    // NULL VALUE, RETURN AN EMPTY SET
+    {
       return new ArrayList<Object>();
+    }
 
-    if (ioResult instanceof Collection<?>)
+    if (ioResult instanceof Collection<?>) {
       return new ArrayList<Object>((Collection<Object>) ioResult);
-    else if (ioResult instanceof Iterable<?>)
+    } else if (ioResult instanceof Iterable<?>) {
       ioResult = ((Iterable<?>) ioResult).iterator();
+    }
 
     if (ioResult instanceof Iterator<?>) {
       final List<Object> list = ioResult instanceof OSizeable ? new ArrayList<Object>(((OSizeable) ioResult).size())
           : new ArrayList<Object>();
 
-      for (Iterator<Object> iter = (Iterator<Object>) ioResult; iter.hasNext();)
+      for (Iterator<Object> iter = (Iterator<Object>) ioResult; iter.hasNext();) {
         list.add(iter.next());
+      }
       return list;
     }
 
     // SINGLE ITEM: ADD IT AS UNIQUE ITEM
-    final Set<Object> list = new HashSet<Object>();
+    final List<Object> list = new ArrayList<Object>();
     list.add(ioResult);
     return list;
   }

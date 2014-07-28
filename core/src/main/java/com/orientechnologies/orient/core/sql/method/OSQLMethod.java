@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.method;
 
-import java.text.ParseException;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -60,17 +58,20 @@ public interface OSQLMethod extends Comparable<OSQLMethod> {
   /**
    * Process a record.
    * 
+   * 
+   * 
+   * @param iThis
    * @param iCurrentRecord
    *          : current record
    * @param iContext
    *          execution context
    * @param ioResult
    *          : field value
-   * @param iMethodParams
+   * @param iParams
    *          : function parameters, number is ensured to be within minParams and maxParams.
    * @return evaluation result
    */
-  Object execute(final OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams)
-      throws ParseException;
+  Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams);
 
+  boolean evaluateParameters();
 }

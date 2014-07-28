@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  */
 @Test(enabled = false)
 public class WriteAheadLogConcurrencyTest {
-  private OWriteAheadLog                                                 writeAheadLog;
+  private ODiskWriteAheadLog writeAheadLog;
   private File                                                           testDir;
   private NavigableMap<OLogSequenceNumber, WriteAheadLogTest.TestRecord> recordConcurrentMap = new ConcurrentSkipListMap<OLogSequenceNumber, WriteAheadLogTest.TestRecord>();
   private ExecutorService                                                writerExecutor;
@@ -51,7 +51,7 @@ public class WriteAheadLogConcurrencyTest {
     when(localPaginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
     when(localPaginatedStorage.getName()).thenReturn("WriteAheadLogConcurrencyTest");
 
-    writeAheadLog = new OWriteAheadLog(200, 500, OWALPage.PAGE_SIZE * 800, 100L * 1024L * 1024L * 1024L, localPaginatedStorage);
+    writeAheadLog = new ODiskWriteAheadLog(200, 500, OWALPage.PAGE_SIZE * 800, 100L * 1024L * 1024L * 1024L, localPaginatedStorage);
 
     writerExecutor = Executors.newCachedThreadPool();
   }
@@ -101,12 +101,12 @@ public class WriteAheadLogConcurrencyTest {
 
   private static final class ConcurrentWriter implements Callable<Void> {
     private final CountDownLatch                                                 startLatch;
-    private final OWriteAheadLog                                                 writeAheadLog;
+    private final ODiskWriteAheadLog writeAheadLog;
     private final NavigableMap<OLogSequenceNumber, WriteAheadLogTest.TestRecord> recordConcurrentMap;
     private final Random                                                         random;
     private final AtomicReference<OLogSequenceNumber>                            lastCheckpoint;
 
-    private ConcurrentWriter(long seed, CountDownLatch startLatch, OWriteAheadLog writeAheadLog,
+    private ConcurrentWriter(long seed, CountDownLatch startLatch, ODiskWriteAheadLog writeAheadLog,
         NavigableMap<OLogSequenceNumber, WriteAheadLogTest.TestRecord> recordConcurrentMap,
         AtomicReference<OLogSequenceNumber> lastCheckpoint) {
       this.lastCheckpoint = lastCheckpoint;

@@ -15,15 +15,16 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.WeakHashMap;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Factory to create high-level ODatabase instances. The global instance is managed by Orient class.
@@ -96,21 +97,42 @@ public class ODatabaseFactory {
   }
 
   public ODatabaseDocumentTx createDatabase(final String iType, final String url) {
-    if ("graph".equals(iType))
-      return new OGraphDatabase(url);
-    else
-      return new ODatabaseDocumentTx(url);
-  }
+    if (iType.equals("graph"))
+      return new ODatabaseDocumentTx(url) {
+        @Override
+        public <THISDB extends ODatabase> THISDB create() {
+          final THISDB db = super.create();
 
-  public ODatabaseDocumentTx createObjectDatabase(final String url) {
+          checkSchema((ODatabaseComplex<?>) db);
+
+          return db;
+        }
+
+      };
+
     return new ODatabaseDocumentTx(url);
   }
 
-  public OGraphDatabase createGraphDatabase(final String url) {
-    return new OGraphDatabase(url);
-  }
+  public void checkSchema(final ODatabaseComplex<?> iDatabase) {
+    // FORCE NON DISTRIBUTION ON CREATION
+    OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+    try {
 
-  public ODatabaseDocumentTx createDocumentDatabase(final String url) {
-    return new ODatabaseDocumentTx(url);
+      iDatabase.getMetadata().getSchema().getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+
+      OClass vertexBaseClass = iDatabase.getMetadata().getSchema().getClass("V");
+      OClass edgeBaseClass = iDatabase.getMetadata().getSchema().getClass("E");
+
+      if (vertexBaseClass == null) {
+        // CREATE THE META MODEL USING THE ORIENT SCHEMA
+        vertexBaseClass = iDatabase.getMetadata().getSchema().createClass("V");
+        vertexBaseClass.setOverSize(2);
+      }
+
+      if (edgeBaseClass == null)
+        iDatabase.getMetadata().getSchema().createClass("E");
+    } finally {
+      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+    }
   }
 }

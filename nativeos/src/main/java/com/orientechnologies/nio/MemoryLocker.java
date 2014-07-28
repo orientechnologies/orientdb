@@ -95,7 +95,7 @@ public class MemoryLocker {
 
     } catch (UnsatisfiedLinkError e) {
       OLogManager.instance().config(null,
-          "[MemoryLocker.lockMemory] Cannot lock virtual memory. It seems that you OS (%s) doesn't support this feature",
+          "[MemoryLocker.lockMemory] Cannot lock virtual memory. It seems that your OS (%s) doesn't support this feature",
           System.getProperty("os.name"));
     }
   }

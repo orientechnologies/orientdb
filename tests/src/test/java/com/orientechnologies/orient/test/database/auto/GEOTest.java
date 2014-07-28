@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -34,18 +35,15 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = "sql-select")
-public class GEOTest {
-  private ODatabaseDocument database;
+public class GEOTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
-  public GEOTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public GEOTest(@Optional String url) {
+    super(url);
   }
 
   @Test
   public void geoSchema() {
-    database.open("admin", "admin");
-
     final OClass mapPointClass = database.getMetadata().getSchema().createClass("MapPoint");
     mapPointClass.createProperty("x", OType.DOUBLE).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     mapPointClass.createProperty("y", OType.DOUBLE).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
@@ -55,27 +53,19 @@ public class GEOTest {
 
     final Set<OIndex<?>> yIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
     Assert.assertEquals(yIndexes.size(), 1);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "geoSchema")
   public void checkGeoIndexes() {
-    database.open("admin", "admin");
-
     final Set<OIndex<?>> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
     Assert.assertEquals(xIndexes.size(), 1);
 
     final Set<OIndex<?>> yIndexDefinitions = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
     Assert.assertEquals(yIndexDefinitions.size(), 1);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "checkGeoIndexes")
   public void queryCreatePoints() {
-    database.open("admin", "admin");
-
     ODocument point = new ODocument();
 
     for (int i = 0; i < 10000; ++i) {
@@ -87,14 +77,10 @@ public class GEOTest {
 
       point.save();
     }
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "queryCreatePoints")
   public void queryDistance() {
-    database.open("admin", "admin");
-
     Assert.assertEquals(database.countClass("MapPoint"), 10000);
 
     List<ODocument> result = database.command(
@@ -107,13 +93,10 @@ public class GEOTest {
       Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
     }
 
-    database.close();
   }
 
   @Test(dependsOnMethods = "queryCreatePoints")
   public void queryDistanceOrdered() {
-    database.open("admin", "admin");
-
     Assert.assertEquals(database.countClass("MapPoint"), 10000);
 
     // MAKE THE FIRST RECORD DIRTY TO TEST IF DISTANCE JUMP IT
@@ -139,39 +122,14 @@ public class GEOTest {
         Assert.assertTrue(((Double) d.field("distance")).compareTo(lastDistance) <= 0);
       lastDistance = d.field("distance");
     }
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "queryCreatePoints")
-  public void spatialRange() {
-    database.open("admin", "admin");
-
-    final Set<OIndex<?>> xIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("x").getIndexes();
-    Assert.assertEquals(xIndexes.size(), 1);
-
-    final Set<OIndex<?>> yIndexes = database.getMetadata().getSchema().getClass("MapPoint").getProperty("y").getIndexes();
-    Assert.assertEquals(yIndexes.size(), 1);
-
-    final Collection<OIdentifiable> xResult = xIndexes.iterator().next().getValuesBetween(52.20472, 82.20472);
-    final Collection<OIdentifiable> yResult = yIndexes.iterator().next().getValuesBetween(0.14056, 30.14056);
-
-    xResult.retainAll(yResult);
-
-    Assert.assertTrue(xResult.size() != 0);
-
-    database.close();
-  }
-
-  @Test(dependsOnMethods = "spatialRange")
   public void testQueryIndexWithConversionDouble2Float() {
-    database.open("admin", "admin");
-
     List<ODocument> result = database.command(new OCommandSQL("select from index:MapPoint.x where key between 150.00 and 155.45"))
         .execute();
     Assert.assertTrue(result.size() > 0);
 
-    database.close();
   }
 
 }

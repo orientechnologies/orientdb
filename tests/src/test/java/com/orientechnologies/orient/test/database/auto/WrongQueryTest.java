@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -27,20 +28,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 
 @Test(groups = "query", sequential = true)
-public class WrongQueryTest {
-  private ODatabaseDocument database;
+public class WrongQueryTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
-  public WrongQueryTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public WrongQueryTest(@Optional String url) {
+    super(url);
   }
 
-  @Test
-  public void queryOpen() {
-    database.open("admin", "admin");
-  }
-
-  @Test(dependsOnMethods = "queryOpen")
   public void queryFieldOperatorNotSupported() {
     try {
       database.command(new OSQLSynchQuery<ODocument>("select * from Account where name.not() like 'G%'")).execute();
@@ -49,10 +43,5 @@ public class WrongQueryTest {
       Assert.assertTrue(e.getCause() instanceof OQueryParsingException);
     } catch (OQueryParsingException e) {
     }
-  }
-
-  @Test(dependsOnMethods = "queryFieldOperatorNotSupported")
-  public void queryEnd() {
-    database.close();
   }
 }

@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
  */
 public class OSQLMethodAsSet extends OAbstractSQLMethod {
 
-  public static final String NAME = "asSet";
+  public static final String NAME = "asset";
 
   public OSQLMethodAsSet() {
     super(NAME);
@@ -40,26 +40,32 @@ public class OSQLMethodAsSet extends OAbstractSQLMethod {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Object execute(OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iMethodParams) {
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
     if (ioResult instanceof Set)
-      // ALREADY A SET
+    // ALREADY A SET
+    {
       return ioResult;
+    }
 
     if (ioResult == null)
-      // NULL VALUE, RETURN AN EMPTY SET
+    // NULL VALUE, RETURN AN EMPTY SET
+    {
       return new HashSet<Object>();
+    }
 
-    if (ioResult instanceof Collection<?>)
+    if (ioResult instanceof Collection<?>) {
       return new HashSet<Object>((Collection<Object>) ioResult);
-    else if (ioResult instanceof Iterable<?>)
+    } else if (ioResult instanceof Iterable<?>) {
       ioResult = ((Iterable<?>) ioResult).iterator();
+    }
 
     if (ioResult instanceof Iterator<?>) {
       final Set<Object> set = ioResult instanceof OSizeable ? new HashSet<Object>(((OSizeable) ioResult).size())
           : new HashSet<Object>();
 
-      for (Iterator<Object> iter = (Iterator<Object>) ioResult; iter.hasNext();)
+      for (Iterator<Object> iter = (Iterator<Object>) ioResult; iter.hasNext(); ) {
         set.add(iter.next());
+      }
       return set;
     }
 

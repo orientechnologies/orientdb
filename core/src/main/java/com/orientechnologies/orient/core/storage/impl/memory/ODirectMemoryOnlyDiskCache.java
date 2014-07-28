@@ -1,0 +1,396 @@
+package com.orientechnologies.orient.core.storage.impl.memory;
+
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+/**
+ * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @since 6/24/14
+ */
+public class ODirectMemoryOnlyDiskCache implements ODiskCache {
+  private final Lock                            metadataLock  = new ReentrantLock();
+
+  private final Map<String, Long>               fileNameIdMap = new HashMap<String, Long>();
+  private final Map<Long, String>               fileIdNameMap = new HashMap<Long, String>();
+
+  private final ConcurrentMap<Long, MemoryFile> files         = new ConcurrentHashMap<Long, MemoryFile>();
+
+  private long                                  counter       = 0;
+
+  private final int                             pageSize;
+
+  public ODirectMemoryOnlyDiskCache(int pageSize) {
+    this.pageSize = pageSize;
+  }
+
+  @Override
+  public long openFile(String fileName) throws IOException {
+    metadataLock.lock();
+    try {
+      Long fileId = fileNameIdMap.get(fileName);
+
+      if (fileId == null) {
+        final long id = counter++;
+
+        files.put(id, new MemoryFile(id, pageSize));
+        fileNameIdMap.put(fileName, id);
+
+        fileId = id;
+
+        fileIdNameMap.put(fileId, fileName);
+      }
+
+      return fileId;
+    } finally {
+      metadataLock.unlock();
+    }
+  }
+
+  @Override
+  public void openFile(long fileId) throws IOException {
+    final MemoryFile memoryFile = files.get(fileId);
+    if (memoryFile == null)
+      throw new OStorageException("File with id " + fileId + " does not exist");
+  }
+
+  @Override
+  public void openFile(String fileName, long fileId) throws IOException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages) throws IOException {
+    final MemoryFile memoryFile = getFile(fileId);
+    final OCacheEntry cacheEntry = memoryFile.loadPage(pageIndex);
+
+    synchronized (cacheEntry) {
+      cacheEntry.incrementUsages();
+    }
+
+    return cacheEntry;
+  }
+
+  @Override
+  public void pinPage(OCacheEntry cacheEntry) throws IOException {
+  }
+
+  @Override
+  public void loadPinnedPage(OCacheEntry cacheEntry) throws IOException {
+    synchronized (cacheEntry) {
+      cacheEntry.incrementUsages();
+    }
+  }
+
+  @Override
+  public OCacheEntry allocateNewPage(long fileId) throws IOException {
+    final MemoryFile memoryFile = getFile(fileId);
+    final OCacheEntry cacheEntry = memoryFile.addNewPage();
+
+    synchronized (cacheEntry) {
+      cacheEntry.incrementUsages();
+    }
+
+    return cacheEntry;
+  }
+
+  private MemoryFile getFile(long fileId) {
+    final MemoryFile memoryFile = files.get(fileId);
+
+    if (memoryFile == null)
+      throw new OStorageException("File with id " + fileId + " does not exist");
+
+    return memoryFile;
+  }
+
+  @Override
+  public void release(OCacheEntry cacheEntry) {
+    synchronized (cacheEntry) {
+      cacheEntry.decrementUsages();
+    }
+  }
+
+  @Override
+  public long getFilledUpTo(long fileId) throws IOException {
+    final MemoryFile memoryFile = getFile(fileId);
+    return memoryFile.size();
+  }
+
+  @Override
+  public void flushFile(long fileId) throws IOException {
+  }
+
+  @Override
+  public void closeFile(long fileId) throws IOException {
+  }
+
+  @Override
+  public void closeFile(long fileId, boolean flush) throws IOException {
+  }
+
+  @Override
+  public void deleteFile(long fileId) throws IOException {
+    metadataLock.lock();
+    try {
+      final String fileName = fileIdNameMap.remove(fileId);
+      if (fileName == null)
+        return;
+
+      fileNameIdMap.remove(fileName);
+      MemoryFile file = files.remove(fileId);
+      if (file != null)
+        file.clear();
+    } finally {
+      metadataLock.unlock();
+    }
+  }
+
+  @Override
+  public void renameFile(long fileId, String oldFileName, String newFileName) throws IOException {
+    metadataLock.lock();
+    try {
+      String fileName = fileIdNameMap.get(fileId);
+      if (fileName == null)
+        return;
+
+      fileNameIdMap.remove(fileName);
+
+      fileName = newFileName + fileName.substring(fileName.lastIndexOf(oldFileName) + fileName.length());
+
+      fileIdNameMap.put(fileId, fileName);
+      fileNameIdMap.put(fileName, fileId);
+    } finally {
+      metadataLock.unlock();
+    }
+  }
+
+  @Override
+  public void truncateFile(long fileId) throws IOException {
+    final MemoryFile file = getFile(fileId);
+    file.clear();
+  }
+
+  @Override
+  public boolean wasSoftlyClosed(long fileId) throws IOException {
+    return true;
+  }
+
+  @Override
+  public void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException {
+  }
+
+  @Override
+  public void setSoftlyClosed(boolean softlyClosed) throws IOException {
+  }
+
+  @Override
+  public void flushBuffer() throws IOException {
+  }
+
+  @Override
+  public void close() throws IOException {
+  }
+
+  @Override
+  public void delete() throws IOException {
+    metadataLock.lock();
+    try {
+      for (MemoryFile file : files.values())
+        file.clear();
+
+      files.clear();
+      fileIdNameMap.clear();
+      fileNameIdMap.clear();
+    } finally {
+      metadataLock.unlock();
+    }
+  }
+
+  @Override
+  public OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener) {
+    return new OPageDataVerificationError[0];
+  }
+
+  @Override
+  public Set<ODirtyPage> logDirtyPagesTable() throws IOException {
+    return Collections.emptySet();
+  }
+
+  @Override
+  public boolean isOpen(long fileId) {
+    return files.get(fileId) != null;
+  }
+
+  @Override
+  public boolean exists(String name) {
+    metadataLock.lock();
+    try {
+      final Long fileId = fileNameIdMap.get(name);
+      if (fileId == null)
+        return false;
+
+      final MemoryFile memoryFile = files.get(fileId);
+      return memoryFile != null;
+    } finally {
+      metadataLock.unlock();
+    }
+  }
+
+	@Override
+	public boolean exists(long fileId) {
+		metadataLock.lock();
+		try {
+			final MemoryFile memoryFile = files.get(fileId);
+			return memoryFile != null;
+		} finally {
+			metadataLock.unlock();
+		}
+	}
+
+	@Override
+  public String fileNameById(long fileId) {
+    metadataLock.lock();
+    try {
+      return fileIdNameMap.get(fileId);
+    } finally {
+      metadataLock.unlock();
+    }
+  }
+
+  @Override
+  public void lock() throws IOException {
+  }
+
+  @Override
+  public void unlock() throws IOException {
+  }
+
+  private static final class MemoryFile {
+    private final long                                     id;
+
+    private final int                                      pageSize;
+    private final ReadWriteLock                            clearLock = new ReentrantReadWriteLock();
+
+    private final ConcurrentSkipListMap<Long, OCacheEntry> content   = new ConcurrentSkipListMap<Long, OCacheEntry>();
+
+    private MemoryFile(long id, int pageSize) {
+      this.id = id;
+      this.pageSize = pageSize;
+    }
+
+    private OCacheEntry loadPage(long index) {
+      clearLock.readLock().lock();
+      try {
+        OCacheEntry cacheEntry = content.get(index);
+        if (cacheEntry != null)
+          return cacheEntry;
+
+        ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize]);
+        OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
+        cachePointer.incrementReferrer();
+
+        cacheEntry = new OCacheEntry(id, index, cachePointer, false);
+
+        OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
+
+        if (oldCacheEntry != null) {
+          cacheEntry.getCachePointer().decrementReferrer();
+          cacheEntry = oldCacheEntry;
+        }
+
+        return cacheEntry;
+      } finally {
+        clearLock.readLock().unlock();
+      }
+    }
+
+    private OCacheEntry addNewPage() {
+      clearLock.readLock().lock();
+      try {
+        OCacheEntry cacheEntry;
+
+        long index = -1;
+        do {
+          if (content.isEmpty())
+            index = 0;
+          else {
+            long lastIndex = content.lastKey();
+            index = lastIndex + 1;
+          }
+
+          final ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize]);
+          final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
+          cachePointer.incrementReferrer();
+
+          cacheEntry = new OCacheEntry(id, index, cachePointer, false);
+
+          OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
+
+          if (oldCacheEntry != null) {
+            cacheEntry.getCachePointer().decrementReferrer();
+            index = -1;
+          }
+        } while (index < 0);
+
+        return cacheEntry;
+      } finally {
+        clearLock.readLock().unlock();
+      }
+    }
+
+    private long size() {
+      clearLock.readLock().lock();
+      try {
+        if (content.isEmpty())
+          return 0;
+
+        try {
+          return content.lastKey() + 1;
+        } catch (NoSuchElementException e) {
+          return 0;
+        }
+
+      } finally {
+        clearLock.readLock().unlock();
+      }
+    }
+
+    private void clear() {
+      boolean thereAreNotReleased = false;
+
+      clearLock.writeLock().lock();
+      try {
+        for (OCacheEntry entry : content.values()) {
+          synchronized (entry) {
+            thereAreNotReleased |= entry.getUsagesCount() > 0;
+            entry.getCachePointer().decrementReferrer();
+          }
+        }
+
+        content.clear();
+      } finally {
+        clearLock.writeLock().unlock();
+      }
+
+      if (thereAreNotReleased)
+        throw new IllegalStateException("Some cache entries were not released. Storage may be in invalid state.");
+    }
+  }
+}

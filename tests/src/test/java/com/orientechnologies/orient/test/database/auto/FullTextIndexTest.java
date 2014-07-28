@@ -22,6 +22,7 @@ import java.util.Random;
 import java.util.Set;
 
 import org.testng.Assert;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -30,9 +31,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 @Test(groups = { "index" })
-public class FullTextIndexTest {
+public class FullTextIndexTest extends DocumentDBBaseTest {
   private static final int    TOT  = 1000;
-  private ODatabaseDocumentTx database;
   private static final String TEXT = "Jay Glenn Miner (May 31, 1932 to June 20, 1994), was a famous integrated circuit designer, known primarily for his "
                                        + "work in multimedia chips and as the 'father of the Amiga'[1]. He received a BS in EECS from "
                                        + "UC Berkeley in 1959. Miner started in the electronics industry with a number of designs in the "
@@ -71,14 +71,15 @@ public class FullTextIndexTest {
   private String[]            words;
 
   @Parameters(value = "url")
-  public FullTextIndexTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public FullTextIndexTest(@Optional String url) {
+    super(url);
     words = TEXT.split(" ");
+
   }
 
   @Test
   public void testFullTextInsertion() {
-    database.open("admin", "admin");
+		createBasicTestSchema();
 
     ODocument doc = new ODocument();
 
@@ -105,14 +106,10 @@ public class FullTextIndexTest {
 
     System.out.println("Indexed words: "
         + database.getMetadata().getSchema().getClass("Whiz").getProperty("text").getIndex().getSize());
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testFullTextInsertion")
   public void testFullTextSearch() {
-    database.open("admin", "admin");
-
     Set<ODocument> allDocs = new HashSet<ODocument>();
 
     for (int i = 0; i < words.length - 1; ++i) {
@@ -122,14 +119,10 @@ public class FullTextIndexTest {
     }
 
     Assert.assertEquals(allDocs.size(), TOT);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testFullTextInsertion")
   public void testDeleteDocument() {
-    database.open("admin", "admin");
-
     StringBuilder text = new StringBuilder();
     Random random = new Random(1000);
 
@@ -169,14 +162,10 @@ public class FullTextIndexTest {
     }
 
     Assert.assertEquals(allDocs.size(), TOT);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testFullTextInsertion")
   public void testUpdateDocument() {
-    database.open("admin", "admin");
-
     StringBuilder text = new StringBuilder();
     Random random = new Random(1000);
 
@@ -224,8 +213,6 @@ public class FullTextIndexTest {
     }
 
     Assert.assertEquals(allDocs.size(), TOT + 1);
-
-    database.close();
   }
 
 }

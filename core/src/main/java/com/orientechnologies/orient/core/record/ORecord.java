@@ -74,22 +74,6 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
   public ORID getIdentity();
 
   /**
-   * Returns the data segment where the record will be created at first.
-   * 
-   * @return Data segment name
-   */
-  public String getDataSegmentName();
-
-  /**
-   * Sets the data segment name where to save the record the first time it's created.
-   * 
-   * @param iName
-   *          Data segment name
-   * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   */
-  public <RET extends ORecord<T>> RET setDataSegmentName(String iName);
-
-  /**
    * Returns the current version number of the record. When the record is created has version = 0. At every change the storage
    * increment the version number. Version number is used by Optimistic transactions to check if the record is changed in the
    * meanwhile of the transaction. In distributed environment you should prefer {@link #getRecordVersion()} instead of this method.
@@ -121,29 +105,6 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    * @return True if dirty, otherwise false
    */
   public boolean isDirty();
-
-  /**
-   * Checks if the record is pinned.
-   * 
-   * @return True if pinned, otherwise false
-   */
-  public Boolean isPinned();
-
-  /**
-   * Suggests to the engine to keep the record in cache. Use it for the most read records.
-   * 
-   * @see ORecord#unpin()
-   * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   */
-  public <RET extends ORecord<T>> RET pin();
-
-  /**
-   * Suggests to the engine to not keep the record in cache.
-   * 
-   * @see ORecord#pin()
-   * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   */
-  public <RET extends ORecord<T>> RET unpin();
 
   /**
    * Loads the record content in memory. If the record is in cache will be returned a new instance, so pay attention to use the

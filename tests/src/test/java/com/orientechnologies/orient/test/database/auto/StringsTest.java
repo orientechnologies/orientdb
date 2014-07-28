@@ -15,13 +15,12 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-
+import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import java.util.List;
 
 @Test(groups = "internal")
 public class StringsTest {
@@ -55,4 +54,16 @@ public class StringsTest {
     Assert.assertEquals(subsequentReplaceTest, "text replacement 1   test String number 2 text replacement 1");
   }
 
+  public void testNoEmptyFields() {
+    List<String> pieces = OStringSerializerHelper.split(
+        "1811000032;03/27/2014;HA297000610K;+3415.4000;+3215.4500;+0.0000;+1117.0000;+916.7500;3583;890;+64.8700;4;4;+198.0932",
+        ';');
+    Assert.assertEquals(pieces.size(), 14);
+  }
+
+  public void testEmptyFields() {
+    List<String> pieces = OStringSerializerHelper.split(
+        "1811000032;03/27/2014;HA297000960C;+0.0000;+0.0000;+0.0000;+0.0000;+0.0000;0;0;+0.0000;;5;+0.0000", ';');
+    Assert.assertEquals(pieces.size(), 14);
+  }
 }

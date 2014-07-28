@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -42,60 +34,20 @@ import com.orientechnologies.orient.core.serialization.serializer.string.OString
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
   protected static final OProfilerMBean PROFILER              = Orient.instance().getProfiler();
   private static final char             DECIMAL_SEPARATOR     = '.';
   private static final String           MAX_INTEGER_AS_STRING = String.valueOf(Integer.MAX_VALUE);
   private static final int              MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
-
-  protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
-      final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
-      boolean autoDetectCollectionType);
-
-  public abstract ORecordInternal<?> fromString(String iContent, ORecordInternal<?> iRecord, String[] iFields);
-
-  public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat) {
-    return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
-        OSerializationSetThreadLocal.INSTANCE.get(), false, true);
-  }
-
-  public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat, final boolean autoDetectCollectionType) {
-    return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
-        OSerializationSetThreadLocal.INSTANCE.get(), false, autoDetectCollectionType);
-  }
-
-  public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat) {
-    return toString(iRecord, iOutput, iFormat, null, OSerializationSetThreadLocal.INSTANCE.get(), false, true);
-  }
-
-  public ORecordInternal<?> fromString(final String iSource) {
-    return fromString(iSource, (ORecordInternal<?>) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance(), null);
-  }
-
-  public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord, final String[] iFields) {
-    final long timer = PROFILER.startChrono();
-
-    try {
-      return fromString(OBinaryProtocol.bytes2string(iSource), iRecord, iFields);
-    } finally {
-
-      PROFILER
-          .stopChrono(PROFILER.getProcessMetric("serializer.record.string.fromStream"), "Deserialize record from stream", timer);
-    }
-  }
-
-  public byte[] toStream(final ORecordInternal<?> iRecord, boolean iOnlyDelta) {
-    final long timer = PROFILER.startChrono();
-
-    try {
-      return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(), null, null,
-          OSerializationSetThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
-    } finally {
-
-      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.toStream"), "Serialize record to stream", timer);
-    }
-  }
 
   public static Object fieldTypeFromStream(final ODocument iDocument, OType iType, final Object iValue) {
     if (iValue == null)
@@ -122,10 +74,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
     case EMBEDDED: {
       // EMBEDED RECORD
-      final ODocument doc = ((ODocument) OStringSerializerEmbedded.INSTANCE.fromStream((String) iValue));
-      if (doc != null)
-        return doc.addOwner(iDocument);
-      return null;
+      final Object embeddedObject = OStringSerializerEmbedded.INSTANCE.fromStream((String) iValue);
+      if (embeddedObject instanceof ODocument)
+        ((ODocument) embeddedObject).addOwner(iDocument);
+
+      // EMBEDDED OBJECT
+      return embeddedObject;
     }
 
     case CUSTOM:
@@ -281,8 +235,6 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
    * treat all the number types numbers are postponed with a character that tells the type: b=byte, s=short, l=long, f=float,
    * d=double, t=date.
    * 
-   * @param iUnusualSymbols
-   *          Localized decimal number separators
    * @param iValue
    *          Value to parse
    * @return The closest type recognized
@@ -362,9 +314,16 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       final int numberLength = iValue.length();
       if (numberLength > MAX_INTEGER_DIGITS || (numberLength == MAX_INTEGER_DIGITS && iValue.compareTo(MAX_INTEGER_AS_STRING) > 0))
         return OType.LONG;
+
+      return OType.INTEGER;
     }
 
-    return integer ? OType.INTEGER : OType.FLOAT;
+    // CHECK IF THE DECIMAL NUMBER IS A FLOAT OR DOUBLE
+    final double dou = Double.parseDouble(iValue);
+    if (dou <= Float.MAX_VALUE || dou >= Float.MIN_VALUE)
+      return OType.FLOAT;
+
+    return OType.DOUBLE;
   }
 
   /**
@@ -399,6 +358,14 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return OType.SHORT;
     else if (iCharType == 'e')
       return OType.EMBEDDEDSET;
+    else if (iCharType == 'g')
+      return OType.LINKBAG;
+    else if (iCharType == 'z')
+      return OType.LINKLIST;
+    else if (iCharType == 'x')
+      return OType.LINK;
+    else if (iCharType == 'n')
+      return OType.LINKSET;
 
     return OType.STRING;
   }
@@ -409,14 +376,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
    * l=long, f=float, d=double, t=date. If starts with # it's a RecordID. Most of the code is equals to getType() but has been
    * copied to speed-up it.
    * 
-   * @param iUnusualSymbols
-   *          Localized decimal number separators
    * @param iValue
    *          Value to parse
    * @return The closest type recognized
    */
   public static Object getTypeValue(final String iValue) {
-    if (iValue == null)
+    if (iValue == null || iValue.equalsIgnoreCase("NULL"))
       return null;
 
     if (iValue.length() == 0)
@@ -668,4 +633,52 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       break;
     }
   }
+
+  public abstract ORecordInternal<?> fromString(String iContent, ORecordInternal<?> iRecord, String[] iFields);
+
+  public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat) {
+    return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
+        OSerializationSetThreadLocal.INSTANCE.get(), false, true);
+  }
+
+  public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat, final boolean autoDetectCollectionType) {
+    return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
+        OSerializationSetThreadLocal.INSTANCE.get(), false, autoDetectCollectionType);
+  }
+
+  public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat) {
+    return toString(iRecord, iOutput, iFormat, null, OSerializationSetThreadLocal.INSTANCE.get(), false, true);
+  }
+
+  public ORecordInternal<?> fromString(final String iSource) {
+    return fromString(iSource, (ORecordInternal<?>) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance(), null);
+  }
+
+  public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord, final String[] iFields) {
+    final long timer = PROFILER.startChrono();
+
+    try {
+      return fromString(OBinaryProtocol.bytes2string(iSource), iRecord, iFields);
+    } finally {
+
+      PROFILER
+          .stopChrono(PROFILER.getProcessMetric("serializer.record.string.fromStream"), "Deserialize record from stream", timer);
+    }
+  }
+
+  public byte[] toStream(final ORecordInternal<?> iRecord, boolean iOnlyDelta) {
+    final long timer = PROFILER.startChrono();
+
+    try {
+      return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(), null, null,
+          OSerializationSetThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
+    } finally {
+
+      PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.toStream"), "Serialize record to stream", timer);
+    }
+  }
+
+  protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
+      final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
+      boolean autoDetectCollectionType);
 }
