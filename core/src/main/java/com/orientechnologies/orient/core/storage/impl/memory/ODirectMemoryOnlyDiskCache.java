@@ -234,10 +234,6 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   }
 
   @Override
-  public void forceSyncStoredChanges() throws IOException {
-  }
-
-  @Override
   public boolean isOpen(long fileId) {
     return files.get(fileId) != null;
   }
@@ -257,7 +253,18 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     }
   }
 
-  @Override
+	@Override
+	public boolean exists(long fileId) {
+		metadataLock.lock();
+		try {
+			final MemoryFile memoryFile = files.get(fileId);
+			return memoryFile != null;
+		} finally {
+			metadataLock.unlock();
+		}
+	}
+
+	@Override
   public String fileNameById(long fileId) {
     metadataLock.lock();
     try {

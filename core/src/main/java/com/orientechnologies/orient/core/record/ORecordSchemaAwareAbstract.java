@@ -369,7 +369,8 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
       return _clazz.getName();
 
     final ODatabaseRecord database = getDatabaseIfDefined();
-    if (database != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
+    if (database != null && database.getStorageVersions() != null
+						&& database.getStorageVersions().classesAreDetectedByClusterId()) {
       if (_recordId.clusterId < 0) {
         checkForLoading();
         checkForFields("@class");
