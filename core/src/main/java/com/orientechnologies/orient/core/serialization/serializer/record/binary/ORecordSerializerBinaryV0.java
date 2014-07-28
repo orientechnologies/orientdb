@@ -107,7 +107,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         // temporary skip serialization skip of unknown types
         if (type == null)
           continue;
-        pointer = writeSingleValue(bytes, value, type, getLinkedType(document, values[i].getKey()));
+        pointer = writeSingleValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
@@ -307,7 +307,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return null;
   }
 
-  private OType getLinkedType(ODocument document, String key) {
+  private OType getLinkedType(ODocument document, OType type, String key) {
+    if (type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDMAP)
+      return null;
     OClass clazz = document.getSchemaClass();
     if (clazz != null) {
       OProperty prop = clazz.getProperty(key);
