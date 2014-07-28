@@ -8,12 +8,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>test-commons</artifactId>
+    <artifactId>orientdb-test-commons</artifactId>
     <packaging>jar</packaging>
 
-    <name>test-commons</name>
-    <url>http://maven.apache.org</url>
-
+    <name>OrientDB Test Commons</name>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
