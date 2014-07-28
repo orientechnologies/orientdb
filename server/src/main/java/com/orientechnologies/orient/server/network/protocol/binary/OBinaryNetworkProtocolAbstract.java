@@ -53,6 +53,7 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.logging.Level;
 
 /**
@@ -156,8 +157,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     clientTxId = 0;
 
     long timer = 0;
-
+    int timeout = OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT.getValueAsInteger();
     try {
+      channel.socket.setSoTimeout(timeout);
       requestType = channel.readByte();
       clientTxId = channel.readInt();
 
@@ -174,7 +176,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       } finally {
         onAfterRequest();
       }
-
+    } catch (SocketTimeoutException E) {
+      sendShutdown();
     } catch (IOException e) {
       handleConnectionError(channel, e);
       sendShutdown();
@@ -185,6 +188,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     } catch (Throwable t) {
       sendError(clientTxId, t);
     } finally {
+      if (!channel.socket.isClosed()) {
+        channel.socket.setSoTimeout(0); //unset the timeout
+      }
       Orient.instance().getProfiler()
           .stopChrono("server.network.requests", "Total received requests", timer, "server.network.requests");
 
