@@ -33,6 +33,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
   protected OETLProcessor        processor;
   protected OBasicCommandContext context;
   protected OSQLFilter           ifFilter;
+  protected boolean              verbose = false;
 
   @Override
   public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
@@ -42,6 +43,9 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     final String ifExpression = iConfiguration.field("if");
     if (ifExpression != null)
       ifFilter = new OSQLFilter(ifExpression, iContext, null);
+
+    if (iConfiguration.containsField("verbose"))
+      verbose = iConfiguration.field("verbose");
   }
 
   @Override
@@ -71,7 +75,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
   }
 
   protected Object resolve(final Object iContent) {
-    if( context == null )
+    if (context == null)
       // NO CONTEXT AVAILABLE
       return iContent;
 
@@ -100,6 +104,11 @@ public abstract class OAbstractETLComponent implements OETLComponent {
 
       });
     return value;
+  }
+
+  protected void log(final String iText, Object... iArgs) {
+    if (verbose)
+      System.out.println(getName() + "->" + String.format(iText, iArgs));
   }
 
 }

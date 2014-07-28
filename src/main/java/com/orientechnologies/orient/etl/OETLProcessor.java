@@ -58,7 +58,7 @@ public class OETLProcessor implements OETLComponent {
   protected final List<OBlock>         endBlocks;
   protected final OETLComponentFactory factory = new OETLComponentFactory();
   protected final OBasicCommandContext context;
-  protected OSource                    source;
+  protected final OSource              source;
   protected long                       startTime;
   protected long                       elapsed;
   protected OETLProcessorStats         stats   = new OETLProcessorStats();
@@ -117,26 +117,31 @@ public class OETLProcessor implements OETLComponent {
         name = iSource.fieldNames()[0];
         source = factory.getSource(name);
         configureComponent(source, (ODocument) iSource.field(name), iContext);
-      }
+      } else
+        source = factory.getSource("input");
 
       // EXTRACTOR
       name = iExtractor.fieldNames()[0];
       extractor = factory.getExtractor(name);
       configureComponent(extractor, (ODocument) iExtractor.field(name), iContext);
 
-      // LOADER
-      name = iLoader.fieldNames()[0];
-      loader = factory.getLoader(name);
-      configureComponent(loader, (ODocument) iLoader.field(name), iContext);
+      if (iLoader != null) {
+        // LOADER
+        name = iLoader.fieldNames()[0];
+        loader = factory.getLoader(name);
+        configureComponent(loader, (ODocument) iLoader.field(name), iContext);
+      } else
+        loader = factory.getLoader("output");
 
       // TRANSFORMERS
       transformers = new ArrayList<OTransformer>();
-      for (ODocument t : iTransformers) {
-        name = t.fieldNames()[0];
-        final OTransformer tr = factory.getTransformer(name);
-        transformers.add(tr);
-        configureComponent(tr, (ODocument) t.field(name), iContext);
-      }
+      if (iTransformers != null)
+        for (ODocument t : iTransformers) {
+          name = t.fieldNames()[0];
+          final OTransformer tr = factory.getTransformer(name);
+          transformers.add(tr);
+          configureComponent(tr, (ODocument) t.field(name), iContext);
+        }
 
       // END BLOCKS
       endBlocks = new ArrayList<OBlock>();
@@ -198,12 +203,6 @@ public class OETLProcessor implements OETLComponent {
 
     if (cfgExtract == null)
       throw new IllegalArgumentException("No Extractor configured");
-
-    if (cfgTransformers == null)
-      throw new IllegalArgumentException("No Transformer configured");
-
-    if (cfgLoader == null)
-      throw new IllegalArgumentException("No Loader configured");
 
     if (cfgGlobal != null) {
       // INIT ThE CONTEXT WITH GLOBAL CONFIGURATION

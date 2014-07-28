@@ -36,7 +36,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import java.util.List;
 
 /**
- * ETL Loader.
+ * ETL Loader that saves record into OrientDB database.
  */
 public class OOrientDBLoader extends OAbstractETLComponent implements OLoader {
   protected long                progress     = 0;
