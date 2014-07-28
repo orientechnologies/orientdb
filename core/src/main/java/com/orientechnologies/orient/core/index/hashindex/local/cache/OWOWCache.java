@@ -540,6 +540,16 @@ public class OWOWCache {
     }
   }
 
+  public boolean exists(long fileId) {
+    synchronized (syncObject) {
+      final OFileClassic file = files.get(fileId);
+      if (file == null)
+        return false;
+
+      return file.exists();
+    }
+  }
+
   public Future store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     Future future = null;
 
