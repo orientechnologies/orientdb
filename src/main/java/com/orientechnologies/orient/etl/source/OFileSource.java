@@ -63,7 +63,9 @@ public class OFileSource extends OAbstractETLComponent implements OSource {
   }
 
   public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
-    path = resolveVariable((String) iConfiguration.field("path"));
+    super.configure(iProcessor, iConfiguration, iContext);
+
+    path = resolve(iConfiguration.field("path"));
     if (iConfiguration.containsField("lock"))
       lockFile = iConfiguration.field("lock");
 

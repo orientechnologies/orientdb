@@ -38,7 +38,7 @@ public class OFieldTransformer extends OAbstractTransformer {
   @Override
   public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
-    fieldName = resolveVariable((String) iConfiguration.field("fieldName"));
+    fieldName = (String) resolve(iConfiguration.field("fieldName"));
     expression = iConfiguration.field("expression");
   }
 

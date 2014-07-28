@@ -45,7 +45,7 @@ public abstract class OAbstractExtractor extends OAbstractETLComponent implement
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[],output:'ODocument'}");
+    return new ODocument().fromJSON("{parameters:[],output:'String'}");
   }
 
 }

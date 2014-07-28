@@ -18,9 +18,13 @@
 
 package com.orientechnologies.orient.etl;
 
+import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.common.parser.OVariableParser;
+import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 
 /**
  * ETL abstract component.
@@ -66,9 +70,36 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     return buffer.toString();
   }
 
-  protected <T> T resolveVariable(final String iName) {
-    if (iName != null && iName.startsWith("$"))
-      return (T) context.getVariable(iName);
-    return (T) iName;
+  protected Object resolve(final Object iContent) {
+    if( context == null )
+      // NO CONTEXT AVAILABLE
+      return iContent;
+
+    Object value = null;
+    if (iContent instanceof String) {
+      if (((String) iContent).startsWith("$"))
+        value = context.getVariable(iContent.toString());
+      else
+        value = OVariableParser.resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN,
+            OSystemVariableResolver.VAR_END, new OVariableParserListener() {
+              @Override
+              public Object resolve(final String iVariable) {
+                return context.getVariable(iVariable);
+              }
+            });
+    } else
+      value = iContent;
+
+    if (value instanceof String)
+      value = OVariableParser.resolveVariables((String) value, "={", "}", new OVariableParserListener() {
+
+        @Override
+        public Object resolve(final String iVariable) {
+          return new OSQLPredicate(iVariable).evaluate(context);
+        }
+
+      });
+    return value;
   }
+
 }

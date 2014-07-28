@@ -41,10 +41,11 @@ import java.util.Set;
  */
 public class OLinkTransformer extends OAbstractTransformer {
   protected String               joinFieldName;
+  protected String               joinValue;
   protected String               linkFieldName;
   protected OType                linkFieldType;
   protected String               lookup;
-  protected ACTION               unresolvedLinkAction;
+  protected ACTION               unresolvedLinkAction = ACTION.SKIP;
   protected OSQLQuery<ODocument> sqlQuery;
   protected OIndex<?>            index;
   protected ODatabaseDocument    db;
@@ -56,7 +57,8 @@ public class OLinkTransformer extends OAbstractTransformer {
   @Override
   public ODocument getConfiguration() {
     return new ODocument()
-        .fromJSON("{parameters:[{joinFieldName:{optional:false,description:'field name containing the value to join'}},"
+        .fromJSON("{parameters:[{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
+            + "{joinValue:{optional:true,description:'value to use in lookup query'}},"
             + "{linkFieldName:{optional:false,description:'field name containing the link to set'}},"
             + "{linkFieldType:{optional:true,description:'field type containing the link to set. Use LINK for single link and LINKSET or LINKLIST for many'}},"
             + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
@@ -69,6 +71,7 @@ public class OLinkTransformer extends OAbstractTransformer {
     super.configure(iProcessor, iConfiguration, iContext);
 
     joinFieldName = iConfiguration.field("joinFieldName");
+    joinValue = iConfiguration.field("joinValue");
     linkFieldName = iConfiguration.field("linkFieldName");
     if (iConfiguration.containsField("linkFieldType"))
       linkFieldType = OType.valueOf((String) iConfiguration.field("linkFieldType"));
@@ -89,8 +92,13 @@ public class OLinkTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    Object joinValue = ((ODocument) input).field(joinFieldName);
-    if (joinValue != null) {
+    Object joinRuntimeValue = null;
+    if (joinFieldName != null)
+      joinRuntimeValue = ((ODocument) input).field(joinFieldName);
+    else if (joinValue!= null) 
+      joinRuntimeValue = resolve(joinValue);
+
+    if (joinRuntimeValue != null) {
 
       Object result = null;
 
@@ -103,11 +111,11 @@ public class OLinkTransformer extends OAbstractTransformer {
       }
 
       if (sqlQuery != null)
-        result = db.query(sqlQuery, joinValue);
+        result = db.query(sqlQuery, joinRuntimeValue);
       else {
         final OType idxFieldType = index.getDefinition().getTypes()[0];
-        joinValue = idxFieldType.convert(joinValue, idxFieldType.getDefaultJavaType());
-        result = index.get(joinValue);
+        joinRuntimeValue = idxFieldType.convert(joinRuntimeValue, idxFieldType.getDefaultJavaType());
+        result = index.get(joinRuntimeValue);
       }
 
       if (result != null) {
@@ -143,7 +151,7 @@ public class OLinkTransformer extends OAbstractTransformer {
           if (lookup != null) {
             final String[] lookupParts = lookup.split("\\.");
             final ODocument linkedDoc = new ODocument(lookupParts[0]);
-            linkedDoc.field(lookupParts[1], joinValue);
+            linkedDoc.field(lookupParts[1], joinRuntimeValue);
             linkedDoc.save();
             result = linkedDoc;
           } else
@@ -151,16 +159,16 @@ public class OLinkTransformer extends OAbstractTransformer {
           break;
         case ERROR:
           processor.getStats().incrementErrors();
-          processor.out(true, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
+          processor.out(true, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
           break;
         case WARNING:
           processor.getStats().incrementWarnings();
-          processor.out(true, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
+          processor.out(true, "%s: WARN Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
           break;
         case SKIP:
           return null;
         case HALT:
-          throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinValue + "'");
+          throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinRuntimeValue + "'");
         }
       } else
         // SET THE TRANSFORMED FIELD BACK

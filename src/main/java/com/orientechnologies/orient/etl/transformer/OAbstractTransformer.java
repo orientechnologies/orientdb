@@ -33,8 +33,10 @@ public abstract class OAbstractTransformer extends OAbstractETLComponent impleme
 
     if (skip(input))
       return input;
-    else
+    else {
+      context.setVariable("input", input);
       return executeTransform(input);
+    }
   }
 
   protected abstract Object executeTransform(final Object input);

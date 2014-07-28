@@ -18,12 +18,6 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLProcessor;
-
 import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -34,6 +28,12 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
 /**
  * Created by luca on 04/07/14.
@@ -59,12 +59,12 @@ public class OJDBCExtractor extends OAbstractExtractor {
   public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
-    driverClass = resolveVariable((String) iConfiguration.field("driver"));
-    url = resolveVariable((String) iConfiguration.field("url"));
-    userName = resolveVariable((String) iConfiguration.field("userName"));
-    userPassword = resolveVariable((String) iConfiguration.field("userPassword"));
-    query = resolveVariable((String) iConfiguration.field("query"));
-    queryCount = resolveVariable((String) iConfiguration.field("queryCount"));
+    driverClass = (String) resolve(iConfiguration.field("driver"));
+    url = (String) resolve(iConfiguration.field("url"));
+    userName = (String) resolve(iConfiguration.field("userName"));
+    userPassword = (String) resolve(iConfiguration.field("userPassword"));
+    query = (String) resolve(iConfiguration.field("query"));
+    queryCount = (String) resolve(iConfiguration.field("queryCount"));
 
     try {
       Class.forName(driverClass).newInstance();

@@ -52,13 +52,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class OETLProcessor implements OETLComponent {
   protected final List<OBlock>         beginBlocks;
-  protected final OSource              source;
   protected final OExtractor           extractor;
   protected final List<OTransformer>   transformers;
   protected final OLoader              loader;
   protected final List<OBlock>         endBlocks;
   protected final OETLComponentFactory factory = new OETLComponentFactory();
   protected final OBasicCommandContext context;
+  protected OSource                    source;
   protected long                       startTime;
   protected long                       elapsed;
   protected OETLProcessorStats         stats   = new OETLProcessorStats();
@@ -109,12 +109,15 @@ public class OETLProcessor implements OETLComponent {
           final OBlock b = factory.getBlock(name);
           beginBlocks.add(b);
           configureComponent(b, (ODocument) block.field(name), iContext);
+          b.execute();
         }
 
-      // SOURCE
-      name = iSource.fieldNames()[0];
-      source = factory.getSource(name);
-      configureComponent(source, (ODocument) iSource.field(name), iContext);
+      if (iSource != null) {
+        // SOURCE
+        name = iSource.fieldNames()[0];
+        source = factory.getSource(name);
+        configureComponent(source, (ODocument) iSource.field(name), iContext);
+      }
 
       // EXTRACTOR
       name = iExtractor.fieldNames()[0];
@@ -308,7 +311,8 @@ public class OETLProcessor implements OETLComponent {
       t.end();
     }
 
-    source.begin();
+    if (source != null)
+      source.begin();
     extractor.begin();
     loader.begin();
 
@@ -321,7 +325,8 @@ public class OETLProcessor implements OETLComponent {
     for (OTransformer t : transformers)
       t.end();
 
-    source.end();
+    if (source != null)
+      source.end();
     extractor.end();
     loader.end();
 
@@ -465,15 +470,24 @@ public class OETLProcessor implements OETLComponent {
 
     try {
       out = iLastComponent.getConfiguration().field("output");
-      final Class outClass = getClassByName(iLastComponent, out);
+      if (out == null)
+        // SKIP IT
+        return;
 
       ins = iCurrentComponent.getConfiguration().field("input");
+      if (ins == null)
+        // SKIP IT
+        return;
+
+      final Class outClass = getClassByName(iLastComponent, out);
+
       for (String in : ins) {
         final Class inClass = getClassByName(iCurrentComponent, in);
         if (inClass.isAssignableFrom(outClass)) {
           return;
         }
       }
+
     } catch (Exception e) {
       throw new OConfigurationException("Error on checking compatibility between components '" + iLastComponent.getName()
           + "' and '" + iCurrentComponent.getName() + "'", e);

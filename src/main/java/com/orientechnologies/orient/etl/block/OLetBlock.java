@@ -38,8 +38,6 @@ public class OLetBlock extends OAbstractBlock {
     super.configure(iProcessor, iConfiguration, iContext);
     name = iConfiguration.field("name");
     expression = new OSQLFilter((String) iConfiguration.field("value"), iContext, null);
-
-    executeBlock();
   }
 
   @Override

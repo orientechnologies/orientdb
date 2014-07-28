@@ -20,11 +20,11 @@ package com.orientechnologies.orient.etl.extractor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.NoSuchElementException;
 
 public class ORowExtractor extends OAbstractSourceExtractor {
   protected BufferedReader bReader;
-  private long             currentRow;
 
   @Override
   public String getName() {
@@ -38,10 +38,7 @@ public class ORowExtractor extends OAbstractSourceExtractor {
 
     try {
       final String line = bReader.readLine();
-      current += line.length();
-      currentRow++;
-      if (bReader.ready())
-        current++;
+      current++;
       return line;
     } catch (IOException e) {
       throw new OExtractorException(e);
@@ -49,9 +46,8 @@ public class ORowExtractor extends OAbstractSourceExtractor {
   }
 
   @Override
-  public void begin() {
-    super.begin();
-
+  public void extract(final Reader iReader) {
+    super.extract(iReader);
     bReader = new BufferedReader(reader);
   }
 
@@ -67,6 +63,6 @@ public class ORowExtractor extends OAbstractSourceExtractor {
 
   @Override
   public String getUnit() {
-    return "row";
+    return "rows";
   }
 }

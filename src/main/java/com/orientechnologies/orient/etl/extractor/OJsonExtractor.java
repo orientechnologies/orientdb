@@ -88,6 +88,11 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
   }
 
   @Override
+  public ODocument getConfiguration() {
+    return new ODocument().fromJSON("{parameters:[],output:'ODocument'}");
+  }
+
+  @Override
   public String getUnit() {
     return "entries";
   }

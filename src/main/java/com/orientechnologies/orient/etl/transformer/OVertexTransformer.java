@@ -49,7 +49,7 @@ public class OVertexTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    vertexClass = resolveVariable(vertexClass);
+    vertexClass = (String) resolve(vertexClass);
     if (vertexClass != null) {
       final OClass cls = graph.getVertexType(vertexClass);
       if (cls == null)

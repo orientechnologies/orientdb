@@ -52,12 +52,15 @@ public class OBlockTransformer extends OAbstractTransformer {
 
   @Override
   public String getName() {
-    return "let";
+    return "block";
   }
 
   @Override
   protected Object executeTransform(final Object input) {
+    context.setVariable("input", input);
+
     block.execute();
+
     return input;
   }
 }
