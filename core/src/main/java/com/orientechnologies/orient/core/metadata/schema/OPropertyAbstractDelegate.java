@@ -46,12 +46,12 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OProperty setName(String iName) {
+  public OProperty setName(final String iName) {
     return delegate.setName(iName);
   }
 
   @Override
-  public void set(ATTRIBUTES attribute, Object iValue) {
+  public void set(final ATTRIBUTES attribute, final Object iValue) {
     delegate.set(attribute, iValue);
   }
 
@@ -76,7 +76,7 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OProperty setNotNull(boolean iNotNull) {
+  public OProperty setNotNull(final boolean iNotNull) {
     return delegate.setNotNull(iNotNull);
   }
 
@@ -86,7 +86,7 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OProperty setCollate(String iCollateName) {
+  public OProperty setCollate(final String iCollateName) {
     return delegate.setCollate(iCollateName);
   }
 
@@ -96,7 +96,7 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OProperty setMandatory(boolean mandatory) {
+  public OProperty setMandatory(final boolean mandatory) {
     return delegate.setMandatory(mandatory);
   }
 
@@ -106,7 +106,7 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OPropertyImpl setReadonly(boolean iReadonly) {
+  public OPropertyImpl setReadonly(final boolean iReadonly) {
     return delegate.setReadonly(iReadonly);
   }
 
@@ -116,7 +116,7 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OProperty setMin(String min) {
+  public OProperty setMin(final String min) {
     return delegate.setMin(min);
   }
 
@@ -126,17 +126,17 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OProperty setMax(String max) {
+  public OProperty setMax(final String max) {
     return delegate.setMax(max);
   }
 
   @Override
-  public OIndex<?> createIndex(OClass.INDEX_TYPE iType) {
+  public OIndex<?> createIndex(final OClass.INDEX_TYPE iType) {
     return delegate.createIndex(iType);
   }
 
   @Override
-  public OIndex<?> createIndex(String iType) {
+  public OIndex<?> createIndex(final String iType) {
     return delegate.createIndex(iType);
   }
 
@@ -175,27 +175,27 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OPropertyImpl setRegexp(String regexp) {
+  public OPropertyImpl setRegexp(final String regexp) {
     return delegate.setRegexp(regexp);
   }
 
   @Override
-  public OPropertyImpl setType(OType iType) {
+  public OPropertyImpl setType(final OType iType) {
     return delegate.setType(iType);
   }
 
   @Override
-  public String getCustom(String iName) {
+  public String getCustom(final String iName) {
     return delegate.getCustom(iName);
   }
 
   @Override
-  public OPropertyImpl setCustom(String iName, String iValue) {
+  public OPropertyImpl setCustom(final String iName, final String iValue) {
     return delegate.setCustom(iName, iValue);
   }
 
   @Override
-  public void removeCustom(String iName) {
+  public void removeCustom(final String iName) {
     delegate.removeCustom(iName);
   }
 
@@ -215,12 +215,12 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public Object get(ATTRIBUTES iAttribute) {
+  public Object get(final ATTRIBUTES iAttribute) {
     return delegate.get(iAttribute);
   }
 
   @Override
-  public int compareTo(OProperty o) {
+  public int compareTo(final OProperty o) {
     return delegate.compareTo(o);
   }
 }

@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -54,6 +51,9 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -761,6 +761,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private void setPolymorphicClusterIds(final int[] iClusterIds) {
     polymorphicClusterIds = iClusterIds;
     Arrays.sort(polymorphicClusterIds);
+  }
+
+  public void renameProperty(final String iOldName, final String iNewName) {
+    final OProperty p = properties.remove(iOldName);
+    if (p != null)
+      properties.put(iNewName, p);
   }
 
   public OClass addClusterId(final int clusterId) {

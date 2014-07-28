@@ -106,11 +106,11 @@ public interface ODiskCache {
 
   Set<ODirtyPage> logDirtyPagesTable() throws IOException;
 
-  void forceSyncStoredChanges() throws IOException;
-
   boolean isOpen(long fileId);
 
   boolean exists(String name);
+
+	boolean exists(long fileId);
 
   String fileNameById(long fileId);
 

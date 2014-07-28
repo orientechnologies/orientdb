@@ -29,9 +29,6 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -219,17 +216,24 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     // UNDO PREVIOUS MESSAGE IF ANY
     final IMap<String, Object> lastPendingMessagesMap = restoreMessagesBeforeFailure(iRestoreMessages);
 
+    final int queuedMsg = requestQueue.size();
     restoringMessages = msgService.checkForPendingMessages(requestQueue, queueName, iUnqueuePendingMessages);
 
     listenerThread = new Thread(new Runnable() {
       @Override
       public void run() {
         Thread.currentThread().setName("OrientDB Node Request " + queueName);
-        while (!Thread.interrupted()) {
-          if (restoringMessages && requestQueue.isEmpty()) {
+
+        if (!restoringMessages)
+          // NOTIFY IMMEDIATELY DB IS ONLINE
+          setOnline();
+
+        for (long processedMessages = 0; !Thread.interrupted(); processedMessages++) {
+          if (restoringMessages && processedMessages >= queuedMsg) {
             // END OF RESTORING MESSAGES, SET IT ONLINE
             ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-                "executed all pending tasks in queue, set restoringMessages=false and database '%s' as online...", databaseName);
+                "executed all pending tasks in queue (%d), set restoringMessages=false and database '%s' as online...", queuedMsg,
+                databaseName);
 
             restoringMessages = false;
             setOnline();
@@ -279,6 +283,18 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     });
     listenerThread.start();
 
+    while (!status.get()) {
+      // WAIT UNTIL THE NODE IS ONLINE
+      synchronized (waitForOnline) {
+        try {
+          waitForOnline.wait(5000);
+        } catch (InterruptedException e) {
+          Thread.interrupted();
+          break;
+        }
+      }
+    }
+
     return this;
   }
 
@@ -309,6 +325,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   @Override
   public void setOnline() {
+    status.set(true);
+
     initDatabaseInstance();
 
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "Publishing online status for database %s.%s...",
@@ -316,8 +334,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     // SET THE NODE.DB AS ONLINE
     manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
-
-    status.set(true);
 
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
         "Database %s.%s is online, waking up listeners on local node...", manager.getLocalNodeName(), databaseName);
@@ -366,7 +382,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       final Collection<String> iNodes) {
     boolean waitLocalNode = false;
     if (iNodes.contains(manager.getLocalNodeName()))
-      if (iClusterNames == null) {
+      if (iClusterNames == null || iClusterNames.isEmpty()) {
         // DEFAULT CLUSTER (*)
         if (cfg.isReadYourWrites(null))
           waitLocalNode = true;
@@ -709,13 +725,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   private void createReplicatorUser(ODatabaseDocumentTx database, final OServerUserConfiguration replicatorUser) {
-    String strQuery = "select from ouser where name = '" + replicatorUser.name + "'";
-    OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>(strQuery);
-    List<ODocument> result = database.command(query).execute();
-    if (result == null || result.size() == 0) {
-      String strExec = "insert into ouser (name, password, status, roles) values ('" + replicatorUser.name + "', '"
-          + replicatorUser.password + "', 'ACTIVE', [#4:0])";
-      database.command(new OCommandSQL(strExec)).execute();
-    }
+    final OUser replUser = database.getMetadata().getSecurity().getUser(replicatorUser.name);
+    if (replUser == null)
+      database.getMetadata().getSecurity().createUser(replicatorUser.name, replicatorUser.password, "admin");
   }
 }
