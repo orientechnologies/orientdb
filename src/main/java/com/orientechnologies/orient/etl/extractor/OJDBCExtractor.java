@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
+import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -38,9 +39,6 @@ import java.util.NoSuchElementException;
  * Created by luca on 04/07/14.
  */
 public class OJDBCExtractor extends OAbstractExtractor {
-  protected long         progress    = -1;
-  protected long         total       = -1;
-
   protected String       url;
   protected String       userName;
   protected String       userPassword;
@@ -182,18 +180,12 @@ public class OJDBCExtractor extends OAbstractExtractor {
   }
 
   @Override
+  public void extract(final Reader iReader) {
+  }
+
+  @Override
   public String getUnit() {
     return "records";
-  }
-
-  @Override
-  public long getProgress() {
-    return progress;
-  }
-
-  @Override
-  public long getTotal() {
-    return total;
   }
 
   @Override
@@ -201,13 +193,13 @@ public class OJDBCExtractor extends OAbstractExtractor {
     try {
       if (!didNext) {
         hasNext = rs.next();
-        progress++;
+        current++;
         didNext = true;
       }
       return hasNext;
     } catch (SQLException e) {
       throw new OExtractorException(getName() + ": error on moving forward in resultset of query '" + query
-          + "'. Previous position was " + progress, e);
+          + "'. Previous position was " + current, e);
     }
   }
 
@@ -216,8 +208,8 @@ public class OJDBCExtractor extends OAbstractExtractor {
     try {
       if (!didNext) {
         if (!rs.next())
-          throw new NoSuchElementException("Previous position was " + progress);
-        progress++;
+          throw new NoSuchElementException("Previous position was " + current);
+        current++;
       }
       didNext = false;
 
@@ -231,7 +223,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
 
     } catch (SQLException e) {
       throw new OExtractorException(getName() + ": error on moving forward in resultset of query '" + query
-          + "'. Previous position was " + progress, e);
+          + "'. Previous position was " + current, e);
     }
   }
 

@@ -8,8 +8,11 @@
    { let: { name: "$filePath",  value: "$fileDirectory.append( $fileName )"} },
    { let: { name: "$className", value: "$fileName.substring( 0, $fileName.indexOf('.') )"} }
   ],
+  source : {
+    file: { path: "$filePath", lock : true }
+  },
   extractor : {
-    line: { path: "$filePath", lock : true }
+    row: {}
   },
   transformers : [
    { csv: { separator: ",", nullValue: "NULL", skipFrom: 1, skipTo: 3 } },

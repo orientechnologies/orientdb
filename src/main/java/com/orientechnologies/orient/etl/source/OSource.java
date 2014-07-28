@@ -16,22 +16,17 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extractor;
+package com.orientechnologies.orient.etl.source;
 
 import com.orientechnologies.orient.etl.OETLComponent;
 
 import java.io.Reader;
-import java.util.Iterator;
 
 /**
- * ETL Extractor.
+ * ETL Source interface.
  */
-public interface OExtractor extends OETLComponent, Iterator<Object> {
-  public void extract(final Reader iReader);
-
-  public long getProgress();
-
-  public long getTotal();
-
+public interface OSource extends OETLComponent {
   public String getUnit();
+
+  public Reader read();
 }

@@ -16,12 +16,14 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extractor;
+package com.orientechnologies.orient.etl.source;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OAbstractETLComponent;
 import com.orientechnologies.orient.etl.OETLProcessor;
+import com.orientechnologies.orient.etl.extractor.OExtractorException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,17 +32,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.io.Reader;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
-import java.util.NoSuchElementException;
 import java.util.zip.GZIPInputStream;
 
-public abstract class OFileExtractor extends OAbstractExtractor {
+public class OFileSource extends OAbstractETLComponent implements OSource {
   protected String            fileName;
   protected Object            path;
   protected boolean           lockFile    = false;
   protected long              byteParsed  = 0;
   protected long              byteToParse = -1;
+  protected long              skipFirst   = 0;
+  protected long              skipLast    = 0;
 
   protected RandomAccessFile  raf         = null;
   protected FileChannel       channel     = null;
@@ -49,12 +53,25 @@ public abstract class OFileExtractor extends OAbstractExtractor {
   protected FileLock          lock        = null;
 
   @Override
-  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
+  public String getUnit() {
+    return "bytes";
+  }
 
+  @Override
+  public ODocument getConfiguration() {
+    return null;
+  }
+
+  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
     path = resolveVariable((String) iConfiguration.field("path"));
     if (iConfiguration.containsField("lock"))
       lockFile = iConfiguration.field("lock");
+
+    if (iConfiguration.containsField("skipFirst"))
+      skipFirst = Long.parseLong((String) iConfiguration.field("skipFirst"));
+
+    if (iConfiguration.containsField("skipLast"))
+      skipLast = Long.parseLong((String) iConfiguration.field("skipLast"));
 
     if (path instanceof String)
       path = new File((String) path);
@@ -62,44 +79,6 @@ public abstract class OFileExtractor extends OAbstractExtractor {
     if (path instanceof File) {
       final File file = (File) path;
       fileName = file.getName();
-    }
-  }
-
-  @Override
-  public String getName() {
-    return "file";
-  }
-
-  public String getUnit() {
-    return "bytes";
-  }
-
-  @Override
-  public boolean hasNext() {
-    if (fileReader == null)
-      return false;
-
-    try {
-      final boolean res = fileReader.ready();
-      if (!res)
-        // CLOSE IT
-        end();
-      return res;
-    } catch (IOException e) {
-      throw new OExtractorException(e);
-    }
-  }
-
-  @Override
-  public Object next() {
-    if (!hasNext())
-      throw new NoSuchElementException("EOF");
-
-    try {
-      byteParsed++;
-      return (byte) fileReader.read();
-    } catch (IOException e) {
-      throw new OExtractorException(e);
     }
   }
 
@@ -137,13 +116,8 @@ public abstract class OFileExtractor extends OAbstractExtractor {
   }
 
   @Override
-  public long getProgress() {
-    return byteParsed;
-  }
-
-  @Override
-  public long getTotal() {
-    return byteToParse;
+  public String getName() {
+    return "file";
   }
 
   @Override
@@ -187,5 +161,18 @@ public abstract class OFileExtractor extends OAbstractExtractor {
       }
 
     final long startTime = System.currentTimeMillis();
+  }
+
+  public boolean isClosed() {
+    return fileReader != null;
+  }
+
+  public Reader getFileReader() {
+    return fileReader;
+  }
+
+  @Override
+  public Reader read() {
+    return fileReader;
   }
 }

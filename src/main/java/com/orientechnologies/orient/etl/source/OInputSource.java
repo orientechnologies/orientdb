@@ -16,36 +16,37 @@
  *
  */
 
-package com.orientechnologies.orient.etl.extractor;
+package com.orientechnologies.orient.etl.source;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OAbstractETLComponent;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.Reader;
+
 /**
- * ETL abstract extractor.
+ * ETL Source that reads from System.in
  */
-public abstract class OAbstractExtractor extends OAbstractETLComponent implements OExtractor {
-  protected long current = 0;
-  protected long total   = -1;
-
-  @Override
-  public long getProgress() {
-    return current;
-  }
-
-  @Override
-  public long getTotal() {
-    return total;
-  }
-
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException("remove()");
-  }
+public class OInputSource extends OAbstractETLComponent implements OSource {
+  protected BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[],output:'ODocument'}");
+    return new ODocument().fromJSON("{}");
   }
 
+  @Override
+  public String getUnit() {
+    return "bytes";
+  }
+  @Override
+  public String getName() {
+    return "input";
+  }
+
+  @Override
+  public Reader read() {
+    return reader;
+  }
 }

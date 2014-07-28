@@ -30,6 +30,7 @@ import com.orientechnologies.orient.etl.block.OBlock;
 import com.orientechnologies.orient.etl.extractor.OExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.loader.OOrientDBLoader;
+import com.orientechnologies.orient.etl.source.OSource;
 import com.orientechnologies.orient.etl.transformer.OTransformer;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
@@ -37,6 +38,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -49,8 +51,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLProcessor implements OETLComponent {
-  protected final OExtractor           extractor;
   protected final List<OBlock>         beginBlocks;
+  protected final OSource              source;
+  protected final OExtractor           extractor;
   protected final List<OTransformer>   transformers;
   protected final OLoader              loader;
   protected final List<OBlock>         endBlocks;
@@ -77,9 +80,11 @@ public class OETLProcessor implements OETLComponent {
     }
   }
 
-  public OETLProcessor(final List<OBlock> iBeginBlocks, final OExtractor iExtractor, final List<OTransformer> iTransformers,
-      final OLoader iLoader, final List<OBlock> iEndBlocks, final OBasicCommandContext iContext) {
+  public OETLProcessor(final List<OBlock> iBeginBlocks, final OSource iSource, final OExtractor iExtractor,
+      final List<OTransformer> iTransformers, final OLoader iLoader, final List<OBlock> iEndBlocks,
+      final OBasicCommandContext iContext) {
     beginBlocks = iBeginBlocks;
+    source = iSource;
     extractor = iExtractor;
     transformers = iTransformers;
     loader = iLoader;
@@ -88,7 +93,7 @@ public class OETLProcessor implements OETLComponent {
     context = iContext;
   }
 
-  public OETLProcessor(final Collection<ODocument> iBeginBlocks, final ODocument iExtractor,
+  public OETLProcessor(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
       final Collection<ODocument> iTransformers, final ODocument iLoader, final Collection<ODocument> iEndBlocks,
       final OBasicCommandContext iContext) {
     context = iContext;
@@ -105,6 +110,11 @@ public class OETLProcessor implements OETLComponent {
           beginBlocks.add(b);
           configureComponent(b, (ODocument) block.field(name), iContext);
         }
+
+      // SOURCE
+      name = iSource.fieldNames()[0];
+      source = factory.getSource(name);
+      configureComponent(source, (ODocument) iSource.field(name), iContext);
 
       // EXTRACTOR
       name = iExtractor.fieldNames()[0];
@@ -143,13 +153,14 @@ public class OETLProcessor implements OETLComponent {
   public static void main(final String[] args) {
     ODocument cfgGlobal = null;
     Collection<ODocument> cfgBegin = null;
+    ODocument cfgSource = null;
     ODocument cfgExtract = null;
     Collection<ODocument> cfgTransformers = null;
     ODocument cfgLoader = null;
     Collection<ODocument> cfgEnd = null;
 
     System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
-    if (args.length == 0 ) {
+    if (args.length == 0) {
       System.out.println("Syntax error, missing configuration file.");
       System.out.println("Use: oetl.sh <json-file>");
       System.exit(1);
@@ -170,6 +181,7 @@ public class OETLProcessor implements OETLComponent {
 
           cfgGlobal = cfg.field("config");
           cfgBegin = cfg.field("begin");
+          cfgSource = cfg.field("source");
           cfgExtract = cfg.field("extractor");
           cfgTransformers = cfg.field("transformers");
           cfgLoader = cfg.field("loader");
@@ -197,7 +209,7 @@ public class OETLProcessor implements OETLComponent {
       }
     }
 
-    final OETLProcessor processor = new OETLProcessor(cfgBegin, cfgExtract, cfgTransformers, cfgLoader, cfgEnd, context);
+    final OETLProcessor processor = new OETLProcessor(cfgBegin, cfgSource, cfgExtract, cfgTransformers, cfgLoader, cfgEnd, context);
     processor.execute();
   }
 
@@ -232,6 +244,13 @@ public class OETLProcessor implements OETLComponent {
 
     try {
       begin();
+
+      if (source != null) {
+        final Reader reader = source.read();
+
+        if (reader != null)
+          extractor.extract(reader);
+      }
 
       Object current = null;
       while (extractor.hasNext()) {
@@ -289,6 +308,7 @@ public class OETLProcessor implements OETLComponent {
       t.end();
     }
 
+    source.begin();
     extractor.begin();
     loader.begin();
 
@@ -301,6 +321,7 @@ public class OETLProcessor implements OETLComponent {
     for (OTransformer t : transformers)
       t.end();
 
+    source.end();
     extractor.end();
     loader.end();
 
@@ -403,7 +424,7 @@ public class OETLProcessor implements OETLComponent {
 
     if (extractorTotal == -1) {
       out(iDebug, "+ extracted %,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
-          extractorProgress, extractorUnit, extractorItemsSec, extractorUnit, extractor.getCurrent(), extractor.getCurrentUnit(),
+          extractorProgress, extractorUnit, extractorItemsSec, extractorUnit, extractor.getProgress(), extractor.getUnit(),
           loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, OIOUtils.getTimeAsString(now - startTime), stats.warnings.get(),
           stats.errors.get());
     } else {
@@ -412,7 +433,7 @@ public class OETLProcessor implements OETLComponent {
       out(iDebug,
           "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
           extractorPercentage, extractorProgress, extractorTotal, extractorUnit, extractorItemsSec, extractorUnit,
-          extractor.getCurrent(), extractor.getCurrentUnit(), loaderProgress, loaderUnit, loaderItemsSec, loaderUnit,
+          extractor.getProgress(), extractor.getUnit(), loaderProgress, loaderUnit, loaderItemsSec, loaderUnit,
           OIOUtils.getTimeAsString(now - startTime), stats.warnings.get(), stats.errors.get());
     }
 

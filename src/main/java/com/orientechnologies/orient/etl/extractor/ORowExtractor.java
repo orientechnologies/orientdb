@@ -18,38 +18,17 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 
-public class OLineExtractor extends OFileExtractor {
-  protected BufferedReader reader;
-  private long             progressBytes;
+public class ORowExtractor extends OAbstractSourceExtractor {
+  protected BufferedReader bReader;
   private long             currentRow;
 
   @Override
-  public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[{path:{optional:false,description:'File path'}},"
-        + "{lock:{optional:true,description:'Lock the file while browsing it'}}]," + "output:'String'}");
-  }
-
-  @Override
   public String getName() {
-    return "line";
-  }
-
-  @Override
-  public boolean hasNext() {
-    if (reader == null)
-      return false;
-
-    try {
-      return reader.ready();
-    } catch (IOException e) {
-      throw new OExtractorException(e);
-    }
+    return "row";
   }
 
   @Override
@@ -58,11 +37,11 @@ public class OLineExtractor extends OFileExtractor {
       throw new NoSuchElementException("EOF");
 
     try {
-      final String line = reader.readLine();
-      progressBytes += line.length();
+      final String line = bReader.readLine();
+      current += line.length();
       currentRow++;
-      if (reader.ready())
-        progressBytes++;
+      if (bReader.ready())
+        current++;
       return line;
     } catch (IOException e) {
       throw new OExtractorException(e);
@@ -73,13 +52,13 @@ public class OLineExtractor extends OFileExtractor {
   public void begin() {
     super.begin();
 
-    reader = new BufferedReader(fileReader);
+    bReader = new BufferedReader(reader);
   }
 
   public void end() {
-    if (reader != null)
+    if (bReader != null)
       try {
-        reader.close();
+        bReader.close();
       } catch (IOException e) {
       }
 
@@ -87,17 +66,7 @@ public class OLineExtractor extends OFileExtractor {
   }
 
   @Override
-  public long getCurrent() {
-    return currentRow;
-  }
-
-  @Override
-  public String getCurrentUnit() {
+  public String getUnit() {
     return "row";
-  }
-
-  @Override
-  public long getProgress() {
-    return progressBytes;
   }
 }

@@ -24,9 +24,14 @@ import com.orientechnologies.orient.etl.block.OCodeBlock;
 import com.orientechnologies.orient.etl.block.OLetBlock;
 import com.orientechnologies.orient.etl.extractor.OExtractor;
 import com.orientechnologies.orient.etl.extractor.OJDBCExtractor;
-import com.orientechnologies.orient.etl.extractor.OLineExtractor;
+import com.orientechnologies.orient.etl.extractor.OJsonExtractor;
+import com.orientechnologies.orient.etl.extractor.ORowExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.loader.OOrientDBLoader;
+import com.orientechnologies.orient.etl.source.OFileSource;
+import com.orientechnologies.orient.etl.source.OHttpSource;
+import com.orientechnologies.orient.etl.source.OInputSource;
+import com.orientechnologies.orient.etl.source.OSource;
 import com.orientechnologies.orient.etl.transformer.*;
 
 import java.util.HashMap;
@@ -38,17 +43,23 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLComponentFactory {
+  protected final Map<String, Class<? extends OSource>>      sources      = new HashMap<String, Class<? extends OSource>>();
   protected final Map<String, Class<? extends OBlock>>       blocks       = new HashMap<String, Class<? extends OBlock>>();
   protected final Map<String, Class<? extends OExtractor>>   extractors   = new HashMap<String, Class<? extends OExtractor>>();
   protected final Map<String, Class<? extends OTransformer>> transformers = new HashMap<String, Class<? extends OTransformer>>();
   protected final Map<String, Class<? extends OLoader>>      loaders      = new HashMap<String, Class<? extends OLoader>>();
 
   public OETLComponentFactory() {
+    registerSource(OFileSource.class);
+    registerSource(OHttpSource.class);
+    registerSource(OInputSource.class);
+
     registerBlock(OCodeBlock.class);
     registerBlock(OLetBlock.class);
 
     registerExtractor(OJDBCExtractor.class);
-    registerExtractor(OLineExtractor.class);
+    registerExtractor(ORowExtractor.class);
+    registerExtractor(OJsonExtractor.class);
 
     registerTransformer(OBlockTransformer.class);
     registerTransformer(OCodeTransformer.class);
@@ -62,6 +73,15 @@ public class OETLComponentFactory {
     registerTransformer(OVertexTransformer.class);
 
     registerLoader(OOrientDBLoader.class);
+  }
+
+  public OETLComponentFactory registerSource(final Class<? extends OSource> iComponent) {
+    try {
+      sources.put(iComponent.newInstance().getName(), iComponent);
+    } catch (Exception e) {
+      OLogManager.instance().error(this, "Error on registering source: %s", iComponent.getName());
+    }
+    return this;
   }
 
   public OETLComponentFactory registerBlock(final Class<? extends OBlock> iComponent) {
@@ -125,6 +145,13 @@ public class OETLComponentFactory {
     final Class<? extends OLoader> cls = loaders.get(iName);
     if (cls == null)
       throw new IllegalArgumentException("Loader '" + iName + "' not found");
+    return cls.newInstance();
+  }
+
+  public OSource getSource(final String iName) throws IllegalAccessException, InstantiationException {
+    final Class<? extends OSource> cls = sources.get(iName);
+    if (cls == null)
+      throw new IllegalArgumentException("Source '" + iName + "' not found");
     return cls.newInstance();
   }
 }

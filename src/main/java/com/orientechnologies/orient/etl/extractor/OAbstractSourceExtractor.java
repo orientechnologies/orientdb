@@ -18,20 +18,39 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import com.orientechnologies.orient.etl.OETLComponent;
-
+import java.io.IOException;
 import java.io.Reader;
-import java.util.Iterator;
 
 /**
- * ETL Extractor.
+ * ETL abstract extractor.
  */
-public interface OExtractor extends OETLComponent, Iterator<Object> {
-  public void extract(final Reader iReader);
+public abstract class OAbstractSourceExtractor extends OAbstractExtractor {
+  protected Reader reader;
 
-  public long getProgress();
+  @Override
+  public void extract(final Reader iReader) {
+    reader = iReader;
+  }
 
-  public long getTotal();
+  @Override
+  public boolean hasNext() {
+    if (reader == null)
+      return false;
 
-  public String getUnit();
+    try {
+      return reader.ready();
+    } catch (IOException e) {
+      throw new OExtractorException(e);
+    }
+  }
+
+  public void end() {
+    if (reader != null)
+      try {
+        reader.close();
+      } catch (IOException e) {
+      }
+
+    super.end();
+  }
 }

@@ -186,16 +186,16 @@ public class OOrientDBLoader extends OAbstractETLComponent implements OLoader {
 
         final String idxClass = idx.field("class");
         if (idxClass == null)
-          throw new OConfigurationException("Index 'class' missed in OrientDocument loader");
+          throw new OConfigurationException("Index 'class' missed in OrientDB Loader");
 
         final OClass cls = getOrCreateClass(idxClass);
         final String idxType = idx.field("type");
         if (idxType == null)
-          throw new OConfigurationException("Index 'type' missed in OrientDocument loader for index '" + idxName + "'");
+          throw new OConfigurationException("Index 'type' missed in OrientDB Loader for index '" + idxName + "'");
 
         final List<String> idxFields = idx.field("fields");
         if (idxFields == null)
-          throw new OConfigurationException("Index 'fields' missed in OrientDocument loader");
+          throw new OConfigurationException("Index 'fields' missed in OrientDB Loader");
 
         String[] fields = new String[idxFields.size()];
         for (int f = 0; f < fields.length; ++f) {
@@ -207,7 +207,7 @@ public class OOrientDBLoader extends OAbstractETLComponent implements OLoader {
             // CREATE PROPERTY AUTOMATICALLY
 
             if (fieldNameParts.length < 2)
-              throw new OConfigurationException("Index field type missed in OrientDocument loader for field '" + fieldName + "'");
+              throw new OConfigurationException("Index field type missed in OrientDB Loader for field '" + fieldName + "'");
 
             final String fieldType = fieldNameParts[1].toUpperCase();
             final OType type = OType.valueOf(fieldType);
