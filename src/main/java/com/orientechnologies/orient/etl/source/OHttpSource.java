@@ -30,22 +30,17 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Extracts data from HTTP endpoint.
  */
 public class OHttpSource extends OAbstractETLComponent implements OSource {
-  protected BufferedReader      reader;
-  protected long                progressBytes = -1;
-  protected long                total         = -1;
-
-  protected String              url;
-  protected String              httpMethod    = "GET";
-  protected HttpURLConnection   conn;
-  protected Map<String, String> headers       = new HashMap<String, String>();
-  private long                  currentRow    = 0;
+  protected BufferedReader    reader;
+  protected String            url;
+  protected String            method  = "GET";
+  protected HttpURLConnection conn;
+  protected ODocument         headers;
+  protected boolean           verbose = false;
 
   @Override
   public ODocument getConfiguration() {
@@ -60,8 +55,11 @@ public class OHttpSource extends OAbstractETLComponent implements OSource {
     url = iConfiguration.field("url");
     if (url == null || url.isEmpty())
       throw new OConfigurationException("HTTP Source missing URL");
-    if (iConfiguration.containsField("httpMethod"))
-      httpMethod = iConfiguration.field("httpMethod");
+    if (iConfiguration.containsField("method"))
+      method = iConfiguration.field("method");
+
+    if (iConfiguration.containsField("headers"))
+      headers = iConfiguration.field("headers");
   }
 
   @Override
@@ -79,15 +77,20 @@ public class OHttpSource extends OAbstractETLComponent implements OSource {
     try {
       final URL obj = new URL(url);
       conn = (HttpURLConnection) obj.openConnection();
-      conn.setRequestMethod(httpMethod);
+      conn.setRequestMethod(method);
 
-      for (Map.Entry<String, String> entry : headers.entrySet())
-        conn.setRequestProperty(entry.getKey(), entry.getValue());
+      if (headers != null)
+        for (String k : headers.fieldNames())
+          conn.setRequestProperty(k, (String) headers.field(k));
+
+      log("Connecting to %s (method=%s)", url, method);
 
       final int responseCode = conn.getResponseCode();
 
+      log("Connected: response code %d", responseCode);
+
     } catch (Exception e) {
-      throw new OSourceException("[HTTP source] error on opening connection in " + httpMethod + " to URL: " + url, e);
+      throw new OSourceException("[HTTP source] error on opening connection in " + method + " to URL: " + url, e);
     }
   }
 
@@ -110,7 +113,7 @@ public class OHttpSource extends OAbstractETLComponent implements OSource {
       reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
       return reader;
     } catch (Exception e) {
-      throw new OSourceException("[HTTP source] Error on reading by using " + httpMethod + " from URL: " + url, e);
+      throw new OSourceException("[HTTP source] Error on reading by using " + method + " from URL: " + url, e);
     }
   }
 }

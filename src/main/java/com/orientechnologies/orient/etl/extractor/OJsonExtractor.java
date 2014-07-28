@@ -26,7 +26,7 @@ import java.util.NoSuchElementException;
 
 public class OJsonExtractor extends OAbstractSourceExtractor {
   protected OJSONReader jsonReader;
-  protected boolean     collection;
+  protected Character   first = null;
 
   @Override
   public String getName() {
@@ -38,7 +38,7 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
     if (jsonReader == null)
       return false;
 
-    if (collection && jsonReader.lastChar() == ']') {
+    if (total == 1 && jsonReader.lastChar() == ']') {
       jsonReader = null;
       return false;
     }
@@ -56,7 +56,12 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
       throw new NoSuchElementException("EOF");
 
     try {
-      final String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
+      String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
+      if (first != null) {
+        // USE THE FIRST CHAR READ
+        value = first + value;
+        first = null;
+      }
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
       current++;
       return new ODocument().fromJSON(value);
@@ -65,21 +70,16 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
     }
   }
 
-  @Override
-  public void begin() {
-    super.begin();
-  }
-
   public void extract(final Reader iReader) {
     super.extract(iReader);
     jsonReader = new OJSONReader(reader);
     try {
-      char first = jsonReader.nextChar();
-      if (first == '[') {
-        collection = true;
-      } else if (first == '{') {
-        collection = false;
-      } else
+      first = jsonReader.nextChar();
+      if (first == '[')
+        first = null;
+      else if (first == '{')
+        total = 1;
+      else
         throw new OExtractorException("[JSON extractor] found unexpected character '" + first + "' at the beginning of input");
 
     } catch (Exception e) {

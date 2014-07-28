@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
@@ -68,6 +69,8 @@ public class OMergeTransformer extends OAbstractTransformer {
       unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase());
 
     db = processor.getDocumentDatabase();
+    if( db == null )
+      throw new OTransformException("[Merge transformer] database is not configured");
   }
 
   @Override
