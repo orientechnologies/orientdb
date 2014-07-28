@@ -185,6 +185,7 @@
         </condition>
 
         <java fork="true" dir="graphdb" classname="com.orientechnologies.orient.graph.blueprints.TestLoadGraph">
+	    <jvmarg value="-Djava.awt.headless=true"/>
             <classpath>
                 <fileset dir="${community.release}/lib" includes="*.jar"/>
             </classpath>

@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
@@ -14,6 +15,9 @@
  * limitations under the License.
  */
 package com.orientechnologies.orient.core.metadata.schema;
+
+import java.text.ParseException;
+import java.util.*;
 
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.log.OLogManager;
@@ -42,9 +46,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.text.ParseException;
-import java.util.*;
 
 /**
  * Contains the description of a persistent class property.
@@ -1027,6 +1028,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       checkEmbedded();
 
+      owner.renameProperty(this.name, name);
       this.name = name;
     } finally {
       releaseSchemaWriteLock();

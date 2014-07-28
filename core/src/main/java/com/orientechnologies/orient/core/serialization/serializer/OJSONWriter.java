@@ -384,10 +384,18 @@ public class OJSONWriter {
       out.append(":");
     }
 
-    if (iFormat.contains("graph") && (iValue == null || iValue instanceof OIdentifiable)
-        && (iName.startsWith("in_") || iName.startsWith("out_"))) {
+    if (iFormat.contains("graph") && (iName.startsWith("in_") || iName.startsWith("out_"))
+        && (iValue == null || iValue instanceof OIdentifiable)) {
       // FORCE THE OUTPUT AS COLLECTION
-      out.append("[1]");
+      out.append('[');
+      if (iValue instanceof OIdentifiable) {
+        final boolean shallow = iFormat != null && iFormat.contains("shallow");
+        if (shallow)
+          out.append("1");
+        else
+          out.append(writeValue(iValue, iFormat));
+      }
+      out.append(']');
     } else
       out.append(writeValue(iValue, iFormat));
 

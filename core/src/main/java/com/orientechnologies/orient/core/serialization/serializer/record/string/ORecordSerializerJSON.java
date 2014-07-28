@@ -385,7 +385,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
     iSource = iSource.trim();
     if (!iSource.startsWith("{") || !iSource.endsWith("}"))
-      throw new OSerializationException("Error on unmarshalling JSON content: content must be between { }");
+      throw new OSerializationException("Error on unmarshalling JSON content '" + iSource + "': content must be between { }");
 
     iSource = iSource.substring(1, iSource.length() - 1).trim();
     return iSource;

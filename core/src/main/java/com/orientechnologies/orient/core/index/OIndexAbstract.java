@@ -814,7 +814,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected abstract OStreamSerializer determineValueSerializer();
 
   protected void populateIndex(ODocument doc, Object fieldValue) {
-    if (fieldValue instanceof Collection) {
+		if (fieldValue instanceof Collection) {
       for (final Object fieldValueItem : (Collection<?>) fieldValue) {
         put(fieldValueItem, doc);
       }

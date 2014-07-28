@@ -87,7 +87,7 @@ public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollec
 
   @Override
   public void clearChangedIds() {
-
-    delegate.clearChangedIds();
+    if (delegate != null)
+      delegate.clearChangedIds();
   }
 }
