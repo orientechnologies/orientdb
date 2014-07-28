@@ -12,7 +12,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -114,14 +113,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       }
     }
 
-  }
-
-  protected boolean compareFieldName(final BytesContainer container, final byte[] fieldBytes, final int size) {
-    for (int i = 0; i < size; ++i) {
-      if (fieldBytes[i] != container.bytes[container.offset + i])
-        return false;
-    }
-    return true;
   }
 
   private OType readOType(final BytesContainer bytes) {
@@ -292,10 +283,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         found.add(id);
     }
     return found;
-  }
-
-  private OIdentifiable readLink(final BytesContainer bytes) {
-    return new ORecordId(readInteger(bytes), new OClusterPositionLong(readLong(bytes)));
   }
 
   private ORecordId readOptimizedLink(final BytesContainer bytes) {
@@ -512,29 +499,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return pos;
   }
 
-  private int writeLink(BytesContainer bytes, OIdentifiable link) {
-    link = recursiveLinkSave(link);
-    int pos = bytes.alloc(OIntegerSerializer.INT_SIZE);
-    OIntegerSerializer.INSTANCE.serialize(link.getIdentity().getClusterId(), bytes.bytes, pos);
-    int posR = bytes.alloc(OLongSerializer.LONG_SIZE);
-    OLongSerializer.INSTANCE.serialize(link.getIdentity().getClusterPosition().longValue(), bytes.bytes, posR);
-    return pos;
-  }
-
-  private int writeOptimizedNullLink(BytesContainer bytes) {
-    int pos = OVarIntSerializer.write(bytes, -2);
-    OVarIntSerializer.write(bytes, -1L);
-    return pos;
-  }
-
-  private int writeNullLink(BytesContainer bytes) {
-    int pos = bytes.alloc(OIntegerSerializer.INT_SIZE);
-    OIntegerSerializer.INSTANCE.serialize(-2, bytes.bytes, pos);
-    int posR = bytes.alloc(OLongSerializer.LONG_SIZE);
-    OLongSerializer.INSTANCE.serialize(-1L, bytes.bytes, posR);
-    return pos;
-  }
-
   private int writeLinkCollection(BytesContainer bytes, Collection<OIdentifiable> value) {
     if (value instanceof OMVRBTreeRIDSet) {
       ((OMVRBTreeRIDSet) value).toStream();
@@ -603,30 +567,24 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return res;
   }
 
-  private int writeEmptyString(final BytesContainer bytes) {
-    return OVarIntSerializer.write(bytes, 0);
-  }
-
-  public int readInteger(BytesContainer container) {
+  private int readInteger(BytesContainer container) {
     final int value = OIntegerSerializer.INSTANCE.deserialize(container.bytes, container.offset);
     container.offset += OIntegerSerializer.INT_SIZE;
     return value;
   }
 
-  public byte readByte(BytesContainer container) {
+  private byte readByte(BytesContainer container) {
     return container.bytes[container.offset++];
   }
 
-  public long readLong(BytesContainer container) {
+  private long readLong(BytesContainer container) {
     final long value = OLongSerializer.INSTANCE.deserialize(container.bytes, container.offset);
     container.offset += OLongSerializer.LONG_SIZE;
     return value;
   }
 
-  public long readShort(BytesContainer container) {
-    final short value = OShortSerializer.INSTANCE.deserialize(container.bytes, container.offset);
-    container.offset += OShortSerializer.SHORT_SIZE;
-    return value;
+  private int writeEmptyString(final BytesContainer bytes) {
+    return OVarIntSerializer.write(bytes, 0);
   }
 
   private int writeString(final BytesContainer bytes, final String toWrite) {
