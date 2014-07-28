@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OAbstractETLComponent;
 import com.orientechnologies.orient.etl.OETLProcessor;
-import com.orientechnologies.orient.etl.extractor.OExtractorException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -80,6 +79,8 @@ public class OFileSource extends OAbstractETLComponent implements OSource {
 
     if (path instanceof File) {
       final File file = (File) path;
+      if (!file.exists())
+        throw new OSourceException("[File source] path ''" + path + "' not exists");
       fileName = file.getName();
     }
   }
@@ -151,7 +152,7 @@ public class OFileSource extends OAbstractETLComponent implements OSource {
       byteToParse = -1;
       fileReader = (InputStreamReader) path;
     } else
-      throw new OExtractorException("Unknown input '" + path + "' of class '" + path.getClass() + "'");
+      throw new OSourceException("[File source] Unknown input '" + path + "' of class '" + path.getClass() + "'");
 
     byteParsed = 0;
 

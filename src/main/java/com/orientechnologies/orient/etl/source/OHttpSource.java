@@ -18,9 +18,11 @@
 
 package com.orientechnologies.orient.etl.source;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OAbstractETLComponent;
-import com.orientechnologies.orient.etl.extractor.OExtractorException;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,9 +55,20 @@ public class OHttpSource extends OAbstractETLComponent implements OSource {
   }
 
   @Override
+  public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
+    super.configure(iProcessor, iConfiguration, iContext);
+    url = iConfiguration.field("url");
+    if (url == null || url.isEmpty())
+      throw new OConfigurationException("HTTP Source missing URL");
+    if (iConfiguration.containsField("httpMethod"))
+      httpMethod = iConfiguration.field("httpMethod");
+  }
+
+  @Override
   public String getUnit() {
     return "bytes";
   }
+
   @Override
   public String getName() {
     return "http";
@@ -73,10 +86,8 @@ public class OHttpSource extends OAbstractETLComponent implements OSource {
 
       final int responseCode = conn.getResponseCode();
 
-      reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-
     } catch (Exception e) {
-      throw new OExtractorException("Error on opening connection in " + httpMethod + " to URL: " + url, e);
+      throw new OSourceException("[HTTP source] error on opening connection in " + httpMethod + " to URL: " + url, e);
     }
   }
 
@@ -95,6 +106,11 @@ public class OHttpSource extends OAbstractETLComponent implements OSource {
 
   @Override
   public Reader read() {
-    return reader;
+    try {
+      reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+      return reader;
+    } catch (Exception e) {
+      throw new OSourceException("[HTTP source] Error on reading by using " + httpMethod + " from URL: " + url, e);
+    }
   }
 }

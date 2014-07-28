@@ -40,13 +40,13 @@ public class OBlockTransformer extends OAbstractTransformer {
     super.configure(iProcessor, iConfiguration, iContext);
     final String[] fieldNames = iConfiguration.fieldNames();
     if (fieldNames.length != 1)
-      throw new OConfigurationException("Only one block can be declared inside 'block' transformer");
+      throw new OConfigurationException("[Block transformer] Only one block can be declared inside 'block' transformer");
 
     try {
       block = processor.getFactory().getBlock(fieldNames[0]);
       block.configure(processor, (ODocument) iConfiguration.field(fieldNames[0]), context);
     } catch (Exception e) {
-      throw new OConfigurationException("Error on configuring inner block", e);
+      throw new OConfigurationException("[Block transformer] Error on configuring inner block", e);
     }
   }
 

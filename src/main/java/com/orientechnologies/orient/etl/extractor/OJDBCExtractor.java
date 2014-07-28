@@ -18,6 +18,12 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLProcessor;
+
 import java.io.Reader;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -28,12 +34,6 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OETLProcessor;
 
 /**
  * Created by luca on 04/07/14.
@@ -69,13 +69,13 @@ public class OJDBCExtractor extends OAbstractExtractor {
     try {
       Class.forName(driverClass).newInstance();
     } catch (Exception e) {
-      throw new OConfigurationException("JDBC Driver " + driverClass + " not found", e);
+      throw new OConfigurationException("[JDBC extractor] JDBC Driver " + driverClass + " not found", e);
     }
 
     try {
       conn = DriverManager.getConnection(url, userName, userPassword);
     } catch (Exception e) {
-      throw new OConfigurationException("Error on connecting to JDBC url '" + url + "' using user '" + userName
+      throw new OConfigurationException("[JDBC extractor] error on connecting to JDBC url '" + url + "' using user '" + userName
           + "' and the password provided", e);
     }
   }
@@ -156,7 +156,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
       }
 
     } catch (SQLException e) {
-      throw new OExtractorException(getName() + ": error on executing query '" + query + "'", e);
+      throw new OExtractorException("[JDBC extractor] error on executing query '" + query + "'", e);
     }
   }
 
@@ -198,7 +198,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
       }
       return hasNext;
     } catch (SQLException e) {
-      throw new OExtractorException(getName() + ": error on moving forward in resultset of query '" + query
+      throw new OExtractorException("[JDBC extractor] error on moving forward in resultset of query '" + query
           + "'. Previous position was " + current, e);
     }
   }
@@ -208,7 +208,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
     try {
       if (!didNext) {
         if (!rs.next())
-          throw new NoSuchElementException("Previous position was " + current);
+          throw new NoSuchElementException("[JDBC extractor] previous position was " + current);
         current++;
       }
       didNext = false;
@@ -222,7 +222,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
       return doc;
 
     } catch (SQLException e) {
-      throw new OExtractorException(getName() + ": error on moving forward in resultset of query '" + query
+      throw new OExtractorException("[JDBC extractor] error on moving forward in resultset of query '" + query
           + "'. Previous position was " + current, e);
     }
   }

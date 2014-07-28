@@ -13,31 +13,25 @@
  *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  * See the License for the specific language governing permissions and
  *  * limitations under the License.
- *
+ *  
  */
 
-package com.orientechnologies.orient.etl.transformer;
+package com.orientechnologies.orient.etl.source;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+/**
+ * Created by luca on 26/06/14.
+ */
+public class OSourceException extends RuntimeException {
 
-public class OJSONTransformer extends OAbstractTransformer {
-  @Override
-  public ODocument getConfiguration() {
-    return new ODocument();
+  public OSourceException(final Exception e) {
+    super(e);
   }
 
-  @Override
-  public String getName() {
-    return "json";
+  public OSourceException(String s) {
+    super(s);
   }
 
-  @Override
-  public Object executeTransform(final Object input) {
-    if (input instanceof ODocument)
-      return input;
-    else if (input instanceof String)
-      return new ODocument((String) input);
-    else
-      throw new OTransformException("[JSON transformer] Unknown input '" + input + "' of class '" + input.getClass() + "'");
+  public OSourceException(String s, Exception e) {
+    super(s, e);
   }
 }

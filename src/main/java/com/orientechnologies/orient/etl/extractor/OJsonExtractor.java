@@ -46,7 +46,7 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
     try {
       return jsonReader.hasNext();
     } catch (Exception e) {
-      throw new OExtractorException(e);
+      throw new OExtractorException("[JSON extractor] error on parsing next element", e);
     }
   }
 
@@ -61,7 +61,7 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
       current++;
       return new ODocument().fromJSON(value);
     } catch (Exception e) {
-      throw new OExtractorException(e);
+      throw new OExtractorException("[JSON extractor] error on extract json", e);
     }
   }
 
@@ -80,7 +80,7 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
       } else if (first == '{') {
         collection = false;
       } else
-        throw new OExtractorException("json: found unexpected character '" + first + "' at the beginning of input");
+        throw new OExtractorException("[JSON extractor] found unexpected character '" + first + "' at the beginning of input");
 
     } catch (Exception e) {
       throw new OExtractorException(e);

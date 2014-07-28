@@ -168,7 +168,7 @@ public class OLinkTransformer extends OAbstractTransformer {
         case SKIP:
           return null;
         case HALT:
-          throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinRuntimeValue + "'");
+          throw new OETLProcessHaltedException("[Link transformer] Cannot resolve join for value '" + joinRuntimeValue + "'");
         }
       } else
         // SET THE TRANSFORMED FIELD BACK

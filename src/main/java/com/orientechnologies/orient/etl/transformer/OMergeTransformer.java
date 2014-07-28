@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
-import com.orientechnologies.orient.etl.transformer.OAbstractTransformer;
 
 import java.util.Collection;
 
@@ -122,7 +121,7 @@ public class OMergeTransformer extends OAbstractTransformer {
         case SKIP:
           return null;
         case HALT:
-          throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinValue + "'");
+          throw new OETLProcessHaltedException("[Merge transformer] Cannot resolve join for value '" + joinValue + "'");
         }
       } else {
         final ODocument loadedDocument = (ODocument) result;
