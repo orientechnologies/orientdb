@@ -217,3 +217,8 @@ input.search-query {
 .search-bookmarks {
     padding-top: 5px;
 }
+
+.antialiased {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}

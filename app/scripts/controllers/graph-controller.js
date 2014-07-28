@@ -294,6 +294,9 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
         }
     }
+    $scope.redraw = function () {
+        $scope.graph.redraw();
+    }
     $scope.graphOptions = {
         data: data,
         onLoad: function (graph) {
@@ -357,6 +360,26 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                     var title = "Edge (" + e.label + ")";
                     $scope.doc = e.edge;
                     Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideEdge.html', show: true});
+                }
+            },
+            {
+                name: '\uf127',
+                onClick: function (e) {
+
+                    var recordID = e['@rid']
+                    Utilities.confirm($scope, $modal, $q, {
+                        title: 'Warning!',
+                        body: 'You are removing Edge ' + recordID + ' from. Are you sure?',
+                        success: function () {
+                            var command = "DELETE Vertex " + recordID;
+                            //TODO remove edge from db
+                            $scope.graph.removeEdge(e);
+//                            CommandApi.queryText({database: $routeParams.database, language: 'sql', text: command, verbose: false}, function (data) {
+//                                $scope.graph.removeEdge(v);
+//                            });
+                        }
+                    });
+
                 }
             }
         ],
