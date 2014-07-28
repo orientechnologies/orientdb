@@ -313,7 +313,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
    */
   public boolean isConnected() {
     final Socket s = socket;
-    return s != null && s.isConnected() && !s.isInputShutdown() && !s.isOutputShutdown();
+    return s != null && !s.isClosed() && s.isConnected() && !s.isInputShutdown() && !s.isOutputShutdown();
   }
 
   /**
