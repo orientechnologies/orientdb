@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.serialization.serializer;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.text.ParseException;
 import java.util.Arrays;
 
@@ -45,7 +45,7 @@ public class OJSONReader {
   public static final char[] BEGIN_COLLECTION  = new char[] { '[' };
   public static final char[] END_COLLECTION    = new char[] { ']' };
 
-  public OJSONReader(InputStreamReader iIn) {
+  public OJSONReader(Reader iIn) {
     this.in = new BufferedReader(iIn);
   }
 
