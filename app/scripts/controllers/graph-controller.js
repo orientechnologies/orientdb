@@ -301,6 +301,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
             $scope.graph.on('node/click', function (v) {
 
+
                 if (Aside.isOpen()) {
                     $scope.doc = v.source;
                     var title = $scope.doc['@class'] + "-" + $scope.doc['@rid'] + "- Version " + $scope.doc['@version'];
@@ -313,10 +314,13 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             });
             $scope.graph.on('edge/click', function (e) {
 
+                if (Aside.isOpen()) {
+                    var title = "Edge (" + e.label + ")";
+                    $scope.doc = e.edge;
+                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideEdge.html', show: true});
+                }
 
-                var title = "Edge (" + e.label + ")";
-                $scope.doc = e.edge;
-                Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideEdge.html', show: true});
+
             });
             $scope.graph.on('node/dblclick', function (v) {
 
@@ -338,8 +342,21 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         edgeMenu: [
             {
                 name: '\uf044',
-                onClick: function (v) {
-                    console.log(v);
+                onClick: function (e) {
+                    if (e.edge) {
+                        $scope.showModal(e, e.edge["@rid"]);
+                    }
+                }
+
+
+            },
+            {
+                name: '\uf06e',
+                onClick: function (e) {
+
+                    var title = "Edge (" + e.label + ")";
+                    $scope.doc = e.edge;
+                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideEdge.html', show: true});
                 }
             }
         ],
@@ -521,7 +538,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
     };
     $scope.addNode = function () {
-        $scope.showModalNew("Dir");
+        $scope.showModalNew();
     }
     $scope.showModal = function (v, rid) {
         var modalScope = $scope.$new(true);
@@ -529,7 +546,11 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         modalScope.database = $routeParams.database;
         modalScope.rid = rid;
         modalScope.confirmSave = function (doc) {
-            v.source = doc;
+            if (v.edge) {
+                v.edge = doc;
+            } else if (v.source) {
+                v.source = doc;
+            }
         }
         $modal({template: 'views/database/modalEdit.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
 
