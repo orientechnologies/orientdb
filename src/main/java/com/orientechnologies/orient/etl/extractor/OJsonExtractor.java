@@ -74,7 +74,7 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
     super.extract(iReader);
     jsonReader = new OJSONReader(reader);
     try {
-      first = jsonReader.nextChar();
+      first = (char) reader.read();
       if (first == '[')
         first = null;
       else if (first == '{')
