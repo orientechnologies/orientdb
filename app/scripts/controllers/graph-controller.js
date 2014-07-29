@@ -144,9 +144,9 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
                     }
                     else {
                         if (group.contains('in_')) {
-                            command = "DELETE EDGE FROM " + edge + " TO " + $scope.rid;
+                            command = "DELETE EDGE FROM " + edge + " TO " + $scope.rid + " where @class='" + group.replace("in_","") + "'";
                         } else {
-                            command = "DELETE EDGE FROM " + $scope.rid + " TO " + edge;
+                            command = "DELETE EDGE FROM " + $scope.rid + " TO " + edge + " where @class='" + group.replace("out_","") + "'";
                         }
                     }
                     CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
@@ -313,6 +313,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             });
             $scope.graph.on('edge/create', function (v1, v2) {
 
+                console.log(v1);
                 $scope.showModalNewEdge(v1, v2);
             });
             $scope.graph.on('edge/click', function (e) {
@@ -327,7 +328,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             });
             $scope.graph.on('node/dblclick', function (v) {
 
-                var q = "select expand(unionAll(bothE(),both()) )  from " + v['@rid'];
+                var q = "select expand(bothE())  from " + v['@rid'];
                 CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: $scope.language, text: q, limit: -1, shallow: false, verbose: false}, function (data) {
 
                     $scope.graph.data(data.result).redraw();
@@ -477,7 +478,6 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                 placeholder: "Connect",
                 onClick: function (v) {
 
-                    console.log(v);
                     $scope.graph.startEdge();
                 }
             },
