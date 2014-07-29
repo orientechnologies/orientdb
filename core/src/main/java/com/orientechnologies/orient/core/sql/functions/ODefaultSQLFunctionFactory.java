@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionEncode;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIf;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIfNull;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
+import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMode;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
 
 /**
@@ -75,6 +76,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionSysdate.NAME, OSQLFunctionSysdate.class);
     register(OSQLFunctionSum.NAME, OSQLFunctionSum.class);
     register(OSQLFunctionUnionAll.NAME, OSQLFunctionUnionAll.class);
+    register(OSQLFunctionMode.NAME, OSQLFunctionMode.class);
   }
 
   public static void register(final String iName, final Object iImplementation) {
