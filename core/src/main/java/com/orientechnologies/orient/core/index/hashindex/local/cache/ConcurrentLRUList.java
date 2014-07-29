@@ -15,6 +15,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class ConcurrentLRUList implements LRUList {
 
+  private static boolean                              assertionsEnabled;
+
+  static {
+    assert assertionsEnabled = true;
+  }
+
   private final ConcurrentHashMap<CacheKey, LRUEntry> cache           = new ConcurrentHashMap<CacheKey, LRUEntry>();
   private final ListNode                              headReference   = new ListNode(null, true);
   private final AtomicReference<ListNode>             tailReference   = new AtomicReference<ListNode>(headReference);
@@ -52,7 +58,7 @@ public class ConcurrentLRUList implements LRUList {
     try {
       valueToRemove.removed = true;
       ListNode node = valueToRemove.listNode.get();
-      valueToRemove.listNode.set(null);
+      valueToRemove.listNode.lazySet(null);
 
       if (node != null)
         addToTrash(node);
@@ -95,7 +101,7 @@ public class ConcurrentLRUList implements LRUList {
         if (lruEntry.listNode.compareAndSet(oldNode, newNode)) {
 
           while (true) {
-            newNode.previous = tail;
+            newNode.previous.set(tail);
 
             if (tail.next.compareAndSet(null, newNode)) {
               tailReference.compareAndSet(tail, newNode);
@@ -148,7 +154,7 @@ public class ConcurrentLRUList implements LRUList {
           currentEntry.removed = true;
           ListNode node = currentEntry.listNode.get();
 
-          currentEntry.listNode.set(null);
+          currentEntry.listNode.lazySet(null);
           addToTrash(node);
           removed = true;
         } finally {
@@ -192,19 +198,22 @@ public class ConcurrentLRUList implements LRUList {
         continue;
       }
 
-      ListNode previous = node.previous;
-      ListNode next = node.next.get();
+      final ListNode previous = node.previous.get();
+      final ListNode next = node.next.get();
+
+      node.previous.lazySet(null);
 
       assert previous.next.get() == node;
-      assert next == null || next.previous == node;
+      assert next == null || next.previous.get() == node;
 
-      boolean success = previous.next.compareAndSet(node, next);
-      assert success;
+      if (assertionsEnabled) {
+        boolean success = previous.next.compareAndSet(node, next);
+        assert success;
+      } else
+        previous.next.set(next);
 
       if (next != null)
-        next.previous = previous;
-
-      node.previous = null;
+        next.previous.set(previous);
     }
   }
 
@@ -249,7 +258,7 @@ public class ConcurrentLRUList implements LRUList {
     public OCacheEntryIterator(ListNode start) {
       current = start;
       while (current != null && current.entry == null)
-        current = current.previous;
+        current = current.previous.get();
     }
 
     @Override
@@ -262,7 +271,7 @@ public class ConcurrentLRUList implements LRUList {
       final OCacheEntry entry = current.entry.entry;
 
       do
-        current = current.previous;
+        current = current.previous.get();
       while (current != null && current.entry == null);
 
       return entry;
@@ -324,8 +333,8 @@ public class ConcurrentLRUList implements LRUList {
 
   private static class ListNode {
     private volatile LRUEntry               entry;
-    private final AtomicReference<ListNode> next = new AtomicReference<ListNode>();
-    private volatile ListNode               previous;
+    private final AtomicReference<ListNode> next     = new AtomicReference<ListNode>();
+    private final AtomicReference<ListNode> previous = new AtomicReference<ListNode>();
 
     private final boolean                   isDummy;
 
