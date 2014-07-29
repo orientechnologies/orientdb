@@ -40,12 +40,12 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     processor = iProcessor;
     context = iContext;
 
-    final String ifExpression = iConfiguration.field("if");
+    final String ifExpression = (String) resolve(iConfiguration.field("if"));
     if (ifExpression != null)
       ifFilter = new OSQLFilter(ifExpression, iContext, null);
 
     if (iConfiguration.containsField("verbose"))
-      verbose = iConfiguration.field("verbose");
+      verbose = (Boolean) iConfiguration.field("verbose");
   }
 
   @Override
@@ -75,8 +75,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
   }
 
   protected Object resolve(final Object iContent) {
-    if (context == null)
-      // NO CONTEXT AVAILABLE
+    if (context == null || iContent == null)
       return iContent;
 
     Object value = null;

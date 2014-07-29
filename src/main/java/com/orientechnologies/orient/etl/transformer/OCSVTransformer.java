@@ -57,7 +57,7 @@ public class OCSVTransformer extends OAbstractTransformer {
     if (iConfiguration.containsField("separator"))
       separator = iConfiguration.field("separator").toString().charAt(0);
     if (iConfiguration.containsField("columnsOnFirstLine"))
-      columnsOnFirstLine = iConfiguration.field("columnsOnFirstLine");
+      columnsOnFirstLine = (Boolean) iConfiguration.field("columnsOnFirstLine");
     if (iConfiguration.containsField("columns")) {
       final List<String> columns = iConfiguration.field("columns");
       columnNames = new ArrayList<String>(columns.size());

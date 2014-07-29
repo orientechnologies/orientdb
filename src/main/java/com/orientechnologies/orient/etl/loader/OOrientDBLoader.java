@@ -136,9 +136,9 @@ public class OOrientDBLoader extends OAbstractETLComponent implements OLoader {
     if (iConfiguration.containsField("dbType"))
       dbType = DB_TYPE.valueOf(iConfiguration.field("dbType").toString().toUpperCase());
     if (iConfiguration.containsField("tx"))
-      tx = iConfiguration.field("tx");
+      tx = (Boolean) iConfiguration.field("tx");
     if (iConfiguration.containsField("batchCommit"))
-      batchCommit = iConfiguration.field("batchCommit");
+      batchCommit = (Integer) iConfiguration.field("batchCommit");
 
     clusterName = iConfiguration.field("cluster");
     className = iConfiguration.field("class");

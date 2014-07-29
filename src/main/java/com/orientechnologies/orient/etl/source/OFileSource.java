@@ -66,7 +66,7 @@ public class OFileSource extends OAbstractETLComponent implements OSource {
 
     path = resolve(iConfiguration.field("path"));
     if (iConfiguration.containsField("lock"))
-      lockFile = iConfiguration.field("lock");
+      lockFile = (Boolean) iConfiguration.field("lock");
 
     if (iConfiguration.containsField("skipFirst"))
       skipFirst = Long.parseLong((String) iConfiguration.field("skipFirst"));
