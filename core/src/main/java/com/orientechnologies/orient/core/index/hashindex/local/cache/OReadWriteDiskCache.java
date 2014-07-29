@@ -1,5 +1,14 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.Future;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -10,19 +19,9 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.Future;
 
 /**
  * @author Andrey Lomakin
@@ -84,9 +83,9 @@ public class OReadWriteDiskCache implements ODiskCache {
     K_IN = maxSize >> 2;
     K_OUT = maxSize >> 1;
 
-    am = new LRUList();
-    a1out = new LRUList();
-    a1in = new LRUList();
+    am = new ConcurrentLRUList();
+    a1out = new ConcurrentLRUList();
+    a1in = new ConcurrentLRUList();
 
     syncObject = new Object();
   }

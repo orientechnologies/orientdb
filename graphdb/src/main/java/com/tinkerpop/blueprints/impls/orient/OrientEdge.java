@@ -338,7 +338,8 @@ public class OrientEdge extends OrientElement implements Edge {
    */
   @Override
   public void remove() {
-    checkClass();
+    if (!isLightweight())
+      checkClass();
 
     graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();

@@ -73,10 +73,16 @@
         </dependency>
 
         <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>5.14.1</version>
-            <scope>test</scope>
+            <version>6.8.8</version>
         </dependency>
 
         <dependency>

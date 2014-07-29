@@ -23,21 +23,34 @@ public class ConcurrentTestHelper<T> {
   private final List<Future<T>> futures;
 
   public static <T> Collection<T> test(int threadCount, TestFactory<T> factory) {
+    final List<Callable<T>> callables = prepareWorkers(threadCount, factory);
+    return go(callables);
+  }
+
+  private static <T> Collection<T> go(List<Callable<T>> workers) {
+    final ConcurrentTestHelper<T> helper = new ConcurrentTestHelper<T>(workers.size());
+
+    helper.submit(workers);
+
+    return helper.assertSuccess();
+  }
+
+  private static <T> List<Callable<T>> prepareWorkers(int threadCount, TestFactory<T> factory) {
     final List<Callable<T>> callables = new ArrayList<Callable<T>>(threadCount);
     for (int i = 0; i < threadCount; i++) {
       callables.add(factory.createWorker());
     }
-    final ConcurrentTestHelper<T> helper = new ConcurrentTestHelper<T>(threadCount);
+    return callables;
+  }
 
-    helper.submit(callables);
-
-    return helper.assertSuccess();
+  public static <T> TestBuilder<T> build() {
+    return new TestBuilder<T>();
   }
 
   private Collection<T> assertSuccess() {
     try {
       executor.shutdown();
-      assertTrue(executor.awaitTermination(1, TimeUnit.MINUTES), "Test threads hanged");
+      assertTrue(executor.awaitTermination(30, TimeUnit.MINUTES), "Test threads hanged");
 
       List<T> results = new ArrayList<T>(futures.size());
       List<Exception> exceptions = new ArrayList<Exception>();
@@ -113,6 +126,19 @@ public class ConcurrentTestHelper<T> {
           cause.printStackTrace(s);
         }
       }
+    }
+  }
+
+  public static class TestBuilder<T> {
+    private List<Callable<T>> workers = new ArrayList<Callable<T>>();
+
+    public TestBuilder<T> add(int threadCount, TestFactory<T> factory) {
+      workers.addAll(prepareWorkers(threadCount, factory));
+      return this;
+    }
+
+    public Collection<T> go() {
+      return ConcurrentTestHelper.go(workers);
     }
   }
 }

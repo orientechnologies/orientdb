@@ -93,6 +93,9 @@
                 <fileset dir="${global.lib}">
                     <include name="*.jar"/>
                 </fileset>
+                <fileset dir="../test-commons/target">
+                    <include name="*.jar"/>
+                </fileset>
             </classpath>
             <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
                         includes="embedded-test-db-from-scratch.xml"/>
@@ -151,7 +154,12 @@
                 <fileset dir="${global.lib}">
                     <include name="*.jar"/>
                 </fileset>
+                <fileset dir="../test-commons/target">
+                    <include name="*.jar"/>
+                </fileset>
+
             </classpath>
+
             <xmlfileset dir="${project.build}/com/orientechnologies/orient/test/database/auto"
                         includes="remote-test-db-from-scratch.xml"/>
         </testng>

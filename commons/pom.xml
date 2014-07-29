@@ -40,15 +40,14 @@
 			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
-		<!-- External -->
-		<dependency>
-			<groupId>org.testng</groupId>
-			<artifactId>testng</artifactId>
-			<version>5.14.1</version>
-			<scope>test</scope>
-		</dependency>
-
-	</dependencies>
+        <!-- External -->
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>6.8.8</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 	<build>
 		<plugins>
