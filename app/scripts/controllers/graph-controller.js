@@ -148,9 +148,9 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
                     }
                     else {
                         if (group.contains('in_')) {
-                            command = "DELETE EDGE FROM " + edge + " TO " + $scope.rid;
+                            command = "DELETE EDGE FROM " + edge + " TO " + $scope.rid + " where @class='" + group.replace("in_", "") + "'";
                         } else {
-                            command = "DELETE EDGE FROM " + $scope.rid + " TO " + edge;
+                            command = "DELETE EDGE FROM " + $scope.rid + " TO " + edge + " where @class='" + group.replace("out_", "") + "'";
                         }
                     }
                     CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
