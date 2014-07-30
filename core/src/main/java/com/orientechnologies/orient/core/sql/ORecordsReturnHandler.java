@@ -1,21 +1,21 @@
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public abstract class ORecordsReturnHandler implements OReturnHandler {
-  private List<Object>          results;
   private final Object          returnExpression;
   private final OCommandContext context;
+  private List<Object>          results;
 
-  protected ORecordsReturnHandler(Object returnExpression, OCommandContext context) {
+  protected ORecordsReturnHandler(final Object returnExpression, final OCommandContext context) {
     this.returnExpression = returnExpression;
     this.context = context;
   }
@@ -25,36 +25,33 @@ public abstract class ORecordsReturnHandler implements OReturnHandler {
     results = new ArrayList<Object>();
   }
 
-  protected void storeResult(ODocument result) {
+  @Override
+  public Object ret() {
+    return results;
+  }
+
+  protected void storeResult(final ODocument result) {
     final ODocument processedResult = preprocess(result);
 
     results.add(evaluateExpression(processedResult));
   }
 
-  private Object evaluateExpression(ODocument record) {
+  protected abstract ODocument preprocess(final ODocument result);
+
+  private Object evaluateExpression(final ODocument record) {
     if (returnExpression == null) {
       return record;
     } else {
       final Object itemResult;
       final ODocument wrappingDoc;
       context.setVariable("current", record);
+
       itemResult = OSQLHelper.getValue(returnExpression, (ODocument) ((OIdentifiable) record).getRecord(), context);
       if (itemResult instanceof OIdentifiable)
         return itemResult;
-      else {
-        // WRAP WITH ODOCUMENT IF NEEDED
-        wrappingDoc = new ODocument("result", itemResult);
-        wrappingDoc.field("rid", record.getIdentity());// passing record id.In many cases usable on client side
-        wrappingDoc.field("version", record.getVersion());
-        return wrappingDoc;
-      }
+
+      // WRAP WITH ODOCUMENT TO BE TRANSFERRED THROUGH BINARY DRIVER
+      return new ODocument("value", itemResult);
     }
   }
-
-  @Override
-  public Object ret() {
-    return results;
-  }
-
-  protected abstract ODocument preprocess(ODocument result);
 }
