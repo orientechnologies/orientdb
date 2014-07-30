@@ -20,6 +20,8 @@ public interface LRUList extends Iterable<OCacheEntry> {
 
   OCacheEntry removeLRU();
 
+	OCacheEntry getLRU();
+
   @Override
   Iterator<OCacheEntry> iterator();
 }

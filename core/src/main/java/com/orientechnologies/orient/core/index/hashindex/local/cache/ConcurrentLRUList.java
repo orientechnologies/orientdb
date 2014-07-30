@@ -172,6 +172,36 @@ public class ConcurrentLRUList implements LRUList {
     return currentEntry.entry;
   }
 
+  @Override
+  public OCacheEntry getLRU() {
+    ListNode current = headReference;
+
+    LRUEntry currentEntry = null;
+    int inUseCounter = 0;
+
+    while (current.isDummy || (currentEntry = current.entry) == null || (isInUse(currentEntry.entry))) {
+      if (currentEntry != null && isInUse(currentEntry.entry))
+        inUseCounter++;
+
+      ListNode next = current.next.get();
+
+      if (next == null) {
+        if (cache.size() == inUseCounter)
+          return null;
+
+        current = headReference;
+        inUseCounter = 0;
+        continue;
+      }
+
+      current = next;
+    }
+
+    purge();
+
+    return currentEntry.entry;
+  }
+
   private void purge() {
     if (purgeInProgress.compareAndSet(false, true)) {
       purgeSomeFromTrash();

@@ -44,6 +44,11 @@ public class SynchronizedLRUList implements LRUList {
   }
 
   @Override
+  public synchronized OCacheEntry getLRU() {
+    return underlying.getLRU();
+  }
+
+  @Override
   public synchronized Iterator<OCacheEntry> iterator() {
     return underlying.iterator();
   }
