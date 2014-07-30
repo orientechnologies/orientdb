@@ -144,9 +144,9 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
                     }
                     else {
                         if (group.contains('in_')) {
-                            command = "DELETE EDGE FROM " + edge + " TO " + $scope.rid + " where @class='" + group.replace("in_","") + "'";
+                            command = "DELETE EDGE FROM " + edge + " TO " + $scope.rid + " where @class='" + group.replace("in_", "") + "'";
                         } else {
-                            command = "DELETE EDGE FROM " + $scope.rid + " TO " + edge + " where @class='" + group.replace("out_","") + "'";
+                            command = "DELETE EDGE FROM " + $scope.rid + " TO " + edge + " where @class='" + group.replace("out_", "") + "'";
                         }
                     }
                     CommandApi.queryText({database: $scope.database, language: 'sql', text: command}, function (data) {
@@ -238,7 +238,7 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
     }
 }]);
 
-GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService) {
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph) {
 
 
     var data = [];
@@ -294,11 +294,12 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
         }
     }
-    $scope.redraw = function () {
-        $scope.graph.redraw();
+    $scope.clear = function () {
+        $scope.graph.clear();
     }
+    $scope.queryText = Graph.query;
     $scope.graphOptions = {
-        data: data,
+        data: Graph.data,
         onLoad: function (graph) {
             $scope.graph = graph;
 
@@ -313,7 +314,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             });
             $scope.graph.on('edge/create', function (v1, v2) {
 
-                console.log(v1);
+
                 $scope.showModalNewEdge(v1, v2);
             });
             $scope.graph.on('edge/click', function (e) {
@@ -370,14 +371,21 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                     var recordID = e['@rid']
                     Utilities.confirm($scope, $modal, $q, {
                         title: 'Warning!',
-                        body: 'You are removing Edge ' + recordID + ' from. Are you sure?',
+                        body: 'You are removing Edge ' + e.label + ' from ' + e.source["@rid"] + ' to ' + e.target["@rid"] + ' . Are you sure?',
                         success: function () {
-                            var command = "DELETE Vertex " + recordID;
+
+                            var command = ""
+                            if (e.edge) {
+                                command = "DELETE EDGE " + e.edge["@rid"];
+                            }
+                            else {
+                                command = "DELETE EDGE FROM " + e.source["@rid"] + " TO " + e.target["@rid"] + " where @class='" + e.label + "'";
+                            }
                             //TODO remove edge from db
-                            $scope.graph.removeEdge(e);
-//                            CommandApi.queryText({database: $routeParams.database, language: 'sql', text: command, verbose: false}, function (data) {
-//                                $scope.graph.removeEdge(v);
-//                            });
+
+                            CommandApi.queryText({database: $routeParams.database, language: 'sql', text: command, verbose: false}, function (data) {
+                                $scope.graph.removeEdge(e);
+                            });
                         }
                     });
 
@@ -545,6 +553,9 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         modalScope.confirmSave = function (docs) {
             $scope.graph.endEdgeCreation();
             $scope.graph.data(docs).redraw();
+        }
+        modalScope.cancelSave = function () {
+            $scope.graph.endEdgeCreation();
         }
         $modal({template: 'views/database/modalNewEdge.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
 

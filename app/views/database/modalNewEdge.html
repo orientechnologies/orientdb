@@ -2,7 +2,8 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
+                <button type="button" class="close" data-dismiss="modal" ng-click="$hide();cancelSave()"
+                        aria-hidden="true">×
                 </button>
                 <h5>New Edge from {{source["@rid"]}} to {{target["@rid"]}}</h5>
             </div>
@@ -43,6 +44,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
+
                     <button type="button" ng-show="lightweight" ng-disabled="!selectedClass"
                             class="btn btn-sm pull-right"
                             ng-click="createLightEdge(selectedClass)"> Create
@@ -50,6 +52,10 @@
                     <button type="button" ng-show="!lightweight" ng-disabled="!selectedClass"
                             class="btn btn-sm pull-right"
                             ng-click="setSelectClass(selectedClass)"> Next
+                    </button>
+                    <button type="button"
+                            class="btn btn-sm pull-right"
+                            ng-click="$hide();cancelSave()"> Cancel
                     </button>
                 </div>
             </div>

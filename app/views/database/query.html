@@ -4,11 +4,14 @@
     </div>
     <div class="query-actions bookmarks">
 
-        <a class="ng-binding" href="javascript:void(0)" data-placement="bottom"
+        <a class="ng-binding" href="javascript:void(0)" data-title="Send to Graph" ng-click="sendToGraph(item)">
+            <i class="fa fa-circle-o"></i>
+        </a>
+        <a class="ng-binding" href="javascript:void(0)"  data-placement="bottom"
            data-title="Add bookmark"
            data-template="views/database/bookmark.html"
            bs-popover>
-            <i ng-class="bookIcon"></i>
+            <i data-title="Add to bookmarks" bs-tooltip ng-class="bookIcon"></i>
         </a>
         <a class="ng-binding" href="javascript:void(0)" ng-click="removeItem(item)">
             <i class="fa fa-trash-o"></i>
@@ -39,14 +42,7 @@
                      style="width: 100%; height: 100px;"></div>
             </div>
         </div>
-        <div ng-show="current == 'graph'" class="jsonView">
-            <!--<div class="graph-container" ng-graph-query="graphOptions">-->
 
-            <!--</div>-->
-            <div class="graph-container" ng-o-graph="graphOptions">
-
-            </div>
-        </div>
     </div>
     <div class="query-info">
         <div class="row">
@@ -58,9 +54,6 @@
                 <ul class="nav nav-pills pull-right" ng-show="item.headers">
                     <li ng-class="{active : current == 'table' }">
                         <a href="javascript:void(0)" ng-click="current = 'table'">Table</a>
-                    </li>
-                    <li ng-class="{active : current == 'graph' }">
-                        <a href="javascript:void(0)" ng-click="current = 'graph'">Graph</a>
                     </li>
                     <li ng-class="{active : current == 'raw' }">
                         <a href="javascript:void(0)" ng-click="current = 'raw'">Raw</a>

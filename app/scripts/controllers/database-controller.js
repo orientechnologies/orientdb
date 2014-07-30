@@ -257,7 +257,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 //    $scope.loadMore();
 
 }]);
-dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller', '$ojson', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller, $ojson) {
+dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller', '$ojson', 'Graph', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller, $ojson, Graph) {
 
 
     var data = $scope.item.resultTotal;
@@ -296,6 +296,11 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
             }
 
         }
+    }
+    $scope.sendToGraph = function () {
+        Graph.add($scope.item.resultTotal);
+        Graph.query = $scope.item.query;
+        $location.path("/database/" + $scope.database.getName() + "/graph");
     }
     $scope.changeIcon = function () {
         $scope.bookIcon = 'icon-star';
