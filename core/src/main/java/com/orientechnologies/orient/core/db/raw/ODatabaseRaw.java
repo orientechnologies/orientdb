@@ -16,7 +16,6 @@
 
 package com.orientechnologies.orient.core.db.raw;
 
-import com.orientechnologies.common.concur.lock.ONoLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -55,9 +54,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -82,7 +79,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   private ODatabaseRecord           databaseOwner;
 
   public ODatabaseRaw(final String iURL) {
-    super(Collections.newSetFromMap(new IdentityHashMap<ODatabaseListener, Boolean>(64)), new ONoLock());
+		super(false);
     if (iURL == null)
       throw new IllegalArgumentException("URL parameter is null");
 

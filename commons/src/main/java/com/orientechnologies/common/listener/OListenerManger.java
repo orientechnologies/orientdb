@@ -16,10 +16,9 @@
 package com.orientechnologies.common.listener;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
-
-import com.orientechnologies.common.concur.lock.OLock;
-import com.orientechnologies.common.concur.lock.ONoLock;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract class to manage listeners.
@@ -31,57 +30,28 @@ import com.orientechnologies.common.concur.lock.ONoLock;
  */
 public abstract class OListenerManger<L> {
   private final Collection<L> listeners;
-  private final OLock         lock;
 
-  public OListenerManger() {
-    this(new HashSet<L>(8), new ONoLock());
-  }
-
-  public OListenerManger(final OLock iLock) {
-    listeners = new HashSet<L>(8);
-    lock = iLock;
-  }
-
-  public OListenerManger(final Collection<L> iListeners, final OLock iLock) {
-    listeners = iListeners;
-    lock = iLock;
+  public OListenerManger(boolean concurrent) {
+    if (concurrent)
+      listeners = Collections.newSetFromMap(new ConcurrentHashMap<L, Boolean>());
+    else
+      listeners = new HashSet<L>();
   }
 
   public void registerListener(final L iListener) {
     if (iListener != null) {
-      lock.lock();
-      try {
-
-        listeners.add(iListener);
-
-      } finally {
-        lock.unlock();
-      }
+      listeners.add(iListener);
     }
   }
 
   public void unregisterListener(final L iListener) {
     if (iListener != null) {
-      lock.lock();
-      try {
-
-        listeners.remove(iListener);
-
-      } finally {
-        lock.unlock();
-      }
+      listeners.remove(iListener);
     }
   }
 
   public void resetListeners() {
-    lock.lock();
-    try {
-
-      listeners.clear();
-
-    } finally {
-      lock.unlock();
-    }
+    listeners.clear();
   }
 
   public Iterable<L> browseListeners() {
@@ -90,17 +60,7 @@ public abstract class OListenerManger<L> {
 
   @SuppressWarnings("unchecked")
   public Iterable<L> getListenersCopy() {
-    lock.lock();
-    try {
-
-      return (Iterable<L>) new HashSet<Object>(listeners);
-
-    } finally {
-      lock.unlock();
-    }
+    return (Iterable<L>) new HashSet<Object>(listeners);
   }
 
-  public OLock getLock() {
-    return lock;
-  }
 }

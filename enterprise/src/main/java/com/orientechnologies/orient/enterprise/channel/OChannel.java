@@ -77,6 +77,7 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   }
 
   public OChannel(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
+		super(true);
     socket = iSocket;
     socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
     socket.setTcpNoDelay(true);

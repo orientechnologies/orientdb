@@ -39,10 +39,10 @@ import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
   public static final String                      ORIENTDB_HOME          = "ORIENTDB_HOME";
@@ -50,8 +50,10 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   protected static final Orient                   instance               = new Orient();
   protected static boolean                        registerDatabaseByPath = false;
-  protected final Map<String, OEngine>            engines                = new HashMap<String, OEngine>();
-  protected final Map<String, OStorage>           storages               = new HashMap<String, OStorage>();
+
+  protected final ConcurrentMap<String, OEngine>  engines                = new ConcurrentHashMap<String, OEngine>();
+  protected final ConcurrentMap<String, OStorage> storages               = new ConcurrentHashMap<String, OStorage>();
+
   protected final Set<ODatabaseLifecycleListener> dbLifecycleListeners   = new HashSet<ODatabaseLifecycleListener>();
   protected final ODatabaseFactory                databaseFactory        = new ODatabaseFactory();
   protected final OScriptManager                  scriptManager          = new OScriptManager();
@@ -67,8 +69,11 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected volatile boolean                      active                 = false;
   protected ThreadPoolExecutor                    workers;
 
+  private final ReadWriteLock                     engineLock             = new ReentrantReadWriteLock();
+
   protected Orient() {
-    super(new OAdaptiveLock(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean()));
+		super(true);
+
     startup();
   }
 
@@ -112,7 +117,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public Orient startup() {
-    getLock().lock();
+    engineLock.writeLock().lock();
     try {
       if (active)
         // ALREADY ACTIVE
@@ -154,12 +159,12 @@ public class Orient extends OListenerManger<OOrientListener> {
       return this;
 
     } finally {
-      getLock().unlock();
+      engineLock.writeLock().unlock();
     }
   }
 
   public Orient shutdown() {
-    getLock().lock();
+    engineLock.writeLock().lock();
     try {
       if (!active)
         return this;
@@ -220,13 +225,14 @@ public class Orient extends OListenerManger<OOrientListener> {
       OLogManager.instance().flush();
 
     } finally {
-      getLock().unlock();
+      engineLock.writeLock().unlock();
     }
     return this;
   }
 
   public void closeAllStorages() {
-    if (storages != null) {
+    engineLock.writeLock().lock();
+    try {
       // CLOSE ALL THE STORAGES
       final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
       for (OStorage stg : storagesCopy) {
@@ -238,6 +244,8 @@ public class Orient extends OListenerManger<OOrientListener> {
         }
       }
       storages.clear();
+    } finally {
+      engineLock.writeLock().unlock();
     }
   }
 
@@ -260,7 +268,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     final String engineName = iURL.substring(0, pos);
 
-    getLock().lock();
+    engineLock.readLock().lock();
     try {
       final OEngine engine = engines.get(engineName.toLowerCase());
 
@@ -301,7 +309,10 @@ public class Orient extends OListenerManger<OOrientListener> {
         if (storage == null) {
           // NOT FOUND: CREATE IT
           storage = engine.createStorage(dbPath, parameters);
-          storages.put(dbName, storage);
+
+          final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
+          if (oldStorage != null)
+            storage = oldStorage;
         }
       } else {
         // REGISTER IT WITH A SERIAL NAME TO AVOID BEING REUSED
@@ -313,98 +324,98 @@ public class Orient extends OListenerManger<OOrientListener> {
         l.onStorageRegistered(storage);
 
       return storage;
-
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
-  public OStorage registerStorage(final OStorage iStorage) throws IOException {
-    getLock().lock();
+  public OStorage registerStorage(OStorage storage) throws IOException {
+    engineLock.readLock().lock();
     try {
       for (OOrientListener l : browseListeners())
-        l.onStorageRegistered(iStorage);
+        l.onStorageRegistered(storage);
 
-      if (!storages.containsKey(iStorage.getName()))
-        storages.put(iStorage.getName(), iStorage);
+      OStorage oldStorage = storages.putIfAbsent(storage.getName(), storage);
+      if (oldStorage != null)
+        storage = oldStorage;
 
+      return storage;
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
-    return iStorage;
   }
 
-  public OStorage getStorage(final String iDbName) {
-    getLock().lock();
+  public OStorage getStorage(final String dbName) {
+    engineLock.readLock().lock();
     try {
-      return storages.get(iDbName);
+      return storages.get(dbName);
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
   public void registerEngine(final OEngine iEngine) {
-    getLock().lock();
+    engineLock.readLock().lock();
     try {
       engines.put(iEngine.getName(), iEngine);
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
   /**
    * Returns the engine by its name.
    * 
-   * @param iEngineName
+   * @param engineName
    *          Engine name to retrieve
    * @return OEngine instance of found, otherwise null
    */
-  public OEngine getEngine(final String iEngineName) {
-    getLock().lock();
+  public OEngine getEngine(final String engineName) {
+    engineLock.readLock().lock();
     try {
-      return engines.get(iEngineName);
+      return engines.get(engineName);
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
   public Set<String> getEngines() {
-    getLock().lock();
+    engineLock.readLock().lock();
     try {
       return Collections.unmodifiableSet(engines.keySet());
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
-  public void unregisterStorageByName(final String iName) {
-    final String dbName = registerDatabaseByPath ? iName : OIOUtils.getRelativePathIfAny(iName, null);
+  public void unregisterStorageByName(final String name) {
+    final String dbName = registerDatabaseByPath ? name : OIOUtils.getRelativePathIfAny(name, null);
     final OStorage stg = storages.get(dbName);
     unregisterStorage(stg);
   }
 
-  public void unregisterStorage(final OStorage iStorage) {
+  public void unregisterStorage(final OStorage storage) {
     if (!active)
       // SHUTDOWNING OR NOT ACTIVE: RETURN
       return;
 
-    if (iStorage == null)
+    if (storage == null)
       return;
 
-    getLock().lock();
+    engineLock.writeLock().lock();
     try {
       // UNREGISTER ALL THE LISTENER ONE BY ONE AVOIDING SELF-RECURSION BY REMOVING FROM THE LIST
       final Iterable<OOrientListener> listenerCopy = getListenersCopy();
       for (Iterator<OOrientListener> it = listenerCopy.iterator(); it.hasNext();) {
         final OOrientListener l = it.next();
         unregisterListener(l);
-        l.onStorageUnregistered(iStorage);
+        l.onStorageUnregistered(storage);
       }
 
       final List<String> storagesToRemove = new ArrayList<String>();
 
       for (Entry<String, OStorage> s : storages.entrySet()) {
-        if (s.getValue().equals(iStorage))
+        if (s.getValue().equals(storage))
           storagesToRemove.add(s.getKey());
       }
 
@@ -412,18 +423,16 @@ public class Orient extends OListenerManger<OOrientListener> {
         storages.remove(dbName);
 
     } finally {
-      getLock().unlock();
+      engineLock.writeLock().unlock();
     }
   }
 
   public Collection<OStorage> getStorages() {
-    getLock().lock();
+    engineLock.readLock().lock();
     try {
-
       return new ArrayList<OStorage>(storages.values());
-
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
