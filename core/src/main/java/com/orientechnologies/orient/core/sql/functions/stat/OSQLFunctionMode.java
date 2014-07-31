@@ -1,3 +1,18 @@
+/*
+ * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.orientechnologies.orient.core.sql.functions.stat;
 
 import java.util.ArrayList;
@@ -12,7 +27,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 
 /**
- * Compute the mode (or multimodal) value for a field. The scores in the field's distribution that occurs more frequently.
+ * Compute the mode (or multimodal) value for a field. The scores in the field's distribution that occurs more frequently. Nulls are
+ * ignored in the calculation.
+ * 
+ * @author Fabrizio Fortino
  */
 public class OSQLFunctionMode extends OSQLFunctionAbstract {
 
@@ -23,7 +41,7 @@ public class OSQLFunctionMode extends OSQLFunctionAbstract {
   private List<Object>         maxElems = new ArrayList<Object>();
 
   public OSQLFunctionMode() {
-    super("mode", 1, 1);
+    super(NAME, 1, 1);
   }
 
   @Override
@@ -32,10 +50,10 @@ public class OSQLFunctionMode extends OSQLFunctionAbstract {
 
     if (OMultiValue.isMultiValue(iParams[0])) {
       for (Object o : OMultiValue.getMultiValueIterable(iParams[0])) {
-        max = computeMode(o, 1, seen, maxElems, max);
+        max = evaluate(o, 1, seen, maxElems, max);
       }
     } else {
-      max = computeMode(iParams[0], 1, seen, maxElems, max);
+      max = evaluate(iParams[0], 1, seen, maxElems, max);
     }
     return getResult();
   }
@@ -45,7 +63,7 @@ public class OSQLFunctionMode extends OSQLFunctionAbstract {
     if (returnDistributedResult()) {
       return seen;
     } else {
-      return this.maxElems;
+      return maxElems.isEmpty() ? null : maxElems;
     }
   }
 
@@ -68,13 +86,13 @@ public class OSQLFunctionMode extends OSQLFunctionAbstract {
     for (Object iParameter : resultsToMerge) {
       final Map<Object, Integer> mSeen = (Map<Object, Integer>) iParameter;
       for (Entry<Object, Integer> o : mSeen.entrySet()) {
-        dMax = this.computeMode(o.getKey(), o.getValue(), dSeen, dMaxElems, dMax);
+        dMax = this.evaluate(o.getKey(), o.getValue(), dSeen, dMaxElems, dMax);
       }
     }
     return dMaxElems;
   }
 
-  private int computeMode(Object value, int times, Map<Object, Integer> iSeen, List<Object> iMaxElems, int iMax) {
+  private int evaluate(Object value, int times, Map<Object, Integer> iSeen, List<Object> iMaxElems, int iMax) {
     if (value != null) {
       if (iSeen.containsKey(value)) {
         iSeen.put(value, iSeen.get(value) + times);
