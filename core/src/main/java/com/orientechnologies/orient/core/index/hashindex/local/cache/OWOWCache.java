@@ -65,6 +65,9 @@ import java.util.zip.CRC32;
  * @since 7/23/13
  */
 public class OWOWCache {
+	//we add 8 bytes before and after cache pages to prevent word tearing in mt case.
+  public static final int                                   PAGE_PADDING          = 8;
+
   public static final String                                NAME_ID_MAP_EXTENSION = ".cm";
 
   private static final String                               NAME_ID_MAP           = "name_id_map" + NAME_ID_MAP_EXTENSION;
@@ -644,12 +647,6 @@ public class OWOWCache {
     }
   }
 
-  public void forceSyncStoredChanges() throws IOException {
-    synchronized (syncObject) {
-      for (OFileClassic fileClassic : files.values())
-        fileClassic.synch();
-    }
-  }
 
   public boolean isOpen(long fileId) {
     synchronized (syncObject) {
@@ -1061,7 +1058,7 @@ public class OWOWCache {
     final long startPosition = pageIndex * pageSize;
     final long endPosition = startPosition + pageSize;
 
-    byte[] content = new byte[pageSize];
+    byte[] content = new byte[pageSize + 2 * PAGE_PADDING];
     OCachePointer dataPointer;
     final OFileClassic fileClassic = files.get(fileId);
 
@@ -1069,7 +1066,7 @@ public class OWOWCache {
       throw new IllegalArgumentException("File with id " + fileId + " not found in WOW Cache");
 
     if (fileClassic.getFilledUpTo() >= endPosition) {
-      fileClassic.read(startPosition, content, content.length);
+      fileClassic.read(startPosition, content, content.length - 2 * PAGE_PADDING, PAGE_PADDING);
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
 
       final OLogSequenceNumber storedLSN = ODurablePage.getLogSequenceNumberFromPage(pointer);
@@ -1092,7 +1089,7 @@ public class OWOWCache {
         writeAheadLog.flush();
     }
 
-    final byte[] content = dataPointer.get(0, pageSize);
+    final byte[] content = dataPointer.get(PAGE_PADDING, pageSize);
     OLongSerializer.INSTANCE.serializeNative(MAGIC_NUMBER, content, 0);
 
     final int crc32 = calculatePageCrc(content);

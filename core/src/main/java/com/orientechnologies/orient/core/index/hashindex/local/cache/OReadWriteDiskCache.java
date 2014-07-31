@@ -607,7 +607,7 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   private int normalizeMemory(long maxSize, int pageSize) {
-    long tmpMaxSize = maxSize / pageSize;
+    long tmpMaxSize = maxSize / (pageSize + 2 * OWOWCache.PAGE_PADDING);
     if (tmpMaxSize >= Integer.MAX_VALUE) {
       return Integer.MAX_VALUE;
     } else {
