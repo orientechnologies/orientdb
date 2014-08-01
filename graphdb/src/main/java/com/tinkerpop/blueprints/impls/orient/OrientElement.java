@@ -4,7 +4,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -12,10 +11,9 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.tinkerpop.blueprints.Edge;
@@ -183,7 +181,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return (T) rawElement.getIdentity().toString();
 
     final Object fieldValue = getRecord().field(key);
-    if (fieldValue instanceof OIdentifiable)
+    if (fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof ORecordBytes))
       // CONVERT IT TO VERTEX/EDGE
       return (T) graph.getElement(fieldValue);
     else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
