@@ -26,6 +26,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
 
@@ -54,7 +55,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageC
  * @since 16.08.13
  */
 public class ODurablePage {
-  protected static final int         MAGIC_NUMBER_OFFSET = 0;
+  protected static final int         PAGE_PADDING        = OWOWCache.PAGE_PADDING;
+
+  protected static final int         MAGIC_NUMBER_OFFSET = PAGE_PADDING;
   protected static final int         CRC32_OFFSET        = MAGIC_NUMBER_OFFSET + OLongSerializer.LONG_SIZE;
 
   public static final int            WAL_SEGMENT_OFFSET  = CRC32_OFFSET + OIntegerSerializer.INT_SIZE;
@@ -66,14 +69,14 @@ public class ODurablePage {
   protected OPageChanges             pageChanges         = new OPageChanges();
 
   private final OCacheEntry          cacheEntry;
-	private final ODirectMemoryPointer pagePointer;
+  private final ODirectMemoryPointer pagePointer;
 
   protected final TrackMode          trackMode;
 
   public ODurablePage(OCacheEntry cacheEntry, TrackMode trackMode) {
     this.cacheEntry = cacheEntry;
 
-		final OCachePointer cachePointer = cacheEntry.getCachePointer();
+    final OCachePointer cachePointer = cacheEntry.getCachePointer();
     this.pagePointer = cachePointer.getDataPointer();
 
     this.trackMode = trackMode;
