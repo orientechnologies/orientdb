@@ -300,7 +300,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 // TODO: ONCE OPTIMIZED (SEE ABOVE) AVOID TO FILTER HERE
                 final Set<Object> set = new HashSet<Object>();
                 for (Map.Entry<String, Object> entry : ((Map<String, Object>) result).entrySet()) {
-                  set.addAll((Collection<?>) entry.getValue());
+                  final Object nodeResult = entry.getValue();
+                  if (nodeResult instanceof Collection)
+                    set.addAll((Collection<?>) nodeResult);
+                  else if (nodeResult instanceof Exception)
+                    // RECEIVED EXCEPTION
+                    throw (Exception) nodeResult;
                 }
                 result = new ArrayList<Object>(set);
               }

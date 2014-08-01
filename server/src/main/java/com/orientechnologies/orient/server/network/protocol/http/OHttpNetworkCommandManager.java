@@ -7,6 +7,7 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,9 +16,9 @@ public class OHttpNetworkCommandManager {
   private static final String               URL_PART_PATTERN   = "([a-zA-Z0-9%:\\\\+]*)";
   private static final String               REST_PARAM_PATTERN = "\\{[a-zA-Z0-9%:]*\\}";
 
-  private final Map<String, OServerCommand> exactCommands      = new HashMap<String, OServerCommand>();
-  private final Map<String, OServerCommand> wildcardCommands   = new HashMap<String, OServerCommand>();
-  private final Map<String, OServerCommand> restCommands       = new HashMap<String, OServerCommand>();
+  private final Map<String, OServerCommand> exactCommands      = new ConcurrentHashMap<String, OServerCommand>();
+  private final Map<String, OServerCommand> wildcardCommands   = new ConcurrentHashMap<String, OServerCommand>();
+  private final Map<String, OServerCommand> restCommands       = new ConcurrentHashMap<String, OServerCommand>();
   private final OHttpNetworkCommandManager  parent;
   private final OServer                     server;
 

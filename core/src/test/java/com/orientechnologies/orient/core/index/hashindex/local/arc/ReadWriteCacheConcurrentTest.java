@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -85,7 +86,8 @@ public class ReadWriteCacheConcurrentTest {
   }
 
   private void initBuffer() throws IOException {
-    buffer = new OReadWriteDiskCache(4 * (8 + systemOffset), 15000 * (8 + systemOffset), 8 + systemOffset, 10000, -1, storageLocal,
+    buffer = new OReadWriteDiskCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 15000 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING),
+						8 + systemOffset, 10000, -1, storageLocal,
         null, true, false);
   }
 
@@ -214,7 +216,7 @@ public class ReadWriteCacheConcurrentTest {
       pointer.acquireExclusiveLock();
       cacheEntry.markDirty();
 
-      pointer.getDataPointer().set(systemOffset,
+      pointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING,
           new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) }, 0, 8);
       pointer.releaseExclusiveLock();
       buffer.release(cacheEntry);
@@ -266,7 +268,7 @@ public class ReadWriteCacheConcurrentTest {
       OCacheEntry cacheEntry = buffer.load(fileIds.get(fileNumber), pageIndex, false);
       OCachePointer pointer = cacheEntry.getCachePointer();
 
-      byte[] content = pointer.getDataPointer().get(systemOffset, 8);
+      byte[] content = pointer.getDataPointer().get(systemOffset + OWOWCache.PAGE_PADDING, 8);
 
       buffer.release(cacheEntry);
 
