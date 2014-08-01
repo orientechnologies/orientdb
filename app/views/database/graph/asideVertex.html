@@ -42,6 +42,17 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label for="inputIcon" class="col-md-4 control-label">Icon</label>
+
+                    <div class="col-md-8">
+                        <select id="inputIcon" class="form-control" ng-options="icon.code as icon.css for icon in icons"
+                                ng-model="config.icon">
+                        </select>
+                    </div>
+                </div>
+
+
+                <div class="form-group">
                     <label for="inputRadius" class="col-md-4 control-label">Radius</label>
 
                     <div class="col-md-8">

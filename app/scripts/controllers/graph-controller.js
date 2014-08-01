@@ -182,7 +182,7 @@ GrapgController.controller("VertexPopoverLabelController", ['$scope', '$routePar
 
 }]);
 
-GrapgController.controller("VertexModalBrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', function ($scope, $routeParams, $location, Database, CommandApi) {
+GrapgController.controller("VertexModalBrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Icon', function ($scope, $routeParams, $location, Database, CommandApi, Icon) {
 
     $scope.database = Database;
     $scope.limit = 20;
@@ -238,10 +238,11 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
     }
 }]);
 
-GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph) {
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon) {
 
 
     var data = [];
+
 
     $scope.editorOptions = {
         lineWrapping: true,
@@ -330,7 +331,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             $scope.graph.on('node/dblclick', function (v) {
 
                 var q = "select expand(bothE())  from " + v['@rid'];
-                CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: $scope.language, text: q, limit: -1, shallow: false, verbose: false}, function (data) {
+                CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: 'sql', text: q, limit: -1, shallow: false, verbose: false}, function (data) {
 
                     $scope.graph.data(data.result).redraw();
                 })
@@ -619,11 +620,18 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     }
 }])
 ;
-GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside) {
+GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', 'Icon', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside, Icon) {
 
 
     $scope.database = $routeParams.database;
+
+
+    Icon.icons().then(function (data) {
+        $scope.icons = data;
+    });
     $scope.headers = Database.getPropertyFromDoc($scope.doc);
+    $scope.headers.unshift("@class");
+    $scope.headers.unshift("@rid");
     $scope.active = 'properties';
     if ($scope.doc['@class']) {
         $scope.config = $scope.graph.getClazzConfig($scope.doc['@class']);
@@ -632,6 +640,11 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
     $scope.$watch('config.display', function (val) {
         if (val) {
             $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
+        }
+    })
+    $scope.$watch('config.icon', function (val) {
+        if (val) {
+            $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', eval('\'\\u' + val.toString(16) + '\''));
         }
     })
     $scope.$watch('config.fill', function (val) {
@@ -649,6 +662,8 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
             $scope.graph.changeClazzConfig($scope.doc['@class'], 'r', val);
         }
     })
+    $('#inputIcon').fontIconPicker();
+
 }]);
 GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside) {
 
@@ -665,6 +680,11 @@ GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$l
         $scope.$watch('config.display', function (val) {
             if (val) {
                 $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
+            }
+        })
+        $scope.$watch('config.icon', function (val) {
+            if (val) {
+                $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', val);
             }
         })
         $scope.$watch('config.fill', function (val) {

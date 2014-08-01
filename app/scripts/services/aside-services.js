@@ -5,6 +5,7 @@ aside.factory('Aside', function () {
     var params = {
         cls: ""
     }
+
     return {
         params: params,
         show: function (params) {

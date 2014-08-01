@@ -214,6 +214,7 @@ input.search-query {
 
     border-radius: 15px;
 }
+
 .search-bookmarks {
     padding-top: 5px;
 }
@@ -221,4 +222,26 @@ input.search-query {
 .antialiased {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* GRAPH LAYOUT */
+.panel-graph .panel-body {
+    padding-top: 10px;
+}
+
+.enode text {
+    font-family: FontAwesome;
+    font-size: 14px;
+}
+
+text.menu-text {
+    font-family: FontAwesome;
+    font-size: 14px;
+}
+
+
+
+text.vicon {
+    font-family: fontello;
+    font-size: 18px;
 }
