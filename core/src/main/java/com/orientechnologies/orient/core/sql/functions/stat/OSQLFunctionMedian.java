@@ -28,7 +28,7 @@ public class OSQLFunctionMedian extends OSQLFunctionPercentile {
 
   public OSQLFunctionMedian() {
     super(NAME, 1, 1);
-    this.quantile = .5;
+    this.quantiles.add(.5);
   }
 
   @Override
