@@ -1,6 +1,9 @@
 package com.orientechnologies.orient.core.sql.functions.stat;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+
+import java.util.List;
 
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -96,5 +99,18 @@ public class OSQLFunctionPercentileTest {
 
     Object result = percentile.getResult();
     assertEquals(4.5, result);
+  }
+  
+  @Test
+  public void testMultiQuartile() {
+    int[] scores = { 1, 2, 3, 4, 5 };
+
+    for (int s : scores) {
+      percentile.execute(null, null, null, new Object[] { s, .25, .75 }, null);
+    }
+
+    List<Number> result = (List<Number>) percentile.getResult();
+    assertEquals(1.5, result.get(0).doubleValue());
+    assertEquals(4.5, result.get(1).doubleValue());
   }
 }

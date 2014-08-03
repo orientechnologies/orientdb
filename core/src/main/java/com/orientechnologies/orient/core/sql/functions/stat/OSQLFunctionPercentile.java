@@ -32,13 +32,13 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  */
 public class OSQLFunctionPercentile extends OSQLFunctionAbstract {
 
-  public static final String NAME     = "percentile";
+  public static final String NAME      = "percentile";
 
-  protected double           quantile = -1;
-  private List<Number>       values   = new ArrayList<Number>();
+  protected List<Double>     quantiles = new ArrayList<Double>();
+  private List<Number>       values    = new ArrayList<Number>();
 
   public OSQLFunctionPercentile() {
-    this(NAME, 2, 2);
+    this(NAME, 2, -1);
   }
 
   public OSQLFunctionPercentile(final String iName, final int iMinParams, final int iMaxParams) {
@@ -49,8 +49,10 @@ public class OSQLFunctionPercentile extends OSQLFunctionAbstract {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, Object[] iParams,
       OCommandContext iContext) {
 
-    if (quantile < 0) { // set quantile once
-      quantile = Double.parseDouble(iParams[1].toString());
+    if (quantiles.isEmpty()) { // set quantiles once
+      for (int i = 1; i < iParams.length; ++i) {
+        this.quantiles.add(Double.parseDouble(iParams[i].toString()));
+      }
     }
 
     if (iParams[0] instanceof Number) {
@@ -73,7 +75,7 @@ public class OSQLFunctionPercentile extends OSQLFunctionAbstract {
     if (returnDistributedResult()) {
       return values;
     } else {
-      return this.evaluate(this.values, this.quantile);
+      return this.evaluate(this.values);
     }
   }
 
@@ -84,12 +86,12 @@ public class OSQLFunctionPercentile extends OSQLFunctionAbstract {
     for (Object iParameter : resultsToMerge) {
       dValues.addAll((List<Number>) iParameter);
     }
-    return this.evaluate(dValues, quantile);
+    return this.evaluate(dValues);
   }
 
   @Override
   public String getSyntax() {
-    return NAME + "(<field>, <quantile>)";
+    return NAME + "(<field>, <quantile> [,<quantile>*])";
   }
 
   private void addValue(Number value) {
@@ -98,10 +100,22 @@ public class OSQLFunctionPercentile extends OSQLFunctionAbstract {
     }
   }
 
-  private Object evaluate(List<Number> iValues, double iQuantile) {
+  private Object evaluate(List<Number> iValues) {
     if (iValues.isEmpty()) { // result set is empty
       return null;
     }
+    if (quantiles.size() > 1) {
+      List<Number> results = new ArrayList<Number>();
+      for (Double q : this.quantiles) {
+        results.add(this.evaluate(iValues, q));
+      }
+      return results;
+    } else {
+      return this.evaluate(iValues, this.quantiles.get(0));
+    }
+  }
+
+  private Number evaluate(List<Number> iValues, double iQuantile) {
     Collections.sort(iValues, new Comparator<Number>() {
       @Override
       public int compare(Number o1, Number o2) {
