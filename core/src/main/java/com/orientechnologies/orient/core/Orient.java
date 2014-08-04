@@ -72,7 +72,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   private final ReadWriteLock                     engineLock             = new ReentrantReadWriteLock();
 
   protected Orient() {
-		super(true);
+    super(true);
 
     startup();
   }
@@ -196,9 +196,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         shutdownHook.cancel();
         shutdownHook = null;
       }
-
-      if (OMMapManagerLocator.getInstance() != null)
-        OMMapManagerLocator.getInstance().shutdown();
 
       if (threadGroup != null)
         // STOP ALL THE PENDING THREADS

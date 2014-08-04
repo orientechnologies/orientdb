@@ -289,12 +289,10 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     // check INCREMENT, AFTER + $current + field
     sqlString = "UPDATE " + doc.getIdentity().toString() + " INCREMENT Age = 100 RETURN AFTER $current.Age";
     result1 = database.command(new OCommandSQL(sqlString)).execute();
-    Assert.assertEquals(result1.size(), 1);
-    Assert.assertTrue(result1.get(0).containsField("result"));
-    Assert.assertEquals(result1.get(0).field("result"), 101);
-    Assert.assertTrue(result1.get(0).containsField("rid"));
-    Assert.assertTrue(result1.get(0).containsField("version"));
-    // check exclude + WHERE + LIMIT
+		Assert.assertTrue(result1.get(0).containsField("value"));
+		Assert.assertEquals(result1.get(0).field("value"), 101);
+
+		// check exclude + WHERE + LIMIT
     sqlString = "UPDATE " + doc.getIdentity().toString()
         + " INCREMENT Age = 100 RETURN AFTER $current.Exclude('really_big_field') WHERE Age=101 LIMIT 1";
     result1 = database.command(new OCommandSQL(sqlString)).execute();
