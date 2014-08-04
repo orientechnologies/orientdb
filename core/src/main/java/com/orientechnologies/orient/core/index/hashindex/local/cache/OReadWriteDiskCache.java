@@ -723,7 +723,7 @@ public class OReadWriteDiskCache implements ODiskCache {
                 if (am.get(removedEntry.fileId, removedEntry.pageIndex) == null)
                   continue;
 
-                if (removedEntry.usagesCount == 0)
+                if (removedEntry.usagesCount > 0)
                   continue;
 
                 assert !removedEntry.isDirty;
