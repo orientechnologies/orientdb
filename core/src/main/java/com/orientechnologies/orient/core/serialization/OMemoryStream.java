@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.serialization;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -35,6 +36,7 @@ public class OMemoryStream extends OutputStream {
 
   private byte[]           buffer;
   private int              position;
+  private Charset          charset               = Charset.forName("utf8");
 
   private static final int NATIVE_COPY_THRESHOLD = 9;
   private static long      metricResize          = 0;
@@ -207,8 +209,12 @@ public class OMemoryStream extends OutputStream {
     write(iContent);
   }
 
-  public final int set(final String iContent) {
+  public final int setCustom(final String iContent) {
     return set(OBinaryProtocol.string2bytes(iContent));
+  }
+
+  public final int setUtf8(final String iContent) {
+    return set(iContent.getBytes(charset));
   }
 
   public int set(final boolean iContent) {
@@ -379,6 +385,16 @@ public class OMemoryStream extends OutputStream {
   }
 
   public String getAsString() {
+    if (position >= buffer.length)
+      return null;
+
+    final int size = getVariableSize();
+    String str = new String(buffer, position, size, charset);
+    position += size;
+    return str;
+  }
+
+  public String getAsStringCustom() {
     final int size = getVariableSize();
     if (size < 0)
       return null;

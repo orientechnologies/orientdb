@@ -72,7 +72,7 @@ public class OCommandScript extends OCommandRequestTextAbstract {
 
   public byte[] toStream() throws OSerializationException {
     final OMemoryStream buffer = new OMemoryStream();
-    buffer.set(language);
+    buffer.setUtf8(language);
     return toStream(buffer);
   }
 

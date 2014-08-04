@@ -85,7 +85,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
   }
 
   protected byte[] toStream(final OMemoryStream buffer) {
-    buffer.set(text);
+    buffer.setUtf8(text);
 
     if (parameters == null || parameters.size() == 0) {
       // simple params are absent

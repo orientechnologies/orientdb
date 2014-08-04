@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -46,20 +47,21 @@ import java.util.zip.GZIPOutputStream;
  * 
  */
 public class OHttpResponse {
-  public static final String JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
-  public static final char[] URL_SEPARATOR = { '/' };
-  public final String        httpVersion;
-  private final OutputStream out;
-  public String              headers;
-  public String[]            additionalHeaders;
-  public String              characterSet;
-  public String              contentType;
-  public String              serverInfo;
+  public static final String   JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
+  public static final char[]   URL_SEPARATOR = { '/' };
+  private static final Charset utf8          = Charset.forName("utf8");
+  public final String          httpVersion;
+  private final OutputStream   out;
+  public String                headers;
+  public String[]              additionalHeaders;
+  public String                characterSet;
+  public String                contentType;
+  public String                serverInfo;
 
-  public String              sessionId;
-  public String              callbackFunction;
-  public String              contentEncoding;
-  public boolean             sendStarted   = false;
+  public String                sessionId;
+  public String                callbackFunction;
+  public String                contentEncoding;
+  public boolean               sendStarted   = false;
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction) {
@@ -112,7 +114,7 @@ public class OHttpResponse {
       if (contentEncoding != null && contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED))
         binaryContent = compress(content);
       else
-        binaryContent = OBinaryProtocol.string2bytes(content);
+        binaryContent = content.getBytes(utf8);
     }
 
     writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
@@ -159,7 +161,7 @@ public class OHttpResponse {
 
   public void writeContent(final String iContent) throws IOException {
     if (iContent != null)
-      out.write(OBinaryProtocol.string2bytes(iContent));
+      out.write(iContent.getBytes(utf8));
   }
 
   public void writeResult(Object iResult) throws InterruptedException, IOException {

@@ -107,9 +107,9 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
   protected OMemoryStream queryToStream() {
     final OMemoryStream buffer = new OMemoryStream();
 
-    buffer.set(text); // TEXT AS STRING
+    buffer.setUtf8(text); // TEXT AS STRING
     buffer.set(limit); // LIMIT AS INTEGER
-    buffer.set(fetchPlan != null ? fetchPlan : ""); // FETCH PLAN IN FORM OF STRING (to know more goto:
+    buffer.setUtf8(fetchPlan != null ? fetchPlan : ""); // FETCH PLAN IN FORM OF STRING (to know more goto:
     // http://code.google.com/p/orient/wiki/FetchingStrategies)
 
     buffer.set(serializeQueryParameters(parameters));

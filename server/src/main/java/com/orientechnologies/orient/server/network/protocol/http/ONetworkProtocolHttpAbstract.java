@@ -15,6 +15,21 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.InputMismatchException;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -27,7 +42,6 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
@@ -46,7 +60,23 @@ import com.orientechnologies.orient.server.network.protocol.http.command.delete.
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteIndex;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteProperty;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.*;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnections;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDictionary;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDisconnect;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocumentByClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetExportDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetFileDownload;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetIndex;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetListDatabases;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStorageAllocation;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandKillDbConnection;
 import com.orientechnologies.orient.server.network.protocol.http.command.options.OServerCommandOptions;
 import com.orientechnologies.orient.server.network.protocol.http.command.patch.OServerCommandPatchDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostBatch;
@@ -62,23 +92,10 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.URLDecoder;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.IllegalFormatException;
-import java.util.InputMismatchException;
-import java.util.Map;
-import java.util.zip.GZIPInputStream;
-
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private static final String          COMMAND_SEPARATOR = "|";
-  private static int                   requestMaxContentLength;                // MAX = 10Kb
+  private static final Charset         utf8              = Charset.forName("utf8");
+  private static int                   requestMaxContentLength;                    // MAX = 10Kb
   private static int                   socketTimeout;
   private final StringBuilder          requestContent    = new StringBuilder();
   protected OClientConnection          connection;
@@ -347,7 +364,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     if (iHeaders != null)
       writeLine(iHeaders);
 
-    final byte[] binaryContent = empty ? null : OBinaryProtocol.string2bytes(iContent);
+    final byte[] binaryContent = empty ? null : iContent.getBytes(utf8);
 
     writeLine(OHttpUtils.HEADER_CONTENT_LENGTH + (empty ? 0 : binaryContent.length));
 

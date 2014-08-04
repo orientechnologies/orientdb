@@ -15,16 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * SQL synchronous query. When executed the caller wait for the result.
@@ -124,7 +124,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
   protected OMemoryStream queryToStream() {
     final OMemoryStream buffer = super.queryToStream();
 
-    buffer.set(nextPageRID != null ? nextPageRID.toString() : "");
+    buffer.setUtf8(nextPageRID != null ? nextPageRID.toString() : "");
 
     final byte[] queryParams = serializeQueryParameters(previousQueryParams);
     buffer.set(queryParams);

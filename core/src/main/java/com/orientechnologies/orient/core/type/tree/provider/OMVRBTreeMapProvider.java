@@ -109,12 +109,12 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
       stream.set(keySize);
 
       stream.set(keySerializer.getId());
-      stream.set(valueSerializer.getName());
+      stream.setCustom(valueSerializer.getName());
 
       if (streamKeySerializer != null)
-        stream.set(streamKeySerializer.getName());
+        stream.setCustom(streamKeySerializer.getName());
       else
-        stream.set("");
+        stream.setCustom("");
 
       final byte[] result = stream.toByteArray();
       record.fromStream(result);
@@ -165,15 +165,15 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
       // @COMPATIBILITY BEFORE 1.0
       if (protocolVersion < 3) {
-        streamKeySerializer = OStreamSerializerFactory.get(stream.getAsString());
-        valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
+        streamKeySerializer = OStreamSerializerFactory.get(stream.getAsStringCustom());
+        valueSerializer = OStreamSerializerFactory.get(stream.getAsStringCustom());
 
         keySerializer = createRelatedSerializer(streamKeySerializer);
       } else {
         keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance().getObjectSerializer(stream.getAsByte());
-        valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
+        valueSerializer = OStreamSerializerFactory.get(stream.getAsStringCustom());
 
-        final String oldKeySerializerName = stream.getAsString();
+        final String oldKeySerializerName = stream.getAsStringCustom();
         if (oldKeySerializerName != null && oldKeySerializerName.length() > 0)
           streamKeySerializer = OStreamSerializerFactory.get(oldKeySerializerName);
       }
