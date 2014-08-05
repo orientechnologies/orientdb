@@ -197,9 +197,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         shutdownHook = null;
       }
 
-      if (OMMapManagerLocator.getInstance() != null)
-        OMMapManagerLocator.getInstance().shutdown();
-
       if (threadGroup != null)
         // STOP ALL THE PENDING THREADS
         threadGroup.interrupt();
