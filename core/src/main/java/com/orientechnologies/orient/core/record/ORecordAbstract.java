@@ -125,6 +125,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     _recordVersion.reset();
     _size = 0;
 
+    _source = null;
     setDirty();
     if (_recordId != null)
       _recordId.reset();

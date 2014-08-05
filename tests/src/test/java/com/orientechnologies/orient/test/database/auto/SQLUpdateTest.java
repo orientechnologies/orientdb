@@ -22,9 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -289,10 +287,10 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     // check INCREMENT, AFTER + $current + field
     sqlString = "UPDATE " + doc.getIdentity().toString() + " INCREMENT Age = 100 RETURN AFTER $current.Age";
     result1 = database.command(new OCommandSQL(sqlString)).execute();
-		Assert.assertTrue(result1.get(0).containsField("value"));
-		Assert.assertEquals(result1.get(0).field("value"), 101);
-
-		// check exclude + WHERE + LIMIT
+    Assert.assertEquals(result1.size(), 1);
+    Assert.assertTrue(result1.get(0).containsField("value"));
+    Assert.assertEquals(result1.get(0).field("value"), 101);
+    // check exclude + WHERE + LIMIT
     sqlString = "UPDATE " + doc.getIdentity().toString()
         + " INCREMENT Age = 100 RETURN AFTER $current.Exclude('really_big_field') WHERE Age=101 LIMIT 1";
     result1 = database.command(new OCommandSQL(sqlString)).execute();
@@ -302,6 +300,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     Assert.assertFalse(result1.get(0).containsField("really_big_field"));
 
   }
+
 
   @Test
   public void updateWithNamedParameters() {
