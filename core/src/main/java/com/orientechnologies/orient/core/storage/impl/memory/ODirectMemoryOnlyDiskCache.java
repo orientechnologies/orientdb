@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
@@ -253,18 +254,18 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     }
   }
 
-	@Override
-	public boolean exists(long fileId) {
-		metadataLock.lock();
-		try {
-			final MemoryFile memoryFile = files.get(fileId);
-			return memoryFile != null;
-		} finally {
-			metadataLock.unlock();
-		}
-	}
+  @Override
+  public boolean exists(long fileId) {
+    metadataLock.lock();
+    try {
+      final MemoryFile memoryFile = files.get(fileId);
+      return memoryFile != null;
+    } finally {
+      metadataLock.unlock();
+    }
+  }
 
-	@Override
+  @Override
   public String fileNameById(long fileId) {
     metadataLock.lock();
     try {
@@ -302,7 +303,7 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
         if (cacheEntry != null)
           return cacheEntry;
 
-        ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize]);
+        ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize + 2 * ODurablePage.PAGE_PADDING]);
         OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
         cachePointer.incrementReferrer();
 
@@ -335,7 +336,8 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
             index = lastIndex + 1;
           }
 
-          final ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize]);
+          final ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize + 2
+              * ODurablePage.PAGE_PADDING]);
           final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
           cachePointer.incrementReferrer();
 

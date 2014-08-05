@@ -22,10 +22,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -300,7 +299,6 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     Assert.assertFalse(result1.get(0).containsField("really_big_field"));
 
   }
-
 
   @Test
   public void updateWithNamedParameters() {
