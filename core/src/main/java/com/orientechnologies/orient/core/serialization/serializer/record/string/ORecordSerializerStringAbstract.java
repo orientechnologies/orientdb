@@ -670,7 +670,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     final long timer = PROFILER.startChrono();
 
     try {
-      return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(), null, null,
+      return OBinaryProtocol.string2bytes(toString(iRecord, new StringBuilder(2048), null, null,
           OSerializationSetThreadLocal.INSTANCE.get(), iOnlyDelta, true).toString());
     } finally {
 
