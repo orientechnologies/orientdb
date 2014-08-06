@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -47,6 +48,7 @@ public class TestSharding extends AbstractServerClusterTest {
           clientType.addCluster("client_" + i);
 
         graphNoTx.createVertexType("Product");
+        graphNoTx.createEdgeType("Knows");
         graphNoTx.createEdgeType("Buy");
       } finally {
         graphNoTx.shutdown();
@@ -73,7 +75,12 @@ public class TestSharding extends AbstractServerClusterTest {
           System.out.println("Create vertex, class: " + vertices[i].getLabel() + ", cluster: " + clId + " -> "
               + vertices[i].getRecord());
 
-          vertices[i].addEdge("Buy", product);
+          if (i > 1)
+            // CREATE A LIGHT-WEIGHT EDGE
+            vertices[i].addEdge("Knows", vertices[i - 1]);
+
+          // CREATE A REGULAR EDGE
+          final Edge edge = vertices[i].addEdge("Buy", product, new Object[] { "price", 1000 * i });
         }
       } finally {
         graph.shutdown();
@@ -96,9 +103,14 @@ public class TestSharding extends AbstractServerClusterTest {
             Assert.assertEquals("Returned vertices name property is != shard_" + cluster + " on server " + server, "shard_"
                 + cluster, v.getProperty("name"));
 
-            final Iterable<Vertex> outV = v.getVertices(Direction.OUT, "Buy");
-            Assert.assertTrue(outV.iterator().hasNext());
-            Assert.assertEquals(outV.iterator().next(), product);
+            final Iterable<Vertex> knows = v.getVertices(Direction.OUT, "Knows");
+
+            final Iterable<Vertex> boughtV = v.getVertices(Direction.OUT, "Buy");
+            Assert.assertTrue(boughtV.iterator().hasNext());
+            Assert.assertEquals(boughtV.iterator().next(), product);
+
+            final Iterable<Edge> boughtE = v.getEdges(Direction.OUT, "Buy");
+            Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
 
           }
         } finally {
@@ -138,9 +150,14 @@ public class TestSharding extends AbstractServerClusterTest {
           for (OrientVertex v : result) {
             count++;
 
-            final Iterable<Vertex> outV = v.getVertices(Direction.OUT, "Buy");
-            Assert.assertTrue(outV.iterator().hasNext());
-            Assert.assertEquals(outV.iterator().next(), product);
+            final Iterable<Vertex> knows = v.getVertices(Direction.OUT, "Knows");
+
+            final Iterable<Vertex> boughtV = v.getVertices(Direction.OUT, "Buy");
+            Assert.assertTrue(boughtV.iterator().hasNext());
+            Assert.assertEquals(boughtV.iterator().next(), product);
+
+            final Iterable<Edge> boughtE = v.getEdges(Direction.OUT, "Buy");
+            Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
           }
 
           Assert.assertEquals("Returned wrong vertices count on server " + server, 3, count);
