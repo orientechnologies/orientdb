@@ -571,9 +571,13 @@ Widget.directive('whenScrolled', function () {
 Widget.directive('fontpicker', function ($timeout) {
     return {
         require: 'ngModel',
-        templateUrl: 'views/widget/pickerSelect.html',
         link: function (scope, elem, attrs, ngModel) {
-            //$(elem.children()[0]).fontIconPicker();
+            $timeout(function () {
+                $(elem).fontIconPicker({
+                    theme: 'fip-inverted'
+                });
+            }, 1000)
+
         }
 
     }

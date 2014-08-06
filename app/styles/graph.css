@@ -1,6 +1,7 @@
 
 .graph-container {
     border: 1px solid #DEDEDE;
+    margin-top: 5px;
 }
 
 text.id {
@@ -8,3 +9,17 @@ text.id {
     font-weight: bold;
 }
 
+.queryGraph .ng-hide-remove {
+    -webkit-animation: fadeInDown 0.2s;
+    animation: fadeInDown 0.2s;
+}
+
+.queryGraph .ng-hide-add {
+    -webkit-animation: fadeOutUp 0.2s;
+    -webkit-animation: fadeOutUp 0.2s;
+    display: block !important;
+}
+
+.animationQuery {
+
+}

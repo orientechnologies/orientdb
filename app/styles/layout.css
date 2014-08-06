@@ -229,6 +229,24 @@ input.search-query {
     padding-top: 10px;
 }
 
+.panel-graph {
+    background-color: #EEEEEE;
+}
+
+.panel-graph .graph-container {
+    background-color: white;
+}
+
+.queryGraph .run-container {
+    position: relative;
+}
+
+.queryGraph .run-action {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+}
+
 .enode text {
     font-family: FontAwesome;
     font-size: 14px;
@@ -239,9 +257,11 @@ text.menu-text {
     font-size: 14px;
 }
 
-
-
 text.vicon {
     font-family: fontello;
     font-size: 18px;
+}
+
+.btn {
+    border-radius: 0;
 }

@@ -45,7 +45,8 @@
                     <label for="inputIcon" class="col-md-4 control-label">Icon</label>
 
                     <div class="col-md-8">
-                        <select id="inputIcon" class="form-control" ng-options="icon.code as icon.css for icon in icons"
+                        <select fontpicker id="inputIcon" class="form-control"
+                                ng-options="icon.css as icon.code for icon in icons track by icon.css"
                                 ng-model="config.icon">
                         </select>
                     </div>

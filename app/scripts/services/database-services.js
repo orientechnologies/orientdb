@@ -614,6 +614,9 @@ database.factory('DocumentApi', function ($http, $resource, Database) {
     resource.deleteDocument = function (database, rid, callback) {
         $http.delete(API + 'document/' + database + "/" + rid.replace('#', '')).success(callback).error(callback);
     }
+    resource.isNew = function (doc) {
+        return doc['@rid'] == '#-1:-1';
+    }
     resource.createNewDoc = function (clazz) {
         var r = new resource
         var fields = Database.listField(clazz);
