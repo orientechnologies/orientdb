@@ -27,7 +27,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   }
 
   protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
-    super(iDatabase);
+    super(iDatabase, null, null);
     setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
 

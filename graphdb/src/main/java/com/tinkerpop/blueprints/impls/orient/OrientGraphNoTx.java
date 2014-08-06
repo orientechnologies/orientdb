@@ -1,8 +1,8 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import org.apache.commons.configuration.Configuration;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.Features;
 
@@ -21,16 +21,16 @@ public class OrientGraphNoTx extends OrientBaseGraph {
    *          Underlying database object to attach
    */
   public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase) {
-    super(iDatabase);
+    super(iDatabase, null, null);
     config();
   }
 
-	public OrientGraphNoTx(ODatabaseDocumentPool pool) {
-		super(pool);
-		config();
-	}
+  public OrientGraphNoTx(ODatabaseDocumentPool pool) {
+    super(pool);
+    config();
+  }
 
-	public OrientGraphNoTx(final String url) {
+  public OrientGraphNoTx(final String url) {
     super(url, ADMIN, ADMIN);
     config();
   }
@@ -42,6 +42,11 @@ public class OrientGraphNoTx extends OrientBaseGraph {
 
   public OrientGraphNoTx(final Configuration configuration) {
     super(configuration);
+    config();
+  }
+
+  public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase, final String user,final  String password) {
+    super(iDatabase, user, password);
     config();
   }
 
