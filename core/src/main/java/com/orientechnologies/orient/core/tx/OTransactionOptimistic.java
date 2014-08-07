@@ -297,7 +297,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       if (iRecord.getIdentity().isTemporary())
         temp2persistent.put(iRecord.getIdentity().copy(), iRecord);
 
-      if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage() instanceof OStorageEmbedded) {
+      if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage().getUnderlying() instanceof OStorageEmbedded) {
 
         // I'M COMMITTING: BYPASS LOCAL BUFFER
         switch (iStatus) {
@@ -447,7 +447,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     status = TXSTATUS.COMMITTING;
 
-    if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED && !(database.getStorage() instanceof OStorageEmbedded))
+    if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED && !(database.getStorage().getUnderlying() instanceof OStorageEmbedded))
       database.getStorage().commit(this, null);
     else {
       List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
@@ -458,7 +458,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
         final Runnable callback = new CommitIndexesCallback(indexes);
 
-        final String storageType = database.getStorage().getType();
+        final String storageType = database.getStorage().getUnderlying().getType();
 
         if (storageType.equals(OEngineLocal.NAME) || storageType.equals(OEngineLocalPaginated.NAME))
           database.getStorage().commit(OTransactionOptimistic.this, callback);

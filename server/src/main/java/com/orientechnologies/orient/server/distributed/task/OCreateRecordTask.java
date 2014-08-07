@@ -38,10 +38,11 @@ import java.io.ObjectOutput;
  * 
  */
 public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
-  private static final long serialVersionUID = 1L;
+  private static final long              serialVersionUID = 1L;
 
-  protected byte[]          content;
-  protected byte            recordType;
+  protected byte[]                       content;
+  protected byte                         recordType;
+  protected transient ORecordInternal<?> record;
 
   public OCreateRecordTask() {
   }
@@ -58,9 +59,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "creating record %s/%s v.%s...",
         database.getName(), rid.toString(), version.toString());
 
-    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+    getRecord();
 
-    record.fill(rid, version, content, true);
     if (rid.getClusterId() != -1)
       record.save(database.getClusterNameById(rid.getClusterId()), true);
     else
@@ -122,5 +122,13 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public String getName() {
     return "record_create";
+  }
+
+  public ORecordInternal<?> getRecord() {
+    if (record == null) {
+      record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+      record.fill(rid, version, content, true);
+    }
+    return record;
   }
 }

@@ -105,17 +105,22 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientBaseGraph(final ODatabaseDocumentTx iDatabase) {
+  public OrientBaseGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPassword) {
     this.pool = null;
+    this.username = iUserName;
+    this.password = iUserPassword;
 
     reuse(iDatabase);
     readDatabaseConfiguration();
   }
 
-  public OrientBaseGraph(ODatabaseDocumentPool pool) {
+  public OrientBaseGraph(final ODatabaseDocumentPool pool) {
     this.pool = pool;
 
-    reuse(pool.acquire());
+    final ODatabaseDocumentTx db = pool.acquire();
+    this.username = db.getUser() != null ? db.getUser().getName() : null;
+    reuse(db);
+
     readDatabaseConfiguration();
   }
 
@@ -856,7 +861,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
 
   /**
    * Reuses the underlying database avoiding to create and open it every time.
-   * 
+   *
    * @param iDatabase
    *          Underlying database object
    */
@@ -864,7 +869,6 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
 
     this.url = iDatabase.getURL();
-    this.username = iDatabase.getUser() != null ? iDatabase.getUser().getName() : null;
     synchronized (this) {
       OrientGraphContext context = threadContext.get();
       if (context == null || !context.rawGraph.getName().equals(iDatabase.getName()) || context.rawGraph.isClosed()) {

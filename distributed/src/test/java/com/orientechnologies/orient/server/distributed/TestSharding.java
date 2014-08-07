@@ -5,6 +5,10 @@ import junit.framework.Assert;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -36,15 +40,28 @@ public class TestSharding extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
     try {
       OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-      OrientGraphNoTx graph = factory.getNoTx();
+      OrientGraphNoTx graphNoTx = factory.getNoTx();
 
       try {
-        final OrientVertexType clientType = graph.createVertexType("Client");
+        final OrientVertexType clientType = graphNoTx.createVertexType("Client");
+        for (int i = 0; i < serverInstance.size(); ++i)
+          clientType.addCluster("client_" + i);
+
+        graphNoTx.createVertexType("Product");
+        graphNoTx.createEdgeType("Knows");
+        graphNoTx.createEdgeType("Buy");
+      } finally {
+        graphNoTx.shutdown();
+      }
+
+      final OrientVertex product;
+
+      final OrientGraph graph = factory.getTx();
+      try {
+        product = graph.addVertex("class:Product");
 
         vertices = new OrientVertex[serverInstance.size()];
         for (int i = 0; i < vertices.length; ++i) {
-          clientType.addCluster("client_" + i);
-
           vertices[i] = graph.addVertex("class:Client,cluster:client_" + i);
 
           final int clId = vertices[i].getIdentity().getClusterId();
@@ -57,6 +74,13 @@ public class TestSharding extends AbstractServerClusterTest {
 
           System.out.println("Create vertex, class: " + vertices[i].getLabel() + ", cluster: " + clId + " -> "
               + vertices[i].getRecord());
+
+          if (i > 1)
+            // CREATE A LIGHT-WEIGHT EDGE
+            vertices[i].addEdge("Knows", vertices[i - 1]);
+
+          // CREATE A REGULAR EDGE
+          final Edge edge = vertices[i].addEdge("Buy", product, new Object[] { "price", 1000 * i });
         }
       } finally {
         graph.shutdown();
@@ -78,6 +102,16 @@ public class TestSharding extends AbstractServerClusterTest {
 
             Assert.assertEquals("Returned vertices name property is != shard_" + cluster + " on server " + server, "shard_"
                 + cluster, v.getProperty("name"));
+
+            final Iterable<Vertex> knows = v.getVertices(Direction.OUT, "Knows");
+
+            final Iterable<Vertex> boughtV = v.getVertices(Direction.OUT, "Buy");
+            Assert.assertTrue(boughtV.iterator().hasNext());
+            Assert.assertEquals(boughtV.iterator().next(), product);
+
+            final Iterable<Edge> boughtE = v.getEdges(Direction.OUT, "Buy");
+            Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
+
           }
         } finally {
           graph.shutdown();
@@ -113,8 +147,18 @@ public class TestSharding extends AbstractServerClusterTest {
 
           Iterable<OrientVertex> result = g.command(new OCommandSQL("select from Client")).execute();
           int count = 0;
-          for (OrientVertex v : result)
+          for (OrientVertex v : result) {
             count++;
+
+            final Iterable<Vertex> knows = v.getVertices(Direction.OUT, "Knows");
+
+            final Iterable<Vertex> boughtV = v.getVertices(Direction.OUT, "Buy");
+            Assert.assertTrue(boughtV.iterator().hasNext());
+            Assert.assertEquals(boughtV.iterator().next(), product);
+
+            final Iterable<Edge> boughtE = v.getEdges(Direction.OUT, "Buy");
+            Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
+          }
 
           Assert.assertEquals("Returned wrong vertices count on server " + server, 3, count);
         } finally {
