@@ -21,7 +21,6 @@ package com.orientechnologies.orient.etl.source;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OAbstractETLComponent;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
 import java.io.BufferedReader;
@@ -34,13 +33,12 @@ import java.net.URL;
 /**
  * Extracts data from HTTP endpoint.
  */
-public class OHttpSource extends OAbstractETLComponent implements OSource {
+public class OHttpSource extends OAbstractSource {
   protected BufferedReader    reader;
   protected String            url;
-  protected String            method  = "GET";
+  protected String            method = "GET";
   protected HttpURLConnection conn;
   protected ODocument         headers;
-  protected boolean           verbose = false;
 
   @Override
   public ODocument getConfiguration() {

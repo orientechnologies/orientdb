@@ -18,11 +18,11 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.etl.OETLComponent;
+import com.orientechnologies.orient.etl.OETLPipelineComponent;
 
 /**
  * ETL Transformer.
  */
-public interface OTransformer extends OETLComponent {
+public interface OTransformer extends OETLPipelineComponent {
   public Object transform(final Object input);
 }

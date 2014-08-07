@@ -38,7 +38,6 @@ public class OVertexTransformer extends OAbstractTransformer {
   @Override
   public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
-    graph = processor.getGraphDatabase();
     vertexClass = iConfiguration.field("class");
   }
 
@@ -49,6 +48,9 @@ public class OVertexTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
+    if (graph == null)
+      graph = pipeline.getGraphDatabase();
+
     vertexClass = (String) resolve(vertexClass);
     if (vertexClass != null) {
       final OClass cls = graph.getVertexType(vertexClass);

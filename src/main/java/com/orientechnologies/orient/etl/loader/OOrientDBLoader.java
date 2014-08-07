@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.loader;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -27,7 +28,6 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OAbstractETLComponent;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
@@ -38,22 +38,21 @@ import java.util.List;
 /**
  * ETL Loader that saves record into OrientDB database.
  */
-public class OOrientDBLoader extends OAbstractETLComponent implements OLoader {
-  protected long                progress     = 0;
-  protected String              clusterName;
-  protected String              className;
-  protected List<ODocument>     indexes;
-  protected OClass              schemaClass;
-  protected String              dbURL;
-  protected String              dbUser       = "admin";
-  protected String              dbPassword   = "admin";
-  protected boolean             dbAutoCreate = true;
-  protected boolean             tx           = true;
-  protected int                 batchCommit  = 0;
-  protected long                batchCounter = 0;
-  protected DB_TYPE             dbType       = DB_TYPE.DOCUMENT;
-  protected ODatabaseDocumentTx documentDatabase;
-  protected OrientBaseGraph     graphDatabase;
+public class OOrientDBLoader extends OAbstractLoader implements OLoader {
+  protected String          clusterName;
+  protected String          className;
+  protected List<ODocument> indexes;
+  protected OClass          schemaClass;
+  protected String          dbURL;
+  protected String          dbUser             = "admin";
+  protected String          dbPassword         = "admin";
+  protected boolean         dbAutoCreate       = true;
+  protected boolean         dbAutoDropIfExists = false;
+  protected boolean         tx                 = true;
+  protected int             batchCommit        = 0;
+  protected long            batchCounter       = 0;
+  protected DB_TYPE         dbType             = DB_TYPE.DOCUMENT;
+  protected boolean         wal                = true;
 
   protected enum DB_TYPE {
     DOCUMENT, GRAPH
@@ -97,10 +96,11 @@ public class OOrientDBLoader extends OAbstractETLComponent implements OLoader {
     if (batchCommit > 0) {
       if (batchCounter > batchCommit) {
         if (dbType == DB_TYPE.DOCUMENT) {
+          final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
           documentDatabase.commit();
           documentDatabase.begin();
         } else {
-          graphDatabase.commit();
+          pipeline.getGraphDatabase().commit();
         }
       }
       batchCounter++;
@@ -118,6 +118,8 @@ public class OOrientDBLoader extends OAbstractETLComponent implements OLoader {
         + "{dbPassword:{optional:true,description:'Database password, default is admin'}},"
         + "{dbType:{optional:true,description:'Database type, default is document',values:" + stringArray2Json(DB_TYPE.values())
         + "}}," + "{class:{optional:true,description:'Record class name'}},"
+        + "{tx:{optional:true,description:'Transaction mode: true executes in transaction, false for atomic operations'}},"
+        + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
         + "{cluster:{optional:true,description:'Cluster name where to store the new record'}},"
         + "{indexes:{optional:true,description:'Index used. It assure the index exist or in case create them'}}],"
         + "input:['OrientVertex','ODocument']}");
@@ -137,6 +139,8 @@ public class OOrientDBLoader extends OAbstractETLComponent implements OLoader {
       dbType = DB_TYPE.valueOf(iConfiguration.field("dbType").toString().toUpperCase());
     if (iConfiguration.containsField("tx"))
       tx = (Boolean) iConfiguration.field("tx");
+    if (iConfiguration.containsField("wal"))
+      wal = (Boolean) iConfiguration.field("wal");
     if (iConfiguration.containsField("batchCommit"))
       batchCommit = (Integer) iConfiguration.field("batchCommit");
 
@@ -146,30 +150,106 @@ public class OOrientDBLoader extends OAbstractETLComponent implements OLoader {
 
     switch (dbType) {
     case DOCUMENT:
-      documentDatabase = new ODatabaseDocumentTx(dbURL);
-      if (documentDatabase.exists()) {
+      final ODatabaseDocumentTx documentDatabase = new ODatabaseDocumentTx(dbURL);
+      if (documentDatabase.exists() && dbAutoDropIfExists) {
+        log("Dropping existent database '%s'...", dbURL);
         documentDatabase.open(dbUser, dbPassword);
-      } else {
-        if (dbAutoCreate) {
-          documentDatabase.create();
-        } else {
-          throw new IllegalArgumentException("Database '" + dbURL + "' not exists and 'dbAutoCreate' setting is false");
-        }
+        documentDatabase.drop();
       }
+
+      if (documentDatabase.exists()) {
+        log("Opening database '%s'...", dbURL);
+        documentDatabase.open(dbUser, dbPassword);
+      } else if (dbAutoCreate) {
+        documentDatabase.create();
+      } else
+        throw new IllegalArgumentException("Database '" + dbURL + "' not exists and 'dbAutoCreate' setting is false");
+
+      documentDatabase.close();
       break;
 
     case GRAPH:
-      graphDatabase = new OrientGraphFactory(dbURL).setTransactional(tx).get();
-      documentDatabase = graphDatabase.getRawGraph();
+      final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
+      if (factory.exists() && dbAutoDropIfExists) {
+        log("Dropping existent database '%s'...", dbURL);
+        factory.drop();
+      }
+
+      final OrientBaseGraph graphDatabase = factory.setTransactional(tx).get();
+      graphDatabase.shutdown();
       break;
     }
   }
 
   @Override
   public void begin() {
+    if (!wal)
+      OGlobalConfiguration.USE_WAL.setValue(wal);
+
+    ODatabaseDocumentTx documentDatabase = init();
+    final OrientBaseGraph graphDatabase;
+
+    if (documentDatabase == null) {
+      switch (dbType) {
+      case DOCUMENT:
+        documentDatabase = new ODatabaseDocumentTx(dbURL);
+        documentDatabase.open(dbUser, dbPassword);
+        break;
+
+      case GRAPH:
+        final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
+        graphDatabase = factory.setTransactional(false).get();
+        documentDatabase = graphDatabase.getRawGraph();
+
+        pipeline.setGraphDatabase(graphDatabase);
+        break;
+      }
+      pipeline.setDocumentDatabase(documentDatabase);
+    }
+    documentDatabase.declareIntent(new OIntentMassiveInsert());
+  }
+
+  @Override
+  public void end() {
+    if (dbType == DB_TYPE.DOCUMENT)
+      pipeline.getDocumentDatabase().commit();
+    else
+      pipeline.getGraphDatabase().commit();
+  }
+
+  @Override
+  public String getName() {
+    return "orientdb";
+  }
+
+  public String getUnit() {
+    return dbType == DB_TYPE.DOCUMENT ? "documents" : "vertices";
+  }
+
+  protected synchronized ODatabaseDocumentTx init() {
+    ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+    OrientBaseGraph graphDatabase;
+
+    if (documentDatabase == null) {
+      switch (dbType) {
+      case DOCUMENT:
+        documentDatabase = new ODatabaseDocumentTx(dbURL);
+        documentDatabase.open(dbUser, dbPassword);
+        break;
+
+      case GRAPH:
+        final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
+        graphDatabase = factory.getNoTx();
+        documentDatabase = graphDatabase.getRawGraph();
+        pipeline.setGraphDatabase(graphDatabase);
+        break;
+      }
+      pipeline.setDocumentDatabase(documentDatabase);
+    }
+
     if (className != null) {
       schemaClass = getOrCreateClass(className);
-      processor.out(true, "%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
+      log("%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
     }
 
     if (indexes != null) {
@@ -213,8 +293,7 @@ public class OOrientDBLoader extends OAbstractETLComponent implements OLoader {
             final OType type = OType.valueOf(fieldType);
 
             cls.createProperty(fieldNameParts[0], type);
-            processor.out(true, "- OrientDBLoader: created property '%s.%s' of type: %s", idxClass, fieldNameParts[0],
-                fieldNameParts[1]);
+            log("- OrientDBLoader: created property '%s.%s' of type: %s", idxClass, fieldNameParts[0], fieldNameParts[1]);
           }
 
           fields[f] = fieldNameParts[0];
@@ -236,56 +315,32 @@ public class OOrientDBLoader extends OAbstractETLComponent implements OLoader {
           continue;
 
         index = cls.createIndex(idxName, idxType, fields);
-        processor.out(true, "- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType,
-            idxClass, idxFields);
+        log("- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType, idxClass,
+            idxFields);
       }
     }
-
-    documentDatabase.declareIntent(new OIntentMassiveInsert());
-  }
-
-  @Override
-  public void end() {
-    if (dbType == DB_TYPE.DOCUMENT)
-      documentDatabase.commit();
-    else
-      graphDatabase.commit();
-  }
-
-  @Override
-  public String getName() {
-    return "orientdb";
-  }
-
-  public String getUnit() {
-    return dbType == DB_TYPE.DOCUMENT ? "documents" : "vertices";
-  }
-
-  public OrientBaseGraph getGraphDatabase() {
-    return graphDatabase;
-  }
-
-  public ODatabaseDocumentTx getDocumentDatabase() {
     return documentDatabase;
   }
 
   protected OClass getOrCreateClass(final String iClassName) {
     OClass cls;
 
-    if (dbType == DB_TYPE.DOCUMENT)
+    if (dbType == DB_TYPE.DOCUMENT) {
       // DOCUMENT
+      final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
       if (documentDatabase.getMetadata().getSchema().existsClass(iClassName))
         cls = documentDatabase.getMetadata().getSchema().getClass(iClassName);
       else {
         cls = documentDatabase.getMetadata().getSchema().createClass(iClassName);
-        processor.out(true, "- OrientDBLoader: created class '%s'", iClassName);
+        log("- OrientDBLoader: created class '%s'", iClassName);
       }
-    else {
+    } else {
       // GRAPH
+      final OrientBaseGraph graphDatabase = pipeline.getGraphDatabase();
       cls = graphDatabase.getVertexType(iClassName);
       if (cls == null) {
         cls = graphDatabase.createVertexType(iClassName);
-        processor.out(true, "- OrientDBLoader: created vertex class '%s'", iClassName);
+        log("- OrientDBLoader: created vertex class '%s'", iClassName);
       }
     }
     return cls;

@@ -2,7 +2,8 @@
   config: {
     verbose: true,
     fileDirectory: "/temp/databases/dbpedia_csv/",
-    fileName: "Person.csv.gz"
+    fileName: "Person.csv.gz",
+    parallel: true
   },
   begin: [
    { let: { name: "$filePath",  value: "$fileDirectory.append( $fileName )"} },
@@ -24,8 +25,10 @@
       dbURL: "plocal:/temp/databases/dbpedia",
       dbUser: "admin",
       dbPassword: "admin",
+      dbAutoDropIfExists: true,
       dbAutoCreate: true,
       tx: false,
+      wal: false,
       batchCommit: 1000,
       dbType: "graph",
       indexes: [{class:"V", fields:["URI:string"], type:"UNIQUE" }]

@@ -18,36 +18,11 @@
 
 package com.orientechnologies.orient.etl.loader;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OAbstractETLPipelineComponent;
 
 /**
- * ETL Loader that saves record into OrientDB database.
+ * ETL Abstract Loader component.
  */
-public class OOutputLoader extends OAbstractLoader {
-  @Override
-  public void load(final Object input, final OCommandContext context) {
-    progress++;
-    System.out.println(input);
-  }
-
-  @Override
-  public long getProgress() {
-    return progress;
-  }
-
-  @Override
-  public String getUnit() {
-    return "bytes";
-  }
-
-  @Override
-  public ODocument getConfiguration() {
-    return new ODocument();
-  }
-
-  @Override
-  public String getName() {
-    return "output";
-  }
+public abstract class OAbstractLoader extends OAbstractETLPipelineComponent implements OLoader {
+  protected long progress = 0;
 }

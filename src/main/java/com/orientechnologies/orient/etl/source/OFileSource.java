@@ -21,7 +21,6 @@ package com.orientechnologies.orient.etl.source;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OAbstractETLComponent;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
 import java.io.File;
@@ -36,7 +35,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.zip.GZIPInputStream;
 
-public class OFileSource extends OAbstractETLComponent implements OSource {
+public class OFileSource extends OAbstractSource {
   protected String            fileName;
   protected Object            path;
   protected boolean           lockFile    = false;

@@ -16,18 +16,11 @@
  *
  */
 
-package com.orientechnologies.orient.etl.loader;
-
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.etl.OETLPipelineComponent;
+package com.orientechnologies.orient.etl;
 
 /**
- * ETL Loader.
+ * ETL basic component.
  */
-public interface OLoader extends OETLPipelineComponent {
-  public void load(final Object input, OCommandContext context);
-
-  public long getProgress();
-
-  public String getUnit();
+public interface OETLPipelineComponent extends OETLComponent {
+  public void setPipeline(OETLPipeline iPipeline);
 }

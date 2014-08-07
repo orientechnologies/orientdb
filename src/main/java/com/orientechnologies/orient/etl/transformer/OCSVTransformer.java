@@ -132,8 +132,8 @@ public class OCSVTransformer extends OAbstractTransformer {
             doc.field(fieldName, fieldValue);
           } catch (Exception e) {
             processor.getStats().incrementErrors();
-            processor.out(false, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s", processor
-                .getExtractor().getProgress(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
+            log("Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s", processor.getExtractor()
+                .getProgress(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
           }
         } else if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
           // DETERMINE THE TYPE
@@ -166,7 +166,7 @@ public class OCSVTransformer extends OAbstractTransformer {
         }
       } catch (Exception e) {
         processor.getStats().incrementErrors();
-        processor.out(false, "Error on setting document field %s=%s (cause=%s)", fieldName, fieldValue, e.toString());
+        log("Error on setting document field %s=%s (cause=%s)", fieldName, fieldValue, e.toString());
       }
     }
 

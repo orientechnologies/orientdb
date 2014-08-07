@@ -20,12 +20,12 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OAbstractETLComponent;
+import com.orientechnologies.orient.etl.OAbstractETLPipelineComponent;
 
 /**
  * Abstract Transformer.
  */
-public abstract class OAbstractTransformer extends OAbstractETLComponent implements OTransformer {
+public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent implements OTransformer {
   @Override
   public Object transform(final Object input) {
     if (input == null)

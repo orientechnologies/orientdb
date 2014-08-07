@@ -19,7 +19,6 @@
 package com.orientechnologies.orient.etl.source;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.etl.OAbstractETLComponent;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -28,7 +27,7 @@ import java.io.Reader;
 /**
  * ETL Source that reads from System.in
  */
-public class OInputSource extends OAbstractETLComponent implements OSource {
+public class OInputSource extends OAbstractSource {
   protected BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
   @Override

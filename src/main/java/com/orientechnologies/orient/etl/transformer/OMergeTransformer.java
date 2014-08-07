@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
@@ -67,10 +66,6 @@ public class OMergeTransformer extends OAbstractTransformer {
 
     if (iConfiguration.containsField("unresolvedLinkAction"))
       unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase());
-
-    db = processor.getDocumentDatabase();
-    if( db == null )
-      throw new OTransformException("[Merge transformer] database is not configured");
   }
 
   @Override
@@ -80,6 +75,12 @@ public class OMergeTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
+    if (db == null) {
+      db = pipeline.getDocumentDatabase();
+      if (db == null)
+        throw new OTransformException("[Merge transformer] database is not configured");
+    }
+
     Object joinValue = ((ODocument) input).field(joinFieldName);
     if (joinValue != null) {
 
@@ -115,11 +116,11 @@ public class OMergeTransformer extends OAbstractTransformer {
           break;
         case ERROR:
           processor.getStats().incrementErrors();
-          processor.out(true, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
+          log("%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
           break;
         case WARNING:
           processor.getStats().incrementWarnings();
-          processor.out(true, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
+          log("%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
           break;
         case SKIP:
           return null;

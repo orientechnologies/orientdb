@@ -18,11 +18,11 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
-
 import java.io.Reader;
 import java.util.NoSuchElementException;
+
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 
 public class OJsonExtractor extends OAbstractSourceExtractor {
   protected OJSONReader jsonReader;

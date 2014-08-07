@@ -46,6 +46,8 @@ public abstract class OAbstractETLComponent implements OETLComponent {
 
     if (iConfiguration.containsField("verbose"))
       verbose = (Boolean) iConfiguration.field("verbose");
+    else
+      verbose = iProcessor.isVerbose();
   }
 
   @Override
@@ -105,9 +107,8 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     return value;
   }
 
-  protected void log(final String iText, Object... iArgs) {
+  protected void log(final String iText, final Object... iArgs) {
     if (verbose)
       System.out.println(getName() + "->" + String.format(iText, iArgs));
   }
-
 }

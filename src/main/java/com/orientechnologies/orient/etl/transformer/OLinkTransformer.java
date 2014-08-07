@@ -81,8 +81,6 @@ public class OLinkTransformer extends OAbstractTransformer {
 
     if (iConfiguration.containsField("unresolvedLinkAction"))
       unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase());
-
-    db = processor.getDocumentDatabase();
   }
 
   @Override
@@ -92,10 +90,13 @@ public class OLinkTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
+    if (db == null)
+      db = pipeline.getDocumentDatabase();
+
     Object joinRuntimeValue = null;
     if (joinFieldName != null)
       joinRuntimeValue = ((ODocument) input).field(joinFieldName);
-    else if (joinValue!= null) 
+    else if (joinValue != null)
       joinRuntimeValue = resolve(joinValue);
 
     if (joinRuntimeValue != null) {
@@ -159,11 +160,11 @@ public class OLinkTransformer extends OAbstractTransformer {
           break;
         case ERROR:
           processor.getStats().incrementErrors();
-          processor.out(true, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
+          log("%s: ERROR Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
           break;
         case WARNING:
           processor.getStats().incrementWarnings();
-          processor.out(true, "%s: WARN Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
+          log("%s: WARN Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
           break;
         case SKIP:
           return null;

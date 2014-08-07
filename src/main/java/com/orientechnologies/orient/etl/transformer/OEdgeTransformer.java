@@ -66,11 +66,7 @@ public class OEdgeTransformer extends OAbstractTransformer {
     if (iConfiguration.containsField("unresolvedLinkAction"))
       unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase());
 
-    graph = processor.getGraphDatabase();
     edgeClass = iConfiguration.field("class");
-    final OClass cls = graph.getEdgeType(edgeClass);
-    if (cls == null)
-      graph.createEdgeType(edgeClass);
   }
 
   @Override
@@ -80,6 +76,13 @@ public class OEdgeTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
+    if (graph == null) {
+      graph = pipeline.getGraphDatabase();
+      final OClass cls = graph.getEdgeType(edgeClass);
+      if (cls == null)
+        graph.createEdgeType(edgeClass);
+    }
+
     // GET JOIN VALUE
     Object joinValue;
     final OrientVertex vertex;
@@ -99,7 +102,7 @@ public class OEdgeTransformer extends OAbstractTransformer {
         if (lookup.toUpperCase().startsWith("SELECT"))
           sqlQuery = new OSQLSynchQuery<OrientVertex>(lookup);
         else
-          index = processor.getDocumentDatabase().getMetadata().getIndexManager().getIndex(lookup);
+          index = pipeline.getDocumentDatabase().getMetadata().getIndexManager().getIndex(lookup);
       }
 
       if (sqlQuery != null)
@@ -141,11 +144,11 @@ public class OEdgeTransformer extends OAbstractTransformer {
           break;
         case ERROR:
           processor.getStats().incrementErrors();
-          processor.out(true, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
+          log("%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
           break;
         case WARNING:
           processor.getStats().incrementWarnings();
-          processor.out(true, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
+          log("%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
           break;
         case SKIP:
           return null;
