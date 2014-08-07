@@ -172,8 +172,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         else if (!getLockRead().tryAcquireLock(iTimeout, TimeUnit.MILLISECONDS))
           throw new OTimeoutException("Cannot acquire read lock against channel: " + this);
 
-        if (!isConnected())
+        if (!isConnected()) {
+          releaseReadLock();
           throw new IOException("Channel is closed");
+        }
 
         if (!channelRead) {
           channelRead = true;
