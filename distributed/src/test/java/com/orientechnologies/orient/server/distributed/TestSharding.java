@@ -8,7 +8,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -48,17 +49,24 @@ public class TestSharding extends AbstractServerClusterTest {
           clientType.addCluster("client_" + i);
 
         graphNoTx.createVertexType("Product");
+        graphNoTx.createVertexType("Hobby");
+
         graphNoTx.createEdgeType("Knows");
         graphNoTx.createEdgeType("Buy");
+        graphNoTx.createEdgeType("Loves");
       } finally {
         graphNoTx.shutdown();
       }
 
       final OrientVertex product;
+      final OrientVertex fishing;
 
-      final OrientGraph graph = factory.getTx();
+      OrientBaseGraph graph = factory.getTx();
       try {
         product = graph.addVertex("class:Product");
+
+        fishing = graph.addVertex("class:Hobby");
+        fishing.setProperty("name", "Fishing");
 
         vertices = new OrientVertex[serverInstance.size()];
         for (int i = 0; i < vertices.length; ++i) {
@@ -81,6 +89,32 @@ public class TestSharding extends AbstractServerClusterTest {
 
           // CREATE A REGULAR EDGE
           final Edge edge = vertices[i].addEdge("Buy", product, new Object[] { "price", 1000 * i });
+        }
+      } finally {
+        graph.shutdown();
+      }
+
+      graph = factory.getNoTx();
+      try {
+        for (int i = 0; i < vertices.length; ++i)
+          System.out.println("Created vertex " + i + ": " + vertices[i].getRecord());
+
+        for (int i = 0; i < vertices.length; ++i) {
+          // CREATE A REGULAR EDGE
+          Iterable<OrientEdge> result = graph.command(
+              new OCommandSQL("create edge Loves from " + vertices[i].getIdentity() + " to " + fishing.getIdentity()
+                  + " set real = true")).execute();
+
+          Assert.assertTrue(result.iterator().hasNext());
+          OrientEdge e = result.iterator().next();
+          Assert.assertEquals(e.getProperty("real"), true);
+
+          result = graph.command(new OCommandSQL("select from " + e.getIdentity())).execute();
+
+          Assert.assertTrue(result.iterator().hasNext());
+          OrientEdge e2 = result.iterator().next();
+          Assert.assertEquals(e2.getProperty("real"), true);
+
         }
       } finally {
         graph.shutdown();
@@ -111,7 +145,6 @@ public class TestSharding extends AbstractServerClusterTest {
 
             final Iterable<Edge> boughtE = v.getEdges(Direction.OUT, "Buy");
             Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
-
           }
         } finally {
           graph.shutdown();
