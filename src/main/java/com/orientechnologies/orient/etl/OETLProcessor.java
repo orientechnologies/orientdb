@@ -256,6 +256,8 @@ public class OETLProcessor implements OETLComponent {
     try {
       begin();
 
+      out(true, "Started parallel execution with %d threads", threads.length);
+
       if (source != null) {
         final Reader reader = source.read();
 
@@ -316,7 +318,7 @@ public class OETLProcessor implements OETLComponent {
       extractionFinished.set(true);
 
       while (counter.get() > 0) {
-        out(true, "Waiting for the pipeline to finish, remaining: " + counter.get());
+        out(true, "Waiting for the pipeline to finish, remaining " + counter.get()+" entries to process");
         try {
           // WAIT A BIT AND RETRY
           Thread.sleep(500);

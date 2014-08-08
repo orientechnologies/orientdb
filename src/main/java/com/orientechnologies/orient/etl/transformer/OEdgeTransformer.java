@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -84,15 +85,15 @@ public class OEdgeTransformer extends OAbstractTransformer {
     }
 
     // GET JOIN VALUE
-    Object joinValue;
     final OrientVertex vertex;
-    if (input instanceof ODocument) {
-      joinValue = ((ODocument) input).field(joinFieldName);
+    if (input instanceof OIdentifiable)
       vertex = graph.getVertex(input);
-    } else {
-      joinValue = ((OrientVertex) input).getProperty(joinFieldName);
+    else if (input instanceof OrientVertex)
       vertex = (OrientVertex) input;
-    }
+    else
+      throw new OTransformException("Input type '" + input + "' is not supported");
+
+    Object joinValue = vertex.getProperty(joinFieldName);
 
     if (joinValue != null) {
       Object result = null;

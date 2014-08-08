@@ -91,7 +91,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         doc.save();
     }
 
-    progress++;
+    progress.incrementAndGet();
 
     if (batchCommit > 0) {
       if (batchCounter > batchCommit) {
@@ -105,10 +105,6 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       }
       batchCounter++;
     }
-  }
-
-  public long getProgress() {
-    return progress;
   }
 
   @Override

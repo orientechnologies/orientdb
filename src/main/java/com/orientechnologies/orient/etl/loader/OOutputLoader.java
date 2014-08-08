@@ -27,13 +27,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OOutputLoader extends OAbstractLoader {
   @Override
   public void load(final Object input, final OCommandContext context) {
-    progress++;
+    progress.incrementAndGet();
     System.out.println(input);
-  }
-
-  @Override
-  public long getProgress() {
-    return progress;
   }
 
   @Override
