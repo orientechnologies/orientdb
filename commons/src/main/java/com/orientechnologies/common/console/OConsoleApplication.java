@@ -130,6 +130,7 @@ public class OConsoleApplication {
           if (!executeCommands(new ODFACommandStream(consoleInput), false))
             break;
         } catch (Exception e) {
+          result = 1;
         }
       }
     } else {
