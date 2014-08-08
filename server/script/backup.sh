@@ -91,8 +91,10 @@ echo $ORIENTDB_HOME
 if [ "$ENGINE" = "plocal" ]
 then
 	DB_PATH=`echo $DB | awk -F ':' '{print $2}'`
+	FREEZE=false
 else
 	DB_PATH="$ORIENTDB_HOME/databases/$DB_NAME"
+	FREEZE=true
 fi
 TMP_PATH=`pwd`
 cd $DB_PATH
@@ -104,15 +106,22 @@ MOUNT_POINT=`df -h $DB_PATH | awk '{if (NR !=1) {print $6}}'`
 PARTITION_PATH=`echo $DB_PATH | awk -v MOUNT_POINT=$MOUNT_POINT '{print substr($0,length(MOUNT_POINT)+1)}'`
 
 DEVICE=`lvdisplay $DEVICE_PATH | grep 'LV Path' | awk '{print $3}'`
-
-sh ./console.sh "connect $DB $USER $PASSWD;freeze database;disconnect;" 1> $ECHO_PATH
-check_errs $? "database freeze failed"
-
+if [ "$FREEZE" = "true" ]
+then
+	sh ./console.sh "connect $DB $USER $PASSWD;freeze database;disconnect;" 1> $ECHO_PATH
+	check_errs $? "database freeze failed"
+else
+	sh ./console.sh "connect $DB $USER $PASSWD;disconnect;" 1> $ECHO_PATH
+	check_errs $? "failed to connect to $DB"
+fi
 lvcreate -L592M -s -n $SNAPSHOT_NAME $DEVICE 1> $ECHO_PATH
 check_errs $? "create $DEVICE snapshot failed"
 
-sh ./console.sh "connect $DB $USER $PASSWD;release database;disconnect;" 1> $ECHO_PATH
-check_errs $? "database release failed"
+if [ "$FREEZE" = "true" ]
+then
+	sh ./console.sh "connect $DB $USER $PASSWD;release database;disconnect;" 1> $ECHO_PATH
+	check_errs $? "database release failed"
+fi
 
 SNAPSHOT_PATH=`echo $DEVICE | awk -v SNAPSHOT_NAME=$SNAPSHOT_NAME -F '/' '{for(i=1;i<NF;i++){ printf "%s%s",$(i),"/"} print SNAPSHOT_NAME}'`
 SNAPSHOT_DEVICE=`lvdisplay $SNAPSHOT_PATH | grep 'LV Path' | awk '{print $3}'`
