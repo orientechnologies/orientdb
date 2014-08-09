@@ -50,9 +50,9 @@ public class OETLPipeline {
   }
 
   public void begin() {
+    loader.begin();
     for (OTransformer t : transformers)
       t.begin();
-    loader.begin();
   }
 
   public OLoader getLoader() {

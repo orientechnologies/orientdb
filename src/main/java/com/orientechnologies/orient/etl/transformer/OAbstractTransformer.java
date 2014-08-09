@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OAbstractETLPipelineComponent;
@@ -42,8 +43,9 @@ public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent
   protected abstract Object executeTransform(final Object input);
 
   protected boolean skip(final Object input) {
-    if (ifFilter != null && input instanceof ODocument) {
-      final Object result = ifFilter.evaluate((ODocument) input, null, context);
+    if (ifFilter != null && input instanceof OIdentifiable) {
+      final ODocument doc = ((OIdentifiable) input).getRecord();
+      final Object result = ifFilter.evaluate(doc, null, context);
       if (!(result instanceof Boolean))
         throw new OConfigurationException("'if' expression in Transformer " + getName() + " returned '" + result
             + "' instead of boolean");

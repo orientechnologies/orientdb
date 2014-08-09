@@ -21,30 +21,16 @@ package com.orientechnologies.orient.etl.transformer;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.Collection;
-
-public class OEdgeTransformer extends OAbstractTransformer {
-  protected OrientBaseGraph              graph;
-  protected String                       joinFieldName;
-  protected String                       lookup;
-  protected ACTION                       unresolvedLinkAction;
-  protected OSQLSynchQuery<OrientVertex> sqlQuery;
-  protected OIndex<?>                    index;
-  protected String                       edgeClass = "E";
-
-  protected enum ACTION {
-    CREATE, WARNING, ERROR, HALT, SKIP
-  }
+public class OEdgeTransformer extends OAbstractLookupTransformer {
+  protected OrientBaseGraph graph;
+  protected String          edgeClass = "E";
 
   @Override
   public ODocument getConfiguration() {
@@ -59,14 +45,6 @@ public class OEdgeTransformer extends OAbstractTransformer {
   @Override
   public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
-    joinFieldName = iConfiguration.field("joinFieldName");
-
-    if (iConfiguration.containsField("lookup"))
-      lookup = iConfiguration.field("lookup");
-
-    if (iConfiguration.containsField("unresolvedLinkAction"))
-      unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase());
-
     edgeClass = iConfiguration.field("class");
   }
 
@@ -76,7 +54,7 @@ public class OEdgeTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public Object executeTransform(final Object input) {
+  public void begin() {
     if (graph == null) {
       graph = pipeline.getGraphDatabase();
       final OClass cls = graph.getEdgeType(edgeClass);
@@ -84,6 +62,11 @@ public class OEdgeTransformer extends OAbstractTransformer {
         graph.createEdgeType(edgeClass);
     }
 
+    super.begin();
+  }
+
+  @Override
+  public Object executeTransform(final Object input) {
     // GET JOIN VALUE
     final OrientVertex vertex;
     if (input instanceof OIdentifiable)
@@ -95,70 +78,41 @@ public class OEdgeTransformer extends OAbstractTransformer {
 
     Object joinValue = vertex.getProperty(joinFieldName);
 
-    if (joinValue != null) {
-      Object result = null;
-
-      if (sqlQuery == null && index == null) {
-        // ONLY THE FIRST TIME
-        if (lookup.toUpperCase().startsWith("SELECT"))
-          sqlQuery = new OSQLSynchQuery<OrientVertex>(lookup);
-        else
-          index = pipeline.getDocumentDatabase().getMetadata().getIndexManager().getIndex(lookup);
-      }
-
-      if (sqlQuery != null)
-        result = graph.command(sqlQuery).execute(joinValue);
-      else {
-        final OType idxFieldType = index.getDefinition().getTypes()[0];
-        joinValue = idxFieldType.convert(joinValue, idxFieldType.getDefaultJavaType());
-        result = index.get(joinValue);
+    Object result = lookup(joinValue);
+    if (result == null) {
+      // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
+      switch (unresolvedLinkAction) {
+      case CREATE:
+        if (lookup != null) {
+          final String[] lookupParts = lookup.split("\\.");
+          final OrientVertex linkedV = graph.addTemporaryVertex(lookupParts[0]);
+          linkedV.setProperty(lookupParts[1], joinValue);
+          linkedV.save();
+          result = linkedV;
+        } else
+          throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
+        break;
+      case ERROR:
+        processor.getStats().incrementErrors();
+        log("%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
+        break;
+      case WARNING:
+        processor.getStats().incrementWarnings();
+        log("%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
+        break;
+      case SKIP:
+        return null;
+      case HALT:
+        throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinValue + "'");
       }
 
       if (result != null) {
-        if (result instanceof Collection<?>) {
-          if (!((Collection) result).isEmpty())
-            result = ((Collection) result).iterator().next();
-          else
-            result = null;
-        }
+        final OrientVertex targetVertex = graph.getVertex(result);
 
-        if (result != null) {
-          final OrientVertex targetVertex = graph.getVertex(result);
-
-          // CREATE THE EDGE
-          vertex.addEdge(edgeClass, targetVertex);
-        }
-      }
-
-      if (result == null) {
-        // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
-        switch (unresolvedLinkAction) {
-        case CREATE:
-          if (lookup != null) {
-            final String[] lookupParts = lookup.split("\\.");
-            final OrientVertex linkedV = graph.addTemporaryVertex(lookupParts[0]);
-            linkedV.setProperty(lookupParts[1], joinValue);
-            linkedV.save();
-            result = linkedV;
-          } else
-            throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
-          break;
-        case ERROR:
-          processor.getStats().incrementErrors();
-          log("%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
-          break;
-        case WARNING:
-          processor.getStats().incrementWarnings();
-          log("%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
-          break;
-        case SKIP:
-          return null;
-        case HALT:
-          throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinValue + "'");
-        }
+        // CREATE THE EDGE
+        vertex.addEdge(edgeClass, targetVertex);
       }
     }
-
     return input;
   }
 }

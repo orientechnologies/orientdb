@@ -18,34 +18,13 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
-import com.orientechnologies.orient.etl.OETLProcessor;
-
-import java.util.Collection;
 
 /**
  * Merges two records. Useful when a record needs to be updated rather than created.
  */
-public class OMergeTransformer extends OAbstractTransformer {
-  protected String               joinFieldName;
-  protected String               lookup;
-  protected ACTION               unresolvedLinkAction = ACTION.NOTHING;
-  protected OSQLQuery<ODocument> sqlQuery;
-  protected OIndex<?>            index;
-  protected ODatabaseDocumentTx  db;
-
-  protected enum ACTION {
-    NOTHING, WARNING, ERROR, HALT, SKIP
-  }
-
+public class OMergeTransformer extends OAbstractLookupTransformer {
   @Override
   public ODocument getConfiguration() {
     return new ODocument()
@@ -56,82 +35,36 @@ public class OMergeTransformer extends OAbstractTransformer {
   }
 
   @Override
-  public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
-    super.configure(iProcessor, iConfiguration, iContext);
-
-    joinFieldName = iConfiguration.field("joinFieldName");
-
-    if (iConfiguration.containsField("lookup"))
-      lookup = iConfiguration.field("lookup");
-
-    if (iConfiguration.containsField("unresolvedLinkAction"))
-      unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase());
-  }
-
-  @Override
   public String getName() {
     return "merge";
   }
 
   @Override
   public Object executeTransform(final Object input) {
-    if (db == null) {
-      db = pipeline.getDocumentDatabase();
-      if (db == null)
-        throw new OTransformException("[Merge transformer] database is not configured");
-    }
-
     Object joinValue = ((ODocument) input).field(joinFieldName);
-    if (joinValue != null) {
+    final Object result = lookup(joinValue);
 
-      Object result = null;
-
-      if (sqlQuery == null && index == null) {
-        // ONLY THE FIRST TIME
-        if (lookup.toUpperCase().startsWith("SELECT"))
-          sqlQuery = new OSQLSynchQuery<ODocument>(lookup);
-        else
-          index = db.getMetadata().getIndexManager().getIndex(lookup);
+    if (result == null) {
+      // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
+      switch (unresolvedLinkAction) {
+      case NOTHING:
+        break;
+      case ERROR:
+        processor.getStats().incrementErrors();
+        log("%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
+        break;
+      case WARNING:
+        processor.getStats().incrementWarnings();
+        log("%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
+        break;
+      case SKIP:
+        return null;
+      case HALT:
+        throw new OETLProcessHaltedException("[Merge transformer] Cannot resolve join for value '" + joinValue + "'");
       }
-
-      if (sqlQuery != null)
-        result = db.query(sqlQuery, joinValue);
-      else {
-        final OType idxFieldType = index.getDefinition().getTypes()[0];
-        joinValue = idxFieldType.convert(joinValue, idxFieldType.getDefaultJavaType());
-        result = index.get(joinValue);
-      }
-
-      if (result != null)
-        if (result instanceof Collection) {
-          if (!((Collection) result).isEmpty())
-            result = ((Collection<OIdentifiable>) result).iterator().next().getRecord();
-        } else if (result instanceof OIdentifiable)
-          result = ((OIdentifiable) result).getRecord();
-
-      if (result == null) {
-        // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
-        switch (unresolvedLinkAction) {
-        case NOTHING:
-          break;
-        case ERROR:
-          processor.getStats().incrementErrors();
-          log("%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
-          break;
-        case WARNING:
-          processor.getStats().incrementWarnings();
-          log("%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
-          break;
-        case SKIP:
-          return null;
-        case HALT:
-          throw new OETLProcessHaltedException("[Merge transformer] Cannot resolve join for value '" + joinValue + "'");
-        }
-      } else {
-        final ODocument loadedDocument = (ODocument) result;
-        ((ODocument) result).merge((ODocument) input, true, false);
-        return result;
-      }
+    } else {
+      ((ODocument) result).merge((ODocument) input, true, false);
+      return result;
     }
 
     return input;

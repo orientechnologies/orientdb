@@ -19,14 +19,10 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
@@ -39,20 +35,10 @@ import java.util.Set;
 /**
  * Converts a JOIN in LINK
  */
-public class OLinkTransformer extends OAbstractTransformer {
-  protected String               joinFieldName;
-  protected String               joinValue;
-  protected String               linkFieldName;
-  protected OType                linkFieldType;
-  protected String               lookup;
-  protected ACTION               unresolvedLinkAction = ACTION.SKIP;
-  protected OSQLQuery<ODocument> sqlQuery;
-  protected OIndex<?>            index;
-  protected ODatabaseDocument    db;
-
-  protected enum ACTION {
-    CREATE, NOTHING, WARNING, ERROR, HALT, SKIP
-  }
+public class OLinkTransformer extends OAbstractLookupTransformer {
+  protected String joinValue;
+  protected String linkFieldName;
+  protected OType  linkFieldType;
 
   @Override
   public ODocument getConfiguration() {
@@ -70,17 +56,10 @@ public class OLinkTransformer extends OAbstractTransformer {
   public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
 
-    joinFieldName = iConfiguration.field("joinFieldName");
     joinValue = iConfiguration.field("joinValue");
     linkFieldName = iConfiguration.field("linkFieldName");
     if (iConfiguration.containsField("linkFieldType"))
       linkFieldType = OType.valueOf((String) iConfiguration.field("linkFieldType"));
-
-    if (iConfiguration.containsField("lookup"))
-      lookup = iConfiguration.field("lookup");
-
-    if (iConfiguration.containsField("unresolvedLinkAction"))
-      unresolvedLinkAction = ACTION.valueOf(iConfiguration.field("unresolvedLinkAction").toString().toUpperCase());
   }
 
   @Override
@@ -90,57 +69,35 @@ public class OLinkTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    if (db == null)
-      db = pipeline.getDocumentDatabase();
-
     Object joinRuntimeValue = null;
     if (joinFieldName != null)
       joinRuntimeValue = ((ODocument) input).field(joinFieldName);
     else if (joinValue != null)
       joinRuntimeValue = resolve(joinValue);
 
-    if (joinRuntimeValue != null) {
+    Object result = lookup(joinRuntimeValue);
 
-      Object result = null;
-
-      if (sqlQuery == null && index == null) {
-        // ONLY THE FIRST TIME
-        if (lookup.toUpperCase().startsWith("SELECT"))
-          sqlQuery = new OSQLSynchQuery<ODocument>(lookup);
-        else
-          index = db.getMetadata().getIndexManager().getIndex(lookup);
-      }
-
-      if (sqlQuery != null)
-        result = db.query(sqlQuery, joinRuntimeValue);
-      else {
-        final OType idxFieldType = index.getDefinition().getTypes()[0];
-        joinRuntimeValue = idxFieldType.convert(joinRuntimeValue, idxFieldType.getDefaultJavaType());
-        result = index.get(joinRuntimeValue);
-      }
-
-      if (result != null) {
-        if (linkFieldType != null) {
-          // CONVERT IT
-          if (linkFieldType == OType.LINK) {
-            if (result instanceof Collection<?>) {
-              if (!((Collection) result).isEmpty())
-                result = ((Collection) result).iterator().next();
-              else
-                result = null;
-            }
-          } else if (linkFieldType == OType.LINKSET) {
-            if (!(result instanceof Collection)) {
-              final Set<OIdentifiable> res = new HashSet<OIdentifiable>();
-              res.add((OIdentifiable) result);
-              result = res;
-            }
-          } else if (linkFieldType == OType.LINKLIST) {
-            if (!(result instanceof Collection)) {
-              final List<OIdentifiable> res = new ArrayList<OIdentifiable>();
-              res.add((OIdentifiable) result);
-              result = res;
-            }
+    if (result != null) {
+      if (linkFieldType != null) {
+        // CONVERT IT
+        if (linkFieldType == OType.LINK) {
+          if (result instanceof Collection<?>) {
+            if (!((Collection) result).isEmpty())
+              result = ((Collection) result).iterator().next();
+            else
+              result = null;
+          }
+        } else if (linkFieldType == OType.LINKSET) {
+          if (!(result instanceof Collection)) {
+            final Set<OIdentifiable> res = new HashSet<OIdentifiable>();
+            res.add((OIdentifiable) result);
+            result = res;
+          }
+        } else if (linkFieldType == OType.LINKLIST) {
+          if (!(result instanceof Collection)) {
+            final List<OIdentifiable> res = new ArrayList<OIdentifiable>();
+            res.add((OIdentifiable) result);
+            result = res;
           }
         }
       }
@@ -171,10 +128,11 @@ public class OLinkTransformer extends OAbstractTransformer {
         case HALT:
           throw new OETLProcessHaltedException("[Link transformer] Cannot resolve join for value '" + joinRuntimeValue + "'");
         }
-      } else
-        // SET THE TRANSFORMED FIELD BACK
-        ((ODocument) input).field(linkFieldName, result);
+      }
     }
+
+    // SET THE TRANSFORMED FIELD BACK
+    ((ODocument) input).field(linkFieldName, result);
 
     return input;
   }

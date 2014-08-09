@@ -79,7 +79,7 @@ public class OFileSource extends OAbstractSource {
     if (path instanceof File) {
       final File file = (File) path;
       if (!file.exists())
-        throw new OSourceException("[File source] path ''" + path + "' not exists");
+        throw new OSourceException("[File source] path '" + path + "' not exists");
       fileName = file.getName();
     }
   }
