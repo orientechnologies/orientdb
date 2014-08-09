@@ -1,0 +1,35 @@
+{
+  config: {
+    verbose: true
+  },
+  begin: [
+  ],
+  source: {
+    file: { path: "/temp/_UserExport.txt", lock : true }
+  },
+  extractor : {
+    json: {}
+  },
+  transformers : [
+   { merge: { joinFieldName:"objectId", lookup:"OUser.objectId" } },
+   { field: { fieldName:"status", expression:"'ACTIVE'" } },
+   { field: { fieldName:"password", expression:"'-'" } },
+   { field: { fieldName:"name", expression:"username" } },
+   { block: { let: { name:"userObjectId", value:"$input.ACL.keys().remove('*')[0]" } } },
+   { link: { linkFieldName:"_allowRead", linkFieldType:"LINKLIST", joinValue:"$userObjectId", lookup:"OUser.objectId", unresolvedLinkAction:"HALT", if:"$userObjectId is not null" } },
+   { vertex: { class: "OUser"} },
+   { log: { prefix: "-> "} },
+  ],
+  loader : {
+    orientdb: {
+      dbURL: "plocal:/temp/databases/pumpup",
+      dbUser: "admin",
+      dbPassword: "admin",
+      dbAutoCreate: true,
+      tx: false,
+      batchCommit: 1000,
+      dbType: "graph",
+      indexes: [{class:"OUser", fields:["objectId:string"], type:"UNIQUE_HASH_INDEX" }]
+    }
+  }
+}

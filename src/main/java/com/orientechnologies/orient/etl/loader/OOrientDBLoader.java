@@ -41,6 +41,7 @@ import java.util.List;
 public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected String          clusterName;
   protected String          className;
+  protected List<ODocument> classes;
   protected List<ODocument> indexes;
   protected OClass          schemaClass;
   protected String          dbURL;
@@ -117,7 +118,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         + "{tx:{optional:true,description:'Transaction mode: true executes in transaction, false for atomic operations'}},"
         + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
         + "{cluster:{optional:true,description:'Cluster name where to store the new record'}},"
-        + "{indexes:{optional:true,description:'Index used. It assure the index exist or in case create them'}}],"
+        + "{classes:{optional:true,description:'Classes used. It assure the classes exist or in case create them'}},"
+        + "{indexes:{optional:true,description:'Indexes used. It assure the indexes exist or in case create them'}}],"
         + "input:['OrientVertex','ODocument']}");
   }
 
@@ -143,6 +145,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     clusterName = iConfiguration.field("cluster");
     className = iConfiguration.field("class");
     indexes = iConfiguration.field("indexes");
+    classes = iConfiguration.field("classes");
 
     switch (dbType) {
     case DOCUMENT:
@@ -244,8 +247,15 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     }
 
     if (className != null) {
-      schemaClass = getOrCreateClass(className);
+      schemaClass = getOrCreateClass(className, null);
       log("%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
+    }
+
+    if (classes != null) {
+      for (ODocument cls : classes) {
+        schemaClass = getOrCreateClass((String) cls.field("name"), (String) cls.field("extends"));
+        log("%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
+      }
     }
 
     if (indexes != null) {
@@ -264,7 +274,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         if (idxClass == null)
           throw new OConfigurationException("Index 'class' missed in OrientDB Loader");
 
-        final OClass cls = getOrCreateClass(idxClass);
+        final OClass cls = getOrCreateClass(idxClass, null);
         final String idxType = idx.field("type");
         if (idxType == null)
           throw new OConfigurationException("Index 'type' missed in OrientDB Loader for index '" + idxName + "'");
@@ -318,7 +328,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     return documentDatabase;
   }
 
-  protected OClass getOrCreateClass(final String iClassName) {
+  protected OClass getOrCreateClass(final String iClassName, final String iSuperClass) {
     OClass cls;
 
     if (dbType == DB_TYPE.DOCUMENT) {
@@ -327,19 +337,45 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       if (documentDatabase.getMetadata().getSchema().existsClass(iClassName))
         cls = documentDatabase.getMetadata().getSchema().getClass(iClassName);
       else {
-        cls = documentDatabase.getMetadata().getSchema().createClass(iClassName);
-        log("- OrientDBLoader: created class '%s'", iClassName);
+        if (iSuperClass != null) {
+          final OClass superClass = documentDatabase.getMetadata().getSchema().getClass(iSuperClass);
+          if (superClass == null)
+            throw new OLoaderException("Cannot find super class '" + iSuperClass + "'");
+
+          cls = documentDatabase.getMetadata().getSchema().createClass(iClassName, superClass);
+          log("- OrientDBLoader: created class '%s' extends '%s'", iClassName, iSuperClass);
+        } else {
+          cls = documentDatabase.getMetadata().getSchema().createClass(iClassName);
+          log("- OrientDBLoader: created class '%s'", iClassName);
+        }
       }
     } else {
       // GRAPH
       final OrientBaseGraph graphDatabase = pipeline.getGraphDatabase();
       cls = graphDatabase.getVertexType(iClassName);
       if (cls == null) {
-        cls = graphDatabase.createVertexType(iClassName);
-        log("- OrientDBLoader: created vertex class '%s'", iClassName);
+
+        if (iSuperClass != null) {
+          final OClass superClass = graphDatabase.getRawGraph().getMetadata().getSchema().getClass(iSuperClass);
+          if (superClass == null)
+            throw new OLoaderException("Cannot find super class '" + iSuperClass + "'");
+
+          if (graphDatabase.getVertexBaseType().isSuperClassOf(superClass)) {
+            // VERTEX
+            cls = graphDatabase.createVertexType(iClassName, superClass);
+            log("- OrientDBLoader: created vertex class '%s' extends '%s'", iClassName, iSuperClass);
+          } else {
+            // EDGE
+            cls = graphDatabase.createEdgeType(iClassName, superClass);
+            log("- OrientDBLoader: created edge class '%s' extends '%s'", iClassName, iSuperClass);
+          }
+        } else {
+          // ALWAYS CREATE SUB-VERTEX
+          cls = graphDatabase.createVertexType(iClassName);
+          log("- OrientDBLoader: created vertex class '%s'", iClassName);
+        }
       }
     }
     return cls;
   }
-
 }
