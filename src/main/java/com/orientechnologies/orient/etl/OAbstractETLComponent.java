@@ -34,6 +34,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
   protected OBasicCommandContext context;
   protected OSQLFilter           ifFilter;
   protected boolean              verbose = false;
+  protected String               output  = null;
 
   @Override
   public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
@@ -48,6 +49,9 @@ public abstract class OAbstractETLComponent implements OETLComponent {
       verbose = (Boolean) iConfiguration.field("verbose");
     else
       verbose = iProcessor.isVerbose();
+
+    if (iConfiguration.containsField("output"))
+      output = (String) iConfiguration.field("output");
   }
 
   @Override
@@ -56,6 +60,18 @@ public abstract class OAbstractETLComponent implements OETLComponent {
 
   @Override
   public void end() {
+  }
+
+  @Override
+  public ODocument getConfiguration() {
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + "]");
+  }
+
+  protected String getCommonConfigurationParameters() {
+    return "{verbose:{optional:true,description:'If verbose, the component generates more output. Useful to debug the pipeline'}},"
+        + "{if:{optional:true,description:'Conditional expression. If true, the block is executed, otherwise is skipped'}},"
+        + "{output:{optional:true,description:'Variable name to store the transformer output. If null, the output will be passed to the pipeline as input for the next component.'}}";
+
   }
 
   protected String stringArray2Json(final Object[] iObject) {

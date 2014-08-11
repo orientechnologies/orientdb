@@ -38,8 +38,9 @@ public class OCodeTransformer extends OAbstractTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[{language:{optional:true,description:'Code language, default is Javascript'}},"
-        + "{code:{optional:false,description:'Code to execute'}}]," + "input:['Object'],output:'Object'}");
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
+        + "{language:{optional:true,description:'Code language, default is Javascript'}},"
+        + "{code:{optional:false,description:'Code to execute'}}" + "]}");
   }
 
   @Override

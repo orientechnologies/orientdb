@@ -43,7 +43,10 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
   @Override
   public ODocument getConfiguration() {
     return new ODocument()
-        .fromJSON("{parameters:[{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
+        .fromJSON("{parameters:["
+            + getCommonConfigurationParameters()
+            + ","
+            + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
             + "{joinValue:{optional:true,description:'value to use in lookup query'}},"
             + "{linkFieldName:{optional:false,description:'field name containing the link to set'}},"
             + "{linkFieldType:{optional:true,description:'field type containing the link to set. Use LINK for single link and LINKSET or LINKLIST for many'}},"

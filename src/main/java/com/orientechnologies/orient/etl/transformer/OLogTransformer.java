@@ -34,7 +34,7 @@ public class OLogTransformer extends OAbstractTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[{expression:{optional:false,description:'Expression to evaluate'}}]}");
+    return new ODocument().fromJSON("{parameters:["+getCommonConfigurationParameters()+","+"{expression:{optional:false,description:'Expression to evaluate'}}]}");
   }
 
   @Override

@@ -31,7 +31,10 @@ public class OFieldTransformer extends OAbstractTransformer {
   @Override
   public ODocument getConfiguration() {
     return new ODocument()
-        .fromJSON("{parameters:[{fieldName:{optional:false,description:'field name to apply the result'}},{expression:{optional:false,description:'expression to evaluate'}}],"
+        .fromJSON("{parameters:["
+            + getCommonConfigurationParameters()
+            + ","
+            + "{fieldName:{optional:false,description:'field name to apply the result'}},{expression:{optional:false,description:'expression to evaluate'}}],"
             + "input:['ODocument'],output:'ODocument'}");
   }
 

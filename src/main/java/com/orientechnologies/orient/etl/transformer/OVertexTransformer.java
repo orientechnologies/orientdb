@@ -31,7 +31,8 @@ public class OVertexTransformer extends OAbstractTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[{class:{optional:true,description:'Vertex class name to assign. Default is V'}}]"
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
+        + "{class:{optional:true,description:'Vertex class name to assign. Default is V'}}]"
         + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
   }
 
@@ -59,6 +60,9 @@ public class OVertexTransformer extends OAbstractTransformer {
     }
 
     final OrientVertex v = graph.getVertex(input);
+    if (v == null)
+      return null;
+
     if (vertexClass != null)
       v.setProperty("@class", vertexClass);
     return v;

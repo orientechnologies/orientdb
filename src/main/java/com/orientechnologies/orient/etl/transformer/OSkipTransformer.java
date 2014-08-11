@@ -30,8 +30,8 @@ public class OSkipTransformer extends OAbstractTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[{expression:{optional:false,description:'Expression to evaluate'}}],"
-        + "input:['ODocument'],output:'ODocument'}");
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
+        + "{expression:{optional:false,description:'Expression to evaluate'}}]," + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override

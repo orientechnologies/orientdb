@@ -22,11 +22,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OJSONTransformer extends OAbstractTransformer {
   @Override
-  public ODocument getConfiguration() {
-    return new ODocument();
-  }
-
-  @Override
   public String getName() {
     return "json";
   }

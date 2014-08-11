@@ -32,12 +32,15 @@ public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent
     if (input == null)
       return null;
 
-    if (skip(input))
-      return input;
-    else {
+    if (!skip(input)) {
       context.setVariable("input", input);
-      return executeTransform(input);
+      final Object result = executeTransform(input);
+      if (output == null)
+        return result;
+
+      context.setVariable(output, result);
     }
+    return input;
   }
 
   protected abstract Object executeTransform(final Object input);

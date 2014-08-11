@@ -34,7 +34,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:["
+    return new ODocument().fromJSON("{parameters:["+getCommonConfigurationParameters()+","
         + "{joinFieldName:{optional:false,description:'field name containing the value to join'}},"
         + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
         + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"

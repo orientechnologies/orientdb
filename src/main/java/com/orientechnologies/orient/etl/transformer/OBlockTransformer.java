@@ -32,7 +32,8 @@ public class OBlockTransformer extends OAbstractTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[{block:{optional:false,description:'Block to execute'}}]}");
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
+        + "{block:{optional:false,description:'Block to execute'}}]}");
   }
 
   @Override
