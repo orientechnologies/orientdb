@@ -23,15 +23,23 @@ angular.module('login.controller', ['database.services']).controller("LoginContr
     }
     $scope.createNew = function () {
         modalScope = $scope.$new(true);
+        modalScope.creating = false;
         modalScope.stype = "plocal";
         modalScope.type = "graph";
         modalScope.username = "root";
         modalScope.types = ['document', 'graph']
         modalScope.stypes = ['local', 'plocal', 'memory']
         modalScope.createNew = function () {
+            modalScope.creating = true;
             DatabaseApi.createDatabase(modalScope.name, modalScope.type, modalScope.stype, modalScope.username, modalScope.password, function (data) {
                 $scope.databases.push(modalScope.name);
+                modalScope.creating = false;
                 modalScope.hide();
+                var noti = "Database " + modalScope.name + " created.";
+                Notification.push({content: noti});
+            }, function (data) {
+                modalScope.creating = false;
+                modalScope.error = data;
             });
         }
         var modalPromise = $modal({template: 'views/database/newDatabase.html', scope: modalScope});
