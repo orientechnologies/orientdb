@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  */
 public class ORoundRobinClusterSelectionStrategy implements OClusterSelectionStrategy {
   public static final String NAME    = "round-robin";
-  private int                pointer = 0;
+  private volatile int       pointer = 0;
 
   public int getCluster(final OClass iClass) {
     final int[] clusters = iClass.getClusterIds();
@@ -32,11 +32,13 @@ public class ORoundRobinClusterSelectionStrategy implements OClusterSelectionStr
       // ONLY ONE: RETURN THE FIRST ONE
       return clusters[0];
 
-    if (pointer >= clusters.length)
-      // RESET POINTER
-      pointer = 0;
+    synchronized (this) {
+      if (pointer >= clusters.length)
+        // RESET POINTER
+        pointer = 0;
 
-    return clusters[pointer++];
+      return clusters[pointer++];
+    }
   }
 
   @Override
