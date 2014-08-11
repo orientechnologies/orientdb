@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  */
 public class LockManagerTest {
 
-  public static final int                           THREADS         = 100;
+  public static final int                           THREADS         = 1000;
   public static int                                 cyclesByProcess = 10000;
   public static boolean                             verbose         = false;
   public static OLockManager<Callable<?>, Runnable> lockMgr         = new OLockManager<Callable<?>, Runnable>(

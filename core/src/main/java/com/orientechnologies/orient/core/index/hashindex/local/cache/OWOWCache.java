@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -59,6 +60,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import java.util.zip.CRC32;
 
 /**
@@ -66,7 +68,7 @@ import java.util.zip.CRC32;
  * @since 7/23/13
  */
 public class OWOWCache {
-	//we add 8 bytes before and after cache pages to prevent word tearing in mt case.
+  // we add 8 bytes before and after cache pages to prevent word tearing in mt case.
   public static final int                                   PAGE_PADDING          = 8;
 
   public static final String                                NAME_ID_MAP_EXTENSION = ".cm";
@@ -85,10 +87,7 @@ public class OWOWCache {
   private final long                                        groupTTL;
   private final OWriteAheadLog                              writeAheadLog;
   private final AtomicInteger                               cacheSize             = new AtomicInteger();
-  private final OLockManager<GroupKey, Thread>              lockManager           = new OLockManager<GroupKey, Thread>(
-                                                                                      true,
-                                                                                      OGlobalConfiguration.DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT
-                                                                                          .getValueAsInteger());
+  private final ONewLockManager                             lockManager           = new ONewLockManager();
   private final OLocalPaginatedStorage                      storageLocal;
   private final Object                                      syncObject            = new Object();
   private final ScheduledExecutorService                    commitExecutor        = Executors
@@ -276,7 +275,7 @@ public class OWOWCache {
           continue;
         }
 
-        lockManager.acquireLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
+        Lock groupLock = lockManager.acquireExclusiveLock(entry.getKey());
         try {
           if (group.recencyBit && weakLockMode)
             group.recencyBit = false;
@@ -313,7 +312,7 @@ public class OWOWCache {
             cacheSize.addAndGet(-flushedPages);
           }
         } finally {
-          lockManager.releaseLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
+          lockManager.releaseLock(groupLock);
         }
 
         lastGroupKey = groupKey;
@@ -343,7 +342,7 @@ public class OWOWCache {
         final WriteGroup writeGroup = entry.getValue();
         final GroupKey groupKey = entry.getKey();
 
-        lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
+        Lock groupLock = lockManager.acquireExclusiveLock(groupKey);
         try {
           int flushedPages = 0;
 
@@ -370,7 +369,7 @@ public class OWOWCache {
           cacheSize.addAndGet(-flushedPages);
           entryIterator.remove();
         } finally {
-          lockManager.releaseLock(Thread.currentThread(), entry.getKey(), OLockManager.LOCK.EXCLUSIVE);
+          lockManager.releaseLock(groupLock);
         }
       }
 
@@ -399,7 +398,7 @@ public class OWOWCache {
         WriteGroup writeGroup = entry.getValue();
         GroupKey groupKey = entry.getKey();
 
-        lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
+        Lock groupLock = lockManager.acquireExclusiveLock(groupKey);
         try {
           for (OCachePointer pagePointer : writeGroup.pages) {
             if (pagePointer != null) {
@@ -415,7 +414,7 @@ public class OWOWCache {
 
           entryIterator.remove();
         } finally {
-          lockManager.releaseLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
+          lockManager.releaseLock(groupLock);
         }
       }
 
@@ -559,7 +558,7 @@ public class OWOWCache {
 
     synchronized (syncObject) {
       final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
-      lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
+      Lock groupLock = lockManager.acquireExclusiveLock(groupKey);
       try {
         WriteGroup writeGroup = writeGroups.get(groupKey);
         if (writeGroup == null) {
@@ -585,7 +584,7 @@ public class OWOWCache {
 
         writeGroup.recencyBit = true;
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), groupKey, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.releaseLock(groupLock);
       }
 
       if (cacheSize.get() > cacheMaxSize) {
@@ -599,7 +598,7 @@ public class OWOWCache {
   public OCachePointer load(long fileId, long pageIndex) throws IOException {
     synchronized (syncObject) {
       final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
-      lockManager.acquireLock(Thread.currentThread(), groupKey, OLockManager.LOCK.SHARED);
+      Lock groupLock = lockManager.acquireSharedLock(groupKey);
       try {
         final WriteGroup writeGroup = writeGroups.get(groupKey);
 
@@ -620,7 +619,7 @@ public class OWOWCache {
         pagePointer.incrementReferrer();
         return pagePointer;
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), groupKey, OLockManager.LOCK.SHARED);
+        lockManager.releaseLock(groupLock);
       }
     }
   }
@@ -647,7 +646,6 @@ public class OWOWCache {
       return files.get(fileId).getFilledUpTo() / pageSize;
     }
   }
-
 
   public boolean isOpen(long fileId) {
     synchronized (syncObject) {
