@@ -1788,4 +1788,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     _fieldCollectionChangeTimeLines.remove(fieldName);
   }
+
+  protected void clearSource() {
+    this._source = null;
+  }
 }
