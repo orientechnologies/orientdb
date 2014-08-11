@@ -56,14 +56,15 @@ public class OETLProcessor implements OETLComponent {
   protected final OExtractor           extractor;
   protected final OLoader              loader;
   protected final List<OTransformer>   transformers;
-  protected final OETLComponentFactory factory  = new OETLComponentFactory();
+  protected final OETLComponentFactory factory    = new OETLComponentFactory();
   protected final OBasicCommandContext context;
   protected long                       startTime;
   protected long                       elapsed;
-  protected OETLProcessorStats         stats    = new OETLProcessorStats();
+  protected OETLProcessorStats         stats      = new OETLProcessorStats();
   protected TimerTask                  dumpTask;
-  protected boolean                    verbose  = false;
-  protected boolean                    parallel = false;
+  protected boolean                    verbose    = false;
+  protected boolean                    parallel   = false;
+  protected int                        maxRetries = 10;
   private Thread[]                     threads;
 
   public class OETLProcessorStats {
@@ -281,12 +282,13 @@ public class OETLProcessor implements OETLComponent {
 
       final AtomicLong counter = new AtomicLong();
       final AtomicBoolean extractionFinished = new AtomicBoolean(false);
+      final OETLProcessor processor = this;
 
       for (int i = 0; i < threads.length; ++i) {
         threads[i] = new Thread(new Runnable() {
           @Override
           public void run() {
-            final OETLPipeline pipeline = new OETLPipeline(transformers, loader, context);
+            final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, context, maxRetries);
             pipeline.begin();
 
             while (!extractionFinished.get() || counter.get() > 0) {
@@ -318,7 +320,7 @@ public class OETLProcessor implements OETLComponent {
       extractionFinished.set(true);
 
       while (counter.get() > 0) {
-        out(true, "Waiting for the pipeline to finish, remaining " + counter.get()+" entries to process");
+        out(true, "Waiting for the pipeline to finish, remaining " + counter.get() + " entries to process");
         try {
           // WAIT A BIT AND RETRY
           Thread.sleep(500);
@@ -346,9 +348,13 @@ public class OETLProcessor implements OETLComponent {
   public void begin() {
     out(false, "BEGIN ETL PROCESSOR");
 
-    final Boolean v = (Boolean) context.getVariable("verbose");
-    if (v != null)
-      verbose = v;
+    final Boolean cfgVerbose = (Boolean) context.getVariable("verbose");
+    if (cfgVerbose != null)
+      verbose = cfgVerbose;
+
+    final Integer cfgMaxRetries = (Integer) context.getVariable("maxRetries");
+    if (cfgMaxRetries != null)
+      maxRetries = cfgMaxRetries;
 
     final int dumpEveryMs = (Integer) context.getVariable("dumpEveryMs");
     if (dumpEveryMs > 0) {
@@ -442,7 +448,7 @@ public class OETLProcessor implements OETLComponent {
           extractor.extract(reader);
       }
 
-      final OETLPipeline pipeline = new OETLPipeline(transformers, loader, context);
+      final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, context, maxRetries);
       pipeline.begin();
 
       while (extractor.hasNext()) {

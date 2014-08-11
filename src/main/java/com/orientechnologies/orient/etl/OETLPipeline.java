@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.etl.loader.OLoader;
@@ -32,13 +33,17 @@ import java.util.List;
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLPipeline {
+  protected final OETLProcessor        processor;
   protected final List<OTransformer>   transformers;
   protected final OLoader              loader;
   protected final OBasicCommandContext context;
+  protected final int                  maxRetries;
   protected ODatabaseDocumentTx        db;
   protected OrientBaseGraph            graph;
 
-  public OETLPipeline(final List<OTransformer> iTransformers, final OLoader iLoader, final OBasicCommandContext iContext) {
+  public OETLPipeline(final OETLProcessor iProcessor, final List<OTransformer> iTransformers, final OLoader iLoader,
+      final OBasicCommandContext iContext, final int iMaxRetries) {
+    processor = iProcessor;
     context = iContext;
 
     transformers = iTransformers;
@@ -47,6 +52,8 @@ public class OETLPipeline {
     for (OTransformer t : transformers)
       t.setPipeline(this);
     loader.setPipeline(this);
+
+    maxRetries = iMaxRetries;
   }
 
   public void begin() {
@@ -81,17 +88,28 @@ public class OETLPipeline {
     return this;
   }
 
-  protected OETLPipeline execute(Object current) {
-    // SEQUENTIAL
-    for (OTransformer t : transformers) {
-      current = t.transform(current);
-      if (current == null)
-        break;
-    }
+  protected Object execute(final Object source) {
+    int retry = 0;
+    do {
+      try {
+        Object current = source;
+        for (OTransformer t : transformers) {
+          current = t.transform(current);
+          if (current == null)
+            break;
+        }
 
-    if (current != null)
-      // LOAD
-      loader.load(current, context);
+        if (current != null)
+          // LOAD
+          loader.load(current, context);
+
+        return current;
+      } catch (ONeedRetryException e) {
+        retry++;
+        processor.out(true, "Error in pipeline execution, retry = %d/%d", retry, maxRetries);
+      }
+    } while (retry < maxRetries);
+
     return this;
   }
 }
