@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.speed;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
@@ -31,6 +32,7 @@ public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
   private long          date = System.currentTimeMillis();
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    OGlobalConfiguration.USE_WAL.setValue(false);
     LocalCreateFlatSpeedTest test = new LocalCreateFlatSpeedTest();
     test.data.go(test);
   }

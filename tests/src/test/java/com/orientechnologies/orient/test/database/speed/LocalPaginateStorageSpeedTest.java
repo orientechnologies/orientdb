@@ -1,10 +1,7 @@
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Date;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -16,6 +13,9 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import org.testng.annotations.Test;
+
+import java.util.Date;
 
 public class LocalPaginateStorageSpeedTest extends OrientMonoThreadTest {
   private ODatabaseDocument database;
@@ -24,19 +24,21 @@ public class LocalPaginateStorageSpeedTest extends OrientMonoThreadTest {
   private byte[]            content;
   private OStorage          storage;
 
+  public LocalPaginateStorageSpeedTest() throws InstantiationException, IllegalAccessException {
+    super(1000000);
+  }
+
   @Test(enabled = false)
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     LocalPaginateStorageSpeedTest test = new LocalPaginateStorageSpeedTest();
     test.data.go(test);
   }
 
-  public LocalPaginateStorageSpeedTest() throws InstantiationException, IllegalAccessException {
-    super(1000000);
-  }
-
   @Override
   @Test(enabled = false)
   public void init() {
+    OGlobalConfiguration.USE_WAL.setValue(false);
+
     ODatabaseDocumentTx.setDefaultSerializer(new ORecordSerializerBinary());
     database = new ODatabaseDocumentTx("plocal:target/db/test");
     if (database.exists()) {
@@ -52,6 +54,13 @@ public class LocalPaginateStorageSpeedTest extends OrientMonoThreadTest {
 
     database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);
+
+    storage = database.getStorage();
+  }
+
+  @Override
+  @Test(enabled = false)
+  public void cycle() {
     record.reset();
 
     record.setClassName("Account");
@@ -63,12 +72,6 @@ public class LocalPaginateStorageSpeedTest extends OrientMonoThreadTest {
 
     content = record.toStream();
 
-    storage = database.getStorage();
-  }
-
-  @Override
-  @Test(enabled = false)
-  public void cycle() {
     storage.createRecord(new ORecordId(), content, new OSimpleVersion(), (byte) 'd', 0, null);
   }
 

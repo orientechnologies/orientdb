@@ -15,39 +15,42 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Date;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import org.testng.annotations.Test;
+
+import java.util.Date;
 
 @Test
 public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
-  private ODatabaseDocument database;
-  private ODocument         record;
-  private Date              date = new Date();
-
-  @Test(enabled = false)
-  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
-    LocalCreateDocumentSpeedTest test = new LocalCreateDocumentSpeedTest();
-    test.data.go(test);
-  }
+  private ODatabaseDocumentTx database;
+  private ODocument           record;
+  private Date                date = new Date();
 
   public LocalCreateDocumentSpeedTest() throws InstantiationException, IllegalAccessException {
     super(1000000);
+  }
+
+  @Test(enabled = false)
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    OGlobalConfiguration.USE_WAL.setValue(false);
+    LocalCreateDocumentSpeedTest test = new LocalCreateDocumentSpeedTest();
+    test.data.go(test);
   }
 
   @Override
   @Test(enabled = false)
   public void init() {
     database = new ODatabaseDocumentTx(System.getProperty("url"));
+    database.setSerializer(new ORecordSerializerBinary());
+
     if (database.exists()) {
       database.open("admin", "admin");
       database.drop();
