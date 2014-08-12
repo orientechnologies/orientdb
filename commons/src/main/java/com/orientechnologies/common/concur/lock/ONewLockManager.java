@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 8/11/14
  */
-public class ONewLockManager {
+public class ONewLockManager<T> {
   private static final int      CONCURRENCY_LEVEL = closestInteger(Runtime.getRuntime().availableProcessors() * 64);
   private static final int      MASK              = CONCURRENCY_LEVEL - 1;
 
@@ -61,7 +61,7 @@ public class ONewLockManager {
     return lock;
   }
 
-  public Lock acquireExclusiveLock(Object value) {
+  public Lock acquireExclusiveLock(T value) {
     final int index = index(value.hashCode());
 
     final ReadWriteLock rwLock = locks[index];
@@ -94,7 +94,7 @@ public class ONewLockManager {
     return lock;
   }
 
-  public Lock acquireSharedLock(Object value) {
+  public Lock acquireSharedLock(T value) {
     final int index = index(value.hashCode());
 
     final ReadWriteLock rwLock = locks[index];
@@ -102,6 +102,58 @@ public class ONewLockManager {
     final Lock lock = rwLock.readLock();
     lock.lock();
     return lock;
+  }
+
+  public void releaseSharedLock(int value) {
+    final int index = index(value);
+
+    final ReadWriteLock rwLock = locks[index];
+    rwLock.readLock().unlock();
+  }
+
+  public void releaseSharedLock(long value) {
+    final int hashCode = longHashCode(value);
+    final int index = index(hashCode);
+
+    final ReadWriteLock rwLock = locks[index];
+
+    final Lock lock = rwLock.readLock();
+    lock.unlock();
+  }
+
+  public void releaseSharedLock(T value) {
+    final int index = index(value.hashCode());
+
+    final ReadWriteLock rwLock = locks[index];
+
+    final Lock lock = rwLock.readLock();
+    lock.unlock();
+  }
+
+  public void releaseExclusiveLock(int value) {
+    final int index = index(value);
+
+    final ReadWriteLock rwLock = locks[index];
+    rwLock.writeLock().unlock();
+  }
+
+  public void releaseExclusiveLock(long value) {
+    final int hashCode = longHashCode(value);
+    final int index = index(hashCode);
+
+    final ReadWriteLock rwLock = locks[index];
+
+    final Lock lock = rwLock.writeLock();
+    lock.unlock();
+  }
+
+  public void releaseExclusiveLock(T value) {
+    final int index = index(value.hashCode());
+
+    final ReadWriteLock rwLock = locks[index];
+
+    final Lock lock = rwLock.writeLock();
+    lock.unlock();
   }
 
   public void releaseLock(Lock lock) {

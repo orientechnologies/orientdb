@@ -19,6 +19,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+/**
+ *
+ * @deprecated use ONewLockManager instead.
+ */
+@Deprecated
 public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   public enum LOCK {
     SHARED, EXCLUSIVE

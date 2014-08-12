@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
+import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -37,15 +38,15 @@ import java.io.IOException;
  * @author Luca Garulli
  */
 public abstract class OStorageEmbedded extends OStorageAbstract {
-  protected final ORecordLockManager lockManager;
-  protected final String             PROFILER_CREATE_RECORD;
-  protected final String             PROFILER_READ_RECORD;
-  protected final String             PROFILER_UPDATE_RECORD;
-  protected final String             PROFILER_DELETE_RECORD;
+  protected final ONewLockManager<ORID> lockManager;
+  protected final String                         PROFILER_CREATE_RECORD;
+  protected final String                         PROFILER_READ_RECORD;
+  protected final String                         PROFILER_UPDATE_RECORD;
+  protected final String                         PROFILER_DELETE_RECORD;
 
   public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
     super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
-    lockManager = new ORecordLockManager(OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger());
+    lockManager = new ONewLockManager<ORID>();
 
     PROFILER_CREATE_RECORD = "db." + name + ".createRecord";
     PROFILER_READ_RECORD = "db." + name + ".readRecord";
@@ -55,16 +56,6 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
   protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock,
       boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy);
-
-  /**
-   * Closes the storage freeing the lock manager first.
-   */
-  @Override
-  public void close(final boolean iForce, boolean onDelete) {
-    if (checkForClose(iForce))
-      lockManager.clear();
-    super.close(iForce, onDelete);
-  }
 
   /**
    * Executes the command request and return the result back.
@@ -182,23 +173,19 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   }
 
   public void acquireWriteLock(final ORID iRid) {
-    lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+    lockManager.acquireExclusiveLock(iRid);
   }
 
   public void releaseWriteLock(final ORID iRid) {
-    lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+    lockManager.releaseExclusiveLock(iRid);
   }
 
   public void acquireReadLock(final ORID iRid) {
-    lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
+    lockManager.acquireSharedLock(iRid);
   }
 
   public void releaseReadLock(final ORID iRid) {
-    lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
-  }
-
-  public void releaseAllLocksOfCurrentThread() {
-    lockManager.releaseAllLocksOfRequester(Thread.currentThread());
+    lockManager.releaseSharedLock(iRid);
   }
 
   @Override
@@ -211,7 +198,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     final OCluster cluster = getClusterById(rid.getClusterId());
     lock.acquireSharedLock();
     try {
-      lockManager.acquireLock(Thread.currentThread(), rid, LOCK.SHARED);
+      lockManager.acquireSharedLock(rid);
       try {
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
         if (ppos == null)
@@ -219,7 +206,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
         return new ORecordMetadata(rid, ppos.recordVersion);
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), rid, LOCK.SHARED);
+        lockManager.releaseSharedLock(rid);
       }
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);

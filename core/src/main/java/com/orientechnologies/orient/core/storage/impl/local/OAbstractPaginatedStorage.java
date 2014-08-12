@@ -83,6 +83,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
 /**
  * @author Andrey Lomakin
@@ -460,10 +461,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
       else
         diskCache.delete();
 
-      if (writeAheadLog != null)
-      {
-    	  writeAheadLog.close();
-    	  if(onDelete) writeAheadLog.delete();
+      if (writeAheadLog != null) {
+        writeAheadLog.close();
+        if (onDelete)
+          writeAheadLog.delete();
       }
 
       postCloseSteps(onDelete);
@@ -909,7 +910,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     final OCluster cluster = getClusterById(rid.getClusterId());
     lock.acquireSharedLock();
     try {
-      lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
+      Lock recordLock = lockManager.acquireSharedLock(rid);
       try {
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
         if (ppos == null)
@@ -917,7 +918,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
         return new ORecordMetadata(rid, ppos.recordVersion);
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
+        lockManager.releaseLock(recordLock);
       }
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
@@ -952,7 +953,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
         lock.acquireSharedLock();
         try {
           // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
-          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          Lock recordLock = lockManager.acquireExclusiveLock(rid);
           try {
             // UPDATE IT
             final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
@@ -989,7 +990,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
             return new OStorageOperationResult<ORecordVersion>(ppos.recordVersion);
 
           } finally {
-            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+            lockManager.releaseLock(recordLock);
           }
         } catch (IOException e) {
           OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
@@ -1235,7 +1236,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
       try {
         lock.acquireSharedLock();
         try {
-          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          Lock recordLock = lockManager.acquireExclusiveLock(rid);
           try {
             final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
 
@@ -1265,7 +1266,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
             return new OStorageOperationResult<Boolean>(true);
           } finally {
-            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+            lockManager.releaseLock(recordLock);
           }
         } finally {
           lock.releaseSharedLock();
@@ -1298,7 +1299,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
       try {
         lock.acquireSharedLock();
         try {
-          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          final Lock recordLock = lockManager.acquireExclusiveLock(rid);
           try {
             final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
 
@@ -1321,7 +1322,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
             return new OStorageOperationResult<Boolean>(true);
           } finally {
-            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+            lockManager.releaseLock(recordLock);
           }
         } finally {
           lock.releaseSharedLock();
@@ -1370,13 +1371,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
       } else
         lock.acquireSharedLock();
       try {
-        lockManager
-            .acquireLock(Thread.currentThread(), rid, exclusiveLock ? OLockManager.LOCK.EXCLUSIVE : OLockManager.LOCK.SHARED);
+        Lock recordLock;
+        if (exclusiveLock)
+          recordLock = lockManager.acquireExclusiveLock(rid);
+        else
+          recordLock = lockManager.acquireSharedLock(rid);
         try {
           return callable.call();
         } finally {
-          lockManager.releaseLock(Thread.currentThread(), rid, exclusiveLock ? OLockManager.LOCK.EXCLUSIVE
-              : OLockManager.LOCK.SHARED);
+          lockManager.releaseLock(recordLock);
         }
       } catch (RuntimeException e) {
         throw e;

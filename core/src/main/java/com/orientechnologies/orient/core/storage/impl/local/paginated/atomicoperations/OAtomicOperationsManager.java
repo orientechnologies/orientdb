@@ -17,9 +17,11 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
+import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -27,10 +29,9 @@ import java.util.concurrent.ConcurrentMap;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager {
-  private static final ThreadLocal<OAtomicOperation>           currentOperation = new ThreadLocal<OAtomicOperation>();
-  private final OWriteAheadLog                                 writeAheadLog;
-  private final OLockManager<Object, OAtomicOperationsManager> lockManager      = new OLockManager<Object, OAtomicOperationsManager>(
-                                                                                    true, 300000);
+  private static final ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
+  private final OWriteAheadLog                       writeAheadLog;
+  private final ONewLockManager<Object>              lockManager      = new ONewLockManager<Object>();
 
   public OAtomicOperationsManager(OWriteAheadLog writeAheadLog) {
     this.writeAheadLog = writeAheadLog;
@@ -77,7 +78,7 @@ public class OAtomicOperationsManager {
 
     if (counter == 0) {
       for (Object lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+        lockManager.releaseExclusiveLock(lockObject);
 
       writeAheadLog.log(new OAtomicUnitEndRecord(operation.getOperationUnitId(), rollback));
       currentOperation.set(null);
@@ -94,7 +95,7 @@ public class OAtomicOperationsManager {
     if (operation.containsInLockedObjects(lockObject))
       return;
 
-    lockManager.acquireLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+    lockManager.acquireExclusiveLock(lockObject);
     operation.addLockedObject(lockObject);
   }
 }

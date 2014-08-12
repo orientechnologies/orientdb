@@ -88,7 +88,7 @@ public class OWOWCache {
   private final long                                        groupTTL;
   private final OWriteAheadLog                              writeAheadLog;
   private final AtomicInteger                               cacheSize             = new AtomicInteger();
-  private final ONewLockManager                             lockManager           = new ONewLockManager();
+  private final ONewLockManager<GroupKey>                   lockManager           = new ONewLockManager<GroupKey>();
   private final OLocalPaginatedStorage                      storageLocal;
   private final ReadWriteLock                               filesLock             = new ReentrantReadWriteLock();
   private final ScheduledExecutorService                    commitExecutor        = Executors

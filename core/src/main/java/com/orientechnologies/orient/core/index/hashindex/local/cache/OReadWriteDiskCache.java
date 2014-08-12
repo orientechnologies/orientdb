@@ -54,7 +54,7 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   private final ReadWriteLock                         cacheLock                  = new ReentrantReadWriteLock();
   private final ONewLockManager                       fileLockManager            = new ONewLockManager();
-  private final ONewLockManager                       pageLockManager            = new ONewLockManager();
+  private final ONewLockManager<PageKey>              pageLockManager            = new ONewLockManager<PageKey>();
   private final NavigableMap<PinnedPage, OCacheEntry> pinnedPages                = new ConcurrentSkipListMap<PinnedPage, OCacheEntry>();
 
   private final String                                storageName;
