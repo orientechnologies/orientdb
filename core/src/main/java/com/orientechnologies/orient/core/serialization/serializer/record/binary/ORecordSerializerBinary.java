@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.binary
 
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
@@ -45,6 +46,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     BytesContainer container = new BytesContainer(iSource);
     container.skip(1);
     serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
+    ODocumentInternal.clearSource((ODocument) iRecord);
     return iRecord;
   }
 
