@@ -158,9 +158,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         iRequest.getTask().getSynchronousTimeout(expectedSynchronousResponses), iRequest.getTask().getTotalTimeout(queueSize),
         groupByResponse);
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sending request %s", iRequest);
-
     final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
 
     try {
@@ -170,6 +167,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
 
         iRequest.setId(msgService.getMessageIdCounter().getAndIncrement());
+
+        if (ODistributedServerLog.isDebugEnabled())
+          ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sending request %s", iRequest);
 
         msgService.registerRequest(iRequest.getId(), currentResponseMgr);
 
@@ -183,8 +183,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       }
 
       if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sent request %s",
-            iRequest.getTask());
+        ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sent request %d (%s)",
+            iRequest.getId(), iRequest.getTask());
 
       Orient
           .instance()
@@ -195,8 +195,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       return waitForResponse(iRequest, currentResponseMgr);
 
     } catch (Throwable e) {
-      throw new ODistributedException("Error on sending distributed request against database '" + databaseName
-          + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes, e);
+      throw new ODistributedException("Error on sending distributed request " + iRequest.getId() + " against database '"
+          + databaseName + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes, e);
     }
   }
 
@@ -273,7 +273,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
           } catch (Throwable e) {
             ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
-                "error on reading distributed request: %s", e, message != null ? message.getTask() : "-");
+                "error on executing distributed request %d: %s", e, message.getId(), message != null ? message.getTask() : "-");
           }
         }
 
@@ -545,7 +545,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
-            "sending back response '%s' to request: %s", responsePayload, task);
+            "sending back response '%s' to request %d (%s)", responsePayload, iRequest.getId(), task);
 
       final OHazelcastDistributedResponse response = new OHazelcastDistributedResponse(iRequest.getId(),
           manager.getLocalNodeName(), iRequest.getSenderNodeName(), responsePayload);

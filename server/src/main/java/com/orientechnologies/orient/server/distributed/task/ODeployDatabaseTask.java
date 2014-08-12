@@ -76,13 +76,6 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
           iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
-          // WAIT UNTIL ALL PENDING OPERATION ARE COMPLETED
-          while (database.getStorage().getLastOperationId() >= iManager.getMessageService().getLastMessageId()) {
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "pausing deploy of database %s until all pending operations are completed...", databaseName);
-            Thread.sleep(300);
-          }
-
           iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
           ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",

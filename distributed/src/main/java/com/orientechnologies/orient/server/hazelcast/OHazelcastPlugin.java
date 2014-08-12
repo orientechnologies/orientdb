@@ -680,8 +680,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (database != null)
         ((ODistributedStorage) database.getStorage()).setLastOperationId(req.getId());
 
-      return (Serializable) task.execute(serverInstance, this, database);
+      final Serializable result = (Serializable) task.execute(serverInstance, this, database);
+
+      if (result instanceof Throwable)
+        ODistributedServerLog.error(this, getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
+            "error on executing request %d (%s) on local node: ", (Throwable) result, req.getId(), req != null ? req.getTask()
+                : "-");
+
+      return result;
+
     } catch (Throwable e) {
+      ODistributedServerLog.error(this, getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
+          "error on executing distributed request %d on local node: %s", e, req.getId(), req != null ? req.getTask() : "-");
+
       return e;
     }
   }
@@ -742,13 +753,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         return false;
     }
 
+    final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
+
     try {
-      Thread.sleep(2000);
+      Thread.sleep(5000);
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-
-    final OHazelcastDistributedDatabase distrDatabase = messageService.registerDatabase(databaseName);
 
     // CREATE THE DISTRIBUTED QUEUE
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(messageService.manager.getLocalNodeName(),
@@ -757,7 +768,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
 
-    // GET ALL THE
+    // GET ALL THE OTHER SERVERS
     final Collection<String> nodes = cfg.getServers();
     nodes.remove(getLocalNodeName());
 
@@ -917,7 +928,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return chunk.buffer.length;
   }
 
-  protected void installDatabaseOnLocalNode(final OHazelcastDistributedDatabase distrDatabase, final String databaseName, final String dbPath, final String iNode, final String iDatabaseCompressedFile) {
+  protected void installDatabaseOnLocalNode(final OHazelcastDistributedDatabase distrDatabase, final String databaseName,
+      final String dbPath, final String iNode, final String iDatabaseCompressedFile) {
     ODistributedServerLog.warn(this, getLocalNodeName(), iNode, DIRECTION.IN, "installing database '%s' to: %s...", databaseName,
         dbPath);
 
