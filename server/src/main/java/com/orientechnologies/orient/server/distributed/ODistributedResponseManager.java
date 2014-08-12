@@ -53,10 +53,11 @@ public class ODistributedResponseManager {
   private final long                             totalTimeout;
   private final Lock                             synchronousResponsesLock    = new ReentrantLock();
   private final Condition                        synchronousResponsesArrived = synchronousResponsesLock.newCondition();
-  private int                                    receivedResponses           = 0;
-  private int                                    quorum;
-  private boolean                                waitForLocalNode;
+  private final int                              quorum;
+  private final boolean                          waitForLocalNode;
+  private volatile int                           receivedResponses           = 0;
   private volatile boolean                       receivedCurrentNode;
+  private Object                                 responseLock                = new Object();
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
@@ -88,27 +89,27 @@ public class ODistributedResponseManager {
   public boolean collectResponse(final ODistributedResponse response) {
     final String executorNode = response.getExecutorNodeName();
 
-    if (!responses.containsKey(executorNode)) {
-      ODistributedServerLog.warn(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
-          "received response for request %s from unexpected node. Expected are: %s", request, getExpectedNodes());
+    synchronized (responseLock) {
+      if (!responses.containsKey(executorNode)) {
+        ODistributedServerLog.warn(this, response.getSenderNodeName(), executorNode, DIRECTION.IN,
+            "received response for request %s from unexpected node. Expected are: %s", request, getExpectedNodes());
+
+        Orient.instance().getProfiler()
+            .updateCounter("distributed.node.unexpectedNodeResponse", "Number of responses from unexpected nodes", +1);
+
+        return false;
+      }
 
       Orient.instance().getProfiler()
-          .updateCounter("distributed.node.unexpectedNodeResponse", "Number of responses from unexpected nodes", +1);
+          .stopChrono("distributed.node.latency", "Latency of distributed messages", sentOn, "distributed.node.latency");
 
-      return false;
-    }
+      Orient
+          .instance()
+          .getProfiler()
+          .stopChrono("distributed.node." + executorNode + ".latency", "Latency of distributed messages per node", sentOn,
+              "distributed.node.*.latency");
 
-    Orient.instance().getProfiler()
-        .stopChrono("distributed.node.latency", "Latency of distributed messages", sentOn, "distributed.node.latency");
-
-    Orient
-        .instance()
-        .getProfiler()
-        .stopChrono("distributed.node." + executorNode + ".latency", "Latency of distributed messages per node", sentOn,
-            "distributed.node.*.latency");
-
-    boolean completed = false;
-    synchronized (responseGroups) {
+      boolean completed = false;
       responses.put(executorNode, response);
       receivedResponses++;
 
@@ -154,99 +155,8 @@ public class ODistributedResponseManager {
           }
         }
       }
+      return completed;
     }
-    return completed;
-  }
-
-  /**
-   * Returns the received response objects.
-   */
-  public List<ODistributedResponse> getReceivedResponses() {
-    final List<ODistributedResponse> parsed = new ArrayList<ODistributedResponse>();
-    for (Object r : responses.values())
-      if (r != NO_RESPONSE)
-        parsed.add((ODistributedResponse) r);
-    return parsed;
-  }
-
-  public void timeout() {
-    manageConflicts();
-  }
-
-  public boolean isMinimumQuorumReached(final boolean iCheckAvailableNodes) {
-    if (isWaitForLocalNode() && !isReceivedCurrentNode()) {
-      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), dManager.getLocalNodeName(), DIRECTION.IN,
-          "no response received from local node about request %s", request);
-      return false;
-    }
-
-    if (quorum == 0)
-      return true;
-
-    if (!groupResponsesByResult)
-      return receivedResponses >= quorum;
-
-    synchronized (responseGroups) {
-      for (List<ODistributedResponse> group : responseGroups)
-        if (group.size() >= quorum)
-          return true;
-
-      if (getReceivedResponsesCount() < quorum && iCheckAvailableNodes) {
-        final ODistributedConfiguration dbConfig = dManager.getDatabaseConfiguration(getDatabaseName());
-        if (!dbConfig.getFailureAvailableNodesLessQuorum("*")) {
-          // CHECK IF ANY NODE IS OFFLINE
-          int availableNodes = 0;
-          for (Map.Entry<String, Object> r : responses.entrySet()) {
-            if (dManager.isNodeAvailable(r.getKey(), getDatabaseName()))
-              availableNodes++;
-          }
-
-          if (availableNodes < quorum) {
-            ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-                "overridden quorum (%d) for request %s because available nodes (%d) are less than quorum, received responses: %s",
-                quorum, request, availableNodes, responses);
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * Returns the biggest response group.
-   * 
-   * @return
-   */
-  public int getBestResponsesGroup() {
-    int maxCoherentResponses = 0;
-    int bestGroupSoFar = 0;
-    for (int i = 0; i < responseGroups.size(); ++i) {
-      final int currentGroupSize = responseGroups.get(i).size();
-      if (currentGroupSize > maxCoherentResponses) {
-        maxCoherentResponses = currentGroupSize;
-        bestGroupSoFar = i;
-      }
-    }
-    return bestGroupSoFar;
-  }
-
-  /**
-   * Returns all the responses in conflict.
-   * 
-   * @return
-   */
-  public List<ODistributedResponse> getConflictResponses() {
-    final List<ODistributedResponse> servers = new ArrayList<ODistributedResponse>();
-    int bestGroupSoFar = getBestResponsesGroup();
-    for (int i = 0; i < responseGroups.size(); ++i) {
-      if (i != bestGroupSoFar) {
-        for (ODistributedResponse r : responseGroups.get(i))
-          servers.add(r);
-      }
-    }
-    return servers;
   }
 
   public long getMessageId() {
@@ -255,48 +165,6 @@ public class ODistributedResponseManager {
 
   public long getSentOn() {
     return sentOn;
-  }
-
-  public int getExpectedResponses() {
-    return responses.size();
-  }
-
-  public Set<String> getExpectedNodes() {
-    return responses.keySet();
-  }
-
-  public int getMissingResponses() {
-    return getExpectedResponses() - receivedResponses;
-  }
-
-  /**
-   * Returns the list of node names that provided a response.
-   */
-  public List<String> getRespondingNodes() {
-    final List<String> respondedNodes = new ArrayList<String>();
-    for (Map.Entry<String, Object> entry : responses.entrySet())
-      if (entry.getValue() != NO_RESPONSE)
-        respondedNodes.add(entry.getKey());
-    return respondedNodes;
-  }
-
-  /**
-   * Returns the list of node names that didn't provide a response.
-   */
-  public List<String> getMissingNodes() {
-    final List<String> missingNodes = new ArrayList<String>();
-    for (Map.Entry<String, Object> entry : responses.entrySet())
-      if (entry.getValue() == NO_RESPONSE)
-        missingNodes.add(entry.getKey());
-    return missingNodes;
-  }
-
-  public int getReceivedResponsesCount() {
-    return receivedResponses;
-  }
-
-  public long getTotalTimeout() {
-    return totalTimeout;
   }
 
   @SuppressWarnings("unchecked")
@@ -375,8 +243,8 @@ public class ODistributedResponseManager {
       Orient
           .instance()
           .getProfiler()
-          .stopChrono("distributed.synchResponses",
-              "Time to collect all the synchronous responses from distributed nodes", beginTime);
+          .stopChrono("distributed.synchResponses", "Time to collect all the synchronous responses from distributed nodes",
+              beginTime);
     }
   }
 
@@ -389,38 +257,180 @@ public class ODistributedResponseManager {
   }
 
   public ODistributedResponse getFinalResponse() {
-    manageConflicts();
+    synchronized (responseGroups) {
 
-    if (receivedResponses == 0)
-      throw new ODistributedException("No response received from any of nodes " + getExpectedNodes() + " for request " + request);
+      manageConflicts();
 
-    // MANAGE THE RESULT BASED ON RESULT STRATEGY
-    switch (request.getTask().getResultStrategy()) {
-    case ANY:
-      // DEFAULT: RETURN BEST ANSWER
-      break;
+      if (receivedResponses == 0)
+        throw new ODistributedException("No response received from any of nodes " + getExpectedNodes() + " for request " + request);
 
-    case UNION: {
-      // COLLECT ALL THE RESPONSE IN A MAP OF <NODE, RESULT>
-      final Map<String, Object> payloads = new HashMap<String, Object>();
-      for (Map.Entry<String, Object> entry : responses.entrySet())
-        if (entry.getValue() != NO_RESPONSE)
-          payloads.put(entry.getKey(), ((ODistributedResponse) entry.getValue()).getPayload());
+      // MANAGE THE RESULT BASED ON RESULT STRATEGY
+      switch (request.getTask().getResultStrategy()) {
+      case ANY:
+        // DEFAULT: RETURN BEST ANSWER
+        break;
 
-      final ODistributedResponse response = (ODistributedResponse) responses.values().iterator().next();
-      response.setExecutorNodeName(responses.keySet().toString());
-      response.setPayload(payloads);
-      return response;
+      case UNION: {
+        // COLLECT ALL THE RESPONSE IN A MAP OF <NODE, RESULT>
+        final Map<String, Object> payloads = new HashMap<String, Object>();
+        for (Map.Entry<String, Object> entry : responses.entrySet())
+          if (entry.getValue() != NO_RESPONSE)
+            payloads.put(entry.getKey(), ((ODistributedResponse) entry.getValue()).getPayload());
+
+        final ODistributedResponse response = (ODistributedResponse) responses.values().iterator().next();
+        response.setExecutorNodeName(responses.keySet().toString());
+        response.setPayload(payloads);
+        return response;
+      }
+      }
+
+      final int bestResponsesGroupIndex = getBestResponsesGroup();
+      final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
+      return bestResponsesGroup.get(0);
     }
-    }
-
-    final int bestResponsesGroupIndex = getBestResponsesGroup();
-    final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
-    return bestResponsesGroup.get(0);
   }
 
   public String getDatabaseName() {
     return request.getDatabaseName();
+  }
+
+  public void timeout() {
+    synchronized (responseGroups) {
+      manageConflicts();
+    }
+  }
+
+  /**
+   * Returns the list of node names that didn't provide a response.
+   */
+  public List<String> getMissingNodes() {
+    synchronized (responseLock) {
+      final List<String> missingNodes = new ArrayList<String>();
+      for (Map.Entry<String, Object> entry : responses.entrySet())
+        if (entry.getValue() == NO_RESPONSE)
+          missingNodes.add(entry.getKey());
+      return missingNodes;
+    }
+  }
+
+  public Set<String> getExpectedNodes() {
+    synchronized (responseLock) {
+      return new HashSet<String>(responses.keySet());
+    }
+  }
+
+  /**
+   * Returns the list of node names that provided a response.
+   */
+  public List<String> getRespondingNodes() {
+    final List<String> respondedNodes = new ArrayList<String>();
+    synchronized (responseLock) {
+      for (Map.Entry<String, Object> entry : responses.entrySet())
+        if (entry.getValue() != NO_RESPONSE)
+          respondedNodes.add(entry.getKey());
+    }
+    return respondedNodes;
+  }
+
+  /**
+   * Returns all the responses in conflict.
+   * 
+   * @return
+   */
+  protected List<ODistributedResponse> getConflictResponses() {
+    final List<ODistributedResponse> servers = new ArrayList<ODistributedResponse>();
+    int bestGroupSoFar = getBestResponsesGroup();
+    for (int i = 0; i < responseGroups.size(); ++i) {
+      if (i != bestGroupSoFar) {
+        for (ODistributedResponse r : responseGroups.get(i))
+          servers.add(r);
+      }
+    }
+    return servers;
+  }
+
+  protected int getExpectedResponses() {
+    return responses.size();
+  }
+
+  protected int getMissingResponses() {
+    return getExpectedResponses() - receivedResponses;
+  }
+
+  protected int getReceivedResponsesCount() {
+    return receivedResponses;
+  }
+
+  protected long getTotalTimeout() {
+    return totalTimeout;
+  }
+
+  /**
+   * Returns the biggest response group.
+   * 
+   * @return
+   */
+  protected int getBestResponsesGroup() {
+    int maxCoherentResponses = 0;
+    int bestGroupSoFar = 0;
+    for (int i = 0; i < responseGroups.size(); ++i) {
+      final int currentGroupSize = responseGroups.get(i).size();
+      if (currentGroupSize > maxCoherentResponses) {
+        maxCoherentResponses = currentGroupSize;
+        bestGroupSoFar = i;
+      }
+    }
+    return bestGroupSoFar;
+  }
+
+  protected boolean isMinimumQuorumReached(final boolean iCheckAvailableNodes) {
+    if (isWaitForLocalNode() && !isReceivedCurrentNode()) {
+      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), dManager.getLocalNodeName(), DIRECTION.IN,
+          "no response received from local node about request %s", request);
+      return false;
+    }
+
+    if (quorum == 0)
+      return true;
+
+    if (!groupResponsesByResult)
+      return receivedResponses >= quorum;
+
+    for (List<ODistributedResponse> group : responseGroups)
+      if (group.size() >= quorum)
+        return true;
+
+    if (getReceivedResponsesCount() < quorum && iCheckAvailableNodes) {
+      final ODistributedConfiguration dbConfig = dManager.getDatabaseConfiguration(getDatabaseName());
+      if (!dbConfig.getFailureAvailableNodesLessQuorum("*")) {
+        // CHECK IF ANY NODE IS OFFLINE
+        int availableNodes = 0;
+        for (Map.Entry<String, Object> r : responses.entrySet()) {
+          if (dManager.isNodeAvailable(r.getKey(), getDatabaseName()))
+            availableNodes++;
+        }
+
+        if (availableNodes < quorum) {
+          ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
+              "overridden quorum (%d) for request %s because available nodes (%d) are less than quorum, received responses: %s",
+              quorum, request, availableNodes, responses);
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Returns the received response objects.
+   */
+  protected List<ODistributedResponse> getReceivedResponses() {
+    final List<ODistributedResponse> parsed = new ArrayList<ODistributedResponse>();
+    for (Object r : responses.values())
+      if (r != NO_RESPONSE)
+        parsed.add((ODistributedResponse) r);
+    return parsed;
   }
 
   protected void manageConflicts() {
@@ -507,7 +517,7 @@ public class ODistributedResponseManager {
     }
   }
 
-  protected void fixNodesInConflict(List<ODistributedResponse> bestResponsesGroup) {
+  protected void fixNodesInConflict(final List<ODistributedResponse> bestResponsesGroup) {
     final ODistributedResponse goodResponse = bestResponsesGroup.get(0);
 
     for (List<ODistributedResponse> responseGroup : responseGroups) {
@@ -528,9 +538,9 @@ public class ODistributedResponseManager {
     }
   }
 
-  protected boolean checkNoWinnerCase(List<ODistributedResponse> bestResponsesGroup) {
+  protected boolean checkNoWinnerCase(final List<ODistributedResponse> bestResponsesGroup) {
     // CHECK IF THERE ARE 2 PARTITIONS EQUAL IN SIZE
-    int maxCoherentResponses = bestResponsesGroup.size();
+    final int maxCoherentResponses = bestResponsesGroup.size();
 
     for (List<ODistributedResponse> responseGroup : responseGroups) {
       if (responseGroup != bestResponsesGroup && responseGroup.size() == maxCoherentResponses) {

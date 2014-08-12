@@ -18,173 +18,131 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
-public class SuperNodeInsertSpeedTest {
+/*
+ * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-  private static final int    WARM_UP_COUNT = 50000;
-  private static final int    TEST_COUNT    = 60000;
-  private static final int    THREAD_COUNT  = 5;
-  private final int           threadCount;
-  private OrientGraph         graph;
-  private final AtomicInteger retryCount    = new AtomicInteger();
+import com.orientechnologies.common.test.SpeedTestMultiThreads;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
+import com.orientechnologies.orient.test.database.base.OrientThreadTest;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.testng.Assert;
+import org.testng.annotations.Test;
 
-  public SuperNodeInsertSpeedTest(int threadCount1) {
-    threadCount = threadCount1;
-  }
+import java.util.concurrent.atomic.AtomicLong;
 
-  private void setUp() {
-    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
+@Test(enabled = false)
+public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
+  protected static final String      URL     = "plocal:target/databases/graphspeedtest";
+  protected final OrientGraphFactory factory = new OrientGraphFactory(URL);
+  protected long                     foundObjects;
 
-    graph = openGraph();
-  }
+  @Test(enabled = false)
+  public static class CreateObjectsThread extends OrientThreadTest {
+    protected final AtomicLong counter = new AtomicLong();
+    private OrientBaseGraph    graph;
 
-  private OrientGraph openGraph() {
-    return new OrientGraph("plocal:target/SuperNodeInsertSpeedTest");
-  }
+    public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
+      super(parent, threadId);
+    }
 
-  private void tearDown() {
-    graph.shutdown();
-  }
+    @Override
+    public void init() {
+      OrientGraphFactory factory = new OrientGraphFactory(URL);
+      graph = factory.getNoTx();
 
-  public static void main(String[] args) throws InterruptedException {
-    System.out.println("Test insert super-node");
+      graph.getRawGraph().declareIntent(new OIntentMassiveInsert());
+    }
 
-    for (int threadCount = 1; threadCount <= THREAD_COUNT; threadCount++) {
+    public void cycle() {
+      graph.addVertex("class:Client,cluster:client_" + currentThreadId(), "uid", counter.getAndIncrement());
 
-      List<Double> results = new ArrayList<Double>();
-      for (int i = 0; i < 20; i++) {
-        final double time = new SuperNodeInsertSpeedTest(threadCount).start();
+      final int maxEdged = (int) (data.getCyclesDone()/10);
+      for( int i = 0; i <  maxEdged && i <10;++i){
 
-        results.add(time);
       }
-      System.out.println();
-      System.out.println("Thread count: " + threadCount);
-      stat(results);
+    }
+
+    @Override
+    public void deinit() throws Exception {
+      if (graph != null)
+        graph.shutdown();
+      super.deinit();
+    }
+
+    private int currentThreadId() {
+      return threadId;
     }
   }
 
-  private static void stat(List<Double> results) {
-    System.out.println("Performance: " + avg(results) + "(" + sd(results) + ")");
-    System.out.println("Median:      " + median(results));
-    System.out.println();
-    System.out.println();
+  public SuperNodeInsertSpeedTest() {
+    super(1000000, 4, CreateObjectsThread.class);
   }
 
-  private static double sd(List<Double> results) {
-    final double avg = avg(results);
-    final int n = results.size();
-    double sum = 0;
-    for (Double result : results) {
-      sum += sqr(result - avg) / n;
-    }
-
-    return Math.sqrt(sum);
+  public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    // System.setProperty("url", "memory:test");
+    SuperNodeInsertSpeedTest test = new SuperNodeInsertSpeedTest();
+    test.data.go(test);
   }
 
-  private static double sqr(Double result) {
-    return result * result;
-  }
+  @Override
+  public void init() {
+    final OrientGraphNoTx graph = factory.getNoTx();
+    try {
+      if (graph.getVertexType("Client") == null) {
+        final OrientVertexType clientType = graph.createVertexType("Client");
 
-  private static double avg(List<Double> results) {
-    final double sum = sum(results);
-    final int n = results.size();
+        final OrientVertexType.OrientVertexProperty property = clientType.createProperty("uid", OType.STRING);
+        property.createIndex(OClass.INDEX_TYPE.UNIQUE_HASH_INDEX);
 
-    return sum / n;
-  }
-
-  private static Double median(List<Double> results) {
-    Collections.sort(results);
-
-    final int n = results.size();
-    if (n % 2 == 0) {
-      return (results.get(n / 2) + results.get(n / 2 - 1)) / 2;
-    } else
-      return (results.get(n / 2));
-  }
-
-  private static double sum(List<Double> results) {
-    double sum = 0;
-    for (Double result : results) {
-      sum += result;
-    }
-    return sum;
-  }
-
-  public double start() throws InterruptedException {
-    setUp();
-
-    System.out.print("#");
-
-    final long time = test();
-
-    tearDown();
-
-    return ((double) TEST_COUNT) / time * 1000;
-  }
-
-  private long test() throws InterruptedException {
-    OrientVertex superNode = graph.addVertex("");
-    superNode.save();
-    graph.commit();
-    final ORID superNodeId = superNode.getIdentity();
-
-    // warm up
-    createLinks(WARM_UP_COUNT, superNode, graph);
-
-    final CountDownLatch startLatch = new CountDownLatch(threadCount);
-    final CountDownLatch endLatch = new CountDownLatch(threadCount);
-
-    final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-    for (int i = 0; i < threadCount; i++) {
-      executorService.submit(new Callable<Long>() {
-        @Override
-        public Long call() throws Exception {
-          final OrientGraph graph = openGraph();
-          OrientVertex superNode = graph.getVertex(superNodeId);
-
-          startLatch.countDown();
-          startLatch.await();
-
-          long time = doTest(superNode, graph);
-
-          endLatch.countDown();
-
-          graph.shutdown();
-
-          return time;
+        // CREATE ONE CLUSTER PER THREAD
+        for (int i = 0; i < getThreads(); ++i) {
+          System.out.println("Creating cluster: client_" + i + "...");
+          clientType.addCluster("client_" + i);
         }
-      });
+
+        foundObjects = 0;
+      } else
+        foundObjects = graph.countVertices("Client");
+
+    } finally {
+      graph.shutdown();
     }
-
-    startLatch.await();
-    final long startTime = System.currentTimeMillis();
-
-    endLatch.await();
-    final long time = System.currentTimeMillis() - startTime;
-
-    executorService.shutdown();
-
-    return time;
   }
 
-  private long doTest(OrientVertex superNode, OrientGraph graph) {
-    final long startTime = System.currentTimeMillis();
-    createLinks(TEST_COUNT / threadCount, superNode, graph);
-    return System.currentTimeMillis() - startTime;
-  }
+  @Override
+  public void deinit() {
+    final OrientGraphNoTx graph = factory.getNoTx();
+    try {
+      final long total = graph.countVertices("Client");
 
-  private void createLinks(int vertexNumber, OrientVertex superNode, OrientGraph graph) {
-    for (int i = 0; i < vertexNumber; i++) {
-      while (true)
-        try {
-          final OrientVertex v = graph.addVertex("");
-          v.addEdge("link", superNode);
-          v.save();
-          graph.commit();
-          break;
-        } catch (OConcurrentModificationException e) {
-          superNode.getRecord().reload();
-          retryCount.incrementAndGet();
-        }
+      System.out.println("\nTotal objects in Client cluster after the test: " + total);
+      System.out.println("Created " + (total - foundObjects));
+      Assert.assertEquals(total - foundObjects, threadCycles);
+
+      final long indexedItems = graph.getRawGraph().getMetadata().getIndexManager().getIndex("Client.uid").getSize();
+      System.out.println("\nTotal indexed objects after the test: " + indexedItems);
+
+    } finally {
+      graph.shutdown();
     }
   }
 }

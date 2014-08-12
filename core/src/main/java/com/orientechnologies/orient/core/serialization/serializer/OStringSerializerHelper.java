@@ -607,7 +607,7 @@ public abstract class OStringSerializerHelper {
 
           continue;
         }
-
+        escape = false;
         buffer.append(c);
       }
     }
