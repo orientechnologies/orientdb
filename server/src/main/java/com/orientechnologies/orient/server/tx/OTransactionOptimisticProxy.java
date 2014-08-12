@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -209,7 +210,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
             final ODocument keyContainer = new ODocument();
             keyContainer.setLazyLoad(false);
 
-            keyContainer.fromString(serializedKey);
+            ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
 
             final Object storedKey = keyContainer.field("key");
             if (storedKey instanceof List)
