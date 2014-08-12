@@ -15,6 +15,24 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -52,24 +70,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -320,12 +320,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName) {
-    return (DB_STATUS) getConfigurationMap().get(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName);
-  }
+    if (!activeNodes.containsKey(iNode))
+      return DB_STATUS.OFFLINE;
 
-  @Override
-  public boolean checkDatabaseStatus(final String iNode, final String iDatabaseName, final DB_STATUS iStatus) {
-    return getDatabaseStatus(iNode, iDatabaseName) == iStatus;
+    return (DB_STATUS) getConfigurationMap().get(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName);
   }
 
   @Override
@@ -495,15 +493,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       activeNodes.remove(nodeName);
 
       // REMOVE NODE IN DB CFG
-      if (messageService != null) {
-        final Set<String> dbs = messageService.getDatabases();
-        if (dbs != null)
-          for (String dbName : dbs)
-            messageService.getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
-
-        // REMOVE THE SERVER'S RESPONSE QUEUE
-        messageService.removeQueue(OHazelcastDistributedMessageService.getResponseQueueName(nodeName));
-      }
+      if (messageService != null)
+        messageService.handleUnreachableNode(nodeName);
     }
 
     OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
@@ -623,12 +614,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public boolean isNodeAvailable(final String iNodeName, final String iDatabaseName) {
-    if (activeNodes.containsKey(iNodeName)) {
-      final Boolean nodeStatus = checkDatabaseStatus(iNodeName, iDatabaseName, DB_STATUS.ONLINE);
-      if (nodeStatus != null && nodeStatus)
-        return nodeStatus;
-    }
-    return false;
+    return getDatabaseStatus(iNodeName, iDatabaseName) != DB_STATUS.OFFLINE;
   }
 
   public boolean isOffline() {

@@ -189,6 +189,19 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     responsesByRequestIds.put(id, currentResponseMgr);
   }
 
+  public void handleUnreachableNode(String nodeName) {
+    final Set<String> dbs = getDatabases();
+    if (dbs != null)
+      for (String dbName : dbs)
+        getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
+
+    // REMOVE THE SERVER'S RESPONSE QUEUE
+    // removeQueue(OHazelcastDistributedMessageService.getResponseQueueName(nodeName));
+
+    for (ODistributedResponseManager r : responsesByRequestIds.values())
+      r.notifyWaiters();
+  }
+
   @Override
   public List<String> getManagedQueueNames() {
     List<String> queueNames = new ArrayList<String>();

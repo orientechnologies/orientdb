@@ -195,7 +195,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       return waitForResponse(iRequest, currentResponseMgr);
 
     } catch (Throwable e) {
-      throw new ODistributedException("Error on sending distributed request " + iRequest.getId() + " against database '"
+      throw new ODistributedException("Error on sending distributed request (" + iRequest + ") against database '"
           + databaseName + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes, e);
     }
   }
