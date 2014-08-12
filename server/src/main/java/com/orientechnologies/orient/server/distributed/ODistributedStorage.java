@@ -144,6 +144,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   public Object command(final OCommandRequestText iCommand) {
+
+    List<String> servers = (List<String>) iCommand.getContext().getVariable("servers");
+    if (servers == null) {
+      servers = new ArrayList<String>();
+      iCommand.getContext().setVariable("servers", servers);
+    }
+    servers.add(dManager.getLocalNodeName());
+
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
       return wrapped.command(iCommand);

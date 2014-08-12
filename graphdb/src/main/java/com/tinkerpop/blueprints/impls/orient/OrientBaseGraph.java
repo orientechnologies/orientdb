@@ -1149,7 +1149,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     final ODocument doc = rec.getRecord();
     if (doc != null) {
       final OClass schemaClass = doc.getSchemaClass();
-      if (schemaClass.isSubClassOf(OrientEdgeType.CLASS_NAME))
+      if (schemaClass != null && schemaClass.isSubClassOf(OrientEdgeType.CLASS_NAME))
         return new OrientEdge(this, doc);
       else
         return new OrientVertex(this, doc);
