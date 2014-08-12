@@ -207,7 +207,7 @@ public class OrientEdge extends OrientElement implements Edge {
       // LIGHTWEIGHT EDGE
       return label;
     else if (rawElement != null) {
-      if (settings.useClassForEdgeLabel) {
+      if (settings != null && settings.useClassForEdgeLabel) {
         final String clsName = getRecord().getClassName();
         if (!OrientEdgeType.CLASS_NAME.equals(clsName) && !"OGraphEdge".equals(clsName))
           // RETURN THE CLASS NAME
@@ -493,7 +493,7 @@ public class OrientEdge extends OrientElement implements Edge {
     vOut = (OIdentifiable) in.readObject();
     vIn = (OIdentifiable) in.readObject();
     label = in.readUTF();
-    if( label.isEmpty())
+    if (label.isEmpty())
       label = null;
   }
 

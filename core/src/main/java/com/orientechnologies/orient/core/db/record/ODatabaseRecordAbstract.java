@@ -1596,7 +1596,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   private void acquireIndexModificationLock(ODocument doc, Set<OIndex<?>> lockedIndexes) {
-    if (getStorage() instanceof OStorageEmbedded) {
+    if (getStorage().getUnderlying() instanceof OStorageEmbedded) {
       final OClass cls = doc.getSchemaClass();
       if (cls != null) {
         final Collection<OIndex<?>> indexes = cls.getIndexes();

@@ -606,7 +606,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     if (iAttribute == null)
       throw new IllegalArgumentException("attribute is null");
 
-    final String stringValue = iValue != null ? iValue.toString() : null;
+    final String stringValue = OStringSerializerHelper.getStringContent(iValue != null ? iValue.toString() : null);
 
     switch (iAttribute) {
     case STATUS:

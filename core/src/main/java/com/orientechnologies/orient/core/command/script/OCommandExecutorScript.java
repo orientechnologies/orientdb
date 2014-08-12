@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 import java.io.BufferedReader;
@@ -111,8 +112,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
       request.setCompiledScript(compiledScript);
     }
 
-    final Bindings binding = scriptManager.bind(compiledScript.getEngine().createBindings(), (ODatabaseRecordTx) db, iContext,
-        iArgs);
+    final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
+        (ODatabaseRecordTx) db, iContext, iArgs);
 
     try {
       final Object ob = compiledScript.eval(binding);

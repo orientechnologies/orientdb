@@ -484,25 +484,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             iType = ORecordSerializerStringAbstract.getType(iFieldValueAsString, c);
         }
 
-        if (iType == null) {
-          if (iFieldValueAsString.length() == ODateHelper.getDateFormat().length())
-            // TRY TO PARSE AS DATE
-            try {
-              return ODateHelper.getDateFormatInstance().parseObject(iFieldValueAsString);
-            } catch (Exception e) {
-              // IGNORE IT
-            }
-
-          if (iFieldValueAsString.length() == ODateHelper.getDateTimeFormat().length())
-            // TRY TO PARSE AS DATETIME
-            try {
-              return ODateHelper.getDateTimeFormatInstance().parseObject(iFieldValueAsString);
-            } catch (Exception e) {
-              // IGNORE IT
-            }
-
+        if (iType == null)
           iType = OType.STRING;
-        }
       }
 
     if (iType != null)

@@ -126,7 +126,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       for (Entry<ORID, ORecordOperation> entry : tempEntries.entrySet()) {
 
         if (entry.getValue().type == ORecordOperation.UPDATED) {
-          // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING HOOKS (LIKE UNDEXES)
+          // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING HOOKS (LIKE INDEXES)
 
           final ORecordInternal<?> record = entry.getValue().record.getRecord();
           final ORecordInternal<?> loadedRecord = record.getIdentity().copy().getRecord();
