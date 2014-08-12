@@ -67,7 +67,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   private volatile OCompression                 compression;
   private ODiskCache                            diskCache;
   private OClusterPositionMap                   clusterPositionMap;
-  private String                                name;
+  private volatile String                       name;
   private OAbstractPaginatedStorage             storageLocal;
   private volatile int                          id;
   private long                                  fileId;
@@ -1047,12 +1047,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   @Override
   public String getName() {
-    acquireSharedLock();
-    try {
-      return name;
-    } finally {
-      releaseSharedLock();
-    }
+    return name;
   }
 
   @Override

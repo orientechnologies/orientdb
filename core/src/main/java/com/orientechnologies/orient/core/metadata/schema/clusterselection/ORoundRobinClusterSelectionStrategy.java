@@ -17,6 +17,8 @@ package com.orientechnologies.orient.core.metadata.schema.clusterselection;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Returns the cluster selecting by round robin algorithm.
  * 
@@ -24,21 +26,15 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  */
 public class ORoundRobinClusterSelectionStrategy implements OClusterSelectionStrategy {
   public static final String NAME    = "round-robin";
-  private volatile int       pointer = 0;
+  private AtomicLong         pointer = new AtomicLong(0);
 
-  public int getCluster(final OClass iClass) {
-    final int[] clusters = iClass.getClusterIds();
+  public int getCluster(final OClass clazz) {
+    final int[] clusters = clazz.getClusterIds();
     if (clusters.length == 1)
       // ONLY ONE: RETURN THE FIRST ONE
       return clusters[0];
 
-    synchronized (this) {
-      if (pointer >= clusters.length)
-        // RESET POINTER
-        pointer = 0;
-
-      return clusters[pointer++];
-    }
+    return clusters[(int) (pointer.getAndIncrement() % clusters.length)];
   }
 
   @Override
