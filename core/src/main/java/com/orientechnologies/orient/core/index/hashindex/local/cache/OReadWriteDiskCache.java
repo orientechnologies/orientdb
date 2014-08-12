@@ -656,111 +656,17 @@ public class OReadWriteDiskCache implements ODiskCache {
 
     final boolean exclusiveCacheLock = (am.size() + a1in.size() - maxSize) > MAX_CACHE_OVERFLOW;
 
-    Lock fileLock;
-    Lock pageLock;
-
     if (exclusiveCacheLock)
       cacheLock.writeLock().lock();
     else
       cacheLock.readLock().lock();
 
     try {
-      int iterationsCounter = 0;
 
-      while (am.size() + a1in.size() > maxSize && iterationsCounter < 1000) {
-        if (!exclusiveCacheLock)
-          iterationsCounter++;
-
-        if (a1in.size() > K_IN) {
-          OCacheEntry removedFromAInEntry = a1in.getLRU();
-          if (removedFromAInEntry == null) {
-            increaseCacheSize();
-          } else {
-            fileLock = fileLockManager.acquireSharedLock(removedFromAInEntry.fileId);
-            try {
-              pageLock = pageLockManager
-                  .acquireExclusiveLock(new PageKey(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex));
-              try {
-                if (a1in.get(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex) == null)
-                  continue;
-
-                if (removedFromAInEntry.usagesCount > 0)
-                  continue;
-
-                assert !removedFromAInEntry.isDirty;
-
-                a1in.remove(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex);
-
-                removedFromAInEntry.dataPointer.decrementReferrer();
-                removedFromAInEntry.dataPointer = null;
-
-                a1out.putToMRU(removedFromAInEntry);
-              } finally {
-                pageLockManager.releaseLock(pageLock);
-              }
-            } finally {
-              fileLockManager.releaseLock(fileLock);
-            }
-          }
-
-          while (a1out.size() > K_OUT) {
-            OCacheEntry removedEntry = a1out.getLRU();
-            fileLock = fileLockManager.acquireSharedLock(removedEntry.fileId);
-            try {
-              pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedEntry.fileId, removedEntry.pageIndex));
-              try {
-                if (a1out.get(removedEntry.fileId, removedEntry.pageIndex) == null)
-                  continue;
-
-                assert removedEntry.usagesCount == 0;
-                assert removedEntry.dataPointer == null;
-                assert !removedEntry.isDirty;
-
-                a1out.remove(removedEntry.fileId, removedEntry.pageIndex);
-
-                Set<Long> pageEntries = filePages.get(removedEntry.fileId);
-                pageEntries.remove(removedEntry.pageIndex);
-              } finally {
-                pageLockManager.releaseLock(pageLock);
-              }
-            } finally {
-              fileLockManager.releaseLock(fileLock);
-            }
-          }
-        } else {
-          OCacheEntry removedEntry = am.getLRU();
-
-          if (removedEntry == null) {
-            increaseCacheSize();
-          } else {
-            fileLock = fileLockManager.acquireSharedLock(removedEntry.fileId);
-            try {
-              pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedEntry.fileId, removedEntry.pageIndex));
-              try {
-                if (am.get(removedEntry.fileId, removedEntry.pageIndex) == null)
-                  continue;
-
-                if (removedEntry.usagesCount > 0)
-                  continue;
-
-                assert !removedEntry.isDirty;
-
-                am.remove(removedEntry.fileId, removedEntry.pageIndex);
-
-                removedEntry.dataPointer.decrementReferrer();
-                removedEntry.dataPointer = null;
-
-                Set<Long> pageEntries = filePages.get(removedEntry.fileId);
-                pageEntries.remove(removedEntry.pageIndex);
-              } finally {
-                pageLockManager.releaseLock(pageLock);
-              }
-            } finally {
-              fileLockManager.releaseLock(fileLock);
-            }
-          }
-        }
-      }
+      if (exclusiveCacheLock)
+        removeColdPagesWithCacheLock();
+      else
+        removeColdPagesWithoutCacheLock();
 
     } finally {
       if (exclusiveCacheLock)
@@ -769,6 +675,152 @@ public class OReadWriteDiskCache implements ODiskCache {
         cacheLock.readLock().unlock();
 
       coldPagesRemovalInProgress.set(false);
+    }
+  }
+
+  private void removeColdPagesWithCacheLock() {
+    System.out.println("lock pages removal !!!");
+
+    while (am.size() + a1in.size() > maxSize) {
+      if (a1in.size() > K_IN) {
+        OCacheEntry removedFromAInEntry = a1in.removeLRU();
+        if (removedFromAInEntry == null) {
+          increaseCacheSize();
+        } else {
+          assert removedFromAInEntry.usagesCount == 0;
+          assert !removedFromAInEntry.isDirty;
+
+          removedFromAInEntry.dataPointer.decrementReferrer();
+          removedFromAInEntry.dataPointer = null;
+
+          a1out.putToMRU(removedFromAInEntry);
+        }
+
+        while (a1out.size() > K_OUT) {
+          OCacheEntry removedEntry = a1out.removeLRU();
+
+          assert removedEntry.usagesCount == 0;
+          assert removedEntry.dataPointer == null;
+          assert !removedEntry.isDirty;
+
+          Set<Long> pageEntries = filePages.get(removedEntry.fileId);
+          pageEntries.remove(removedEntry.pageIndex);
+        }
+      } else {
+        OCacheEntry removedEntry = am.removeLRU();
+
+        if (removedEntry == null) {
+          increaseCacheSize();
+        } else {
+          assert removedEntry.usagesCount == 0;
+          assert !removedEntry.isDirty;
+
+          removedEntry.dataPointer.decrementReferrer();
+          removedEntry.dataPointer = null;
+
+          Set<Long> pageEntries = filePages.get(removedEntry.fileId);
+          pageEntries.remove(removedEntry.pageIndex);
+        }
+      }
+    }
+  }
+
+  private void removeColdPagesWithoutCacheLock() {
+    Lock fileLock;
+    Lock pageLock;
+    int iterationsCounter = 0;
+
+    while (am.size() + a1in.size() > maxSize && iterationsCounter < 1000) {
+      iterationsCounter++;
+
+      if (a1in.size() > K_IN) {
+        OCacheEntry removedFromAInEntry = a1in.getLRU();
+        if (removedFromAInEntry == null) {
+          increaseCacheSize();
+        } else {
+          fileLock = fileLockManager.acquireSharedLock(removedFromAInEntry.fileId);
+          try {
+            pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex));
+            try {
+              if (a1in.get(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex) == null)
+                continue;
+
+              if (removedFromAInEntry.usagesCount > 0)
+                continue;
+
+              assert !removedFromAInEntry.isDirty;
+
+              a1in.remove(removedFromAInEntry.fileId, removedFromAInEntry.pageIndex);
+
+              removedFromAInEntry.dataPointer.decrementReferrer();
+              removedFromAInEntry.dataPointer = null;
+
+              a1out.putToMRU(removedFromAInEntry);
+            } finally {
+              pageLockManager.releaseLock(pageLock);
+            }
+          } finally {
+            fileLockManager.releaseLock(fileLock);
+          }
+        }
+
+        while (a1out.size() > K_OUT) {
+          OCacheEntry removedEntry = a1out.getLRU();
+          fileLock = fileLockManager.acquireSharedLock(removedEntry.fileId);
+          try {
+            pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedEntry.fileId, removedEntry.pageIndex));
+            try {
+              if (a1out.get(removedEntry.fileId, removedEntry.pageIndex) == null)
+                continue;
+
+              assert removedEntry.usagesCount == 0;
+              assert removedEntry.dataPointer == null;
+              assert !removedEntry.isDirty;
+
+              a1out.remove(removedEntry.fileId, removedEntry.pageIndex);
+
+              Set<Long> pageEntries = filePages.get(removedEntry.fileId);
+              pageEntries.remove(removedEntry.pageIndex);
+            } finally {
+              pageLockManager.releaseLock(pageLock);
+            }
+          } finally {
+            fileLockManager.releaseLock(fileLock);
+          }
+        }
+      } else {
+        OCacheEntry removedEntry = am.getLRU();
+
+        if (removedEntry == null) {
+          increaseCacheSize();
+        } else {
+          fileLock = fileLockManager.acquireSharedLock(removedEntry.fileId);
+          try {
+            pageLock = pageLockManager.acquireExclusiveLock(new PageKey(removedEntry.fileId, removedEntry.pageIndex));
+            try {
+              if (am.get(removedEntry.fileId, removedEntry.pageIndex) == null)
+                continue;
+
+              if (removedEntry.usagesCount > 0)
+                continue;
+
+              assert !removedEntry.isDirty;
+
+              am.remove(removedEntry.fileId, removedEntry.pageIndex);
+
+              removedEntry.dataPointer.decrementReferrer();
+              removedEntry.dataPointer = null;
+
+              Set<Long> pageEntries = filePages.get(removedEntry.fileId);
+              pageEntries.remove(removedEntry.pageIndex);
+            } finally {
+              pageLockManager.releaseLock(pageLock);
+            }
+          } finally {
+            fileLockManager.releaseLock(fileLock);
+          }
+        }
+      }
     }
   }
 
