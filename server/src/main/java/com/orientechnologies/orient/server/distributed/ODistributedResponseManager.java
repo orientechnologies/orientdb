@@ -282,7 +282,7 @@ public class ODistributedResponseManager {
   }
 
   public ODistributedResponse getFinalResponse() {
-    synchronized (responseGroups) {
+    synchronized (responseLock) {
 
       manageConflicts();
 
@@ -320,7 +320,7 @@ public class ODistributedResponseManager {
   }
 
   public void timeout() {
-    synchronized (responseGroups) {
+    synchronized (responseLock) {
       manageConflicts();
     }
   }
