@@ -30,14 +30,16 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OEdgeTransformer extends OAbstractLookupTransformer {
   protected OrientBaseGraph graph;
-  protected String          edgeClass = "E";
+  protected String          edgeClass    = "E";
+  protected boolean         directionOut = true;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:["+getCommonConfigurationParameters()+","
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
         + "{joinFieldName:{optional:false,description:'field name containing the value to join'}},"
-        + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
         + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
+        + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
+        + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
         + "{unresolvedVertexAction:{optional:true,description:'action when a unresolved vertices is found',values:"
         + stringArray2Json(ACTION.values()) + "}}]," + "input:['ODocument','OrientVertex'],output:'OrientVertex'}");
   }
@@ -46,6 +48,17 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
   public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
     edgeClass = iConfiguration.field("class");
+
+    if (iConfiguration.containsField("direction")) {
+      final String direction = iConfiguration.field("direction");
+      if ("out".equalsIgnoreCase(direction))
+        directionOut = true;
+      else if ("in".equalsIgnoreCase(direction))
+        directionOut = false;
+      else
+        throw new OConfigurationException("Direction can be 'in' or 'out', but found: " + direction);
+
+    }
   }
 
   @Override
@@ -110,7 +123,10 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         final OrientVertex targetVertex = graph.getVertex(result);
 
         // CREATE THE EDGE
-        vertex.addEdge(edgeClass, targetVertex);
+        if (directionOut)
+          vertex.addEdge(edgeClass, targetVertex);
+        else
+          targetVertex.addEdge(edgeClass, vertex);
       }
     }
     return input;

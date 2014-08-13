@@ -35,7 +35,7 @@ public class OLogTransformer extends OAbstractTransformer {
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{prefix:{optional:true,description:'Custom prefix to prepend to the message'}}"
+        + "{prefix:{optional:true,description:'Custom prefix to prepend to the message'}},"
         + "{postfix:{optional:true,description:'Custom postfix to append to the message'}}" + "]}");
   }
 
