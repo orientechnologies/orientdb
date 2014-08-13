@@ -94,7 +94,12 @@ public class OrientVertex extends OrientElement implements Vertex {
   public static Object createLink(final ODocument iFromVertex, final OIdentifiable iTo, final String iFieldName) {
     final Object out;
     Object found = iFromVertex.field(iFieldName);
-    final OProperty prop = iFromVertex.getSchemaClass().getProperty(iFieldName);
+
+    final OClass linkClass = iFromVertex.getSchemaClass();
+    if (linkClass == null)
+      throw new IllegalArgumentException("Class ot found in source vertex: " + iFromVertex);
+
+    final OProperty prop = linkClass.getProperty(iFieldName);
     if (found == null) {
       // CREATE ONLY ONE LINK
       if (prop == null || prop.getType().equals(OType.LINK) || "true".equalsIgnoreCase(prop.getCustom("ordered")))

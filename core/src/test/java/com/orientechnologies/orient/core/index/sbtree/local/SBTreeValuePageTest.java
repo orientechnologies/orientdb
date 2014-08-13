@@ -18,7 +18,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 @Test
 public class SBTreeValuePageTest {
   public void fillPageDataTest() throws Exception {
-    ODirectMemoryPointer pointerOne = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
+    ODirectMemoryPointer pointerOne = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
     OCachePointer cachePointerOne = new OCachePointer(pointerOne, new OLogSequenceNumber(0, 0));
     cachePointerOne.incrementReferrer();
 
@@ -60,7 +60,7 @@ public class SBTreeValuePageTest {
   }
 
   public void testFreeListPointer() throws Exception {
-    ODirectMemoryPointer pointer = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES);
+    ODirectMemoryPointer pointer = new ODirectMemoryPointer(ODurablePage.MAX_PAGE_SIZE_BYTES + ODurablePage.PAGE_PADDING);
     OCachePointer cachePointer = new OCachePointer(pointer, new OLogSequenceNumber(0, 0));
     cachePointer.incrementReferrer();
 

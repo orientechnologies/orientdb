@@ -38,6 +38,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   }
 
   public static void main(final String[] args) {
+    int result;
     try {
       boolean tty = false;
       try {
@@ -51,7 +52,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       if (tty)
         console.setReader(new TTYConsoleReader());
 
-      console.run();
+      result = console.run();
 
     } finally {
       try {
@@ -59,6 +60,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       } catch (Exception e) {
       }
     }
+    System.exit(result);
   }
 
   @Override

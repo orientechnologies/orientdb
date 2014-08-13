@@ -4,7 +4,13 @@ import junit.framework.Assert;
 
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -36,15 +42,35 @@ public class TestSharding extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
     try {
       OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server0/databases/" + getDatabaseName());
-      OrientGraphNoTx graph = factory.getNoTx();
+      OrientGraphNoTx graphNoTx = factory.getNoTx();
 
       try {
-        final OrientVertexType clientType = graph.createVertexType("Client");
+        final OrientVertexType clientType = graphNoTx.createVertexType("Client");
+        for (int i = 0; i < serverInstance.size(); ++i)
+          clientType.addCluster("client_" + i);
+
+        graphNoTx.createVertexType("Product");
+        graphNoTx.createVertexType("Hobby");
+
+        graphNoTx.createEdgeType("Knows");
+        graphNoTx.createEdgeType("Buy");
+        graphNoTx.createEdgeType("Loves");
+      } finally {
+        graphNoTx.shutdown();
+      }
+
+      final OrientVertex product;
+      final OrientVertex fishing;
+
+      OrientBaseGraph graph = factory.getTx();
+      try {
+        product = graph.addVertex("class:Product");
+
+        fishing = graph.addVertex("class:Hobby");
+        fishing.setProperty("name", "Fishing");
 
         vertices = new OrientVertex[serverInstance.size()];
         for (int i = 0; i < vertices.length; ++i) {
-          clientType.addCluster("client_" + i);
-
           vertices[i] = graph.addVertex("class:Client,cluster:client_" + i);
 
           final int clId = vertices[i].getIdentity().getClusterId();
@@ -57,6 +83,43 @@ public class TestSharding extends AbstractServerClusterTest {
 
           System.out.println("Create vertex, class: " + vertices[i].getLabel() + ", cluster: " + clId + " -> "
               + vertices[i].getRecord());
+
+          if (i > 1)
+            // CREATE A LIGHT-WEIGHT EDGE
+            vertices[i].addEdge("Knows", vertices[i - 1]);
+
+          // CREATE A REGULAR EDGE
+          final Edge edge = vertices[i].addEdge("Buy", product, new Object[] { "price", 1000 * i });
+        }
+      } finally {
+        graph.shutdown();
+      }
+
+      graph = factory.getNoTx();
+      try {
+        for (int i = 0; i < vertices.length; ++i)
+          System.out.println("Created vertex " + i + ": " + vertices[i].getRecord());
+
+        for (int i = 0; i < vertices.length; ++i) {
+          // CREATE A REGULAR EDGE
+          Iterable<OrientEdge> result = graph.command(
+              new OCommandSQL("create edge Loves from " + vertices[i].getIdentity() + " to " + fishing.getIdentity()
+                  + " set real = true")).execute();
+
+          Assert.assertTrue(result.iterator().hasNext());
+          OrientEdge e = result.iterator().next();
+          Assert.assertEquals(e.getProperty("real"), true);
+
+          final OrientVertex explain = graph.command(new OCommandSQL("explain select from " + e.getIdentity())).execute();
+          System.out
+              .println("explain select from " + e.getIdentity() + " -> " + ((ODocument) explain.getRecord()).field("servers"));
+
+          result = graph.command(new OCommandSQL("select from " + e.getIdentity())).execute();
+
+          Assert.assertTrue(result.iterator().hasNext());
+          OrientEdge e2 = result.iterator().next();
+          Assert.assertEquals(e2.getProperty("real"), true);
+
         }
       } finally {
         graph.shutdown();
@@ -67,9 +130,15 @@ public class TestSharding extends AbstractServerClusterTest {
         OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
         OrientGraphNoTx g = f.getNoTx();
 
+        System.out.println("Query from server " + server + "...");
+
         try {
           for (int cluster = 0; cluster < vertices.length; ++cluster) {
             final String query = "select from cluster:client_" + cluster;
+
+            final OrientVertex explain = g.command(new OCommandSQL("explain " + query)).execute();
+            System.out.println("explain " + query + " -> " + ((ODocument) explain.getRecord()).field("servers"));
+
             Iterable<OrientVertex> result = g.command(new OCommandSQL(query)).execute();
             Assert.assertTrue("Error on query against 'cluster_" + cluster + "' on server '" + server + "': " + query, result
                 .iterator().hasNext());
@@ -78,6 +147,15 @@ public class TestSharding extends AbstractServerClusterTest {
 
             Assert.assertEquals("Returned vertices name property is != shard_" + cluster + " on server " + server, "shard_"
                 + cluster, v.getProperty("name"));
+
+            final Iterable<Vertex> knows = v.getVertices(Direction.OUT, "Knows");
+
+            final Iterable<Vertex> boughtV = v.getVertices(Direction.OUT, "Buy");
+            Assert.assertTrue(boughtV.iterator().hasNext());
+            Assert.assertEquals(boughtV.iterator().next(), product);
+
+            final Iterable<Edge> boughtE = v.getEdges(Direction.OUT, "Buy");
+            Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
           }
         } finally {
           graph.shutdown();
@@ -113,8 +191,18 @@ public class TestSharding extends AbstractServerClusterTest {
 
           Iterable<OrientVertex> result = g.command(new OCommandSQL("select from Client")).execute();
           int count = 0;
-          for (OrientVertex v : result)
+          for (OrientVertex v : result) {
             count++;
+
+            final Iterable<Vertex> knows = v.getVertices(Direction.OUT, "Knows");
+
+            final Iterable<Vertex> boughtV = v.getVertices(Direction.OUT, "Buy");
+            Assert.assertTrue(boughtV.iterator().hasNext());
+            Assert.assertEquals(boughtV.iterator().next(), product);
+
+            final Iterable<Edge> boughtE = v.getEdges(Direction.OUT, "Buy");
+            Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
+          }
 
           Assert.assertEquals("Returned wrong vertices count on server " + server, 3, count);
         } finally {

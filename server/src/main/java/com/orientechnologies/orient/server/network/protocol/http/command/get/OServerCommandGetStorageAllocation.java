@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.io.StringWriter;
-import java.util.Collections;
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.impl.local.ODataHoleInfo;
@@ -28,6 +24,10 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+
+import java.io.StringWriter;
+import java.util.Collections;
+import java.util.List;
 
 public class OServerCommandGetStorageAllocation extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "GET|allocation/*" };
@@ -46,7 +46,7 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
 
       if (!(db.getStorage() instanceof OStorageLocal))
         throw new IllegalArgumentException("Cannot get allocation information for database '" + iRequest.databaseName
-            + "' because it is not a disk-based database");
+            + "' because the storage is not 'local'");
 
       final List<ODataHoleInfo> holes = ((OStorageLocal) db.getStorage()).getHolesList();
       Collections.sort(holes);

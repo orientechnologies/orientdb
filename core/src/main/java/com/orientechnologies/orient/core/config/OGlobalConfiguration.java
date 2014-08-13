@@ -532,6 +532,9 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
       "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
 
+  DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT("distributed.deployChunkTaskTimeout",
+                                           "Maximum timeout in milliseconds to wait for database chunk deployment", Long.class, 15000l),
+
   DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression",
       "Compression level between 0 and 9 to use in backup for database deployment", Integer.class, 7),
 

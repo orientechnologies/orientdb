@@ -98,7 +98,7 @@ public class OrientGraphFactory {
    */
   public OrientGraphNoTx getNoTx() {
     if (pool == null) {
-      return new OrientGraphNoTx(getDatabase());
+      return new OrientGraphNoTx(getDatabase(), user, password);
     } else {
       return new OrientGraphNoTx(pool);
     }

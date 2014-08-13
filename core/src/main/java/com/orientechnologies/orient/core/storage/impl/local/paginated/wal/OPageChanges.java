@@ -22,6 +22,8 @@ import java.util.ListIterator;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.orient.core.index.hashindex.local.ODirectoryPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 public class OPageChanges {
   private List<ChangeUnit> changeUnits    = new ArrayList<ChangeUnit>();
@@ -44,7 +46,7 @@ public class OPageChanges {
     for (ChangeUnit changeUnit : changeUnits) {
       // some components work in rollback only mode, so we do not have new values.
       if (changeUnit.newValues != null)
-        pointer.set(changeUnit.pageOffset, changeUnit.newValues, 0, changeUnit.newValues.length);
+        pointer.set(changeUnit.pageOffset + ODurablePage.PAGE_PADDING, changeUnit.newValues, 0, changeUnit.newValues.length);
     }
   }
 
@@ -52,7 +54,7 @@ public class OPageChanges {
     ListIterator<ChangeUnit> iterator = changeUnits.listIterator(changeUnits.size());
     while (iterator.hasPrevious()) {
       ChangeUnit changeUnit = iterator.previous();
-      pointer.set(changeUnit.pageOffset, changeUnit.oldValues, 0, changeUnit.oldValues.length);
+      pointer.set(changeUnit.pageOffset + ODurablePage.PAGE_PADDING, changeUnit.oldValues, 0, changeUnit.oldValues.length);
     }
   }
 
