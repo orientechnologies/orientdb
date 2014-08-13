@@ -18,6 +18,13 @@
 
 package com.orientechnologies.agent.profiler;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler;
+import com.orientechnologies.common.profiler.OProfilerEntry;
+import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,11 +36,6 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OAbstractProfiler;
-import com.orientechnologies.common.profiler.OProfilerEntry;
-import com.orientechnologies.common.profiler.OProfilerMBean;
-
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
  * any instances you want for separate profiling contexts.
@@ -43,18 +45,16 @@ import com.orientechnologies.common.profiler.OProfilerMBean;
  * @author Luca Garulli
  * @copyrights Orient Technologies.com
  */
-public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerMBean {
-  protected Date                      lastReset               = new Date();
-
+public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerMBean, OMemoryWatchDog.Listener {
+  protected final static Timer        timer                   = new Timer(true);
   protected final List<OProfilerData> snapshots               = new ArrayList<OProfilerData>();
+  protected final int                 metricProcessors        = Runtime.getRuntime().availableProcessors();
+  protected Date                      lastReset               = new Date();
   protected OProfilerData             realTime                = new OProfilerData();
   protected OProfilerData             lastSnapshot;
-
   protected int                       elapsedToCreateSnapshot = 0;
   protected int                       maxSnapshots            = 0;
-  protected final static Timer        timer                   = new Timer(true);
   protected TimerTask                 archiverTask;
-  protected final int                 metricProcessors        = Runtime.getRuntime().availableProcessors();
 
   public OEnterpriseProfiler() {
     init();
@@ -81,16 +81,8 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
     startRecording();
   }
 
-  /**
-   * Frees the memory removing profiling information
-   */
-  public void memoryUsageLow(final long iFreeMemory, final long iFreeMemoryPercentage) {
-    synchronized (snapshots) {
-      snapshots.clear();
-    }
-  }
-
   public void shutdown() {
+    Orient.instance().getMemoryWatchDog().removeListener(this);
     super.shutdown();
     hooks.clear();
 
@@ -542,6 +534,20 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
     }
   }
 
+  @Override
+  public void lowMemory(final long l, final long l2) {
+    acquireExclusiveLock();
+    try {
+      synchronized (snapshots) {
+        snapshots.clear();
+      }
+      realTime.clear();
+      lastSnapshot = null;
+    } finally {
+      releaseExclusiveLock();
+    }
+  }
+
   /**
    * Must be not called inside a lock.
    */
@@ -647,5 +653,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
         }
       });
     }
+    Orient.instance().getMemoryWatchDog().addListener(this);
   }
 }

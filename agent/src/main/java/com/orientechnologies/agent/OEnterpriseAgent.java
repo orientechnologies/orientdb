@@ -17,10 +17,12 @@
  */
 package com.orientechnologies.agent;
 
-import java.util.Map;
-
-import com.orientechnologies.agent.OL.OLicenseException;
-import com.orientechnologies.agent.http.command.*;
+import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
+import com.orientechnologies.agent.http.command.OServerCommandGetDeployDb;
+import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
+import com.orientechnologies.agent.http.command.OServerCommandGetLog;
+import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
+import com.orientechnologies.agent.http.command.OServerCommandPostBackupDatabase;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -28,7 +30,6 @@ import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValu
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
@@ -39,7 +40,7 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
-import javax.crypto.SecretKey;
+import java.util.Map;
 
 public class OEnterpriseAgent extends OServerPluginAbstract {
   public static final String  EE                         = "ee.";
@@ -155,7 +156,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
   private void installProfiler() {
     final OAbstractProfiler currentProfiler = (OAbstractProfiler) Orient.instance().getProfiler();
 
-    Orient.instance().setProfiler(new OEnterpriseProfiler(60, 60, currentProfiler));
+    Orient.instance().setProfiler(new OEnterpriseProfiler(60, 24, currentProfiler));
     Orient.instance().getProfiler().startup();
 
     currentProfiler.shutdown();
