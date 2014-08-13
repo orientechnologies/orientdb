@@ -162,7 +162,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         ' ', '\n', '\r', '\t');
 
     if (fields.size() % 2 != 0)
-      throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>");
+      throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>, but found: " + iSource);
 
     Map<String, Character> fieldTypes = null;
 
