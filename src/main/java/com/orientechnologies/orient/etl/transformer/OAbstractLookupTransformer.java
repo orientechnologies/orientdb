@@ -78,7 +78,7 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
         else {
           index = db.getMetadata().getIndexManager().getIndex(lookup);
           if (index == null) {
-            log("WARNING: index %s not found. Lookups could be really slow", lookup);
+            debug("WARNING: index %s not found. Lookups could be really slow", lookup);
             final String[] parts = lookup.split("\\.");
             sqlQuery = new OSQLSynchQuery<ODocument>("SELECT FROM " + parts[0] + " WHERE " + parts[1] + " = ?");
           }

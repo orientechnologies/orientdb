@@ -123,8 +123,12 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     return value;
   }
 
-  protected void log(final String iText, final Object... iArgs) {
+  protected void debug(final String iText, final Object... iArgs) {
     if (verbose)
-      System.out.println(getName() + "->" + String.format(iText, iArgs));
+      log(iText, iArgs);
+  }
+
+  protected void log(final String iText, final Object... iArgs) {
+    System.out.println(getName() + "->" + String.format(iText, iArgs));
   }
 }

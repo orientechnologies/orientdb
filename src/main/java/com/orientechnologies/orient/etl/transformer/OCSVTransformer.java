@@ -40,8 +40,8 @@ public class OCSVTransformer extends OAbstractTransformer {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{" + getCommonConfigurationParameters() + ","
-        + "parameters:[{separator:{optional:true,description:'Column separator'}},"
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters()
+        + ",{separator:{optional:true,description:'Column separator'}},"
         + "{columnsOnFirstLine:{optional:true,description:'Columns are described in the first line'}},"
         + "{columns:{optional:true,description:'Columns array containing names, and optionally type after :'}},"
         + "{nullValue:{optional:true,description:'value to consider as NULL. Default is not declared'}},"
@@ -167,7 +167,7 @@ public class OCSVTransformer extends OAbstractTransformer {
         }
       } catch (Exception e) {
         processor.getStats().incrementErrors();
-        log("Error on setting document field %s=%s (cause=%s)", fieldName, fieldValue, e.toString());
+        debug("Error on setting document field %s=%s (cause=%s)", fieldName, fieldValue, e.toString());
       }
     }
 

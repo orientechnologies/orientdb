@@ -81,11 +81,11 @@ public class OHttpSource extends OAbstractSource {
         for (String k : headers.fieldNames())
           conn.setRequestProperty(k, (String) headers.field(k));
 
-      log("Connecting to %s (method=%s)", url, method);
+      debug("Connecting to %s (method=%s)", url, method);
 
       final int responseCode = conn.getResponseCode();
 
-      log("Connected: response code %d", responseCode);
+      debug("Connected: response code %d", responseCode);
 
     } catch (Exception e) {
       throw new OSourceException("[HTTP source] error on opening connection in " + method + " to URL: " + url, e);

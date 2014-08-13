@@ -151,13 +151,13 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     case DOCUMENT:
       final ODatabaseDocumentTx documentDatabase = new ODatabaseDocumentTx(dbURL);
       if (documentDatabase.exists() && dbAutoDropIfExists) {
-        log("Dropping existent database '%s'...", dbURL);
+        debug("Dropping existent database '%s'...", dbURL);
         documentDatabase.open(dbUser, dbPassword);
         documentDatabase.drop();
       }
 
       if (documentDatabase.exists()) {
-        log("Opening database '%s'...", dbURL);
+        debug("Opening database '%s'...", dbURL);
         documentDatabase.open(dbUser, dbPassword);
       } else if (dbAutoCreate) {
         documentDatabase.create();
@@ -170,7 +170,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     case GRAPH:
       final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
       if (factory.exists() && dbAutoDropIfExists) {
-        log("Dropping existent database '%s'...", dbURL);
+        debug("Dropping existent database '%s'...", dbURL);
         factory.drop();
       }
 
@@ -248,13 +248,13 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
     if (className != null) {
       schemaClass = getOrCreateClass(className, null);
-      log("%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
+      debug("%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
     }
 
     if (classes != null) {
       for (ODocument cls : classes) {
         schemaClass = getOrCreateClass((String) cls.field("name"), (String) cls.field("extends"));
-        log("%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
+        debug("%s: found %d %s in class '%s'", getName(), schemaClass.count(), getUnit(), className);
       }
     }
 
@@ -299,7 +299,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
             final OType type = OType.valueOf(fieldType);
 
             cls.createProperty(fieldNameParts[0], type);
-            log("- OrientDBLoader: created property '%s.%s' of type: %s", idxClass, fieldNameParts[0], fieldNameParts[1]);
+            debug("- OrientDBLoader: created property '%s.%s' of type: %s", idxClass, fieldNameParts[0], fieldNameParts[1]);
           }
 
           fields[f] = fieldNameParts[0];
@@ -321,8 +321,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           continue;
 
         index = cls.createIndex(idxName, idxType, fields);
-        log("- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType, idxClass,
-            idxFields);
+        debug("- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType, idxClass, idxFields);
       }
     }
     return documentDatabase;
@@ -343,10 +342,10 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
             throw new OLoaderException("Cannot find super class '" + iSuperClass + "'");
 
           cls = documentDatabase.getMetadata().getSchema().createClass(iClassName, superClass);
-          log("- OrientDBLoader: created class '%s' extends '%s'", iClassName, iSuperClass);
+          debug("- OrientDBLoader: created class '%s' extends '%s'", iClassName, iSuperClass);
         } else {
           cls = documentDatabase.getMetadata().getSchema().createClass(iClassName);
-          log("- OrientDBLoader: created class '%s'", iClassName);
+          debug("- OrientDBLoader: created class '%s'", iClassName);
         }
       }
     } else {
@@ -363,16 +362,16 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           if (graphDatabase.getVertexBaseType().isSuperClassOf(superClass)) {
             // VERTEX
             cls = graphDatabase.createVertexType(iClassName, superClass);
-            log("- OrientDBLoader: created vertex class '%s' extends '%s'", iClassName, iSuperClass);
+            debug("- OrientDBLoader: created vertex class '%s' extends '%s'", iClassName, iSuperClass);
           } else {
             // EDGE
             cls = graphDatabase.createEdgeType(iClassName, superClass);
-            log("- OrientDBLoader: created edge class '%s' extends '%s'", iClassName, iSuperClass);
+            debug("- OrientDBLoader: created edge class '%s' extends '%s'", iClassName, iSuperClass);
           }
         } else {
           // ALWAYS CREATE SUB-VERTEX
           cls = graphDatabase.createVertexType(iClassName);
-          log("- OrientDBLoader: created vertex class '%s'", iClassName);
+          debug("- OrientDBLoader: created vertex class '%s'", iClassName);
         }
       }
     }
