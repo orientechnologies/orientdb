@@ -27,33 +27,41 @@
 This document contains the last changes to OrientDB Community Edition.
 
 ---------------------------------------------------------------------------------------------------
-VERSION 1.7.7 - (July, 23th 2014)
+VERSION 1.7.8 - (August, 13th 2014)
+
+- DevOps: new bin/backup.sh with -lvm option to execute a non-blocking backup on Linux with LVM
+          installed
+- Hot fixes:
+   https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A1.7.8+is%3Aclosed
+
 ---------------------------------------------------------------------------------------------------
+VERSION 1.7.7 - (July, 23th 2014)
+
 Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=24&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7.6 - (July, 16th 2014)
----------------------------------------------------------------------------------------------------
+
 Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=23&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7.5 - (July, 10th 2014)
----------------------------------------------------------------------------------------------------
+
 Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=22&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7.4 - (June, 23rd 2014)
----------------------------------------------------------------------------------------------------
+
 Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=21&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7.3 - (June, 12th 2014)
----------------------------------------------------------------------------------------------------
+
 Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=20&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7.2 - (June, 7th 2014)
----------------------------------------------------------------------------------------------------
+
 Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=19&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
@@ -63,7 +71,7 @@ Hot fixes: https://github.com/orientechnologies/orientdb/issues?milestone=18&pag
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7 - (May, 27th 2014)
----------------------------------------------------------------------------------------------------
+
 - Core: new “minimumclusters” to auto-create X clusters per class
         new cluster strategy to pick the cluster. Available round-robin, default and balanced
         added record locking via API
@@ -104,7 +112,7 @@ Full list: https://github.com/orientechnologies/orientdb/issues?labels=&mileston
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7-rc2 - (March, 25th 2014)
----------------------------------------------------------------------------------------------------
+
 - Core: supported retro-compatibility for databases created with OrientDB v1.5 or further (#1899)
         improved performance on ORDER BY against indexes (#1843)
         improved performance on RENAME CLASS (#1818)
@@ -120,7 +128,7 @@ Full list: https://github.com/orientechnologies/orientdb/issues?labels=&mileston
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.7-rc1 - (February, 6th 2014)
----------------------------------------------------------------------------------------------------
+
 - Engine: new LINKBag to manage LINKS by using SBTree indexes. This drastically improved performance
 - SQL: new LOCK keyword to specify locking strategy
        new RETURNING keyword to let to UPDATE and DELETE commands to return modified records
@@ -141,23 +149,23 @@ Full list: https://github.com/orientechnologies/orientdb/issues?milestone=15&pag
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.6.4 - (January, 16th 2014)
----------------------------------------------------------------------------------------------------
+
 - Integrated Blueprints API in “graphdb” module
 - Bug fixing
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.6.3 - (December, 27th 2013)
----------------------------------------------------------------------------------------------------
+
 - Bug fixing
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.6.3 - (December, 27th 2013)
----------------------------------------------------------------------------------------------------
+
 - Bug fixing
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.6.2 - (December, 9th 2013)
----------------------------------------------------------------------------------------------------
+
 - Support for COLLATE to case insensitive compare fields
 - Bug fixing
 
@@ -165,14 +173,13 @@ Full list: https://github.com/orientechnologies/orientdb/issues?milestone=11&pag
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.6.1 - (November, 20th 2013)
----------------------------------------------------------------------------------------------------
+
 - Bug fixing
 
 Full list: https://github.com/orientechnologies/orientdb/issues?milestone=10&page=1&state=closed
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.6 - (October, 31nd 2013)
----------------------------------------------------------------------------------------------------
 
 - SBTree: new index engine with the support for transactions and range queries
 - Distributed: new Architecture based on Hazelcast, new Distributed Transaction support across
@@ -192,7 +199,6 @@ Full list: https://github.com/orientechnologies/orientdb/issues?milestone=8&stat
 
 ---------------------------------------------------------------------------------------------------
 VERSION 1.5.1 - (September, 3rd 2013)
----------------------------------------------------------------------------------------------------
 
 - New PLOCAL (Paginated Local) storage engine. In comparison with LOCAL it's more durable (no usage
   of MMAP) and supports better concurrency on parallel transactions
