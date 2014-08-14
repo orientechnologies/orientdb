@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -266,6 +267,84 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     return true;
   }
 
+  @Override
+  public String getSyntax() {
+    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
+  }
+
+  @Override
+  public void end() {
+  }
+
+  @Override
+  public int getSecurityOperationType() {
+    return ORole.PERMISSION_UPDATE;
+  }
+
+  protected void parseMerge() {
+    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE)) {
+      final String contentAsString = parserRequiredWord(false, "document to merge expected").trim();
+      merge = new ODocument().fromJSON(contentAsString);
+      parserSkipWhiteSpaces();
+    }
+
+    if (merge == null)
+      throwSyntaxErrorException("Document to merge not provided. Example: MERGE { \"name\": \"Jay\" }");
+  }
+
+  protected String getBlock(String fieldValue) {
+    final int startPos = parserGetCurrentPosition();
+
+    if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
+      if (startPos > 0)
+        parserSetCurrentPosition(startPos - fieldValue.length());
+      else
+        parserSetCurrentPosition(parserText.length() - fieldValue.length());
+
+      parserSkipWhiteSpaces();
+      final StringBuilder buffer = new StringBuilder();
+      parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
+          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, -1, false,
+          OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
+      fieldValue = buffer.toString();
+    }
+    return fieldValue;
+  }
+
+  /**
+   * Parses the returning keyword if found.
+   */
+  protected void parseReturn() throws OCommandSQLParsingException {
+    parserNextWord(false, " ");
+    String mode = parserGetLastWord().trim();
+
+    if (mode.equalsIgnoreCase("COUNT")) {
+      returnHandler = new ORecordCountHandler();
+    } else if (mode.equalsIgnoreCase("BEFORE") || mode.equalsIgnoreCase("AFTER")) {
+
+      parserNextWord(false, " ");
+      String returning = parserGetLastWord().trim();
+      Object returnExpression = null;
+      if (returning.equalsIgnoreCase(KEYWORD_WHERE) || returning.equalsIgnoreCase(KEYWORD_TIMEOUT)
+          || returning.equalsIgnoreCase(KEYWORD_LIMIT) || returning.equalsIgnoreCase(KEYWORD_UPSERT)
+          || returning.equalsIgnoreCase(KEYWORD_LOCK) || returning.length() == 0) {
+        parserGoBack();
+      } else {
+        if (returning.startsWith("$") || returning.startsWith("@"))
+          returnExpression = (returning.length() > 0) ? OSQLHelper.parseValue(this, returning, this.getContext()) : null;
+        else
+          throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
+      }
+
+      if (mode.equalsIgnoreCase("BEFORE"))
+        returnHandler = new OOriginalRecordsReturnHandler(returnExpression, getContext());
+      else
+        returnHandler = new OUpdatedRecordsReturnHandler(returnExpression, getContext());
+
+    } else
+      throwSyntaxErrorException(" COUNT | BEFORE | AFTER keywords expected");
+  }
+
   private boolean handleContent(ODocument record) {
     boolean updated = false;
     if (content != null) {
@@ -490,45 +569,6 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     return value;
   }
 
-  @Override
-  public String getSyntax() {
-    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
-  }
-
-  @Override
-  public void end() {
-  }
-
-  protected void parseMerge() {
-    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE)) {
-      final String contentAsString = parserRequiredWord(false, "document to merge expected").trim();
-      merge = new ODocument().fromJSON(contentAsString);
-      parserSkipWhiteSpaces();
-    }
-
-    if (merge == null)
-      throwSyntaxErrorException("Document to merge not provided. Example: MERGE { \"name\": \"Jay\" }");
-  }
-
-  protected String getBlock(String fieldValue) {
-    final int startPos = parserGetCurrentPosition();
-
-    if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
-      if (startPos > 0)
-        parserSetCurrentPosition(startPos - fieldValue.length());
-      else
-        parserSetCurrentPosition(parserText.length() - fieldValue.length());
-
-      parserSkipWhiteSpaces();
-      final StringBuilder buffer = new StringBuilder();
-      parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
-          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, -1, false,
-          OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
-      fieldValue = buffer.toString();
-    }
-    return fieldValue;
-  }
-
   private void parseAddFields() {
     String fieldName;
     String fieldValue;
@@ -621,39 +661,4 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     if (incrementEntries.size() == 0)
       throwSyntaxErrorException("Entries to increment <field> = <value> are missed. Example: salary = -100");
   }
-
-  /**
-   * Parses the returning keyword if found.
-   */
-  protected void parseReturn() throws OCommandSQLParsingException {
-    parserNextWord(false, " ");
-    String mode = parserGetLastWord().trim();
-
-    if (mode.equalsIgnoreCase("COUNT")) {
-      returnHandler = new ORecordCountHandler();
-    } else if (mode.equalsIgnoreCase("BEFORE") || mode.equalsIgnoreCase("AFTER")) {
-
-      parserNextWord(false, " ");
-      String returning = parserGetLastWord().trim();
-      Object returnExpression = null;
-      if (returning.equalsIgnoreCase(KEYWORD_WHERE) || returning.equalsIgnoreCase(KEYWORD_TIMEOUT)
-          || returning.equalsIgnoreCase(KEYWORD_LIMIT) || returning.equalsIgnoreCase(KEYWORD_UPSERT)
-          || returning.equalsIgnoreCase(KEYWORD_LOCK) || returning.length() == 0) {
-        parserGoBack();
-      } else {
-        if (returning.startsWith("$") || returning.startsWith("@"))
-          returnExpression = (returning.length() > 0) ? OSQLHelper.parseValue(this, returning, this.getContext()) : null;
-        else
-          throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
-      }
-
-      if (mode.equalsIgnoreCase("BEFORE"))
-        returnHandler = new OOriginalRecordsReturnHandler(returnExpression, getContext());
-      else
-        returnHandler = new OUpdatedRecordsReturnHandler(returnExpression, getContext());
-
-    } else
-      throwSyntaxErrorException(" COUNT | BEFORE | AFTER keywords expected");
-  }
-
 }

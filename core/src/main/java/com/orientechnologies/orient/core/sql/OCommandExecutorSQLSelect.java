@@ -250,11 +250,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       if (parsedTarget.getTargetQuery() != null) {
         // SUB QUERY, PROPAGATE THE CALL
-        clusters.addAll(parsedTarget.getTargetQuery().getInvolvedClusters());
+        final Set<String> clIds = parsedTarget.getTargetQuery().getInvolvedClusters();
+        for (String c : clIds)
+          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+          if (checkClusterAccess(db, c))
+            clusters.add(c);
+
       } else if (parsedTarget.getTargetRecords() != null) {
         // SINGLE RECORDS: BROWSE ALL (COULD BE EXPENSIVE).
         for (OIdentifiable identifiable : parsedTarget.getTargetRecords()) {
-          clusters.add(db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase());
+          final String c = db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase();
+          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+          if (checkClusterAccess(db, c))
+            clusters.add(c);
         }
       }
 
@@ -263,13 +271,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           final OClass cls = db.getMetadata().getSchema().getClass(clazz);
           if (cls != null)
             for (int clId : cls.getClusterIds()) {
-              clusters.add(db.getClusterNameById(clId).toLowerCase());
+              // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+              if (clId > -1 && checkClusterAccess(db, db.getClusterNameById(clId)))
+                clusters.add(db.getClusterNameById(clId).toLowerCase());
             }
         }
       }
+
       if (parsedTarget.getTargetClusters() != null) {
         for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-          clusters.add(cluster.toLowerCase());
+          final String c = cluster.toLowerCase();
+          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+          if (checkClusterAccess(db, c))
+            clusters.add(c);
         }
       }
       if (parsedTarget.getTargetIndex() != null) {
@@ -366,6 +380,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   public String getFetchPlan() {
     return fetchPlan != null ? fetchPlan : request.getFetchPlan();
+  }
+
+  protected boolean checkClusterAccess(final ODatabaseRecord db, final String iClusterName) {
+    return db.getUser() != null
+        && db.getUser().checkIfAllowed(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, getSecurityOperationType()) != null;
   }
 
   protected void executeSearch(final Map<Object, Object> iArgs) {
