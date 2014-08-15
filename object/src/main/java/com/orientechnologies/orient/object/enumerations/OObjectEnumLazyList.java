@@ -64,7 +64,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
   }
 
   public boolean contains(final Object o) {
-    return list.contains(o);
+	  return this.indexOf(o) > -1;
   }
 
   public boolean add(TYPE element) {
@@ -92,11 +92,21 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
   }
 
   public int indexOf(final Object o) {
-    return list.indexOf(o);
+	  TYPE enumToCheck = objectToEnum(o);
+
+	  if(enumToCheck != null)
+		  return serializedList.indexOf(enumToCheck.name());
+	  else
+		  return -1;
   }
 
   public int lastIndexOf(final Object o) {
-    return list.lastIndexOf(o);
+	  TYPE enumToCheck = objectToEnum(o);
+
+	  if(enumToCheck != null)
+		  return serializedList.lastIndexOf(enumToCheck.name());
+	  else
+		  return -1;
   }
 
   public Object[] toArray() {
@@ -273,5 +283,15 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
   @Override
   public String toString() {
     return list.toString();
+  }
+  
+  private TYPE objectToEnum(Object o)
+  {
+	 if(o != null && (o.getClass() == this.enumClass))	
+	 {
+		 return (TYPE) o;
+	 }
+	 else
+		 return null;
   }
 }
