@@ -46,8 +46,8 @@ public class OObjectEnumLazyListTest
 		EntityWithEnumList hasListWithEnums = getTestObject();	
 		
 		assertTrue(hasListWithEnums.getEnumList().contains(TESTENUM.TEST_VALUE_1));
-		assertTrue(hasListWithEnums.getEnumList().contains(TESTENUM.TEST_VALUE_1));
-		assertTrue(hasListWithEnums.getEnumList().contains(TESTENUM.TEST_VALUE_1));
+		assertTrue(hasListWithEnums.getEnumList().contains(TESTENUM.TEST_VALUE_2));
+		assertTrue(hasListWithEnums.getEnumList().contains(TESTENUM.TEST_VALUE_3));
 	}	
 	
 	@Test
