@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.object.enumerations;
 
 import java.io.Serializable;
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -31,282 +32,280 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 @SuppressWarnings({ "unchecked" })
 public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OObjectLazyEnumSerializer<List<TYPE>>, Serializable {
-  private static final long     serialVersionUID = -8541477416577361792L;
+	private static final long     serialVersionUID = -8541477416577361792L;
 
-  private ORecord<?>            sourceRecord;
-  private final List<Object>    serializedList;
-  private final ArrayList<TYPE> list             = new ArrayList<TYPE>();
-  private boolean               converted        = false;
-  private final Class<Enum>     enumClass;
+	private ORecord<?>            sourceRecord;
+	private final List<Object>    serializedList;
+	private final ArrayList<TYPE> list             = new ArrayList<TYPE>();
+	private boolean               converted        = false;
+	private final Class<Enum>     enumClass;
 
-  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final List<Object> iRecordList) {
-    this.sourceRecord = iSourceRecord;
-    this.serializedList = iRecordList;
-    this.enumClass = iEnumClass;
-    for (int i = 0; i < iRecordList.size(); i++) {
-      list.add(i, null);
-    }
-  }
+	public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final List<Object> iRecordList) {
+		this.sourceRecord = iSourceRecord;
+		this.serializedList = iRecordList;
+		this.enumClass = iEnumClass;
+		for (int i = 0; i < iRecordList.size(); i++) {
+			list.add(i, null);
+		}
+	}
 
-  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final List<Object> iRecordList,
-      final Collection<? extends TYPE> iSourceList) {
-    this.sourceRecord = iSourceRecord;
-    this.serializedList = iRecordList;
-    this.enumClass = iEnumClass;
-    addAll(iSourceList);
-    for (int i = iSourceList.size(); i < iRecordList.size(); i++) {
-      list.add(i, null);
-    }
-  }
+	public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final List<Object> iRecordList,
+			final Collection<? extends TYPE> iSourceList) {
+		this.sourceRecord = iSourceRecord;
+		this.serializedList = iRecordList;
+		this.enumClass = iEnumClass;
+		addAll(iSourceList);
+		for (int i = iSourceList.size(); i < iRecordList.size(); i++) {
+			list.add(i, null);
+		}
+	}
 
-  public Iterator<TYPE> iterator() {
-    return new OObjectEnumLazyIterator<TYPE>(enumClass, sourceRecord, serializedList.iterator());
-  }
+	public Iterator<TYPE> iterator() {
+		return new OObjectEnumLazyIterator<TYPE>(enumClass, sourceRecord, serializedList.iterator());
+	}
 
-  public boolean contains(final Object o) 
-  {
-	  TYPE enumToCheck = objectToEnum(o);
-	  
-	  if(enumToCheck != null)
-		  return serializedList.contains(enumToCheck.name());
-	  else
-		  return false;
-  }
+	public boolean contains(final Object o) 
+	{
+		return this.indexOf(o) != -1;
+	}
 
-  public boolean add(TYPE element) {
-    serializedList.add(element.name());
-    return list.add(element);
-  }
+	public boolean add(TYPE element) {
+		serializedList.add(element.name());
+		return list.add(element);
+	}
 
-  public void add(int index, TYPE element) {
-    setDirty();
-    serializedList.add(index, element.name());
-    list.add(index, element);
-  }
+	public void add(int index, TYPE element) {
+		setDirty();
+		serializedList.add(index, element.name());
+		list.add(index, element);
+	}
 
-  public TYPE get(final int index) {
-    TYPE o = (TYPE) list.get(index);
-    if (o == null) {
-      Object toDeserialize = serializedList.get(index);
-      if (toDeserialize instanceof Number)
-        o = (TYPE) enumClass.getEnumConstants()[((Number) toDeserialize).intValue()];
-      else
-        o = (TYPE) Enum.valueOf(enumClass, toDeserialize.toString());
-      list.set(index, o);
-    }
-    return o;
-  }
+	public TYPE get(final int index) {
+		TYPE o = (TYPE) list.get(index);
+		if (o == null) {
+			Object toDeserialize = serializedList.get(index);
+			if (toDeserialize instanceof Number)
+				o = (TYPE) enumClass.getEnumConstants()[((Number) toDeserialize).intValue()];
+			else
+				o = (TYPE) Enum.valueOf(enumClass, toDeserialize.toString());
+			list.set(index, o);
+		}
+		return o;
+	}
 
-  public int indexOf(final Object o) 
-  {
-	  TYPE enumToCheck = objectToEnum(o);
-	  
-	  if(enumToCheck != null)
-		  return serializedList.indexOf(enumToCheck.name());
-	  else
-		  return -1;
-  }
+	public int indexOf(final Object o) 
+	{
+		TYPE enumToCheck = objectToEnum(o);
+		int indexToReturn = -1;
 
-  public int lastIndexOf(final Object o) 
-  {
-	  TYPE enumToCheck = objectToEnum(o);
-	  
-	  if(enumToCheck != null)
-		  return serializedList.lastIndexOf(enumToCheck.name());
-	  else
-		  return -1;
-  }
+		if(enumToCheck != null)
+		{
+			indexToReturn = serializedList.indexOf(enumToCheck.name());		  
+			if(indexToReturn > -1 && this.get(indexToReturn) != enumToCheck) //check if it is an enum from the same Enumtype
+			indexToReturn = -1;			  
+		}
 
-  public Object[] toArray() {
-    convertAll();
-    return list.toArray();
-  }
+		return indexToReturn;
+	}
 
-  public <T> T[] toArray(final T[] a) {
-    convertAll();
-    return list.toArray(a);
-  }
+	public int lastIndexOf(final Object o) 
+	{
+		TYPE enumToCheck = objectToEnum(o);
+		int indexToReturn = -1;
 
-  public int size() {
-    return serializedList.size();
-  }
+		if(enumToCheck != null)
+		{
+			indexToReturn = serializedList.lastIndexOf(enumToCheck.name());		  
+			if(indexToReturn > -1 && this.get(indexToReturn) != enumToCheck) //check if it is an enum from the same Enumtype
+				indexToReturn = -1;			  
+		}
 
-  public boolean isEmpty() {
-    return serializedList.isEmpty();
-  }
+		return indexToReturn;
+	}
 
-  public boolean remove(Object o) {
-    setDirty();
-    int indexOfO = list.indexOf(o);
-    serializedList.remove(indexOfO);
-    return list.remove(o);
-  }
+	public Object[] toArray() {
+		convertAll();
+		return list.toArray();
+	}
 
-  public boolean containsAll(Collection<?> c) {
-    for (Object o : c) {
-      if (!contains(o))
-        return false;
-    }
-    return true;
-  }
+	public <T> T[] toArray(final T[] a) {
+		convertAll();
+		return list.toArray(a);
+	}
 
-  public boolean addAll(Collection<? extends TYPE> c) {
-    boolean dirty = false;
-    for (TYPE element : c) {
-      dirty = add(element) || dirty;
-    }
-    if (dirty)
-      setDirty();
-    return dirty;
-  }
+	public int size() {
+		return serializedList.size();
+	}
 
-  public boolean addAll(int index, Collection<? extends TYPE> c) {
-    for (TYPE element : c) {
-      add(index, element);
-      index++;
-    }
-    if (c.size() > 0)
-      setDirty();
-    return c.size() > 0;
-  }
+	public boolean isEmpty() {
+		return serializedList.isEmpty();
+	}
 
-  public boolean removeAll(Collection<?> c) {
-    boolean dirty = true;
-    for (Object o : c) {
-      dirty = dirty || remove(o);
-    }
-    if (dirty)
-      setDirty();
-    return dirty;
-  }
+	public boolean remove(Object o) {
+		setDirty();
+		int indexOfO = list.indexOf(o);
+		serializedList.remove(indexOfO);
+		return list.remove(o);
+	}
 
-  public boolean retainAll(Collection<?> c) {
-    boolean modified = false;
-    Iterator<TYPE> e = iterator();
-    while (e.hasNext()) {
-      if (!c.contains(e.next())) {
-        remove(e);
-        modified = true;
-      }
-    }
-    return modified;
-  }
+	public boolean containsAll(Collection<?> c) {
+		for (Object o : c) {
+			if (!contains(o))
+				return false;
+		}
+		return true;
+	}
 
-  public void clear() {
-    setDirty();
-    serializedList.clear();
-    list.clear();
-  }
+	public boolean addAll(Collection<? extends TYPE> c) {
+		boolean dirty = false;
+		for (TYPE element : c) {
+			dirty = add(element) || dirty;
+		}
+		if (dirty)
+			setDirty();
+		return dirty;
+	}
 
-  public TYPE set(int index, TYPE element) {
-    serializedList.set(index, element.name());
-    return (TYPE) list.set(index, element);
-  }
+	public boolean addAll(int index, Collection<? extends TYPE> c) {
+		for (TYPE element : c) {
+			add(index, element);
+			index++;
+		}
+		if (c.size() > 0)
+			setDirty();
+		return c.size() > 0;
+	}
 
-  public TYPE remove(int index) {
-    serializedList.remove(index);
-    return (TYPE) list.remove(index);
-  }
+	public boolean removeAll(Collection<?> c) {
+		boolean dirty = true;
+		for (Object o : c) {
+			dirty = dirty || remove(o);
+		}
+		if (dirty)
+			setDirty();
+		return dirty;
+	}
 
-  public ListIterator<TYPE> listIterator() {
-    return (ListIterator<TYPE>) list.listIterator();
-  }
+	public boolean retainAll(Collection<?> c) {
+		boolean modified = false;
+		Iterator<TYPE> e = iterator();
+		while (e.hasNext()) {
+			if (!c.contains(e.next())) {
+				remove(e);
+				modified = true;
+			}
+		}
+		return modified;
+	}
 
-  public ListIterator<TYPE> listIterator(int index) {
-    return (ListIterator<TYPE>) list.listIterator(index);
-  }
+	public void clear() {
+		setDirty();
+		serializedList.clear();
+		list.clear();
+	}
 
-  public List<TYPE> subList(int fromIndex, int toIndex) {
-    return (List<TYPE>) list.subList(fromIndex, toIndex);
-  }
+	public TYPE set(int index, TYPE element) {
+		serializedList.set(index, element.name());
+		return (TYPE) list.set(index, element);
+	}
 
-  public boolean isConverted() {
-    return converted;
-  }
+	public TYPE remove(int index) {
+		serializedList.remove(index);
+		return (TYPE) list.remove(index);
+	}
 
-  public void detach() {
-    convertAll();
-  }
+	public ListIterator<TYPE> listIterator() {
+		return (ListIterator<TYPE>) list.listIterator();
+	}
 
-  public void detach(boolean nonProxiedInstance) {
-    convertAll();
-  }
+	public ListIterator<TYPE> listIterator(int index) {
+		return (ListIterator<TYPE>) list.listIterator(index);
+	}
 
-  public void detachAll(boolean nonProxiedInstance) {
-    convertAll();
-  }
+	public List<TYPE> subList(int fromIndex, int toIndex) {
+		return (List<TYPE>) list.subList(fromIndex, toIndex);
+	}
 
-  @Override
-  public List<TYPE> getNonOrientInstance() {
-    List<TYPE> list = new ArrayList<TYPE>();
-    list.addAll(this);
-    return list;
-  }
+	public boolean isConverted() {
+		return converted;
+	}
 
-  protected void convertAll() {
-    if (converted)
-      return;
+	public void detach() {
+		convertAll();
+	}
 
-    for (int i = 0; i < size(); ++i)
-      convert(i);
+	public void detach(boolean nonProxiedInstance) {
+		convertAll();
+	}
 
-    converted = true;
-  }
+	public void detachAll(boolean nonProxiedInstance) {
+		convertAll();
+	}
 
-  public void setDirty() {
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
-  }
+	@Override
+	public List<TYPE> getNonOrientInstance() {
+		List<TYPE> list = new ArrayList<TYPE>();
+		list.addAll(this);
+		return list;
+	}
 
-  @Override
-  public Object getUnderlying() {
-    return serializedList;
-  }
+	protected void convertAll() {
+		if (converted)
+			return;
 
-  /**
-   * Convert the item requested.
-   * 
-   * @param iIndex
-   *          Position of the item to convert
-   */
-  private void convert(final int iIndex) {
-    if (converted)
-      return;
+		for (int i = 0; i < size(); ++i)
+			convert(i);
 
-    Object o = list.get(iIndex);
-    if (o == null) {
-      o = serializedList.get(iIndex);
-      if (o instanceof Number)
-        o = enumClass.getEnumConstants()[((Number) o).intValue()];
-      else
-        o = Enum.valueOf(enumClass, o.toString());
-      list.set(iIndex, (TYPE) o);
-    }
-  }
+		converted = true;
+	}
 
-  protected boolean indexLoaded(int iIndex) {
-    return list.get(iIndex) != null;
-  }
+	public void setDirty() {
+		if (sourceRecord != null)
+			sourceRecord.setDirty();
+	}
 
-  @Override
-  public String toString() {
-    return list.toString();
-  }  
-  
-  private TYPE objectToEnum(Object o)
-  {
-	  if(o != null && (o instanceof Enum))	
-	  {
-		 try
+	@Override
+	public Object getUnderlying() {
+		return serializedList;
+	}
+
+	/**
+	 * Convert the item requested.
+	 * 
+	 * @param iIndex
+	 *          Position of the item to convert
+	 */
+	 private void convert(final int iIndex) {
+		if (converted)
+			return;
+
+		Object o = list.get(iIndex);
+		if (o == null) {
+			o = serializedList.get(iIndex);
+			if (o instanceof Number)
+				o = enumClass.getEnumConstants()[((Number) o).intValue()];
+			else
+				o = Enum.valueOf(enumClass, o.toString());
+			list.set(iIndex, (TYPE) o);
+		}
+	 }
+
+	 protected boolean indexLoaded(int iIndex) {
+		 return list.get(iIndex) != null;
+	 }
+
+	 @Override
+	 public String toString() {
+		 return list.toString();
+	 }  
+
+	 private TYPE objectToEnum(Object o)
+	 {
+		 if(o != null && (o instanceof Enum))	
 		 {
 			 return (TYPE) o;
 		 }
-		 catch(ClassCastException e)
-		 {
+		 else
 			 return null;
-		 }		 
-	  }
-	  else
-		  return null;
-  }
+	 }
 }
