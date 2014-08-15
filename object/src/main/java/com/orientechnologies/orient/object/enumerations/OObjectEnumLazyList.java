@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.object.enumerations;
 
 import java.io.Serializable;
-import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -66,7 +65,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
 
 	public boolean contains(final Object o) 
 	{
-		return this.indexOf(o) != -1;
+		return this.indexOf(o) > -1;
 	}
 
 	public boolean add(TYPE element) {
@@ -96,31 +95,21 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
 	public int indexOf(final Object o) 
 	{
 		TYPE enumToCheck = objectToEnum(o);
-		int indexToReturn = -1;
 
 		if(enumToCheck != null)
-		{
-			indexToReturn = serializedList.indexOf(enumToCheck.name());		  
-			if(indexToReturn > -1 && this.get(indexToReturn) != enumToCheck) //check if it is an enum from the same Enumtype
-			indexToReturn = -1;			  
-		}
-
-		return indexToReturn;
+			return serializedList.indexOf(enumToCheck.name());
+		else
+			return -1;
 	}
 
 	public int lastIndexOf(final Object o) 
 	{
 		TYPE enumToCheck = objectToEnum(o);
-		int indexToReturn = -1;
 
 		if(enumToCheck != null)
-		{
-			indexToReturn = serializedList.lastIndexOf(enumToCheck.name());		  
-			if(indexToReturn > -1 && this.get(indexToReturn) != enumToCheck) //check if it is an enum from the same Enumtype
-				indexToReturn = -1;			  
-		}
-
-		return indexToReturn;
+			return serializedList.lastIndexOf(enumToCheck.name());
+		else
+			return -1;
 	}
 
 	public Object[] toArray() {
@@ -301,7 +290,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
 
 	 private TYPE objectToEnum(Object o)
 	 {
-		 if(o != null && (o instanceof Enum))	
+		 if(o != null && (o.getClass() == this.enumClass))	
 		 {
 			 return (TYPE) o;
 		 }
