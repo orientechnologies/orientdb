@@ -343,8 +343,8 @@
                         <manifestEntries>
                             <Implementation-Build>${implementation.build}</Implementation-Build>
                             <Implementation-Build-Date>${maven.build.timestamp}</Implementation-Build-Date>
-                            <X-Compile-Source-JDK>${javac.src.version}</X-Compile-Source-JDK>
-                            <X-Compile-Target-JDK>${javac.target.version}</X-Compile-Target-JDK>
+                            <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
+                            <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -455,8 +455,8 @@
                         <artifactId>maven-compiler-plugin</artifactId>
                         <version>2.3.2</version>
                         <configuration>
-                            <source>${javac.src.version}</source>
-                            <target>${javac.target.version}</target>
+                            <source>${maven.compiler.source}</source>
+                            <target>${maven.compiler.target}</target>
                             <showDeprecation>true</showDeprecation>
                             <showWarnings>true</showWarnings>
                             <optimize>true</optimize>
@@ -481,8 +481,8 @@
                         <artifactId>maven-compiler-plugin</artifactId>
                         <version>2.3.2</version>
                         <configuration>
-                            <source>${javac.src.version}</source>
-                            <target>${javac.target.version}</target>
+                            <source>${maven.compiler.source}</source>
+                            <target>${maven.compiler.target}</target>
                             <showDeprecation>true</showDeprecation>
                             <showWarnings>true</showWarnings>
                             <optimize>true</optimize>
@@ -542,8 +542,8 @@
                                             <Implementation-Build>${implementation.build}</Implementation-Build>
                                             <Implementation-Build-Date>${maven.build.timestamp}
                                             </Implementation-Build-Date>
-                                            <X-Compile-Source-JDK>${javac.src.version}</X-Compile-Source-JDK>
-                                            <X-Compile-Target-JDK>${javac.target.version}</X-Compile-Target-JDK>
+                                            <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
+                                            <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
                                         </manifestEntries>
                                     </archive>
                                 </configuration>
@@ -571,8 +571,8 @@
                                             <Implementation-Build>${implementation.build}</Implementation-Build>
                                             <Implementation-Build-Date>${maven.build.timestamp}
                                             </Implementation-Build-Date>
-                                            <X-Compile-Source-JDK>${javac.src.version}</X-Compile-Source-JDK>
-                                            <X-Compile-Target-JDK>${javac.target.version}</X-Compile-Target-JDK>
+                                            <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
+                                            <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
                                         </manifestEntries>
                                     </archive>
                                 </configuration>

@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -84,7 +85,7 @@ public enum OType {
 
   LINKLIST("LinkList", 14, List.class, new Class<?>[] { List.class }),
 
-  LINKSET("LinkSet", 15, Set.class, new Class<?>[] { Set.class, OMVRBTreeRIDSet.class }),
+  LINKSET("LinkSet", 15, Set.class, new Class<?>[] { Set.class }),
 
   LINKMAP("LinkMap", 16, Map.class, new Class<?>[] { Map.class }),
 
@@ -114,6 +115,7 @@ public enum OType {
     for (OType oType : values()) {
       TYPES_BY_ID[oType.id] = oType;
     }
+    // This is made by hand because not all types should be add.
     TYPES_BY_CLASS.put(Boolean.class, BOOLEAN);
     TYPES_BY_CLASS.put(Boolean.TYPE, BOOLEAN);
     TYPES_BY_CLASS.put(Integer.TYPE, INTEGER);
@@ -138,22 +140,32 @@ public enum OType {
     TYPES_BY_CLASS.put(ORecordId.class, LINK);
     TYPES_BY_CLASS.put(BigDecimal.class, DECIMAL);
     TYPES_BY_CLASS.put(ORidBag.class, LINKBAG);
+    TYPES_BY_CLASS.put(OTrackedList.class, EMBEDDEDLIST);
+    TYPES_BY_CLASS.put(OMVRBTreeRIDSet.class, LINKSET);
     TYPES_BY_CLASS.put(ORecordLazySet.class, LINKSET);
     TYPES_BY_CLASS.put(ORecordLazyList.class, LINKLIST);
     TYPES_BY_CLASS.put(ORecordLazyMap.class, LINKMAP);
+    BYTE.castable = new OType[] { BOOLEAN, BYTE };
+    SHORT.castable = new OType[] { BOOLEAN, BYTE, SHORT };
+    INTEGER.castable = new OType[] { BOOLEAN, BYTE, SHORT, INTEGER };
+    LONG.castable = new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG };
+    FLOAT.castable = new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, FLOAT };
+    DOUBLE.castable = new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE };
+    DECIMAL.castable = new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE, DECIMAL };
   }
 
   protected String                            name;
   protected int                               id;
   protected Class<?>                          javaDefaultType;
   protected Class<?>[]                        allowAssignmentFrom;
+  protected OType[]                           castable;
 
   private OType(final String iName, final int iId, final Class<?> iJavaDefaultType, final Class<?>[] iAllowAssignmentBy) {
     name = iName;
     id = iId;
     javaDefaultType = iJavaDefaultType;
     allowAssignmentFrom = iAllowAssignmentBy;
-
+    castable = new OType[] { this };
   }
 
   /**
@@ -687,6 +699,10 @@ public enum OType {
 
   public Class<?> getDefaultJavaType() {
     return javaDefaultType;
+  }
+
+  public OType[] getCastable() {
+    return castable;
   }
 
   @Deprecated
