@@ -38,7 +38,7 @@ public class OSQLMethodType extends OAbstractSQLMethod {
     if (ioResult == null) {
       return null;
     }
-    final OType t = OType.getTypeByClass(ioResult.getClass());
+    final OType t = OType.getTypeByValue(ioResult);
 
     if (t != null) {
       return t.toString();

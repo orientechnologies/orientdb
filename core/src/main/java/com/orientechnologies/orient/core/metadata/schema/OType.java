@@ -37,6 +37,8 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -140,10 +142,12 @@ public enum OType {
     TYPES_BY_CLASS.put(ORecordId.class, LINK);
     TYPES_BY_CLASS.put(BigDecimal.class, DECIMAL);
     TYPES_BY_CLASS.put(ORidBag.class, LINKBAG);
-    TYPES_BY_CLASS.put(OTrackedList.class, EMBEDDEDLIST);
+    TYPES_BY_CLASS.put(OTrackedSet.class, EMBEDDEDSET);
     TYPES_BY_CLASS.put(OMVRBTreeRIDSet.class, LINKSET);
     TYPES_BY_CLASS.put(ORecordLazySet.class, LINKSET);
+    TYPES_BY_CLASS.put(OTrackedList.class, EMBEDDEDLIST);
     TYPES_BY_CLASS.put(ORecordLazyList.class, LINKLIST);
+    TYPES_BY_CLASS.put(OTrackedMap.class, EMBEDDEDMAP);
     TYPES_BY_CLASS.put(ORecordLazyMap.class, LINKMAP);
     BYTE.castable = new OType[] { BOOLEAN, BYTE };
     SHORT.castable = new OType[] { BOOLEAN, BYTE, SHORT };
@@ -686,8 +690,6 @@ public enum OType {
     return iValue.toString();
   }
 
-  // never used
-  @Deprecated()
   public boolean isMultiValue() {
     return this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET || this == LINKLIST || this == LINKMAP
         || this == LINKSET;

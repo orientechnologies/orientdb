@@ -18,6 +18,8 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -122,9 +124,13 @@ public class TestOTypeDetection {
 
     assertEquals(OType.EMBEDDEDSET, OType.getTypeByClass(HashSet.class));
 
+    assertEquals(OType.EMBEDDEDSET, OType.getTypeByClass(OTrackedSet.class));
+
     assertEquals(OType.EMBEDDEDMAP, OType.getTypeByClass(Map.class));
 
     assertEquals(OType.EMBEDDEDMAP, OType.getTypeByClass(HashMap.class));
+
+    assertEquals(OType.EMBEDDEDMAP, OType.getTypeByClass(OTrackedMap.class));
 
     assertEquals(OType.LINKSET, OType.getTypeByClass(OMVRBTreeRIDSet.class));
 
