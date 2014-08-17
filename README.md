@@ -39,7 +39,7 @@ OrientDB is free for any use (Apache 2 license). If you are in production don't 
 Start learning OrientDB by following the first  [Tutorial](https://github.com/orientechnologies/orientdb/wiki/Tutorial:-Document-and-graph-model).
 
 ## Main References
-- [Documentation](https://github.com/orientechnologies/orientdb/wiki)
+- [Documentation](http://www.orientechnologies.com/docs/)
 - For any questions visit the [OrientDB Community Group](http://www.orientdb.org/community-group.htm)
 - [Professional Support](www.orientechnologies.com/support/).
 
