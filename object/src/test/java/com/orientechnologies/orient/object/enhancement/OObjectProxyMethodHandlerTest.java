@@ -1,0 +1,306 @@
+package com.orientechnologies.orient.object.enhancement;
+
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+
+/**
+ * @author JN <a href="mailto:jn@brain-activit.com">Julian Neuhaus</a>
+ * @since 18.08.2014
+ */
+public class OObjectProxyMethodHandlerTest
+{
+	private OObjectDatabaseTx databaseTx;
+	
+	private Map<String,Object> fieldsAndThereDefaultValue;
+
+	@BeforeClass
+	protected void setUp() throws Exception 
+	{
+		databaseTx = new OObjectDatabaseTx("memory:OObjectEnumLazyListTest");
+		databaseTx.create();
+
+		databaseTx.getEntityManager().registerEntityClass(EntityWithDifferentFieldTypes.class);
+		
+		fieldsAndThereDefaultValue = new HashMap<String,Object>();
+		fieldsAndThereDefaultValue.put("byteField",Byte.valueOf("0"));
+		fieldsAndThereDefaultValue.put("shortField",Short.valueOf("0"));
+		fieldsAndThereDefaultValue.put("intField",0);
+		fieldsAndThereDefaultValue.put("longField",0L);
+		fieldsAndThereDefaultValue.put("floatField",0.0f);
+		fieldsAndThereDefaultValue.put("doubleField",0.0d);
+		fieldsAndThereDefaultValue.put("stringField",null);
+		fieldsAndThereDefaultValue.put("booleanField",false);
+		fieldsAndThereDefaultValue.put("objectField",null);
+	}
+
+	@AfterClass
+	protected void tearDown() 
+	{
+		databaseTx.drop();
+	}
+	
+	@Test
+	public void reloadTestForListsInTarget()
+	{
+		EntityWithDifferentFieldTypes targetObject = new EntityWithDifferentFieldTypes();
+		
+		List<EntityWithDifferentFieldTypes> entitieList = new ArrayList<EntityWithDifferentFieldTypes>();
+		
+		EntityWithDifferentFieldTypes listObject1 = new EntityWithDifferentFieldTypes();
+		EntityWithDifferentFieldTypes listObject2 = new EntityWithDifferentFieldTypes();
+		
+		listObject1.setBooleanField(true);
+		listObject1.setByteField(Byte.MIN_VALUE);
+		listObject1.setDoubleField(1.1);
+		listObject1.setFloatField(1f);
+		listObject1.setIntField(13);
+		listObject1.setLongField(10);
+		listObject1.setShortField(Short.MIN_VALUE);
+		listObject1.setStringField("TEST2");
+		
+		listObject2.setBooleanField(true);
+		listObject2.setByteField(Byte.MIN_VALUE);
+		listObject2.setDoubleField(1.1);
+		listObject2.setFloatField(1f);
+		listObject2.setIntField(13);
+		listObject2.setLongField(10);
+		listObject2.setShortField(Short.MIN_VALUE);
+		listObject2.setStringField("TEST2");
+		
+		entitieList.add(listObject1);
+		entitieList.add(listObject2);
+		
+		targetObject.setListOfEntityWithDifferentFieldTypes(entitieList);
+		
+		targetObject = this.databaseTx.save(targetObject);
+		
+		for(EntityWithDifferentFieldTypes entity : targetObject.getListOfEntityWithDifferentFieldTypes())
+		{
+			assertTrue(entity.isBooleanField() == true);			
+			assertTrue(entity.getByteField() == Byte.MIN_VALUE);
+			assertTrue(entity.getDoubleField() == 1.1);
+			assertTrue(entity.getFloatField() == 1f);
+			assertTrue(entity.getIntField() == 13);
+			assertTrue(entity.getLongField() == 10);
+			assertTrue(entity.getObjectField() == null);
+			assertTrue(entity.getShortField() == Short.MIN_VALUE);
+			assertTrue("TEST2".equals(entity.getStringField()));
+			
+			entity.setBooleanField(false);
+			entity.setByteField(Byte.MAX_VALUE);
+			entity.setDoubleField(3.1);
+			entity.setFloatField(2f);
+			entity.setIntField(15);
+			entity.setLongField(11);
+			entity.setShortField(Short.MAX_VALUE);
+			entity.setStringField("TEST3");		
+			entity.setObjectField(new EntityWithDifferentFieldTypes());
+		}		
+		
+		for(EntityWithDifferentFieldTypes entity : targetObject.getListOfEntityWithDifferentFieldTypes())
+		{
+			this.databaseTx.reload(entity);
+			assertTrue(entity.isBooleanField() == true);
+			assertTrue(entity.getByteField() == Byte.MIN_VALUE);
+			assertTrue(entity.getDoubleField() == 1.1);
+			assertTrue(entity.getFloatField() == 1f);
+			assertTrue(entity.getIntField() == 13);
+			assertTrue(entity.getLongField() == 10);
+			assertTrue(entity.getObjectField() == null);
+			assertTrue(entity.getShortField() == Short.MIN_VALUE);
+			assertTrue("TEST2".equals(entity.getStringField()));
+		}
+	}
+	
+	@Test
+	public void getDefaultValueForFieldTest()
+	{
+		OObjectProxyMethodHandler handler = new OObjectProxyMethodHandler(null);
+		
+		Method m = null;
+		
+		try
+		{
+			m = handler.getClass().getDeclaredMethod("getDefaultValueForField",Field.class);
+			m.setAccessible(true);
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			fail("Unexpected exception");
+		}
+		
+		assertTrue(m != null);
+		
+		EntityWithDifferentFieldTypes testEntity = new EntityWithDifferentFieldTypes();
+		
+		for(String fieldName : fieldsAndThereDefaultValue.keySet())
+		{
+			Field field = null;
+			
+			try
+			{
+				field = testEntity.getClass().getDeclaredField(fieldName);
+				field.setAccessible(true);
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+				fail("Unexpected exception");
+			}
+			
+			assertTrue(field != null);			
+			
+			try
+			{
+				Object defaultValue = m.invoke(handler,field);
+				Object expectedValue = fieldsAndThereDefaultValue.get(fieldName);
+				
+				if(expectedValue == null)
+					assertTrue(defaultValue == null);
+				else
+					assertTrue(expectedValue.equals(defaultValue));
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+				fail("Unexpected exception");
+			}
+		}	
+	}
+	
+	public class EntityWithDifferentFieldTypes
+	{
+		private byte byteField;
+		private short shortField;
+		private int intField;
+		private long longField;
+		private float floatField;
+		private double doubleField;
+		private String stringField;
+		private boolean booleanField;
+		private EntityWithDifferentFieldTypes objectField;
+		
+		private List<EntityWithDifferentFieldTypes> listOfEntityWithDifferentFieldTypes;
+		
+		public EntityWithDifferentFieldTypes()
+		{
+			super();
+			this.listOfEntityWithDifferentFieldTypes = new ArrayList<EntityWithDifferentFieldTypes>();
+		}
+
+		public byte getByteField()
+		{
+			return byteField;
+		}
+
+		public void setByteField(byte byteField)
+		{
+			this.byteField = byteField;
+		}
+
+		public short getShortField()
+		{
+			return shortField;
+		}
+
+		public void setShortField(short shortField)
+		{
+			this.shortField = shortField;
+		}
+
+		public int getIntField()
+		{
+			return intField;
+		}
+
+		public void setIntField(int intField)
+		{
+			this.intField = intField;
+		}
+
+		public long getLongField()
+		{
+			return longField;
+		}
+
+		public void setLongField(long longField)
+		{
+			this.longField = longField;
+		}
+
+		public float getFloatField()
+		{
+			return floatField;
+		}
+
+		public void setFloatField(float floatField)
+		{
+			this.floatField = floatField;
+		}
+
+		public double getDoubleField()
+		{
+			return doubleField;
+		}
+
+		public void setDoubleField(double doubleField)
+		{
+			this.doubleField = doubleField;
+		}
+
+		public String getStringField()
+		{
+			return stringField;
+		}
+
+		public void setStringField(String stringField)
+		{
+			this.stringField = stringField;
+		}
+
+		public boolean isBooleanField()
+		{
+			return booleanField;
+		}
+
+		public void setBooleanField(boolean booleanField)
+		{
+			this.booleanField = booleanField;
+		}
+
+		public EntityWithDifferentFieldTypes getObjectField()
+		{
+			return objectField;
+		}
+
+		public void setObjectField(EntityWithDifferentFieldTypes objectField)
+		{
+			this.objectField = objectField;
+		}
+
+		public List<EntityWithDifferentFieldTypes> getListOfEntityWithDifferentFieldTypes()
+		{
+			return listOfEntityWithDifferentFieldTypes;
+		}
+
+		public void setListOfEntityWithDifferentFieldTypes(
+				List<EntityWithDifferentFieldTypes> listOfEntityWithDifferentFieldTypes)
+		{
+			this.listOfEntityWithDifferentFieldTypes = listOfEntityWithDifferentFieldTypes;
+		}
+	}
+}
