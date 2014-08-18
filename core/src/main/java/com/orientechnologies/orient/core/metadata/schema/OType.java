@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -149,27 +150,29 @@ public enum OType {
     TYPES_BY_CLASS.put(ORecordLazyList.class, LINKLIST);
     TYPES_BY_CLASS.put(OTrackedMap.class, EMBEDDEDMAP);
     TYPES_BY_CLASS.put(ORecordLazyMap.class, LINKMAP);
-    BYTE.castable = new OType[] { BOOLEAN, BYTE };
-    SHORT.castable = new OType[] { BOOLEAN, BYTE, SHORT };
-    INTEGER.castable = new OType[] { BOOLEAN, BYTE, SHORT, INTEGER };
-    LONG.castable = new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG };
-    FLOAT.castable = new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, FLOAT };
-    DOUBLE.castable = new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE };
-    DECIMAL.castable = new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE, DECIMAL };
+    BYTE.castable.add(BOOLEAN);
+    SHORT.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE }));
+    INTEGER.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT }));
+    LONG.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT, INTEGER }));
+    FLOAT.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT, INTEGER }));
+    DOUBLE.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG, FLOAT }));
+    DECIMAL.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE }));
+    LINKLIST.castable.add(LINKSET);
   }
 
   protected String                            name;
   protected int                               id;
   protected Class<?>                          javaDefaultType;
   protected Class<?>[]                        allowAssignmentFrom;
-  protected OType[]                           castable;
+  protected Set<OType>                        castable;
 
   private OType(final String iName, final int iId, final Class<?> iJavaDefaultType, final Class<?>[] iAllowAssignmentBy) {
     name = iName;
     id = iId;
     javaDefaultType = iJavaDefaultType;
     allowAssignmentFrom = iAllowAssignmentBy;
-    castable = new OType[] { this };
+    castable = new HashSet<OType>();
+    castable.add(this);
   }
 
   /**
@@ -703,7 +706,7 @@ public enum OType {
     return javaDefaultType;
   }
 
-  public OType[] getCastable() {
+  public Set<OType> getCastable() {
     return castable;
   }
 

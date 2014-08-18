@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
@@ -17,7 +16,16 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.log.OLogManager;
@@ -118,9 +126,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public OPropertyImpl setType(final OType type) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
+    final ODatabaseRecord database = getDatabase();
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -136,10 +144,10 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         setTypeInternal(type);
       } else
         setTypeInternal(type);
-
     } finally {
       releaseSchemaWriteLock();
     }
+    owner.fireDatabaseMigration(database, name, type);
 
     return this;
   }
@@ -1153,18 +1161,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         // NO CHANGES
         return;
 
-      boolean ok = false;
-      switch (type) {
-      case LINKLIST:
-        ok = iType == OType.LINKSET;
-        break;
-
-      case LINKSET:
-        ok = iType == OType.LINKLIST;
-        break;
-      }
-
-      if (!ok)
+      if (!type.getCastable().contains(iType))
         throw new IllegalArgumentException("Cannot change property type from " + type + " to " + iType);
 
       type = iType;
