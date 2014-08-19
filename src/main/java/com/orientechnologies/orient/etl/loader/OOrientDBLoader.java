@@ -18,6 +18,8 @@
 
 package com.orientechnologies.orient.etl.loader;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -32,8 +34,6 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.List;
 
 /**
  * ETL Loader that saves record into OrientDB database.
@@ -65,6 +65,13 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   public void load(final Object input, OCommandContext context) {
     if (input == null)
       return;
+
+    if (tx && dbType == DB_TYPE.DOCUMENT) {
+      final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+      if (!documentDatabase.getTransaction().isActive())
+        // BEGIN THE TRANSACTION FIRST
+        documentDatabase.begin();
+    }
 
     if (input instanceof OrientVertex) {
       // VERTEX
@@ -103,8 +110,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         } else {
           pipeline.getGraphDatabase().commit();
         }
-      }
-      batchCounter++;
+        batchCounter = 0;
+      } else
+        batchCounter++;
     }
   }
 
@@ -321,7 +329,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           continue;
 
         index = cls.createIndex(idxName, idxType, fields);
-        debug("- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType, idxClass, idxFields);
+        debug("- OrientDocumentLoader: created index '%s' type '%s' against Class '%s', fields %s", idxName, idxType, idxClass,
+            idxFields);
       }
     }
     return documentDatabase;
