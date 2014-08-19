@@ -288,7 +288,7 @@ public class OETLProcessor implements OETLComponent {
         threads[i] = new Thread(new Runnable() {
           @Override
           public void run() {
-            final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, context, maxRetries);
+            final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, context, verbose, maxRetries);
             pipeline.begin();
 
             while (!extractionFinished.get() || counter.get() > 0) {
@@ -448,7 +448,7 @@ public class OETLProcessor implements OETLComponent {
           extractor.extract(reader);
       }
 
-      final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, context, maxRetries);
+      final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, context, verbose, maxRetries);
       pipeline.begin();
 
       while (extractor.hasNext()) {

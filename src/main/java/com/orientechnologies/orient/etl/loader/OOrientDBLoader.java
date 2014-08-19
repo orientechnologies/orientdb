@@ -18,8 +18,6 @@
 
 package com.orientechnologies.orient.etl.loader;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -34,6 +32,8 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.List;
 
 /**
  * ETL Loader that saves record into OrientDB database.

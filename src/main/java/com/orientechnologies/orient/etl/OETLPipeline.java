@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.etl.loader.OLoader;
@@ -37,12 +38,14 @@ public class OETLPipeline {
   protected final List<OTransformer>   transformers;
   protected final OLoader              loader;
   protected final OBasicCommandContext context;
+  protected final boolean              verbose;
   protected final int                  maxRetries;
   protected ODatabaseDocumentTx        db;
   protected OrientBaseGraph            graph;
 
   public OETLPipeline(final OETLProcessor iProcessor, final List<OTransformer> iTransformers, final OLoader iLoader,
-      final OBasicCommandContext iContext, final int iMaxRetries) {
+      final OBasicCommandContext iContext, final boolean iVerbose, final int iMaxRetries) {
+    verbose = iVerbose;
     processor = iProcessor;
     context = iContext;
 
@@ -95,8 +98,11 @@ public class OETLPipeline {
         Object current = source;
         for (OTransformer t : transformers) {
           current = t.transform(current);
-          if (current == null)
+          if (current == null) {
+            if (verbose)
+              OLogManager.instance().warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
             break;
+          }
         }
 
         if (current != null)
