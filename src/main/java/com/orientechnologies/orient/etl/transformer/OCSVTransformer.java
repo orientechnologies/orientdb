@@ -106,7 +106,7 @@ public class OCSVTransformer extends OAbstractTransformer {
 
     if (columnNames == null) {
       if (!columnsOnFirstLine)
-        throw new OTransformException("CSV: columnsOnFirstLine=false and no columns declared");
+        throw new OTransformException(getName() + ": columnsOnFirstLine=false and no columns declared");
       columnNames = fields;
 
       // REMOVE ANY STRING CHARACTERS IF ANY

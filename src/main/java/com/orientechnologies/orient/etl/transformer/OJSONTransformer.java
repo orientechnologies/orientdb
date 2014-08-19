@@ -33,6 +33,6 @@ public class OJSONTransformer extends OAbstractTransformer {
     else if (input instanceof String)
       return new ODocument((String) input);
     else
-      throw new OTransformException("[JSON transformer] Unknown input '" + input + "' of class '" + input.getClass() + "'");
+      throw new OTransformException(getName() + ": unknown input '" + input + "' of class '" + input.getClass() + "'");
   }
 }

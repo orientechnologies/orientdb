@@ -87,7 +87,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
     else if (input instanceof OrientVertex)
       vertex = (OrientVertex) input;
     else
-      throw new OTransformException("Input type '" + input + "' is not supported");
+      throw new OTransformException(getName() + ": input type '" + input + "' is not supported");
 
     Object joinValue = vertex.getProperty(joinFieldName);
 
