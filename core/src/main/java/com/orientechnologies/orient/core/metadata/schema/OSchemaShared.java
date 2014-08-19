@@ -1020,7 +1020,14 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public OGlobalProperty createGlobalProperty(String name, OType type, Integer id) {
-    OGlobalProperty global = new OGlobalPropertyImpl(name, type, id);
+    OGlobalProperty global;
+    if (id < properties.size() && (global = properties.get(id)) != null) {
+      if (!global.getName().equals(name) || !global.getType().equals(type))
+        throw new OSchemaException("A property with id " + id + " already exist ");
+      return global;
+    }
+
+    global = new OGlobalPropertyImpl(name, type, id);
     ensurePropertiesSize(id);
     properties.set(id, global);
     propertiesByNameType.put(global.getName() + "|" + global.getType().name(), global);
