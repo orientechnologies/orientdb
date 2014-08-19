@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableInteger;
@@ -44,6 +45,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -60,7 +63,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   private final boolean                         clustersCanNotBeSharedAmongClasses;
 
-  private final ReadWriteLock                   readWriteLock           = new ReentrantReadWriteLock();
+  private final OReadersWriterSpinLock          rwSpinLock              = new OReadersWriterSpinLock();
 
   private final Map<String, OClass>             classes                 = new HashMap<String, OClass>();
   private final Map<Integer, OClass>            clustersToClasses       = new HashMap<Integer, OClass>();
@@ -333,8 +336,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
           clusterIds[0] = database.getClusterIdByName(className);
           if (clusterIds[0] == -1)
             clusterIds[0] = database.addCluster(className);
-        }
-        else
+        } else
           for (int i = 0; i < minimumClusters; ++i) {
             clusterIds[i] = database.getClusterIdByName(className + "_" + i);
             if (clusterIds[i] == -1)
@@ -458,7 +460,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#dropClass(java.lang.String)
    */
   public void dropClass(final String className) {
@@ -565,13 +567,13 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
    */
   @Override
   public <RET extends ODocumentWrapper> RET reload() {
-    readWriteLock.writeLock().lock();
+    rwSpinLock.acquireWriteLock();
     try {
       reload(null);
 
       return (RET) this;
     } finally {
-      readWriteLock.writeLock().unlock();
+      rwSpinLock.releaseWriteLock();
     }
   }
 
@@ -586,7 +588,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#getClass(java.lang.Class)
    */
   public OClass getClass(final Class<?> iClass) {
@@ -595,7 +597,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   /*
    * (non-Javadoc)
-   *
+   * 
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#getClass(java.lang.String)
    */
   public OClass getClass(final String iClassName) {
@@ -629,15 +631,15 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public void acquireSchemaReadLock() {
-    readWriteLock.readLock().lock();
+    rwSpinLock.acquireReadLock();
   }
 
   public void releaseSchemaReadLock() {
-    readWriteLock.readLock().unlock();
+    rwSpinLock.releaseReadLock();
   }
 
   public void acquireSchemaWriteLock() {
-    readWriteLock.writeLock().lock();
+    rwSpinLock.acquireWriteLock();
     modificationCounter.get().increment();
   }
 
@@ -653,7 +655,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
           reload();
       }
     } finally {
-      readWriteLock.writeLock().unlock();
+      rwSpinLock.releaseWriteLock();
       modificationCounter.get().decrement();
     }
 
@@ -683,7 +685,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
    */
   @Override
   public void fromStream() {
-    readWriteLock.writeLock().lock();
+    rwSpinLock.acquireWriteLock();
     modificationCounter.get().increment();
     try {
       // READ CURRENT SCHEMA VERSION
@@ -750,7 +752,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
     } finally {
       modificationCounter.get().decrement();
-      readWriteLock.writeLock().unlock();
+      rwSpinLock.releaseWriteLock();
     }
   }
 
@@ -760,7 +762,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   @Override
   @OBeforeSerialization
   public ODocument toStream() {
-    readWriteLock.readLock().lock();
+    rwSpinLock.acquireReadLock();
     try {
       document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
@@ -779,7 +781,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       return document;
     } finally {
-      readWriteLock.readLock().unlock();
+      rwSpinLock.releaseReadLock();
     }
   }
 
@@ -814,7 +816,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   @Override
   public OSchemaShared load() {
-    readWriteLock.writeLock().lock();
+    rwSpinLock.acquireWriteLock();
     try {
       getDatabase();
       ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().schemaRecordId);
@@ -822,29 +824,29 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       return this;
     } finally {
-      readWriteLock.writeLock().unlock();
+      rwSpinLock.releaseWriteLock();
     }
   }
 
   public void create() {
-    readWriteLock.writeLock().lock();
+    rwSpinLock.acquireWriteLock();
     try {
       final ODatabaseRecord db = getDatabase();
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
       db.getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
       db.getStorage().getConfiguration().update();
     } finally {
-      readWriteLock.writeLock().unlock();
+      rwSpinLock.releaseWriteLock();
     }
   }
 
   public void close(boolean onDelete) {
-    readWriteLock.writeLock().lock();
+    rwSpinLock.acquireWriteLock();
     try {
       classes.clear();
       document.clear();
     } finally {
-      readWriteLock.writeLock().unlock();
+      rwSpinLock.releaseWriteLock();
     }
   }
 
@@ -902,12 +904,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public OSchemaShared setDirty() {
-    readWriteLock.writeLock().lock();
+    rwSpinLock.acquireWriteLock();
     try {
       document.setDirty();
       return this;
     } finally {
-      readWriteLock.writeLock().unlock();
+      rwSpinLock.releaseWriteLock();
     }
   }
 
