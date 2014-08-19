@@ -233,6 +233,17 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     return dbType == DB_TYPE.DOCUMENT ? "documents" : "vertices";
   }
 
+  @Override
+  public void rollback() {
+    if (tx)
+      if (dbType == DB_TYPE.DOCUMENT) {
+        final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+        if (documentDatabase.getTransaction().isActive())
+          documentDatabase.rollback();
+      } else
+        pipeline.getGraphDatabase().rollback();
+  }
+
   protected synchronized ODatabaseDocumentTx init() {
     ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
     OrientBaseGraph graphDatabase;

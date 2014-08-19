@@ -24,7 +24,11 @@ import com.orientechnologies.common.exception.OException;
  * Created by luca on 30/06/14.
  */
 public class OETLProcessHaltedException extends OException {
-  public OETLProcessHaltedException(String s) {
+  public OETLProcessHaltedException(Throwable iNested) {
+    super(iNested);
+  }
+
+  public OETLProcessHaltedException(final String s) {
     super(s);
   }
 }

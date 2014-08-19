@@ -18,9 +18,6 @@
 
 package com.orientechnologies.orient.etl;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.etl.block.OBlock;
 import com.orientechnologies.orient.etl.block.OCodeBlock;
@@ -38,6 +35,9 @@ import com.orientechnologies.orient.etl.source.OHttpSource;
 import com.orientechnologies.orient.etl.source.OInputSource;
 import com.orientechnologies.orient.etl.source.OSource;
 import com.orientechnologies.orient.etl.transformer.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * ETL component factory. Registers all the ETL components.

@@ -30,4 +30,6 @@ public interface OLoader extends OETLPipelineComponent {
   public long getProgress();
 
   public String getUnit();
+
+  public void rollback();
 }

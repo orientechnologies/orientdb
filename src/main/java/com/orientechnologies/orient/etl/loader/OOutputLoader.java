@@ -37,6 +37,10 @@ public class OOutputLoader extends OAbstractLoader {
   }
 
   @Override
+  public void rollback() {
+  }
+
+  @Override
   public ODocument getConfiguration() {
     return new ODocument();
   }

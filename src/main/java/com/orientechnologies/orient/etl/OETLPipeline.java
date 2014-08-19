@@ -111,8 +111,15 @@ public class OETLPipeline {
 
         return current;
       } catch (ONeedRetryException e) {
+        loader.rollback();
         retry++;
         processor.out(true, "Error in pipeline execution, retry = %d/%d", retry, maxRetries);
+      } catch (OETLProcessHaltedException e) {
+        loader.rollback();
+        throw e;
+      } catch (Exception e) {
+        loader.rollback();
+        throw new OETLProcessHaltedException(e);
       }
     } while (retry < maxRetries);
 
