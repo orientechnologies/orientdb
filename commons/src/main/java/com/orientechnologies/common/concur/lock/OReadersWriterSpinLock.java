@@ -15,30 +15,30 @@ import java.util.concurrent.locks.LockSupport;
  * @since 8/18/14
  */
 public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
-  private static final int                             NCPU           = Runtime.getRuntime().availableProcessors();
-  private static final MersenneTwister                 RANDOM         = new MersenneTwister();
-  private static final int                             COUNTERS_SIZE  = 1 << (32 - Integer.numberOfLeadingZeros((NCPU << 2) - 1));
-  private static final int                             MASK           = COUNTERS_SIZE - 1;
+  private static final int                      NCPU           = Runtime.getRuntime().availableProcessors();
+  private static final int                      COUNTERS_SIZE  = 1 << (32 - Integer.numberOfLeadingZeros((NCPU << 2) - 1));
+  private static final int                      MASK           = COUNTERS_SIZE - 1;
 
-  private static final ThreadLocal<Integer>            threadHashCode = new ThreadLocal<Integer>() {
-                                                                        @Override
-                                                                        protected Integer initialValue() {
-                                                                          return RANDOM.nextInt();
-                                                                        }
-                                                                      };
+  private final MersenneTwister                 random         = new MersenneTwister();
+  private final ThreadLocal<Integer>            threadHashCode = new ThreadLocal<Integer>() {
+                                                                 @Override
+                                                                 protected Integer initialValue() {
+                                                                   return random.nextInt();
+                                                                 }
+                                                               };
 
-  private final AtomicInteger                          writeState     = new AtomicInteger(0);
+  private final AtomicInteger                   writeState     = new AtomicInteger(0);
 
-  private final PaddedCounter[]                        readCounters;
+  private final PaddedCounter[]                 readCounters;
 
-  private final long                                   writeDelay;
+  private final long                            writeDelay;
 
-  private static final ThreadLocal<OModifiableInteger> lockHolds      = new ThreadLocal<OModifiableInteger>() {
-                                                                        @Override
-                                                                        protected OModifiableInteger initialValue() {
-                                                                          return new OModifiableInteger();
-                                                                        }
-                                                                      };
+  private final ThreadLocal<OModifiableInteger> lockHolds      = new ThreadLocal<OModifiableInteger>() {
+                                                                 @Override
+                                                                 protected OModifiableInteger initialValue() {
+                                                                   return new OModifiableInteger();
+                                                                 }
+                                                               };
 
   public OReadersWriterSpinLock() {
     this(100 * 1000); // 0.1 ms

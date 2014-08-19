@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
+import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -90,7 +91,7 @@ public class OWOWCache {
   private final AtomicInteger                               cacheSize             = new AtomicInteger();
   private final ONewLockManager<GroupKey>                   lockManager           = new ONewLockManager<GroupKey>();
   private final OLocalPaginatedStorage                      storageLocal;
-  private final ReadWriteLock                               filesLock             = new ReentrantReadWriteLock();
+  private final OReadersWriterSpinLock                      filesLock             = new OReadersWriterSpinLock();
   private final ScheduledExecutorService                    commitExecutor        = Executors
                                                                                       .newSingleThreadScheduledExecutor(new ThreadFactory() {
                                                                                         @Override
@@ -112,7 +113,7 @@ public class OWOWCache {
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
       int cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize) {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       this.files = new ConcurrentHashMap<Long, OFileClassic>();
 
@@ -132,7 +133,7 @@ public class OWOWCache {
       if (pageFlushInterval > 0)
         commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
@@ -146,7 +147,7 @@ public class OWOWCache {
   }
 
   public long openFile(String fileName) throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
 
@@ -172,12 +173,12 @@ public class OWOWCache {
       return fileId;
 
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
   public void openFile(String fileName, long fileId) throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
 
@@ -204,7 +205,7 @@ public class OWOWCache {
 
       openFile(fileClassic);
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
@@ -221,7 +222,7 @@ public class OWOWCache {
   }
 
   public void openFile(long fileId) throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
 
@@ -232,12 +233,12 @@ public class OWOWCache {
       openFile(fileClassic);
 
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
   public boolean exists(String fileName) {
-    filesLock.readLock().lock();
+    filesLock.acquireReadLock();
     try {
       if (nameIdMap != null && nameIdMap.containsKey(fileName))
         return true;
@@ -246,12 +247,12 @@ public class OWOWCache {
           storageLocal.getStoragePath() + File.separator + fileName));
       return file.exists();
     } finally {
-      filesLock.readLock().unlock();
+      filesLock.releaseReadLock();
     }
   }
 
   public boolean exists(long fileId) {
-    filesLock.readLock().lock();
+    filesLock.acquireReadLock();
     try {
       final OFileClassic file = files.get(fileId);
       if (file == null)
@@ -259,14 +260,14 @@ public class OWOWCache {
 
       return file.exists();
     } finally {
-      filesLock.readLock().unlock();
+      filesLock.releaseReadLock();
     }
   }
 
   public Future store(final long fileId, final long pageIndex, final OCachePointer dataPointer) {
     Future future = null;
 
-    filesLock.readLock().lock();
+    filesLock.acquireReadLock();
     try {
       final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
       Lock groupLock = lockManager.acquireExclusiveLock(groupKey);
@@ -304,12 +305,12 @@ public class OWOWCache {
 
       return future;
     } finally {
-      filesLock.readLock().unlock();
+      filesLock.releaseReadLock();
     }
   }
 
   public OCachePointer load(long fileId, long pageIndex) throws IOException {
-    filesLock.readLock().lock();
+    filesLock.acquireReadLock();
     try {
       final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
       Lock groupLock = lockManager.acquireSharedLock(groupKey);
@@ -336,7 +337,7 @@ public class OWOWCache {
         lockManager.releaseLock(groupLock);
       }
     } finally {
-      filesLock.readLock().unlock();
+      filesLock.releaseReadLock();
     }
   }
 
@@ -358,16 +359,16 @@ public class OWOWCache {
   }
 
   public long getFilledUpTo(long fileId) throws IOException {
-    filesLock.readLock().lock();
+    filesLock.acquireReadLock();
     try {
       return files.get(fileId).getFilledUpTo() / pageSize;
     } finally {
-      filesLock.readLock().unlock();
+      filesLock.releaseReadLock();
     }
   }
 
   public boolean isOpen(long fileId) {
-    filesLock.readLock().lock();
+    filesLock.acquireReadLock();
     try {
       OFileClassic fileClassic = files.get(fileId);
       if (fileClassic != null)
@@ -375,12 +376,12 @@ public class OWOWCache {
 
       return false;
     } finally {
-      filesLock.readLock().unlock();
+      filesLock.releaseReadLock();
     }
   }
 
   public long isOpen(String fileName) throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       initNameIdMapping();
 
@@ -394,33 +395,33 @@ public class OWOWCache {
 
       return fileId;
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
   public void setSoftlyClosed(long fileId, boolean softlyClosed) throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       OFileClassic fileClassic = files.get(fileId);
       if (fileClassic != null && fileClassic.isOpen())
         fileClassic.setSoftlyClosed(softlyClosed);
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       for (long fileId : files.keySet())
         setSoftlyClosed(fileId, softlyClosed);
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
   public boolean wasSoftlyClosed(long fileId) throws IOException {
-    filesLock.readLock().lock();
+    filesLock.acquireReadLock();
     try {
       OFileClassic fileClassic = files.get(fileId);
       if (fileClassic == null)
@@ -428,12 +429,12 @@ public class OWOWCache {
 
       return fileClassic.wasSoftlyClosed();
     } finally {
-      filesLock.readLock().unlock();
+      filesLock.releaseReadLock();
     }
   }
 
   public void deleteFile(long fileId) throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       final String name = doDeleteFile(fileId);
       if (name != null) {
@@ -441,22 +442,22 @@ public class OWOWCache {
         writeNameIdEntry(new NameFileIdEntry(name, -1), true);
       }
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
   public void truncateFile(long fileId) throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       removeCachedPages(fileId);
       files.get(fileId).shrink(0);
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
   public void renameFile(long fileId, String oldFileName, String newFileName) throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       if (!files.containsKey(fileId))
         return;
@@ -479,7 +480,7 @@ public class OWOWCache {
       writeNameIdEntry(new NameFileIdEntry(oldFileName, -1), false);
       writeNameIdEntry(new NameFileIdEntry(newFileName, fileId), true);
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
@@ -499,7 +500,7 @@ public class OWOWCache {
       }
     }
 
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       for (OFileClassic fileClassic : files.values()) {
         if (fileClassic.isOpen())
@@ -515,12 +516,12 @@ public class OWOWCache {
         nameIdMapHolder.close();
       }
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
   public Set<ODirtyPage> logDirtyPagesTable() throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       if (writeAheadLog == null)
         return Collections.emptySet();
@@ -544,12 +545,12 @@ public class OWOWCache {
       writeAheadLog.logDirtyPages(logDirtyPages);
       return logDirtyPages;
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
   public void close(long fileId, boolean flush) throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       if (flush)
         flush(fileId);
@@ -558,7 +559,7 @@ public class OWOWCache {
 
       files.get(fileId).close();
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
@@ -566,7 +567,7 @@ public class OWOWCache {
     final int notificationTimeOut = 5000;
     final List<OPageDataVerificationError> errors = new ArrayList<OPageDataVerificationError>();
 
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       for (long fileId : files.keySet()) {
 
@@ -645,12 +646,12 @@ public class OWOWCache {
 
       return errors.toArray(new OPageDataVerificationError[errors.size()]);
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
   }
 
   public void delete() throws IOException {
-    filesLock.writeLock().lock();
+    filesLock.acquireWriteLock();
     try {
       for (long fileId : files.keySet())
         doDeleteFile(fileId);
@@ -667,7 +668,7 @@ public class OWOWCache {
         nameIdMapHolderFile = null;
       }
     } finally {
-      filesLock.writeLock().unlock();
+      filesLock.releaseWriteLock();
     }
 
     if (!commitExecutor.isShutdown()) {
@@ -685,11 +686,11 @@ public class OWOWCache {
   }
 
   public String fileNameById(long fileId) {
-    filesLock.readLock().lock();
+    filesLock.acquireReadLock();
     try {
       return files.get(fileId).getName();
     } finally {
-      filesLock.readLock().unlock();
+      filesLock.releaseReadLock();
     }
   }
 
