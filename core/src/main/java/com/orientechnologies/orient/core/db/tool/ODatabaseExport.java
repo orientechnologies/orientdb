@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.zip.Deflater;
+import java.util.zip.GZIPOutputStream;
+
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -29,6 +41,7 @@ import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
@@ -39,25 +52,13 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.zip.Deflater;
-import java.util.zip.GZIPOutputStream;
-
 /**
  * Export data from a database to a file.
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  public static final int VERSION = 9;
+  public static final int VERSION           = 9;
 
   protected OJSONWriter   writer;
   protected long          recordExported;
@@ -452,6 +453,18 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.beginObject(1, true, "schema");
     OSchemaProxy s = (OSchemaProxy) database.getMetadata().getSchema();
     writer.writeAttribute(2, true, "version", s.getVersion());
+
+    if (!s.getGlobalProperties().isEmpty()) {
+      writer.beginCollection(2, true, "globalProperties");
+      for (OGlobalProperty global : s.getGlobalProperties()) {
+        writer.beginObject(3, true, null);
+        writer.writeAttribute(0, false, "name", global.getName());
+        writer.writeAttribute(0, false, "global-id", global.getId());
+        writer.writeAttribute(0, false, "type", global.getType().toString());
+        writer.endObject(3, true);
+      }
+      writer.endCollection(2, true);
+    }
 
     if (!s.getClasses().isEmpty()) {
       writer.beginCollection(2, true, "classes");

@@ -16,10 +16,10 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 public interface OSchema {
@@ -97,5 +97,12 @@ public interface OSchema {
    */
   public Set<OClass> getClassesRelyOnCluster(String iClusterName);
 
-	public OClass getClassByClusterId(int clusterId);
+  public OClass getClassByClusterId(int clusterId);
+
+  public OGlobalProperty getGlobalPropertyById(int id);
+
+  public List<OGlobalProperty> getGlobalProperties();
+  
+  public OGlobalProperty createGlobalProperty(String name, OType type, Integer id);
+  
 }

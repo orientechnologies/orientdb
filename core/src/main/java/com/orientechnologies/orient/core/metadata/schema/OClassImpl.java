@@ -1320,7 +1320,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       if (properties.containsKey(lowerName))
         throw new OSchemaException("Class " + this.name + " already has property '" + name + "'");
 
-      final OPropertyImpl prop = new OPropertyImpl(this, name, type);
+      OGlobalProperty global = owner.findOrCreateGlobalProperty(name, type);
+
+      final OPropertyImpl prop = new OPropertyImpl(this, global);
 
       properties.put(lowerName, prop);
 
@@ -1890,6 +1892,26 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   }
 
+  public void firePropertyNameMigration(final ODatabaseRecord database, final String propertyName, final String newPropertyName,
+      final OType type) {
+    database.query(new OSQLAsynchQuery<Object>("select from " + name + " where " + propertyName + " is not null ", new OCommandResultListener() {
+
+      @Override
+      public boolean result(Object iRecord) {
+        final ODocument record = ((OIdentifiable) iRecord).getRecord();
+        record.setFieldType(propertyName, type);
+        record.field(newPropertyName, record.field(propertyName), type);
+        database.save(record);
+        return true;
+      }
+
+      @Override
+      public void end() {
+      }
+    }));
+
+  }
+
   private int getClusterId(final String stringValue) {
     int clId;
     try {
@@ -2055,4 +2077,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   }
 
+  public OSchemaShared getOwner() {
+    return owner;
+  }
+  
 }
