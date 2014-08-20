@@ -158,6 +158,7 @@ public enum OType {
     DOUBLE.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG, FLOAT }));
     DECIMAL.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE }));
     LINKLIST.castable.add(LINKSET);
+    EMBEDDEDLIST.castable.add(EMBEDDEDSET);
   }
 
   protected String                            name;
