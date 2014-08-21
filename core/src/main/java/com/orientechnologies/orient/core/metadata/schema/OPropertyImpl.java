@@ -946,10 +946,19 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   @SuppressWarnings("unchecked")
   @Override
   public void fromStream() {
-    // name = document.field("name");
-    // if (document.field("type") != null)
-    // type = OType.getById(((Integer) document.field("type")).byteValue());
-    globalRef = owner.owner.getGlobalPropertyById((Integer) document.field("globalId"));
+
+    String name = document.field("name");
+    OType type = null;
+    if (document.field("type") != null)
+      type = OType.getById(((Integer) document.field("type")).byteValue());
+    Integer globalId = document.field("globalId");
+    if (globalId != null)
+      globalRef = owner.owner.getGlobalPropertyById(globalId);
+    else {
+      if (type == null)
+        type = OType.ANY;
+      globalRef = owner.owner.findOrCreateGlobalProperty(name, type);
+    }
 
     mandatory = document.containsField("mandatory") ? (Boolean) document.field("mandatory") : false;
     readonly = document.containsField("readonly") ? (Boolean) document.field("readonly") : false;
