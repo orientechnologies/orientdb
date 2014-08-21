@@ -22,10 +22,12 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -52,15 +54,38 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       document.setClassNameIfExists(className);
     int last = 0;
     String field;
-    while ((field = readString(bytes)).length() != 0) {
+    while (true) {
+      OGlobalProperty prop = null;
+      final int len = OVarIntSerializer.readAsInteger(bytes);
+      if (len == 0)
+        break;
+      else if (len > 0) {
+        final String res = new String(bytes.bytes, bytes.offset, len, utf8);
+        bytes.skip(len);
+        field = res;
+      } else {
+        ODatabaseRecord db = document.getDatabase();
+        if (db == null || db.isClosed())
+          throw new ODatabaseException("Impossible deserialize the document no database present");
+        prop = db.getMetadata().getSchema().getGlobalPropertyById((len * -1) - 1);
+        field = prop.getName();
+      }
+
       if (document.containsField(field)) {
         // SKIP FIELD
-        bytes.skip(OIntegerSerializer.INT_SIZE + 1);
+        if (prop != null && prop.getType() != OType.ANY)
+          bytes.skip(OIntegerSerializer.INT_SIZE);
+        else
+          bytes.skip(OIntegerSerializer.INT_SIZE + 1);
         continue;
       }
 
       final int valuePos = readInteger(bytes);
-      final OType type = readOType(bytes);
+      final OType type;
+      if (prop != null && prop.getType() != OType.ANY)
+        type = prop.getType();
+      else
+        type = readOType(bytes);
 
       if (valuePos != 0) {
         int headerCursor = bytes.offset;
@@ -89,11 +114,21 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     else
       writeEmptyString(bytes);
     int[] pos = new int[document.fields()];
+    OProperty[] properties = new OProperty[document.fields()];
     int i = 0;
     Entry<String, ?> values[] = new Entry[document.fields()];
     for (Entry<String, Object> entry : document) {
-      writeString(bytes, entry.getKey());
-      pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
+      properties[i] = getSchemaProperty(document, entry.getKey());
+      if (properties[i] != null) {
+        OVarIntSerializer.write(bytes, (properties[i].getId() + 1) * -1);
+        if (properties[i].getType() != OType.ANY)
+          pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE);
+        else
+          pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
+      } else {
+        writeString(bytes, entry.getKey());
+        pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
+      }
       values[i] = entry;
       i++;
     }
@@ -109,7 +144,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           continue;
         pointer = writeSingleValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
-        writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
+        if (properties[i] == null || properties[i].getType() == OType.ANY)
+          writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
     }
 
@@ -537,6 +573,13 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       }
     }
     return pos;
+  }
+
+  private OProperty getSchemaProperty(ODocument document, String key) {
+    OClass clazz = document.getSchemaClass();
+    if (clazz != null)
+      return clazz.getProperty(key);
+    return null;
   }
 
   private OType getFieldType(ODocument document, String key, Object fieldValue) {
