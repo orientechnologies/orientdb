@@ -1,12 +1,5 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -28,6 +21,13 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * OrientDB Vertex implementation of TinkerPop Blueprints standard.
@@ -91,7 +91,8 @@ public class OrientVertex extends OrientElement implements Vertex {
   /**
    * (Internal only) Creates a link between a vertices and a Graph Element.
    */
-  public static Object createLink(final ODocument iFromVertex, final OIdentifiable iTo, final String iFieldName) {
+  public static Object createLink(final OrientBaseGraph iGraph, final ODocument iFromVertex, final OIdentifiable iTo,
+      final String iFieldName) {
     final Object out;
     Object found = iFromVertex.field(iFieldName);
 
@@ -100,24 +101,28 @@ public class OrientVertex extends OrientElement implements Vertex {
       throw new IllegalArgumentException("Class ot found in source vertex: " + iFromVertex);
 
     final OProperty prop = linkClass.getProperty(iFieldName);
+    final OType propType = prop != null && prop.getType() != OType.ANY ? prop.getType() : null;
+
     if (found == null) {
-      // CREATE ONLY ONE LINK
-      if (prop == null || prop.getType().equals(OType.LINK) || "true".equalsIgnoreCase(prop.getCustom("ordered")))
+      if (iGraph.isAutoScaleEdgeType()
+          && (prop == null || propType == OType.LINK || "true".equalsIgnoreCase(prop.getCustom("ordered")))) {
+        // CREATE ONLY ONE LINK
         out = iTo;
-      else if (prop.getType().equals(OType.LINKBAG)) {
-        final ORidBag bag = new ORidBag();
-        bag.add(iTo);
-        out = bag;
-      } else if (prop.getType().equals(OType.LINKLIST)) {
+      } else if (propType == OType.LINKLIST || ( prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered")))) {
         final Collection coll = new OTrackedList<Object>(iFromVertex);
         coll.add(iTo);
         out = coll;
+      } else if (propType == null || propType == OType.LINKBAG) {
+        final ORidBag bag = new ORidBag(iGraph.getEdgeContainerEmbedded2TreeThreshold(),
+            iGraph.getEdgeContainerEmbedded2TreeThreshold());
+        bag.add(iTo);
+        out = bag;
       } else
         throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
             + " can not be used for link creation.");
 
     } else if (found instanceof OIdentifiable) {
-      if (prop != null && prop.getType().equals(OType.LINK))
+      if (prop != null && propType == OType.LINK)
         throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
             + " can not be used for creation to hold several links.");
 
@@ -127,7 +132,8 @@ public class OrientVertex extends OrientElement implements Vertex {
         coll.add(iTo);
         out = coll;
       } else {
-        final ORidBag bag = new ORidBag();
+        final ORidBag bag = new ORidBag(iGraph.getEdgeContainerEmbedded2TreeThreshold(),
+            iGraph.getEdgeContainerEmbedded2TreeThreshold());
         bag.add((OIdentifiable) found);
         bag.add(iTo);
         out = bag;
@@ -705,10 +711,10 @@ public class OrientVertex extends OrientElement implements Vertex {
     }
 
     // OUT-VERTEX ---> IN-VERTEX/EDGE
-    createLink(outDocument, to, outFieldName);
+    createLink(graph, outDocument, to, outFieldName);
 
     // IN-VERTEX ---> OUT-VERTEX/EDGE
-    createLink(inDocument, from, inFieldName);
+    createLink(graph, inDocument, from, inFieldName);
 
     if (graph != null) {
       edge.save(iClusterName);

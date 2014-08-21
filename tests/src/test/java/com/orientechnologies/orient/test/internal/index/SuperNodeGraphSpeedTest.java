@@ -15,7 +15,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * @since 14.08.13
  */
 public class SuperNodeGraphSpeedTest extends SpeedTestMonoThread {
-  private final static long TOT = 1000000l;
+  private final static long TOT = 100000l;
   private OrientBaseGraph   graph;
   private OrientVertex      superNode;
 
