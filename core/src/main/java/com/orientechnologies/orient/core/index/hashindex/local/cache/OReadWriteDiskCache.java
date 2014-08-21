@@ -8,11 +8,9 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
+import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -52,8 +50,8 @@ public class OReadWriteDiskCache implements ODiskCache {
    */
   private final ConcurrentMap<Long, Set<Long>>        filePages;
 
-  private final ReadWriteLock                         cacheLock                  = new ReentrantReadWriteLock();
-  private final ONewLockManager                       fileLockManager            = new ONewLockManager();
+  private final OReadersWriterSpinLock                cacheLock                  = new OReadersWriterSpinLock();
+  private final ONewLockManager                       fileLockManager            = new ONewLockManager(true);
   private final ONewLockManager<PageKey>              pageLockManager            = new ONewLockManager<PageKey>();
   private final NavigableMap<PinnedPage, OCacheEntry> pinnedPages                = new ConcurrentSkipListMap<PinnedPage, OCacheEntry>();
 
@@ -76,7 +74,7 @@ public class OReadWriteDiskCache implements ODiskCache {
   public OReadWriteDiskCache(final String storageName, final long readCacheMaxMemory, final long writeCacheMaxMemory,
       final int pageSize, final long writeGroupTTL, final int pageFlushInterval, final OLocalPaginatedStorage storageLocal,
       final OWriteAheadLog writeAheadLog, final boolean syncOnPageFlush, final boolean checkMinSize) {
-    cacheLock.writeLock().lock();
+    cacheLock.acquireWriteLock();
     try {
       this.storageName = storageName;
       this.pageSize = pageSize;
@@ -99,7 +97,7 @@ public class OReadWriteDiskCache implements ODiskCache {
       a1out = new ConcurrentLRUList();
       a1in = new ConcurrentLRUList();
     } finally {
-      cacheLock.writeLock().unlock();
+      cacheLock.releaseWriteLock();
     }
   }
 
@@ -117,7 +115,7 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public long openFile(final String fileName) throws IOException {
-    cacheLock.writeLock().lock();
+    cacheLock.acquireWriteLock();
     try {
       long fileId = writeCache.isOpen(fileName);
       if (fileId >= 0)
@@ -128,13 +126,13 @@ public class OReadWriteDiskCache implements ODiskCache {
 
       return fileId;
     } finally {
-      cacheLock.writeLock().unlock();
+      cacheLock.releaseWriteLock();
     }
   }
 
   @Override
   public void openFile(final long fileId) throws IOException {
-    cacheLock.readLock().lock();
+    cacheLock.acquireReadLock();
     Lock fileLock;
     try {
       fileLock = fileLockManager.acquireExclusiveLock(fileId);
@@ -149,13 +147,13 @@ public class OReadWriteDiskCache implements ODiskCache {
         fileLockManager.releaseLock(fileLock);
       }
     } finally {
-      cacheLock.readLock().unlock();
+      cacheLock.releaseReadLock();
     }
   }
 
   @Override
   public void openFile(String fileName, long fileId) throws IOException {
-    cacheLock.writeLock().lock();
+    cacheLock.acquireWriteLock();
     try {
       long existingFileId = writeCache.isOpen(fileName);
 
@@ -168,7 +166,7 @@ public class OReadWriteDiskCache implements ODiskCache {
       writeCache.openFile(fileName, fileId);
       filePages.put(fileId, Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>()));
     } finally {
-      cacheLock.writeLock().unlock();
+      cacheLock.releaseWriteLock();
     }
   }
 
@@ -202,7 +200,7 @@ public class OReadWriteDiskCache implements ODiskCache {
     Lock fileLock;
     Lock pageLock;
 
-    cacheLock.readLock().lock();
+    cacheLock.acquireReadLock();
     try {
       fileLock = fileLockManager.acquireSharedLock(cacheEntry.fileId);
       try {
@@ -217,7 +215,7 @@ public class OReadWriteDiskCache implements ODiskCache {
         fileLockManager.releaseLock(fileLock);
       }
     } finally {
-      cacheLock.readLock().unlock();
+      cacheLock.releaseReadLock();
     }
   }
 
@@ -226,7 +224,7 @@ public class OReadWriteDiskCache implements ODiskCache {
     Lock fileLock;
     Lock pageLock;
 
-    cacheLock.readLock().lock();
+    cacheLock.acquireReadLock();
     try {
       fileLock = fileLockManager.acquireSharedLock(cacheEntry.fileId);
       try {
@@ -240,7 +238,7 @@ public class OReadWriteDiskCache implements ODiskCache {
         fileLockManager.releaseLock(fileLock);
       }
     } finally {
-      cacheLock.readLock().unlock();
+      cacheLock.releaseReadLock();
     }
   }
 
@@ -268,7 +266,7 @@ public class OReadWriteDiskCache implements ODiskCache {
     Lock fileLock;
     Lock pageLock;
 
-    cacheLock.readLock().lock();
+    cacheLock.acquireReadLock();
     try {
       fileLock = fileLockManager.acquireSharedLock(fileId);
       try {
@@ -291,7 +289,7 @@ public class OReadWriteDiskCache implements ODiskCache {
         fileLockManager.releaseLock(fileLock);
       }
     } finally {
-      cacheLock.readLock().unlock();
+      cacheLock.releaseReadLock();
     }
 
     return new UpdateCacheResult(removeColdPages, cacheEntry);
@@ -302,7 +300,7 @@ public class OReadWriteDiskCache implements ODiskCache {
     UpdateCacheResult cacheResult;
 
     Lock fileLock;
-    cacheLock.readLock().lock();
+    cacheLock.acquireReadLock();
     try {
       fileLock = fileLockManager.acquireExclusiveLock(fileId);
       try {
@@ -312,7 +310,7 @@ public class OReadWriteDiskCache implements ODiskCache {
         fileLockManager.releaseLock(fileLock);
       }
     } finally {
-      cacheLock.readLock().unlock();
+      cacheLock.releaseReadLock();
     }
 
     try {
@@ -334,7 +332,7 @@ public class OReadWriteDiskCache implements ODiskCache {
 
     Lock fileLock;
     Lock pageLock;
-    cacheLock.readLock().lock();
+    cacheLock.acquireReadLock();
     try {
       fileLock = fileLockManager.acquireSharedLock(cacheEntry.fileId);
       try {
@@ -355,7 +353,7 @@ public class OReadWriteDiskCache implements ODiskCache {
         fileLockManager.releaseLock(fileLock);
       }
     } finally {
-      cacheLock.readLock().unlock();
+      cacheLock.releaseReadLock();
     }
 
     if (flushFuture != null) {
@@ -388,7 +386,7 @@ public class OReadWriteDiskCache implements ODiskCache {
   @Override
   public void closeFile(long fileId, boolean flush) throws IOException {
     Lock fileLock;
-    cacheLock.readLock().lock();
+    cacheLock.acquireReadLock();
     try {
       fileLock = fileLockManager.acquireExclusiveLock(fileId);
       try {
@@ -425,7 +423,7 @@ public class OReadWriteDiskCache implements ODiskCache {
       }
 
     } finally {
-      cacheLock.readLock().unlock();
+      cacheLock.releaseReadLock();
     }
   }
 
@@ -433,7 +431,7 @@ public class OReadWriteDiskCache implements ODiskCache {
   public void deleteFile(long fileId) throws IOException {
     Lock fileLock;
 
-    cacheLock.readLock().lock();
+    cacheLock.acquireReadLock();
     try {
       fileLock = fileLockManager.acquireExclusiveLock(fileId);
       try {
@@ -446,7 +444,7 @@ public class OReadWriteDiskCache implements ODiskCache {
         fileLockManager.releaseLock(fileLock);
       }
     } finally {
-      cacheLock.readLock().unlock();
+      cacheLock.releaseReadLock();
     }
   }
 
@@ -454,7 +452,7 @@ public class OReadWriteDiskCache implements ODiskCache {
   public void truncateFile(long fileId) throws IOException {
     Lock fileLock;
 
-    cacheLock.readLock().lock();
+    cacheLock.acquireReadLock();
     try {
       fileLock = fileLockManager.acquireExclusiveLock(fileId);
       try {
@@ -487,14 +485,14 @@ public class OReadWriteDiskCache implements ODiskCache {
         fileLockManager.releaseLock(fileLock);
       }
     } finally {
-      cacheLock.readLock().unlock();
+      cacheLock.releaseReadLock();
     }
   }
 
   @Override
   public void renameFile(long fileId, String oldFileName, String newFileName) throws IOException {
     Lock fileLock;
-    cacheLock.readLock().lock();
+    cacheLock.acquireReadLock();
     try {
       fileLock = fileLockManager.acquireExclusiveLock(fileId);
       try {
@@ -503,7 +501,7 @@ public class OReadWriteDiskCache implements ODiskCache {
         fileLockManager.releaseLock(fileLock);
       }
     } finally {
-      cacheLock.readLock().unlock();
+      cacheLock.releaseReadLock();
     }
 
   }
@@ -516,11 +514,11 @@ public class OReadWriteDiskCache implements ODiskCache {
   public void clear() throws IOException {
     writeCache.flush();
 
-    cacheLock.writeLock().lock();
+    cacheLock.acquireWriteLock();
     try {
       clearCacheContent();
     } finally {
-      cacheLock.writeLock().unlock();
+      cacheLock.releaseWriteLock();
     }
   }
 
@@ -570,12 +568,12 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public void close() throws IOException {
-    cacheLock.writeLock().lock();
+    cacheLock.acquireWriteLock();
     try {
       clear();
       writeCache.close();
     } finally {
-      cacheLock.writeLock().unlock();
+      cacheLock.releaseWriteLock();
     }
   }
 
@@ -657,9 +655,9 @@ public class OReadWriteDiskCache implements ODiskCache {
     final boolean exclusiveCacheLock = (am.size() + a1in.size() - maxSize) > MAX_CACHE_OVERFLOW;
 
     if (exclusiveCacheLock)
-      cacheLock.writeLock().lock();
+      cacheLock.acquireWriteLock();
     else
-      cacheLock.readLock().lock();
+      cacheLock.acquireReadLock();
 
     try {
 
@@ -670,9 +668,9 @@ public class OReadWriteDiskCache implements ODiskCache {
 
     } finally {
       if (exclusiveCacheLock)
-        cacheLock.writeLock().unlock();
+        cacheLock.releaseWriteLock();
       else
-        cacheLock.readLock().unlock();
+        cacheLock.releaseReadLock();
 
       coldPagesRemovalInProgress.set(false);
     }
@@ -849,13 +847,13 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public void delete() throws IOException {
-    cacheLock.writeLock().lock();
+    cacheLock.acquireWriteLock();
     try {
       writeCache.delete();
 
       clearCacheContent();
     } finally {
-      cacheLock.writeLock().unlock();
+      cacheLock.releaseWriteLock();
     }
   }
 

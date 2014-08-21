@@ -16,11 +16,6 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
-
 import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
@@ -42,6 +37,11 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * A collection that contain links to {@link OIdentifiable}. Bag is similar to set but can contain several entering of the same
@@ -82,25 +82,27 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   private UUID            uuid;
 
-  public ORidBag(ORidBag ridBag) {
-    this();
-
+  public ORidBag(final ORidBag ridBag) {
+    init();
     for (OIdentifiable identifiable : ridBag)
       add(identifiable);
   }
 
   public ORidBag() {
-    if (topThreshold < 0)
-      delegate = new OSBTreeRidBag();
-    else
-      delegate = new OEmbeddedRidBag();
+    init();
   }
 
-  private ORidBag(byte[] stream) {
+  public ORidBag(final int iTopThreshold, final int iBottomThreshold) {
+    topThreshold = iTopThreshold;
+    bottomThreshold = iBottomThreshold;
+    init();
+  }
+
+  private ORidBag(final byte[] stream) {
     fromStream(stream);
   }
 
-  public static ORidBag fromStream(String value) {
+  public static ORidBag fromStream(final String value) {
     final byte[] stream = OBase64Utils.decode(value);
     return new ORidBag(stream);
   }
@@ -343,19 +345,6 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   /**
-   * Silently replace delegate by tree implementation.
-   * 
-   * @param pointer
-   *          new collection pointer
-   */
-  private void replaceWithSBTree(OBonsaiCollectionPointer pointer) {
-    delegate.requestDelete();
-    final OSBTreeRidBag treeBag = new OSBTreeRidBag();
-    treeBag.setCollectionPointer(pointer);
-    delegate = treeBag;
-  }
-
-  /**
    * IMPORTANT! Only for internal usage.
    */
   public boolean tryMerge(ORidBag otherValue) {
@@ -372,5 +361,25 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
       }
     }
     return false;
+  }
+
+  protected void init() {
+    if (topThreshold < 0)
+      delegate = new OSBTreeRidBag();
+    else
+      delegate = new OEmbeddedRidBag();
+  }
+
+  /**
+   * Silently replace delegate by tree implementation.
+   * 
+   * @param pointer
+   *          new collection pointer
+   */
+  private void replaceWithSBTree(OBonsaiCollectionPointer pointer) {
+    delegate.requestDelete();
+    final OSBTreeRidBag treeBag = new OSBTreeRidBag();
+    treeBag.setCollectionPointer(pointer);
+    delegate = treeBag;
   }
 }

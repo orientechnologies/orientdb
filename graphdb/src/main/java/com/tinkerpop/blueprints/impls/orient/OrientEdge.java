@@ -451,14 +451,14 @@ public class OrientEdge extends OrientElement implements Edge {
     removeLightweightConnection(vOutRecord, outFieldName, vInRecord);
 
     // OUT-VERTEX ---> IN-VERTEX/EDGE
-    OrientVertex.createLink(vOutRecord, doc, outFieldName);
+    OrientVertex.createLink(graph, vOutRecord, doc, outFieldName);
     vOutRecord.save();
 
     final String inFieldName = OrientVertex.getConnectionFieldName(Direction.IN, label, useVertexFieldsForEdgeLabels);
     removeLightweightConnection(vInRecord, inFieldName, vOutRecord);
 
     // IN-VERTEX ---> OUT-VERTEX/EDGE
-    OrientVertex.createLink(vInRecord, doc, inFieldName);
+    OrientVertex.createLink(graph, vInRecord, doc, inFieldName);
     vInRecord.save();
 
     vOut = null;

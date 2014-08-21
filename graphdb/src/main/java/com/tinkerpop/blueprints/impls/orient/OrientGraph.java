@@ -104,7 +104,7 @@ public class OrientGraph extends OrientTransactionalGraph {
    * @param pool
    *          Database pool where to acquire a database instance
    */
-  public OrientGraph(ODatabaseDocumentPool pool) {
+  public OrientGraph(final ODatabaseDocumentPool pool) {
     super(pool);
     config();
   }

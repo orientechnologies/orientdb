@@ -31,7 +31,7 @@ import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph.THREAD_MODE;
+import com.tinkerpop.blueprints.impls.orient.OrientConfigurableGraph.THREAD_MODE;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -387,7 +387,7 @@ public class OScriptGraphWrapper implements TransactionalGraph {
   }
 
   public OrientBaseGraph setThreadMode(THREAD_MODE iControl) {
-    return graph.setThreadMode(iControl);
+    return (OrientBaseGraph) graph.setThreadMode(iControl);
   }
 
 }
