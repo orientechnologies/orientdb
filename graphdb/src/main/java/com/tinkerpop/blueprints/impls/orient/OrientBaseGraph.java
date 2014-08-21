@@ -1,5 +1,17 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.configuration.Configuration;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -37,24 +49,14 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
-import org.apache.commons.configuration.Configuration;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<ODatabaseDocumentTx>, KeyIndexableGraph {
+public abstract class OrientBaseGraph extends OrientConfigurableGraph implements IndexableGraph, MetaGraph<ODatabaseDocumentTx>,
+    KeyIndexableGraph {
   public static final String                    CONNECTION_OUT  = "out";
   public static final String                    CONNECTION_IN   = "in";
   public static final String                    CLASS_PREFIX    = "class:";
@@ -64,44 +66,13 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   private final ThreadLocal<OrientGraphContext> threadContext   = new ThreadLocal<OrientGraphContext>();
   private final Set<OrientGraphContext>         contexts        = new HashSet<OrientGraphContext>();
   private final ODatabaseDocumentPool           pool;
-  protected Settings                            settings        = new Settings();
   private String                                url;
   private String                                username;
   private String                                password;
 
-  public enum THREAD_MODE {
-    MANUAL, AUTOSET_IFNULL, ALWAYS_AUTOSET
-  }
-
-  public class Settings {
-    protected boolean     useLightweightEdges          = true;
-    protected boolean     useClassForEdgeLabel         = true;
-    protected boolean     useClassForVertexLabel       = true;
-    protected boolean     keepInMemoryReferences       = false;
-    protected boolean     useVertexFieldsForEdgeLabels = true;
-    protected boolean     saveOriginalIds              = false;
-    protected boolean     standardElementConstraints   = true;
-    protected boolean     warnOnForceClosingTx         = true;
-    protected THREAD_MODE threadMode                   = THREAD_MODE.AUTOSET_IFNULL;
-
-    public Settings copy() {
-      final Settings copy = new Settings();
-      copy.useLightweightEdges = useLightweightEdges;
-      copy.useClassForEdgeLabel = useClassForEdgeLabel;
-      copy.useClassForVertexLabel = useClassForVertexLabel;
-      copy.keepInMemoryReferences = keepInMemoryReferences;
-      copy.useVertexFieldsForEdgeLabels = useVertexFieldsForEdgeLabels;
-      copy.saveOriginalIds = saveOriginalIds;
-      copy.standardElementConstraints = standardElementConstraints;
-      copy.warnOnForceClosingTx = warnOnForceClosingTx;
-      copy.threadMode = threadMode;
-      return copy;
-    }
-  }
-
   /**
    * Constructs a new object using an existent database instance.
-   * 
+   *
    * @param iDatabase
    *          Underlying database object to attach
    */
@@ -193,38 +164,32 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
    * properties</td>
    * <td>true</td>
    * </tr>
+   * <tr>
+   * <td>blueprints.orientdb.autoScaleEdgeType</td>
+   * <td>Set auto scale of edge type. True means one edge is managed as LINK, 2 or more are managed with a LINKBAG</td>
+   * <td>false</td>
+   * </tr>
+   * <tr>
+   * <td>blueprints.orientdb.edgeContainerEmbedded2TreeThreshold</td>
+   * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from embedded to tree. Use -1
+   * to disable transformation</td>
+   * <td>-1</td>
+   * </tr>
+   * <tr>
+   * <td>blueprints.orientdb.edgeContainerTree2EmbeddedThreshold</td>
+   * <td>Changes the minimum number of edges for edge containers to transform the underlying structure from tree to embedded. Use -1
+   * to disable transformation</td>
+   * <td>-1</td>
+   * </tr>
    * </table>
-   * 
+   *
    * @param configuration
    *          of graph
    */
   public OrientBaseGraph(final Configuration configuration) {
     this(configuration.getString("blueprints.orientdb.url", null), configuration.getString("blueprints.orientdb.username", null),
         configuration.getString("blueprints.orientdb.password", null));
-
-    final Boolean saveOriginalIds = configuration.getBoolean("blueprints.orientdb.saveOriginalIds", null);
-    if (saveOriginalIds != null)
-      setSaveOriginalIds(saveOriginalIds);
-
-    final Boolean keepInMemoryReferences = configuration.getBoolean("blueprints.orientdb.keepInMemoryReferences", null);
-    if (keepInMemoryReferences != null)
-      setKeepInMemoryReferences(keepInMemoryReferences);
-
-    final Boolean useCustomClassesForEdges = configuration.getBoolean("blueprints.orientdb.useCustomClassesForEdges", null);
-    if (useCustomClassesForEdges != null)
-      setUseClassForEdgeLabel(useCustomClassesForEdges);
-
-    final Boolean useCustomClassesForVertex = configuration.getBoolean("blueprints.orientdb.useCustomClassesForVertex", null);
-    if (useCustomClassesForVertex != null)
-      setUseClassForVertexLabel(useCustomClassesForVertex);
-
-    final Boolean useVertexFieldsForEdgeLabels = configuration.getBoolean("blueprints.orientdb.useVertexFieldsForEdgeLabels", null);
-    if (useVertexFieldsForEdgeLabels != null)
-      setUseVertexFieldsForEdgeLabels(useVertexFieldsForEdgeLabels);
-
-    final Boolean lightweightEdges = configuration.getBoolean("blueprints.orientdb.lightweightEdges", null);
-    if (lightweightEdges != null)
-      setUseLightweightEdges(lightweightEdges);
+    super.init(configuration);
   }
 
   /**
@@ -271,6 +236,17 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       OLogManager.instance().error(null, "Error on decoding class name using encoding '%s'", e, "UTF-8");
       return iClassName;
     }
+  }
+
+  /**
+   * (Blueprints Extension) Configure the Graph instance.
+   * 
+   * @param iSetting
+   *          Settings object containing all the settings
+   */
+  public OrientBaseGraph configure(final Settings iSetting) {
+    settings = iSetting;
+    return this;
   }
 
   /**
@@ -1363,159 +1339,6 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
       throw new UnsupportedOperationException("Graph set to use Lightweight Edges, count against edges is not supported");
 
     return getRawGraph().countClass(iClassName);
-  }
-
-  /**
-   * Returns true if is using lightweight edges, otherwise false.
-   */
-  public boolean isUseLightweightEdges() {
-    return settings.useLightweightEdges;
-  }
-
-  /**
-   * Changes the setting about usage of lightweight edges.
-   */
-  public void setUseLightweightEdges(final boolean useDynamicEdges) {
-    settings.useLightweightEdges = useDynamicEdges;
-  }
-
-  /**
-   * Returns true if it saves the original Id, otherwise false.
-   */
-  public boolean isSaveOriginalIds() {
-    return settings.saveOriginalIds;
-  }
-
-  /**
-   * Changes the setting about usage of lightweight edges.
-   */
-  public void setSaveOriginalIds(final boolean saveIds) {
-    settings.saveOriginalIds = saveIds;
-  }
-
-  /**
-   * Returns true if the references are kept in memory.
-   */
-  public boolean isKeepInMemoryReferences() {
-    return settings.keepInMemoryReferences;
-  }
-
-  /**
-   * Changes the setting about using references in memory.
-   */
-  public void setKeepInMemoryReferences(boolean useReferences) {
-    settings.keepInMemoryReferences = useReferences;
-  }
-
-  /**
-   * Returns true if the class are use for Edge labels.
-   */
-  public boolean isUseClassForEdgeLabel() {
-    return settings.useClassForEdgeLabel;
-  }
-
-  /**
-   * Changes the setting to use the Edge class for Edge labels.
-   */
-  public void setUseClassForEdgeLabel(final boolean useCustomClassesForEdges) {
-    settings.useClassForEdgeLabel = useCustomClassesForEdges;
-  }
-
-  /**
-   * Returns true if the class are use for Vertex labels.
-   */
-  public boolean isUseClassForVertexLabel() {
-    return settings.useClassForVertexLabel;
-  }
-
-  /**
-   * Changes the setting to use the Vertex class for Vertex labels.
-   */
-  public void setUseClassForVertexLabel(final boolean useCustomClassesForVertex) {
-    this.settings.useClassForVertexLabel = useCustomClassesForVertex;
-  }
-
-  /**
-   * Returns true if the out/in fields in vertex are post-fixed with edge labels. This improves traversal time by partitioning edges
-   * on different collections, one per Edge's class.
-   */
-  public boolean isUseVertexFieldsForEdgeLabels() {
-    return settings.useVertexFieldsForEdgeLabels;
-  }
-
-  /**
-   * Changes the setting to postfix vertices fields with edge labels. This improves traversal time by partitioning edges on
-   * different collections, one per Edge's class.
-   */
-  public void setUseVertexFieldsForEdgeLabels(final boolean useVertexFieldsForEdgeLabels) {
-    this.settings.useVertexFieldsForEdgeLabels = useVertexFieldsForEdgeLabels;
-  }
-
-  /**
-   * Returns true if Blueprints standard constraints are applied to elements.
-   */
-  public boolean isStandardElementConstraints() {
-    return settings.standardElementConstraints;
-  }
-
-  /**
-   * Changes the setting to apply the Blueprints standard constraints against elements.
-   */
-  public void setStandardElementConstraints(final boolean allowsPropertyValueNull) {
-    this.settings.standardElementConstraints = allowsPropertyValueNull;
-  }
-
-  /**
-   * Returns true if the warning is generated on force the graph closing.
-   */
-  public boolean isWarnOnForceClosingTx() {
-    return settings.warnOnForceClosingTx;
-  }
-
-  /**
-   * Changes the setting to generate a warning if the graph closing has been forced.
-   */
-  public OrientBaseGraph setWarnOnForceClosingTx(final boolean warnOnSchemaChangeInTx) {
-    this.settings.warnOnForceClosingTx = warnOnSchemaChangeInTx;
-    return this;
-  }
-
-  /**
-   * Returns the current thread mode:
-   * <ul>
-   * <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
-   * ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());</li>
-   * <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in the Thread Local only if no one was
-   * set before</li>
-   * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
-   * </ul>
-   * 
-   * @see #setThreadMode(THREAD_MODE)
-   * @return Current Graph instance to allow calls in chain (fluent interface)
-   */
-
-  public THREAD_MODE getThreadMode() {
-    return settings.threadMode;
-  }
-
-  /**
-   * Changes the thread mode:
-   * <ul>
-   * <li><b>MANUAL</b> the user has to manually invoke the current database in Thread Local:
-   * ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());</li>
-   * <li><b>AUTOSET_IFNULL</b> (default) each call assures the current graph instance is set in the Thread Local only if no one was
-   * set before</li>
-   * <li><b>ALWAYS_AUTOSET</b> each call assures the current graph instance is set in the Thread Local</li>
-   * </ul>
-   * 
-   * @param iControl
-   *          Value to set
-   * @see #getThreadMode()
-   * @return Current Graph instance to allow calls in chain (fluent interface)
-   */
-  public OrientBaseGraph setThreadMode(final THREAD_MODE iControl) {
-    this.settings.threadMode = iControl;
-    return this;
   }
 
   /**

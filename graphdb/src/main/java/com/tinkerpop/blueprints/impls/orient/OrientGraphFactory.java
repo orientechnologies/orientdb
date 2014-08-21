@@ -14,17 +14,16 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public class OrientGraphFactory {
+public class OrientGraphFactory extends OrientConfigurableGraph {
   protected final String                   url;
   protected final String                   user;
   protected final String                   password;
-
   protected volatile ODatabaseDocumentPool pool;
   protected volatile boolean               transactional = true;
 
   /**
    * Creates a factory that use default admin credentials.
-   * 
+   *
    * @param iURL
    *          to the database
    */
@@ -34,7 +33,7 @@ public class OrientGraphFactory {
 
   /**
    * Creates a factory with given credentials.
-   * 
+   *
    * @param iURL
    *          to the database
    * @param iUser
@@ -70,7 +69,8 @@ public class OrientGraphFactory {
 
   /**
    * Depends of configuration work like {@link #getTx()} or {@link #getNoTx()}. By default the factory configured to return
-   * transactional graph. Use {@link #setTransactional(boolean)} to change the behaviour
+   * transactional graph. Use {@link #setTransactional(boolean)} to change the behaviour. The Graph instance inherits the factory's
+   * configuration.
    * 
    * @return orient graph
    */
@@ -79,29 +79,29 @@ public class OrientGraphFactory {
   }
 
   /**
-   * Gets transactional graph with the database from pool if pool is configured. Otherwise creates a graph with new db instance.
+   * Gets transactional graph with the database from pool if pool is configured. Otherwise creates a graph with new db instance. The
+   * Graph instance inherits the factory's configuration.
    * 
    * @return transactional graph
    */
   public OrientGraph getTx() {
-    if (pool == null) {
-      return new OrientGraph(getDatabase());
-    } else {
-      return new OrientGraph(pool);
-    }
+    if (pool == null)
+      return (OrientGraph) new OrientGraph(getDatabase()).configure(settings);
+
+    return (OrientGraph) new OrientGraph(pool).configure(settings);
   }
 
   /**
    * Gets non transactional graph with the database from pool if pool is configured. Otherwise creates a graph with new db instance.
+   * The Graph instance inherits the factory's configuration.
    * 
    * @return non transactional graph
    */
   public OrientGraphNoTx getNoTx() {
-    if (pool == null) {
-      return new OrientGraphNoTx(getDatabase(), user, password);
-    } else {
-      return new OrientGraphNoTx(pool);
-    }
+    if (pool == null)
+      return (OrientGraphNoTx) new OrientGraphNoTx(getDatabase(), user, password).configure(settings);
+
+    return (OrientGraphNoTx) new OrientGraphNoTx(pool).configure(settings);
   }
 
   /**
