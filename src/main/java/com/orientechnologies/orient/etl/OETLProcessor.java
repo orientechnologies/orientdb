@@ -157,7 +157,7 @@ public class OETLProcessor implements OETLComponent {
           configureComponent(b, (ODocument) block.field(name), iContext);
         }
 
-      analyzeFlow();
+      //analyzeFlow();
 
     } catch (Exception e) {
       throw new OConfigurationException("Error on creating ETL processor", e);
