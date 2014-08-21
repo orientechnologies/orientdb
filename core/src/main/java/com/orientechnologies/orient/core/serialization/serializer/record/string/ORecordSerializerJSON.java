@@ -286,6 +286,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName))
               type = ORecordSerializerStringAbstract.getType(fieldValue, fieldTypes.get(fieldName));
 
+            if (type != null && (type == OType.EMBEDDEDSET || type.equals(OType.EMBEDDEDLIST))) {
+              OType curRype = OType.getTypeByValue(v);
+              if (curRype != null)
+                type = curRype;
+            }
+
             if (type != null)
               doc.field(fieldName, v, type);
             else
@@ -634,8 +640,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
       return bag;
     } else if (iType == OType.LINKSET) {
-      return getValueAsLinkedCollection(new ORecordLazySet(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes,
-          iNoMap, iOptions);
+      return getValueAsLinkedCollection(new ORecordLazySet(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes, iNoMap,
+          iOptions);
     } else if (iType == OType.LINKLIST) {
       return getValueAsLinkedCollection(new ORecordLazyList(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes,
           iNoMap, iOptions);
