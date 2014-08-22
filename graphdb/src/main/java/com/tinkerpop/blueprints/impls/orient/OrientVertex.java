@@ -113,8 +113,7 @@ public class OrientVertex extends OrientElement implements Vertex {
         coll.add(iTo);
         out = coll;
       } else if (propType == null || propType == OType.LINKBAG) {
-        final ORidBag bag = new ORidBag(iGraph.getEdgeContainerEmbedded2TreeThreshold(),
-            iGraph.getEdgeContainerEmbedded2TreeThreshold());
+        final ORidBag bag = new ORidBag();
         bag.add(iTo);
         out = bag;
       } else
@@ -132,8 +131,7 @@ public class OrientVertex extends OrientElement implements Vertex {
         coll.add(iTo);
         out = coll;
       } else {
-        final ORidBag bag = new ORidBag(iGraph.getEdgeContainerEmbedded2TreeThreshold(),
-            iGraph.getEdgeContainerEmbedded2TreeThreshold());
+        final ORidBag bag = new ORidBag();
         bag.add((OIdentifiable) found);
         bag.add(iTo);
         out = bag;
