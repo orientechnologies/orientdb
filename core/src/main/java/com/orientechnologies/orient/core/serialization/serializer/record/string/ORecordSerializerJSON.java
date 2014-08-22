@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -286,10 +287,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName))
               type = ORecordSerializerStringAbstract.getType(fieldValue, fieldTypes.get(fieldName));
 
-            if (type != null && (type == OType.EMBEDDEDSET || type.equals(OType.EMBEDDEDLIST))) {
-              OType curRype = OType.getTypeByValue(v);
-              if (curRype != null)
-                type = curRype;
+            if (v instanceof OTrackedSet<?>) {
+              if (OMultiValue.getFirstValue((Set<?>) v) instanceof OIdentifiable)
+                type = OType.LINKSET;
+            } else if (v instanceof OTrackedList<?>) {
+              if (OMultiValue.getFirstValue((List<?>) v) instanceof OIdentifiable)
+                type = OType.LINKLIST;
             }
 
             if (type != null)
