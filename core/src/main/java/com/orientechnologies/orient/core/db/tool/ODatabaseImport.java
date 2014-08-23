@@ -15,6 +15,25 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -63,25 +82,6 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Import data from a file into a database.
@@ -711,8 +711,26 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     @SuppressWarnings("unused")
     int schemaVersion = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"version\"")
         .readNumber(OJSONReader.ANY_NUMBER, true);
-    jsonReader.readNext(OJSONReader.COMMA_SEPARATOR).readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"classes\"")
-        .readNext(OJSONReader.BEGIN_COLLECTION);
+    jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+    jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
+    if (jsonReader.getValue().equals("\"globalProperties\"")) {
+      jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+      do {
+        jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+        jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"");
+        String name = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"global-id\"");
+        String id = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"");
+        String type = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        getDatabase().getMetadata().getSchema().createGlobalProperty(name, OType.valueOf(type), Integer.valueOf(id));
+        jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+      } while (jsonReader.lastChar() == ',');
+      jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+      jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
+    }
+
+    jsonReader.checkContent("\"classes\"").readNext(OJSONReader.BEGIN_COLLECTION);
 
     long classImported = 0;
 
@@ -839,7 +857,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       next = jsonReader.readString(OJSONReader.COMMA_SEPARATOR);
       next = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).getValue();
     }
-
     next = jsonReader.checkContent("\"type\"").readString(OJSONReader.NEXT_IN_OBJECT);
 
     final OType type = OType.valueOf(next);
@@ -886,10 +903,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     OPropertyImpl prop = (OPropertyImpl) iClass.getProperty(propName);
-    if (prop == null)
+    if (prop == null) {
       // CREATE IT
       prop = (OPropertyImpl) iClass.createProperty(propName, type);
-
+    }
     prop.setMandatory(mandatory);
     prop.setReadonly(readonly);
     prop.setNotNull(notNull);

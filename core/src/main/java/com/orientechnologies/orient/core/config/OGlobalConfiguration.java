@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
-
 import java.io.PrintStream;
 import java.lang.management.OperatingSystemMXBean;
 import java.util.Map;
@@ -30,6 +22,14 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -553,7 +553,7 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
-      ORecordSerializerSchemaAware2CSV.NAME);
+      ORecordSerializerBinary.NAME);
 
   private final String                 key;
   private final Object                 defValue;

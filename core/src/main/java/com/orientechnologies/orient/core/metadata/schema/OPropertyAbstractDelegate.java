@@ -16,11 +16,11 @@
 
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.orient.core.collate.OCollate;
-import com.orientechnologies.orient.core.index.OIndex;
-
 import java.util.Collection;
 import java.util.Set;
+
+import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.index.OIndex;
 
 /**
  * Abstract Delegate for OProperty interface.
@@ -38,6 +38,11 @@ public class OPropertyAbstractDelegate implements OProperty {
   @Override
   public String getName() {
     return delegate.getName();
+  }
+
+  @Override
+  public Integer getId() {
+    return delegate.getId();
   }
 
   @Override

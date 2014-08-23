@@ -150,6 +150,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (!enabled)
       return;
 
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(-1);
+    
     super.startup();
 
     status = NODE_STATUS.STARTING;

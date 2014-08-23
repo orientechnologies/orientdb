@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
@@ -40,15 +49,13 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -58,7 +65,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
-  public static final int                       CURRENT_VERSION_NUMBER  = 4;
+  public static final int                       CURRENT_VERSION_NUMBER  = 5;
+  public static final int                       VERSION_NUMBER_V4       = 4;
   private static final long                     serialVersionUID        = 1L;
 
   private final boolean                         clustersCanNotBeSharedAmongClasses;
@@ -76,6 +84,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
                                                                             return new OModifiableInteger(0);
                                                                           }
                                                                         };
+  private final List<OGlobalProperty>           properties              = new ArrayList<OGlobalProperty>();
+  private final Map<String, OGlobalProperty>    propertiesByNameType    = new HashMap<String, OGlobalProperty>();
 
   public OSchemaShared(boolean clustersCanNotBeSharedAmongClasses) {
     super(new ODocument());
@@ -697,12 +707,24 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
                 this,
                 "Database's schema is empty! Recreating the system classes and allow the opening of the database but double check the integrity of the database");
         return;
-      } else if (schemaVersion != CURRENT_VERSION_NUMBER) {
+      } else if (schemaVersion != CURRENT_VERSION_NUMBER && VERSION_NUMBER_V4 != schemaVersion) {
         // HANDLE SCHEMA UPGRADE
         throw new OConfigurationException(
             "Database schema is different. Please export your old database with the previous version of OrientDB and reimport it using the current one.");
       }
 
+      properties.clear();
+      propertiesByNameType.clear();
+      List<ODocument> globalProperties = document.field("globalProperties");
+      if (globalProperties != null) {
+        for (ODocument oDocument : globalProperties) {
+          OGlobalPropertyImpl prop = new OGlobalPropertyImpl();
+          prop.fromDocument(oDocument);
+          ensurePropertiesSize(prop.getId());
+          properties.set(prop.getId(), prop);
+          propertiesByNameType.put(prop.getName() + "|" + prop.getType().name(), prop);
+        }
+      }
       // REGISTER ALL THE CLASSES
       clustersToClasses.clear();
 
@@ -750,6 +772,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
           cls.setSuperClassInternal(superClass);
         }
       }
+
+      if (schemaVersion == VERSION_NUMBER_V4) {
+        if (getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded)
+          saveInternal();
+      }
+
     } finally {
       modificationCounter.get().decrement();
       rwSpinLock.releaseWriteLock();
@@ -775,6 +803,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
         document.field("classes", cc, OType.EMBEDDEDSET);
 
+        List<ODocument> globalProperties = new ArrayList<ODocument>();
+        for (OGlobalProperty globalProperty : properties) {
+          if (globalProperty != null)
+            globalProperties.add(((OGlobalPropertyImpl) globalProperty).toDocument());
+        }
+        document.field("globalProperties", globalProperties, OType.EMBEDDEDLIST);
       } finally {
         document.setInternalStatus(ORecordElement.STATUS.LOADED);
       }
@@ -981,5 +1015,44 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   private ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
+  public OGlobalProperty getGlobalPropertyById(int id) {
+    return properties.get(id);
+  }
+
+  private void ensurePropertiesSize(int size) {
+    while (properties.size() <= size)
+      properties.add(null);
+  }
+
+  public OGlobalProperty createGlobalProperty(String name, OType type, Integer id) {
+    OGlobalProperty global;
+    if (id < properties.size() && (global = properties.get(id)) != null) {
+      if (!global.getName().equals(name) || !global.getType().equals(type))
+        throw new OSchemaException("A property with id " + id + " already exist ");
+      return global;
+    }
+
+    global = new OGlobalPropertyImpl(name, type, id);
+    ensurePropertiesSize(id);
+    properties.set(id, global);
+    propertiesByNameType.put(global.getName() + "|" + global.getType().name(), global);
+    return global;
+  }
+
+  protected OGlobalProperty findOrCreateGlobalProperty(String name, OType type) {
+    OGlobalProperty global = propertiesByNameType.get(name + "|" + type.name());
+    if (global == null) {
+      int id = properties.size();
+      global = new OGlobalPropertyImpl(name, type, id);
+      properties.add(id, global);
+      propertiesByNameType.put(global.getName() + "|" + global.getType().name(), global);
+    }
+    return global;
+  }
+
+  public List<OGlobalProperty> getGlobalProperties() {
+    return Collections.unmodifiableList(properties);
   }
 }

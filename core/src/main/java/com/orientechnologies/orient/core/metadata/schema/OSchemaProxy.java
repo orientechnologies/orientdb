@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -65,17 +66,16 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     setCurrentDatabaseInThreadLocal();
     return delegate.getOrCreateClass(iClassName);
   }
-  
+
   public OClass getOrCreateClass(final String iClassName, final OClass iSuperClass) {
-	  setCurrentDatabaseInThreadLocal();
-	  return delegate.getOrCreateClass(iClassName, iSuperClass);
+    setCurrentDatabaseInThreadLocal();
+    return delegate.getOrCreateClass(iClassName, iSuperClass);
   }
 
   public OClass createClass(final String iClassName, final OClass iSuperClass) {
     setCurrentDatabaseInThreadLocal();
     return delegate.createClass(iClassName, iSuperClass, (int[]) null);
   }
-
 
   public OClass createClass(final String iClassName, final int iDefaultClusterId) {
     setCurrentDatabaseInThreadLocal();
@@ -172,8 +172,23 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     return delegate.getClassesRelyOnCluster(iClusterName);
   }
 
-	@Override
-	public OClass getClassByClusterId(int clusterId) {
-		return delegate.getClassByClusterId(clusterId);
-	}
+  @Override
+  public OClass getClassByClusterId(int clusterId) {
+    return delegate.getClassByClusterId(clusterId);
+  }
+
+  @Override
+  public OGlobalProperty getGlobalPropertyById(int id) {
+    return delegate.getGlobalPropertyById(id);
+  }
+
+  @Override
+  public List<OGlobalProperty> getGlobalProperties() {
+    return delegate.getGlobalProperties();
+  }
+
+  public OGlobalProperty createGlobalProperty(String name, OType type, Integer id) {
+    return delegate.createGlobalProperty(name, type, id);
+  }
+
 }

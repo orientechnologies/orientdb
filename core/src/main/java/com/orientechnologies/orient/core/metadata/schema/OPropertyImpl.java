@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
@@ -17,7 +16,16 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.log.OLogManager;
@@ -56,8 +64,8 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty {
   private final OClassImpl    owner;
 
-  private String              name;
-  private OType               type;
+  // private String name;
+  // private OType type;
 
   private OType               linkedType;
   private OClass              linkedClass;
@@ -71,11 +79,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private boolean             readonly;
   private Map<String, String> customFields;
   private OCollate            collate = new ODefaultCollate();
+  private OGlobalProperty     globalRef;
 
+  @Deprecated
   OPropertyImpl(final OClassImpl owner, final String name, final OType type) {
     this(owner);
-    this.name = name;
-    this.type = type;
+    // this.name = name;
+    // this.type = type;
   }
 
   OPropertyImpl(final OClassImpl owner) {
@@ -88,10 +98,15 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     this.document = document;
   }
 
+  public OPropertyImpl(OClassImpl oClassImpl, OGlobalProperty global) {
+    this(oClassImpl);
+    this.globalRef = global;
+  }
+
   public String getName() {
     acquireSchemaReadLock();
     try {
-      return name;
+      return globalRef.getName();
     } finally {
       releaseSchemaReadLock();
     }
@@ -100,7 +115,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public String getFullName() {
     acquireSchemaReadLock();
     try {
-      return owner.getName() + "." + name;
+      return owner.getName() + "." + globalRef.getName();
     } finally {
       releaseSchemaReadLock();
     }
@@ -109,7 +124,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public OType getType() {
     acquireSchemaReadLock();
     try {
-      return type;
+      return globalRef.getType();
     } finally {
       releaseSchemaReadLock();
     }
@@ -118,9 +133,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public OPropertyImpl setType(final OType type) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
+    final ODatabaseRecord database = getDatabase();
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -136,10 +151,10 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         setTypeInternal(type);
       } else
         setTypeInternal(type);
-
     } finally {
       releaseSchemaWriteLock();
     }
+    owner.fireDatabaseMigration(database, globalRef.getName(), globalRef.getType());
 
     return this;
   }
@@ -147,7 +162,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public int compareTo(final OProperty o) {
     acquireSchemaReadLock();
     try {
-      return name.compareTo(o.getName());
+      return globalRef.getName().compareTo(o.getName());
     } finally {
       releaseSchemaReadLock();
     }
@@ -182,7 +197,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public OIndex<?> createIndex(final String iType) {
     acquireSchemaReadLock();
     try {
-      return owner.createIndex(getFullName(), iType, name);
+      return owner.createIndex(getFullName(), iType, globalRef.getName());
     } finally {
       releaseSchemaReadLock();
     }
@@ -205,7 +220,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       for (final OIndex<?> index : indexManager.getClassIndexes(owner.getName())) {
         final OIndexDefinition definition = index.getDefinition();
 
-        if (OCollections.indexOf(definition.getFields(), name, new OCaseInsentiveComparator()) > -1) {
+        if (OCollections.indexOf(definition.getFields(), globalRef.getName(), new OCaseInsentiveComparator()) > -1) {
           if (definition instanceof OPropertyIndexDefinition) {
             relatedIndexes.add(index);
           } else {
@@ -243,7 +258,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public OIndex<?> getIndex() {
     acquireSchemaReadLock();
     try {
-      Set<OIndex<?>> indexes = owner.getInvolvedIndexes(name);
+      Set<OIndex<?>> indexes = owner.getInvolvedIndexes(globalRef.getName());
       if (indexes != null && !indexes.isEmpty())
         return indexes.iterator().next();
       return null;
@@ -260,7 +275,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public Set<OIndex<?>> getIndexes() {
     acquireSchemaReadLock();
     try {
-      return owner.getInvolvedIndexes(name);
+      return owner.getInvolvedIndexes(globalRef.getName());
     } finally {
       releaseSchemaReadLock();
     }
@@ -274,7 +289,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public boolean isIndexed() {
     acquireSchemaReadLock();
     try {
-      return owner.areIndexed(name);
+      return owner.areIndexed(globalRef.getName());
     } finally {
       releaseSchemaReadLock();
     }
@@ -365,6 +380,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       checkEmbedded();
 
+      OType type = globalRef.getType();
       if (type == OType.LINK || type == OType.LINKSET || type == OType.LINKLIST || type == OType.LINKMAP || type == OType.EMBEDDED
           || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP)
         this.linkedClass = iLinkedClass;
@@ -420,7 +436,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
-
+      OType type = globalRef.getType();
       if (type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP)
         this.linkedType = iLinkedType;
       else
@@ -886,7 +902,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public String toString() {
     acquireSchemaReadLock();
     try {
-      return name + " (type=" + type + ")";
+      return globalRef.getName() + " (type=" + globalRef.getType() + ")";
     } finally {
       releaseSchemaReadLock();
     }
@@ -930,9 +946,19 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   @SuppressWarnings("unchecked")
   @Override
   public void fromStream() {
-    name = document.field("name");
+
+    String name = document.field("name");
+    OType type = null;
     if (document.field("type") != null)
       type = OType.getById(((Integer) document.field("type")).byteValue());
+    Integer globalId = document.field("globalId");
+    if (globalId != null)
+      globalRef = owner.owner.getGlobalPropertyById(globalId);
+    else {
+      if (type == null)
+        type = OType.ANY;
+      globalRef = owner.owner.findOrCreateGlobalProperty(name, type);
+    }
 
     mandatory = document.containsField("mandatory") ? (Boolean) document.field("mandatory") : false;
     readonly = document.containsField("readonly") ? (Boolean) document.field("readonly") : false;
@@ -956,7 +982,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       final List<OIndex<?>> indexList = new LinkedList<OIndex<?>>();
       for (final OIndex<?> index : indexes) {
         final OIndexDefinition indexDefinition = index.getDefinition();
-        if (indexDefinition.getFields().contains(name))
+        if (indexDefinition.getFields().contains(globalRef.getName()))
           indexList.add(index);
       }
 
@@ -972,8 +998,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
     try {
-      document.field("name", name);
-      document.field("type", type.id);
+      // document.field("name", name);
+      // document.field("type", type.id);
+      document.field("globalId", globalRef.getId());
       document.field("mandatory", mandatory);
       document.field("readonly", readonly);
       document.field("notNull", notNull);
@@ -1024,15 +1051,18 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private void setNameInternal(final String name) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
+    String oldName = this.globalRef.getName();
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
 
-      owner.renameProperty(this.name, name);
-      this.name = name;
+      owner.renameProperty(oldName, name);
+      // this.name = name;
+      this.globalRef = owner.owner.findOrCreateGlobalProperty(name, this.globalRef.getType());
     } finally {
       releaseSchemaWriteLock();
     }
+    owner.firePropertyNameMigration(getDatabase(), oldName, name, this.globalRef.getType());
   }
 
   private void setNotNullInternal(final boolean isNotNull) {
@@ -1149,25 +1179,14 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      if (iType == type)
+      if (iType == globalRef.getType())
         // NO CHANGES
         return;
 
-      boolean ok = false;
-      switch (type) {
-      case LINKLIST:
-        ok = iType == OType.LINKSET;
-        break;
+      if (!iType.getCastable().contains(globalRef.getType()))
+        throw new IllegalArgumentException("Cannot change property type from " + globalRef.getType() + " to " + iType);
 
-      case LINKSET:
-        ok = iType == OType.LINKLIST;
-        break;
-      }
-
-      if (!ok)
-        throw new IllegalArgumentException("Cannot change property type from " + type + " to " + iType);
-
-      type = iType;
+      this.globalRef = owner.owner.findOrCreateGlobalProperty(this.globalRef.getName(), iType);
     } finally {
       releaseSchemaWriteLock();
     }
@@ -1225,13 +1244,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
   private void checkForDateFormat(final String iDateAsString) {
     if (iDateAsString != null)
-      if (type == OType.DATE) {
+      if (globalRef.getType() == OType.DATE) {
         try {
           owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
           throw new OSchemaException("Invalid date format while formatting date '" + iDateAsString + "'", e);
         }
-      } else if (type == OType.DATETIME) {
+      } else if (globalRef.getType() == OType.DATETIME) {
         try {
           owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
@@ -1244,4 +1263,10 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return getDatabase().getStorage() instanceof OAutoshardedStorage
         && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
+
+  @Override
+  public Integer getId() {
+    return globalRef.getId();
+  }
+
 }
