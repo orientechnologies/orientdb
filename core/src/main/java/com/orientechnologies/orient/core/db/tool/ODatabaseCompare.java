@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.tool;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -497,7 +498,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       final OClusterPosition db1Max = db1Range[1];
       final OClusterPosition db2Max = db2Range[1];
 
+      ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTxOne);
       final ODocument doc1 = new ODocument();
+      ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTxTwo);
       final ODocument doc2 = new ODocument();
 
       final ORecordId rid = new ORecordId(clusterId);
