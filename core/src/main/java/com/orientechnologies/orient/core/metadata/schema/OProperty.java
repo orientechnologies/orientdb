@@ -207,4 +207,6 @@ public interface OProperty extends Comparable<OProperty> {
   public OClass getOwnerClass();
 
   public Object get(ATTRIBUTES iAttribute);
+
+  public Integer getId();
 }

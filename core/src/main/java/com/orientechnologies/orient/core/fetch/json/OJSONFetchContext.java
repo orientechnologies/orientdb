@@ -16,8 +16,16 @@
  */
 package com.orientechnologies.orient.core.fetch.json;
 
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.Set;
+import java.util.Stack;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
@@ -28,12 +36,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON.FormatSettings;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.Set;
-import java.util.Stack;
 
 /**
  * @author luca.molino
@@ -174,7 +176,7 @@ public class OJSONFetchContext implements OFetchContext {
   }
 
   public void writeSignature(final OJSONWriter json, final ORecordInternal<?> record) throws IOException {
-    if( record == null ) {
+    if (record == null) {
       json.write("null");
       return;
     }
@@ -234,6 +236,10 @@ public class OJSONFetchContext implements OFetchContext {
         appendType(typesStack.peek(), iFieldName, 'b');
       else if (iFieldValue instanceof BigDecimal)
         appendType(typesStack.peek(), iFieldName, 'c');
+      else if (iFieldValue instanceof ORecordLazyList)
+        appendType(typesStack.peek(), iFieldName, 'z');
+      else if (iFieldValue instanceof ORecordLazySet)
+        appendType(typesStack.peek(), iFieldName, 'n');
       else if (iFieldValue instanceof Set<?>)
         appendType(typesStack.peek(), iFieldName, 'e');
       else if (iFieldValue instanceof ORidBag)

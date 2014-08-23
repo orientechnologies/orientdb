@@ -1,13 +1,20 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -21,13 +28,6 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * OrientDB Vertex implementation of TinkerPop Blueprints standard.
@@ -108,13 +108,12 @@ public class OrientVertex extends OrientElement implements Vertex {
           && (prop == null || propType == OType.LINK || "true".equalsIgnoreCase(prop.getCustom("ordered")))) {
         // CREATE ONLY ONE LINK
         out = iTo;
-      } else if (propType == OType.LINKLIST || ( prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered")))) {
-        final Collection coll = new OTrackedList<Object>(iFromVertex);
+      } else if (propType == OType.LINKLIST || (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered")))) {
+        final Collection coll = new ORecordLazyList(iFromVertex);
         coll.add(iTo);
         out = coll;
       } else if (propType == null || propType == OType.LINKBAG) {
-        final ORidBag bag = new ORidBag(iGraph.getEdgeContainerEmbedded2TreeThreshold(),
-            iGraph.getEdgeContainerEmbedded2TreeThreshold());
+        final ORidBag bag = new ORidBag();
         bag.add(iTo);
         out = bag;
       } else
@@ -127,13 +126,12 @@ public class OrientVertex extends OrientElement implements Vertex {
             + " can not be used for creation to hold several links.");
 
       if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {
-        final Collection coll = new OTrackedList<Object>(iFromVertex);
+        final Collection coll = new ORecordLazyList(iFromVertex);
         coll.add(found);
         coll.add(iTo);
         out = coll;
       } else {
-        final ORidBag bag = new ORidBag(iGraph.getEdgeContainerEmbedded2TreeThreshold(),
-            iGraph.getEdgeContainerEmbedded2TreeThreshold());
+        final ORidBag bag = new ORidBag();
         bag.add((OIdentifiable) found);
         bag.add(iTo);
         out = bag;

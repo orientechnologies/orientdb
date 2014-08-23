@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -285,6 +286,14 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
             if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName))
               type = ORecordSerializerStringAbstract.getType(fieldValue, fieldTypes.get(fieldName));
+
+            if (v instanceof OTrackedSet<?>) {
+              if (OMultiValue.getFirstValue((Set<?>) v) instanceof OIdentifiable)
+                type = OType.LINKSET;
+            } else if (v instanceof OTrackedList<?>) {
+              if (OMultiValue.getFirstValue((List<?>) v) instanceof OIdentifiable)
+                type = OType.LINKLIST;
+            }
 
             if (type != null)
               doc.field(fieldName, v, type);
@@ -634,8 +643,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
       return bag;
     } else if (iType == OType.LINKSET) {
-      return getValueAsLinkedCollection(new ORecordLazySet(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes,
-          iNoMap, iOptions);
+      return getValueAsLinkedCollection(new ORecordLazySet(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes, iNoMap,
+          iOptions);
     } else if (iType == OType.LINKLIST) {
       return getValueAsLinkedCollection(new ORecordLazyList(iRecord), iRecord, iFieldValue, iType, iLinkedType, iFieldTypes,
           iNoMap, iOptions);
