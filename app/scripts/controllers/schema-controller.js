@@ -416,7 +416,7 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
 
 
     $scope.$watch("property['type']", function (data) {
-        console.log(data);
+
     });
     $scope.salvaProperty = function () {
 
@@ -457,6 +457,12 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit, verbose: false}, function (data) {
 
             var len = Object.keys(prop).length;
+            for (entry in prop) {
+                if (prop[entry] == null) {
+                    len--;
+                    delete prop[entry];
+                }
+            }
             var i = 1;
             for (entry in prop) {
                 var sql = 'ALTER PROPERTY ' + $scope.classInject + '.' + propName + ' ' + entry + ' ' + prop[entry];
@@ -498,7 +504,7 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
             $scope.property['linkedClass'] = null;
             return true;
         }
-        if ($scope.property['type'] == 'LINKLIST' || $scope.property['type'] == 'LINKSET' || $scope.property['type'] == 'LINKMAP' || $scope.property['type'] == 'EMBEDDED' || $scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] == 'EMBEDDEDSET' || $scope.property['type'] == 'EMBEDDEDMAP') {
+        if ($scope.property['type'] == 'LINK' || $scope.property['type'] == 'LINKLIST' || $scope.property['type'] == 'LINKSET' || $scope.property['type'] == 'LINKMAP' || $scope.property['type'] == 'EMBEDDED' || $scope.property['type'] == 'EMBEDDEDLIST' || $scope.property['type'] == 'EMBEDDEDSET' || $scope.property['type'] == 'EMBEDDEDMAP') {
             return false;
         }
 

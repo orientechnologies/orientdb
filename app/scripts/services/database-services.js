@@ -466,12 +466,15 @@ database.factory('DatabaseApi', function ($http, $resource) {
         $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
         $http.get(API + 'connect/' + database).success(callback).error(error);
     }
-    resource.createDatabase = function (name, type, stype, username, password, callback) {
+    resource.createDatabase = function (name, type, stype, username, password, callback, error) {
+        delete $http.defaults.headers.common['Authorization'];
         $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
         $http.post(API + 'database/' + name + "/" + stype + "/" + type).success(function (data) {
             delete $http.defaults.headers.common['Authorization'];
             callback(data);
-        });
+        }).error(function (data) {
+                error(data);
+            });
     }
 
     resource.exportDatabase = function (database) {

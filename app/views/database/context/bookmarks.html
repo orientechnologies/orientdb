@@ -1,22 +1,24 @@
 <div ng-controller="BookmarkController" class="bookmarks-container">
-    <div class="container-fluid">
-        <div class="row">
+    <div ng-keydown="closeIfReturn($event)">
+        <span class="bookmarks-folder label label-warning" ng-click="click($event)">Bookmarks</span>
+
+        <div class="row-fluid">
             <form class="form-search search-bookmarks">
-                <input type="text" class="input-large search-query" ng-model="searchText"
+                <input type="text" ng-click="stopProps($event)" class="input-large search-query" ng-model="searchText"
                        placeholder="Search bookmarks">
             </form>
         </div>
-        <div class="row">
+        <div class="row-fluid">
+
             <ul class="nav nav-tabs nav-stacked bookmarks-list">
                 <li class="bookmarks-item" ng-mouseover="hover(bk)" ng-repeat="bk in bks | filter:searchText">
-                    <div class="bookmarks-actions" ng-class="{ true : 'visible', false : 'invisible' }[bk == selected]">
-                        <a href="javascript:void(0)" data-placement="right"
-                           data-template="views/database/bookmarkEdit.html"
-                           bs-popover
+                    <div class="bookmarks-actions" ng-class='isSelected(bk)'>
+                        <a href="javascript:void(0)" ng-click="stopProps($event)" data-placement="right"
+                           bs-popover="'views/database/bookmarkEdit.html'"
                            data-title="Edit bookmark">
                             <i class="icon-edit icon-white"></i>
                         </a>
-                        <a class="" ng-click="remove(bk)" href="javascript:void(0)">
+                        <a class="" ng-click="remove(bk,$event)" href="javascript:void(0)">
                             <i class="icon-remove icon-white"></i>
                         </a>
                     </div>

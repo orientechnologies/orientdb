@@ -1,66 +1,62 @@
-<div class="modal" ng-controller="NewDatabaseController">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
-                </button>
-                <h3>New Database </h3>
+<div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3>New Database </h3>
+</div>
+<div class="modal-body edge">
+
+    <form id="signin" name="newDB" class="form-horizontal" novalidate="">
+        <fieldset>
+            <div class="control-group">
+                <label class="control-label">Name</label>
+
+                <div class="controls">
+                    <input type="text" class="input-xlarge" required ng-model="name" placeholder="Database name"/>
+
+                </div>
             </div>
-            <div class="modal-body edge">
+            <div class="control-group">
+                <label class="control-label">Type</label>
 
+                <div class="controls">
+                    <select class='span2' ng-model="type" required ng-options="c for c in types">
+                    </select>
 
-                <form id="signin" name="newDB" class="form-horizontal" novalidate="">
-                    <fieldset>
-                        <div class="form-group">
-                            <label class="control-label col-md-2">Name</label>
-
-                            <div class="col-md-10">
-                                <input type="text" class="form-control" required ng-model="name"
-                                       placeholder="Database name"/>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-md-2">Type</label>
-
-                            <div class="col-md-10">
-                                <select class='form-control' ng-model="type" required ng-options="c for c in types">
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-md-2">Storage Type</label>
-
-                            <div class="col-md-10">
-                                <select class='form-control' ng-model="stype" required ng-options="c for c in stypes">
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-md-2">User</label>
-
-                            <div class="col-md-10">
-                                <input id="user" class="form-control" type="text" required ng-model="username"
-                                       value=""/>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="control-label col-md-2">Password</label>
-
-                            <div class="col-md-10">
-                                <input id="password" type="password" class="form-control" required ng-model="password"
-                                       value=""/>
-                            </div>
-
-                        </div>
-                    </fieldset>
-                </form>
-
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn" ng-click="$hide()">Close</button>
-                <button class="btn btn-primary" ng-disabled="newDB.$invalid" ng-click="createNew()">Create database
-                </button>
+            <div class="control-group">
+                <label class="control-label">Storage Type</label>
+
+                <div class="controls">
+                    <select class='span2' ng-model="stype" required ng-options="c for c in stypes">
+                    </select>
+
+                </div>
             </div>
-        </div>
+            <div class="control-group">
+                <label class="control-label">User</label>
+
+                <div class="controls">
+                    <input id="user" type="text" required ng-model="username" value=""/>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Password</label>
+
+                <div class="controls">
+                    <input id="password" type="password" required ng-model="password" value=""/>
+                </div>
+            </div>
+        </fieldset>
+    </form>
+    <div class="progress progress-striped active" ng-show="creating">
+        <div class="bar" style="width: 100%;">Creating database {{ name }}</div>
     </div>
+    <div class="alert alert-error" ng-show="error">
+        <button type="button" class="close"  ng-click="error = null">×</button>
+        {{error}}
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn" ng-click="hide()">Close</button>
+    <button class="btn btn-primary" ng-disabled="newDB.$invalid" ng-click="createNew()">Create database</button>
 </div>

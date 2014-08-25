@@ -131,7 +131,6 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         var queryBuffer = "" + $scope.queryText;
         var selection = $scope.cm.getSelection();
         if (selection && selection != "") {
-            console.log(selection);
             queryBuffer = "" + selection;
         }
 
@@ -457,10 +456,18 @@ dbModule.controller("BookmarkEditController", ['$scope', '$rootScope', 'Bookmark
 dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database', 'scroller', function ($scope, Bookmarks, DocumentApi, Database, scroller) {
 
 
-    $(document).bind("keypress", function (e) {
+    $(document).bind("keydown", function (e) {
+
         if ($scope.$parent.bookmarksClass == "show") {
             $scope.$apply(function () {
                 $scope.closeIfReturn(e);
+            });
+        }
+    });
+    $(document).bind("click", function (e) {
+        if ($scope.$parent.bookmarksClass == "show") {
+            $scope.$apply(function () {
+                $scope.click();
             });
         }
     });
@@ -480,10 +487,16 @@ dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi',
         $scope.bks = data.result
     });
 
-    $scope.click = function () {
+    $scope.click = function ($event) {
 
+        if ($event) {
+            $event.stopPropagation();
+        }
         $scope.$parent.setBookClass();
 
+    }
+    $scope.isSelected = function (bk) {
+        return $scope.selected == bk ? '' : 'hide';
     }
     $scope.hover = function (bk) {
         $scope.selected = bk;
@@ -498,7 +511,15 @@ dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi',
         $scope.$parent.setBookClass();
     }
 
-    $scope.remove = function (r) {
+    $scope.stopProps = function ($event) {
+        if ($event) {
+            $event.stopPropagation();
+        }
+    }
+    $scope.remove = function (r, $event) {
+        if ($event) {
+            $event.stopPropagation();
+        }
         Bookmarks.remove(Database.getName(), r).then(function (data) {
             var idx = $scope.bks.indexOf(r);
             $scope.bks.splice(idx, 1);
