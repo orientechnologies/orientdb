@@ -11,7 +11,7 @@ configModule.controller("ConfigurationController", ['$scope', '$routeParams', '$
 
     $scope.active = $routeParams.tab || "structure";
     $scope.db = $routeParams.database;
-    $scope.tabs = ['structure', 'allocation', 'configuration', 'import-export', 'uml'];
+    $scope.tabs = ['structure', 'configuration', 'import-export', 'uml'];
 
     $scope.tabsI18n = new Array;
 
@@ -22,7 +22,7 @@ configModule.controller("ConfigurationController", ['$scope', '$routeParams', '$
         Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Uml");
     }
     $scope.tabsI18n['structure'] = 'Structure';
-    $scope.tabsI18n['allocation'] = 'Defragmentation';
+//    $scope.tabsI18n['allocation'] = 'Defragmentation';
     $scope.tabsI18n['configuration'] = 'Configuration';
     $scope.tabsI18n['import-export'] = 'Export';
     $scope.tabsI18n['uml'] = 'UML Class Diagram';

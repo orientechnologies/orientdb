@@ -222,7 +222,6 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
                     var props = classes[entry]['indexes'];
                     for (var f in props) {
 
-
                         fields.push(props[f]);
                     }
                     ;

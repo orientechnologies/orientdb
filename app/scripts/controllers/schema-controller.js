@@ -158,6 +158,18 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     $scope.indexes = null;
     $scope.indexes = Database.listIndexesForClass(clazz);
 
+
+    $scope.getEngine = function (index) {
+        var engine = '';
+        Database.getMetadata()["indexes"].forEach(function (e) {
+            if (index.name == e.name) {
+                engine = e.configuration.algorithm;
+            }
+        });
+
+        return engine;
+    }
+
     $scope.queryText = ""
     $scope.modificati = new Array;
     $scope.listTypes = ['BINARY', 'BOOLEAN', 'EMBEDDED', 'EMBEDDEDLIST', 'EMBEDDEDMAP', 'EMBEDDEDSET', 'DECIMAL', 'FLOAT', 'DATE', 'DATETIME', 'DOUBLE', 'INTEGER', 'LINK', 'LINKLIST', 'LINKMAP', 'LINKSET', 'LONG', 'SHORT', 'STRING'];
