@@ -53,7 +53,7 @@ App.config(function ($routeProvider) {
         .when('/database/:database/schema', {
             templateUrl: 'views/database/schema.html',
             controller: 'SchemaController',
-            resolve: DatabaseResolve
+            resolve: InstantDatabaseResolve
         })
         .when('/database/:database/schema/indexes', {
             templateUrl: 'views/database/index/indexMain.html',

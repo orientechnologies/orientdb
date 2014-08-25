@@ -19,6 +19,20 @@ var DatabaseResolve = {
         return delay.promise;
     }
 }
+var InstantDatabaseResolve = {
+    current: function (Database, $q, $route, $location, Spinner) {
+        var deferred = $q.defer();
+        Database.refreshMetadata($route.current.params.database, function () {
+            deferred.resolve();
+        })
+        return deferred.promise;
+    },
+    delay: function ($q, $timeout) {
+        var delay = $q.defer();
+        $timeout(delay.resolve, 0);
+        return delay.promise;
+    }
+}
 database.factory('Database', function (DatabaseApi, localStorageService) {
     var current = {
         name: null,
