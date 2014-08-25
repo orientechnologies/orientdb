@@ -93,7 +93,7 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
       else if (sum instanceof Double)
         return sum.doubleValue() / total;
       else if (sum instanceof BigDecimal)
-        return ((BigDecimal) sum).divide(new BigDecimal(total));
+        return ((BigDecimal) sum).divide(new BigDecimal(total), RoundingMode.HALF_EVEN);
     }
     return null;
   }
