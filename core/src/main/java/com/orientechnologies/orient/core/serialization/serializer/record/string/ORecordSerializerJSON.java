@@ -15,6 +15,16 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -49,16 +59,6 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -152,17 +152,24 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       boolean needReload) {
     iSource = unwrapSource(iSource);
 
+    boolean noMap = false;
+    if (iOptions != null) {
+      final String[] format = iOptions.split(",");
+      for (String f : format)
+        if (f.equalsIgnoreCase("noMap"))
+          noMap = true;
+    }
+
     if (iRecord != null)
       // RESET ALL THE FIELDS
       iRecord.clear();
-
-    boolean noMap = isNoMap(iOptions);
 
     final List<String> fields = OStringSerializerHelper.smartSplit(iSource, PARAMETER_SEPARATOR, 0, -1, true, true, false, false,
         ' ', '\n', '\r', '\t');
 
     if (fields.size() % 2 != 0)
-      throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>, but found: " + iSource);
+      throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>, but found: "
+          + iSource);
 
     Map<String, Character> fieldTypes = null;
 
@@ -293,6 +300,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           throw new OSerializationException("Error on unmarshalling JSON content for record: " + iSource, e);
       }
     }
+
     return iRecord;
   }
 
@@ -378,17 +386,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
     iSource = iSource.substring(1, iSource.length() - 1).trim();
     return iSource;
-  }
-
-  private boolean isNoMap(String iOptions) {
-    boolean noMap = false;
-    if (iOptions != null) {
-      final String[] format = iOptions.split(",");
-      for (String f : format)
-        if (f.equals("noMap"))
-          noMap = true;
-    }
-    return noMap;
   }
 
   @SuppressWarnings("unchecked")

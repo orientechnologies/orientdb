@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -48,6 +45,17 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -110,7 +118,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   /**
    * Assign the right TARGET if found.
-   * 
+   *
    * @param iArgs
    *          Parameters to bind
    * @return true if the target has been recognized, otherwise false
@@ -213,7 +221,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       final Object letValue;
 
       // TRY TO PARSE AS FUNCTION
-      final Object func = OSQLHelper.getFunction(parsedTarget, letValueAsString);
+      final Object func = OSQLHelper.parseValue(letValueAsString, context);
       if (func != null)
         letValue = func;
       else if (letValueAsString.startsWith("(")) {
@@ -228,9 +236,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   /**
    * Parses the limit keyword if found.
-   * 
+   *
    * @param w
-   * 
+   *
    * @return the limit found as integer, or -1 if no limit is found. -1 means no limits.
    * @throws OCommandSQLParsingException
    *           if no valid limit has been found
@@ -256,9 +264,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   /**
    * Parses the skip keyword if found.
-   * 
+   *
    * @param w
-   * 
+   *
    * @return the skip found as integer, or -1 if no skip is found. -1 means no skip.
    * @throws OCommandSQLParsingException
    *           if no valid skip has been found
@@ -338,8 +346,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
             varValue = f.getFunction().getResult();
           } else
             varValue = f.execute(iRecord, iRecord, null, context);
-        } else
+        } else if( letValue instanceof String )
           varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim(), context);
+        else
+          varValue = letValue;
 
         context.setVariable(varName, varValue);
       }
@@ -433,7 +443,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   /**
    * Check function arguments and pre calculate it if possible
-   * 
+   *
    * @param function
    * @return optimized function, same function if no change
    */

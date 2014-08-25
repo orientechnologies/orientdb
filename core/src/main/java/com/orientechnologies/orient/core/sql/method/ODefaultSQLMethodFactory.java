@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.sql.functions.conversion.OSQLMethodConv
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLMethodExclude;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLMethodInclude;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodAppend;
+import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodFromJSON;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodHash;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodLength;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLMethodReplace;
@@ -63,6 +64,7 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     register(OSQLMethodExclude.NAME, new OSQLMethodExclude());
     register(OSQLMethodField.NAME, new OSQLMethodField());
     register(OSQLMethodFormat.NAME, new OSQLMethodFormat());
+    register(OSQLMethodFromJSON.NAME, new OSQLMethodFromJSON());
     register(OSQLMethodFunctionDelegate.NAME, OSQLMethodFunctionDelegate.class);
     register(OSQLMethodHash.NAME, new OSQLMethodHash());
     register(OSQLMethodInclude.NAME, new OSQLMethodInclude());
