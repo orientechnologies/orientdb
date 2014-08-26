@@ -21,8 +21,28 @@ a.navbar-brand > img {
     padding: 0px;
 }
 
-body {
+.normal-page {
     background: url("../img/bg-texture-light.gif") repeat scroll 0 0 #f6f6f6;
+
+}
+
+html,
+body {
+    height: 100%;
+    /* The html and body elements cannot have any padding or margin. */
+}
+body {
+
+}
+.landing-page {
+    background: url("../img/orient_home_bg.jpg") no-repeat 0 0 #f6f6f6;
+    background-size: cover;
+}
+
+.ologin {
+    margin-top: 50px;
+    border-color: #c5c5c5 #c5c5c5 #c5c5c5;
+    box-shadow: 0px 0px 1px 1px #c5c5c5;
 }
 
 body div.container-notification {
@@ -264,4 +284,35 @@ text.vicon {
 
 .btn {
     border-radius: 0;
+}
+#wrap {
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+    /* Negative indent footer by its height */
+    margin: 0 auto -40px;
+    /* Pad bottom by footer height */
+    padding: 0 0 40px;
+}
+#footer {
+    height: 40px;
+}
+#footer hr {
+    margin: 5px;
+}
+#footer {
+    background-color: transparent;
+}
+.icon-container i {
+    vertical-align: middle;
+}
+.icon-container {
+    display: block;
+    height: 25px;
+    width: 25px;
+    border-width: 1px;
+    border-style: solid;
+    border-radius: 50%;
+    text-align: center;
+    vertical-align: middle;
 }

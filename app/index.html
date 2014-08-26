@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="components/codemirror/theme/ambiance.css">
     <link rel="stylesheet" href="components/codemirror/lib/codemirror.css">
     <link rel="stylesheet" href="components/codemirror/addon/hint/show-hint.css">
+    <link rel="stylesheet" href="components/codemirror/addon/dialog/dialog.css">
     <link rel="stylesheet" href="components/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="components/bootstrap/dist/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="components/bootstrap-datepicker/css/datepicker.css"/>
@@ -44,7 +45,7 @@
 
     <!-- endbuild -->
 </head>
-<body ng-app="OrientDBStudioApp" class="antialiased">
+<body ng-app="OrientDBStudioApp" class="antialiased" ng-class="bodyClass">
 <!--[if lt IE 7]>
 <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser
     today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better
@@ -55,39 +56,68 @@
 <script src="components/es5-shim/es5-shim.js"></script>
 <script src="components/json3/lib/json3.min.js"></script>
 <![endif]-->
-<div ng-controller="HeaderController">
-    <div ng-include src="'views/header.html'"></div>
-</div>
-
-<div id="spinner-container" class="">
-    <div id="spinner">
+<div id="wrap">
+    <div ng-controller="HeaderController">
+        <div ng-include src="'views/header.html'"></div>
     </div>
-</div>
-<div id="spinner-circle" class="circle-stop">
-    <div class="circle-container">
-        <div class="circle"></div>
-        <div class="circle1"></div>
 
+    <div id="spinner-container" class="">
+        <div id="spinner">
+        </div>
     </div>
-</div>
-<div id="interrupter-container" class="circle-interrupt-stop">
-    <a id="interrupter" class="btn btn-danger" href="javascript:void(0)" data-placement="bottom"
-       bs-tooltip="'Interrupt request'"></i>Interrupt</a>
-</div>
-<div class="container-fluid container-notification">
-    <div class="row-fluid">
-        <div ng-controller="NotificationController">
-            <div ng-include src="'views/notification.html'"></div>
+    <div id="spinner-circle" class="circle-stop">
+        <div class="circle-container">
+            <div class="circle"></div>
+            <div class="circle1"></div>
+
+        </div>
+    </div>
+    <div id="interrupter-container" class="circle-interrupt-stop">
+        <a id="interrupter" class="btn btn-danger" href="javascript:void(0)" data-placement="bottom"
+           bs-tooltip="'Interrupt request'"></i>Interrupt</a>
+    </div>
+    <div class="container-fluid container-notification">
+        <div class="row-fluid">
+            <div ng-controller="NotificationController">
+                <div ng-include src="'views/notification.html'"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Add your site or application content here -->
+    <div ng-include="'views/widget/aside.html'"></div>
+    <div class="container-fluid container-studio">
+        <div class="container-fluid" ng-view>
         </div>
     </div>
 </div>
-<!-- Add your site or application content here -->
-<div ng-include="'views/widget/aside.html'"></div>
-<div class="container-fluid container-studio">
-    <div class="container-fluid" ng-view>
-    </div>
-</div>
+<div id="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <hr/>
+            </div>
+            <div class="col-md-6">
+                <p>© 2014 Orient Technologies LTD</p>
+            </div>
+            <div class="col-md-6">
+                <div class="pull-right">
+                    <div class="btn-group">
+                        <a href="" class="icon-container"><i class="fa fa-twitter"></i></a>
+                    </div>
+                    <div class="btn-group" class="icon-container">
+                        <a href="" class="icon-container"><i class="fa fa-facebook"></i></a>
+                    </div>
+                    <div class="btn-group">
+                        <a href="" class="icon-container"><i class="fa fa-google-plus"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--/row-->
 
+    </div>
+    <!--/container-->
+</div>
 
 <!-- <script type="text/javascript" src="components/select2/select2.js"></script>
 <script type="text/javascript" src="components/angular-ui-select2/src/select2.js"></script> -->
@@ -121,6 +151,9 @@
 <script type="text/javascript" src="components/codemirror/mode/javascript/javascript.js"></script>
 <script type="text/javascript" src="components/codemirror/mode/sql/sql.js"></script>
 <script type="text/javascript" src="components/codemirror/addon/hint/show-hint.js"></script>
+<script type="text/javascript" src="components/codemirror/addon/search/search.js"></script>
+<script type="text/javascript" src="components/codemirror/addon/search/searchcursor.js"></script>
+<script type="text/javascript" src="components/codemirror/addon/dialog/dialog.js"></script>
 <script src="scripts/util/orientdb-hint.js"></script>
 <script type="text/javascript" src="scripts/widgets/patch/ui-codemirror.js"></script>
 <script src="components/angular-scroll/angular-scroll.min.js"></script>

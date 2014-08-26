@@ -458,7 +458,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
     };
 });
 
-database.factory('DatabaseApi', function ($http, $resource) {
+database.factory('DatabaseApi', function ($http, $resource, $q) {
 
 
     var urlWiki = "https://github.com/orientechnologies/orientdb-studio/wiki/Functions";
@@ -489,7 +489,17 @@ database.factory('DatabaseApi', function ($http, $resource) {
                 error(data);
             });
     }
-
+    resource.deleteDatabase = function (name, username, password) {
+        var deferred = $q.defer();
+        delete $http.defaults.headers.common['Authorization'];
+        $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+        $http.delete(API + 'database/' + name).success(function (data) {
+            deferred.resolve(data);
+        }).error(function (data) {
+                deferred.reject(data);
+            })
+        return deferred.promise;
+    }
     resource.exportDatabase = function (database) {
         window.open(API + 'export/' + database);
     }

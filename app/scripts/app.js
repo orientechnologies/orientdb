@@ -135,3 +135,15 @@ App.config(function ($routeProvider) {
             redirectTo: '/'
         });
 });
+App.run(function ($rootScope) {
+    $rootScope.$on('$routeChangeSuccess', function (event, currentRoute) {
+        switch (currentRoute.templateUrl) {
+            case 'views/login.html':
+                $rootScope.bodyClass = 'landing-page';
+                break;
+            default:
+                $rootScope.bodyClass = 'normal-page';
+                break;
+        }
+    });
+})

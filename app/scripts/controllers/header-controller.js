@@ -65,6 +65,9 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
             modalEl.modal('show');
         });
     }
+    $scope.manageServer = function () {
+        $location.path("/server");
+    }
     $scope.logout = function () {
         Database.disconnect(function () {
             $scope.menus = [];
