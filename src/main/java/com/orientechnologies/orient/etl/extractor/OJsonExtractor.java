@@ -18,11 +18,12 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
-import java.io.Reader;
-import java.util.NoSuchElementException;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
+import com.orientechnologies.orient.etl.OExtractedItem;
+
+import java.io.Reader;
+import java.util.NoSuchElementException;
 
 public class OJsonExtractor extends OAbstractSourceExtractor {
   protected OJSONReader jsonReader;
@@ -51,7 +52,7 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
   }
 
   @Override
-  public Object next() {
+  public OExtractedItem next() {
     if (!hasNext())
       throw new NoSuchElementException("EOF");
 
@@ -63,8 +64,9 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
         first = null;
       }
       jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-      current++;
-      return new ODocument().fromJSON(value);
+
+      return new OExtractedItem(current++, new ODocument().fromJSON(value));
+
     } catch (Exception e) {
       throw new OExtractorException("[JSON extractor] error on extract json", e);
     }

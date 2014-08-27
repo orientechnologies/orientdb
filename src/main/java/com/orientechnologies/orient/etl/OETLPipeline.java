@@ -44,10 +44,10 @@ public class OETLPipeline {
   protected OrientBaseGraph            graph;
 
   public OETLPipeline(final OETLProcessor iProcessor, final List<OTransformer> iTransformers, final OLoader iLoader,
-      final OBasicCommandContext iContext, final boolean iVerbose, final int iMaxRetries) {
+      final boolean iVerbose, final int iMaxRetries) {
     verbose = iVerbose;
     processor = iProcessor;
-    context = iContext;
+    context = new OBasicCommandContext();
 
     transformers = iTransformers;
     loader = iLoader;
@@ -91,11 +91,15 @@ public class OETLPipeline {
     return this;
   }
 
-  protected Object execute(final Object source) {
+  protected Object execute(final OExtractedItem source) {
     int retry = 0;
     do {
       try {
-        Object current = source;
+        Object current = source.payload;
+
+        context.setVariable("extractedNum", source.num);
+        context.setVariable("extractedPayload", source.payload);
+
         for (OTransformer t : transformers) {
           current = t.transform(current);
           if (current == null) {

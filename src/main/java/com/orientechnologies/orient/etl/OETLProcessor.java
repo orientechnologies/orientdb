@@ -157,7 +157,7 @@ public class OETLProcessor implements OETLComponent {
           configureComponent(b, (ODocument) block.field(name), iContext);
         }
 
-      //analyzeFlow();
+      // analyzeFlow();
 
     } catch (Exception e) {
       throw new OConfigurationException("Error on creating ETL processor", e);
@@ -266,9 +266,9 @@ public class OETLProcessor implements OETLComponent {
           extractor.extract(reader);
       }
 
-      final LinkedBlockingQueue<Object> queue = new LinkedBlockingQueue<Object>(threads.length * 500) {
+      final LinkedBlockingQueue<OExtractedItem> queue = new LinkedBlockingQueue<OExtractedItem>(threads.length * 500) {
         @Override
-        public boolean offer(Object e) {
+        public boolean offer(OExtractedItem e) {
           // turn offer() and add() into a blocking calls (unless interrupted)
           try {
             put(e);
@@ -288,12 +288,12 @@ public class OETLProcessor implements OETLComponent {
         threads[i] = new Thread(new Runnable() {
           @Override
           public void run() {
-            final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, context, verbose, maxRetries);
+            final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, verbose, maxRetries);
             pipeline.begin();
 
             while (!extractionFinished.get() || counter.get() > 0) {
               try {
-                final Object content = queue.take();
+                final OExtractedItem content = queue.take();
                 try {
                   pipeline.execute(content);
                 } finally {
@@ -305,12 +305,15 @@ public class OETLProcessor implements OETLComponent {
           }
         }, "OrientDB ETL pipeline-" + i);
 
+        threads[i].setDaemon(true);
         threads[i].start();
       }
 
       while (extractor.hasNext()) {
         // EXTRACTOR
-        final Object current = extractor.next();
+        final Object payload = extractor.next();
+
+        final OExtractedItem current = new OExtractedItem(extractor.getProgress(), payload);
 
         // TRANSFORM + LOAD
         queue.offer(current);
@@ -448,12 +451,12 @@ public class OETLProcessor implements OETLComponent {
           extractor.extract(reader);
       }
 
-      final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, context, verbose, maxRetries);
+      final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, verbose, maxRetries);
       pipeline.begin();
 
       while (extractor.hasNext()) {
         // EXTRACTOR
-        final Object current = extractor.next();
+        final OExtractedItem current = extractor.next();
 
         // TRANSFORM + LOAD
         pipeline.execute(current);

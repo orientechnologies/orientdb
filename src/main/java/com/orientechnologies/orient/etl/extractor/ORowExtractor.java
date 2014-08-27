@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.orient.etl.OExtractedItem;
+
 public class ORowExtractor extends OAbstractSourceExtractor {
   protected BufferedReader bReader;
 
@@ -32,14 +34,15 @@ public class ORowExtractor extends OAbstractSourceExtractor {
   }
 
   @Override
-  public Object next() {
+  public OExtractedItem next() {
     if (!hasNext())
       throw new NoSuchElementException("EOF");
 
     try {
       final String line = bReader.readLine();
-      current++;
-      return line;
+
+      return new OExtractedItem(current++, line);
+
     } catch (IOException e) {
       throw new OExtractorException(e);
     }

@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
+import com.orientechnologies.orient.etl.OExtractedItem;
 
 import java.io.Reader;
 import java.sql.Connection;
@@ -204,12 +205,11 @@ public class OJDBCExtractor extends OAbstractExtractor {
   }
 
   @Override
-  public Object next() {
+  public OExtractedItem next() {
     try {
       if (!didNext) {
         if (!rs.next())
           throw new NoSuchElementException("[JDBC extractor] previous position was " + current);
-        current++;
       }
       didNext = false;
 
@@ -219,7 +219,8 @@ public class OJDBCExtractor extends OAbstractExtractor {
         Object fieldValue = rs.getObject(i + 1);
         doc.field(columnNames.get(i), fieldValue);
       }
-      return doc;
+
+      return new OExtractedItem(current++, doc);
 
     } catch (SQLException e) {
       throw new OExtractorException("[JDBC extractor] error on moving forward in resultset of query '" + query

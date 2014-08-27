@@ -124,6 +124,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         + "{dbType:{optional:true,description:'Database type, default is document',values:" + stringArray2Json(DB_TYPE.values())
         + "}}," + "{class:{optional:true,description:'Record class name'}},"
         + "{tx:{optional:true,description:'Transaction mode: true executes in transaction, false for atomic operations'}},"
+        + "{dbAutoCreate:{optional:true,description:'Auto create the database if not exists. Default is true'}},"
+        + "{dbAutoDropIfExists:{optional:true,description:'Auto drop the database if already exists. Default is false.'}},"
+        + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
         + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
         + "{cluster:{optional:true,description:'Cluster name where to store the new record'}},"
         + "{classes:{optional:true,description:'Classes used. It assure the classes exist or in case create them'}},"
@@ -149,6 +152,10 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       wal = (Boolean) iConfiguration.field("wal");
     if (iConfiguration.containsField("batchCommit"))
       batchCommit = (Integer) iConfiguration.field("batchCommit");
+    if (iConfiguration.containsField("dbAutoCreate"))
+      dbAutoCreate = (Boolean) iConfiguration.field("dbAutoCreate");
+    if (iConfiguration.containsField("dbAutoCreate"))
+      dbAutoDropIfExists = (Boolean) iConfiguration.field("dbAutoDropIfExists");
 
     clusterName = iConfiguration.field("cluster");
     className = iConfiguration.field("class");

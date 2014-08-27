@@ -75,7 +75,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
   }
 
   protected String stringArray2Json(final Object[] iObject) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(256);
     buffer.append('[');
     for (int i = 0; i < iObject.length; ++i) {
       if (i > 0)
