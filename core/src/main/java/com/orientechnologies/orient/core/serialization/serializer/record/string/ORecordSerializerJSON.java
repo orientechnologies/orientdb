@@ -136,7 +136,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             dateAsLong = true;
           else if (f.startsWith("prettyPrint"))
             prettyPrint = true;
-          else if (f.startsWith("graph"))
+          else if (f.startsWith("graph")||f.startsWith("shallow"))
             // SUPPORTED IN OTHER PARTS
             ;
           else
