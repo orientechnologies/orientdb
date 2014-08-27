@@ -68,6 +68,10 @@ public class OCodeTransformer extends OAbstractTransformer {
       return null;
 
     params.put("record", input);
-    return cmd.executeInContext(context, params);
+    Object result = cmd.executeInContext(context, params);
+
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "executed code=%s, result=%s", cmd, result);
+
+    return result;
   }
 }

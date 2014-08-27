@@ -65,8 +65,13 @@ public class OFieldTransformer extends OAbstractTransformer {
 
         // SET THE TRANSFORMED FIELD BACK
         ((ODocument) input).field(fieldName, newValue);
-      } else
-        ((ODocument) input).removeField(fieldName);
+
+        log(OETLProcessor.LOG_LEVELS.DEBUG, "set %s=%s in document=%s", fieldName, newValue, input);
+      } else {
+        final Object prev = ((ODocument) input).removeField(fieldName);
+
+        log(OETLProcessor.LOG_LEVELS.DEBUG, "removed %s (value=%s) from document=%s", fieldName, prev, input);
+      }
     }
 
     return input;

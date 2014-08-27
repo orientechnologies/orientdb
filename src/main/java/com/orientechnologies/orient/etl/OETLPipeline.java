@@ -34,18 +34,18 @@ import java.util.List;
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
 public class OETLPipeline {
-  protected final OETLProcessor        processor;
-  protected final List<OTransformer>   transformers;
-  protected final OLoader              loader;
-  protected final OBasicCommandContext context;
-  protected final boolean              verbose;
-  protected final int                  maxRetries;
-  protected ODatabaseDocumentTx        db;
-  protected OrientBaseGraph            graph;
+  protected final OETLProcessor            processor;
+  protected final List<OTransformer>       transformers;
+  protected final OLoader                  loader;
+  protected final OBasicCommandContext     context;
+  protected final OETLProcessor.LOG_LEVELS logLevel;
+  protected final int                      maxRetries;
+  protected ODatabaseDocumentTx            db;
+  protected OrientBaseGraph                graph;
 
   public OETLPipeline(final OETLProcessor iProcessor, final List<OTransformer> iTransformers, final OLoader iLoader,
-      final boolean iVerbose, final int iMaxRetries) {
-    verbose = iVerbose;
+      final OETLProcessor.LOG_LEVELS iLogLevel, final int iMaxRetries) {
+    logLevel = iLogLevel;
     processor = iProcessor;
     context = new OBasicCommandContext();
 
@@ -91,6 +91,10 @@ public class OETLPipeline {
     return this;
   }
 
+  public OBasicCommandContext getContext() {
+    return context;
+  }
+
   protected Object execute(final OExtractedItem source) {
     int retry = 0;
     do {
@@ -103,7 +107,7 @@ public class OETLPipeline {
         for (OTransformer t : transformers) {
           current = t.transform(current);
           if (current == null) {
-            if (verbose)
+            if (logLevel == OETLProcessor.LOG_LEVELS.DEBUG)
               OLogManager.instance().warn(this, "Transformer [%s] returned null, skip rest of pipeline execution", t);
             break;
           }
@@ -117,7 +121,7 @@ public class OETLPipeline {
       } catch (ONeedRetryException e) {
         loader.rollback();
         retry++;
-        processor.out(true, "Error in pipeline execution, retry = %d/%d", retry, maxRetries);
+        processor.out(OETLProcessor.LOG_LEVELS.INFO, "Error in pipeline execution, retry = %d/%d", retry, maxRetries);
       } catch (OETLProcessHaltedException e) {
         loader.rollback();
         throw e;

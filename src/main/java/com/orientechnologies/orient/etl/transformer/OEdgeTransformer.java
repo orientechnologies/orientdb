@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OEdgeTransformer extends OAbstractLookupTransformer {
@@ -92,6 +93,9 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
     Object joinValue = vertex.getProperty(joinFieldName);
 
     Object result = lookup(joinValue);
+
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "joinValue=%s, lookupResult=%s", joinValue, result);
+
     if (result == null) {
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
       switch (unresolvedLinkAction) {
@@ -101,17 +105,20 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
           final OrientVertex linkedV = graph.addTemporaryVertex(lookupParts[0]);
           linkedV.setProperty(lookupParts[1], joinValue);
           linkedV.save();
+
+          log(OETLProcessor.LOG_LEVELS.DEBUG, "created new vertex=%s", linkedV.getRecord());
+
           result = linkedV;
         } else
           throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
         break;
       case ERROR:
         processor.getStats().incrementErrors();
-        log("%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
+        log(OETLProcessor.LOG_LEVELS.ERROR, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
         break;
       case WARNING:
         processor.getStats().incrementWarnings();
-        log("%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
+        log(OETLProcessor.LOG_LEVELS.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
         break;
       case SKIP:
         return null;
@@ -123,10 +130,13 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         final OrientVertex targetVertex = graph.getVertex(result);
 
         // CREATE THE EDGE
+        final OrientEdge edge;
         if (directionOut)
-          vertex.addEdge(edgeClass, targetVertex);
+          edge = (OrientEdge) vertex.addEdge(edgeClass, targetVertex);
         else
-          targetVertex.addEdge(edgeClass, vertex);
+          edge = (OrientEdge) targetVertex.addEdge(edgeClass, vertex);
+
+        log(OETLProcessor.LOG_LEVELS.DEBUG, "created new edge=%s", edge);
       }
     }
     return input;

@@ -27,5 +27,6 @@ public abstract class OAbstractETLPipelineComponent extends OAbstractETLComponen
   @Override
   public void setPipeline(final OETLPipeline iPipeline) {
     pipeline = iPipeline;
+    context = iPipeline.getContext();
   }
 }

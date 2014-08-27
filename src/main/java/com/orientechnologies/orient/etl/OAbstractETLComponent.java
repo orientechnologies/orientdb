@@ -30,11 +30,11 @@ import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
  * ETL abstract component.
  */
 public abstract class OAbstractETLComponent implements OETLComponent {
-  protected OETLProcessor        processor;
-  protected OBasicCommandContext context;
-  protected OSQLFilter           ifFilter;
-  protected boolean              verbose = false;
-  protected String               output  = null;
+  protected OETLProcessor            processor;
+  protected OBasicCommandContext     context;
+  protected OSQLFilter               ifFilter;
+  protected OETLProcessor.LOG_LEVELS logLevel;
+  protected String                   output = null;
 
   @Override
   public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
@@ -45,10 +45,10 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     if (ifExpression != null)
       ifFilter = new OSQLFilter(ifExpression, iContext, null);
 
-    if (iConfiguration.containsField("verbose"))
-      verbose = (Boolean) iConfiguration.field("verbose");
+    if (iConfiguration.containsField("log"))
+      logLevel = OETLProcessor.LOG_LEVELS.valueOf((String) iConfiguration.field("log"));
     else
-      verbose = iProcessor.isVerbose();
+      logLevel = iProcessor.getLogLevel();
 
     if (iConfiguration.containsField("output"))
       output = (String) iConfiguration.field("output");
@@ -68,7 +68,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
   }
 
   protected String getCommonConfigurationParameters() {
-    return "{verbose:{optional:true,description:'If verbose, the component generates more output. Useful to debug the pipeline'}},"
+    return "{log:{optional:true,description:'Can be any of [NONE, ERROR, INFO, DEBUG]. Default is INFO'}},"
         + "{if:{optional:true,description:'Conditional expression. If true, the block is executed, otherwise is skipped'}},"
         + "{output:{optional:true,description:'Variable name to store the transformer output. If null, the output will be passed to the pipeline as input for the next component.'}}";
 
@@ -123,12 +123,13 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     return value;
   }
 
-  protected void debug(final String iText, final Object... iArgs) {
-    if (verbose)
-      log(iText, iArgs);
-  }
-
-  protected void log(final String iText, final Object... iArgs) {
-    System.out.println(getName() + "->" + String.format(iText, iArgs));
+  protected void log(final OETLProcessor.LOG_LEVELS iLevel, final String iText, final Object... iArgs) {
+    if (logLevel.ordinal() >= iLevel.ordinal()) {
+      Long extractedNum = (Long) context.getVariable("extractedNum");
+      if (extractedNum != null)
+        System.out.println("[" + extractedNum + ":" + getName() + "] " + iLevel + " " + String.format(iText, iArgs));
+      else
+        System.out.println("[" + getName() + "] " + iLevel + " " + String.format(iText, iArgs));
+    }
   }
 }

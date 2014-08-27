@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
 /**
  * Merges two records. Useful when a record needs to be updated rather than created.
@@ -44,6 +45,8 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
     Object joinValue = ((ODocument) input).field(joinFieldName);
     final Object result = lookup(joinValue);
 
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "joinValue=%s, lookupResult=%s", joinValue, result);
+
     if (result == null) {
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
       switch (unresolvedLinkAction) {
@@ -51,11 +54,11 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
         break;
       case ERROR:
         processor.getStats().incrementErrors();
-        log("%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
+        log(OETLProcessor.LOG_LEVELS.ERROR, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
         break;
       case WARNING:
         processor.getStats().incrementWarnings();
-        log("%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
+        log(OETLProcessor.LOG_LEVELS.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
         break;
       case SKIP:
         return null;
@@ -64,6 +67,9 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
       }
     } else {
       ((ODocument) result).merge((ODocument) input, true, false);
+
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "merged record %s with found record=%s", result, input);
+
       return result;
     }
 

@@ -60,10 +60,16 @@ public class OCommandTransformer extends OAbstractTransformer {
 
     if (language.equals("sql")) {
       cmd = new OCommandSQL(command);
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "executing command=%s...", command);
     } else if (language.equals("gremlin")) {
       cmd = new OCommandGremlin(command);
     } else
       throw new OTransformException(getName() + ": language '" + language + "' not supported");
-    return pipeline.getDocumentDatabase().command(cmd).execute();
+
+    Object result = pipeline.getDocumentDatabase().command(cmd).execute();
+
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "executed command=%s, result=%s", cmd, result);
+
+    return result;
   }
 }

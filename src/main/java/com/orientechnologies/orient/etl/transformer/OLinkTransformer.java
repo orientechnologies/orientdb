@@ -80,6 +80,8 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
 
     Object result = lookup(joinRuntimeValue);
 
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "joinRuntimeValue=%s, lookupResult=%s", joinRuntimeValue, result);
+
     if (result != null) {
       if (linkFieldType != null) {
         // CONVERT IT
@@ -114,17 +116,20 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
             final ODocument linkedDoc = new ODocument(lookupParts[0]);
             linkedDoc.field(lookupParts[1], joinRuntimeValue);
             linkedDoc.save();
+
+            log(OETLProcessor.LOG_LEVELS.DEBUG, "created new document=%s", linkedDoc.getRecord());
+
             result = linkedDoc;
           } else
             throw new OConfigurationException("Cannot create linked document because target class is unknown. Use 'lookup' field");
           break;
         case ERROR:
           processor.getStats().incrementErrors();
-          log("%s: ERROR Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
+          log(OETLProcessor.LOG_LEVELS.ERROR, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
           break;
         case WARNING:
           processor.getStats().incrementWarnings();
-          log("%s: WARN Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
+          log(OETLProcessor.LOG_LEVELS.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinRuntimeValue);
           break;
         case SKIP:
           return null;
@@ -136,6 +141,8 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
 
     // SET THE TRANSFORMED FIELD BACK
     ((ODocument) input).field(linkFieldName, result);
+
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "set %s=%s in document=%s", linkFieldName, result, input);
 
     return input;
   }

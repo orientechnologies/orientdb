@@ -101,6 +101,8 @@ public class OCSVTransformer extends OAbstractTransformer {
         return null;
     }
 
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "parsing=%s", input);
+
     final List<String> fields = OStringSerializerHelper.smartSplit(input.toString(), new char[] { separator }, 0, -1, false, false,
         false, false);
 
@@ -133,8 +135,8 @@ public class OCSVTransformer extends OAbstractTransformer {
             doc.field(fieldName, fieldValue);
           } catch (Exception e) {
             processor.getStats().incrementErrors();
-            log("Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s", processor.getExtractor()
-                .getProgress(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
+            log(OETLProcessor.LOG_LEVELS.ERROR, "Error on converting row %d field '%s' (%d), value '%s' (class:%s) to type: %s",
+                processor.getExtractor().getProgress(), fieldName, i, fieldValue, fieldValue.getClass().getName(), fieldType);
           }
         } else if (fieldStringValue != null && !fieldStringValue.isEmpty()) {
           // DETERMINE THE TYPE
@@ -165,11 +167,14 @@ public class OCSVTransformer extends OAbstractTransformer {
 
           doc.field(fieldName, fieldValue);
         }
+
       } catch (Exception e) {
         processor.getStats().incrementErrors();
-        debug("Error on setting document field %s=%s (cause=%s)", fieldName, fieldValue, e.toString());
+        log(OETLProcessor.LOG_LEVELS.ERROR, "Error on setting document field %s=%s (cause=%s)", fieldName, fieldValue, e.toString());
       }
     }
+
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "document=%s", doc);
 
     return doc;
   }

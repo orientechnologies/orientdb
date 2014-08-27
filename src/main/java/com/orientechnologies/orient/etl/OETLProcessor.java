@@ -18,6 +18,17 @@
 
 package com.orientechnologies.orient.etl;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.TimerTask;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -32,17 +43,6 @@ import com.orientechnologies.orient.etl.source.OSource;
 import com.orientechnologies.orient.etl.transformer.OTransformer;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * ETL processor class.
@@ -62,10 +62,14 @@ public class OETLProcessor implements OETLComponent {
   protected long                       elapsed;
   protected OETLProcessorStats         stats      = new OETLProcessorStats();
   protected TimerTask                  dumpTask;
-  protected boolean                    verbose    = false;
+  protected LOG_LEVELS                 logLevel   = LOG_LEVELS.INFO;
   protected boolean                    parallel   = false;
   protected int                        maxRetries = 10;
   private Thread[]                     threads;
+
+  public enum LOG_LEVELS {
+    NONE, ERROR, INFO, DEBUG
+  }
 
   public class OETLProcessorStats {
     public long       lastExtractorProgress = 0;
@@ -257,7 +261,7 @@ public class OETLProcessor implements OETLComponent {
     try {
       begin();
 
-      out(true, "Started parallel execution with %d threads", threads.length);
+      out(LOG_LEVELS.INFO, "Started parallel execution with %d threads", threads.length);
 
       if (source != null) {
         final Reader reader = source.read();
@@ -288,7 +292,7 @@ public class OETLProcessor implements OETLComponent {
         threads[i] = new Thread(new Runnable() {
           @Override
           public void run() {
-            final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, verbose, maxRetries);
+            final OETLPipeline pipeline = new OETLPipeline(processor, transformers, loader, logLevel, maxRetries);
             pipeline.begin();
 
             while (!extractionFinished.get() || counter.get() > 0) {
@@ -311,9 +315,7 @@ public class OETLProcessor implements OETLComponent {
 
       while (extractor.hasNext()) {
         // EXTRACTOR
-        final Object payload = extractor.next();
-
-        final OExtractedItem current = new OExtractedItem(extractor.getProgress(), payload);
+        final OExtractedItem current = extractor.next();
 
         // TRANSFORM + LOAD
         queue.offer(current);
@@ -323,7 +325,7 @@ public class OETLProcessor implements OETLComponent {
       extractionFinished.set(true);
 
       while (counter.get() > 0) {
-        out(true, "Waiting for the pipeline to finish, remaining " + counter.get() + " entries to process");
+        out(LOG_LEVELS.INFO, "Waiting for the pipeline to finish, remaining " + counter.get() + " entries to process");
         try {
           // WAIT A BIT AND RETRY
           Thread.sleep(500);
@@ -334,7 +336,7 @@ public class OETLProcessor implements OETLComponent {
       end();
 
     } catch (OETLProcessHaltedException e) {
-      out(false, "ETL process halted: " + e);
+      out(LOG_LEVELS.ERROR, "ETL process halted: " + e);
     }
   }
 
@@ -349,11 +351,11 @@ public class OETLProcessor implements OETLComponent {
 
   @Override
   public void begin() {
-    out(false, "BEGIN ETL PROCESSOR");
+    out(LOG_LEVELS.INFO, "BEGIN ETL PROCESSOR");
 
-    final Boolean cfgVerbose = (Boolean) context.getVariable("verbose");
-    if (cfgVerbose != null)
-      verbose = cfgVerbose;
+    final String cfgLog = (String) context.getVariable("log");
+    if (cfgLog != null)
+      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
 
     final Integer cfgMaxRetries = (Integer) context.getVariable("maxRetries");
     if (cfgMaxRetries != null)
@@ -364,7 +366,7 @@ public class OETLProcessor implements OETLComponent {
       dumpTask = new TimerTask() {
         @Override
         public void run() {
-          dumpProgress(true);
+          dumpProgress();
         }
       };
 
@@ -405,9 +407,9 @@ public class OETLProcessor implements OETLComponent {
       dumpTask.cancel();
     }
 
-    out(false, "END ETL PROCESSOR");
+    out(LOG_LEVELS.INFO, "END ETL PROCESSOR");
 
-    dumpProgress(false);
+    dumpProgress();
   }
 
   @Override
@@ -415,8 +417,8 @@ public class OETLProcessor implements OETLComponent {
     return "Processor";
   }
 
-  public void out(final boolean iDebug, final String iText, final Object... iArgs) {
-    if (!iDebug || verbose)
+  public void out(final LOG_LEVELS iLogLevel, final String iText, final Object... iArgs) {
+    if (logLevel.ordinal() >= iLogLevel.ordinal())
       System.out.println(String.format(iText, iArgs));
   }
 
@@ -436,8 +438,8 @@ public class OETLProcessor implements OETLComponent {
     return transformers;
   }
 
-  public boolean isVerbose() {
-    return verbose;
+  public LOG_LEVELS getLogLevel() {
+    return logLevel;
   }
 
   protected void executeSequentially() {
@@ -451,7 +453,7 @@ public class OETLProcessor implements OETLComponent {
           extractor.extract(reader);
       }
 
-      final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, verbose, maxRetries);
+      final OETLPipeline pipeline = new OETLPipeline(this, transformers, loader, logLevel, maxRetries);
       pipeline.begin();
 
       while (extractor.hasNext()) {
@@ -465,7 +467,7 @@ public class OETLProcessor implements OETLComponent {
       end();
 
     } catch (OETLProcessHaltedException e) {
-      out(false, "ETL process halted: " + e);
+      out(LOG_LEVELS.ERROR, "ETL process halted: " + e);
     }
   }
 
@@ -495,7 +497,7 @@ public class OETLProcessor implements OETLComponent {
     return inClass;
   }
 
-  protected void dumpProgress(final boolean iDebug) {
+  protected void dumpProgress() {
     final long now = System.currentTimeMillis();
 
     final long extractorProgress = extractor.getProgress();
@@ -510,14 +512,15 @@ public class OETLProcessor implements OETLComponent {
     final String extractorTotalFormatted = extractorTotal > -1 ? String.format("%,d", extractorTotal) : "?";
 
     if (extractorTotal == -1) {
-      out(iDebug, "+ extracted %,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
+      out(LOG_LEVELS.INFO,
+          "+ extracted %,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
           extractorProgress, extractorUnit, extractorItemsSec, extractorUnit, extractor.getProgress(), extractor.getUnit(),
           loaderProgress, loaderUnit, loaderItemsSec, loaderUnit, OIOUtils.getTimeAsString(now - startTime), stats.warnings.get(),
           stats.errors.get());
     } else {
       float extractorPercentage = ((float) extractorProgress * 100 / extractorTotal);
 
-      out(iDebug,
+      out(LOG_LEVELS.INFO,
           "+ %3.2f%% -> extracted %,d/%,d %s (%,d %s/sec) - %,d %s -> loaded %,d %s (%,d %s/sec) Total time: %s [%d warnings, %d errors]",
           extractorPercentage, extractorProgress, extractorTotal, extractorUnit, extractorItemsSec, extractorUnit,
           extractor.getProgress(), extractor.getUnit(), loaderProgress, loaderUnit, loaderItemsSec, loaderUnit,
