@@ -21,6 +21,7 @@ package com.orientechnologies.common.console;
 
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OArrays;
 
@@ -132,6 +133,7 @@ public class OConsoleApplication {
             break;
         } catch (Exception e) {
           result = 1;
+          OLogManager.instance().error(this, "Error on reading console input: %s", e);
         }
       }
     } else {

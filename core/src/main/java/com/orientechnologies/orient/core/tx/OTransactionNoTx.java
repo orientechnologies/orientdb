@@ -51,6 +51,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
+  public int getEntryCount() {
+    return 0;
+  }
+
+  @Override
   public void commit(boolean force) {
   }
 

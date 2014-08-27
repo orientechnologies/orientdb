@@ -16,13 +16,6 @@
  */
 package com.orientechnologies.orient.object.metadata.schema;
 
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import javassist.util.proxy.Proxy;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
@@ -33,11 +26,18 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import javassist.util.proxy.Proxy;
+
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author luca.molino
@@ -184,6 +184,11 @@ public class OSchemaProxyObject implements OSchema {
   @Override
   public OClass getClassByClusterId(int clusterId) {
     return underlying.getClassByClusterId(clusterId);
+  }
+
+  @Override
+  public OClusterSelectionFactory getClusterSelectionFactory() {
+    return underlying.getClusterSelectionFactory();
   }
 
   /**

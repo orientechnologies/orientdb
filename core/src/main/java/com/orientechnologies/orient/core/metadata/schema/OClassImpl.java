@@ -15,19 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
@@ -69,6 +56,9 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
+import java.io.IOException;
+import java.util.*;
+
 /**
  * Schema Class implementation.
  * 
@@ -77,24 +67,24 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
-  private static final long            serialVersionUID        = 1L;
-  private static final int             NOT_EXISTENT_CLUSTER_ID = -1;
+  private static final long                  serialVersionUID        = 1L;
+  private static final int                   NOT_EXISTENT_CLUSTER_ID = -1;
 
-  private int                          defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
-  final OSchemaShared                  owner;
-  private final Map<String, OProperty> properties              = new HashMap<String, OProperty>();
-  private String                       name;
-  private Class<?>                     javaClass;
-  private int[]                        clusterIds;
-  private OClassImpl                   superClass;
-  private int[]                        polymorphicClusterIds;
-  private List<OClass>                 baseClasses;
-  private float                        overSize                = 0f;
-  private String                       shortName;
-  private boolean                      strictMode              = false;                           // @SINCE v1.0rc8
-  private boolean                      abstractClass           = false;                           // @SINCE v1.2.0
-  private Map<String, String>          customFields;
-  private OClusterSelectionStrategy    clusterSelection;                                          // @SINCE 1.7
+  private int                                defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
+  final OSchemaShared                        owner;
+  private final Map<String, OProperty>       properties              = new HashMap<String, OProperty>();
+  private String                             name;
+  private Class<?>                           javaClass;
+  private int[]                              clusterIds;
+  private OClassImpl                         superClass;
+  private int[]                              polymorphicClusterIds;
+  private List<OClass>                       baseClasses;
+  private float                              overSize                = 0f;
+  private String                             shortName;
+  private boolean                            strictMode              = false;                           // @SINCE v1.0rc8
+  private boolean                            abstractClass           = false;                           // @SINCE v1.2.0
+  private Map<String, String>                customFields;
+  private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
 
   /**
    * Constructor used in unmarshalling.
@@ -842,6 +832,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     } finally {
       releaseSchemaWriteLock();
     }
+
     return this;
   }
 
@@ -1135,7 +1126,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   /**
    * Truncates all the clusters the class uses.
-   * 
+   *
    * @throws IOException
    */
   public void truncate() throws IOException {
@@ -1160,7 +1151,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   /**
    * Check if the current instance extends specified schema class.
-   * 
+   *
    * @param iClassName
    *          of class that should be checked
    * @return Returns true if the current instance extends the passed schema class (iClass)
@@ -1188,7 +1179,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   /**
    * Check if the current instance extends specified schema class.
-   * 
+   *
    * @param clazz
    *          to check
    * @return true if the current instance extends the passed schema class (iClass)
@@ -1214,7 +1205,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   /**
    * Returns true if the passed schema class (iClass) extends the current instance.
-   * 
+   *
    * @param clazz
    *          to check
    * @return Returns true if the passed schema class extends the current instance
@@ -1507,7 +1498,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
   }
 
-  private void setClusterSelectionInternal(final String clusterSelection) {
+  public void setClusterSelectionInternal(final String clusterSelection) {
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -1516,6 +1507,78 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     } finally {
       releaseSchemaWriteLock();
     }
+  }
+
+  public void setClusterSelectionInternal(final OClusterSelectionStrategy clusterSelection) {
+    checkEmbedded();
+    this.clusterSelection = clusterSelection;
+  }
+
+  public void fireDatabaseMigration(final ODatabaseRecord database, final String propertyName, final OType type) {
+    database.query(new OSQLAsynchQuery<Object>("select from " + name + " where " + propertyName + ".type() <> \"" + type.name()
+        + "\"", new OCommandResultListener() {
+
+      @Override
+      public boolean result(Object iRecord) {
+        final ODocument record = ((OIdentifiable) iRecord).getRecord();
+        record.setFieldType(propertyName, type);
+        record.field(propertyName, OType.convert(record.field(propertyName), type.getDefaultJavaType()), type);
+        database.save(record);
+        return true;
+      }
+
+      @Override
+      public void end() {
+      }
+    }));
+
+  }
+
+  public void firePropertyNameMigration(final ODatabaseRecord database, final String propertyName, final String newPropertyName,
+      final OType type) {
+    database.query(new OSQLAsynchQuery<Object>("select from " + name + " where " + propertyName + " is not null ",
+        new OCommandResultListener() {
+
+          @Override
+          public boolean result(Object iRecord) {
+            final ODocument record = ((OIdentifiable) iRecord).getRecord();
+            record.setFieldType(propertyName, type);
+            record.field(newPropertyName, record.field(propertyName), type);
+            database.save(record);
+            return true;
+          }
+
+          @Override
+          public void end() {
+          }
+        }));
+
+  }
+
+  public void checkPersistentPropertyType(ODatabaseComplex<ORecordInternal<?>> database, String propertyName, OType type) {
+
+    StringBuilder builder = new StringBuilder();
+    builder.append("select count(*) from ").append(name).append(" where ");
+    builder.append(propertyName).append(".type() not in [");
+    Iterator<OType> cur = type.getCastable().iterator();
+    while (cur.hasNext()) {
+      builder.append('"').append(cur.next().name()).append('"');
+      if (cur.hasNext())
+        builder.append(",");
+    }
+    builder.append("] and ").append(propertyName).append(" is not null ");
+    if (type.isMultiValue())
+      builder.append(" and ").append(propertyName).append(".size() <> 0 ");
+
+    List<ODocument> res = database.command(new OCommandSQL(builder.toString())).execute();
+    if (((Long) res.get(0).field("count")) > 0)
+      throw new OSchemaException("The database contains some schemaless data in the property " + name + "." + propertyName
+          + " that is not compatible with the type " + type);
+
+  }
+
+  public OSchemaShared getOwner() {
+    return owner;
   }
 
   private void setCustomInternal(final String name, final String value) {
@@ -1872,46 +1935,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return property;
   }
 
-  public void fireDatabaseMigration(final ODatabaseRecord database, final String propertyName, final OType type) {
-    database.query(new OSQLAsynchQuery<Object>("select from " + name + " where " + propertyName + ".type() <> \"" + type.name()
-        + "\"", new OCommandResultListener() {
-
-      @Override
-      public boolean result(Object iRecord) {
-        final ODocument record = ((OIdentifiable) iRecord).getRecord();
-        record.setFieldType(propertyName, type);
-        record.field(propertyName, OType.convert(record.field(propertyName), type.getDefaultJavaType()), type);
-        database.save(record);
-        return true;
-      }
-
-      @Override
-      public void end() {
-      }
-    }));
-
-  }
-
-  public void firePropertyNameMigration(final ODatabaseRecord database, final String propertyName, final String newPropertyName,
-      final OType type) {
-    database.query(new OSQLAsynchQuery<Object>("select from " + name + " where " + propertyName + " is not null ", new OCommandResultListener() {
-
-      @Override
-      public boolean result(Object iRecord) {
-        final ODocument record = ((OIdentifiable) iRecord).getRecord();
-        record.setFieldType(propertyName, type);
-        record.field(newPropertyName, record.field(propertyName), type);
-        database.save(record);
-        return true;
-      }
-
-      @Override
-      public void end() {
-      }
-    }));
-
-  }
-
   private int getClusterId(final String stringValue) {
     int clId;
     try {
@@ -1938,7 +1961,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   /**
    * Adds a base class to the current one. It adds also the base class cluster ids to the polymorphic cluster ids array.
-   * 
+   *
    * @param iBaseClass
    *          The base class to add.
    */
@@ -2055,30 +2078,4 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
 
-  public void checkPersistentPropertyType(ODatabaseComplex<ORecordInternal<?>> database, String propertyName, OType type) {
-
-    StringBuilder builder = new StringBuilder();
-    builder.append("select count(*) from ").append(name).append(" where ");
-    builder.append(propertyName).append(".type() not in [");
-    Iterator<OType> cur = type.getCastable().iterator();
-    while (cur.hasNext()) {
-      builder.append('"').append(cur.next().name()).append('"');
-      if (cur.hasNext())
-        builder.append(",");
-    }
-    builder.append("] and ").append(propertyName).append(" is not null ");
-    if (type.isMultiValue())
-      builder.append(" and ").append(propertyName).append(".size() <> 0 ");
-
-    List<ODocument> res = database.command(new OCommandSQL(builder.toString())).execute();
-    if (((Long) res.get(0).field("count")) > 0)
-      throw new OSchemaException("The database contains some schemaless data in the property " + name + "." + propertyName
-          + " that is not compatible with the type " + type);
-
-  }
-
-  public OSchemaShared getOwner() {
-    return owner;
-  }
-  
 }

@@ -535,10 +535,13 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
-      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 5000l),
+      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 60000l),
 
   DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
       "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
+
+  DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT("distributed.deployChunkTaskTimeout",
+                                           "Maximum timeout in milliseconds to wait for database chunk deployment", Long.class, 15000l),
 
   DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression",
       "Compression level between 0 and 9 to use in backup for database deployment", Integer.class, 7),

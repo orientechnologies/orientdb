@@ -337,6 +337,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         // @COMPATIBILITY 1.0RC9
         metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
+      // WAKE UP LISTENERS
+      underlying.callOnOpenListeners();
+
     } catch (OException e) {
       close();
       throw e;

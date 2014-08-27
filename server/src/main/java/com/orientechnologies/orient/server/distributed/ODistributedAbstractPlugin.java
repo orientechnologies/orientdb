@@ -19,11 +19,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -126,40 +124,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     Orient.instance().removeDbLifecycleListener(this);
   }
 
-  /**
-   * Auto register myself as hook.
-   */
-  @Override
-  public void onOpen(final ODatabase iDatabase) {
-    final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
-
-    if (dbUrl.startsWith("plocal:")) {
-      // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
-      final String dbDirectory = serverInstance.getDatabaseDirectory();
-      if (!dbUrl.substring("plocal:".length()).startsWith(dbDirectory))
-        // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
-        return;
-    }
-
-    synchronized (cachedDatabaseConfiguration) {
-      final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
-      if (cfg == null)
-        return;
-
-      if (iDatabase instanceof ODatabaseComplex<?> && !(iDatabase.getStorage() instanceof ODistributedStorage)) {
-        ODistributedStorage storage = storages.get(iDatabase.getURL());
-        if (storage == null) {
-          storage = new ODistributedStorage(serverInstance, (OStorageEmbedded) iDatabase.getStorage());
-          final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
-          if (oldStorage != null)
-            storage = oldStorage;
-        }
-
-        iDatabase.replaceStorage(storage);
-      }
-    }
-  }
-
   @Override
   public void onCreate(ODatabase iDatabase) {
     onOpen(iDatabase);
@@ -247,15 +211,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     synchronized (cachedDatabaseConfiguration) {
       ODocument cfg = cachedDatabaseConfiguration.get(iDatabaseName);
       if (cfg == null) {
-        cfg = cachedDatabaseConfiguration.get("*");
-        if (cfg == null) {
-          // FIRST TIME RUNNING: GET DEFAULT CFG
-          cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
-          if (cfg == null)
-            throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
+        // FIRST TIME RUNNING: GET DEFAULT CFG
+        cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
+        if (cfg == null)
+          throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
 
-          cachedDatabaseConfiguration.put(iDatabaseName, cfg);
-        }
+        cachedDatabaseConfiguration.put(iDatabaseName, cfg);
       }
 
       final ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);

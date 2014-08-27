@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.Map.Entry;
-
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -52,34 +47,32 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
+  /**
+   * USE THIS AS RESPONSE TO REPORT A DELETED RECORD IN TX
+   */
+  public static final ORecordFlat                             DELETED_RECORD        = new ORecordFlat();
+  private final OOperationUnitId                              operationUnitId;
   protected Map<ORID, ORecord<?>>                             temp2persistent       = new HashMap<ORID, ORecord<?>>();
   protected Map<ORID, ORecordOperation>                       allEntries            = new HashMap<ORID, ORecordOperation>();
   protected Map<ORID, ORecordOperation>                       recordEntries         = new LinkedHashMap<ORID, ORecordOperation>();
   protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
   protected Map<ORID, List<OTransactionRecordIndexOperation>> recordIndexOperations = new HashMap<ORID, List<OTransactionRecordIndexOperation>>();
   protected int                                               id;
-  private final OOperationUnitId                              operationUnitId;
-
   protected int                                               newObjectCounter      = -2;
-
-  /**
-   * USE THIS AS RESPONSE TO REPORT A DELETED RECORD IN TX
-   */
-  public static final ORecordFlat                             DELETED_RECORD        = new ORecordFlat();
 
   /**
    * Represents information for each index operation for each record in DB.
    */
   public static final class OTransactionRecordIndexOperation {
+    public String    index;
+    public Object    key;
+    public OPERATION operation;
+
     public OTransactionRecordIndexOperation(String index, Object key, OPERATION operation) {
       this.index = index;
       this.key = key;
       this.operation = operation;
     }
-
-    public String    index;
-    public Object    key;
-    public OPERATION operation;
   }
 
   protected OTransactionRealAbstract(ODatabaseRecordTx database, int id) {
@@ -115,6 +108,11 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     }
 
     recordEntries.clear();
+  }
+
+  @Override
+  public int getEntryCount() {
+    return recordEntries.size();
   }
 
   public Collection<ORecordOperation> getCurrentRecordEntries() {
@@ -342,15 +340,6 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     }
   }
 
-  private void updateChangesIdentity(ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {
-    if (changesPerKey == null)
-      return;
-
-    for (final OTransactionIndexEntry indexEntry : changesPerKey.entries)
-      if (indexEntry.value.getIdentity().equals(oldRid))
-        indexEntry.value = newRid;
-  }
-
   protected void checkTransaction() {
     if (status == TXSTATUS.INVALID)
       throw new OTransactionException("Invalid state of the transaction. The transaction must be begun.");
@@ -410,5 +399,14 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
     return new ODocument().addOwner(indexDoc).setAllowChainedAccess(false)
         .field("k", key != null ? OStringSerializerHelper.encode(key) : null).field("ops", operations, OType.EMBEDDEDLIST);
+  }
+
+  private void updateChangesIdentity(ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {
+    if (changesPerKey == null)
+      return;
+
+    for (final OTransactionIndexEntry indexEntry : changesPerKey.entries)
+      if (indexEntry.value.getIdentity().equals(oldRid))
+        indexEntry.value = newRid;
   }
 }

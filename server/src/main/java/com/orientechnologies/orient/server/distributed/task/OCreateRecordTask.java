@@ -38,8 +38,8 @@ import java.io.ObjectOutput;
  * 
  */
 public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
-  private static final long              serialVersionUID = 1L;
-
+  public static final String             SUFFIX_QUEUE_NAME = ".insert";
+  private static final long              serialVersionUID  = 1L;
   protected byte[]                       content;
   protected byte                         recordType;
   protected transient ORecordInternal<?> record;
@@ -90,6 +90,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public ODeleteRecordTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+    if (iBadResponse instanceof Throwable)
+      return null;
+
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;
     return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
   }
@@ -118,6 +121,11 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     }
     recordType = in.readByte();
   }
+
+//  @Override
+//  public String getQueueName(final String iOriginalQueueName) {
+//    return iOriginalQueueName + SUFFIX_QUEUE_NAME;
+//  }
 
   @Override
   public String getName() {

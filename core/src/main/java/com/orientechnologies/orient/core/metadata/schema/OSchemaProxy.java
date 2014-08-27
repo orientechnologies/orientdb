@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
@@ -189,6 +190,11 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   public OGlobalProperty createGlobalProperty(String name, OType type, Integer id) {
     return delegate.createGlobalProperty(name, type, id);
+  }
+
+  @Override
+  public OClusterSelectionFactory getClusterSelectionFactory() {
+    return delegate.getClusterSelectionFactory();
   }
 
 }

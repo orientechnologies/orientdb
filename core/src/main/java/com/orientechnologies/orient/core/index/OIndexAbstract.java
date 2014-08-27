@@ -376,42 +376,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         if (iProgressListener != null)
           iProgressListener.onBegin(this, documentTotal, true);
 
-        for (final String clusterName : clustersToIndex)
-          try {
-            for (final ORecord<?> record : getDatabase().browseCluster(clusterName)) {
-              if (Thread.interrupted())
-                throw new OCommandExecutionException("The index rebuild has been interrupted");
-
-              if (record instanceof ODocument) {
-                final ODocument doc = (ODocument) record;
-
-                if (indexDefinition == null)
-                  throw new OConfigurationException("Index '" + name + "' cannot be rebuilt because has no a valid definition ("
-                      + indexDefinition + ")");
-
-                final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
-
-                if (fieldValue != null) {
-                  try {
-                    populateIndex(doc, fieldValue);
-                  } catch (OIndexException e) {
-                    OLogManager.instance().error(
-                        this,
-                        "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
-                            + " Rebuild will continue from this point.", e, fieldValue, doc.getIdentity());
-                  }
-
-                  ++documentIndexed;
-                }
-              }
-              documentNum++;
-
-              if (iProgressListener != null)
-                iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
-            }
-          } catch (NoSuchElementException e) {
-            // END OF CLUSTER REACHED, IGNORE IT
-          }
+        // INDEX ALL CLUSTERS
+        for (final String clusterName : clustersToIndex) {
+          final long[] metrics = indexCluster(clusterName, iProgressListener, documentNum, documentIndexed, documentTotal);
+          documentNum += metrics[0];
+          documentIndexed += metrics[1];
+        }
 
         if (iProgressListener != null)
           iProgressListener.onCompletition(this, true);
@@ -520,24 +490,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  private void removeValuesContainer() {
-    if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
-      final OStorage storage = getDatabase().getStorage();
-      if (storage instanceof OAbstractPaginatedStorage) {
-        final ODiskCache diskCache = ((OAbstractPaginatedStorage) storage).getDiskCache();
-        try {
-          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-          if (diskCache.exists(fileName)) {
-            final long fileId = diskCache.openFile(fileName);
-            diskCache.deleteFile(fileId);
-          }
-        } catch (IOException e) {
-          OLogManager.instance().error(this, "Can't delete file for value containers", e);
-        }
-      }
-    }
-  }
-
   @Override
   public void deleteWithoutIndexLoad(String indexName) {
     modificationLock.requestModificationLock();
@@ -589,7 +541,9 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     try {
       if (clustersToIndex.add(clusterName)) {
         updateConfiguration();
-        rebuild();
+
+        // INDEX SINGLE CLUSTER
+        indexCluster(clusterName, null, 0, 0, 0);
       }
 
       return this;
@@ -814,7 +768,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected abstract OStreamSerializer determineValueSerializer();
 
   protected void populateIndex(ODocument doc, Object fieldValue) {
-		if (fieldValue instanceof Collection) {
+    if (fieldValue instanceof Collection) {
       for (final Object fieldValueItem : (Collection<?>) fieldValue) {
         put(fieldValueItem, doc);
       }
@@ -859,6 +813,65 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected void checkForRebuild() {
     if (rebuilding && !Thread.currentThread().equals(rebuildThread)) {
       throw new OIndexException("Index " + name + " is rebuilding now and can not be used.");
+    }
+  }
+
+  protected long[] indexCluster(final String clusterName, final OProgressListener iProgressListener, long documentNum,
+      long documentIndexed, long documentTotal) {
+    try {
+      for (final ORecord<?> record : getDatabase().browseCluster(clusterName)) {
+        if (Thread.interrupted())
+          throw new OCommandExecutionException("The index rebuild has been interrupted");
+
+        if (record instanceof ODocument) {
+          final ODocument doc = (ODocument) record;
+
+          if (indexDefinition == null)
+            throw new OConfigurationException("Index '" + name + "' cannot be rebuilt because has no a valid definition ("
+                + indexDefinition + ")");
+
+          final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
+
+          if (fieldValue != null) {
+            try {
+              populateIndex(doc, fieldValue);
+            } catch (OIndexException e) {
+              OLogManager.instance().error(
+                  this,
+                  "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
+                      + " Rebuild will continue from this point.", e, fieldValue, doc.getIdentity());
+            }
+
+            ++documentIndexed;
+          }
+        }
+        documentNum++;
+
+        if (iProgressListener != null)
+          iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
+      }
+    } catch (NoSuchElementException e) {
+      // END OF CLUSTER REACHED, IGNORE IT
+    }
+
+    return new long[] { documentNum, documentIndexed };
+  }
+
+  private void removeValuesContainer() {
+    if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
+      final OStorage storage = getDatabase().getStorage();
+      if (storage instanceof OAbstractPaginatedStorage) {
+        final ODiskCache diskCache = ((OAbstractPaginatedStorage) storage).getDiskCache();
+        try {
+          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+          if (diskCache.exists(fileName)) {
+            final long fileId = diskCache.openFile(fileName);
+            diskCache.deleteFile(fileId);
+          }
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Can't delete file for value containers", e);
+        }
+      }
     }
   }
 

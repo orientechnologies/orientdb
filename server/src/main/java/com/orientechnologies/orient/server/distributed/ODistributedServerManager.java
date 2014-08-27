@@ -54,9 +54,7 @@ public interface ODistributedServerManager {
 
   public DB_STATUS getDatabaseStatus(final String iNode, final String iDatabaseName);
 
-  public boolean checkDatabaseStatus(final String iNode, final String iDatabaseName, DB_STATUS iStatus);
-
-  public void setDatabaseStatus(final String iDatabaseName, DB_STATUS iStatus);
+  public void setDatabaseStatus(final String iNode, final String iDatabaseName, DB_STATUS iStatus);
 
   public ODistributedMessageService getMessageService();
 

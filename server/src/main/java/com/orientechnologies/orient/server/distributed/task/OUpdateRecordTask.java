@@ -88,7 +88,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OUpdateRecordTask getFixTask(ODistributedRequest iRequest, Object iBadResponse, final Object iGoodResponse) {
+  public OUpdateRecordTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
     final ORecordVersion versionCopy = version.copy();
     versionCopy.setRollbackMode();
 
@@ -96,7 +96,10 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OAbstractRemoteTask getUndoTask(ODistributedRequest iRequest, Object iBadResponse) {
+  public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+    if (iBadResponse instanceof Throwable)
+      return null;
+
     return new OUpdateRecordTask(rid, null, null, previousContent, previousVersion);
   }
 

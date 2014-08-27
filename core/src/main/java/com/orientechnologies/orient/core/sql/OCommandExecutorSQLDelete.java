@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -24,6 +23,12 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,7 +39,9 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL UPDATE command.
@@ -252,6 +259,29 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     return "DELETE FROM <Class>|RID|cluster:<cluster> [LOCK <NONE|RECORD>] [RETURNING <COUNT|BEFORE>] [WHERE <condition>*]";
   }
 
+  @Override
+  public void end() {
+  }
+
+  @Override
+  public int getSecurityOperationType() {
+    return ORole.PERMISSION_DELETE;
+  }
+
+  /**
+   * Parses the returning keyword if found.
+   */
+  protected String parseReturn() throws OCommandSQLParsingException {
+    parserNextWord(true);
+    final String returning = parserGetLastWord();
+
+    if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
+      throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
+          + "' but it should be COUNT (default), BEFORE. Example: " + KEYWORD_RETURN + " BEFORE");
+
+    return returning;
+  }
+
   private Object getIndexKey(final OIndexDefinition indexDefinition, Object value) {
     if (indexDefinition instanceof OCompositeIndexDefinition) {
       if (value instanceof List) {
@@ -273,25 +303,5 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     } else {
       return OSQLHelper.getValue(value);
     }
-  }
-
-    /**
-     * Parses the returning keyword if found.
-     */
-    protected String parseReturn() throws OCommandSQLParsingException {
-        parserNextWord(true);
-        final String returning = parserGetLastWord();
-
-        if (!returning.equalsIgnoreCase("COUNT") && !returning.equalsIgnoreCase("BEFORE"))
-            throwParsingException("Invalid " + KEYWORD_RETURN + " value set to '" + returning
-                    + "' but it should be COUNT (default), BEFORE. Example: " + KEYWORD_RETURN + " BEFORE");
-
-        return returning;
-    }
-
-
-
-  @Override
-  public void end() {
   }
 }

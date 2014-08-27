@@ -151,6 +151,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   public Object command(final OCommandRequestText iCommand) {
+
+    List<String> servers = (List<String>) iCommand.getContext().getVariable("servers");
+    if (servers == null) {
+      servers = new ArrayList<String>();
+      iCommand.getContext().setVariable("servers", servers);
+    }
+    servers.add(dManager.getLocalNodeName());
+
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
       return wrapped.command(iCommand);
@@ -338,32 +346,37 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // ALREADY DISTRIBUTED
       return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
-    Object result = null;
-
     try {
       // ASSIGN DESTINATION NODE
       final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-      if (!dbCfg.isReplicationActive(clusterName, dManager.getLocalNodeName()) && dbCfg.getServers(clusterName) == null)
+      final List<String> nodes = dbCfg.getServers(clusterName, null);
+
+      if (nodes.isEmpty())
         // DON'T REPLICATE OR DISTRIBUTE
         return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
 
+      final String masterNode = nodes.get(0);
+      if (!masterNode.equals(dManager.getLocalNodeName()))
+        throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '"
+            + dManager.getLocalNodeName() + "' is not the master of it, but it's '" + masterNode + "'");
+
       // REPLICATE IT
-      final Collection<String> nodes = dbCfg.getServers(clusterName);
-      result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OCreateRecordTask(iRecordId,
-          iContent, iRecordVersion, iRecordType), EXECUTION_MODE.RESPONSE);
+      final Object masterResult = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OCreateRecordTask(
+          iRecordId, iContent, iRecordVersion, iRecordType), EXECUTION_MODE.RESPONSE);
 
-      if (result instanceof ONeedRetryException)
-        throw (ONeedRetryException) result;
-      else if (result instanceof Throwable)
-        throw new ODistributedException("Error on execution distributed CREATE_RECORD", (Throwable) result);
+      if (masterResult instanceof ONeedRetryException)
+        throw (ONeedRetryException) masterResult;
+      else if (masterResult instanceof Throwable)
+        throw new ODistributedException("Error on execution distributed CREATE_RECORD", (Throwable) masterResult);
 
-      final OPlaceholder p = (OPlaceholder) result;
+      // COPY THE CLUSTER POS -> RID
+      final OPlaceholder masterPlaceholder = (OPlaceholder) masterResult;
+      iRecordId.copyFrom(masterPlaceholder.getIdentity());
 
-      iRecordId.copyFrom(p.getIdentity());
-      return new OStorageOperationResult<OPhysicalPosition>(new OPhysicalPosition(p.getIdentity().getClusterPosition(),
-          p.getRecordVersion()));
+      return new OStorageOperationResult<OPhysicalPosition>(new OPhysicalPosition(masterPlaceholder.getIdentity()
+          .getClusterPosition(), masterPlaceholder.getRecordVersion()));
 
     } catch (ONeedRetryException e) {
       // PASS THROUGH
@@ -392,17 +405,17 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-      final Collection<String> serverList = dbCfg.getServers(clusterName);
-      if (!dbCfg.isReplicationActive(clusterName, dManager.getLocalNodeName()) && serverList == null)
+      final List<String> nodes = dbCfg.getServers(clusterName, null);
+
+      if (nodes.isEmpty())
         // DON'T REPLICATE
         return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
-      if (serverList.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName) <= 1)
+      if (nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName) <= 1)
         // LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
         return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
       // DISTRIBUTE IT
-      final Collection<String> nodes = dbCfg.getServers(clusterName);
       final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OReadRecordTask(
           iRecordId), EXECUTION_MODE.RESPONSE);
 
@@ -439,7 +452,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-      if (!dbCfg.isReplicationActive(clusterName, dManager.getLocalNodeName()) && dbCfg.getServers(clusterName) == null)
+      final List<String> nodes = dbCfg.getServers(clusterName, null);
+
+      if (nodes.isEmpty())
         // DON'T REPLICATE OR DISTRIBUTE
         return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
 
@@ -448,7 +463,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           LOCKING_STRATEGY.DEFAULT);
 
       // REPLICATE IT
-      final Collection<String> nodes = dbCfg.getServers(clusterName);
       final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OUpdateRecordTask(
           iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version, iContent, iVersion),
           EXECUTION_MODE.RESPONSE);
@@ -482,7 +496,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final String clusterName = getClusterNameByRID(iRecordId);
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-      if (!dbCfg.isReplicationActive(clusterName, dManager.getLocalNodeName()) && dbCfg.getServers(clusterName) == null)
+      final List<String> nodes = dbCfg.getServers(clusterName, null);
+
+      if (nodes.isEmpty())
         // DON'T REPLICATE OR DISTRIBUTE
         return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
@@ -491,8 +507,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           LOCKING_STRATEGY.DEFAULT);
 
       // REPLICATE IT
-      final Collection<String> nodes = dbCfg.getServers(clusterName);
-
       final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new ODeleteRecordTask(
           iRecordId, iVersion), EXECUTION_MODE.RESPONSE);
 
@@ -645,7 +659,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             txTask.add(task);
           }
 
-          final Collection<String> nodes = dbCfg.getServers(involvedClusters);
+          final Set<String> nodes = dbCfg.getServers(involvedClusters);
 
           // REPLICATE IT
           final Object result = dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE);
@@ -728,14 +742,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public int addCluster(final String iClusterName, boolean forceListBased,
-												final Object... iParameters) {
+  public int addCluster(final String iClusterName, boolean forceListBased, final Object... iParameters) {
     return wrapped.addCluster(iClusterName, false, iParameters);
   }
 
   @Override
-  public int addCluster(String iClusterName, int iRequestedId, boolean forceListBased,
-												Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId, boolean forceListBased, Object... iParameters) {
     return wrapped.addCluster(iClusterName, iRequestedId, forceListBased, iParameters);
   }
 

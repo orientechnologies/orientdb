@@ -84,6 +84,18 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
+
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected ODatabaseDocument   currentDatabase;
   protected String              currentDatabaseName;
@@ -134,6 +146,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
     }
 
+    Orient.instance().shutdown();
     System.exit(result);
   }
 
@@ -2012,12 +2025,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     properties.put("backupBufferSize", "1048576"); // 1MB
   }
 
-  @Override
-  protected void onAfter() {
-    super.onAfter();
-    Orient.instance().shutdown();
-  }
-
   protected OIdentifiable setCurrentRecord(final int iIndex) {
     currentRecordIdx = iIndex;
     if (iIndex < currentResultSet.size())
@@ -2066,10 +2073,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @Override
   protected String getContext() {
-    if (currentDatabase != null && currentDatabaseName != null)
-      return " {" + currentDatabaseName + "}";
-    else if (serverAdmin != null)
-      return " {" + serverAdmin.getURL() + "}";
+    if (currentDatabase != null && currentDatabaseName != null) {
+      final StringBuilder buffer = new StringBuilder();
+      buffer.append(" {db=");
+      buffer.append(currentDatabaseName);
+      if (currentDatabase.getTransaction().isActive()) {
+        buffer.append(" tx=[");
+        buffer.append(currentDatabase.getTransaction().getEntryCount());
+        buffer.append(" entries]");
+      }
+
+      buffer.append("}");
+      return buffer.toString();
+    } else if (serverAdmin != null)
+      return " {server=" + serverAdmin.getURL() + "}";
     return "";
   }
 

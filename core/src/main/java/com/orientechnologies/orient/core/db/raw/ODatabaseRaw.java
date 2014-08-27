@@ -107,9 +107,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
       status = STATUS.OPEN;
 
-      // WAKE UP LISTENERS
-      callOnOpenListeners();
-
     } catch (OStorageException e) {
       // UNREGISTER STORAGE
       Orient.instance().unregisterStorage(storage);

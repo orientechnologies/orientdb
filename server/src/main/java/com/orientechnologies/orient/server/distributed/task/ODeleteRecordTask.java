@@ -83,6 +83,9 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+    if( iBadResponse instanceof Throwable)
+      return null;
+
     return new OResurrectRecordTask(rid, version);
   }
 

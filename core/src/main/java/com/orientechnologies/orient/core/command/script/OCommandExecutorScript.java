@@ -149,13 +149,14 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
   protected Object executeSQLScript(ODatabaseRecord db, final String iText) throws IOException {
     Object lastResult = null;
-    int txBegunAtLine = -1;
-    int txBegunAtPart = -1;
     int maxRetry = 1;
 
     context.setVariable("transactionRetries", 0);
 
     for (int retry = 0; retry < maxRetry; retry++) {
+      int txBegunAtLine = -1;
+      int txBegunAtPart = -1;
+      lastResult = null;
 
       final BufferedReader reader = new BufferedReader(new StringReader(iText));
 

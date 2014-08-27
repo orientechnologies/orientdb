@@ -93,4 +93,8 @@ public abstract class OAbstractRemoteTask implements Externalizable {
   public boolean isIdempotent() {
     return false;
   }
+
+  public String getQueueName(final String iOriginalQueueName) {
+    return iOriginalQueueName;
+  }
 }
