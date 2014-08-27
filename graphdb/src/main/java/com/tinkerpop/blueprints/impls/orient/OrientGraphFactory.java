@@ -137,7 +137,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     if (!db.getURL().startsWith("remote:") && !db.exists()) {
       if (iCreate)
         db.create();
-      else
+      else if( iOpen )
         throw new ODatabaseException("Database '" + url + "' not found");
     } else if (iOpen)
       db.open(user, password);
