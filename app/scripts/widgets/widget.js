@@ -394,7 +394,7 @@ Widget.directive('ridrender', function (Database) {
 
                 value.forEach(function (elem) {
                     if (typeof elem == 'string' && elem.indexOf('#') == 0) {
-                        var link = '<span class="label label-default badge-edge"><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></span> ';
+                        var link = '<span class="label label-warning badge-edge"><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></span> ';
                         html += link;
                         i++;
                     }

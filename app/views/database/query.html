@@ -7,7 +7,7 @@
         <a class="ng-binding" href="javascript:void(0)" data-title="Send to Graph" ng-click="sendToGraph(item)">
             <i class="fa fa-circle-o"></i>
         </a>
-        <a class="ng-binding" href="javascript:void(0)"  data-placement="bottom"
+        <a class="ng-binding" href="javascript:void(0)" data-placement="bottom"
            data-title="Add bookmark"
            data-template="views/database/bookmark.html"
            bs-popover>
@@ -19,12 +19,17 @@
     </div>
     <div class="query-body">
         <div ng-show="current == 'table'">
-            <table ng-table="tableParams" show-filter="false"
-                   class="table  table-striped table-bordered table-hover table-condensed">
+            <table  ng-table="tableParams" show-filter="false"
+                   class="table  table-striped table-bordered table-hover table-condensed result-table">
                 <thead>
-                <tr>
-                    <th ng-repeat="header in item.headers">
-                        {{header}}
+                <tr class="subHeader">
+                    <th class="text-center" ng-if="value.span > 0" colspan="{{value.span}}" ng-repeat="(key, value) in item.subHeaders">
+                        {{value.name}}
+                    </th>
+                </tr>
+                <tr class="queryfield-header">
+                    <th  ng-class="isDivider($index)"  ng-repeat="header in item.headers">
+                        {{header | nograph}}
                     </th>
                 </tr>
                 </thead>

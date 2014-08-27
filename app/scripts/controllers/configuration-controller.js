@@ -177,7 +177,7 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
 
     $scope.values = Database.getMetadata()['config']['values'];
 
-    $scope.canChange = ["clusterSelection", "minimumClusters"];
+    $scope.canChange = ["clusterSelection", "minimumClusters","localeCountry"];
     $scope.changeTemplate = { clusterSelection: "views/database/config/clusterSelection.html"}
     $scope.dirty = [];
     $scope.clusterStrategies = ['round-robin', "default", "balanced"];

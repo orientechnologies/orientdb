@@ -166,16 +166,35 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
                 item.language = $scope.language;
                 $scope.headers = Database.getPropertyTableFromResults(data.result);
-                if ($scope.headers.length == 00) {
+                if ($scope.headers.length == 0) {
                     $scope.alerts = new Array;
                     $scope.alerts.push({content: "No records found."});
                 }
+
                 $scope.rawData = JSON.stringify(data);
                 $scope.resultTotal = data.result;
                 $scope.results = data.result.slice(0, $scope.countPage);
                 $scope.currentPage = 1;
                 $scope.numberOfPage = new Array(Math.ceil(data.result.length / $scope.countPage));
+                item.subHeaders = { "a": {"name": "METADATA", span: 0}, "b": {"name": "PROPERTIES", span: 0}, "c": {"name": "IN", span: 0}, "d": {"name": "OUT", span: 0}};
+                $scope.headers.forEach(function (n) {
+                    if (n.startsWith("in_")) {
+                        item.subHeaders["c"].span++;
+                    } else if (n.startsWith("out_")) {
+                        item.subHeaders["d"].span++;
+                    } else if (n.startsWith('@')) {
+                        item.subHeaders["a"].span++;
+                    } else {
+                        item.subHeaders["b"].span++;
+                    }
+                });
+                $scope.headers.sort(function (a, b) {
+                    var aI = a.startsWith("in_") ? 2 : (a.startsWith("out_") ? 3 : ((a.startsWith("@") ? 0 : 1)));
+                    var bI = b.startsWith("in_") ? 2 : (b.startsWith("out_") ? 3 : ((b.startsWith("@") ? 0 : 1)));
+                    return aI - bI;
+                });
                 item.headers = $scope.headers;
+
                 item.rawData = $scope.rawData;
                 item.resultTotal = $scope.resultTotal;
                 item.results = $scope.results;
@@ -246,14 +265,6 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         localStorageService.add("keepLimit", data);
     });
 
-//    $scope.loadMore = function () {
-//        var len = $scope.queries.length;
-//        var lenTime = $scope.timeline.length;
-//        if (len < lenTime)
-//            $scope.queries.push($scope.timeline[len]);
-//    };
-//    $scope.loadMore();
-//    $scope.loadMore();
 
 }]);
 dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', 'ngTableParams', 'scroller', '$ojson', 'Graph', function ($scope, $routeParams, $filter, $location, Database, CommandApi, localStorageService, Spinner, ngTableParams, scroller, $ojson, Graph) {
@@ -264,6 +275,14 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     if ($scope.item.rawData instanceof Object) {
         $scope.item.rawData = JSON.stringify($scope.item.rawData);
     }
+
+    $scope.indexes = []
+    var total = 0;
+    Object.keys($scope.item.subHeaders).forEach(function (e) {
+        total += $scope.item.subHeaders[e].span;
+        $scope.indexes.push(total);
+    });
+
     $scope.current = 'table';
     $scope.bookIcon = 'fa fa-star';
     $scope.viewerOptions = {
@@ -328,6 +347,9 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
                 index * $scope.item.countPage
             );
         }
+    }
+    $scope.isDivider = function (index) {
+        return $scope.indexes.indexOf(index) != -1 ? 'header-divider' : '';
     }
     $scope.previous = function () {
         if ($scope.item.currentPage > 1) {
