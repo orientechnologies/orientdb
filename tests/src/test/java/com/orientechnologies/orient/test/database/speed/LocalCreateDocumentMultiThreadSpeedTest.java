@@ -15,30 +15,30 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Date;
-
-import org.testng.Assert;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.test.SpeedTestMultiThreads;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.util.Date;
 
 @Test(enabled = false)
 public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTest {
-  private ODatabaseDocument database;
-  private long              foundObjects;
+  private ODatabaseDocumentTx database;
+  private long                foundObjects;
 
   @Test(enabled = false)
   public static class CreateObjectsThread extends OrientThreadTest {
-    private ODatabaseDocument database;
-    private ODocument         record;
-    private Date              date = new Date();
+    private ODatabaseDocumentTx database;
+    private ODocument           record;
+    private Date                date = new Date();
 
     public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
       super(parent, threadId);
@@ -47,6 +47,8 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
     @Override
     public void init() {
       database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+      // database.setSerializer(new ORecordSerializerBinary());
+
       record = database.newInstance();
       database.declareIntent(new OIntentMassiveInsert());
       database.begin(TXTYPE.NOTX);
@@ -77,11 +79,12 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
   }
 
   public LocalCreateDocumentMultiThreadSpeedTest() {
-    super(1000000, 20, CreateObjectsThread.class);
+    super(1000000, 8, CreateObjectsThread.class);
   }
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     // System.setProperty("url", "memory:test");
+    OGlobalConfiguration.USE_WAL.setValue(false);
     LocalCreateDocumentMultiThreadSpeedTest test = new LocalCreateDocumentMultiThreadSpeedTest();
     test.data.go(test);
   }
@@ -89,12 +92,15 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
   @Override
   public void init() {
     database = new ODatabaseDocumentTx(System.getProperty("url"));
+    // database.setSerializer(new ORecordSerializerBinary());
     if (database.exists())
       // database.open("admin", "admin");
       // else
       database.drop();
 
     database.create();
+    database.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);
+    database.getMetadata().getSchema().createClass("Account");
 
     foundObjects = 0;// database.countClusterElements("Account");
 

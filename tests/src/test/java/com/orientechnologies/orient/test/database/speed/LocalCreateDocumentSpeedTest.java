@@ -15,11 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
-import java.util.Date;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -27,6 +24,9 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
+import org.testng.annotations.Test;
+
+import java.util.Date;
 
 @Test
 public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
@@ -36,6 +36,7 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
 
   @Test(enabled = false)
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
+    OGlobalConfiguration.USE_WAL.setValue(false);
     LocalCreateDocumentSpeedTest test = new LocalCreateDocumentSpeedTest();
     test.data.go(test);
   }
