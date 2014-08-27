@@ -64,7 +64,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    *           if there is no current database.
    */
   public void drop() {
-    getDatabase(false).drop();
+    getDatabase(false, true).drop();
   }
 
   /**
@@ -115,7 +115,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * @return database.
    */
   public ODatabaseDocumentTx getDatabase() {
-    return getDatabase(true);
+    return getDatabase(true, true);
   }
 
   /**
@@ -124,9 +124,11 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * 
    * @param iCreate
    *          if true automatically creates database if database with given URL does not exist
+   * @param iOpen
+   *          if true automatically opens the database
    * @return database
    */
-  public ODatabaseDocumentTx getDatabase(final boolean iCreate) {
+  public ODatabaseDocumentTx getDatabase(final boolean iCreate, final boolean iOpen) {
     if (pool != null)
       // USE THE POOL
       return pool.acquire();
@@ -137,7 +139,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
         db.create();
       else
         throw new ODatabaseException("Database '" + url + "' not found");
-    } else
+    } else if (iOpen)
       db.open(user, password);
 
     return db;
@@ -149,7 +151,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * @return true if database is exists
    */
   public boolean exists() {
-    final ODatabaseDocumentTx db = getDatabase();
+    final ODatabaseDocumentTx db = getDatabase(false, false);
     try {
       return db.exists();
     } finally {
