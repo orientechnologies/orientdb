@@ -26,16 +26,16 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 public class OFieldTransformer extends OAbstractTransformer {
   protected String     fieldName;
   protected String     expression;
+  protected boolean    setOperation = true;
   protected OSQLFilter sqlFilter;
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument()
-        .fromJSON("{parameters:["
-            + getCommonConfigurationParameters()
-            + ","
-            + "{fieldName:{optional:false,description:'field name to apply the result'}},{expression:{optional:false,description:'expression to evaluate'}}],"
-            + "input:['ODocument'],output:'ODocument'}");
+    return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
+        + "{fieldName:{optional:false,description:'field name to apply the result'}},"
+        + "{expression:{optional:true,description:'expression to evaluate. Mandatory with operation=set (default)'}}"
+        + "{operation:{optional:false,description:'operation to execute against the field: set, remove. Default is set'}}" + "],"
+        + "input:['ODocument'],output:'ODocument'}");
   }
 
   @Override
@@ -43,6 +43,9 @@ public class OFieldTransformer extends OAbstractTransformer {
     super.configure(iProcessor, iConfiguration, iContext);
     fieldName = (String) resolve(iConfiguration.field("fieldName"));
     expression = iConfiguration.field("expression");
+
+    if (iConfiguration.containsField("operation"))
+      setOperation = "set".equalsIgnoreCase((String) iConfiguration.field("operation"));
   }
 
   @Override
@@ -53,14 +56,17 @@ public class OFieldTransformer extends OAbstractTransformer {
   @Override
   public Object executeTransform(final Object input) {
     if (input instanceof ODocument) {
-      if (sqlFilter == null)
-        // ONLY THE FIRST TIME
-        sqlFilter = new OSQLFilter(expression, context, null);
+      if (setOperation) {
+        if (sqlFilter == null)
+          // ONLY THE FIRST TIME
+          sqlFilter = new OSQLFilter(expression, context, null);
 
-      final Object newValue = sqlFilter.evaluate((ODocument) input, null, context);
+        final Object newValue = sqlFilter.evaluate((ODocument) input, null, context);
 
-      // SET THE TRANSFORMED FIELD BACK
-      ((ODocument) input).field(fieldName, newValue);
+        // SET THE TRANSFORMED FIELD BACK
+        ((ODocument) input).field(fieldName, newValue);
+      } else
+        ((ODocument) input).removeField(fieldName);
     }
 
     return input;
