@@ -67,7 +67,7 @@ public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparabl
 
   @Override
   public String toString() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(512);
     buffer.append(key);
     buffer.append(':');
 

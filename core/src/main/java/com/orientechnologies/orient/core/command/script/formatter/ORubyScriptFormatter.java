@@ -15,9 +15,9 @@
  */
 package com.orientechnologies.orient.core.command.script.formatter;
 
-import java.util.Scanner;
-
 import com.orientechnologies.orient.core.metadata.function.OFunction;
+
+import java.util.Scanner;
 
 /**
  * Ruby script formatter
@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 public class ORubyScriptFormatter implements OScriptFormatter {
   public String getFunctionDefinition(final OFunction f) {
 
-    final StringBuilder fCode = new StringBuilder();
+    final StringBuilder fCode = new StringBuilder(1024);
     fCode.append("def ");
     fCode.append(f.getName());
     fCode.append('(');
@@ -59,7 +59,7 @@ public class ORubyScriptFormatter implements OScriptFormatter {
 
   @Override
   public String getFunctionInvoke(final OFunction iFunction, final Object[] iArgs) {
-    final StringBuilder code = new StringBuilder();
+    final StringBuilder code = new StringBuilder(1024);
 
     code.append(iFunction.getName());
     code.append('(');

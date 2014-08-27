@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.core.type.tree.provider;
 
-import java.lang.ref.WeakReference;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
@@ -31,6 +29,8 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.lang.ref.WeakReference;
 
 public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBTreeEntryDataProvider<K, V>, OSerializableStream,
     ORecordListener {
@@ -252,7 +252,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
   }
 
   public String toString() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(256);
     buffer.append("mvrb-tree entry ");
     buffer.append(record.getIdentity());
     buffer.append(" (size=");

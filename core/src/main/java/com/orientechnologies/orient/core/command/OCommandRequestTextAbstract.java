@@ -15,13 +15,9 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
@@ -29,6 +25,10 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Text based Command Request abstract class.
@@ -105,7 +105,7 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 
           compositeKeyParams.put(paramEntry.getKey(), stream);
         } else if (paramEntry.getValue() instanceof String) {
-          final StringBuilder builder = new StringBuilder();
+          final StringBuilder builder = new StringBuilder(512);
           ORecordSerializerStringAbstract.simpleValueToStream(builder, OType.STRING, paramEntry.getValue());
           params.put(paramEntry.getKey(), builder.toString());
         } else

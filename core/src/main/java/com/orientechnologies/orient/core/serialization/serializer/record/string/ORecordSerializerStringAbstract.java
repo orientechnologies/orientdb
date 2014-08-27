@@ -637,12 +637,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   public abstract ORecordInternal<?> fromString(String iContent, ORecordInternal<?> iRecord, String[] iFields);
 
   public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat) {
-    return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
+    return toString(iRecord, new StringBuilder(1024), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
         OSerializationSetThreadLocal.INSTANCE.get(), false, true);
   }
 
   public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat, final boolean autoDetectCollectionType) {
-    return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
+    return toString(iRecord, new StringBuilder(1024), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
         OSerializationSetThreadLocal.INSTANCE.get(), false, autoDetectCollectionType);
   }
 

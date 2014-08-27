@@ -179,7 +179,7 @@ public class ODistributedResponseManager {
 
   @SuppressWarnings("unchecked")
   public ODistributedResponse merge(final ODistributedResponse merged) {
-    final StringBuilder executor = new StringBuilder();
+    final StringBuilder executor = new StringBuilder(64);
     HashSet<Object> mergedPayload = new HashSet<Object>();
 
     for (Map.Entry<String, Object> entry : responses.entrySet()) {
@@ -508,7 +508,7 @@ public class ODistributedResponseManager {
 
       undoRequest();
 
-      final StringBuilder msg = new StringBuilder();
+      final StringBuilder msg = new StringBuilder(256);
       msg.append("Quorum " + getQuorum() + " not reached for request (" + request + ").");
       final List<ODistributedResponse> res = getConflictResponses();
       if (res.isEmpty())

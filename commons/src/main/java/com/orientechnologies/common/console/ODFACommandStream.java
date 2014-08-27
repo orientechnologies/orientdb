@@ -60,7 +60,7 @@ public class ODFACommandStream implements OCommandStream {
     try {
       fillBuffer();
 
-      partialResult = new StringBuilder();
+      partialResult = new StringBuilder(512);
       state = State.S;
       start = 0;
       end = -1;

@@ -902,7 +902,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     if (user != null) {
       try {
-        final StringBuilder keyBuffer = new StringBuilder();
+        final StringBuilder keyBuffer = new StringBuilder(256);
 
         boolean ruleFound = false;
         for (Object target : iResourcesSpecific) {
@@ -952,7 +952,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     checkOpeness();
     if (user != null) {
       try {
-        final StringBuilder keyBuffer = new StringBuilder();
+        final StringBuilder keyBuffer = new StringBuilder(256);
 
         boolean ruleFound = false;
         if (iResourceSpecific != null) {

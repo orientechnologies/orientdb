@@ -15,16 +15,16 @@
  */
 package com.orientechnologies.orient.core.storage.fs;
 
-import java.lang.reflect.Method;
-import java.nio.MappedByteBuffer;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+
+import java.lang.reflect.Method;
+import java.nio.MappedByteBuffer;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
   private static final OProfilerMBean PROFILER = Orient.instance().getProfiler();
@@ -105,7 +105,7 @@ public class OMMapBufferEntry implements Comparable<OMMapBufferEntry> {
 
   @Override
   public String toString() {
-    final StringBuilder builder = new StringBuilder();
+    final StringBuilder builder = new StringBuilder(64);
     builder.append("OMMapBufferEntry [file=").append(file).append(", beginOffset=").append(beginOffset).append(", size=")
         .append(size).append("]");
     return builder.toString();

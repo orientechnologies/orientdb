@@ -91,7 +91,7 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
       // EXCEPTION
       OLogManager.instance().error(this, "[process] exception during process of %s", e, name);
 
-      final StringBuilder msg = new StringBuilder();
+      final StringBuilder msg = new StringBuilder(256);
       for (Exception currentException = e; currentException != null; currentException = (Exception) currentException.getCause()) {
         if (msg.length() > 0)
           msg.append("\n");

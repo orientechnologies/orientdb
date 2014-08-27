@@ -275,7 +275,7 @@ public class ODistributedWorker extends Thread {
    * Composes the undo queue name based on node name.
    */
   protected String getPendingRequestMapName() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     buffer.append(distributed.NODE_QUEUE_PREFIX);
     buffer.append(manager.getLocalNodeName());
     buffer.append(distributed.NODE_QUEUE_PENDING_POSTFIX);

@@ -672,7 +672,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   @Override
   public String toString() {
 
-    final StringBuilder buffer = new StringBuilder().append('[');
+    final StringBuilder buffer = new StringBuilder(128).append('[');
 
     if (size() < 10) {
       OMVRBTreeEntry<K, V> current = getFirstEntry();

@@ -66,7 +66,7 @@ public class ODatabaseFunction implements OSQLFunction {
 
   @Override
   public String getSyntax() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(512);
     buffer.append(f.getName());
     buffer.append('(');
     final List<String> params = f.getParameters();

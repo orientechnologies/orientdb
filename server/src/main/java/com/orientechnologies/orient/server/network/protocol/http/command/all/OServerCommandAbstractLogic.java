@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.all;
 
-import java.io.IOException;
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -28,6 +26,8 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponseWr
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+
+import java.io.IOException;
 
 public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenticatedDbAbstract {
   protected abstract String[] init(OHttpRequest iRequest, OHttpResponse iResponse);
@@ -69,7 +69,7 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
     } catch (OCommandScriptException e) {
       // EXCEPTION
 
-      final StringBuilder msg = new StringBuilder();
+      final StringBuilder msg = new StringBuilder(256);
       for (Exception currentException = e; currentException != null; currentException = (Exception) currentException.getCause()) {
         if (msg.length() > 0)
           msg.append("\n");

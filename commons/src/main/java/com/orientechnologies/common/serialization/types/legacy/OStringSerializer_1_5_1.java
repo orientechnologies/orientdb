@@ -16,14 +16,14 @@
 
 package com.orientechnologies.common.serialization.types.legacy;
 
-import java.nio.ByteOrder;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.OBinaryConverter;
 import com.orientechnologies.common.serialization.OBinaryConverterFactory;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OCharSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+
+import java.nio.ByteOrder;
 
 /**
  * Legacy serializer for {@link String} type. Keep it to support compatibility with 1.5.1.
@@ -54,7 +54,7 @@ public class OStringSerializer_1_5_1 implements OBinarySerializer<String> {
   public String deserialize(final byte[] stream, final int startPosition) {
     final OCharSerializer charSerializer = OCharSerializer.INSTANCE;
     final int len = OIntegerSerializer.INSTANCE.deserialize(stream, startPosition);
-    final StringBuilder stringBuilder = new StringBuilder();
+    final StringBuilder stringBuilder = new StringBuilder(len);
     for (int i = 0; i < len; i++) {
       stringBuilder.append(charSerializer.deserialize(stream, startPosition + OIntegerSerializer.INT_SIZE + i * 2));
     }

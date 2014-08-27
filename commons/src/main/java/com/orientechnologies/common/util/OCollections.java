@@ -56,7 +56,7 @@ public class OCollections {
    * @return String
    */
   public static String toString(Iterable<?> iterable) {
-    final StringBuilder builder = new StringBuilder();
+    final StringBuilder builder = new StringBuilder(512);
     builder.append('[');
     int cnt = 0;
     final Iterator<?> ite = iterable.iterator();

@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.core.query;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldMultiAbstract;
+
+import java.util.List;
 
 /**
  * Represent multiple values in query.
@@ -43,7 +43,7 @@ public class OQueryRuntimeValueMulti {
     if (getValues() == null)
       return "";
 
-    StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder(128);
     buffer.append("[");
     int i = 0;
     for (Object v : getValues()) {

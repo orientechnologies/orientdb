@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.server.config.*;
@@ -139,7 +138,7 @@ public class OServer {
             new OProfilerHookValue() {
               @Override
               public Object getValue() {
-                final StringBuilder dbs = new StringBuilder();
+                final StringBuilder dbs = new StringBuilder(64);
                 for (String dbName : getAvailableStorageNames().keySet()) {
                   if (dbs.length() > 0)
                     dbs.append(',');

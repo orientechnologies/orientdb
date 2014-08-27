@@ -255,7 +255,7 @@ public class OServerNetworkListener extends Thread {
 
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder();
+    StringBuilder builder = new StringBuilder(64);
     builder.append(protocolType.getSimpleName()).append(" ").append(serverSocket.getLocalSocketAddress()).append(":");
     return builder.toString();
   }

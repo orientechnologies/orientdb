@@ -40,7 +40,7 @@ public class OProfilerEntry {
   }
 
   public String toJSON() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(1024);
     toJSON(buffer);
     return buffer.toString();
   }

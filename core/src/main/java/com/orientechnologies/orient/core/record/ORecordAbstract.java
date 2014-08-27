@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -39,6 +31,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
@@ -231,7 +231,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public String toJSON(final String iFormat) {
-    return ORecordSerializerJSON.INSTANCE.toString(this, new StringBuilder(), iFormat).toString();
+    return ORecordSerializerJSON.INSTANCE.toString(this, new StringBuilder(1024), iFormat).toString();
   }
 
   @Override

@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
-import java.io.BufferedReader;
-import java.io.StringReader;
-import java.text.NumberFormat;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Locale;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,6 +24,13 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
+
+import java.io.BufferedReader;
+import java.io.StringReader;
+import java.text.NumberFormat;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Locale;
 
 public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstract {
   private static final char     CSV_SEPARATOR     = ',';
@@ -74,7 +74,7 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
         int imported = 0;
         int errors = 0;
 
-        final StringBuilder output = new StringBuilder();
+        final StringBuilder output = new StringBuilder(1024);
 
         int line = 0;
         int col = 0;

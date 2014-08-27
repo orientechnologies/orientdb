@@ -16,14 +16,14 @@
 
 package com.orientechnologies.common.profiler;
 
+import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
+import com.orientechnologies.common.util.OPair;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
-import com.orientechnologies.common.util.OPair;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -36,10 +36,10 @@ import com.orientechnologies.common.util.OPair;
  */
 public abstract class OAbstractProfiler extends OSharedResourceAbstract implements OProfilerMBean {
 
-  protected long                                         recordingFrom = -1;
   protected final Map<String, OProfilerHookValue>        hooks         = new ConcurrentHashMap<String, OProfilerHookValue>();
   protected final ConcurrentHashMap<String, String>      dictionary    = new ConcurrentHashMap<String, String>();
   protected final ConcurrentHashMap<String, METRIC_TYPE> types         = new ConcurrentHashMap<String, METRIC_TYPE>();
+  protected long                                         recordingFrom = -1;
 
   public interface OProfilerHookValue {
     public Object getValue();
@@ -181,7 +181,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
 
   @Override
   public String getSystemMetric(final String iMetricName) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder("system.".length() + iMetricName.length() + 1);
     buffer.append("system.");
     buffer.append(iMetricName);
     return buffer.toString();
@@ -189,7 +189,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
 
   @Override
   public String getProcessMetric(final String iMetricName) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder("process.".length() + iMetricName.length() + 1);
     buffer.append("process.");
     buffer.append(iMetricName);
     return buffer.toString();
@@ -197,7 +197,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
 
   @Override
   public String getDatabaseMetric(final String iDatabaseName, final String iMetricName) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     buffer.append("db.");
     buffer.append(iDatabaseName != null ? iDatabaseName : "*");
     buffer.append('.');

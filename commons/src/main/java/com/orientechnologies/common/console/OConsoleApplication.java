@@ -46,7 +46,7 @@ import java.util.logging.Logger;
 
 public class OConsoleApplication {
   protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" }; ;
-  protected final StringBuilder   commandBuffer   = new StringBuilder();
+  protected final StringBuilder   commandBuffer   = new StringBuilder(2048);
   protected InputStream           in              = System.in;                       // System.in;
   protected PrintStream           out             = System.out;
   protected PrintStream           err             = System.err;
@@ -68,7 +68,7 @@ public class OConsoleApplication {
   }
 
   public static String getCorrectMethodName(Method m) {
-    StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder(128);
     buffer.append(getClearName(m.getName()));
     for (int i = 0; i < m.getParameterAnnotations().length; i++) {
       for (int j = 0; j < m.getParameterAnnotations()[i].length; j++) {
@@ -306,7 +306,7 @@ public class OConsoleApplication {
       }
 
     Method lastMethodInvoked = null;
-    final StringBuilder lastCommandInvoked = new StringBuilder();
+    final StringBuilder lastCommandInvoked = new StringBuilder(1024);
 
     final String commandLowerCase = iCommand.toLowerCase();
 
@@ -514,7 +514,7 @@ public class OConsoleApplication {
   }
 
   protected String getCommandLine(String[] iArguments) {
-    StringBuilder command = new StringBuilder();
+    StringBuilder command = new StringBuilder(512);
     for (int i = 0; i < iArguments.length; ++i) {
       if (i > 0)
         command.append(" ");

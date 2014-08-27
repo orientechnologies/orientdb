@@ -205,7 +205,7 @@ public class OIOUtils {
   }
 
   public static String java2unicode(final String iInput) {
-    final StringBuilder result = new StringBuilder();
+    final StringBuilder result = new StringBuilder(iInput.length()*2);
     final int inputSize = iInput.length();
 
     char ch;

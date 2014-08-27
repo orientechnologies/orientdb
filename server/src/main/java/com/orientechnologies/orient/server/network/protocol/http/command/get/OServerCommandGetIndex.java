@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
-import java.util.Collection;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -24,6 +22,8 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract;
+
+import java.util.Collection;
 
 public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
   private static final String[] NAMES = { "GET|index/*" };
@@ -50,7 +50,7 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
         iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
             null, null);
       else {
-        final StringBuilder buffer = new StringBuilder();
+        final StringBuilder buffer = new StringBuilder(128);
         buffer.append('[');
 
         if (content instanceof Collection<?>) {

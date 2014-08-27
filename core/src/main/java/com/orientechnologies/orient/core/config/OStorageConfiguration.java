@@ -326,7 +326,7 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public byte[] toStream() throws OSerializationException {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(4096);
 
     write(buffer, CURRENT_VERSION);
     write(buffer, name);

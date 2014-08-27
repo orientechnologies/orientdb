@@ -84,18 +84,6 @@ import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected ODatabaseDocument   currentDatabase;
   protected String              currentDatabaseName;
@@ -1280,7 +1268,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       for (OClass cls : classes) {
         try {
-          final StringBuilder clusters = new StringBuilder();
+          final StringBuilder clusters = new StringBuilder(1024);
           if (cls.isAbstract())
             clusters.append("-");
           else
@@ -1936,7 +1924,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (((int) (iPercent * 10)) == lastPercentStep)
       return true;
 
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(64);
 
     if (interactiveMode) {
       buffer.append("\r[");
@@ -2074,7 +2062,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @Override
   protected String getContext() {
     if (currentDatabase != null && currentDatabaseName != null) {
-      final StringBuilder buffer = new StringBuilder();
+      final StringBuilder buffer = new StringBuilder(64);
       buffer.append(" {db=");
       buffer.append(currentDatabaseName);
       if (currentDatabase.getTransaction().isActive()) {

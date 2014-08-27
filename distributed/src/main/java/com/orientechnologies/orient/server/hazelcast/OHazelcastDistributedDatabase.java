@@ -383,7 +383,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
    * Composes the undo queue name based on node name.
    */
   protected String getPendingRequestMapName() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     buffer.append(NODE_QUEUE_PREFIX);
     buffer.append(getLocalNodeName());
     buffer.append(NODE_QUEUE_PENDING_POSTFIX);

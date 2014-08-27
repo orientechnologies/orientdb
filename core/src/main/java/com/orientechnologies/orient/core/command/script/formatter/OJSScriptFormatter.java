@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 public class OJSScriptFormatter implements OScriptFormatter {
   public String getFunctionDefinition(final OFunction f) {
 
-    final StringBuilder fCode = new StringBuilder();
+    final StringBuilder fCode = new StringBuilder(1024);
     fCode.append("function ");
     fCode.append(f.getName());
     fCode.append('(');
@@ -46,7 +46,7 @@ public class OJSScriptFormatter implements OScriptFormatter {
 
   @Override
   public String getFunctionInvoke(final OFunction iFunction, final Object[] iArgs) {
-    final StringBuilder code = new StringBuilder();
+    final StringBuilder code = new StringBuilder(1024);
 
     code.append(iFunction.getName());
     code.append('(');

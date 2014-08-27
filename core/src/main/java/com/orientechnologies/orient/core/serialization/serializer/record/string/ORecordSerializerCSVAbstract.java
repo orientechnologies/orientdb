@@ -405,7 +405,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         }
 
         if (it != null && it.hasNext()) {
-          final StringBuilder buffer = new StringBuilder();
+          final StringBuilder buffer = new StringBuilder(128);
           for (int items = 0; it.hasNext(); items++) {
             if (items > 0)
               buffer.append(OStringSerializerHelper.RECORD_SEPARATOR);

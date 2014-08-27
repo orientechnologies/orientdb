@@ -27,7 +27,7 @@ public abstract class OBaseParser {
   public String                   parserText;
   public String                   parserTextUpperCase;
 
-  private transient StringBuilder parserLastWord      = new StringBuilder();
+  private transient StringBuilder parserLastWord      = new StringBuilder(256);
   private transient int           parserCurrentPos    = 0;
   private transient int           parserPreviousPos   = 0;
   private transient char          parserLastSeparator = ' ';

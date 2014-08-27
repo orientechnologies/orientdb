@@ -147,7 +147,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   @Override
   public String toString() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     final String root = getRoot();
     if (root != null)
       buffer.append(root);

@@ -60,7 +60,10 @@ public class OJSONWriter {
   }
 
   public static String writeValue(Object iValue, final String iFormat) throws IOException {
-    final StringBuilder buffer = new StringBuilder();
+    if (iValue == null)
+      return "null";
+
+    final StringBuilder buffer = new StringBuilder(64);
 
     final boolean oldAutoConvertSettings;
 
@@ -70,10 +73,7 @@ public class OJSONWriter {
     } else
       oldAutoConvertSettings = false;
 
-    if (iValue == null)
-      buffer.append("null");
-
-    else if (iValue instanceof Boolean || iValue instanceof Number)
+    if (iValue instanceof Boolean || iValue instanceof Number)
       buffer.append(iValue.toString());
 
     else if (iValue instanceof OIdentifiable) {
@@ -229,7 +229,7 @@ public class OJSONWriter {
   }
 
   public static String mapToJSON(Map<?, ?> iMap) {
-    return mapToJSON(iMap, null, new StringBuilder());
+    return mapToJSON(iMap, null, new StringBuilder(128));
   }
 
   public static String mapToJSON(final Map<?, ?> iMap, final String iFormat, final StringBuilder buffer) {

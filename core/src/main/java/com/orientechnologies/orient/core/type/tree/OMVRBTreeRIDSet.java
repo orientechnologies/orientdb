@@ -184,7 +184,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
   }
 
   public byte[] toStream() throws OSerializationException {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     toStream(buffer);
     return buffer.toString().getBytes();
   }

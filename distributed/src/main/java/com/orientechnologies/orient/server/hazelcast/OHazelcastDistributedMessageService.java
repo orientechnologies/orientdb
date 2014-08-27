@@ -136,7 +136,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
    * Composes the request queue name based on node name and database.
    */
   protected static String getRequestQueueName(final String iNodeName, final String iDatabaseName) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     buffer.append(NODE_QUEUE_PREFIX);
     buffer.append(iNodeName);
     if (iDatabaseName != null) {
@@ -151,7 +151,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
    * Composes the response queue name based on node name.
    */
   protected static String getResponseQueueName(final String iNodeName) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     buffer.append(NODE_QUEUE_PREFIX);
     buffer.append(iNodeName);
     buffer.append(NODE_QUEUE_RESPONSE_POSTFIX);

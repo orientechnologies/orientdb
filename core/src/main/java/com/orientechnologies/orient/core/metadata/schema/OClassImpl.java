@@ -1557,7 +1557,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public void checkPersistentPropertyType(ODatabaseComplex<ORecordInternal<?>> database, String propertyName, OType type) {
 
-    StringBuilder builder = new StringBuilder();
+    StringBuilder builder = new StringBuilder(256);
     builder.append("select count(*) from ").append(name).append(" where ");
     builder.append(propertyName).append(".type() not in [");
     Iterator<OType> cur = type.getCastable().iterator();

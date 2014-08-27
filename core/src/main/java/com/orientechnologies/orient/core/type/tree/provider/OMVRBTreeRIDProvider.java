@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.orient.core.type.tree.provider;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.IdentityHashMap;
-import java.util.StringTokenizer;
-
-import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -28,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -38,6 +33,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeEntryPersistent;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreePersistent;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRID;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.IdentityHashMap;
+import java.util.StringTokenizer;
 
 /**
  * MVRB-Tree implementation to handle a set of RID. It's serialized as embedded or external binary. Once external cannot come back
@@ -55,7 +55,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
   private int                           binaryThreshold       = OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD
                                                                   .getValueAsInteger();
 
-  private final StringBuilder           buffer                = new StringBuilder();
+  private final StringBuilder           buffer                = new StringBuilder(128);
   private boolean                       marshalling           = true;
 
   protected static final OProfilerMBean PROFILER              = Orient.instance().getProfiler();

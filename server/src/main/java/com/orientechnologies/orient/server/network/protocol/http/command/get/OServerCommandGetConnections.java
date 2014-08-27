@@ -104,7 +104,7 @@ public class OServerCommandGetConnections extends OServerCommandAuthenticatedSer
       writeField(json, 2, "protocol", c.protocol.getType());
       writeField(json, 2, "clientId", data.clientId);
 
-      final StringBuilder driver = new StringBuilder();
+      final StringBuilder driver = new StringBuilder(128);
       if (data.driverName != null) {
         driver.append(data.driverName);
         driver.append(" v");

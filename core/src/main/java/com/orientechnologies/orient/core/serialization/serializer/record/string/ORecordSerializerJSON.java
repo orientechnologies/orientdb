@@ -15,16 +15,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
@@ -61,6 +51,16 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.util.ODateHelper;
 import com.orientechnologies.orient.core.version.ODistributedVersion;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
@@ -76,16 +76,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   private interface CollectionItemVisitor {
     void visitItem(Object item);
-  }
-
-  @Override
-  public int getCurrentVersion() {
-    return 0;
-  }
-
-  @Override
-  public int getMinSupportedVersion() {
-    return 0;
   }
 
   public class FormatSettings {
@@ -146,8 +136,23 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             dateAsLong = true;
           else if (f.startsWith("prettyPrint"))
             prettyPrint = true;
+          else if (f.startsWith("graph"))
+            // SUPPORTED IN OTHER PARTS
+            ;
+          else
+            throw new IllegalArgumentException("Unrecognized JSON formatting option: " + f);
       }
     }
+  }
+
+  @Override
+  public int getCurrentVersion() {
+    return 0;
+  }
+
+  @Override
+  public int getMinSupportedVersion() {
+    return 0;
   }
 
   public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, boolean needReload) {

@@ -15,15 +15,14 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+
+import java.io.IOException;
+import java.lang.reflect.Constructor;
 
 /**
  * Allow short and long form. Examples: <br/>
@@ -50,7 +49,7 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
     Class<?> cls = null;
 
     try {
-      final StringBuilder content = new StringBuilder();
+      final StringBuilder content = new StringBuilder(1024);
       cls = OStreamSerializerHelper.readRecordType(stream, content);
 
       // TRY WITH THE DATABASE CONSTRUCTOR
@@ -78,7 +77,7 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
     if (((ORecord<?>) iObject).getIdentity() == null)
       throw new OSerializationException("Cannot serialize record without identity. Store it before serialization.");
 
-    final StringBuilder buffer = OStreamSerializerHelper.writeRecordType(iObject.getClass(), new StringBuilder());
+    final StringBuilder buffer = OStreamSerializerHelper.writeRecordType(iObject.getClass(), new StringBuilder(1024));
     buffer.append(((ORecord<?>) iObject).getIdentity().toString());
 
     return OBinaryProtocol.string2bytes(buffer.toString());

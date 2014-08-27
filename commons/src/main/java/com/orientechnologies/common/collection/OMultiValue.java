@@ -275,7 +275,7 @@ public class OMultiValue {
    * @return a stringified version of the multi-value object.
    */
   public static String toString(final Object iObject) {
-    final StringBuilder sb = new StringBuilder();
+    final StringBuilder sb = new StringBuilder(2048);
 
     if (iObject instanceof Iterable<?>) {
       final Iterable<Object> coll = (Iterable<Object>) iObject;

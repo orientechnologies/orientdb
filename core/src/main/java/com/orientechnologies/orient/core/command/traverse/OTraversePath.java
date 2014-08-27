@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.command.traverse;
 
-import java.util.ArrayDeque;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+import java.util.ArrayDeque;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -25,7 +25,7 @@ public class OTraversePath {
       currentItem = currentItem.parentItem;
     }
 
-    final StringBuilder buf = new StringBuilder();
+    final StringBuilder buf = new StringBuilder(1024);
     for (PathItem pathItem : stack) {
       buf.append(pathItem.toString());
     }

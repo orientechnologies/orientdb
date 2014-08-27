@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record.ridbag.embedded;
 
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
@@ -207,7 +206,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       return "[size=" + size + "]";
 
     if (size < 10) {
-      final StringBuilder sb = new StringBuilder();
+      final StringBuilder sb = new StringBuilder(256);
       sb.append('[');
       for (final Iterator<OIdentifiable> it = this.iterator(); it.hasNext();) {
         try {

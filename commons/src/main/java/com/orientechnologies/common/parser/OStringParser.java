@@ -41,7 +41,7 @@ public class OStringParser {
     iText = iText.trim();
 
     final ArrayList<String> fields = new ArrayList<String>();
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(64);
     char stringBeginChar = ' ';
     char c;
     int openBraket = 0;
@@ -162,7 +162,7 @@ public class OStringParser {
     iText = iText.trim();
 
     ArrayList<String> fields = new ArrayList<String>();
-    StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder(256);
     char c;
     char stringChar = ' ';
     boolean escape = false;
@@ -244,7 +244,7 @@ public class OStringParser {
     char stringChar = ' ';
     boolean escape = false;
 
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(1024);
 
     int i = iFrom;
     while (true) {
@@ -343,7 +343,7 @@ public class OStringParser {
 
   public static int readUnicode(String iText, int position, final StringBuilder buffer) {
     // DECODE UNICODE CHAR
-    final StringBuilder buff = new StringBuilder();
+    final StringBuilder buff = new StringBuilder(64);
     final int lastPos = position + 4;
     for (; position < lastPos; ++position)
       buff.append(iText.charAt(position));
@@ -354,7 +354,7 @@ public class OStringParser {
 
   public static int readUnicode(char[] iText, int position, final StringBuilder buffer) {
     // DECODE UNICODE CHAR
-    final StringBuilder buff = new StringBuilder();
+    final StringBuilder buff = new StringBuilder(64);
     final int lastPos = position + 4;
     for (; position < lastPos; ++position)
       buff.append(iText[position]);
@@ -368,7 +368,7 @@ public class OStringParser {
       return iText;
     int pos = iText.indexOf(iToReplace);
     int lastAppend = 0;
-    final StringBuffer buffer = new StringBuffer();
+    final StringBuffer buffer = new StringBuffer(1024);
     while (pos > -1) {
       buffer.append(iText.substring(lastAppend, pos));
       buffer.append(iReplacement);

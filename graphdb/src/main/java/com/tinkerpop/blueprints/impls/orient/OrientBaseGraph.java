@@ -1459,7 +1459,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (raw.getTransaction().isActive()) {
       if (settings.warnOnForceClosingTx && OLogManager.instance().isWarnEnabled()) {
         // COMPOSE THE MESSAGE
-        final StringBuilder msg = new StringBuilder();
+        final StringBuilder msg = new StringBuilder(256);
         for (String s : iOperationStrings)
           msg.append(s);
 

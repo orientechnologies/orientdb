@@ -308,7 +308,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
     final List<String> words = (List<String>) OStringSerializerHelper.split(new ArrayList<String>(), iKey, 0, -1, separatorChars);
 
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(64);
     // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
 
     char c;

@@ -543,7 +543,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
   @Override
   public String toString() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(256);
     buffer.append("OrientDB[");
     buffer.append(url != null ? url : "?");
     buffer.append(']');

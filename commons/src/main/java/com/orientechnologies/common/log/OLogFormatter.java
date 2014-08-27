@@ -23,7 +23,7 @@ public class OLogFormatter extends Formatter {
     }
 
     // FORMAT THE STACK TRACE
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(512);
     buffer.append(record.getMessage());
 
     Throwable current = record.getThrown();
@@ -47,7 +47,7 @@ public class OLogFormatter extends Formatter {
     Object[] iAdditionalArgs = iRecord.getParameters();
     String iRequester = getSourceClassSimpleName(iRecord.getLoggerName());
 
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(512);
     buffer.append(EOL);
     synchronized (dateFormat) {
       buffer.append(dateFormat.format(new Date()));

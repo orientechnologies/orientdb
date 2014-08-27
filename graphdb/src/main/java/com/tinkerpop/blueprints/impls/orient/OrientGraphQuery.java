@@ -139,7 +139,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
       // SUPPORTED USED THE BASIC IMPL
       return new OrientGraphQueryIterable<Vertex>(true, labels);
 
-    final StringBuilder text = new StringBuilder();
+    final StringBuilder text = new StringBuilder(512);
 
     // GO DIRECTLY AGAINST E CLASS AND SUB-CLASSES
     text.append(QUERY_SELECT_FROM);
@@ -202,7 +202,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (((OrientBaseGraph) graph).isUseLightweightEdges())
       return new OrientGraphQueryIterable<Edge>(false, labels);
 
-    final StringBuilder text = new StringBuilder();
+    final StringBuilder text = new StringBuilder(512);
 
     // GO DIRECTLY AGAINST E CLASS AND SUB-CLASSES
     text.append(QUERY_SELECT_FROM);
