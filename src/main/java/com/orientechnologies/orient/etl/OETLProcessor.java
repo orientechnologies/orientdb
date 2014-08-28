@@ -18,17 +18,6 @@
 
 package com.orientechnologies.orient.etl;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -43,6 +32,17 @@ import com.orientechnologies.orient.etl.source.OSource;
 import com.orientechnologies.orient.etl.transformer.OTransformer;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.TimerTask;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * ETL processor class.
@@ -353,10 +353,6 @@ public class OETLProcessor implements OETLComponent {
   public void begin() {
     out(LOG_LEVELS.INFO, "BEGIN ETL PROCESSOR");
 
-    final String cfgLog = (String) context.getVariable("log");
-    if (cfgLog != null)
-      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
-
     final Integer cfgMaxRetries = (Integer) context.getVariable("maxRetries");
     if (cfgMaxRetries != null)
       maxRetries = cfgMaxRetries;
@@ -584,6 +580,10 @@ public class OETLProcessor implements OETLComponent {
   }
 
   protected void init() {
+    final String cfgLog = (String) context.getVariable("log");
+    if (cfgLog != null)
+      logLevel = LOG_LEVELS.valueOf(cfgLog.toUpperCase());
+
     final Object parallelSetting = context.getVariable("parallel");
     if (parallelSetting != null)
       parallel = ((Boolean) parallelSetting).booleanValue();
