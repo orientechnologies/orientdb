@@ -39,39 +39,55 @@
             </form>
         </div>
         <div class="query-info">
-            <form class="form-inline pull-right" ng-show="!hideSettings">
-                <fieldset>
+            <div class="row vertical-align">
+                <div class="col-md-4 info">
+                    <div class="query-hint">
+                        <b>Run:</b>
+                        Ctrl/Cmd + Return
+                        <b>Undo:</b>
+                        Ctrl/Cmd + Z
+                        <b>Redo:</b>
+                        Ctrl/Cmd + Shift + Z
+                        <br>
+                        <b class="clear-hint">Hint:</b>
+                        You can select
+                    </div>
+                </div>
+                <div class="col-md-7 command">
+                    <form class="form-inline " ng-show="!hideSettings">
+                        <fieldset>
+                            <div class="form-group">
+                                <label>Content Type</label>
+                                <select ng-model="selectedContentType" class="form-control input-sm"
+                                        ng-options="q for q in contentType"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Limit</label>
+                                <input type="text" class="form-control input-sm" ng-model="limit"/>
+                            </div>
+                            <div class="form-group">
+                                <label> Keep result set in history</label>
+                                <input type="text" class="form-control input-sm" ng-model="keepLimit"/>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" class="" ng-model="shallow"/> Shallow collection
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" class="" ng-model="hideSettings"/> Hide settings
+                                </label>
+                            </div>
+                            <button ng-click="query()" ng-disabled="!queryText" class="btn btn-sm btn-primary"><i
+                                    class="icon-white icon-cog"></i>
+                                Run
+                            </button>
 
-                    <div class="form-group">
-                        <label>Content Type</label>
-                        <select ng-model="selectedContentType" class="form-control input-sm"
-                                ng-options="q for q in contentType"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Limit</label>
-                        <input type="text" class="form-control input-sm" ng-model="limit"/>
-                    </div>
-                    <div class="form-group">
-                        <label> Keep result set in history</label>
-                        <input type="text" class="form-control input-sm" ng-model="keepLimit"/>
-                    </div>
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" class="" ng-model="shallow"/> Shallow collection
-                        </label>
-                    </div>
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" class="" ng-model="hideSettings"/> Hide settings
-                        </label>
-                    </div>
-                    <button ng-click="query()" ng-disabled="!queryText" class="btn btn-sm btn-primary"><i
-                            class="icon-white icon-cog"></i>
-                        Run
-                    </button>
-
-                </fieldset>
-            </form>
+                        </fieldset>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
     <div id="download">

@@ -188,7 +188,7 @@ div.edge form.bs-docs-example:after {
     font-size: 13px;
     font-weight: bold;
     right: -1px;
-    padding: 3px 7px;
+    padding: 5px 8px;
     position: absolute;
     top: -1px;
 }
@@ -213,7 +213,8 @@ div.edge form.bs-docs-example:after {
     /*box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);*/
     /*box-shadow: 0 1px 1px rgba(0,0,0,.05);*/
     /*border: 1px solid #DDDDDD;*/
-    margin: 15px 0;
+    margin-top: 15px;
+    margin-bottom: 15px;
     position: relative;
 }
 
@@ -264,7 +265,9 @@ div.edge form.bs-docs-example:after {
     margin-right: 10px;
     color: #333333;
 }
-
+.master-query {
+    margin-top: 0px;
+}
 .input-xxsmall {
     width: 30px;
 }

@@ -65,6 +65,15 @@
         <div id="spinner">
         </div>
     </div>
+
+    <div class="server-down-container" ng-controller="ServerStatusController">
+        <div class="server-down" ng-show="isDown">
+
+        </div>
+        <div class="alert alert-danger" ng-show="isDown" role="alert">Server may be down. Please check your server
+            status.
+        </div>
+    </div>
     <div id="spinner-circle" class="circle-stop">
         <div class="circle-container">
             <div class="circle"></div>
@@ -75,6 +84,9 @@
     <div id="interrupter-container" class="circle-interrupt-stop">
         <a id="interrupter" class="btn btn-danger" href="javascript:void(0)" data-placement="bottom"
            bs-tooltip="'Interrupt request'"></i>Interrupt</a>
+    </div>
+    <div class="circle-interrupt-stop">
+
     </div>
     <div class="container-fluid container-notification">
         <div class="row-fluid">
@@ -93,25 +105,7 @@
 <div id="footer">
     <div class="container">
         <div class="row">
-            <!--<div class="col-md-12">-->
-                <!--<hr/>-->
-            <!--</div>-->
-            <!--<div class="col-md-6">-->
-                <!--<p>© 2014 Orient Technologies LTD</p>-->
-            <!--</div>-->
-            <!--<div class="col-md-6">-->
-                <!--<div class="pull-right">-->
-                    <!--<div class="btn-group">-->
-                        <!--<a href="" class="icon-container"><i class="fa fa-twitter"></i></a>-->
-                    <!--</div>-->
-                    <!--<div class="btn-group" class="icon-container">-->
-                        <!--<a href="" class="icon-container"><i class="fa fa-facebook"></i></a>-->
-                    <!--</div>-->
-                    <!--<div class="btn-group">-->
-                        <!--<a href="" class="icon-container"><i class="fa fa-google-plus"></i></a>-->
-                    <!--</div>-->
-                <!--</div>-->
-            <!--</div>-->
+
         </div>
         <!--/row-->
 

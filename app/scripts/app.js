@@ -135,7 +135,7 @@ App.config(function ($routeProvider) {
             redirectTo: '/'
         });
 });
-App.run(function ($rootScope) {
+App.run(function ($rootScope, $interval, DatabaseApi) {
     $rootScope.$on('$routeChangeSuccess', function (event, currentRoute) {
         switch (currentRoute.templateUrl) {
             case 'views/login.html':
@@ -146,4 +146,11 @@ App.run(function ($rootScope) {
                 break;
         }
     });
+    $interval(function () {
+        DatabaseApi.listDatabases().then(function (data) {
+            $rootScope.$broadcast("server:up");
+        }, function error(data) {
+            $rootScope.$broadcast("server:down");
+        })
+    }, 3000);
 })

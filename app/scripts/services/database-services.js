@@ -465,7 +465,18 @@ database.factory('DatabaseApi', function ($http, $resource, $q) {
 
     var resource = $resource(API + 'database/:database');
     resource.listDatabases = function (callback) {
-        $http.get(API + 'listDatabases').success(callback);
+        var deferred = $q.defer();
+        $http.get(API + 'listDatabases').success(function (data) {
+            if (callback) {
+                callback(data);
+            }
+            else {
+                deferred.resolve(data);
+            }
+        }).error(function (data) {
+                deferred.reject(data);
+            });
+        return deferred.promise;
     }
 
     resource.setUrlWiki = function (urll) {

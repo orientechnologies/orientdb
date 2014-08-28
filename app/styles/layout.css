@@ -72,6 +72,7 @@ body div.container-studio {
 .console_class_functions .functiotron {
     padding: 20px;
     border-left: 3px solid #c5c5c5;
+
 }
 
 .aside {
@@ -342,6 +343,135 @@ text.vicon {
 tr.queryfield-header > th.header-divider {
     border-left: 1px solid #d3d3d3 !important;
 }
+
 table.result-table > thead > tr > th {
     border: none;
 }
+
+.query-hint b.clear-hint {
+    border-left: none;
+}
+
+.query-hint b:first-child {
+    border-left: none;
+}
+
+.query-hint b {
+    border-left: 1px solid rgba(0, 0, 0, 0.34);
+    margin-left: 5px;
+    padding-left: 5px;
+}
+
+.query-info input.form-control {
+    width: 50px;
+}
+
+.query-info .info {
+    padding-right: 0px;
+}
+
+.query-info .command {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.vertical-align {
+    display: flex;
+    align-items: center;
+}
+
+.info {
+    width: 40%;
+}
+
+.server-down {
+    text-align: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3000;
+    background-color: rgba(0, 0, 0, 0.92);
+    opacity: .6;
+}
+
+@-webkit-keyframes fadeInDownCustom {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    100% {
+        opacity: .6;
+        transform: translateY(0);
+    }
+}
+
+@-webkit-keyframes fadeOutUpCustom {
+    0% {
+        opacity: .6;
+        transform: translateY(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+@keyframes fadeInDownCustom {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    100% {
+        opacity: .6;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOutUpCustom {
+    0% {
+        opacity: .6;
+        transform: translateY(0);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.server-down-container .ng-hide-remove {
+    -webkit-animation: fadeInDownCustom 0.5s;
+    animation: fadeInDownCustom 0.5s;
+}
+
+.server-down-container .ng-hide-add {
+    -webkit-animation: fadeOutUpCustom 0.5s;
+    -webkit-animation: fadeOutUpCustom 0.5s;
+    display: block !important;
+}
+
+.server-down-container .alert {
+    position: fixed;
+    opacity: 1;
+    z-index: 9999;
+    top: 0;
+    width: 100%;
+    box-shadow: none;
+    border-radius: 0px;
+    background-image: none;
+    background-color: #FAA732;
+    color: white;
+    min-height: 60px;
+    border-color: transparent;
+    text-shadow: none;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+
