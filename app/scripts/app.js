@@ -135,7 +135,7 @@ App.config(function ($routeProvider) {
             redirectTo: '/'
         });
 });
-App.run(function ($rootScope, $interval, DatabaseApi) {
+App.run(function ($rootScope, $interval, DatabaseApi, Notification) {
     $rootScope.$on('$routeChangeSuccess', function (event, currentRoute) {
         switch (currentRoute.templateUrl) {
             case 'views/login.html':
@@ -145,6 +145,7 @@ App.run(function ($rootScope, $interval, DatabaseApi) {
                 $rootScope.bodyClass = 'normal-page';
                 break;
         }
+        Notification.clear();
     });
     $interval(function () {
         DatabaseApi.listDatabases().then(function (data) {
