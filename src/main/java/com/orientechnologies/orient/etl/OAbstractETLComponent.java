@@ -67,6 +67,11 @@ public abstract class OAbstractETLComponent implements OETLComponent {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + "]");
   }
 
+  @Override
+  public String toString() {
+    return getName();
+  }
+
   protected String getCommonConfigurationParameters() {
     return "{log:{optional:true,description:'Can be any of [NONE, ERROR, INFO, DEBUG]. Default is INFO'}},"
         + "{if:{optional:true,description:'Conditional expression. If true, the block is executed, otherwise is skipped'}},"

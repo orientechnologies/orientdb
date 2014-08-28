@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OAbstractETLPipelineComponent;
+import com.orientechnologies.orient.etl.OETLProcessor;
 
 /**
  * Abstract Transformer.
@@ -53,7 +54,12 @@ public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent
         throw new OConfigurationException("'if' expression in Transformer " + getName() + " returned '" + result
             + "' instead of boolean");
 
-      return !((Boolean) result).booleanValue();
+      final boolean res = !((Boolean) result).booleanValue();
+
+      if (res)
+        log(OETLProcessor.LOG_LEVELS.DEBUG, "Skip execution of transformer '%s' because if=%s", this, ifFilter);
+
+      return res;
     }
 
     return false;
