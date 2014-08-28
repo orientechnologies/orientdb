@@ -14,10 +14,67 @@
 }
 
 .alert-item.ng-enter {
-    -webkit-animation: fadeInDown 0.4s;
-    -moz-animation: fadeInDown 0.4s;
-    -ms-animation: fadeInDown 0.4s;
-    animation: fadeInDown 0.4s;
+    -webkit-animation: fadeInDown 0.5s;
+    -moz-animation: fadeInDown 0.5s;
+    -ms-animation: fadeInDown 0.5s;
+    animation: fadeInDown 0.5s;
+}
+
+.alert-item.ng-leave {
+    -webkit-animation: fadeOutUp 0.5s;
+    -moz-animation: fadeOutUp 0.5s;
+    -ms-animation: fadeOutUp 0.5s;
+    animation: fadeOutUp 0.5s;
+}
+
+@-moz-keyframes spinPulse {
+    0% {
+        -moz-transform: rotate(160deg);
+        opacity: 0;
+        box-shadow: 0 0 1px #ff5500;
+    }
+    50% {
+        -moz-transform: rotate(145deg);
+        opacity: 1;
+    }
+    100% {
+        -moz-transform: rotate(-320deg);
+        opacity: 0;
+    }
+}
+
+@-moz-keyframes spinoffPulse {
+    0% {
+        -moz-transform: rotate(0deg);
+    }
+    100% {
+        -moz-transform: rotate(360deg);
+    }
+}
+
+@-webkit-keyframes spinPulse {
+    0% {
+        -webkit-transform: rotate(160deg);
+        opacity: 0;
+        box-shadow: 0 0 1px #ff5500;
+    }
+    50% {
+        -webkit-transform: rotate(145deg);
+        opacity: 1;
+    }
+    100% {
+        -webkit-transform: rotate(-320deg);
+        opacity: 0;
+    }
+}
+
+@-webkit-keyframes spinoffPulse {
+    0% {
+        -webkit-transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
 }
 
 

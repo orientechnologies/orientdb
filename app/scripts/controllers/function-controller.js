@@ -208,8 +208,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                 DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                         $scope.getListFunction();
                         $scope.isNewFunction = false;
-                        var message = 'Function saved successfully. Server returns ' + JSON.stringify(data);
-                        Notification.push({content: message });
+                        var message = 'Function {{name}} saved successfully.';
+                        Notification.push({content: S(message).template({ name: $scope.functionToExecute['name']}).s, autoHide: true });
                     }
                 );
 
@@ -217,8 +217,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             else {
                 DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
                     $scope.getListFunction();
-                    var message = 'Function saved successfully. Server returns ' + JSON.stringify(data);
-                    Notification.push({content: message });
+                    var message = 'Function {{name}} saved successfully.';
+                    Notification.push({content: S(message).template({ name: $scope.functionToExecute['name']}).s, autoHide: true });
                 });
             }
         }

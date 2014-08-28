@@ -1,6 +1,6 @@
 var notification = angular.module('notification.services', []);
 
-notification.factory('Notification', function () {
+notification.factory('Notification', function ($timeout) {
 
     return {
         notifications: new Array,
@@ -14,6 +14,12 @@ notification.factory('Notification', function () {
                 this.errors.push(notification);
             } else {
                 this.notifications.push(notification);
+            }
+            var self = this;
+            if (notification.autoHide) {
+                $timeout(function () {
+                    self.clear();
+                }, 3000)
             }
         },
         clear: function () {

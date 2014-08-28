@@ -688,7 +688,7 @@ ul.arrayrid > li {
     -ms-transform: translateX(0px);
     animation-name: bookmarksInFromLeft;
     -webkit-animation-name: bookmarksInFromLeft;
-    animation-duration: 0.2s;
+    animation-duration: 1s;
     -webkit-animation-duration: 0.2s;
 }
 
@@ -857,55 +857,7 @@ ul.arrayrid > li {
     -webkit-animation: spinoffPulse 1s infinite linear;
 }
 
-@-moz-keyframes spinPulse {
-    0% {
-        -moz-transform: rotate(160deg);
-        opacity: 0;
-        box-shadow: 0 0 1px #ff5500;
-    }
-    50% {
-        -moz-transform: rotate(145deg);
-        opacity: 1;
-    }
-    100% {
-        -moz-transform: rotate(-320deg);
-        opacity: 0;
-    }
-}
 
-@-moz-keyframes spinoffPulse {
-    0% {
-        -moz-transform: rotate(0deg);
-    }
-    100% {
-        -moz-transform: rotate(360deg);
-    }
-}
-
-@-webkit-keyframes spinPulse {
-    0% {
-        -webkit-transform: rotate(160deg);
-        opacity: 0;
-        box-shadow: 0 0 1px #ff5500;
-    }
-    50% {
-        -webkit-transform: rotate(145deg);
-        opacity: 1;
-    }
-    100% {
-        -webkit-transform: rotate(-320deg);
-        opacity: 0;
-    }
-}
-
-@-webkit-keyframes spinoffPulse {
-    0% {
-        -webkit-transform: rotate(0deg);
-    }
-    100% {
-        -webkit-transform: rotate(360deg);
-    }
-}
 
 .circle-start {
     text-align: center;
@@ -960,10 +912,6 @@ span.badge-edge {
 .panelAlerts .alert-error {
     background: #FAA732;
     color: white;
-    /*animation-name: notificationInFromTop;*/
-    /*-webkit-animation-name: notificationInFromTop;*/
-    /*animation-duration: 0.4s;*/
-    /*-webkit-animation-duration: 0.4s;*/
     text-shadow: none;
     box-shadow: 0 0 2px #000000;
     border: none;
@@ -973,10 +921,6 @@ span.badge-edge {
 .panelAlerts .alert-info {
     background: #3ab0fa;
     color: white;
-    /*animation-name: notificationInFromTop;*/
-    /*-webkit-animation-name: notificationInFromTop;*/
-    /*animation-duration: 0.4s;*/
-    /*-webkit-animation-duration: 0.4s;*/
     text-shadow: none;
     box-shadow: 0 0 2px #000000;
     border: none;
