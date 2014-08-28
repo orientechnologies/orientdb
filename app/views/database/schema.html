@@ -94,7 +94,8 @@
                                             class="fa fa-plus"></i> New Record
                                 </button>
 
-                                <button href="javascript:void(0)" class="btn btn-danger btn-xs"
+                                <button href="javascript:void(0)" ng-disabled="!canDrop(result['name'])"
+                                        class="btn btn-danger btn-xs"
                                         ng-click="dropClass(result)">
                                     <i class="fa fa-trash-o"></i> Drop
                                 </button>

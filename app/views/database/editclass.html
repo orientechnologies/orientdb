@@ -34,7 +34,9 @@
                 </button>
             </div>
             <div class="btn-group">
-                <button href="javascript:void(0)" class="btn btn-sm btn-danger" ng-click="dropClass(class2show)"><i
+                <button href="javascript:void(0)" class="btn btn-sm btn-danger"
+                        ng-disabled="!canDrop(class2show)"
+                        ng-click="dropClass(class2show)"><i
                         class="fa fa-trash-o"></i>
                     Drop
                 </button>

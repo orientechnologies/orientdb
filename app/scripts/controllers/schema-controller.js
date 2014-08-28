@@ -38,6 +38,9 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
             $scope.numberOfPage = new Array(Math.ceil($scope.listClassesTotal.length / $scope.countPage));
         }
     });
+    $scope.canDrop = function (clazz) {
+        return clazz != "V" && clazz != "E";
+    }
     $scope.dropClass = function (nameClass) {
 
         Utilities.confirm($scope, $modal, $q, {
@@ -127,7 +130,10 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     $scope.queryAll = function (className) {
         $location.path("/database/" + $scope.database.getName() + "/browse/select * from " + className);
     }
+    $scope.canDrop = function (clazz) {
 
+        return clazz != "V" && clazz != "E";
+    }
     $scope.dropClass = function (nameClass) {
 
         Utilities.confirm($scope, $modal, $q, {
