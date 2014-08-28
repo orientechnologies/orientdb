@@ -154,7 +154,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       batchCommit = (Integer) iConfiguration.field("batchCommit");
     if (iConfiguration.containsField("dbAutoCreate"))
       dbAutoCreate = (Boolean) iConfiguration.field("dbAutoCreate");
-    if (iConfiguration.containsField("dbAutoCreate"))
+    if (iConfiguration.containsField("dbAutoDropIfExists"))
       dbAutoDropIfExists = (Boolean) iConfiguration.field("dbAutoDropIfExists");
 
     clusterName = iConfiguration.field("cluster");
