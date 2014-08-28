@@ -52,6 +52,11 @@
                         </div>
                     </fieldset>
                 </form>
+                <div>
+                    You can find the server credentials in <br>$ORIENTDB_HOME/config/orientdb-server-config.xml file:
+                    <pre>&lt;users&gt;<br/>&nbsp;&nbsp;&lt;user name="root" password="pwd" resources="*" /&gt;<br/>&lt;/users&gt;
+                    </pre>
+                </div>
                 <div class="progress progress-striped active" ng-show="creating">
                     <div class="bar" style="width: 100%;">Creating database {{ name }}</div>
                 </div>
