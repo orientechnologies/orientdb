@@ -221,7 +221,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       final Object letValue;
 
       // TRY TO PARSE AS FUNCTION
-      final Object func = OSQLHelper.parseValue(letValueAsString, context);
+      final Object func = OSQLHelper.getFunction(parsedTarget, letValueAsString);
       if (func != null)
         letValue = func;
       else if (letValueAsString.startsWith("(")) {
