@@ -56,18 +56,18 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
       if (p.isNotNull() && fieldValue == null)
         // NULLITY
-        throw new OValidationException("The field '" + p.getFullName() + "' cannot be null");
+        throw new OValidationException("The field '" + p.getFullName() + "' cannot be null, record: " + iRecord);
 
       if (fieldValue != null && p.getRegexp() != null) {
         // REGEXP
         if (!fieldValue.toString().matches(p.getRegexp()))
           throw new OValidationException("The field '" + p.getFullName() + "' does not match the regular expression '"
-              + p.getRegexp() + "'. Field value is: " + fieldValue);
+              + p.getRegexp() + "'. Field value is: " + fieldValue + ", record: " + iRecord);
       }
 
     } else {
       if (p.isMandatory())
-        throw new OValidationException("The field '" + p.getFullName() + "' is mandatory");
+        throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
       fieldValue = null;
     }
 
