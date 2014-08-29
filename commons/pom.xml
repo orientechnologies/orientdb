@@ -41,6 +41,12 @@
             <version>6.8.8</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+        	<groupId>org.slf4j</groupId>
+        	<artifactId>slf4j-api</artifactId>
+        	<version>1.7.2</version>
+        	<scope>provided</scope>
+        </dependency>
     </dependencies>
 
 	<build>
