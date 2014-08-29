@@ -88,7 +88,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     if (scores != null) {
       iContext.setVariable("$score", scores.get(iRecord.getIdentity().toString()));
     }
-
     return super.evaluateRecord(iRecord, iCurrentResult, iCondition, iLeft, iRight, iContext);
+
   }
 }

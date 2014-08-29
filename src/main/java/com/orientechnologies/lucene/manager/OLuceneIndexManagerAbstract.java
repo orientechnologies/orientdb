@@ -26,10 +26,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexEngine;
-import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -259,7 +256,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   public Analyzer getAnalyzer(final ODocument metadata) {
     Analyzer analyzer = null;
-    if (metadata != null) {
+    if (metadata != null && metadata.field("analyzer") != null) {
       final String analyzerString = metadata.field("analyzer");
       if (analyzerString != null) {
         try {
@@ -357,4 +354,9 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
+
+    @Override
+    public OIndexCursor descCursor(ValuesTransformer<V> vValuesTransformer) {
+    return null;
+    }
 }

@@ -118,6 +118,7 @@ public class OLuceneIndexType {
     } else {
       queryParser = new MultiFieldQueryParser(version, index.getFields().toArray(new String[index.getFields().size()]), analyzer);
     }
+
     return queryParser.parse(key);
   }
 

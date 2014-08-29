@@ -132,7 +132,8 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
         } else {
           val = key;
         }
-        doc.add(OLuceneIndexType.createField(f, oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
+        if (val != null)
+          doc.add(OLuceneIndexType.createField(f, oIdentifiable, val, Field.Store.NO, Field.Index.ANALYZED));
       }
       addDocument(doc);
 
