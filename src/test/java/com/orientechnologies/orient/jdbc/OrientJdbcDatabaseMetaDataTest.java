@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.jdbc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import com.orientechnologies.orient.core.OConstants;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -15,10 +15,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import com.orientechnologies.orient.core.OConstants;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
@@ -38,12 +37,12 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     assertEquals("OrientDB", metaData.getDatabaseProductName());
     assertEquals(OConstants.ORIENT_VERSION, metaData.getDatabaseProductVersion());
     assertEquals(1, metaData.getDatabaseMajorVersion());
-    assertEquals(6, metaData.getDatabaseMinorVersion());
+    assertEquals(7, metaData.getDatabaseMinorVersion());
 
     assertEquals("OrientDB JDBC Driver", metaData.getDriverName());
-    assertEquals("OrientDB 1.6 JDBC Driver", metaData.getDriverVersion());
+    assertEquals("OrientDB 1.7 JDBC Driver", metaData.getDriverVersion());
     assertEquals(1, metaData.getDriverMajorVersion());
-    assertEquals(6, metaData.getDriverMinorVersion());
+    assertEquals(7, metaData.getDriverMinorVersion());
 
   }
 

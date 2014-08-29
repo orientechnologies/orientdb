@@ -17,32 +17,6 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.NClob;
-import java.sql.Ref;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.RowId;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -50,6 +24,17 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+
+import java.io.InputStream;
+import java.io.Reader;
+import java.math.BigDecimal;
+import java.net.URL;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
 
 /**
  * @author Roberto Franchini (CELI srl - franchin--at--celi.it)
@@ -66,8 +51,8 @@ public class OrientJdbcResultSet implements ResultSet {
   private int                 concurrency;
   private int                 holdability;
 
-  protected OrientJdbcResultSet(OrientJdbcStatement iOrientJdbcStatement, List<ODocument> iRecords, int type, int concurrency,
-      int holdability) throws SQLException {
+  protected OrientJdbcResultSet(final OrientJdbcStatement iOrientJdbcStatement, final List<ODocument> iRecords, final int type,
+      final int concurrency, int holdability) throws SQLException {
     statement = iOrientJdbcStatement;
     records = iRecords;
     rowCount = iRecords.size();
@@ -293,7 +278,6 @@ public class OrientJdbcResultSet implements ResultSet {
 
       return null;
     } catch (Exception e) {
-      e.printStackTrace();
       throw new SQLException("An error occured during the retrieval of the BLOB at column '" + columnLabel + "'", e);
     }
 

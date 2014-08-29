@@ -16,30 +16,15 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.CallableStatement;
-import java.sql.Clob;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.NClob;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLClientInfoException;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Savepoint;
-import java.sql.Statement;
-import java.sql.Struct;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+
+import java.sql.*;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
-
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
 
 /**
  * 
@@ -48,28 +33,40 @@ import com.orientechnologies.orient.core.db.graph.OGraphDatabasePool;
  */
 public class OrientJdbcConnection implements Connection {
 
-  private final String     dbUrl;
-  private final Properties info;
-  private OGraphDatabase   database;
-  private boolean          readOnly = false;
-  private boolean          autoCommit;
+  private final String        dbUrl;
+  private final Properties    info;
+  private final boolean       usePool;
+  private ODatabaseDocumentTx database;
+  private boolean             readOnly = false;
+  private boolean             autoCommit;
+  private ODatabase.STATUS    status;
 
   public OrientJdbcConnection(String iUrl, Properties iInfo) {
     dbUrl = iUrl.replace("jdbc:orient:", "");
 
     info = iInfo;
 
-    String username = iInfo.getProperty("user", "admin");
-    String password = iInfo.getProperty("password", "admin");
+    final String username = iInfo.getProperty("user", "admin");
+    final String password = iInfo.getProperty("password", "admin");
 
-    database = OGraphDatabasePool.global().acquire(dbUrl, username, password);
+    usePool = Boolean.parseBoolean(iInfo.getProperty("db.usePool", "false"));
+    if (usePool) {
+      final int poolMinSize = Integer.parseInt(iInfo.getProperty("db.pool.min", "" + OGlobalConfiguration.DB_POOL_MAX));
+      final int poolMaxSize = Integer.parseInt(iInfo.getProperty("db.pool.max", "" + OGlobalConfiguration.DB_POOL_MAX));
 
+      database = ODatabaseDocumentPool.global(poolMinSize, poolMaxSize).acquire(dbUrl, username, password);
+    } else {
+      database = new ODatabaseDocumentTx(dbUrl);
+      database.open(username, password);
+    }
+    status = ODatabase.STATUS.OPEN;
   }
 
   public void clearWarnings() throws SQLException {
   }
 
   public void close() throws SQLException {
+    status = ODatabase.STATUS.CLOSED;
     database.close();
   }
 
@@ -82,7 +79,7 @@ public class OrientJdbcConnection implements Connection {
   }
 
   public boolean isClosed() throws SQLException {
-    return database.isClosed();
+    return status == ODatabase.STATUS.CLOSED;
   }
 
   public boolean isReadOnly() throws SQLException {
@@ -144,13 +141,25 @@ public class OrientJdbcConnection implements Connection {
     return autoCommit;
   }
 
+  public void setAutoCommit(boolean autoCommit) throws SQLException {
+    this.autoCommit = autoCommit;
+  }
+
   public String getCatalog() throws SQLException {
     return database.getName();
+  }
+
+  public void setCatalog(String catalog) throws SQLException {
+
   }
 
   public Properties getClientInfo() throws SQLException {
 
     return null;
+  }
+
+  public void setClientInfo(Properties properties) throws SQLClientInfoException {
+    // noop
   }
 
   public String getClientInfo(String name) throws SQLException {
@@ -161,6 +170,10 @@ public class OrientJdbcConnection implements Connection {
     return ResultSet.CLOSE_CURSORS_AT_COMMIT;
   }
 
+  public void setHoldability(int holdability) throws SQLException {
+
+  }
+
   public DatabaseMetaData getMetaData() throws SQLException {
     return new OrientJdbcDatabaseMetaData(this, getDatabase());
   }
@@ -169,8 +182,16 @@ public class OrientJdbcConnection implements Connection {
     return Connection.TRANSACTION_SERIALIZABLE;
   }
 
+  public void setTransactionIsolation(int level) throws SQLException {
+
+  }
+
   public Map<String, Class<?>> getTypeMap() throws SQLException {
     return null;
+  }
+
+  public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
+
   }
 
   public SQLWarning getWarnings() throws SQLException {
@@ -227,24 +248,8 @@ public class OrientJdbcConnection implements Connection {
     throw new SQLFeatureNotSupportedException();
   }
 
-  public void setAutoCommit(boolean autoCommit) throws SQLException {
-    this.autoCommit = autoCommit;
-  }
-
-  public void setCatalog(String catalog) throws SQLException {
-
-  }
-
-  public void setClientInfo(Properties properties) throws SQLClientInfoException {
-    // noop
-  }
-
   public void setClientInfo(String name, String value) throws SQLClientInfoException {
     // noop
-  }
-
-  public void setHoldability(int holdability) throws SQLException {
-
   }
 
   public Savepoint setSavepoint() throws SQLException {
@@ -255,14 +260,6 @@ public class OrientJdbcConnection implements Connection {
   public Savepoint setSavepoint(String name) throws SQLException {
 
     return null;
-  }
-
-  public void setTransactionIsolation(int level) throws SQLException {
-
-  }
-
-  public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-
   }
 
   public boolean isWrapperFor(Class<?> iface) throws SQLException {
@@ -279,7 +276,7 @@ public class OrientJdbcConnection implements Connection {
     return dbUrl;
   }
 
-  public OGraphDatabase getDatabase() {
+  public ODatabaseDocumentTx getDatabase() {
     return database;
   }
 
@@ -298,10 +295,10 @@ public class OrientJdbcConnection implements Connection {
     return null;
   }
 
-  public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
-    OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT.setValue(arg1);
+  public void setSchema(String arg0) throws SQLException {
   }
 
-  public void setSchema(String arg0) throws SQLException {
+  public void setNetworkTimeout(Executor arg0, int arg1) throws SQLException {
+    OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT.setValue(arg1);
   }
 }

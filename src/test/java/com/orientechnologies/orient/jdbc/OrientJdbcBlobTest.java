@@ -1,9 +1,6 @@
 package com.orientechnologies.orient.jdbc;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,7 +17,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class OrientJdbcBlobTest extends OrientJdbcBaseTest {
 
@@ -120,7 +120,7 @@ public class OrientJdbcBlobTest extends OrientJdbcBaseTest {
         binaryFile.delete();
       } while (binaryFile.exists());
     } else
-      binaryFile.mkdirs();
+      binaryFile.getParentFile().mkdirs();
     return binaryFile;
   }
 }

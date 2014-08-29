@@ -16,7 +16,12 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import static java.util.Collections.emptyList;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -27,12 +32,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.graph.OGraphDatabase;
-import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import static java.util.Collections.emptyList;
 
 /**
  * @author Roberto Franchini (CELI Srl - franchini@celi.it)
@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 public class OrientJdbcStatement implements Statement {
 
   protected final OrientJdbcConnection connection;
-  protected final OGraphDatabase       database;
+  protected final ODatabaseDocumentTx  database;
 
   // protected OCommandSQL query;
   protected OCommandRequest            query;
@@ -61,7 +61,7 @@ public class OrientJdbcStatement implements Statement {
 
   /**
    * @param iConnection
-   * @param resultSetTypee
+   * @param resultSetType
    * @param resultSetConcurrency
    * @throws SQLException
    */
