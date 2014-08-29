@@ -42,12 +42,12 @@ import java.util.concurrent.ConcurrentMap;
  * @copyrights Orient Technologies.com
  */
 public class OProfilerData {
-  private long                                            recordingFrom = 0;
-  private long                                            recordingTo   = Long.MAX_VALUE;
   private final ConcurrentHashMap<String, Long>           counters      = new ConcurrentHashMap<String, Long>();
   private final ConcurrentHashMap<String, OProfilerEntry> chronos       = new ConcurrentHashMap<String, OProfilerEntry>();
   private final ConcurrentHashMap<String, OProfilerEntry> stats         = new ConcurrentHashMap<String, OProfilerEntry>();
   private final Map<String, Object>                       hooks         = new WeakHashMap<String, Object>();
+  private long                                            recordingFrom = 0;
+  private long                                            recordingTo   = Long.MAX_VALUE;
 
   public OProfilerData() {
     recordingFrom = System.currentTimeMillis();
@@ -203,7 +203,7 @@ public class OProfilerData {
   }
 
   public String dump() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(OEnterpriseProfiler.BUFFER_SIZE);
     buffer.append("Dump of profiler data from " + new Date(recordingFrom) + " to " + new Date(recordingFrom) + "\n");
 
     buffer.append(dumpHookValues());
@@ -246,7 +246,7 @@ public class OProfilerData {
   }
 
   public String dumpCounters() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(OEnterpriseProfiler.BUFFER_SIZE);
     buffer.append("Dumping COUNTERS:");
 
     buffer
@@ -285,7 +285,7 @@ public class OProfilerData {
   }
 
   public String dumpHookValues() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(OEnterpriseProfiler.BUFFER_SIZE);
 
     synchronized (hooks) {
       if (hooks.size() == 0)

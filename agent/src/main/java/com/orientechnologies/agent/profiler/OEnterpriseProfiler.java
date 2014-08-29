@@ -18,13 +18,6 @@
 
 package com.orientechnologies.agent.profiler;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OAbstractProfiler;
-import com.orientechnologies.common.profiler.OProfilerEntry;
-import com.orientechnologies.common.profiler.OProfilerMBean;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,6 +28,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler;
+import com.orientechnologies.common.profiler.OProfilerEntry;
+import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -47,6 +47,7 @@ import java.util.TimerTask;
  */
 public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerMBean, OMemoryWatchDog.Listener {
   protected final static Timer        timer                   = new Timer(true);
+  protected final static int          BUFFER_SIZE             = 2048;
   protected final List<OProfilerData> snapshots               = new ArrayList<OProfilerData>();
   protected final int                 metricProcessors        = Runtime.getRuntime().availableProcessors();
   protected Date                      lastReset               = new Date();
@@ -210,7 +211,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
   }
 
   public String toJSON(final String iQuery, final String iPar1) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(BUFFER_SIZE * 5);
 
     Map<String, Object> hookValuesSnapshots = null;
 
@@ -277,7 +278,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
   }
 
   public String metadataToJSON() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(BUFFER_SIZE);
 
     buffer.append("{ \"metadata\": {\n  ");
     boolean first = true;
@@ -311,7 +312,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
     acquireSharedLock();
     try {
 
-      final StringBuilder buffer = new StringBuilder();
+      final StringBuilder buffer = new StringBuilder(BUFFER_SIZE);
       buffer.append("\nOrientDB profiler dump of ");
       buffer.append(new Date(now));
       buffer.append(" after ");
@@ -424,7 +425,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
     if (recordingFrom < 0)
       return "HookValues: <no recording>";
 
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(BUFFER_SIZE);
 
     acquireSharedLock();
     try {
