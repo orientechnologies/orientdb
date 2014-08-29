@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -614,41 +615,53 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           final OTxTask txTask = new OTxTask();
           final Set<String> involvedClusters = new HashSet<String>();
 
-          for (ORecordOperation op : iTx.getCurrentRecordEntries()) {
-            final OAbstractRecordReplicatedTask task;
+          final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
-            final ORecordInternal<?> record = op.getRecord();
+          ((OTransactionOptimistic)iTx).setStatus(OTransaction.TXSTATUS.BEGUN);
 
-            final ORecordId rid = (ORecordId) op.record.getIdentity();
+          while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+            for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+              tmpEntries.add(txEntry);
 
-            switch (op.type) {
-            case ORecordOperation.CREATED:
-              task = new OCreateRecordTask(rid, record.toStream(), record.getRecordVersion(), record.getRecordType());
-              break;
+            iTx.clearRecordEntries();
 
-            case ORecordOperation.UPDATED:
-              // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
-              final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null, false,
-                  LOCKING_STRATEGY.DEFAULT);
+            for (ORecordOperation op : tmpEntries) {
+              // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
+              final OAbstractRecordReplicatedTask task;
 
-              if (previousContent.getResult() == null)
-                // DELETED
-                throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
+              final ORecordInternal<?> record = op.getRecord();
 
-              task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-                  record.toStream(), record.getRecordVersion());
-              break;
+              final ORecordId rid = (ORecordId) op.record.getIdentity();
 
-            case ORecordOperation.DELETED:
-              task = new ODeleteRecordTask(rid, record.getRecordVersion());
-              break;
+              switch (op.type) {
+              case ORecordOperation.CREATED:
+                task = new OCreateRecordTask(rid, record.toStream(), record.getRecordVersion(), record.getRecordType());
+                break;
 
-            default:
-              continue;
+              case ORecordOperation.UPDATED:
+                // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
+                final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null, false,
+                    LOCKING_STRATEGY.DEFAULT);
+
+                if (previousContent.getResult() == null)
+                  // DELETED
+                  throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
+
+                task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
+                    record.toStream(), record.getRecordVersion());
+                break;
+
+              case ORecordOperation.DELETED:
+                task = new ODeleteRecordTask(rid, record.getRecordVersion());
+                break;
+
+              default:
+                continue;
+              }
+
+              involvedClusters.add(getClusterNameByRID(rid));
+              txTask.add(task);
             }
-
-            involvedClusters.add(getClusterNameByRID(rid));
-            txTask.add(task);
           }
 
           final Collection<String> nodes = dbCfg.getServers(involvedClusters);

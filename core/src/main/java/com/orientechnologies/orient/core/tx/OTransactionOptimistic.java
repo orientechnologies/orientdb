@@ -16,6 +16,17 @@
 
 package com.orientechnologies.orient.core.tx;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
@@ -49,17 +60,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static final boolean useSBTree = OGlobalConfiguration.INDEX_USE_SBTREE_BY_DEFAULT.getValueAsBoolean();
@@ -269,6 +269,10 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     this.usingLog = useLog;
   }
 
+  public void setStatus(final TXSTATUS iStatus) {
+    status = iStatus;
+  }
+
   protected void addRecord(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
     checkTransaction();
 
@@ -447,7 +451,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     status = TXSTATUS.COMMITTING;
 
-    if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED && !(database.getStorage().getUnderlying() instanceof OStorageEmbedded))
+    if (OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED
+        && !(database.getStorage().getUnderlying() instanceof OStorageEmbedded))
       database.getStorage().commit(this, null);
     else {
       List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
