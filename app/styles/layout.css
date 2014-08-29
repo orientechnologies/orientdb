@@ -473,9 +473,13 @@ table.result-table > thead > tr > th {
     font-size: 16px;
     font-weight: bold;
 }
-.modal-header h3{
+
+.modal-header h3 {
     margin-top: 5px;
     margin-bottom: 5px;
 }
 
+.rename-popover .form-control {
+    width: 100%;
+}
 

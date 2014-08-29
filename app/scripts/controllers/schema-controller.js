@@ -1,11 +1,12 @@
 var schemaModule = angular.module('schema.controller', ['database.services']);
-schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'ClassAlterApi', '$modal', '$q', '$route', '$window', 'Spinner', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, ClassAlterApi, $modal, $q, $route, $window, Spinner, Notification) {
+schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'ClassAlterApi', '$modal', '$q', '$route', '$window', 'Spinner', 'Notification', '$popover', function ($scope, $routeParams, $location, Database, CommandApi, ClassAlterApi, $modal, $q, $route, $window, Spinner, Notification, $popover) {
 
     //for pagination
     $scope.countPage = 10;
     $scope.countPageOptions = [10, 20, 50, 100];
     $scope.currentPage = 1;
 
+    $scope.popover = { title: "Rename Class"};
     $scope.clusterStrategies = ['round-robin', "default", "balanced"];
     $scope.database = Database;
     $scope.database.refreshMetadata($routeParams.database);
@@ -41,6 +42,24 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     $scope.canDrop = function (clazz) {
         return clazz != "V" && clazz != "E";
     }
+    $scope.rename = function (cls, event) {
+
+        // TODO
+//        if (!$scope.popoverPromise) {
+//            var popScope = $scope.$new(true);
+//            popScope.rename = function (name) {
+//                ClassAlterApi.changeProperty($routeParams.database, { clazz: cls.name, name: "name", value: name}).then(function (data) {
+//                    var noti = S("The class {{name}} has been renamed to {{newName}}").template({ name: cls.name, newName: name}).s;
+//                    Notification.push({content: noti});
+//                    cls.name = name;
+//                }, function err(data) {
+//                    Notification.push({content: data, error: true});
+//                });
+//            }
+//            $scope.popoverPromise = $popover(angular.element(event.target), { scope: popScope, title: 'Rename Class', template: 'views/database/changeNamePopover.html', show: true});
+//        }
+
+    }
     $scope.dropClass = function (nameClass) {
 
         Utilities.confirm($scope, $modal, $q, {
@@ -56,9 +75,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
                     $scope.listClassesTotal.splice(elem, 1)
                     $scope.listClassesTotal.splice();
                 });
-
             }
-
         });
 
     }

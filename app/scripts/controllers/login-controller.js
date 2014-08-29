@@ -1,5 +1,5 @@
 var login = angular.module('login.controller', ['database.services']);
-login.controller("LoginController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'DatabaseApi', 'Notification', function ($scope, $routeParams, $location, $modal, $q, Database, DatabaseApi, Notification) {
+login.controller("LoginController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'DatabaseApi', 'Notification', '$http', function ($scope, $routeParams, $location, $modal, $q, Database, DatabaseApi, Notification, $http) {
 
     $scope.server = "http://localhost:2480"
 
@@ -20,7 +20,7 @@ login.controller("LoginController", ['$scope', '$routeParams', '$location', '$mo
         });
     }
     $scope.createNew = function () {
-        modalScope = $scope.$new(true);
+        var modalScope = $scope.$new(true);
         modalScope.name = null;
         modalScope.creating = false;
         modalScope.stype = "plocal";
@@ -45,8 +45,47 @@ login.controller("LoginController", ['$scope', '$routeParams', '$location', '$mo
 
         modalPromise.$promise.then(modalPromise.show);
     }
+    $scope.importPublic = function () {
+
+
+        $.ajax({
+            type: "GET",
+            url: "http://www.orientechnologies.com/public-databases/config.json",
+            crossDomain: true
+        }).done(handleResponse).fail(function () {
+                var noti = "An error occurred when trying to reach public databases repository. Please check your connection.";
+                Notification.push({content: noti, error: true});
+            });
+
+
+        function handleResponse(data) {
+            var modalScope = $scope.$new(true);
+            modalScope.name = $scope.database;
+            modalScope.databases = data;
+            Object.keys(data).forEach(function (k) {
+                data[k].url = data[k].versions['02.00.00'].url;
+            })
+            modalScope.import = function (k, v, u, p) {
+                modalScope.creating = true;
+                DatabaseApi.install(v, u, p).then(function (data) {
+                    var noti = "Database " + k + " imported.";
+                    $scope.databases.push(k);
+                    $scope.database = k;
+                    Notification.push({content: noti});
+                    modalPromise.hide();
+                }, function err(data) {
+                    modalScope.creating = false;
+                    modalScope.error = data;
+                })
+            }
+            var modalPromise = $modal({template: 'views/database/importCloud.html', scope: modalScope, show: false});
+            modalPromise.$promise.then(modalPromise.show);
+        }
+
+    }
+
     $scope.deleteDb = function () {
-        modalScope = $scope.$new(true);
+        var modalScope = $scope.$new(true);
         modalScope.name = $scope.database;
         var modalPromise = $modal({template: 'views/database/deleteDatabase.html', scope: modalScope, show: false});
         modalScope.delete = function () {

@@ -115,6 +115,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
                 error();
             });
         },
+
         disconnect: function (callback) {
             DatabaseApi.disconnect(function () {
                 delete current.name;
@@ -479,6 +480,18 @@ database.factory('DatabaseApi', function ($http, $resource, $q) {
         return deferred.promise;
     }
 
+    resource.install = function (db, username, password) {
+        var deferred = $q.defer();
+        delete $http.defaults.headers.common['Authorization'];
+        $http.defaults.headers.common['Authorization'] = 'Basic ' + Base64.encode(username + ':' + password);
+
+        $http.post(API + 'installDatabase', db.url).success(function (data) {
+            deferred.resolve(data);
+        }).error(function (data) {
+                deferred.reject(data);
+            })
+        return deferred.promise;
+    }
     resource.setUrlWiki = function (urll) {
         urlWiki = urll;
     }

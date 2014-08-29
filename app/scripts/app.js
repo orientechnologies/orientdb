@@ -34,7 +34,7 @@ var deps = ['header.controller',
 
 var App = angular.module('OrientDBStudioApp', deps);
 
-App.config(function ($routeProvider) {
+App.config(function ($routeProvider, $httpProvider) {
     $routeProvider
         .when('/', {
             templateUrl: 'views/login.html',
@@ -134,6 +134,7 @@ App.config(function ($routeProvider) {
         .otherwise({
             redirectTo: '/'
         });
+
 });
 App.run(function ($rootScope, $interval, DatabaseApi, Notification) {
     $rootScope.$on('$routeChangeSuccess', function (event, currentRoute) {

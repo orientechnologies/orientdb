@@ -372,7 +372,7 @@ Widget.directive('orientdatetime', function (Database) {
         }
     };
 });
-Widget.directive('ridrender', function (Database) {
+Widget.directive('ridrender', function (Database, $http, $compile) {
 
 
     return {
@@ -388,22 +388,46 @@ Widget.directive('ridrender', function (Database) {
                 }
             }
             if (value instanceof Array) {
-                var html = "<div class='rid-list'>";
-                var i = 0;
+
+
+                var LIMIT = 4;
+
                 var dbName = Database.getName();
 
-                value.forEach(function (elem) {
-                    if (typeof elem == 'string' && elem.indexOf('#') == 0) {
-                        var link = '<span class="label label-warning badge-edge"><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></span> ';
-                        html += link;
-                        i++;
+                scope.$new(true);
+                scope.expand = function () {
+                    renderLimit(-1);
+                }
+                scope.collapse = function () {
+                    renderLimit(LIMIT);
+                }
+                function renderLimit(limit) {
+                    var i = 0;
+                    var html = "<div class='rid-list'>";
+                    value.some(function (elem) {
+                        if (typeof elem == 'string' && elem.indexOf('#') == 0) {
+                            var link = '<span class="label label-warning badge-edge"><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></span> ';
+                            html += link;
+                            if (i > limit && limit != -1) {
+                                var expand = '<span class="label label-primary badge-edge"><a ng-click="expand()" href="javascript:void(0)">..More</a></span>';
+                                html += expand;
+                                return true;
+                            }
+                            i++;
+                            return false;
+                        }
+                        return false;
+                    });
+                    if (limit == -1 && value.length > LIMIT) {
+                        var expand = '<span class="label label-primary badge-edge"><a ng-click="collapse()" href="javascript:void(0)">..Less</a></span>';
+                        html += expand;
                     }
-                });
-                html += "</div>";
-                if (html != "" && i == value.length) {
-                    element.html(html);
+                    html += "</div>";
+                    element.html('');
+                    element.html($compile(html)(scope));
                 }
 
+                renderLimit(LIMIT);
             }
         }
     };

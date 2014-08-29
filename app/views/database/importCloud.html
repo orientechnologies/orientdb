@@ -1,13 +1,14 @@
 <div class="modal">
-    <div class="modal-dialog">
+    <div class="modal-dialog  modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
                 </button>
-                <h3>Drop database {{name}} ? </h3>
+                <h3>Import Public Databases</h3>
             </div>
-            <div class="modal-body edge">
-                <form id="signin" name="newDB" class="form-horizontal" novalidate="">
+            <div class="modal-body ">
+
+                <form class="form-horizontal">
                     <fieldset>
                         <div class="form-group">
                             <label class="control-label col-md-2">Server User</label>
@@ -28,17 +29,35 @@
                         </div>
                     </fieldset>
                 </form>
+                <table class="table">
+                    <thead>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>License</th>
+                    <th></th>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="(key,value) in databases">
+                        <td>{{key}}</td>
+                        <td>{{value.description}}</td>
+                        <td>{{value.license}}</td>
+                        <td><a href="javascript:void(0)" ng-click="import(key,value,username,password)"><i
+                                class="fa fa-cloud-download"></i></a></td>
+                    </tr>
+                    </tbody>
+                </table>
                 <div class="progress progress-striped active" ng-show="creating">
-                    <div class="bar" style="width: 100%;">Deleting database {{ name }}</div>
+                    <div class="bar" style="width: 100%;">Importing database {{ name }}</div>
                 </div>
-                <div class="alert alert-danger" ng-show="error">
-                    <button type="button" class="close" ng-click="error = null">×</button>
-                    {{error}}
+                <div class="alerts">
+                    <div class="alert alert-danger" ng-show="error">
+                        <button type="button" class="close" ng-click="error = null">×</button>
+                        {{error}}
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn" ng-click="$hide()">Close</button>
-                <button class="btn btn-primary" ng-disabled="newDB.$invalid" ng-click="delete()">Drop database
                 </button>
             </div>
         </div>
