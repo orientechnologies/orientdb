@@ -43,14 +43,6 @@ public class OTableFormatter {
     this.out = iConsole;
   }
 
-  public OTableFormatter hideRID(final boolean iValue) {
-    if (iValue)
-      prefixedColumns.remove("@RID");
-    else
-      prefixedColumns.add("@RID");
-    return this;
-  }
-
   public void writeRecords(final Collection<OIdentifiable> resultSet, final int limit) {
     writeRecords(resultSet, limit, null);
   }
@@ -213,6 +205,8 @@ public class OTableFormatter {
     for (String c : prefixedColumns)
       columns.put(c, minColumnSize);
 
+    boolean tempRids = false;
+
     int fetched = 0;
     for (OIdentifiable id : resultSet) {
       ORecord<?> rec = id.getRecord();
@@ -232,9 +226,15 @@ public class OTableFormatter {
         columns.put("value", maxWidthSize - 15);
       }
 
+      if (!tempRids && !rec.getIdentity().isPersistent())
+        tempRids = true;
+
       if (limit > -1 && fetched++ >= limit)
         break;
     }
+
+    if (tempRids)
+      columns.remove("@RID");
 
     // COMPUTE MAXIMUM WIDTH
     int width = 0;
@@ -286,6 +286,9 @@ public class OTableFormatter {
         columns.put(col.getKey(), col.getValue());
 
     }
+
+    if (tempRids)
+      columns.remove("@RID");
 
     return columns;
   }
