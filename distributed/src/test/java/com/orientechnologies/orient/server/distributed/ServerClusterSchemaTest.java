@@ -25,8 +25,13 @@ import junit.framework.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 /**
  * Start 3 servers and wait for external commands
@@ -54,7 +59,9 @@ public class ServerClusterSchemaTest extends AbstractServerClusterTest {
 
       try {
         System.out.println("Creating vertex class Client" + s + " against server " + g + "...");
-        g.createVertexType("Client" + s);
+        OrientVertexType t = g.createVertexType("Client" + s);
+        t.createProperty("name", OType.STRING).setMandatory(true);
+
         System.out.println("Creating vertex class Knows" + s + " against server " + g + "...");
         g.createEdgeType("Knows" + s);
       } finally {
@@ -70,6 +77,42 @@ public class ServerClusterSchemaTest extends AbstractServerClusterTest {
         for (int i = 0; i < SERVERS; ++i) {
           Assert.assertNotNull(g.getVertexType("Client" + i));
           Assert.assertNotNull(g.getEdgeType("Knows" + i));
+        }
+      } finally {
+        g.shutdown();
+      }
+    }
+
+    for (int s = 0; s < SERVERS; ++s) {
+      OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
+      OrientGraphNoTx g = factory.getNoTx();
+
+      try {
+        for (int i = 0; i < SERVERS; ++i) {
+          try {
+            final OrientVertex v = g.addVertex("class:" + "Client" + i);
+            Assert.assertTrue(false);
+          } catch (OValidationException e) {
+            // EXPECTED
+          }
+        }
+      } finally {
+        g.shutdown();
+      }
+    }
+
+    for (int s = 0; s < SERVERS; ++s) {
+      OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
+      OrientGraph g = factory.getTx();
+
+      try {
+        for (int i = 0; i < SERVERS; ++i) {
+          try {
+            final OrientVertex v = g.addVertex("class:" + "Client" + i);
+            Assert.assertTrue(false);
+          } catch (OValidationException e) {
+            // EXPECTED
+          }
         }
       } finally {
         g.shutdown();
