@@ -18,7 +18,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 public class TestSharding extends AbstractServerClusterTest {
 
-  protected OrientVertex[] vertices;
+  protected OrientVertex[] clients;
 
   @Test
   // @Ignore
@@ -69,27 +69,27 @@ public class TestSharding extends AbstractServerClusterTest {
         fishing = graph.addVertex("class:Hobby");
         fishing.setProperty("name", "Fishing");
 
-        vertices = new OrientVertex[serverInstance.size()];
-        for (int i = 0; i < vertices.length; ++i) {
-          vertices[i] = graph.addVertex("class:Client,cluster:client_" + i);
+        clients = new OrientVertex[serverInstance.size()];
+        for (int i = 0; i < clients.length; ++i) {
+          clients[i] = graph.addVertex("class:Client,cluster:client_" + i);
 
-          final int clId = vertices[i].getIdentity().getClusterId();
+          final int clId = clients[i].getIdentity().getClusterId();
 
           Assert
               .assertEquals("Error on assigning cluster client_" + i, clId, graph.getRawGraph().getClusterIdByName("client_" + i));
 
-          vertices[i].setProperty("name", "shard_" + i);
-          vertices[i].setProperty("amount", i * 10000);
+          clients[i].setProperty("name", "shard_" + i);
+          clients[i].setProperty("amount", i * 10000);
 
-          System.out.println("Create vertex, class: " + vertices[i].getLabel() + ", cluster: " + clId + " -> "
-              + vertices[i].getRecord());
+          System.out.println("Create vertex, class: " + clients[i].getLabel() + ", cluster: " + clId + " -> "
+              + clients[i].getRecord());
 
           if (i > 1)
             // CREATE A LIGHT-WEIGHT EDGE
-            vertices[i].addEdge("Knows", vertices[i - 1]);
+            clients[i].addEdge("Knows", clients[i - 1]);
 
           // CREATE A REGULAR EDGE
-          final Edge edge = vertices[i].addEdge("Buy", product, new Object[] { "price", 1000 * i });
+          final Edge edge = clients[i].addEdge("Buy", product, new Object[] { "price", 1000 * i });
         }
       } finally {
         graph.shutdown();
@@ -97,14 +97,14 @@ public class TestSharding extends AbstractServerClusterTest {
 
       graph = factory.getNoTx();
       try {
-        for (int i = 0; i < vertices.length; ++i)
-          System.out.println("Created vertex " + i + ": " + vertices[i].getRecord());
+        for (int i = 0; i < clients.length; ++i)
+          System.out.println("Created vertex " + i + ": " + clients[i].getRecord());
 
-        for (int i = 0; i < vertices.length; ++i) {
+        for (int i = 0; i < clients.length; ++i) {
           // CREATE A REGULAR EDGE
           Iterable<OrientEdge> result = graph.command(
-              new OCommandSQL("create edge Loves from " + vertices[i].getIdentity() + " to " + fishing.getIdentity()
-                  + " set real = true")).execute();
+              new OCommandSQL("create edge Loves from " + clients[i].getIdentity() + " to " + fishing.getIdentity()
+                  + " set real = true retry 10")).execute();
 
           Assert.assertTrue(result.iterator().hasNext());
           OrientEdge e = result.iterator().next();
@@ -126,14 +126,14 @@ public class TestSharding extends AbstractServerClusterTest {
       }
 
       // FOR ALL THE DATABASES QUERY THE SINGLE CLUSTER TO TEST ROUTING
-      for (int server = 0; server < vertices.length; ++server) {
+      for (int server = 0; server < clients.length; ++server) {
         OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
         OrientGraphNoTx g = f.getNoTx();
 
         System.out.println("Query from server " + server + "...");
 
         try {
-          for (int cluster = 0; cluster < vertices.length; ++cluster) {
+          for (int cluster = 0; cluster < clients.length; ++cluster) {
             final String query = "select from cluster:client_" + cluster;
 
             final OrientVertex explain = g.command(new OCommandSQL("explain " + query)).execute();
@@ -145,7 +145,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
             OrientVertex v = result.iterator().next();
 
-            Assert.assertEquals("Returned vertices name property is != shard_" + cluster + " on server " + server, "shard_"
+            Assert.assertEquals("Returned clients name property is != shard_" + cluster + " on server " + server, "shard_"
                 + cluster, v.getProperty("name"));
 
             final Iterable<Vertex> knows = v.getVertices(Direction.OUT, "Knows");
@@ -163,7 +163,7 @@ public class TestSharding extends AbstractServerClusterTest {
       }
 
       // TEST DISTRIBUTED QUERY + AGGREGATION + SUB_QUERY AGAINST ALL 3 DATABASES TO TEST MAP/REDUCE
-      for (int server = 0; server < vertices.length; ++server) {
+      for (int server = 0; server < clients.length; ++server) {
         OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + 0 + "/databases/" + getDatabaseName());
         OrientGraphNoTx g = f.getNoTx();
         try {
@@ -176,7 +176,7 @@ public class TestSharding extends AbstractServerClusterTest {
             count++;
           }
 
-          Assert.assertEquals("Returned wrong vertices count on server " + server, 1, count);
+          Assert.assertEquals("Returned wrong clients count on server " + server, 1, count);
 
         } finally {
           g.shutdown();
@@ -184,7 +184,7 @@ public class TestSharding extends AbstractServerClusterTest {
       }
 
       // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST MAP/REDUCE
-      for (int server = 0; server < vertices.length; ++server) {
+      for (int server = 0; server < clients.length; ++server) {
         OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
         OrientGraphNoTx g = f.getNoTx();
         try {
@@ -204,14 +204,14 @@ public class TestSharding extends AbstractServerClusterTest {
             Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
           }
 
-          Assert.assertEquals("Returned wrong vertices count on server " + server, 3, count);
+          Assert.assertEquals("Returned wrong clients count on server " + server, 3, count);
         } finally {
           g.shutdown();
         }
       }
 
       // TEST DISTRIBUTED QUERY AGAINST ALL 3 DATABASES TO TEST AGGREGATION
-      for (int server = 0; server < vertices.length; ++server) {
+      for (int server = 0; server < clients.length; ++server) {
         OrientGraphFactory f = new OrientGraphFactory("plocal:target/server" + server + "/databases/" + getDatabaseName());
         OrientGraphNoTx g = f.getNoTx();
         try {
@@ -225,7 +225,7 @@ public class TestSharding extends AbstractServerClusterTest {
             count++;
           }
 
-          Assert.assertEquals("Returned wrong vertices count on server " + server, 1, count);
+          Assert.assertEquals("Returned wrong clients count on server " + server, 1, count);
         } finally {
           g.shutdown();
         }

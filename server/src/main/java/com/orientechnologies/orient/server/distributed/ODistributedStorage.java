@@ -50,7 +50,6 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -385,7 +384,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // DELETED
       throw new ORecordNotFoundException("Record " + iRecordId + " was not found");
 
-    // COMMENTED BECAUSE WHILE RUNNING DISTRIBUTED IT COULD NEED A REMORE ACCESS TO ANOTHER SHARD
+    // COMMENTED BECAUSE WHILE RUNNING DISTRIBUTED IT COULD NEED A REMOTE ACCESS TO ANOTHER SHARD
     // if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
     // // ALREADY DISTRIBUTED
     // return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
@@ -617,7 +616,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
           final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
-          ((OTransactionOptimistic)iTx).setStatus(OTransaction.TXSTATUS.BEGUN);
+//          ((OTransactionOptimistic)iTx).setStatus(OTransaction.TXSTATUS.BEGUN);
 
           while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
             for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
@@ -663,6 +662,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               txTask.add(task);
             }
           }
+
+//          ((OTransactionOptimistic) iTx).setStatus(OTransaction.TXSTATUS.COMMITTING);
 
           final Collection<String> nodes = dbCfg.getServers(involvedClusters);
 
