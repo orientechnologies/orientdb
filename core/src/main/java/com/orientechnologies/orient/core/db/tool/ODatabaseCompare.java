@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -29,6 +37,9 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -37,13 +48,6 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private OStorage              storage1;
@@ -149,8 +153,10 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       compareClusters();
       compareRecords(ridMapper);
 
-      if (isDocumentDatabases())
+      if (isDocumentDatabases()) {
+        compareSchama();
         compareIndexes(ridMapper);
+      }
 
       if (differences == 0) {
         listener.onMessage("\n\nDatabases match.");
@@ -167,6 +173,134 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     } finally {
       storage1.close();
       storage2.close();
+    }
+  }
+
+  private void compareSchama() {
+    OSchema schema1 = databaseDocumentTxOne.getMetadata().getSchema();
+    OSchema schema2 = databaseDocumentTxTwo.getMetadata().getSchema();
+    boolean ok = true;
+    for (OClass clazz : schema1.getClasses()) {
+      OClass clazz2 = schema2.getClass(clazz.getName());
+      if (clazz2 == null) {
+        listener.onMessage("\n- ERR: Class definition " + clazz.getName() + " for DB2 is null.");
+        continue;
+      }
+      if (clazz.getSuperClass() != null) {
+        if (!clazz.getSuperClass().getName().equals(clazz2.getSuperClass().getName())) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same superclass in DB2.");
+          ok = false;
+        }
+      }
+      if (!clazz.getClassIndexes().equals(clazz2.getClassIndexes())) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined indexes in DB2.");
+        ok = false;
+      }
+      if (!Arrays.equals(clazz.getClusterIds(), clazz2.getClusterIds())) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined clusters in DB2.");
+        ok = false;
+      }
+      if (!clazz.getCustomKeys().equals(clazz2.getCustomKeys())) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined custom keys in DB2.");
+        ok = false;
+      }
+      if ((clazz.getJavaClass() == null && clazz2.getJavaClass() != null)
+          || (clazz.getJavaClass() != null && !clazz.getJavaClass().equals(clazz2.getJavaClass()))) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined Java class in DB2.");
+        ok = false;
+      }
+      if (clazz.getOverSize() != clazz2.getOverSize()) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined overSize in DB2.");
+        ok = false;
+      }
+
+      if (clazz.getDefaultClusterId() != clazz2.getDefaultClusterId()) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined default cluser id in DB2.");
+        ok = false;
+      }
+
+      if (clazz.getSize() != clazz2.getSize()) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined size in DB2.");
+        ok = false;
+      }
+      for (OProperty prop : clazz.declaredProperties()) {
+        OProperty prop2 = clazz2.getProperty(prop.getName());
+        if (prop2 == null) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as missed property " + prop.getName()
+              + "in DB2.");
+          ok = false;
+        }
+        if (prop.getType() != prop2.getType()) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same type for property "
+              + prop.getName() + "in DB2. ");
+          ok = false;
+        }
+
+        if (prop.getLinkedType() != prop2.getLinkedType()) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same linkedtype for property "
+              + prop.getName() + "in DB2.");
+          ok = false;
+        }
+
+        if (prop.getMin() != null) {
+          if (!prop.getMin().equals(prop2.getMin())) {
+            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same min for property "
+                + prop.getName() + "in DB2.");
+            ok = false;
+          }
+        }
+        if (prop.getMax() != null) {
+          if (!prop.getMax().equals(prop2.getMax())) {
+            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same max for property "
+                + prop.getName() + "in DB2.");
+            ok = false;
+          }
+        }
+
+        if (prop.getMax() != null) {
+          if (!prop.getMax().equals(prop2.getMax())) {
+            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same regexp for property "
+                + prop.getName() + "in DB2.");
+            ok = false;
+          }
+        }
+
+        if (prop.getLinkedClass() != null) {
+          if (!prop.getLinkedClass().equals(prop2.getLinkedClass())) {
+            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same linked class for property "
+                + prop.getName() + "in DB2.");
+            ok = false;
+          }
+        }
+
+        if (prop.getLinkedClass() != null) {
+          if (!prop.getCustomKeys().equals(prop2.getCustomKeys())) {
+            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same custom keys for property "
+                + prop.getName() + "in DB2.");
+            ok = false;
+          }
+        }
+        if (prop.isMandatory() != prop2.isMandatory()) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same mandatory flag for property "
+              + prop.getName() + "in DB2.");
+          ok = false;
+        }
+        if (prop.isNotNull() != prop2.isNotNull()) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same nut null flag for property "
+              + prop.getName() + "in DB2.");
+          ok = false;
+        }
+        if (prop.isReadonly() != prop2.isReadonly()) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName()
+              + " as not same readonly flag setting for property " + prop.getName() + "in DB2.");
+          ok = false;
+        }
+
+      }
+      if (!ok) {
+        ++differences;
+        ok = true;
+      }
     }
   }
 
@@ -528,6 +662,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
           if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().indexMgrRecordId))
               && rid.equals(new ORecordId(storage2.getConfiguration().indexMgrRecordId)))
+            continue;
+          if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().schemaRecordId))
+              && rid.equals(new ORecordId(storage2.getConfiguration().schemaRecordId)))
             continue;
 
           final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
