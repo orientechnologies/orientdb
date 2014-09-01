@@ -168,7 +168,7 @@ div.edge form.bs-docs-example:after {
     padding: 2px 5px;
     position: absolute;
     top: -1px;
-    max-width: 30%;
+    max-width: 90%;
 }
 
 .query-header a {
