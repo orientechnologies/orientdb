@@ -1,7 +1,12 @@
 package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.types.OModifiableInteger;
-import java.util.concurrent.atomic.AtomicInteger;
+
+import java.util.HashSet;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.AbstractOwnableSynchronizer;
 import java.util.concurrent.locks.LockSupport;
 
@@ -10,10 +15,9 @@ import java.util.concurrent.locks.LockSupport;
  * @since 8/18/14
  */
 public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
-  private final OThreadCountersHashTable threadCountersHashTable = new OThreadCountersHashTable();
-  private final AtomicInteger                   writeState              = new AtomicInteger(0);
-  private final long                            writeDelay;
+  private final OThreadCountersHashTable        threadCountersHashTable = new OThreadCountersHashTable();
 
+  private final AtomicReference<WNode>          tail                    = new AtomicReference<WNode>();
   private final ThreadLocal<OModifiableInteger> lockHolds               = new ThreadLocal<OModifiableInteger>() {
                                                                           @Override
                                                                           protected OModifiableInteger initialValue() {
@@ -21,12 +25,19 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
                                                                           }
                                                                         };
 
-  public OReadersWriterSpinLock() {
-    this(100 * 1000); // 0.1 ms
-  }
+  private final ThreadLocal<WNode>              myNode                  = new ThreadLocal<WNode>() {
+                                                                          @Override
+                                                                          protected WNode initialValue() {
+                                                                            return new WNode();
+                                                                          }
+                                                                        };
+  private final ThreadLocal<WNode>              predNode                = new ThreadLocal<WNode>();
 
-  public OReadersWriterSpinLock(final long writeDelay) {
-    this.writeDelay = writeDelay;
+  public OReadersWriterSpinLock() {
+    final WNode wNode = new WNode();
+    wNode.locked = false;
+
+    tail.set(wNode);
   }
 
   public void acquireReadLock() {
@@ -44,17 +55,22 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
 
     threadCountersHashTable.increment();
 
-    int wstate = writeState.get();
-
-    while (wstate > 0) {
+    WNode wNode = tail.get();
+    while (wNode.locked) {
       threadCountersHashTable.decrement();
 
-      while (writeState.get() == 1)
-        LockSupport.parkNanos(writeDelay);
+      while (wNode.locked) {
+        wNode.waitingReaders.add(Thread.currentThread());
+
+        if (wNode == tail.get() && wNode.locked)
+          LockSupport.park(this);
+
+        wNode = tail.get();
+      }
 
       threadCountersHashTable.increment();
 
-      wstate = writeState.get();
+      wNode = tail.get();
     }
 
     lHolds.increment();
@@ -86,13 +102,26 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
       return;
     }
 
-    while (!writeState.compareAndSet(0, 1))
-      LockSupport.parkNanos(writeDelay);
+    final WNode node = myNode.get();
+    node.locked = true;
+
+    final WNode pNode = tail.getAndSet(myNode.get());
+    predNode.set(pNode);
+
+    while (pNode.locked) {
+      pNode.waitingWriter = Thread.currentThread();
+
+      if (pNode.locked)
+        LockSupport.park(this);
+    }
+
+    pNode.waitingWriter = null;
 
     while (!threadCountersHashTable.isEmpty())
       ;
 
     setExclusiveOwnerThread(Thread.currentThread());
+
     lHolds.decrement();
     assert lHolds.intValue() == -1;
   }
@@ -105,11 +134,33 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
       return;
     }
 
-    assert writeState.get() == 1;
     setExclusiveOwnerThread(null);
-    writeState.set(0);
+
+    final WNode node = myNode.get();
+    node.locked = false;
+
+    final Thread waitingWriter = node.waitingWriter;
+    if (waitingWriter != null)
+      LockSupport.unpark(waitingWriter);
+
+    final Set<Thread> waitingReaders = new HashSet<Thread>();
+
+    for (Thread waitingReader : node.waitingReaders) {
+      if (waitingReaders.add(waitingReader))
+        LockSupport.unpark(waitingReader);
+    }
+
+    myNode.set(predNode.get());
+    predNode.set(null);
 
     lHolds.increment();
     assert lHolds.intValue() == 0;
+  }
+
+  private final class WNode {
+    private final Queue<Thread> waitingReaders = new ConcurrentLinkedDeque<Thread>();
+
+    private volatile boolean    locked         = true;
+    private volatile Thread     waitingWriter;
   }
 }

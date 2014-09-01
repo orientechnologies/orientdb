@@ -22,7 +22,7 @@ public class ReadersWriterSpinLockTst {
   private final AtomicLong             readersCounter  = new AtomicLong();
   private final AtomicLong             writersCounter  = new AtomicLong();
 
-  private final OReadersWriterSpinLock spinLock        = new OReadersWriterSpinLock(1);
+  private final OReadersWriterSpinLock spinLock        = new OReadersWriterSpinLock();
 
   private volatile boolean             stop            = false;
 
