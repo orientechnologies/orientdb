@@ -323,6 +323,12 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     $scope.changeIcon = function () {
         $scope.bookIcon = 'icon-star';
     }
+    $scope.sort = function (header) {
+        var order = $scope.tableParams.isSortBy(header, 'asc') ? 'desc' : 'asc';
+        var obj = {};
+        obj[header] = order;
+        $scope.tableParams.sorting(obj);
+    }
     $scope.tableParams = new ngTableParams({
         page: 1,            // show first page
         count: 10          // count per page
@@ -330,11 +336,11 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
     }, {
         total: data.length, // length of data
         getData: function ($defer, params) {
-            // use build-in angular filter
-            //            var orderedData = params.sorting() ?
-            //                $filter('orderBy')(data, params.orderBy()) :
-            //                data;
-            $defer.resolve(data.slice((params.page() - 1) * params.count(), params.page() * params.count()));
+//            use build-in angular filter
+            var orderedData = params.sorting() ?
+                $filter('orderBy')(data, params.orderBy()) :
+                data;
+            $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
         }
     });
 
@@ -348,8 +354,10 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
             );
         }
     }
-    $scope.isDivider = function (index) {
-        return $scope.indexes.indexOf(index) != -1 ? 'header-divider' : '';
+    $scope.isDivider = function (index, header) {
+
+        var sort = $scope.tableParams.isSortBy(header, 'asc') ? 'sort-asc' : ($scope.tableParams.isSortBy(header, 'desc') ? 'sort-desc' : '');
+        return $scope.indexes.indexOf(index) != -1 ? 'header-divider ' + sort : sort;
     }
     $scope.previous = function () {
         if ($scope.item.currentPage > 1) {

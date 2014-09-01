@@ -19,17 +19,22 @@
     </div>
     <div class="query-body">
         <div ng-show="current == 'table'">
-            <table  ng-table="tableParams" show-filter="false"
+            <table ng-table="tableParams" show-filter="false"
                    class="table  table-striped table-bordered table-hover table-condensed result-table">
                 <thead>
                 <tr class="subHeader">
-                    <th class="text-center" ng-if="value.span > 0" colspan="{{value.span}}" ng-repeat="(key, value) in item.subHeaders">
+                    <th class="text-center" ng-if="value.span > 0" colspan="{{value.span}}"
+                        ng-repeat="(key, value) in item.subHeaders">
                         {{value.name}}
                     </th>
                 </tr>
                 <tr class="queryfield-header">
-                    <th  ng-class="isDivider($index)"  ng-repeat="header in item.headers">
-                        {{header | nograph}}
+                    <th ng-class="isDivider($index,header)" class="sortable"
+                        ng-click="sort(header)"
+                        ng-repeat="header in item.headers">
+                        <div>
+                            {{header | nograph}}
+                        </div>
                     </th>
                 </tr>
                 </thead>

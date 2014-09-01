@@ -487,10 +487,19 @@ table.result-table > thead > tr > th {
     width: 100%;
     display: inline-table;
 }
+
 .cloud-db tbody {
     max-height: 200px;
     width: 100%;
     overflow: auto;
-    display:block;
+    display: block;
+}
+
+div.config-tab {
+    padding-top: 10px;
+}
+
+div.db-config .row {
+    padding-top: 10px;
 }
 

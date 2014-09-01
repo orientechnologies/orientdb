@@ -172,14 +172,27 @@ configModule.controller("StructureController", ['$scope', '$routeParams', '$loca
 
 
 }]);
-configModule.controller("DbConfigController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', 'DatabaseAlterApi', 'Notification', function ($scope, $routeParams, $location, DatabaseApi, Database, DatabaseAlterApi, Notification) {
+configModule.controller("DbConfigController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', 'DatabaseAlterApi', 'Notification', '$q', function ($scope, $routeParams, $location, DatabaseApi, Database, DatabaseAlterApi, Notification, $q) {
 
 
     $scope.values = Database.getMetadata()['config']['values'];
+    $scope.properties = Database.getMetadata()['config']['properties'];
 
-    $scope.canChange = ["clusterSelection", "minimumClusters","localeCountry"];
-    $scope.changeTemplate = { clusterSelection: "views/database/config/clusterSelection.html"}
+
+    var found = false;
+    $scope.properties.forEach(function (val) {
+        if (val.name == 'useLightweightEdges') {
+            found = true;
+        }
+    });
+    if (!found) {
+        $scope.properties.push({name: 'useLightweightEdges', value: 'false' });
+    }
+
+    $scope.canChange = ["clusterSelection", "minimumClusters", "localeCountry", "useLightweightEdges"];
+    $scope.changeTemplate = { clusterSelection: "views/database/config/clusterSelection.html", useLightweightEdges: "views/database/config/boolenaCustom.html"}
     $scope.dirty = [];
+    $scope.customDirty = [];
     $scope.clusterStrategies = ['round-robin', "default", "balanced"];
 
     $scope.isDisabledVal = function (val) {
@@ -190,15 +203,31 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
         if ($scope.dirty.indexOf(val) == -1)
             $scope.dirty.push(val);
     }
+    $scope.setCustomDirty = function (val) {
+        if ($scope.customDirty.indexOf(val) == -1)
+            $scope.customDirty.push(val);
+    }
     $scope.getRender = function (val) {
         var tpl = $scope.changeTemplate[val.name];
         return tpl ? tpl : "views/database/config/default.html";
     }
+    $scope.getCustomRender = function (val) {
+        var tpl = $scope.changeTemplate[val.name];
+        return tpl ? tpl : "views/database/config/defaultCustom.html";
+    }
     $scope.save = function () {
+        var promises = []
         $scope.dirty.forEach(function (val) {
-            DatabaseAlterApi.changeProperty(Database.getName(), val).then(function (data) {
-                Notification.push({content: "Configuration Saved."});
-            });
+            var p = DatabaseAlterApi.changeProperty(Database.getName(), val);
+            promises.push(p);
+        });
+        $scope.customDirty.forEach(function (val) {
+
+            var p = DatabaseAlterApi.changeCustomProperty(Database.getName(), val);
+            promises.push(p);
+        });
+        $q.all(promises).then(function () {
+            Notification.push({content: "Configuration Saved."});
         });
     }
 

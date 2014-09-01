@@ -760,6 +760,19 @@ database.factory('DatabaseAlterApi', function ($http, $resource, $q) {
             });
         return deferred.promise;
     }
+    resource.changeCustomProperty = function (database, props) {
+
+        var deferred = $q.defer();
+        var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
+        var query = "alter database custom {{name}} = {{value}}"
+        var queryText = S(query).template(props).s;
+        $http.post(text, queryText).success(function (data) {
+            deferred.resolve(data)
+        }).error(function (data) {
+                deferred.reject(data);
+            });
+        return deferred.promise;
+    }
     return resource
 });
 database.factory('ClassAlterApi', function ($http, $resource, $q) {
