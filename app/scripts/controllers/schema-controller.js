@@ -44,20 +44,25 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     }
     $scope.rename = function (cls, event) {
 
-        // TODO
-//        if (!$scope.popoverPromise) {
-//            var popScope = $scope.$new(true);
-//            popScope.rename = function (name) {
-//                ClassAlterApi.changeProperty($routeParams.database, { clazz: cls.name, name: "name", value: name}).then(function (data) {
-//                    var noti = S("The class {{name}} has been renamed to {{newName}}").template({ name: cls.name, newName: name}).s;
-//                    Notification.push({content: noti});
-//                    cls.name = name;
-//                }, function err(data) {
-//                    Notification.push({content: data, error: true});
-//                });
-//            }
-//            $scope.popoverPromise = $popover(angular.element(event.target), { scope: popScope, title: 'Rename Class', template: 'views/database/changeNamePopover.html', show: true});
-//        }
+
+        //modal
+        var modalScope = $scope.$new(true);
+        modalScope.what = 'class';
+        modalScope.tmpName = cls.name;
+        var modalPromise = $modal({template: 'views/database/changeNameModal.html', scope: modalScope, show: false});
+
+        modalScope.rename = function (name) {
+            if (name != cls.name) {
+                ClassAlterApi.changeProperty($routeParams.database, { clazz: cls.name, name: "name", value: name}).then(function (data) {
+                    var noti = S("The class {{name}} has been renamed to {{newName}}").template({ name: cls.name, newName: name}).s;
+                    Notification.push({content: noti});
+                    cls.name = name;
+                }, function err(data) {
+                    Notification.push({content: data, error: true});
+                });
+            }
+        }
+        modalPromise.$promise.then(modalPromise.show);
 
     }
     $scope.dropClass = function (nameClass) {
@@ -124,7 +129,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
 }
 ])
 ;
-schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', 'DatabaseApi', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window, DatabaseApi, Spinner) {
+schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', 'DatabaseApi', 'Spinner', 'PropertyAlterApi', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window, DatabaseApi, Spinner, PropertyAlterApi, Notification) {
     Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Class");
     var clazz = $routeParams.clazz;
     $scope.class2show = clazz;
@@ -181,6 +186,29 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     $scope.indexes = null;
     $scope.indexes = Database.listIndexesForClass(clazz);
 
+    $scope.rename = function (props) {
+
+
+        //modal
+        var modalScope = $scope.$new(true);
+        modalScope.what = 'property';
+        modalScope.tmpName = props.name;
+        var modalPromise = $modal({template: 'views/database/changeNameModal.html', scope: modalScope, show: false});
+
+        modalScope.rename = function (name) {
+            if (name != props.name) {
+                PropertyAlterApi.changeProperty($routeParams.database, { clazz: $scope.class2show, property: props.name, name: "name", value: name}).then(function (data) {
+                    var noti = S("The Property {{name}} has been renamed to {{newName}}").template({ name: props.name, newName: name}).s;
+                    Notification.push({content: noti});
+                    props.name = name;
+                }, function err(data) {
+                    Notification.push({content: data, error: true});
+                });
+            }
+        }
+        modalPromise.$promise.then(modalPromise.show);
+
+    }
 
     $scope.getEngine = function (index) {
         var engine = '';

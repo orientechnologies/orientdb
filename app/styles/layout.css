@@ -483,3 +483,14 @@ table.result-table > thead > tr > th {
     width: 100%;
 }
 
+.cloud-db tr {
+    width: 100%;
+    display: inline-table;
+}
+.cloud-db tbody {
+    max-height: 200px;
+    width: 100%;
+    overflow: auto;
+    display:block;
+}
+

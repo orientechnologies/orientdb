@@ -73,7 +73,7 @@
                     <tbody>
                     <tr ng-repeat="result in property |  orderBy:'name'">
                         <td>
-                            {{result['name']}}
+                            {{result['name']}}</a>
                         </td>
                         <td>
                             <select ng-model="result['type']" ng-options="p.toString() for p in listTypes"
@@ -132,11 +132,19 @@
 
                         </td>
                         <td>
-                            <button href="javascript:void(0)" class="btn btn-danger btn-xs"
-                                    ng-click="dropProperty(result,result['name'])"><i
-                                    class="fa fa-trash-o"></i>
-                                Drop
-                            </button>
+                            <div class="btn-group">
+                                <button href="javascript:void(0)" class="btn btn-primary btn-xs"
+                                        ng-click="rename(result)">
+                                    Rename
+                                </button>
+                            </div>
+                            <div class="btn-group">
+                                <button href="javascript:void(0)" class="btn btn-danger btn-xs"
+                                        ng-click="dropProperty(result,result['name'])"><i
+                                        class="fa fa-trash-o"></i>
+                                    Drop
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     </tbody>

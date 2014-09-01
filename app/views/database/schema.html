@@ -65,9 +65,7 @@
                         </thead>
                         <tbody>
                         <tr ng-repeat="result in listClassesTotal | filter: queryy ">
-                            <td>{{result['name']}} <a href="javascript:void(0)" ng-click="rename(result,$event)"
-                                                      class="pull-right"><i
-                                    class="fa fa-edit"></i></a></td>
+                            <td ng-click="openClass(result)">{{result['name']}}</td>
                             <td ng-click="openClass(result)">{{result['superClass']}}</td>
                             <td ng-click="openClass(result)">{{result['alias']}}</td>
                             <td ng-click="openClass(result)">
@@ -84,6 +82,10 @@
                             </td>
                             <td ng-click="openClass(result)">{{result['records']}}</td>
                             <td>
+                                <button href="javascript:void(0)" class="btn btn-primary btn-xs"
+                                        ng-click="rename(result)">
+                                    Rename
+                                </button>
                                 <button href="javascript:void(0)" class="btn btn-default btn-xs"
                                         ng-click="queryAll(result['name'])">
                                     <i

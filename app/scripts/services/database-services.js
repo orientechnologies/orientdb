@@ -783,3 +783,24 @@ database.factory('ClassAlterApi', function ($http, $resource, $q) {
     }
     return resource
 });
+database.factory('PropertyAlterApi', function ($http, $resource, $q) {
+
+
+    var resource = $resource('function/:database');
+
+
+    resource.changeProperty = function (database, props) {
+
+        var deferred = $q.defer();
+        var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
+        var query = "alter property {{clazz}}.{{property}} {{name}} {{value}}"
+        var queryText = S(query).template(props).s;
+        $http.post(text, queryText).success(function (data) {
+            deferred.resolve(data)
+        }).error(function (data) {
+                deferred.reject(data);
+            });
+        return deferred.promise;
+    }
+    return resource
+});
