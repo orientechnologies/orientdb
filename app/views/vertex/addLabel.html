@@ -1,9 +1,29 @@
-<form name="popoverForm" class="popoverForm">
-    <select ng-model="popover.name" required ng-options="i for i in labels">
-    </select>
+<div class="popover config-popover">
+    <h3 class="popover-title" ng-bind-html="title" ng-show="title"></h3>
 
-    <div class="btn-group">
-        <button type="button" class="btn" ng-click="hide()">Close</button>
-        <button class="btn btn-primary" ng-disabled="popoverForm.$invalid" ng-click="popover.saved=true;hide();addEdgeLabel()">Save changes</button>
+    <div class="popover-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <form name="popoverForm" class="popoverForm">
+                        <div class="form-group">
+                            <select ng-model="popover.name" class="form-control" required
+                                    ng-options="i for i in labels">
+                            </select>
+                        </div>
+                        <div class="form-"></div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-xs" ng-click="$hide()">Close</button>
+
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-xs" ng-disabled="popoverForm.$invalid"
+                                    ng-click="popover.saved=true;$hide();addEdgeLabel()">Save changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-</form>
+</div>

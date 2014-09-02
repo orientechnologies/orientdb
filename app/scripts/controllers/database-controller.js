@@ -233,6 +233,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
             $scope.headers = undefined;
             $scope.resultTotal = undefined;
             $scope.results = undefined;
+            Notification.push({content: data, error: true});
         });
 
     }

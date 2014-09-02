@@ -4,7 +4,7 @@
             <div class="panel-heading">
                 In Edges <a href="javascript:void(0)" ng-init="init('incomings')"
                             ng-controller="VertexPopoverLabelController" data-placement="bottom"
-                            data-title="Add Label" bs-popover="'views/vertex/addLabel.html'"><i
+                            data-title="Add Label" data-template="views/vertex/addLabel.html" bs-popover><i
                     class="fa fa-plus-circle"></i></a>
             </div>
             <div class="panel-body">
@@ -52,7 +52,7 @@
             <div class="panel-heading">
                 <a href="javascript:void(0)" ng-init="init('outgoings')"
                    ng-controller="VertexPopoverLabelController" data-placement="bottom" data-title="Add Label"
-                   bs-popover="'views/vertex/addLabel.html'"><i class="fa fa-plus-circle"></i></a> Out Edges
+                   data-template="views/vertex/addLabel.html" bs-popover><i class="fa fa-plus-circle"></i></a> Out Edges
             </div>
             <div class="panel-body">
                 <form>

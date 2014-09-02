@@ -182,17 +182,17 @@ GrapgController.controller("VertexPopoverLabelController", ['$scope', '$routePar
 
 }]);
 
-GrapgController.controller("VertexModalBrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Icon', function ($scope, $routeParams, $location, Database, CommandApi, Icon) {
+GrapgController.controller("VertexModalBrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Icon', '$timeout', function ($scope, $routeParams, $location, Database, CommandApi, Icon, $timeout) {
 
     $scope.database = Database;
     $scope.limit = 20;
     $scope.queries = new Array;
     $scope.added = new Array;
+    $scope.loaded = true;
     $scope.editorOptions = {
         lineWrapping: true,
         lineNumbers: true,
         readOnly: false,
-        theme: 'ambiance',
         mode: 'text/x-sql',
         metadata: Database,
         extraKeys: {
@@ -202,6 +202,19 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
                 });
             },
             "Ctrl-Space": "autocomplete"
+        },
+        onLoad: function (_cm) {
+            $scope.cm = _cm;
+
+            $scope.cm.on("change", function () { /* script */
+                var wrap = $scope.cm.getWrapperElement();
+                var approp = $scope.cm.getScrollInfo().height > 300 ? "300px" : "auto";
+                if (wrap.style.height != approp) {
+                    wrap.style.height = approp;
+                    $scope.cm.refresh();
+                }
+            });
+            $scope.cm.refresh();
         }
     };
     $scope.query = function () {
@@ -212,6 +225,11 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
             }
             if ($scope.queries.indexOf($scope.queryText) == -1)
                 $scope.queries.push($scope.queryText);
+        }, function err(data) {
+            $scope.error = data;
+            $timeout(function () {
+                $scope.error = null;
+            }, 2000);
         });
     }
     $scope.select = function (result) {
@@ -235,7 +253,11 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
             $scope.container.reload();
         });
 
+
     }
+//    $timeout(function () {
+//        $scope.loaded = true;
+//    }, 2000);
 }]);
 
 GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification) {

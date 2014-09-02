@@ -1,8 +1,27 @@
-<form name="popoverForm" class="popoverForm">
-    <input type="text" required ng-model="popover.name">
-    <div class="btn-group">
-        <button type="button" class="btn" ng-click="hide()">Close</button>
-        <button class="btn btn-primary" ng-disabled="popoverForm.$invalid" ng-click="popover.saved=true;hide();addLink()">Save changes</button>
-    </div>
+<div class="popover config-popover">
+    <h3 class="popover-title" ng-bind-html="title" ng-show="title"></h3>
 
-</form>
+    <div class="popover-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <form name="popoverForm" class="popoverForm">
+                        <div class="form-group">
+                            <input type="text" class="form-control" placeholder="Link Name" required
+                                   ng-model="name">
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-xs" ng-click="$hide()">Close</button>
+
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-xs" ng-disabled="popoverForm.$invalid"
+                                    ng-click="popover.saved=true;$hide();addLink(name)">Save changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

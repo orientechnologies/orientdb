@@ -520,3 +520,14 @@ div.db-config .row {
     padding: 9px 0px;
 }
 
+.config-popover .popover-title {
+    color: #333;
+}
+
+.modal-body .query-result {
+    overflow: auto;
+}
+
+.modal-query .row {
+    padding-top: 5px;
+}

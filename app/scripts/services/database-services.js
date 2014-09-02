@@ -628,7 +628,12 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
                     }
 
                 }).error(function (data) {
-                        Notification.push({content: data, error: true});
+                        if (verbose) {
+                            Notification.push({content: data, error: true});
+                        }
+                        if (!verbose && !error) {
+                            Notification.push({content: data, error: true});
+                        }
                         if (error) error(data);
                     });
             }
