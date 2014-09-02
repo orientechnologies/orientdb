@@ -46,7 +46,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
       ifFilter = new OSQLFilter(ifExpression, iContext, null);
 
     if (iConfiguration.containsField("log"))
-      logLevel = OETLProcessor.LOG_LEVELS.valueOf((String) iConfiguration.field("log"));
+      logLevel = OETLProcessor.LOG_LEVELS.valueOf(iConfiguration.field("log").toString().toUpperCase());
     else
       logLevel = iProcessor.getLogLevel();
 

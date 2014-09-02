@@ -1,7 +1,7 @@
 {
   config: {
-    verbose: true,
-    fileDirectory: "/temp/databases/dbpedia_csv/",
+    log: "info",
+    fileDirectory: "/temp/datasets/dbpedia_csv/",
     fileName: "Person.csv.gz",
     parallel: true
   },
