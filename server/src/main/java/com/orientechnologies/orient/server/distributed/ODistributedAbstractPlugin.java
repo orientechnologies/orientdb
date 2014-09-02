@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -37,6 +29,14 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -209,8 +209,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       cachedDatabaseConfiguration.put(iDatabaseName, cfg);
 
       // PRINT THE NEW CONFIGURATION
-      OLogManager.instance().info(this, "updated distributed configuration for database: %s:\n----------\n%s\n----------",
-          iDatabaseName, cfg.toJSON("prettyPrint"));
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "updated distributed configuration for database: %s:\n----------\n%s\n----------", iDatabaseName,
+          cfg.toJSON("prettyPrint"));
 
       if (iSaveToDisk) {
         // SAVE THE CONFIGURATION TO DISK
@@ -218,7 +219,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         try {
           File file = getDistributedConfigFile(iDatabaseName);
 
-          OLogManager.instance().info(this, "Saving distributed configuration file for database '%s' to: %s", iDatabaseName, file);
+          ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Saving distributed configuration file for database '%s' to: %s", iDatabaseName, file);
 
           if (!file.exists()) {
             file.getParentFile().mkdirs();
@@ -229,7 +231,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
           f.write(cfg.toJSON().getBytes());
           f.flush();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on saving distributed configuration file", e);
+          ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Error on saving distributed configuration file", e);
 
         } finally {
           if (f != null)

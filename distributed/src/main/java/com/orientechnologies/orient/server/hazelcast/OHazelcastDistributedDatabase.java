@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -195,8 +196,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       return waitForResponse(iRequest, currentResponseMgr);
 
     } catch (Throwable e) {
-      throw new ODistributedException("Error on sending distributed request (" + iRequest + ") against database '"
-          + databaseName + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes, e);
+      throw new ODistributedException("Error on sending distributed request (" + iRequest + ") against database '" + databaseName
+          + (iClusterNames != null ? "." + iClusterNames : "") + "' to nodes " + iNodes, e);
     }
   }
 
@@ -641,22 +642,39 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   protected void checkLocalNodeInConfiguration() {
-    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+    final Lock lock = manager.getLock(databaseName);
+    lock.lock();
+    try {
 
-    final List<String> foundPartition = cfg.addNewNodeInServerList(manager.getLocalNodeName());
-    if (foundPartition != null) {
-      // SET THE NODE.DB AS OFFLINE
-      manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
+      ODocument dCfg = (ODocument) manager.getConfigurationMap().get(manager.CONFIG_DATABASE_PREFIX + databaseName);
 
-      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
-          manager.getLocalNodeName(), databaseName, foundPartition);
+      final ODistributedConfiguration cfg;
+      if (dCfg == null)
+        cfg = manager.getDatabaseConfiguration(databaseName);
+      else
+        cfg = new ODistributedConfiguration(dCfg);
 
-      manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+      final List<String> foundPartition = cfg.addNewNodeInServerList(manager.getLocalNodeName());
+      if (foundPartition != null) {
+        // SET THE NODE.DB AS OFFLINE
+        manager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
+
+        ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
+            "adding node '%s' in partition: db=%s %s", manager.getLocalNodeName(), databaseName, foundPartition);
+
+        manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+      }
+
+    } finally {
+      lock.unlock();
     }
   }
 
   protected void removeNodeInConfiguration(final String iNode, final boolean iForce) {
+    final Lock lock = manager.getLock(databaseName);
+    lock.lock();
     try {
+
       // GET DATABASE CFG
       final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
       if (cfg.isHotAlignment())
@@ -672,8 +690,12 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
       }
     } catch (Exception e) {
+
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "unable to remove node '%s' in distributed configuration, db=%s", e, iNode, databaseName);
+
+    } finally {
+      lock.unlock();
     }
   }
 

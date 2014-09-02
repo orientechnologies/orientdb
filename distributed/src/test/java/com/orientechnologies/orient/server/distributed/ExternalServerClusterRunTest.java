@@ -35,7 +35,7 @@ public class ExternalServerClusterRunTest extends AbstractServerClusterTest {
   @Ignore
   public void test() throws Exception {
     init(3);
-    prepare(false);
+    prepare(false, false);
     execute();
   }
 
