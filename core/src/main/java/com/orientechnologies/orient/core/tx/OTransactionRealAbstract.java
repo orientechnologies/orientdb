@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -30,21 +39,10 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   /**
@@ -348,8 +346,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   protected ODocument serializeIndexChangeEntry(OTransactionIndexChangesPerKey entry, final ODocument indexDoc) {
     // SERIALIZE KEY
 
-    final String key;
-    final ODocument keyContainer = new ODocument();
+    ODocument keyContainer = new ODocument();
 
     try {
       if (entry.key != null) {
@@ -366,9 +363,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
           keyContainer.field("binary", false);
         }
 
-        key = ORecordSerializerSchemaAware2CSV.INSTANCE.toString(keyContainer, null, false).toString();
       } else
-        key = null;
+        keyContainer = null;
     } catch (IOException ioe) {
       throw new OTransactionException("Error during index changes serialization. ", ioe);
     }
@@ -397,8 +393,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       }
     }
 
-    return new ODocument().addOwner(indexDoc).setAllowChainedAccess(false)
-        .field("k", key != null ? OStringSerializerHelper.encode(key) : null).field("ops", operations, OType.EMBEDDEDLIST);
+    return new ODocument().addOwner(indexDoc).setAllowChainedAccess(false).field("k", keyContainer, OType.EMBEDDED)
+        .field("ops", operations, OType.EMBEDDEDLIST);
   }
 
   private void updateChangesIdentity(ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {

@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -44,18 +56,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 /**
  * Handles indexing when records change.
@@ -878,13 +878,19 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   private void applyIndexTxEntry(Map<Object, Object> snapshot, ODocument entry) {
     final Object key;
     if (entry.field("k") != null) {
-      final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+      Object serKey = entry.field("k");
       try {
-        final ODocument keyContainer = new ODocument();
-        keyContainer.setLazyLoad(false);
+        ODocument keyContainer = null;
+        // Check for PROTOCOL_VERSION_24 that remove CSV serialization.
+        if (serKey instanceof String) {
+          final String serializedKey = OStringSerializerHelper.decode((String) serKey);
+          keyContainer = new ODocument();
+          keyContainer.setLazyLoad(false);
 
-        ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
-
+          ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
+        } else if (serKey instanceof ODocument) {
+          keyContainer = (ODocument) serKey;
+        }
         final Object storedKey = keyContainer.field("key");
         if (storedKey instanceof List)
           key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
