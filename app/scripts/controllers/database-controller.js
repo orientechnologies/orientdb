@@ -141,11 +141,13 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         queryBuffer = queryBuffer.replace(/\n/g, " ");
         queryBuffer = queryBuffer.replace(/\t/g, " ");
         queryBuffer = queryBuffer.replace(/(\/\*([\s\S]*?)\*\/)|(\/\/(.*)$)/gm, '');
-        Spinner.start(function () {
-            CommandApi.interrupt(Database.getName(), queryBuffer).then(function () {
-                Spinner.stop();
+        if (queryBuffer.length != 0) {
+            Spinner.start(function () {
+                CommandApi.interrupt(Database.getName(), queryBuffer).then(function () {
+                    Spinner.stop();
+                });
             });
-        });
+        }
 
 
         if (queryBuffer.startsWith('g.')) {
@@ -153,6 +155,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         }
         if (queryBuffer.startsWith('#')) {
             $location.path('/database/' + $routeParams.database + '/browse/edit/' + queryBuffer.replace('#', ''));
+            return;
         }
 
         var conttype;

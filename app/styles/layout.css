@@ -21,7 +21,8 @@ a.navbar-brand > img {
 }
 
 .normal-page {
-    background: url("../img/bg-texture-light.gif") repeat scroll 0 0 #f6f6f6;
+    background: #e4e6e8;
+    /*background: url("../img/bg-texture-light.gif") repeat scroll 0 0 #f6f6f6;*/
 
 }
 

@@ -37,9 +37,13 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
             modalScope.creating = true;
             DatabaseApi.createDatabase(modalPromise.$scope.name, modalPromise.$scope.type, modalPromise.$scope.stype, modalPromise.$scope.username, modalPromise.$scope.password, function (data) {
                 $scope.databases.push(modalPromise.$scope.name);
+                $scope.database = modalPromise.$scope.name;
                 modalScope.creating = false;
                 modalPromise.hide();
                 var noti = "Database " + modalPromise.$scope.name + " created.";
+                $scope.username = 'admin';
+                $scope.password = 'admin';
+                $scope.connect();
                 Notification.push({content: noti});
             }, function (data) {
                 modalScope.creating = false;
