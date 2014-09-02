@@ -1,5 +1,5 @@
 var login = angular.module('login.controller', ['database.services']);
-login.controller("LoginController", ['$scope','$rootScope', '$routeParams', '$location', '$modal', '$q', 'Database', 'DatabaseApi', 'Notification', '$http', function ($scope,$rootScope, $routeParams, $location, $modal, $q, Database, DatabaseApi, Notification, $http) {
+login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$location', '$modal', '$q', 'Database', 'DatabaseApi', 'Notification', '$http', 'Spinner', function ($scope, $rootScope, $routeParams, $location, $modal, $q, Database, DatabaseApi, Notification, $http, Spinner) {
 
     $scope.server = "http://localhost:2480"
 
@@ -12,11 +12,15 @@ login.controller("LoginController", ['$scope','$rootScope', '$routeParams', '$lo
 
     $scope.connect = function () {
         $scope.$broadcast("autofill:update");
+
+
         Database.connect($scope.database, $scope.username, $scope.password, function () {
             $location.path("/database/" + $scope.database + "/browse");
+            Spinner.stopSpinner();
         }, function () {
             var noti = "Invalid username or password";
             Notification.push({content: noti});
+            Spinner.stopSpinner();
         });
     }
     $scope.createNew = function () {

@@ -27,6 +27,18 @@
     animation: fadeOutUp 0.5s;
 }
 
+
+
+.slideLeft.ng-enter {
+    -webkit-animation: fadeIn 0.5s;
+    -moz-animation: fadeIn 0.5s;
+    -ms-animation: fadeIn 0.5s;
+    animation: fadeIn 0.5s;
+}
+
+
+
+
 @-moz-keyframes spinPulse {
     0% {
         -moz-transform: rotate(160deg);
@@ -76,6 +88,7 @@
         -webkit-transform: rotate(360deg);
     }
 }
+
 
 
 

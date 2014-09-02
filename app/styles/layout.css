@@ -5,7 +5,6 @@ a.navbar-brand > img {
 
 .navbar-inverse {
     background-color: #222222;
-    /*border-bottom: 3px solid #ff6600;*/
     border-color: #080808 #080808 #080808;
     box-shadow: 0px 0px 2px 2px #080808;
 }
@@ -142,7 +141,7 @@ body div.container-studio {
 }
 
 .navbar-nav li.active {
-    border-bottom: 3px solid #FF6600;
+    border-bottom: 1px solid #FF6600;
 }
 
 .modal-header {
@@ -501,5 +500,16 @@ div.config-tab {
 
 div.db-config .row {
     padding-top: 10px;
+}
+
+#nprogress .bar {
+    background: #FF6600;
+    top: 52px;
+}
+#nprogress .spinner {
+    display: none;
+}
+#nprogress .peg {
+    box-shadow: none;
 }
 

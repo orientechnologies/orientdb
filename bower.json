@@ -32,7 +32,8 @@
     "font-awesome" : "4.1.0",
     "angular-motion": "0.3.2",
     "bootstrap-additions" : "0.2.2",
-    "fontIconPicker" : "2.0.0"
+    "fontIconPicker" : "2.0.0",
+    "nprogress" : "0.1.6"
 
   },
   "devDependencies": {

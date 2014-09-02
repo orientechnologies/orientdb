@@ -57,8 +57,11 @@
                     <pre>&lt;users&gt;<br/>&nbsp;&nbsp;&lt;user name="root" password="pwd" resources="*" /&gt;<br/>&lt;/users&gt;
                     </pre>
                 </div>
-                <div class="progress progress-striped active" ng-show="creating">
-                    <div class="bar" style="width: 100%;">Creating database {{ name }}</div>
+                <div class="progress progress-striped active">
+                    <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0"
+                         aria-valuemax="100" style="width: 100%">
+                        <span class="progress-value">Creating database {{ name }}</span>
+                    </div>
                 </div>
                 <div class="alert alert-error" ng-show="error">
                     <button type="button" class="close" ng-click="error = null">×</button>

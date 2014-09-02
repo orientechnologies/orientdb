@@ -136,7 +136,7 @@ App.config(function ($routeProvider, $httpProvider) {
         });
 
 });
-App.run(function ($rootScope, $interval, DatabaseApi, Notification) {
+App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner) {
     $rootScope.$on('$routeChangeSuccess', function (event, currentRoute) {
         switch (currentRoute.templateUrl) {
             case 'views/login.html':
@@ -147,7 +147,15 @@ App.run(function ($rootScope, $interval, DatabaseApi, Notification) {
                 break;
         }
         Notification.clear();
+        NProgress.done();
+
     });
+    $rootScope.$on("$routeChangeStart", function (event, next, current) {
+        NProgress.start();
+        NProgress.set(0.2);
+        NProgress.set(0.4);
+
+    })
     $interval(function () {
         DatabaseApi.listDatabases().then(function (data) {
             $rootScope.$broadcast("server:up");
