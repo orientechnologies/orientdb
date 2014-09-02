@@ -1,5 +1,5 @@
 var login = angular.module('login.controller', ['database.services']);
-login.controller("LoginController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'DatabaseApi', 'Notification', '$http', function ($scope, $routeParams, $location, $modal, $q, Database, DatabaseApi, Notification, $http) {
+login.controller("LoginController", ['$scope','$rootScope', '$routeParams', '$location', '$modal', '$q', 'Database', 'DatabaseApi', 'Notification', '$http', function ($scope,$rootScope, $routeParams, $location, $modal, $q, Database, DatabaseApi, Notification, $http) {
 
     $scope.server = "http://localhost:2480"
 
@@ -84,6 +84,7 @@ login.controller("LoginController", ['$scope', '$routeParams', '$location', '$mo
 
     }
 
+    $rootScope.$broadcast("request:logout");
     $scope.deleteDb = function () {
         var modalScope = $scope.$new(true);
         modalScope.name = $scope.database;

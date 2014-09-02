@@ -1,4 +1,5 @@
-angular.module('header.controller', ['database.services']).controller("HeaderController", ['$scope', '$routeParams', '$http', '$location', '$modal', '$q', 'Database', 'Aside', function ($scope, $routeParams, $http, $location, $modal, $q, Database, Aside) {
+angular.module('header.controller', ['database.services']).controller("HeaderController", ['$scope', '$rootScope', '$routeParams', '$http', '$location', '$modal', '$q', 'Database', 'Aside', function ($scope, $rootScope, $routeParams, $http, $location, $modal, $q, Database, Aside)
+{
     $scope.database = Database;
     $scope.selectedMenu = null;
     $scope.menus = [];
@@ -47,7 +48,6 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
         return menu == $scope.selectedMenu ? 'active' : '';
     }
     $scope.$on('$routeChangeSuccess', function (scope, next, current) {
-        //$scope.refreshMetadata();
         $scope.setSelected();
     });
     $scope.refreshMetadata = function () {
@@ -68,6 +68,9 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
     $scope.manageServer = function () {
         $location.path("/server");
     }
+    $rootScope.$on('request:logout', function () {
+        $scope.logout()
+    })
     $scope.logout = function () {
         Database.disconnect(function () {
             $scope.menus = [];
@@ -75,4 +78,6 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
         });
     }
 
-}]);
+}
+])
+;

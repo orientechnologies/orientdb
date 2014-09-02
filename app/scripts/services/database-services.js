@@ -439,9 +439,13 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
         getPropertyTableFromResults: function (results) {
             var self = this;
             var headers = new Array;
+            var temp = false;
             results.forEach(function (element, index, array) {
                 var tmp = Object.keys(element);
                 if (headers.length == 0) {
+                    if (element["@rid"] && element["@rid"].startsWith('#-')) {
+                        temp = true;
+                    }
                     headers = headers.concat(tmp);
                 } else {
                     var tmp2 = tmp.filter(function (element, index, array) {
@@ -453,6 +457,13 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             var all = headers.filter(function (element, index, array) {
                 return self.exclude.indexOf(element) == -1;
             });
+            if (temp) {
+                if (all.indexOf("@rid") != -1)
+                    all.splice(all.indexOf("@rid"), 1)
+                if (all.indexOf("@version") != -1)
+                    all.splice(all.indexOf("@version"), 1)
+
+            }
             return all;
         }
 
