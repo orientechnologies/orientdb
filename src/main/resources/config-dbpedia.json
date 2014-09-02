@@ -25,6 +25,7 @@
       dbURL: "plocal:/temp/databases/dbpedia",
       dbUser: "admin",
       dbPassword: "admin",
+      dbAutoCreateProperties: false,
       dbAutoDropIfExists: true,
       dbAutoCreate: true,
       tx: false,

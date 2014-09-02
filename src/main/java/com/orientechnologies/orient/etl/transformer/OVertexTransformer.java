@@ -19,6 +19,7 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -39,7 +40,9 @@ public class OVertexTransformer extends OAbstractTransformer {
   @Override
   public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
-    vertexClass = iConfiguration.field("class");
+
+    if (iConfiguration.containsField("class"))
+      vertexClass = (String) resolve(iConfiguration.field("class"));
   }
 
   @Override
@@ -54,9 +57,12 @@ public class OVertexTransformer extends OAbstractTransformer {
 
     vertexClass = (String) resolve(vertexClass);
     if (vertexClass != null) {
-      final OClass cls = graph.getVertexType(vertexClass);
+      OClass cls = graph.getVertexType(vertexClass);
       if (cls == null)
-        graph.createVertexType(vertexClass);
+        try {
+          graph.createVertexType(vertexClass);
+        } catch (OSchemaException e) {
+        }
     }
 
     final OrientVertex v = graph.getVertex(input);

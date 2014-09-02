@@ -23,13 +23,16 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -45,15 +48,16 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected List<ODocument> indexes;
   protected OClass          schemaClass;
   protected String          dbURL;
-  protected String          dbUser             = "admin";
-  protected String          dbPassword         = "admin";
-  protected boolean         dbAutoCreate       = true;
-  protected boolean         dbAutoDropIfExists = false;
-  protected boolean         tx                 = true;
-  protected int             batchCommit        = 0;
-  protected long            batchCounter       = 0;
-  protected DB_TYPE         dbType             = DB_TYPE.DOCUMENT;
-  protected boolean         wal                = true;
+  protected String          dbUser                 = "admin";
+  protected String          dbPassword             = "admin";
+  protected boolean         dbAutoCreate           = true;
+  protected boolean         dbAutoDropIfExists     = false;
+  protected boolean         dbAutoCreateProperties = false;
+  protected boolean         tx                     = true;
+  protected int             batchCommit            = 0;
+  protected long            batchCounter           = 0;
+  protected DB_TYPE         dbType                 = DB_TYPE.DOCUMENT;
+  protected boolean         wal                    = true;
 
   protected enum DB_TYPE {
     DOCUMENT, GRAPH
@@ -65,6 +69,64 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   public void load(final Object input, OCommandContext context) {
     if (input == null)
       return;
+
+    if (dbAutoCreateProperties) {
+      if (dbType == DB_TYPE.DOCUMENT) {
+        if (input instanceof ODocument) {
+          final ODocument doc = (ODocument) input;
+          final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
+          final OClass cls;
+          if (className != null)
+            cls = getOrCreateClass(className, null);
+          else
+            cls = doc.getSchemaClass();
+
+          for (String f : doc.fieldNames()) {
+            final String newName = transformFieldName(f);
+            final String fName = newName != null ? newName : f;
+
+            OProperty p = cls.getProperty(fName);
+            if (p == null) {
+              final Object fValue = doc.field(f);
+              createProperty(cls, fName, fValue);
+              if (newName != null) {
+                // REPLACE IT
+                doc.removeField(f);
+                doc.field(newName, fValue);
+              }
+            }
+          }
+        }
+      } else if (dbType == DB_TYPE.GRAPH) {
+        if (input instanceof OrientElement) {
+          final OrientElement element = (OrientElement) input;
+
+          final OrientBaseGraph graph = pipeline.getGraphDatabase();
+          final OClass cls;
+          final String clsName = className != null ? className : element.getLabel();
+          if (clsName != null)
+            cls = getOrCreateClass(clsName, element.getBaseClassName());
+          else
+            throw new IllegalArgumentException("No class defined on graph element: " + input);
+
+          for (String f : element.getPropertyKeys()) {
+            final String newName = transformFieldName(f);
+            final String fName = newName != null ? newName : f;
+
+            OProperty p = cls.getProperty(fName);
+            if (p == null) {
+              final Object fValue = element.getProperty(f);
+              createProperty(cls, fName, fValue);
+              if (newName != null) {
+                // REPLACE IT
+                element.removeProperty(f);
+                element.setProperty(newName, fValue);
+              }
+            }
+          }
+        }
+      }
+    }
 
     if (tx && dbType == DB_TYPE.DOCUMENT) {
       final ODatabaseDocumentTx documentDatabase = pipeline.getDocumentDatabase();
@@ -125,6 +187,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         + "}}," + "{class:{optional:true,description:'Record class name'}},"
         + "{tx:{optional:true,description:'Transaction mode: true executes in transaction, false for atomic operations'}},"
         + "{dbAutoCreate:{optional:true,description:'Auto create the database if not exists. Default is true'}},"
+        + "{dbAutoCreateProperties:{optional:true,description:'Auto create properties in schema'}},"
         + "{dbAutoDropIfExists:{optional:true,description:'Auto drop the database if already exists. Default is false.'}},"
         + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
         + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
@@ -156,6 +219,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       dbAutoCreate = (Boolean) iConfiguration.field("dbAutoCreate");
     if (iConfiguration.containsField("dbAutoDropIfExists"))
       dbAutoDropIfExists = (Boolean) iConfiguration.field("dbAutoDropIfExists");
+    if (iConfiguration.containsField("dbAutoCreateProperties"))
+      dbAutoCreateProperties = (Boolean) iConfiguration.field("dbAutoCreateProperties");
 
     clusterName = iConfiguration.field("cluster");
     className = iConfiguration.field("class");
@@ -249,6 +314,19 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
           documentDatabase.rollback();
       } else
         pipeline.getGraphDatabase().rollback();
+  }
+
+  protected void createProperty(final OClass cls, final String f, final Object fValue) {
+    if (fValue != null) {
+      final OType fType = OType.getTypeByClass(fValue.getClass());
+
+      try {
+        cls.createProperty(f, fType);
+      } catch (OSchemaException e) {
+      }
+
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "created property [%s.%s] of type [%s]", cls.getName(), f, fType);
+    }
   }
 
   protected synchronized ODatabaseDocumentTx init() {
@@ -404,5 +482,12 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       }
     }
     return cls;
+  }
+
+  private String transformFieldName(String f) {
+    final char first = f.charAt(0);
+    if (Character.isDigit(first))
+      return "field" + Character.toUpperCase(first) + (f.length() > 1 ? f.substring(1) : "");
+    return null;
   }
 }
