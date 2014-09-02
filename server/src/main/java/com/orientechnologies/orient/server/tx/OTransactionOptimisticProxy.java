@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
@@ -201,17 +202,22 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           continue;
 
         final Object key;
-
-        final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
         try {
-          if (serializedKey.equals("*"))
-            key = null;
-          else {
-            final ODocument keyContainer = new ODocument();
-            keyContainer.setLazyLoad(false);
+          ODocument keyContainer;
+          if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_24) {
 
-            ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
-
+            final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+            if (serializedKey.equals("*"))
+              keyContainer = null;
+            else {
+              keyContainer = new ODocument();
+              keyContainer.setLazyLoad(false);
+              ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
+            }
+          } else {
+            keyContainer = entry.field("k");
+          }
+          if (keyContainer != null) {
             final Object storedKey = keyContainer.field("key");
             if (storedKey instanceof List)
               key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
@@ -219,7 +225,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
               key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
             } else
               key = storedKey;
-          }
+          } else
+            key = null;
         } catch (IOException ioe) {
           throw new OTransactionException("Error during index changes deserialization. ", ioe);
         }
