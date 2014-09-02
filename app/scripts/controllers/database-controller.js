@@ -103,7 +103,10 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 });
 
             },
-            "Ctrl-Space": "autocomplete"
+            "Ctrl-Space": "autocomplete",
+            'Cmd-/': 'toggleComment',
+            'Ctrl-/': 'toggleComment'
+
 
         },
         onLoad: function (_cm) {
@@ -136,6 +139,8 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
         queryBuffer = queryBuffer.trim();
         queryBuffer = queryBuffer.replace(/\n/g, " ");
+        queryBuffer = queryBuffer.replace(/\t/g, " ");
+        queryBuffer = queryBuffer.replace(/(\/\*([\s\S]*?)\*\/)|(\/\/(.*)$)/gm, '');
         Spinner.start(function () {
             CommandApi.interrupt(Database.getName(), queryBuffer).then(function () {
                 Spinner.stop();
@@ -160,6 +165,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
                 var item = new Object;
                 item.query = $scope.queryText;
+                item.executedQuery = queryBuffer;
                 if (selection && selection != "") {
                     item.query = selection;
                 }

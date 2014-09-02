@@ -35,5 +35,10 @@ filterModule.filter('nograph', function () {
         return input.replace("in_", "").replace("out_", "");
     }
 });
+filterModule.filter('nocomment', function () {
+    return function (input) {
+        return input.replace(/(\/\*([\s\S]*?)\*\/)|(\/\/(.*)$)/gm, '');
+    }
+});
 
 
