@@ -506,10 +506,16 @@ div.db-config .row {
     background: #FF6600;
     top: 52px;
 }
+
 #nprogress .spinner {
     display: none;
 }
+
 #nprogress .peg {
     box-shadow: none;
+}
+
+.config-popover .popover-content {
+    padding: 9px 0px;
 }
 

@@ -246,7 +246,9 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.removeItem = function (item) {
         var idx = $scope.timeline.indexOf(item);
         $scope.timeline.splice(idx, 1);
-        localStorageService.add("Timeline", $scope.timeline);
+        var dbTime = localStorageService.get("Timeline");
+        dbTime[Database.getName()] = $scope.timeline;
+        localStorageService.add("Timeline", dbTime);
     }
 
 
@@ -263,6 +265,10 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     $scope.$watch("keepLimit", function (data) {
         $scope.keepLimit = data;
         localStorageService.add("keepLimit", data);
+    });
+    $scope.$watch("hideSettings", function (data) {
+        $scope.hideSettings = data;
+        localStorageService.add("hideSettings", data);
     });
 
 
@@ -396,24 +402,25 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
 
 
     $scope.$watch("limit", function (data) {
-        $scope.$parent.limit = data;
+        $scope.$parent.$parent.$parent.limit = data;
     });
     $scope.$watch("selectedContentType", function (data) {
-        $scope.$parent.selectedContentType = data;
+        $scope.$parent.$parent.$parent.selectedContentType = data;
     });
     $scope.$watch("shallow", function (data) {
-        $scope.$parent.shallow = data;
+        $scope.$parent.$parent.$parent.shallow = data;
         localStorageService.add("shallowCollection", data);
     });
     $scope.$watch("keepLimit", function (data) {
-        $scope.$parent.keepLimit = data;
+        $scope.$parent.$parent.$parent.keepLimit = data;
         localStorageService.add("keepLimit", data);
     });
     $scope.$watch("hideSettings", function (data) {
-        $scope.$parent.hideSettings = data;
+        $scope.$parent.$parent.$parent.hideSettings = data;
         localStorageService.add("hideSettings", data);
-        if ($scope.hide) {
-            $scope.hide();
+
+        if (!data && $scope.$parent.$hide) {
+            $scope.$parent.$hide();
         }
     });
     $scope.$parent.$watch("limit", function (data) {
