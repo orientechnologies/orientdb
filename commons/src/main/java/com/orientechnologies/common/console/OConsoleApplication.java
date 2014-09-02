@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.common.console;
 
-import com.orientechnologies.common.console.annotation.ConsoleCommand;
-import com.orientechnologies.common.console.annotation.ConsoleParameter;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.common.util.OArrays;
-
-import javax.imageio.spi.ServiceRegistry;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -39,6 +32,14 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.imageio.spi.ServiceRegistry;
+
+import com.orientechnologies.common.console.annotation.ConsoleCommand;
+import com.orientechnologies.common.console.annotation.ConsoleParameter;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.OArrays;
 
 public class OConsoleApplication {
   protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" }; ;
@@ -114,7 +115,7 @@ public class OConsoleApplication {
       // EXECUTE IN INTERACTIVE MODE
       // final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
-      String consoleInput;
+      String consoleInput = null;
 
       while (true) {
         try {
@@ -132,7 +133,7 @@ public class OConsoleApplication {
             break;
         } catch (Exception e) {
           result = 1;
-          OLogManager.instance().error(this, "Error on reading console input: %s", e);
+          OLogManager.instance().error(this, "Error on reading console input: %s", e, consoleInput);
         }
       }
     } else {
