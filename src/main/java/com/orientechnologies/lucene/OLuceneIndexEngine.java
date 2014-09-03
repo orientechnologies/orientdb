@@ -155,8 +155,6 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     return (V) lucene.get(key);
   }
 
-
-
   @Override
   public void put(Object key, V value) {
     lucene.put(key, value);
@@ -192,6 +190,11 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   @Override
   public OIndexCursor cursor(ValuesTransformer<V> valuesTransformer) {
     return lucene.cursor(valuesTransformer);
+  }
+
+  @Override
+  public OIndexCursor descCursor(ValuesTransformer<V> vValuesTransformer) {
+    return lucene.descCursor(vValuesTransformer);
   }
 
   @Override

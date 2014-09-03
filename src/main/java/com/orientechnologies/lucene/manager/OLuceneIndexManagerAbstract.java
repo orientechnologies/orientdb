@@ -354,9 +354,8 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-
-    @Override
-    public OIndexCursor descCursor(ValuesTransformer<V> vValuesTransformer) {
+  @Override
+  public OIndexCursor descCursor(ValuesTransformer<V> vValuesTransformer) {
     return null;
-    }
+  }
 }
