@@ -110,52 +110,14 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   @Override
-  public void unload() {
-    lucene.commit();
-  }
-
-  @Override
-  public void startTransaction() {
-    lucene.startTransaction();
-  }
-
-  @Override
-  public void stopTransaction() {
-    lucene.commit();
-  }
-
-  @Override
-  public void afterTxRollback() {
-    lucene.rollback();
-  }
-
-  @Override
-  public void afterTxCommit() {
-    lucene.afterTxCommit();
-  }
-
-  @Override
-  public void closeDb() {
-    lucene.commit();
-    lucene.closeDb();
-  }
-
-  @Override
   public void close() {
     lucene.close();
-  }
-
-  @Override
-  public void beforeTxBegin() {
-    lucene.beforeTxBegin();
   }
 
   @Override
   public V get(Object key) {
     return (V) lucene.get(key);
   }
-
-
 
   @Override
   public void put(Object key, V value) {
@@ -194,7 +156,12 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     return lucene.cursor(valuesTransformer);
   }
 
-  @Override
+    @Override
+    public OIndexCursor descCursor(ValuesTransformer<V> valuesTransformer) {
+    return null;
+    }
+
+    @Override
   public OIndexKeyCursor keyCursor() {
     return lucene.keyCursor();
   }
