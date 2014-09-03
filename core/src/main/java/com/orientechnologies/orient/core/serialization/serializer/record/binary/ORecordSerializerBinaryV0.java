@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -35,6 +36,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
@@ -474,7 +476,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       writeOType(bytes, bytes.alloc(1), type);
       writeString(bytes, entry.getKey().toString());
       if (entry.getValue() == null)
-        writeOptimizedLink(bytes, NULL_RECORD_ID);
+        writeNullLink(bytes);
       else
         writeOptimizedLink(bytes, entry.getValue());
     }
@@ -532,8 +534,16 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return link;
   }
 
+  private int writeNullLink(BytesContainer bytes) {
+    int pos = OVarIntSerializer.write(bytes, NULL_RECORD_ID.getIdentity().getClusterId());
+    OVarIntSerializer.write(bytes, NULL_RECORD_ID.getIdentity().getClusterPosition().longValue());
+    return pos;
+
+  }
+
   private int writeOptimizedLink(BytesContainer bytes, OIdentifiable link) {
     link = recursiveLinkSave(link);
+    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Inpossible to serialize invalid link";
     int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition().longValue());
     return pos;
@@ -547,7 +557,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     for (OIdentifiable itemValue : value) {
       // TODO: handle the null links
       if (itemValue == null)
-        writeOptimizedLink(bytes, NULL_RECORD_ID);
+        writeNullLink(bytes);
       else
         writeOptimizedLink(bytes, itemValue);
     }
