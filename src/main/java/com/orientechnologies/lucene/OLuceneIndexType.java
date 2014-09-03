@@ -100,10 +100,14 @@ public class OLuceneIndexType {
     return new TermQuery(new Term(OLuceneIndexManagerAbstract.RID, value.toString()));
   }
 
-  public static Query createFullQuery(OIndexDefinition index, OCompositeKey key, Analyzer analyzer, Version version)
-      throws ParseException {
+  public static Query createFullQuery(OIndexDefinition index, Object key, Analyzer analyzer, Version version) throws ParseException {
 
-    String query = key.getKeys().get(0).toString();
+    String query = "";
+    if (key instanceof OCompositeKey) {
+      query = ((OCompositeKey) key).getKeys().get(0).toString();
+    } else {
+      query = key.toString();
+    }
 
     return getQueryParser(index, query, analyzer, version);
 
