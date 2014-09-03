@@ -82,6 +82,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public ODeleteRecordTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
+    if (iBadResponse instanceof Throwable)
+      return null;
+
     // TODO: NO ROLLBACK, PUT THE NODE AS OFFLINE
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;
 
@@ -90,6 +93,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public ODeleteRecordTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+    if (iBadResponse instanceof Throwable)
+      return null;
+
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;
     return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
   }
