@@ -20,7 +20,7 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
             $scope.menus = [
                 { name: "browse", link: '#/database/' + data + '/browse', icon: "fa fa-eye", wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Query"},
                 { name: "schema", link: '#/database/' + data + '/schema', icon: "fa fa-tasks", wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Schema"},
-                { name: "users", link: '#/database/' + data + '/users', icon: 'fa fa-user', wiki: ""},
+                { name: "security", link: '#/database/' + data + '/security', icon: 'fa fa-user', wiki: ""},
                 { name: "graph", link: '#/database/' + data + '/graph', icon: 'fa fa-circle-o', wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Graph"},
                 { name: "functions", link: '#/database/' + data + '/functions', icon: 'fa fa-code', wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Functions"},
                 { name: "DB", link: '#/database/' + data + '/db', icon: 'fa fa-database'}

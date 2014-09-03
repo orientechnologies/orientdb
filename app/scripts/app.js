@@ -70,7 +70,7 @@ App.config(function ($routeProvider, $httpProvider) {
             controller: 'FunctionController',
             resolve: DatabaseResolve
         })
-        .when('/database/:database/users', {
+        .when('/database/:database/security', {
             templateUrl: 'views/database/security.html',
             controller: 'SecurityController',
             resolve: DatabaseResolve

@@ -1,71 +1,73 @@
-<div ng-controller="RolesController">
-    <div class="container-fluid" xmlns="http://www.w3.org/1999/html">
-        <div class="row-fluid">
-
-
-            <div class="span12 console_class_functions">
-
-                <div class="span4 row-fluid">
-
-                    <table class="table table-striped table-bordered table-hover table-condensed pointer">
-
-                        <thead>
-                        <tr>
-
-                            <th>Name</th>
-
-                            <th>Role</th>
-
-                        </tr>
-
-                        </thead>
-                        <tbody>
-                        <tr ng-repeat="result in usersResult | orderBy:predicate:reverse">
-                            <td ng-click="selectRole(result)">{{result['name']}}</td>
-                            <td ng-click="selectRole(result)">
-                                {{roleMode[result['mode']]}}
-                            </td>
-                        </tr>
-
-                        </tbody>
-
-
-                    </table>
-                </div>
-                <div class="span8 row-fluid">
-
-                    <table class="table table-striped table-bordered table-hover table-condensed pointer">
-
-                        <thead>
-                        <tr>
-
-                            <th>Name</th>
-                            <th>Delete</th>
-                            <th>Update</th>
-                            <th>Read</th>
-                            <th>Create</th>
-
-                        </tr>
-
-                        </thead>
-                        <tbody>
-                        <tr ng-repeat="i in rules track by $index">
-                            <td ng-click="mostra(selectedRole[i])">{{ i }}</td>
-                            <td ng-repeat="m in calcolaBitmask(selectedRole['rules'][i]) track by $index">
-
-                                <input type="checkbox" ng-model=" calcolaBitmask(selectedRole['rules'][i])[$index]"
-                                       ng-disabled="true">
-
-                            </td>
-
-                        </tr>
-
-                        </tbody>
-
-
-                    </table>
+<div ng-controller="RolesController" class="role-ui">
+    <div class="container-fluid">
+        <div class="row vertical-align">
+            <div class="col-md-4">
+                <form class="form-search">
+                    <div class="input-group">
+                        <input type="text" class="input-xxlarge form-control search-query" ng-model="queryy"
+                               placeholder="Search role">
+                        <span class="input-group-btn">
+                        <button type="submit" class="btn" ng-click="">
+                            <i class="fa fa-search"></i>
+                        </button>
+                            </span>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-2">
+                <h3>Permissions</h3>
+            </div>
+            <div class="col-md-6">
+                <div class="btn-group pull-right">
+                    <button class="btn btn-sm" ng-click="addRole()"><i class="fa fa-plus-circle">Add role</i></button>
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col-md-4">
+                <table class="table table-striped table-bordered table-hover table-condensed pointer">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Mode</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="result in usersResult | filter:queryy |orderBy:predicate:reverse"
+                        ng-class="{ info : selectedRole == result}">
+                        <td ng-click="selectRole(result)">{{result['name']}}</td>
+                        <td ng-click="selectRole(result)">
+                            {{roleMode[result['mode']]}}
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-8">
+
+                <table class="table table-striped table-bordered table-hover table-condensed pointer">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Delete</th>
+                        <th>Update</th>
+                        <th>Read</th>
+                        <th>Create</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="i in rules track by $index">
+                        <td ng-click="mostra(selectedRole[i])">{{ i }}</td>
+                        <td ng-repeat="m in calcolaBitmask(selectedRole['rules'][i]) track by $index">
+                            <input type="checkbox"
+                                   ng-change="changeRules(i,selectedRole.name,$index,calcolaBitmask(selectedRole['rules'][i])[$index])"
+                                   ng-model="calcolaBitmask(selectedRole['rules'][i])[$index]">
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
+</div>
 </div>

@@ -531,3 +531,19 @@ div.db-config .row {
 .modal-query .row {
     padding-top: 5px;
 }
+
+.tab-sercurity {
+    padding-top: 15px;
+}
+
+.users-ui .row {
+    padding-top: 10px;
+}
+
+.role-ui .row {
+    padding-top: 10px;
+}
+
+.users-ui .select2-container {
+    /*width: 80%;*/
+}

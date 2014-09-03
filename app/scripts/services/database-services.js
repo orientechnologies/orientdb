@@ -659,11 +659,24 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
     return resource;
 })
 ;
-database.factory('DocumentApi', function ($http, $resource, Database) {
+database.factory('DocumentApi', function ($http, $resource, Database, $q) {
 
     var resource = $resource(API + 'document/:database/:document');
     resource.updateDocument = function (database, rid, doc, callback) {
-        $http.put(API + 'document/' + database + "/" + rid.replace('#', ''), doc).success(callback).error(callback);
+        var deferred = $q.defer()
+        $http.put(API + 'document/' + database + "/" + rid.replace('#', ''), doc).success(function (data) {
+            if (callback) {
+                callback(data)
+            }
+            deferred.resolve(data);
+        }).error(function (data) {
+                if (callback) {
+                    callback(data)
+                }
+                deferred.reject(data);
+            });
+        return deferred.promise;
+
     }
     resource.uploadFileDocument = function (database, doc, blob, name, callback) {
 
@@ -675,7 +688,20 @@ database.factory('DocumentApi', function ($http, $resource, Database) {
         //$http.put(API + 'document/' + database + "/" + rid.replace('#',''),doc,{headers: { 'Content-Type': undefined }}).success(callback).error(callback);
     }
     resource.createDocument = function (database, rid, doc, callback) {
-        $http.post(API + 'document/' + database + "/" + rid.replace('#', ''), doc).success(callback).error(callback);
+        var deferred = $q.defer()
+        $http.post(API + 'document/' + database + "/" + rid.replace('#', ''), doc).success(function (data) {
+
+            if (callback) {
+                callback(data)
+            }
+            deferred.resolve(data);
+        }).error(function (data) {
+                if (callback) {
+                    callback(data)
+                }
+                deferred.reject(data);
+            });
+        return deferred.promise;
     }
     resource.deleteDocument = function (database, rid, callback) {
         $http.delete(API + 'document/' + database + "/" + rid.replace('#', '')).success(callback).error(callback);
