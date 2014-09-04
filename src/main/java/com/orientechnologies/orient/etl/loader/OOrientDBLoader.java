@@ -366,7 +366,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       for (ODocument idx : indexes) {
         OIndex index;
 
-        String idxName = idx.field("name");
+        String idxName = (String) resolve(idx.field("name"));
         if (idxName != null) {
           index = documentDatabase.getMetadata().getIndexManager().getIndex(idxName);
           if (index != null)
@@ -374,7 +374,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
             continue;
         }
 
-        final String idxClass = idx.field("class");
+        final String idxClass = (String) resolve(idx.field("class"));
         if (idxClass == null)
           throw new OConfigurationException("Index 'class' missed in OrientDB Loader");
 
