@@ -135,13 +135,14 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
 
 }]);
 
-schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'CommandApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DatabaseApi, CommandApi, Database, Notification) {
+schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'CommandApi', 'Database', 'Notification', 'DocumentApi', '$modal', function ($scope, $routeParams, $location, DatabaseApi, CommandApi, Database, Notification, DocumentApi, $modal) {
 
+    $scope.database = Database;
     var selectAllUsers = 'select * from oRole fetchPlan *:1 order by name  ';
     $scope.usersResult = new Array;
     $scope.selectedRole = null;
     $scope.roleMode = [ 'DENY_ALL_BUT', 'ALLOW_ALL_BUT'];
-
+    $scope.permissions = ["delete", "update", "read", "create"];
     $scope.getListUsers = function () {
         $scope.functions = new Array;
         CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: selectAllUsers, limit: $scope.limit, shallow: false}, function (data) {
@@ -155,43 +156,78 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
     $scope.getListUsers();
     $scope.selectRole = function (selectedRole) {
         $scope.selectedRole = selectedRole;
+        if (!selectedRole['rules']) {
+            selectedRole['rules'] = {};
+        }
         $scope.rules = Object.keys(selectedRole['rules']).sort();
     }
 
-    $scope.changeRules = function (resource, role, idx, old) {
+    $scope.dropRule = function (rule) {
+        delete $scope.selectedRole['rules'][rule];
+    }
+    $scope.addRule = function () {
+        var modalScope = $scope.$new(true);
+        var modalPromise = $modal({template: 'views/database/users/newRule.html', scope: modalScope, show: false});
+        modalScope.save = function () {
+            if (!$scope.selectedRole['rules'][modalPromise.$scope.name]) {
+                $scope.selectedRole['rules'][modalPromise.$scope.name] = 0;
+                $scope.rules = Object.keys($scope.selectedRole['rules']).sort();
+            }
+        }
+        modalPromise.$promise.then(modalPromise.show);
+    }
+    $scope.addRole = function () {
+        var modalScope = $scope.$new(true);
+        modalScope.user = DocumentApi.createNewDoc("ORole");
+        modalScope.roles = $scope.usersResult;
+        modalScope.select2Options = $scope.select2Options;
+        var modalPromise = $modal({template: 'views/database/users/newRole.html', scope: modalScope, show: false});
+        modalScope.save = function () {
+
+            DocumentApi.createDocument($scope.database.getName(), modalPromise.$scope.user["@rid"], modalPromise.$scope.user).then(function (data) {
+                $scope.usersResult.push(data);
+                Notification.push({content: 'Role ' + data.name + ' has been created.'});
+            }, function error(err) {
+                Notification.push({content: err, error: true});
+            })
+        }
+        modalPromise.$promise.then(modalPromise.show);
+    }
+    $scope.changeRules = function (resource, role, idx, val, matrix) {
 
 
-        var params = { ops: old ? "GRANT" : "REVOKE", permission: "update", resource: resource, role: role}
-        var sql = "{{ops}} {{permission}} ON {{resource}} TO {{role}}"
+        matrix[idx] = !matrix[idx];
+
+        var val = $scope.calculateValue(matrix);
+        var params = { ops: matrix[idx] ? "GRANT" : "REVOKE", direction: matrix[idx] ? "TO" : "FROM", permission: $scope.permissions[idx], resource: resource, role: role}
+        var sql = "{{ops}} {{permission}} ON {{resource}} {{direction}} {{role}}"
         var query = S(sql).template(params).s
         CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: query, limit: $scope.limit, shallow: false}, function (data) {
 
-
+            $scope.selectedRole['rules'][resource] = val;
             switch (params.ops) {
                 case "GRANT":
                     Notification.push({content: S("Permission of '{{permission}}' granted on resource '{{resource}}' to '{{role}}'").template(params).s});
                     break;
                 case "REVOKE":
+                    Notification.push({content: S("Permission of '{{permission}}' revoked on resource '{{resource}}' from '{{role}}'").template(params).s});
                     break;
             }
         });
     }
     $scope.calcolaBitmask = function (item) {
 
-        var DecToBin = '';
-        var Num1 = item
 
-        Num1 = item % 2;
+        var DecToBin = '';
+        var Num1 = item % 2;
 
         while (item != 0) {
-
             DecToBin = Num1.toString().concat(DecToBin);
             item = Math.floor(item / 2);
             Num1 = item % 2;
         }
         var synch = 4 - DecToBin.length;
-        var i = 0;
-        for (i = 0; i < synch; i++) {
+        for (var i = 0; i < synch; i++) {
             DecToBin = '0'.concat(DecToBin);
         }
         var matrix = new Array;
@@ -201,5 +237,13 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
         }
         return matrix;
 
+    }
+    $scope.calculateValue = function (matrix) {
+        var binToDec = ''
+        matrix.forEach(function (e) {
+            var bit = e ? "1" : "0";
+            binToDec = binToDec.concat(bit);
+        });
+        return parseInt(binToDec, 2);
     }
 }]);

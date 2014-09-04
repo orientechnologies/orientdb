@@ -12,14 +12,19 @@
                         </button>
                             </span>
                     </div>
+
                 </form>
+
             </div>
             <div class="col-md-2">
                 <h3>Permissions</h3>
             </div>
             <div class="col-md-6">
                 <div class="btn-group pull-right">
-                    <button class="btn btn-sm" ng-click="addRole()"><i class="fa fa-plus-circle">Add role</i></button>
+                    <button class="btn btn-sm" ng-click="addRole()"><i class="fa fa-plus-circle">Add Role</i></button>
+                </div>
+                <div class="btn-group pull-right">
+                    <button class="btn btn-sm" ng-click="addRule()"><i class="fa fa-plus-circle">Add Rule</i></button>
                 </div>
             </div>
         </div>
@@ -60,7 +65,7 @@
                         <td ng-click="mostra(selectedRole[i])">{{ i }}</td>
                         <td ng-repeat="m in calcolaBitmask(selectedRole['rules'][i]) track by $index">
                             <input type="checkbox"
-                                   ng-change="changeRules(i,selectedRole.name,$index,calcolaBitmask(selectedRole['rules'][i])[$index])"
+                                   ng-change="changeRules(i,selectedRole.name,$index,selectedRole['rules'][i],calcolaBitmask(selectedRole['rules'][i]))"
                                    ng-model="calcolaBitmask(selectedRole['rules'][i])[$index]">
                         </td>
                     </tr>

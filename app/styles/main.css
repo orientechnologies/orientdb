@@ -266,9 +266,11 @@ div.edge form.bs-docs-example:after {
     margin-right: 10px;
     color: #333333;
 }
+
 .master-query {
     margin-top: 0px;
 }
+
 .input-xxsmall {
     width: 30px;
 }
@@ -627,6 +629,16 @@ ul.arrayrid > li {
     font-size: 13px;
 }
 
+.container-notification {
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .container-notification .alert {
     margin-bottom: 0px;
 }
@@ -858,8 +870,6 @@ ul.arrayrid > li {
     -webkit-animation: spinoffPulse 1s infinite linear;
 }
 
-
-
 .circle-start {
     text-align: center;
     position: fixed;
@@ -910,8 +920,13 @@ span.badge-edge {
     /*width: 100%;*/
 }
 
+.panelAlerts .alert {
+    padding: 5px 10px;
+
+}
+
 .panelAlerts .alert-error {
-    background: #FAA732;
+    background: #cf280e;
     color: white;
     text-shadow: none;
     box-shadow: 0 0 2px #000000;
@@ -920,7 +935,7 @@ span.badge-edge {
 }
 
 .panelAlerts .alert-info {
-    background: #3ab0fa;
+    background: #368a54;
     color: white;
     text-shadow: none;
     box-shadow: 0 0 2px #000000;
