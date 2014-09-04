@@ -44,7 +44,6 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
   public static final OCompositeKeySerializer INSTANCE = new OCompositeKeySerializer();
   public static final byte                    ID       = 14;
 
-  @SuppressWarnings("unchecked")
   public int getObjectSize(OCompositeKey compositeKey, Object... hints) {
     final OType[] types = getKeyTypes(hints);
 
