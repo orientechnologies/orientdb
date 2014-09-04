@@ -30,17 +30,23 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent implements OTransformer {
   @Override
   public Object transform(final Object input) {
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "Transformer input: " + input);
+
     if (input == null)
       return null;
 
     if (!skip(input)) {
       context.setVariable("input", input);
       final Object result = executeTransform(input);
-      if (output == null)
+      if (output == null) {
+        log(OETLProcessor.LOG_LEVELS.DEBUG, "Transformer output: " + result);
         return result;
+      }
 
       context.setVariable(output, result);
     }
+    
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "Transformer output (same as input): " + input);
     return input;
   }
 
