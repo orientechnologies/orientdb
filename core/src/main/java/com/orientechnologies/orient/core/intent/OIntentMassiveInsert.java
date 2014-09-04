@@ -13,11 +13,11 @@ import java.util.Map;
 
 public class OIntentMassiveInsert implements OIntent {
   private boolean                                     previousLocalCacheEnabled;
-  private boolean                                     previousLevel2CacheEnabled;
   private boolean                                     previousRetainRecords;
   private boolean                                     previousRetainObjects;
+  private boolean                                     previousValidation;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
-  private OUser                       currentUser;
+  private OUser                                       currentUser;
 
   public void begin(final ODatabaseRaw iDatabase, final Object... iArgs) {
     // DISABLE CHECK OF SECURITY
@@ -32,6 +32,11 @@ public class OIntentMassiveInsert implements OIntent {
     if (ownerDb instanceof ODatabaseRecord) {
       previousRetainRecords = ((ODatabaseRecord) ownerDb).isRetainRecords();
       ((ODatabaseRecord) ownerDb).setRetainRecords(false);
+
+      // VALIDATION
+      previousValidation = ((ODatabaseRecord) ownerDb).isValidationEnabled();
+      if (previousValidation)
+        ((ODatabaseRecord) ownerDb).setValidationEnabled(false);
     }
 
     while (ownerDb.getDatabaseOwner() != ownerDb)
@@ -61,8 +66,10 @@ public class OIntentMassiveInsert implements OIntent {
     iDatabase.getDatabaseOwner().getLocalCache().setEnable(previousLocalCacheEnabled);
     ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
 
-    if (ownerDb instanceof ODatabaseRecord)
+    if (ownerDb instanceof ODatabaseRecord) {
       ((ODatabaseRecord) ownerDb).setRetainRecords(previousRetainRecords);
+      ((ODatabaseRecord) ownerDb).setValidationEnabled(previousValidation);
+    }
 
     while (ownerDb.getDatabaseOwner() != ownerDb)
       ownerDb = ownerDb.getDatabaseOwner();

@@ -50,6 +50,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       settings = graph.settings;
   }
 
+  public abstract String getLabel();
+
   public abstract String getBaseClassName();
 
   /**
