@@ -495,6 +495,34 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.declareIntent(null);
   }
 
+  public boolean isMigrateLinks() {
+	return migrateLinks;
+  }
+
+  public void setMigrateLinks(boolean migrateLinks) {
+	this.migrateLinks = migrateLinks;
+  }
+
+  public boolean isRebuildIndexes() {
+	return rebuildIndexes;
+  }
+
+  public void setRebuildIndexes(boolean rebuildIndexes) {
+	this.rebuildIndexes = rebuildIndexes;
+  }
+
+  public boolean isPreserveClusterIDs() {
+	return preserveClusterIDs;
+  }
+
+  public boolean isMerge() {
+	return merge;
+  }
+
+  public void setMerge(boolean merge) {
+	this.merge = merge;
+  }
+
   public boolean isDeleteRIDMapping() {
     return deleteRIDMapping;
   }
@@ -1047,7 +1075,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
               || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
                 .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
-        database.command(new OCommandSQL("truncate cluster " + name)).execute();
+        if(!merge) database.command(new OCommandSQL("truncate cluster " + name)).execute();
 
         for (OIndex existingIndex : database.getMetadata().getIndexManager().getIndexes()) {
           if (existingIndex.getClusters().contains(name)) {
