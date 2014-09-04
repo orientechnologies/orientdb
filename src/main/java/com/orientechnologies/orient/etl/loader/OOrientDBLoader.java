@@ -18,6 +18,8 @@
 
 package com.orientechnologies.orient.etl.loader;
 
+import java.util.List;
+
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -32,11 +34,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import java.util.List;
 
 /**
  * ETL Loader that saves record into OrientDB database.
@@ -101,9 +102,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         if (input instanceof OrientElement) {
           final OrientElement element = (OrientElement) input;
 
-          final OrientBaseGraph graph = pipeline.getGraphDatabase();
           final OClass cls;
-          final String clsName = className != null ? className : element.getLabel();
+          final String clsName = className != null ? className : (element instanceof OrientVertex ? ((OrientVertex) element)
+              .getLabel() : ((OrientEdge) element).getLabel());
           if (clsName != null)
             cls = getOrCreateClass(clsName, element.getBaseClassName());
           else
