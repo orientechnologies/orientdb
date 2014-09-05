@@ -66,6 +66,8 @@ public class OCommandTransformer extends OAbstractTransformer {
     } else
       throw new OTransformException(getName() + ": language '" + language + "' not supported");
 
+    cmd.setContext(context);
+
     Object result = pipeline.getDocumentDatabase().command(cmd).execute();
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "executed command=%s, result=%s", cmd, result);
