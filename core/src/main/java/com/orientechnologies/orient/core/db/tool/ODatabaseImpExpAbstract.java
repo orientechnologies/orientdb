@@ -133,9 +133,27 @@ public abstract class ODatabaseImpExpAbstract {
   public String getFileName() {
     return fileName;
   }
+  
+  
 
+  public boolean isIncludeInfo() {
+	return includeInfo;
+  }
+		
+  public boolean isIncludeSecurity() {
+	return includeSecurity;
+  }
+	
+  public void setIncludeInfo(final boolean includeInfo) {
+	  this.includeInfo = includeInfo;
+  }
+	
   public boolean isIncludeSchema() {
     return includeSchema;
+  }
+  
+  public void setIncludeSecurity(final boolean includeSecurity) {
+	  this.includeSecurity = includeSecurity;
   }
 
   public void setIncludeSchema(final boolean includeSchema) {
