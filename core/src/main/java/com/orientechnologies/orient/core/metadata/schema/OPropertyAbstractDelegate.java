@@ -52,7 +52,8 @@ public class OPropertyAbstractDelegate implements OProperty {
 
   @Override
   public OProperty setName(final String iName) {
-    return delegate.setName(iName);
+    delegate.setName(iName);
+    return this;
   }
 
   @Override
@@ -82,7 +83,8 @@ public class OPropertyAbstractDelegate implements OProperty {
 
   @Override
   public OProperty setNotNull(final boolean iNotNull) {
-    return delegate.setNotNull(iNotNull);
+    delegate.setNotNull(iNotNull);
+    return this;
   }
 
   @Override
@@ -92,7 +94,8 @@ public class OPropertyAbstractDelegate implements OProperty {
 
   @Override
   public OProperty setCollate(final String iCollateName) {
-    return delegate.setCollate(iCollateName);
+    delegate.setCollate(iCollateName);
+    return this;
   }
 
   @Override
@@ -102,7 +105,8 @@ public class OPropertyAbstractDelegate implements OProperty {
 
   @Override
   public OProperty setMandatory(final boolean mandatory) {
-    return delegate.setMandatory(mandatory);
+    delegate.setMandatory(mandatory);
+    return this;
   }
 
   @Override
@@ -111,8 +115,9 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OPropertyImpl setReadonly(final boolean iReadonly) {
-    return delegate.setReadonly(iReadonly);
+  public OProperty setReadonly(final boolean iReadonly) {
+    delegate.setReadonly(iReadonly);
+    return this;
   }
 
   @Override
@@ -122,7 +127,8 @@ public class OPropertyAbstractDelegate implements OProperty {
 
   @Override
   public OProperty setMin(final String min) {
-    return delegate.setMin(min);
+    delegate.setMin(min);
+    return this;
   }
 
   @Override
@@ -132,7 +138,8 @@ public class OPropertyAbstractDelegate implements OProperty {
 
   @Override
   public OProperty setMax(final String max) {
-    return delegate.setMax(max);
+    delegate.setMax(max);
+    return this;
   }
 
   @Override
@@ -146,9 +153,28 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
+  public OProperty setLinkedClass(OClass oClass) {
+	delegate.setLinkedClass(oClass);
+	return this;
+  }
+
+  @Override
+  public OProperty setLinkedType(OType type) {
+	delegate.setLinkedType(type);
+	return this;
+  }
+
+  @Override
+  public OProperty setCollate(OCollate collate) {
+	delegate.setCollate(collate);
+	return this;
+  }
+
+  @Override
   @Deprecated
-  public OPropertyImpl dropIndexes() {
-    return delegate.dropIndexes();
+  public OProperty dropIndexes() {
+    delegate.dropIndexes();
+    return this;
   }
 
   @Override
@@ -180,13 +206,15 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OPropertyImpl setRegexp(final String regexp) {
-    return delegate.setRegexp(regexp);
+  public OProperty setRegexp(final String regexp) {
+    delegate.setRegexp(regexp);
+    return this;
   }
 
   @Override
-  public OPropertyImpl setType(final OType iType) {
-    return delegate.setType(iType);
+  public OProperty setType(final OType iType) {
+    delegate.setType(iType);
+    return this;
   }
 
   @Override
@@ -195,8 +223,9 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public OPropertyImpl setCustom(final String iName, final String iValue) {
-    return delegate.setCustom(iName, iValue);
+  public OProperty setCustom(final String iName, final String iValue) {
+    delegate.setCustom(iName, iValue);
+    return this;
   }
 
   @Override
