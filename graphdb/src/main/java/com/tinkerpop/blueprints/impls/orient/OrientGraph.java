@@ -26,6 +26,17 @@ public class OrientGraph extends OrientTransactionalGraph {
   }
 
   /**
+   * Creates a new Transactional Graph using an existent database instance. User and password are passed in case of re-open.
+   *
+   * @param iDatabase
+   *          Underlying database object to attach
+   */
+  public OrientGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPasswd) {
+    super(iDatabase, true, iUserName, iUserPasswd);
+    config();
+  }
+
+  /**
    * Creates a new Transactional Graph using an existent database instance and the auto-start setting to determine if auto start a
    * transaction.
    * 
@@ -35,7 +46,7 @@ public class OrientGraph extends OrientTransactionalGraph {
    *          True to auto start a transaction at the beginning and after each commit/rollback
    */
   public OrientGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
-    super(iDatabase, iAutoStartTx);
+    super(iDatabase, iAutoStartTx, null, null);
     config();
   }
 

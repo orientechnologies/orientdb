@@ -44,13 +44,18 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
   }
 
   public ODatabasePoolBase<DB> setup() {
-    setup(OGlobalConfiguration.DB_POOL_MIN.getValueAsInteger(), OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger());
+    if (dbPool == null)
+      setup(OGlobalConfiguration.DB_POOL_MIN.getValueAsInteger(), OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger());
+
     return this;
   }
 
   public ODatabasePoolBase<DB> setup(final int iMinSize, final int iMaxSize) {
-    return this.setup(iMinSize, iMaxSize, OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT.getValueAsLong(),
-        OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY.getValueAsLong());
+    if (dbPool == null)
+      setup(iMinSize, iMaxSize, OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT.getValueAsLong(),
+          OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY.getValueAsLong());
+
+    return this;
   }
 
   public ODatabasePoolBase<DB> setup(final int iMinSize, final int iMaxSize, final long idleTimeout,

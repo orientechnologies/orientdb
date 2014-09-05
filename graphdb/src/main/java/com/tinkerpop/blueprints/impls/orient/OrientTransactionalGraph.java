@@ -15,31 +15,33 @@ import com.tinkerpop.blueprints.TransactionalGraph;
  */
 public abstract class OrientTransactionalGraph extends OrientBaseGraph implements TransactionalGraph {
   protected boolean autoStartTx = true;
+  protected boolean useLog      = true;
 
   /**
    * Constructs a new object using an existent database instance.
-   * 
+   *
    * @param iDatabase
    *          Underlying database object to attach
    */
   protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
-    this(iDatabase, true);
+    this(iDatabase, true, null, null);
   }
 
-  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
-    super(iDatabase, null, null);
+  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx, final String iUserName,
+      final String iUserPasswd) {
+    super(iDatabase, iUserName, iUserPasswd);
     setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
-      getContext(false).rawGraph.begin();
+      beginTransaction();
   }
 
   protected OrientTransactionalGraph(final ODatabaseDocumentPool pool) {
     super(pool);
     setCurrentGraphInThreadLocal();
 
-    getContext(false).rawGraph.begin();
+    beginTransaction();
   }
 
   protected OrientTransactionalGraph(final String url) {
@@ -52,7 +54,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     this.setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
-      getContext(false).rawGraph.begin();
+      beginTransaction();
   }
 
   protected OrientTransactionalGraph(final String url, final String username, final String password) {
@@ -65,7 +67,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     this.setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
-      getContext(false).rawGraph.begin();
+      beginTransaction();
   }
 
   protected OrientTransactionalGraph(final Configuration configuration) {
@@ -74,6 +76,14 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     final Boolean autoStartTx = configuration.getBoolean("blueprints.orientdb.autoStartTx", null);
     if (autoStartTx != null)
       setAutoStartTx(autoStartTx);
+  }
+
+  public boolean isUseLog() {
+    return useLog;
+  }
+
+  public void setUseLog(boolean useLog) {
+    this.useLog = useLog;
   }
 
   /**
@@ -109,7 +119,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
 
     context.rawGraph.commit();
     if (autoStartTx)
-      getContext(false).rawGraph.begin();
+      beginTransaction();
   }
 
   /**
@@ -122,7 +132,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
 
     context.rawGraph.rollback();
     if (autoStartTx)
-      getContext(false).rawGraph.begin();
+      beginTransaction();
   }
 
   /**
@@ -155,5 +165,11 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
         && context.rawGraph.getTransaction().getStatus() != TXSTATUS.BEGUN) {
       context.rawGraph.begin();
     }
+  }
+
+  protected void beginTransaction() {
+    final ODatabaseDocumentTx db = getContext(false).rawGraph;
+    db.begin();
+    db.getTransaction().setUsingLog(useLog);
   }
 }

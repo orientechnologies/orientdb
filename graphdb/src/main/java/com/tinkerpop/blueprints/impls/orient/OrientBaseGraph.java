@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
+import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -29,9 +30,6 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.IndexableGraph;
-import com.tinkerpop.blueprints.KeyIndexableGraph;
-import com.tinkerpop.blueprints.MetaGraph;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
@@ -54,8 +52,7 @@ import java.util.Set;
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public abstract class OrientBaseGraph extends OrientConfigurableGraph implements IndexableGraph, MetaGraph<ODatabaseDocumentTx>,
-    KeyIndexableGraph {
+public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph {
   public static final String                    CONNECTION_OUT  = "out";
   public static final String                    CONNECTION_IN   = "in";
   public static final String                    CLASS_PREFIX    = "class:";
@@ -544,6 +541,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return new OrientVertex(this, doc);
   }
 
+  @Override
+  public void declareIntent(final OIntent iIntent) {
+    getRawGraph().declareIntent(iIntent);
+  }
+
   /**
    * Removes a vertex from the Graph. All the edges connected to the Vertex are automatically removed.
    * 
@@ -850,7 +852,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         removeContext();
         context = new OrientGraphContext();
         context.rawGraph = iDatabase;
-        checkForGraphSchema(iDatabase);
+        // checkForGraphSchema(iDatabase);
         threadContext.set(context);
         contexts.add(context);
       }
@@ -1560,7 +1562,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       if (pool == null) {
         context.rawGraph = new ODatabaseDocumentTx(url);
         if (url.startsWith("remote:") || context.rawGraph.exists()) {
-          context.rawGraph.open(username, password);
+          if (context.rawGraph.isClosed())
+            context.rawGraph.open(username, password);
 
           // LOAD THE INDEX CONFIGURATION FROM INTO THE DICTIONARY
           // final ODocument indexConfiguration =

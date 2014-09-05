@@ -22,6 +22,8 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import org.apache.commons.configuration.Configuration;
 
+import com.orientechnologies.orient.core.intent.OIntent;
+
 /**
  * Base class to manage graph settings.
  * 
@@ -68,6 +70,8 @@ public abstract class OrientConfigurableGraph {
 
   protected OrientConfigurableGraph() {
   }
+
+  public abstract void declareIntent(OIntent iIntent);
 
   /**
    * Returns true if is using lightweight edges, otherwise false.

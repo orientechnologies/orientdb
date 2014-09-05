@@ -24,23 +24,21 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
  * 
  */
 public interface OIntent {
-	/**
-	 * Activate the intent.
-	 * 
-	 * @param iDatabase
-	 *          Database where to activate it
-	 * @param iArgs
-	 *          Additional, optional arguments
-	 */
-	public void begin(ODatabaseRaw iDatabase, Object... iArgs);
+  /**
+   * Activate the intent.
+   * 
+   * @param iDatabase
+   *          Database where to activate it
+   */
+  public void begin(ODatabaseRaw iDatabase);
 
-	/**
-	 * Activate the intent.
-	 * 
-	 * @param iDatabase
-	 *          Database where to activate it
-	 * @param iArgs
-	 *          Additional, optional arguments
-	 */
-	public void end(ODatabaseRaw iDatabase);
+  /**
+   * Activate the intent.
+   * 
+   * @param iDatabase
+   *          Database where to activate it
+   */
+  public void end(ODatabaseRaw iDatabase);
+
+  public OIntent copy();
 }

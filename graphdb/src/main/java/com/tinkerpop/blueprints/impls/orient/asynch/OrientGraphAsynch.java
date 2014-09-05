@@ -25,22 +25,26 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.script.OScriptDocumentDatabaseWrapper;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.intent.OIntent;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Features;
 import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.IndexableGraph;
-import com.tinkerpop.blueprints.KeyIndexableGraph;
 import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientElement;
+import com.tinkerpop.blueprints.impls.orient.OrientExtendedGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -52,22 +56,19 @@ import java.util.concurrent.atomic.AtomicLong;
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public class OrientGraphAsynch implements IndexableGraph, KeyIndexableGraph {
-  private final Features                 FEATURES         = new Features();
-  private final OrientGraphFactory       factory;
-  private final AtomicLong               updateOperations = new AtomicLong();
-  private final int                      maxPoolSize      = 100;
-  private OScriptDocumentDatabaseWrapper rawGraph;
-
-  // private final AtomicLong completedOperations = new AtomicLong();
-  // private List<CountDownLatch> pendingOperations = new ArrayList<CountDownLatch>(20);
+public class OrientGraphAsynch implements OrientExtendedGraph {
+  private final Features           FEATURES         = new Features();
+  private final OrientGraphFactory factory;
+  private final AtomicLong         updateOperations = new AtomicLong();
+  private int                      maxPoolSize      = 100;
+  private boolean                  transactional    = false;
 
   public OrientGraphAsynch(final String url) {
-    factory = new OrientGraphFactory(url).setupPool(1, maxPoolSize).setTransactional(false);
+    factory = new OrientGraphFactory(url).setupPool(1, maxPoolSize).setTransactional(transactional);
   }
 
   public OrientGraphAsynch(final String url, final String username, final String password) {
-    factory = new OrientGraphFactory(url, username, password).setupPool(1, maxPoolSize).setTransactional(false);
+    factory = new OrientGraphFactory(url, username, password).setupPool(1, maxPoolSize).setTransactional(transactional);
   }
 
   public Vertex addVertex(final Object id, final Object... prop) {
@@ -101,6 +102,11 @@ public class OrientGraphAsynch implements IndexableGraph, KeyIndexableGraph {
         }
       }
     }));
+  }
+
+  @Override
+  public void declareIntent(final OIntent iIntent) {
+    factory.declareIntent(iIntent);
   }
 
   @Override
@@ -243,8 +249,178 @@ public class OrientGraphAsynch implements IndexableGraph, KeyIndexableGraph {
   }
 
   @Override
+  public void drop() {
+    final OrientBaseGraph g = acquire();
+    try {
+      g.drop();
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientVertex addTemporaryVertex(final String iClassName, final Object... prop) {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.addTemporaryVertex(iClassName, prop);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientVertexType getVertexBaseType() {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.getVertexBaseType();
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientVertexType getVertexType(final String iClassName) {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.getVertexType(iClassName);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientVertexType createVertexType(final String iClassName) {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.createVertexType(iClassName);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientVertexType createVertexType(final String iClassName, final String iSuperClassName) {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.createVertexType(iClassName, iSuperClassName);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientVertexType createVertexType(final String iClassName, final OClass iSuperClass) {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.createVertexType(iClassName, iSuperClass);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public void dropVertexType(final String iClassName) {
+    final OrientBaseGraph g = acquire();
+    try {
+      g.dropVertexType(iClassName);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientEdgeType getEdgeBaseType() {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.getEdgeBaseType();
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientEdgeType getEdgeType(final String iClassName) {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.getEdgeType(iClassName);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientEdgeType createEdgeType(final String iClassName) {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.createEdgeType(iClassName);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientEdgeType createEdgeType(final String iClassName, final String iSuperClassName) {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.createEdgeType(iClassName, iSuperClassName);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientEdgeType createEdgeType(final String iClassName, final OClass iSuperClass) {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.createEdgeType(iClassName, iSuperClass);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public void dropEdgeType(final String iClassName) {
+    final OrientBaseGraph g = acquire();
+    try {
+      g.dropEdgeType(iClassName);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientElement detach(final OrientElement iElement) {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.detach(iElement);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public OrientElement attach(final OrientElement iElement) {
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.attach(iElement);
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
   public GraphQuery query() {
     throw new UnsupportedOperationException("query");
+  }
+
+  @Override
+  public OTraverse traverse() {
+    throw new UnsupportedOperationException("traverse");
+  }
+
+  @Override
+  public OCommandRequest command(final OCommandRequest iCommand) {
+    throw new UnsupportedOperationException("command");
   }
 
   @Override
@@ -332,8 +508,7 @@ public class OrientGraphAsynch implements IndexableGraph, KeyIndexableGraph {
   }
 
   public void release(final OrientBaseGraph iGraph) {
-    iGraph.shutdown();
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
+    factory.release(iGraph);
   }
 
   public OCommandRequest command(final OCommandSQL iCommand) {
@@ -356,10 +531,33 @@ public class OrientGraphAsynch implements IndexableGraph, KeyIndexableGraph {
     }
   }
 
+  @Override
+  public long countVertices(String iClassName) {
+    waitUntilCompletition(updateOperations.get());
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.countVertices(iClassName);
+    } finally {
+      release(g);
+    }
+  }
+
   public long countEdges() {
+    waitUntilCompletition(updateOperations.get());
     final OrientBaseGraph g = acquire();
     try {
       return g.countEdges();
+    } finally {
+      release(g);
+    }
+  }
+
+  @Override
+  public long countEdges(String iClassName) {
+    waitUntilCompletition(updateOperations.get());
+    final OrientBaseGraph g = acquire();
+    try {
+      return g.countEdges(iClassName);
     } finally {
       release(g);
     }
@@ -370,8 +568,29 @@ public class OrientGraphAsynch implements IndexableGraph, KeyIndexableGraph {
     try {
       return iCallable.call(graph);
     } finally {
-      graph.shutdown();
+      factory.release(graph);
     }
+  }
+
+  public int getMaxPoolSize() {
+    return maxPoolSize;
+  }
+
+  public void setMaxPoolSize(final int maxPoolSize) {
+    this.maxPoolSize = maxPoolSize;
+  }
+
+  public boolean isTransactional() {
+    return transactional;
+  }
+
+  public void setTransactional(final boolean transactional) {
+    this.transactional = transactional;
+  }
+
+  @Override
+  public ODatabaseDocumentTx getRawGraph() {
+    throw new UnsupportedOperationException("getRawGraph");
   }
 
   protected void config() {

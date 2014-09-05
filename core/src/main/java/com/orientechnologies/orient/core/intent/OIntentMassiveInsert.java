@@ -19,7 +19,7 @@ public class OIntentMassiveInsert implements OIntent {
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
   private OUser                                       currentUser;
 
-  public void begin(final ODatabaseRaw iDatabase, final Object... iArgs) {
+  public void begin(final ODatabaseRaw iDatabase) {
     // DISABLE CHECK OF SECURITY
     currentUser = iDatabase.getDatabaseOwner().getUser();
     iDatabase.getDatabaseOwner().setUser(null);
@@ -84,5 +84,18 @@ public class OIntentMassiveInsert implements OIntent {
       }
     }
 
+  }
+
+  @Override
+  public OIntent copy() {
+    final OIntentMassiveInsert copy = new OIntentMassiveInsert();
+    copy.previousLocalCacheEnabled = previousLocalCacheEnabled;
+    copy.previousRetainRecords = previousRetainRecords;
+    copy.previousRetainObjects = previousRetainObjects;
+    copy.previousValidation = previousValidation;
+    copy.currentUser = currentUser;
+    if (removedHooks != null)
+      copy.removedHooks = new HashMap<ORecordHook, ORecordHook.HOOK_POSITION>(removedHooks);
+    return copy;
   }
 }
