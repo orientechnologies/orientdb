@@ -40,39 +40,29 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
             });
         });
     }
+    $scope.loadRoles = function ($query) {
+        return $scope.getListRoles();
+    }
     $scope.getListRoles = function () {
+        var deferred = $q.defer();
         $scope.functions = new Array;
         CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: selectAllRoles, limit: $scope.limit, shallow: false}, function (data) {
             $scope.roles = data.result;
+            deferred.resolve($scope.roles);
             $scope.dataRoles = [];
             $scope.roles.forEach(function (e, idx, arr) {
                 $scope.dataRoles.push({ id: idx, text: e});
             })
-            $scope.select2Options = {
-                'multiple': true,
-                'tags': $scope.roles,
-                formatResult: function (item) {
-                    if (item.name) {
-                        return item.name
-                    } else {
-                        return item.text.name;
-                    }
-                },
-                formatSelection: function (item) {
-                    if (item.name) {
-                        return item.name
-                    } else {
-                        return item.text.name;
-                    }
-                }
-            };
         });
+        return deferred.promise;
     }
 
     $scope.addUser = function () {
         var modalScope = $scope.$new(true);
         modalScope.user = DocumentApi.createNewDoc("OUser");
+        modalScope.user.roles = [];
         modalScope.select2Options = $scope.select2Options;
+        modalScope.loadRoles = $scope.loadRoles;
         var modalPromise = $modal({template: 'views/database/users/newUser.html', scope: modalScope, show: false});
         modalScope.save = function () {
             if (modalPromise.$scope.roles) {
@@ -82,6 +72,7 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
                 });
             }
             DocumentApi.createDocument($scope.database.getName(), modalPromise.$scope.user["@rid"], modalPromise.$scope.user).then(function (data) {
+                data.roles = modalPromise.$scope.user.roles;
                 $scope.usersResult.push(data);
                 $scope.tableParams.reload();
                 Notification.push({content: 'User ' + data.name + ' has been created.'});
@@ -91,13 +82,30 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
         }
         modalPromise.$promise.then(modalPromise.show);
     }
-    $scope.changeRoles = function (result) {
+    $scope.tagAdded = function (tag, user) {
 
+        var query = 'update {{rid}} add roles = {{role}}';
+        query = S(query).template({rid: user['@rid'], role: tag['@rid']}).s;
+
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: query, limit: $scope.limit, shallow: false}, function (data) {
+            Notification.push({content: S("Role '{{role}}' added to user  '{{user}}'").template({role: tag.name, user: user.name }).s});
+        });
+    }
+    $scope.tagRemoved = function (tag, user) {
+
+        var query = 'update {{rid}} remove roles = {{role}}';
+        query = S(query).template({rid: user['@rid'], role: tag['@rid']}).s;
+
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: query, limit: $scope.limit, shallow: false}, function (data) {
+
+            Notification.push({content: S("Role '{{role}}' removed from user  '{{user}}'").template({role: tag.name, user: user.name }).s});
+
+        });
     }
     $scope.edit = function (user) {
         var modalScope = $scope.$new(true);
         modalScope.user = user;
-        modalScope.select2Options = $scope.select2Options;
+        modalScope.loadRoles = $scope.loadRoles;
         var modalPromise = $modal({template: 'views/database/users/newUser.html', scope: modalScope, show: false});
         modalScope.save = function () {
             if (modalPromise.$scope.roles) {
@@ -106,7 +114,14 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
                     modalPromise.$scope.user.roles.push(e.text["@rid"])
                 });
             }
-            DocumentApi.updateDocument($scope.database.getName(), modalPromise.$scope.user["@rid"], modalPromise.$scope.user).then(function () {
+            DocumentApi.updateDocument($scope.database.getName(), modalPromise.$scope.user["@rid"], modalPromise.$scope.user).then(function (data) {
+
+                var idx = $scope.usersResult.indexOf(modalPromise.$scope.user);
+                $scope.usersResult.splice(idx, 1);
+                data.roles = modalPromise.$scope.user.roles;
+                $scope.usersResult.push(data);
+                $scope.tableParams.reload();
+                Notification.push({content: 'User ' + data.name + ' has been updated.'});
 
             }, function error(err) {
                 Notification.push({content: err, error: true});
@@ -130,12 +145,12 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
             }
         });
     }
-    $scope.getListRoles();
+
     $scope.getListUsers();
 
 }]);
 
-schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'CommandApi', 'Database', 'Notification', 'DocumentApi', '$modal', function ($scope, $routeParams, $location, DatabaseApi, CommandApi, Database, Notification, DocumentApi, $modal) {
+schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'CommandApi', 'Database', 'Notification', 'DocumentApi', '$modal', '$q', function ($scope, $routeParams, $location, DatabaseApi, CommandApi, Database, Notification, DocumentApi, $modal, $q) {
 
     $scope.database = Database;
     var selectAllUsers = 'select * from oRole fetchPlan *:1 order by name  ';
@@ -153,6 +168,26 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
         });
     }
 
+    $scope.deleteRole = function (role) {
+
+        Utilities.confirm($scope, $modal, $q, {
+            title: 'Warning!',
+            body: 'You are deleting role ' + role.name + '. Are you sure?',
+            success: function () {
+                DocumentApi.deleteDocument($routeParams.database, role["@rid"]).then(function () {
+                    var idx = $scope.usersResult.indexOf(role);
+                    $scope.usersResult.splice(idx, 1);
+                    if ($scope.selectedRole == role) {
+                        $scope.selectRole($scope.usersResult.result[0])
+                    }
+                    Notification.push({content: 'Role ' + role.name + ' has been deleted.'});
+                }, function err() {
+
+                })
+            }
+        });
+
+    }
     $scope.getListUsers();
     $scope.selectRole = function (selectedRole) {
         $scope.selectedRole = selectedRole;
@@ -164,6 +199,17 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
 
     $scope.dropRule = function (rule) {
         delete $scope.selectedRole['rules'][rule];
+    }
+    $scope.changeMode = function (res) {
+        var query = 'update {{rid}} set mode = {{mode}}';
+
+        query = S(query).template({rid: res['@rid'], mode: res.mode}).s;
+
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: query, limit: $scope.limit, shallow: false}, function (data) {
+
+            Notification.push({content: S("Mode of '{{role}}' changed in '{{mode}}'").template({role: res.name, mode: $scope.roleMode[res.mode] }).s});
+
+        });
     }
     $scope.addRule = function () {
         var modalScope = $scope.$new(true);

@@ -37,12 +37,17 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="control-label col-md-3" for="inputRoles"> Roles</label>
+                                <label class="control-label col-md-3"> Roles</label>
 
                                 <div class="col-md-9">
-                                    <input id="inputRoles" type="hidden" ng-model="roles"
-                                           ui-select2="select2Options"
-                                           data-placeholder="Add role">
+                                    <tags-input ng-model="user.roles" placeholder="Add role"
+                                                add-from-autocomplete-only="true"
+                                                display-property="name">
+                                        <auto-complete min-length="0"
+                                                       debounce-delay="0"
+                                                       max-results-to-show="10"
+                                                       source="loadRoles($query)"></auto-complete>
+                                    </tags-input>
                                 </div>
                             </div>
                         </div>

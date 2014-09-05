@@ -16,7 +16,8 @@
             </div>
             <div class="col-md-6">
                 <div class="btn-group pull-right">
-                    <button class="btn btn-sm" ng-click="addUser()"><i class="fa fa-plus-circle">Add user</i></button>
+                    <button class="btn btn-sm btn-success" ng-click="addUser()"><i class="fa fa-plus-circle"> Add
+                        user</i></button>
                 </div>
             </div>
         </div>
@@ -28,9 +29,13 @@
                     <tr ng-repeat="result in $data | filter: queryy |  orderBy:predicate:reverse">
                         <td data-title="'Name'">{{result['name']}}</td>
                         <td data-title="'Roles'">
-                            <input type="hidden" ng-model="result.roles" ng-change="changeRoles(result)"
-                                   ui-select2="select2Options" class="input-large"
-                                   data-placeholder="Add role">
+                            <tags-input ng-model="result.roles" placeholder="Add role" add-from-autocomplete-only="true"
+                                        display-property="name" on-tag-added="tagAdded($tag,result)"
+                                        on-tag-removed="tagRemoved($tag,result)">
+                                <auto-complete min-length="0"
+                                               debounce-delay="0"
+                                               max-results-to-show="10" source="loadRoles($query)"></auto-complete>
+                            </tags-input>
                         </td>
                         <td data-title="'Status'">{{result['status']}}</td>
                         <td data-title="'Actions'">

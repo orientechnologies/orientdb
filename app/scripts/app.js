@@ -29,7 +29,8 @@ var deps = ['header.controller',
     'ui.select2',
     'ngRoute',
     'ngAnimate',
-    'angularSpectrumColorpicker'];
+    'angularSpectrumColorpicker',
+    'ngTagsInput'];
 
 
 var App = angular.module('OrientDBStudioApp', deps);

@@ -704,7 +704,19 @@ database.factory('DocumentApi', function ($http, $resource, Database, $q) {
         return deferred.promise;
     }
     resource.deleteDocument = function (database, rid, callback) {
-        $http.delete(API + 'document/' + database + "/" + rid.replace('#', '')).success(callback).error(callback);
+        var deferred = $q.defer()
+        $http.delete(API + 'document/' + database + "/" + rid.replace('#', '')).success(function (data) {
+            if (callback) {
+                callback(data);
+            }
+            deferred.resolve(data);
+        }).error(function (data) {
+                if (callback) {
+                    callback(data);
+                }
+                deferred.reject(data);
+            });
+        return deferred.promise;
     }
     resource.isNew = function (doc) {
         return doc['@rid'] == '#-1:-1';
