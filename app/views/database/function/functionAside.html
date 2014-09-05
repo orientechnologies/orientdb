@@ -1,42 +1,30 @@
-<div class="aside" role="dialog" tabindex="-1">
-    <div class="aside-dialog">
-        <div class="aside-content">
-            <div class="aside-header">
-                <button class="close" ng-click="$hide()" type="button">×</button>
-                <h4 class="aside-title ng-binding">Funcions</h4>
+<div class="container-fluid" role="dialog" tabindex="-1">
+
+
+    <div class="row">
+        <form class="form-search search-bookmarks">
+            <div class="form-group col-md-10 col-md-offset-1">
+                <input type="text" class="form-control  search-query" ng-model="queryy"
+                       placeholder="Search Functions">
             </div>
-            <div class="aside-body">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class=" col-md-offset-1 col-md-10">
-                            <form role="form">
-                                <div class="form-group">
-                                    <input class="form-control input-sm input_functions" placeholder="Search"
-                                           ng-model="queryy">
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="list-group">
-                            <a class="list-group-item" href="javascript:void(0)" ng-repeat="func in functions | orderBy: 'name' | filter:queryy |filter:queryy.code"
-                               ng-class="{active : functionToExecute == func}" ng-click="selectFunction(func)"
-                               value="{{func['name']}}">
-                                <span class="badge">{{func['language']}}</span>
-                                {{func['name']}}
-                            </a>
-                            <!--<li class="list-group-item"-->
-                                <!--ng-repeat="func in functions | orderBy: 'name' | filter:queryy |filter:queryy.code"-->
-                                <!--ng-class="{active : functionToExecute == func}">-->
-                                <!--<span class="badge">{{func['language']}}</span>-->
-                                <!---->
-                            <!--</li>-->
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="aside-footer">
-            </div>
+        </form>
+    </div>
+    <div class="row">
+        <div class="list-group">
+            <a class="list-group-item" href="javascript:void(0)"
+               ng-repeat="func in functions | orderBy: 'name' | filter:queryy |filter:queryy.code"
+               ng-class="{active : functionToExecute == func}" ng-click="selectFunction(func)"
+               value="{{func['name']}}">
+                <span class="badge">{{func['language']}}</span>
+                {{func['name']}}
+            </a>
+            <!--<li class="list-group-item"-->
+            <!--ng-repeat="func in functions | orderBy: 'name' | filter:queryy |filter:queryy.code"-->
+            <!--ng-class="{active : functionToExecute == func}">-->
+            <!--<span class="badge">{{func['language']}}</span>-->
+            <!---->
+            <!--</li>-->
         </div>
     </div>
+
 </div>

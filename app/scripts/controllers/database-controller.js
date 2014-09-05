@@ -45,7 +45,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
     $scope.hideSettings = localStorageService.get("hideSettings");
     if ($scope.hideSettings == null) {
-        $scope.hideSettings = false;
+        $scope.hideSettings = true;
         localStorageService.add("hideSettings", $scope.hideSettings);
     } else {
         $scope.hideSettings = JSON.parse($scope.hideSettings);

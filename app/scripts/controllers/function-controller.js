@@ -2,6 +2,7 @@ var schemaModule = angular.module('function.controller', ['database.services']);
 schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', 'Notification', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner, Notification, Aside) {
 
     $scope.database = Database;
+    $scope.logLevel = ""
     $scope.listClasses = $scope.database.listClasses();
     $scope.editorOptions = {
         lineWrapping: true,
@@ -16,8 +17,19 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         },
         onLoad: function (_cm) {
             $scope.vcm = _cm;
-            $scope.createNewFunction();
+            //$scope.createNewFunction();
         }
+    };
+
+    $scope.viewerOptions = {
+        lineWrapping: true,
+        lineNumbers: true,
+        readOnly: true,
+        mode: 'javascript',
+        onLoad: function (_cm) {
+            $scope.vcm = _cm;
+        }
+
     };
     Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Functions");
     $scope.functions = new Array;
@@ -47,12 +59,17 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                     $scope.functionsrid.push(data.result[i]['name'])
                 }
 
-                if ($scope.functions.length > 0 && $scope.functionToExecute != undefined) {
+
+                if ($scope.functions.length > 0) {
+                    if ($scope.functionToExecute == undefined) {
+
+                        $scope.functionToExecute = $scope.functions[0];
+                    }
                     var index = $scope.functionsrid.indexOf($scope.functionToExecute['name']);
                     if (index != -1)
                         $scope.showInConsoleAfterSave($scope.functions[index]);
                 }
-                Aside.show({scope: $scope, template: 'views/database/function/functionAside.html', show: false});
+                Aside.show({scope: $scope, title: "Functions", template: 'views/database/function/functionAside.html', show: false});
             }
         });
 
@@ -72,6 +89,9 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
         }
         return result;
+    }
+    $scope.showAllFunctions = function () {
+        Aside.toggle();
     }
     $scope.copyFunction = function () {
         if ($scope.functionToExecute != undefined) {
@@ -130,10 +150,13 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                 if (data.result) {
                     $scope.resultExecute = JSON.stringify(data.result);
                     Spinner.stopSpinner();
+
                 }
+                $scope.logLevel = "function-success-log";
                 Spinner.stopSpinner();
             }, function (error) {
                 $scope.resultExecute = error;
+                $scope.logLevel = "function-error-log";
                 Spinner.stopSpinner();
             });
         }
@@ -169,6 +192,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     }
 
     $scope.selectFunction = function (selected) {
+        $scope.resultExecute = '';
+        $scope.logLevel = '';
         $scope.showInConsole(selected);
         Aside.toggle();
     }
@@ -202,6 +227,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     }
     $scope.saveFunction = function () {
         $scope.resultExecute = '';
+        $scope.logLevel = '';
         if ($scope.functionToExecute['language'] != undefined && $scope.functionToExecute['name'] != undefined && $scope.functionToExecute['name'] != '') {
             if ($scope.isNewFunction == true) {
 

@@ -4,6 +4,7 @@ html {
 
 body {
     height: 100%;
+    font-size: 13px;
     background-color: #E7E9EB;
 }
 
@@ -630,7 +631,7 @@ ul.arrayrid > li {
 }
 
 .container-notification {
-    position: absolute;
+    position: fixed;
     width: 100%;
     z-index: 1000;
     left: 0;

@@ -70,9 +70,45 @@ body div.container-studio {
 }
 
 .console_class_functions .functiotron {
-    padding: 20px;
-    border-left: 3px solid #c5c5c5;
+    padding: 10px;
+    padding-left: 35px;
+    margin: 0;
+}
 
+.console_class_functions  > div.row  div.col-md-12 {
+    border-left: 3px solid #c5c5c5;
+}
+
+.console_class_functions .parameters .row > div {
+    border-left: 3px solid #c5c5c5;
+}
+
+.console_class_functions .parameters .row > div:first-child {
+    border: none;
+}
+
+.console_class_functions .parameters {
+    padding: 10px;
+}
+
+.console_class_functions .function-error {
+    padding: 0px;
+}
+
+.function-error .CodeMirror {
+    height: 100px !important;
+}
+
+.function-error .function-success-log {
+    border-color: #008000;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 2px rgba(0, 128, 0, 0.60);
+    outline: 0 none;
+}
+
+.function-error .function-error-log {
+    border-color: red;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 2px rgba(255, 0, 0, 0.60);
+    outline: 0 none;
 }
 
 .aside {
@@ -372,7 +408,7 @@ table.result-table > thead > tr > th {
 
 .query-info .command {
     padding-left: 0px;
-    padding-right: 0px;
+    padding-right: 5px;
 }
 
 .vertical-align {
@@ -381,7 +417,7 @@ table.result-table > thead > tr > th {
 }
 
 .info {
-    width: 40%;
+    padding-left: 0px;
 }
 
 .server-down {
@@ -540,10 +576,18 @@ div.db-config .row {
     padding-top: 10px;
 }
 
+div.users-ui div.container-fluid, div.role-ui div.container-fluid {
+    padding: 0px;
+}
+
 .role-ui .row {
     padding-top: 10px;
 }
 
 .users-ui .select2-container {
     /*width: 80%;*/
+}
+
+.code-editor .form-group {
+    margin-bottom: 0px;
 }

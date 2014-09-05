@@ -783,12 +783,14 @@ database.factory('FunctionApi', function ($http, $resource, Notification) {
             var time = ((new Date().getTime() - startTime) / 1000);
             var records = data.result ? data.result.length : "";
             if (verbose) {
-                var noti = "Query executed in " + time + " sec. Returned " + records + " record(s)";
-                Notification.push({content: noti});
+                var noti = "Function " + params.functionName + " executed in " + time + " sec. ";
+                Notification.push({content: noti, autoHide: true});
             }
             callback(data);
         }).error(function (data) {
-                Notification.push({content: data});
+                if (verbose) {
+                    Notification.push({content: "Error executing function " + params.functionName + ".", error: true, autoHide: true});
+                }
                 if (error) error(data);
             });
     }
