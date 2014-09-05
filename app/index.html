@@ -101,9 +101,14 @@
         </div>
     </div>
     <!-- Add your site or application content here -->
-    <div ng-include="'views/widget/aside.html'"></div>
-    <div class="container-fluid container-studio">
-        <div class="container-fluid slideLeft" ng-view>
+
+    <div class="container-fluid container-studio" ng-controller="AsideManagerController">
+        <div ng-class="asideClass">
+            <div ng-include="'views/widget/aside.html'"></div>
+        </div>
+            <div ng-class="containerClass">
+            <div class="container-fluid slideLeft" ng-view>
+            </div>
         </div>
     </div>
 </div>

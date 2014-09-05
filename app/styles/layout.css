@@ -75,7 +75,7 @@ body div.container-studio {
     margin: 0;
 }
 
-.console_class_functions  > div.row  div.col-md-12 {
+.console_class_functions > div.row div.col-md-12 {
     border-left: 3px solid #c5c5c5;
 }
 
@@ -89,6 +89,7 @@ body div.container-studio {
 
 .console_class_functions .parameters {
     padding: 10px;
+    padding-left: 35px;
 }
 
 .console_class_functions .function-error {
@@ -189,7 +190,7 @@ body div.container-studio {
 }
 
 .oaside {
-    background-color: #222326;
+    background-color: #30333a;
     /*background-color: #222326;*/
     height: 100%;
     width: 320px;
@@ -206,8 +207,11 @@ body div.container-studio {
 }
 
 .oaside .close {
-    color: #c5c5c5;
+    color: white;
     opacity: .8;
+    position: relative;
+    padding: 0;
+    top: 3px;
 }
 
 .oaside-header {
@@ -274,8 +278,11 @@ input.search-query {
     border-radius: 15px;
 }
 
+.search-bookmarks div.form-group {
+    margin-top: 15px;
+}
+
 .search-bookmarks {
-    padding-top: 5px;
 }
 
 .antialiased {

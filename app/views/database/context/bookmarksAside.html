@@ -12,8 +12,30 @@
         </div>
         <div class="row">
 
-            <ul class="nav nav-tabs nav-stacked bookmarks-list">
-                <li class="bookmarks-item" ng-mouseover="hover(bk)" ng-repeat="bk in bks | filter:searchText">
+            <!--<ul class="nav nav-tabs nav-stacked bookmarks-list">-->
+                <!--<li class="bookmarks-item" ng-mouseover="hover(bk)" ng-repeat="bk in bks | filter:searchText">-->
+                    <!--<div class="bookmarks-actions" ng-class="{ true : 'visible', false : 'invisible' }[bk == selected]">-->
+                        <!--<a href="javascript:void(0)" data-placement="right"-->
+                           <!--bs-popover="'views/database/bookmarkEdit.html'" data-title="Edit bookmark">-->
+                            <!--<i class="fa fa-edit"></i>-->
+                        <!--</a>-->
+                        <!--<a class="" ng-click="remove(bk)" href="javascript:void(0)">-->
+                            <!--<i class="fa fa-times-circle-o"></i>-->
+                        <!--</a>-->
+                    <!--</div>-->
+                    <!--<a href="javascript:void(0)" ng-click="run(bk)" data-placement="right" bs-tooltip="bk.query">-->
+                        <!--{{bk.name}}-->
+                        <!--<br>-->
+
+                        <!--<div class="pull-right">-->
+                            <!--<span ng-repeat="b in bk.tags" ng-click=" search = b " class="badge book-badge">{{b}}</span>-->
+                        <!--</div>-->
+
+                    <!--</a>-->
+                <!--</li>-->
+            <!--</ul>-->
+            <div class="list-group">
+                <div class="list-group-item" ng-mouseover="hover(bk)" ng-repeat="bk in bks | filter:searchText">
                     <div class="bookmarks-actions" ng-class="{ true : 'visible', false : 'invisible' }[bk == selected]">
                         <a href="javascript:void(0)" data-placement="right"
                            bs-popover="'views/database/bookmarkEdit.html'" data-title="Edit bookmark">
@@ -32,8 +54,9 @@
                         </div>
 
                     </a>
-                </li>
-            </ul>
+                </div>
+
+            </div>
         </div>
     </div>
 </div>

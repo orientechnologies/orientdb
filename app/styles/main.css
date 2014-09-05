@@ -279,7 +279,6 @@ div.edge form.bs-docs-example:after {
 .query-info {
     background-color: #FFFFFF;
     border-top: 1px solid #E7E9EB;
-    color: #788185;
     font-size: 13px;
     height: 39px;
     padding: 0px 19px 14px;
@@ -922,7 +921,7 @@ span.badge-edge {
 }
 
 .panelAlerts .alert {
-    padding: 5px 10px;
+    padding: 8px 10px;
 
 }
 
@@ -945,7 +944,7 @@ span.badge-edge {
 }
 
 .panelAlerts .alert .close {
-    top: -60%;
+    position: relative;
     color: white;
     opacity: 1;
 }

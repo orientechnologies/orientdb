@@ -27,13 +27,10 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     }
     $scope.countPage = 5;
 
-    $scope.setBookClass = function () {
-        if ($scope.bookmarksClass == "") {
-            $scope.bookmarksClass = "show";
-        } else {
-            $scope.bookmarksClass = "";
-        }
+    $scope.toggleBookmarks = function () {
+        Aside.toggle();
     }
+
 
     if (Database.hasClass(Bookmarks.CLAZZ)) {
         Bookmarks.getAll(Database.getName());
@@ -500,24 +497,18 @@ dbModule.controller("BookmarkEditController", ['$scope', '$rootScope', 'Bookmark
         });
     }
 }]);
-dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database', 'scroller', function ($scope, Bookmarks, DocumentApi, Database, scroller) {
+dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database', 'scroller', 'Aside', function ($scope, Bookmarks, DocumentApi, Database, scroller, Aside) {
 
 
-    $(document).bind("keydown", function (e) {
+//    $(document).bind("keydown", function (e) {
+//
+//        if ($scope.$parent.bookmarksClass == "show") {
+//            $scope.$apply(function () {
+//                $scope.closeIfReturn(e);
+//            });
+//        }
+//    });
 
-        if ($scope.$parent.bookmarksClass == "show") {
-            $scope.$apply(function () {
-                $scope.closeIfReturn(e);
-            });
-        }
-    });
-    $(document).bind("click", function (e) {
-        if ($scope.$parent.bookmarksClass == "show") {
-            $scope.$apply(function () {
-                $scope.click();
-            });
-        }
-    });
     $scope.closeIfReturn = function (e) {
         if (e.keyCode == '27') {
             $scope.click();
@@ -534,14 +525,6 @@ dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi',
         $scope.bks = data.result
     });
 
-    $scope.click = function ($event) {
-
-        if ($event) {
-            $event.stopPropagation();
-        }
-        $scope.$parent.setBookClass();
-
-    }
     $scope.isSelected = function (bk) {
         return $scope.selected == bk ? '' : 'hide';
     }
@@ -555,7 +538,7 @@ dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi',
 
         $scope.cm.setValue($scope.queryText);
         $scope.cm.setCursor($scope.cm.lineCount());
-        $scope.$parent.setBookClass();
+        Aside.toggle();
     }
 
     $scope.stopProps = function ($event) {
