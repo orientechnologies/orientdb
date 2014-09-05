@@ -39,7 +39,7 @@ public class OrientVertexFuture extends OrientElementFuture<OrientVertex> implem
     try {
       return future.get().getEdges(direction, labels);
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -48,7 +48,7 @@ public class OrientVertexFuture extends OrientElementFuture<OrientVertex> implem
     try {
       return future.get().getVertices(direction, labels);
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -57,7 +57,7 @@ public class OrientVertexFuture extends OrientElementFuture<OrientVertex> implem
     try {
       return future.get().query();
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -66,7 +66,7 @@ public class OrientVertexFuture extends OrientElementFuture<OrientVertex> implem
     try {
       return future.get().addEdge(label, inVertex);
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 

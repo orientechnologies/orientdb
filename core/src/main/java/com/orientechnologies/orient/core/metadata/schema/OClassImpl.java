@@ -488,7 +488,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       OClassImpl currentClass = this;
       do {
-        props.putAll(currentClass.properties);
+
+        for (OProperty p : currentClass.properties.values()) {
+          final String propName = p.getName();
+
+          if (!props.containsKey(propName))
+            props.put(propName, p);
+        }
 
         currentClass = (OClassImpl) currentClass.getSuperClass();
 

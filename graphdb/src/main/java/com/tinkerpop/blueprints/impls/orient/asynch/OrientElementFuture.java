@@ -20,15 +20,15 @@
 
 package com.tinkerpop.blueprints.impls.orient.asynch;
 
-import java.util.Set;
-import java.util.concurrent.Future;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
+
+import java.util.Set;
+import java.util.concurrent.Future;
 
 public abstract class OrientElementFuture<T extends OrientElement> implements Element, OIdentifiable {
   protected final Future<T> future;
@@ -42,7 +42,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       return future.get().getProperty(key);
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -51,7 +51,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       return future.get().getPropertyKeys();
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -60,7 +60,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       future.get().setProperty(key, value);
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -69,7 +69,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       return future.get().removeProperty(key);
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -78,7 +78,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       future.get().remove();
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -87,7 +87,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       return future.get().getId();
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -101,7 +101,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       return future.get().getRecord();
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -110,7 +110,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       return future.get().hashCode();
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -119,7 +119,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       future.get().lock(iExclusive);
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -128,7 +128,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       future.get().unlock();
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -137,7 +137,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       return future.get().compareTo(o);
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -146,7 +146,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       return future.get().compare(o1, o2);
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 
@@ -154,7 +154,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     try {
       return (T) future.get();
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve the requested information", e);
     }
   }
 }

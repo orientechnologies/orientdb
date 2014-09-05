@@ -51,9 +51,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   @Override
   public void deserialize(final ODocument document, final BytesContainer bytes) {
-    String className = readString(bytes);
+//    System.out.printf("\n- deserialize %s", document );
+
+    final String className = readString(bytes);
     if (className.length() != 0)
       document.setClassNameIfExists(className);
+
     int last = 0;
     String field;
     while (true) {
@@ -111,17 +114,31 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   @SuppressWarnings("unchecked")
   @Override
-  public void serialize(ODocument document, BytesContainer bytes) {
-    if (document.getClassName() != null)
-      writeString(bytes, document.getClassName());
-    else
+  public void serialize(final ODocument document, final BytesContainer bytes) {
+//    System.out.printf("\n- serialize %s", document );
+
+    final Map<String, OProperty> props;
+    final OClass clazz = document.getSchemaClass();
+    if (clazz != null) {
+      writeString(bytes, clazz.getName());
+      props = clazz.propertiesMap();
+    } else {
       writeEmptyString(bytes);
-    int[] pos = new int[document.fields()];
-    OProperty[] properties = new OProperty[document.fields()];
+      props = null;
+    }
+
+    final String[] fields = document.fieldNames();
+
+    final int[] pos = new int[fields.length];
+    final OProperty[] properties = new OProperty[fields.length];
+
     int i = 0;
-    Entry<String, ?> values[] = new Entry[document.fields()];
+
+    final Entry<String, ?> values[] = new Entry[fields.length];
     for (Entry<String, Object> entry : document) {
-      properties[i] = getSchemaProperty(document, entry.getKey());
+      if (props != null)
+        properties[i] = props.get(entry.getKey());
+
       if (properties[i] != null) {
         OVarIntSerializer.write(bytes, (properties[i].getId() + 1) * -1);
         if (properties[i].getType() != OType.ANY)
@@ -139,12 +156,13 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     for (i = 0; i < values.length; i++) {
       int pointer = 0;
-      Object value = values[i].getValue();
+      final Object value = values[i].getValue();
       if (value != null) {
-        OType type = getFieldType(document, values[i].getKey(), value);
+        final OType type = getFieldType(document, values[i].getKey(), value, props);
         // temporary skip serialization skip of unknown types
         if (type == null)
           continue;
+
         pointer = writeSingleValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         if (properties[i] == null || properties[i].getType() == OType.ANY)
@@ -586,30 +604,21 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return pos;
   }
 
-  private OProperty getSchemaProperty(ODocument document, String key) {
-    OClass clazz = document.getSchemaClass();
-    if (clazz != null)
-      return clazz.getProperty(key);
-    return null;
-  }
-
-  private OType getFieldType(ODocument document, String key, Object fieldValue) {
+  private OType getFieldType(final ODocument document, final String key, final Object fieldValue,
+      final Map<String, OProperty> properties) {
     OType type = document.fieldType(key);
     if (type == null) {
-      OClass clazz = document.getSchemaClass();
-      if (clazz != null) {
-        OProperty prop = clazz.getProperty(key);
-        if (prop != null) {
-          type = prop.getType();
-        }
-      }
+      final OProperty prop = properties != null ? properties.get(key) : null;
+      if (prop != null)
+        type = prop.getType();
+
       if (type == null || OType.ANY == type)
         type = getTypeFromValue(fieldValue, false);
     }
     return type;
   }
 
-  private OType getTypeFromValue(Object fieldValue, boolean forceEmbedded) {
+  private OType getTypeFromValue(final Object fieldValue, final boolean forceEmbedded) {
     OType type = OType.getTypeByValue(fieldValue);
     if (type == OType.LINK && fieldValue instanceof ODocument && forceEmbedded)
       type = OType.EMBEDDED;

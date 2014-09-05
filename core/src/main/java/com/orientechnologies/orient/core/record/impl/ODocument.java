@@ -819,36 +819,6 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return this;
   }
 
-  private void saveOldFieldValue(String iFieldName, Object oldValue) {
-    if (_trackingChanges && _recordId.isValid()) {
-      // SAVE THE OLD VALUE IN A SEPARATE MAP ONLY IF TRACKING IS ACTIVE AND THE RECORD IS NOT NEW
-      if (_fieldOriginalValues == null)
-        _fieldOriginalValues = new HashMap<String, Object>();
-
-      // INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
-      if (!_fieldOriginalValues.containsKey(iFieldName))
-        _fieldOriginalValues.put(iFieldName, oldValue);
-    }
-  }
-
-  private OType deriveFieldType(String iFieldName, OType[] iFieldType) {
-    OType fieldType;
-
-    if (iFieldType != null && iFieldType.length == 1) {
-      setFieldType(iFieldName, iFieldType[0]);
-      fieldType = iFieldType[0];
-    } else
-      fieldType = null;
-
-    if (fieldType == null && _clazz != null) {
-      // SCHEMAFULL?
-      final OProperty prop = _clazz.getProperty(iFieldName);
-      if (prop != null)
-        fieldType = prop.getType();
-    }
-    return fieldType;
-  }
-
   /**
    * Removes a field.
    */
@@ -1681,28 +1651,64 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     return iFieldName;
   }
 
+  protected void clearSource() {
+    this._source = null;
+  }
+
+  private void saveOldFieldValue(String iFieldName, Object oldValue) {
+    if (_trackingChanges && _recordId.isValid()) {
+      // SAVE THE OLD VALUE IN A SEPARATE MAP ONLY IF TRACKING IS ACTIVE AND THE RECORD IS NOT NEW
+      if (_fieldOriginalValues == null)
+        _fieldOriginalValues = new HashMap<String, Object>();
+
+      // INSERT IT ONLY IF NOT EXISTS TO AVOID LOOSE OF THE ORIGINAL VALUE (FUNDAMENTAL FOR INDEX HOOK)
+      if (!_fieldOriginalValues.containsKey(iFieldName))
+        _fieldOriginalValues.put(iFieldName, oldValue);
+    }
+  }
+
+  private OType deriveFieldType(String iFieldName, OType[] iFieldType) {
+    OType fieldType;
+
+    if (iFieldType != null && iFieldType.length == 1) {
+      setFieldType(iFieldName, iFieldType[0]);
+      fieldType = iFieldType[0];
+    } else
+      fieldType = null;
+
+    if (fieldType == null && _clazz != null) {
+      // SCHEMAFULL?
+      final OProperty prop = _clazz.getProperty(iFieldName);
+      if (prop != null)
+        fieldType = prop.getType();
+    }
+    return fieldType;
+  }
+
   private void addCollectionChangeListener(final String fieldName) {
     final Object fieldValue = _fieldValues.get(fieldName);
     addCollectionChangeListener(fieldName, fieldValue);
   }
 
   private void addCollectionChangeListener(final String fieldName, final Object fieldValue) {
-    OType fieldType = fieldType(fieldName);
-    if (fieldType == null && _clazz != null) {
-      final OProperty prop = _clazz.getProperty(fieldName);
-      fieldType = prop != null ? prop.getType() : null;
-    }
+    if (!(fieldValue instanceof OTrackedMultiValue))
+      return;
 
+    OType fieldType;
     if (fieldValue instanceof ORidBag)
       fieldType = OType.LINKBAG;
+    else {
+      fieldType = fieldType(fieldName);
+      if (fieldType == null && _clazz != null) {
+        final OProperty prop = _clazz.getProperty(fieldName);
+        fieldType = prop != null ? prop.getType() : null;
+      }
+    }
 
     if (fieldType == null
         || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)
             || OType.LINKSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType) || OType.LINKBAG
               .equals(fieldType)))
-      return;
-
-    if (!(fieldValue instanceof OTrackedMultiValue))
       return;
 
     final OTrackedMultiValue<Object, Object> multiValue = (OTrackedMultiValue<Object, Object>) fieldValue;
@@ -1763,9 +1769,5 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       return;
 
     _fieldCollectionChangeTimeLines.remove(fieldName);
-  }
-
-  protected void clearSource() {
-    this._source = null;
   }
 }

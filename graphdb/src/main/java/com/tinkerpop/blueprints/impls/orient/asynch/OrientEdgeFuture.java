@@ -38,7 +38,7 @@ public class OrientEdgeFuture extends OrientElementFuture<OrientEdge> implements
     try {
       return future.get().getVertex(direction);
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve getVertex()", e);
     }
   }
 
@@ -47,7 +47,7 @@ public class OrientEdgeFuture extends OrientElementFuture<OrientEdge> implements
     try {
       return future.get().getLabel();
     } catch (Exception e) {
-      throw new OException("Cannot retrieve the requested information");
+      throw new OException("Cannot retrieve label()", e);
     }
   }
 }

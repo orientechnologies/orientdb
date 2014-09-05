@@ -20,15 +20,21 @@
 
 package com.tinkerpop.blueprints.impls.orient.asynch;
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Features;
@@ -56,11 +62,14 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientGraphAsynch implements OrientExtendedGraph {
-  private final Features           FEATURES         = new Features();
-  private final OrientGraphFactory factory;
-  private final AtomicLong         updateOperations = new AtomicLong();
-  private int                      maxPoolSize      = 100;
-  private boolean                  transactional    = false;
+  private final Features                              FEATURES           = new Features();
+  private final OrientGraphFactory                    factory;
+  private ConcurrentLinkedHashMap<ORID, OrientVertex> vertexCache;
+  private int                                         maxPoolSize        = 32;
+  private int                                         maxRetries         = 16;
+  private boolean                                     transactional      = false;
+  private AtomicLong                                  operationStarted   = new AtomicLong();
+  private AtomicLong                                  operationCompleted = new AtomicLong();
 
   public OrientGraphAsynch(final String url) {
     factory = new OrientGraphFactory(url).setupPool(1, maxPoolSize).setTransactional(transactional);
@@ -70,17 +79,71 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     factory = new OrientGraphFactory(url, username, password).setupPool(1, maxPoolSize).setTransactional(transactional);
   }
 
+  public OrientGraphAsynch setCache(final long iElements) {
+    vertexCache = new ConcurrentLinkedHashMap.Builder<ORID, OrientVertex>().maximumWeightedCapacity(iElements).build();
+    return this;
+  }
+
   public Vertex addVertex(final Object id, final Object... prop) {
-    final long operationId = beginGraphUpdate();
+    final long operationId = operationStarted.incrementAndGet();
+
     return new OrientVertexFuture(Orient.instance().getWorkers().submit(new Callable<OrientVertex>() {
       @Override
       public OrientVertex call() throws Exception {
         final OrientBaseGraph g = acquire();
         try {
-          return g.addVertex(id, prop);
+          try {
+            final OrientVertex v = g.addVertex(id, prop);
+
+            if (vertexCache != null)
+              vertexCache.put(v.getIdentity(), v);
+
+            return v;
+
+          } catch (ORecordDuplicatedException e) {
+            // ALREADY EXISTS, TRY TO MERGE IT
+            for (int retry = 0;; retry++) {
+              if (OLogManager.instance().isDebugEnabled())
+                OLogManager.instance().debug(this,
+                    "Vertex already created, merge it and retry again (retry=" + retry + "/" + maxRetries + ")");
+
+              boolean modified = false;
+              final ODocument existent = e.getRid().getRecord();
+              for (int i = 0; i < prop.length; i += 2) {
+                final String pName = prop[i].toString();
+                final Object pValue = prop[i + 1];
+
+                final Object fieldValue = existent.field(pName);
+                if (fieldValue == null || (!fieldValue.equals(pValue))) {
+                  // OVERWRITE PROPERTY VALUE
+                  existent.field(pName, fieldValue);
+                  modified = true;
+                }
+              }
+
+              if (modified) {
+                try {
+                  existent.save();
+
+                } catch (ONeedRetryException ex) {
+                  if (retry < maxRetries)
+                    existent.reload(null, true);
+                  else
+                    throw e;
+                }
+              }
+
+              final OrientVertex v = (OrientVertex) getVertex(existent);
+
+              if (vertexCache != null)
+                vertexCache.put(v.getIdentity(), v);
+
+              return v;
+            }
+          }
         } finally {
-          endGraphUpdate(operationId);
-          release(g);
+          g.shutdown();
+          asynchOperationCompleted();
         }
       }
     }));
@@ -88,16 +151,22 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Vertex addVertex(final Object id) {
-    final long operationId = beginGraphUpdate();
+    final long operationId = operationStarted.incrementAndGet();
+
     return new OrientVertexFuture(Orient.instance().getWorkers().submit(new Callable<OrientVertex>() {
       @Override
       public OrientVertex call() throws Exception {
         final OrientBaseGraph g = acquire();
         try {
-          return g.addVertex(id);
+          final OrientVertex v = g.addVertex(id);
+
+          if (vertexCache != null)
+            vertexCache.put(v.getIdentity(), v);
+
+          return v;
         } finally {
-          endGraphUpdate(operationId);
-          release(g);
+          g.shutdown();
+          asynchOperationCompleted();
         }
       }
     }));
@@ -110,27 +179,53 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Vertex getVertex(final Object id) {
-    waitUntilCompletition(updateOperations.get());
+    if (id instanceof OrientVertex)
+      return (Vertex) id;
+
     final OrientBaseGraph g = acquire();
     try {
-      return g.getVertex(id);
+      if (id != null)
+        return null;
+
+      OrientVertex v;
+      if (vertexCache != null) {
+        if (id instanceof OIdentifiable) {
+          OIdentifiable objId = (OIdentifiable) id;
+          v = vertexCache.get(objId.getIdentity());
+          if (v != null)
+            // FOUND
+            return v;
+        }
+      }
+
+      // LOAD FROM DATABASE AND STORE IN CACHE
+      v = g.getVertex(id);
+      if (v != null && vertexCache != null)
+        vertexCache.put(v.getIdentity(), v);
+
+      return v;
+
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
   @Override
   public void removeVertex(final Vertex vertex) {
-    final long operationId = beginGraphUpdate();
+    final long operationId = operationStarted.incrementAndGet();
+
     Orient.instance().getWorkers().submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
         final OrientBaseGraph g = acquire();
         try {
+          if (vertexCache != null)
+            vertexCache.remove(vertex.getId());
+
           g.removeVertex(vertex);
         } finally {
-          endGraphUpdate(operationId);
-          release(g);
+          g.shutdown();
+          asynchOperationCompleted();
         }
         return null;
       }
@@ -139,29 +234,30 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Iterable<Vertex> getVertices() {
-    waitUntilCompletition(updateOperations.get());
+
     final OrientBaseGraph g = acquire();
     try {
       return g.getVertices();
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
   @Override
   public Iterable<Vertex> getVertices(final String key, final Object value) {
-    waitUntilCompletition(updateOperations.get());
+
     final OrientBaseGraph g = acquire();
     try {
       return g.getVertices(key, value);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
   @Override
   public Edge addEdge(final Object id, final Vertex outVertex, final Vertex inVertex, final String label) {
-    final long operationId = beginGraphUpdate();
+    final long operationId = operationStarted.incrementAndGet();
+
     return new OrientEdgeFuture(Orient.instance().getWorkers().submit(new Callable<OrientEdge>() {
       @Override
       public OrientEdge call() throws Exception {
@@ -179,18 +275,21 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
             try {
               return g.addEdge(id, vOut, vIn, label);
             } catch (Exception e) {
-              if (retry < 20) {
-                OLogManager.instance().debug(this,
-                    "Conflict on addEdge(" + id + "," + outVertex + "," + inVertex + "," + label + "), retrying " + retry);
-                vOut.getRecord().reload();
-                vIn.getRecord().reload();
+              if (retry < maxRetries) {
+                if (OLogManager.instance().isDebugEnabled())
+                  OLogManager.instance().debug(
+                      this,
+                      "Conflict on addEdge(" + id + "," + outVertex + "," + inVertex + "," + label + "), retrying (retry=" + retry
+                          + "/" + maxRetries + ")");
+                vOut.getRecord().reload(null, true);
+                vIn.getRecord().reload(null, true);
               } else
                 throw e;
             }
           }
         } finally {
-          endGraphUpdate(operationId);
-          release(g);
+          g.shutdown();
+          asynchOperationCompleted();
         }
       }
     }));
@@ -198,18 +297,19 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Edge getEdge(final Object id) {
-    waitUntilCompletition(updateOperations.get());
+
     final OrientBaseGraph g = acquire();
     try {
       return g.getEdge(id);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
   @Override
   public void removeEdge(final Edge edge) {
-    final long operationId = beginGraphUpdate();
+    final long operationId = operationStarted.incrementAndGet();
+
     Orient.instance().getWorkers().submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
@@ -217,8 +317,8 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
         try {
           g.removeEdge(edge);
         } finally {
-          endGraphUpdate(operationId);
-          release(g);
+          g.shutdown();
+          asynchOperationCompleted();
         }
         return null;
       }
@@ -227,23 +327,23 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Iterable<Edge> getEdges() {
-    waitUntilCompletition(updateOperations.get());
+
     final OrientBaseGraph g = acquire();
     try {
       return g.getEdges();
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
   @Override
   public Iterable<Edge> getEdges(final String key, final Object value) {
-    waitUntilCompletition(updateOperations.get());
+
     final OrientBaseGraph g = acquire();
     try {
       return g.getEdges(key, value);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -253,7 +353,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       g.drop();
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -263,7 +363,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.addTemporaryVertex(iClassName, prop);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -273,7 +373,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.getVertexBaseType();
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -283,7 +383,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.getVertexType(iClassName);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -293,7 +393,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.createVertexType(iClassName);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -303,7 +403,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.createVertexType(iClassName, iSuperClassName);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -313,7 +413,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.createVertexType(iClassName, iSuperClass);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -323,7 +423,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       g.dropVertexType(iClassName);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -333,7 +433,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.getEdgeBaseType();
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -343,7 +443,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.getEdgeType(iClassName);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -353,7 +453,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.createEdgeType(iClassName);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -363,7 +463,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.createEdgeType(iClassName, iSuperClassName);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -373,7 +473,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.createEdgeType(iClassName, iSuperClass);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -383,7 +483,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       g.dropEdgeType(iClassName);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -393,7 +493,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.detach(iElement);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -403,7 +503,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.attach(iElement);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -424,6 +524,20 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public void shutdown() {
+    synchronized (operationCompleted) {
+      while (operationStarted.get() > operationCompleted.get()) {
+        try {
+          operationCompleted.wait();
+        } catch (InterruptedException e) {
+          Thread.interrupted();
+          break;
+        }
+      }
+    }
+
+    if (vertexCache != null)
+      vertexCache.clear();
+
     factory.close();
   }
 
@@ -438,7 +552,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.createIndex(indexName, indexClass, indexParameters);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -448,7 +562,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.getIndex(indexName, indexClass);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -458,7 +572,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.getIndices();
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -468,7 +582,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       g.dropIndex(indexName);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -478,7 +592,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       g.dropKeyIndex(key, elementClass);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -488,7 +602,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       g.createKeyIndex(key, elementClass, indexParameters);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -498,7 +612,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.getIndexedKeys(elementClass);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
@@ -506,18 +620,14 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     return factory.get();
   }
 
-  public void release(final OrientBaseGraph iGraph) {
-    factory.release(iGraph);
-  }
-
   public OCommandRequest command(final OCommandSQL iCommand) {
-    final long operationId = beginGraphUpdate();
+
     final OrientBaseGraph g = acquire();
     try {
       return g.command(iCommand);
     } finally {
-      endGraphUpdate(operationId);
-      release(g);
+
+      g.shutdown();
     }
   }
 
@@ -526,48 +636,48 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     try {
       return g.countVertices();
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
   @Override
   public long countVertices(String iClassName) {
-    waitUntilCompletition(updateOperations.get());
+
     final OrientBaseGraph g = acquire();
     try {
       return g.countVertices(iClassName);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
   public long countEdges() {
-    waitUntilCompletition(updateOperations.get());
+
     final OrientBaseGraph g = acquire();
     try {
       return g.countEdges();
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
   @Override
   public long countEdges(String iClassName) {
-    waitUntilCompletition(updateOperations.get());
+
     final OrientBaseGraph g = acquire();
     try {
       return g.countEdges(iClassName);
     } finally {
-      release(g);
+      g.shutdown();
     }
   }
 
   public <V> V execute(final OCallable<V, OrientBaseGraph> iCallable) {
-    final OrientBaseGraph graph = factory.get();
+    final OrientBaseGraph graph = acquire();
     try {
       return iCallable.call(graph);
     } finally {
-      factory.release(graph);
+      graph.shutdown();
     }
   }
 
@@ -590,6 +700,14 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   @Override
   public ODatabaseDocumentTx getRawGraph() {
     throw new UnsupportedOperationException("getRawGraph");
+  }
+
+  public int getMaxRetries() {
+    return maxRetries;
+  }
+
+  public void setMaxRetries(final int maxRetries) {
+    this.maxRetries = maxRetries;
   }
 
   protected void config() {
@@ -623,13 +741,10 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     FEATURES.supportsThreadedTransactions = false;
   }
 
-  private long beginGraphUpdate() {
-    return updateOperations.incrementAndGet();
-  }
-
-  private void endGraphUpdate(final long operationId) {
-  }
-
-  private void waitUntilCompletition(final long iWaitForOperationId) {
+  private void asynchOperationCompleted() {
+    operationCompleted.incrementAndGet();
+    synchronized (operationCompleted) {
+      operationCompleted.notifyAll();
+    }
   }
 }

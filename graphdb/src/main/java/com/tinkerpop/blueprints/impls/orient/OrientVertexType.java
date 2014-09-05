@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyAbstractDelegate;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.tinkerpop.blueprints.Direction;
 
 /**
@@ -64,13 +63,17 @@ public class OrientVertexType extends OrientElementType {
   }
 
   public OrientVertexProperty createEdgeProperty(final Direction iDirection, String iEdgeClassName) {
+    return createEdgeProperty(iDirection, iEdgeClassName, OType.ANY);
+  }
+
+  public OrientVertexProperty createEdgeProperty(final Direction iDirection, String iEdgeClassName, final OType iType ) {
     iEdgeClassName = OrientBaseGraph.encodeClassName(iEdgeClassName);
 
     final boolean useVertexFieldsForEdgeLabels = graph.isUseVertexFieldsForEdgeLabels();
 
     final String fieldName = OrientVertex.getConnectionFieldName(iDirection, iEdgeClassName, useVertexFieldsForEdgeLabels);
 
-    return new OrientVertexProperty(graph, delegate.createProperty(fieldName, OType.ANY));
+    return new OrientVertexProperty(graph, delegate.createProperty(fieldName, iType));
   }
 
   @Override

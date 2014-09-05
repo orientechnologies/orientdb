@@ -2,6 +2,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -20,14 +21,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientGraphFactory extends OrientConfigurableGraph {
-  protected final String                           url;
-  protected final String                           user;
-  protected final String                           password;
-  protected OResourcePool<String, OrientBaseGraph> pool;
-  protected volatile boolean                       transactional   = true;
-  protected boolean                                leaveGraphsOpen = true;
-  protected OIntent                                intent;
-  protected AtomicBoolean                          used            = new AtomicBoolean(false);
+  protected final String                                    url;
+  protected final String                                    user;
+  protected final String                                    password;
+  protected volatile OResourcePool<String, OrientBaseGraph> pool;
+  protected volatile boolean                                transactional   = true;
+  protected boolean                                         leaveGraphsOpen = true;
+  protected OIntent                                         intent;
+  protected AtomicBoolean                                   used            = new AtomicBoolean(false);
 
   /**
    * Creates a factory that use default admin credentials.
@@ -204,14 +205,20 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
           g = (OrientGraph) new OrientGraph(getDatabase(), user, password) {
             @Override
             public void shutdown() {
-              release(this);
+              if (pool != null)
+                pool.returnResource(this);
+              else
+                super.shutdown();
             }
           }.configure(settings);
         else
           g = (OrientGraphNoTx) new OrientGraphNoTx(getDatabase(), user, password) {
             @Override
             public void shutdown() {
-              release(this);
+              if (pool != null)
+                pool.returnResource(this);
+              else
+                super.shutdown();
             }
           }.configure(settings);
 
@@ -267,26 +274,21 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     intent = iIntent;
   }
 
-  /**
-   * Releases an acquired Graph instance.
-   * 
-   * @param iGraph
-   *          Graph instance
-   */
-  public void release(final OrientBaseGraph iGraph) {
-    if (pool != null)
-      pool.returnResource(iGraph);
-    else
-      iGraph.shutdown();
-  }
-
   protected void closePool() {
     if (pool != null) {
-      // CLOSE ALL THE INSTANCES
-      for (OrientExtendedGraph g : pool.getResources())
-        g.shutdown();
+      final OResourcePool<String, OrientBaseGraph> closingPool = pool;
+      pool = null;
 
-      pool.close();
+      int usedResources = 0;
+      // CLOSE ALL THE INSTANCES
+      for (OrientExtendedGraph g : closingPool.getResources()) {
+        usedResources++;
+        g.shutdown();
+      }
+
+      OLogManager.instance().debug(this, "Maximum used resources: %d", usedResources);
+
+      closingPool.close();
     }
   }
 
