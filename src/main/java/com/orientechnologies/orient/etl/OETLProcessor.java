@@ -336,7 +336,7 @@ public class OETLProcessor implements OETLComponent {
       end();
 
     } catch (OETLProcessHaltedException e) {
-      out(LOG_LEVELS.ERROR, "ETL process halted: " + e);
+      out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
     }
   }
 
@@ -463,7 +463,7 @@ public class OETLProcessor implements OETLComponent {
       end();
 
     } catch (OETLProcessHaltedException e) {
-      out(LOG_LEVELS.ERROR, "ETL process halted: " + e);
+      out(LOG_LEVELS.ERROR, "ETL process halted: %s", e);
     }
   }
 
