@@ -402,7 +402,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     }
   }
 
-  public OPropertyImpl setLinkedType(final OType linkedType) {
+  public OProperty setLinkedType(final OType linkedType) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
