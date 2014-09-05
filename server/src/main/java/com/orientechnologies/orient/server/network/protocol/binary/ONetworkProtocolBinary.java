@@ -1595,6 +1595,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
+  @Override
+  protected String getRecordSerializerName() {
+    return connection.data.serializationImpl;
+  }
+
   private void sendErrorDetails(Throwable current) throws IOException {
     while (current != null) {
       // MORE DETAILS ARE COMING AS EXCEPTION
@@ -1708,7 +1713,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         * (keySerializer.getFixedLength() + valueSerializer.getFixedLength())];
     int offset = 0;
 
-    OIntegerSerializer.INSTANCE.serialize(collection.size(), stream, offset);
+    OIntegerSerializer.INSTANCE.serializeLiteral(collection.size(), stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     for (Entry<OIdentifiable, Integer> entry : collection) {
@@ -1736,7 +1741,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
 
     byte[] stream = new byte[OByteSerializer.BYTE_SIZE + keySerializer.getObjectSize(result)];
-    OByteSerializer.INSTANCE.serialize(keySerializer.getId(), stream, 0);
+    OByteSerializer.INSTANCE.serializeLiteral(keySerializer.getId(), stream, 0);
     keySerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
 
     beginResponse();
@@ -1767,7 +1772,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
 
     byte[] stream = new byte[OByteSerializer.BYTE_SIZE + valueSerializer.getObjectSize(result)];
-    OByteSerializer.INSTANCE.serialize(valueSerializer.getId(), stream, 0);
+    OByteSerializer.INSTANCE.serializeLiteral(valueSerializer.getId(), stream, 0);
     valueSerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
 
     beginResponse();
@@ -1980,7 +1985,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     beginResponse();
     try {
       sendOk(clientTxId);
-      byte [] stream = getRecordBytes(result);
+      byte[] stream = getRecordBytes(result);
       channel.writeBytes(stream);
     } finally {
       endResponse();
@@ -1990,11 +1995,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   private boolean loadUserFromSchema(final String iUserName, final String iUserPassword) {
     account = connection.database.getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
     return true;
-  }
-
-  @Override
-  protected String getRecordSerializerName() {
-    return connection.data.serializationImpl;
   }
 
 }

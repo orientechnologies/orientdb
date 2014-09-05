@@ -16,13 +16,12 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import java.util.Random;
-
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import java.util.Random;
 
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
@@ -30,10 +29,10 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
  */
 @Test
 public class StringSerializerTest {
+  byte[]                    stream;
   private int               FIELD_SIZE;
   private String            OBJECT;
   private OStringSerializer stringSerializer;
-  byte[]                    stream;
 
   @BeforeClass
   public void beforeClass() {
@@ -58,16 +57,16 @@ public class StringSerializerTest {
   }
 
   public void testSerializeNative() {
-    stringSerializer.serializeNative(OBJECT, stream, 7);
-    Assert.assertEquals(stringSerializer.deserializeNative(stream, 7), OBJECT);
+    stringSerializer.serializeNativeObject(OBJECT, stream, 7);
+    Assert.assertEquals(stringSerializer.deserializeNativeObject(stream, 7), OBJECT);
   }
 
   public void testNativeDirectMemoryCompatibility() {
-    stringSerializer.serializeNative(OBJECT, stream, 7);
+    stringSerializer.serializeNativeObject(OBJECT, stream, 7);
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(stringSerializer.deserializeFromDirectMemory(pointer, 7), OBJECT);
+      Assert.assertEquals(stringSerializer.deserializeFromDirectMemoryObject(pointer, 7), OBJECT);
     } finally {
       pointer.free();
     }

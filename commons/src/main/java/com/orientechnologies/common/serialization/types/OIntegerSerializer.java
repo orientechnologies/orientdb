@@ -42,20 +42,26 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   }
 
   public void serialize(final Integer object, final byte[] stream, final int startPosition, final Object... hints) {
-    final int value = object;
+    serializeLiteral(object.intValue(), stream, startPosition);
+  }
+
+  public void serializeLiteral(final int value, final byte[] stream, final int startPosition) {
     stream[startPosition] = (byte) ((value >>> 24) & 0xFF);
     stream[startPosition + 1] = (byte) ((value >>> 16) & 0xFF);
     stream[startPosition + 2] = (byte) ((value >>> 8) & 0xFF);
     stream[startPosition + 3] = (byte) ((value >>> 0) & 0xFF);
-
   }
 
   public Integer deserialize(final byte[] stream, final int startPosition) {
+    return deserializeLiteral(stream, startPosition);
+  }
+
+  public int deserializeLiteral(final byte[] stream, final int startPosition) {
     return (stream[startPosition]) << 24 | (0xff & stream[startPosition + 1]) << 16 | (0xff & stream[startPosition + 2]) << 8
         | ((0xff & stream[startPosition + 3]));
   }
 
-  public int getObjectSize(byte[] stream, int startPosition) {
+  public int getObjectSize(final byte[] stream, final int startPosition) {
     return INT_SIZE;
   }
 
@@ -63,30 +69,50 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
     return ID;
   }
 
-  public int getObjectSizeNative(byte[] stream, int startPosition) {
+  public int getObjectSizeNative(final byte[] stream, final int startPosition) {
     return INT_SIZE;
   }
 
-  public void serializeNative(Integer object, byte[] stream, int startPosition, Object... hints) {
+  @Override
+  public void serializeNativeObject(Integer object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putInt(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
-  public Integer deserializeNative(byte[] stream, int startPosition) {
+  @Override
+  public Integer deserializeNativeObject(final byte[] stream, final int startPosition) {
     return CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
   }
 
   @Override
-  public void serializeInDirectMemory(Integer object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeInDirectMemoryObject(final Integer object, final ODirectMemoryPointer pointer, final long offset,
+      final Object... hints) {
     pointer.setInt(offset, object);
   }
 
   @Override
-  public Integer deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public Integer deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
+    return pointer.getInt(offset);
+  }
+
+  public void serializeNative(int object, byte[] stream, int startPosition, Object... hints) {
+    CONVERTER.putInt(stream, startPosition, object, ByteOrder.nativeOrder());
+  }
+
+  public int deserializeNative(final byte[] stream, final int startPosition) {
+    return CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
+  }
+
+  public void serializeInDirectMemory(final int object, final ODirectMemoryPointer pointer, final long offset,
+      final Object... hints) {
+    pointer.setInt(offset, object);
+  }
+
+  public int deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return pointer.getInt(offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return INT_SIZE;
   }
 
@@ -99,7 +125,7 @@ public class OIntegerSerializer implements OBinarySerializer<Integer> {
   }
 
   @Override
-  public Integer preprocess(Integer value, Object... hints) {
+  public Integer preprocess(final Integer value, final Object... hints) {
     return value;
   }
 }

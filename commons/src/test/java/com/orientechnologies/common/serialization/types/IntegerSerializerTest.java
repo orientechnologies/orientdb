@@ -49,7 +49,7 @@ public class IntegerSerializerTest {
 
   public void testSerializeNative() {
     integerSerializer.serializeNative(OBJECT, stream, 0);
-    Assert.assertEquals(integerSerializer.deserializeNative(stream, 0), OBJECT);
+    Assert.assertEquals(integerSerializer.deserializeNativeObject(stream, 0), OBJECT);
   }
 
   public void testNativeDirectMemoryCompatibility() {
@@ -57,7 +57,7 @@ public class IntegerSerializerTest {
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(integerSerializer.deserializeFromDirectMemory(pointer, 0), OBJECT);
+      Assert.assertEquals(integerSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);
     } finally {
       pointer.free();
     }

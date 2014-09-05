@@ -33,8 +33,8 @@ public class StringSerializerSpeedTest extends SpeedTestMonoThread {
   @Test(enabled = false)
   @Override
   public void cycle() throws Exception {
-    stringSerializer.serializeInDirectMemory(longString, directMemoryPointer, 0);
-    stringSerializer.deserializeFromDirectMemory(directMemoryPointer, 0);
+    stringSerializer.serializeInDirectMemoryObject(longString, directMemoryPointer, 0);
+    stringSerializer.deserializeFromDirectMemoryObject(directMemoryPointer, 0);
   }
 
   @Override

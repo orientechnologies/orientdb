@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
 import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * @author Andrey Lomakin
@@ -261,10 +261,10 @@ class HashLRUList implements LRUList {
     return (int) ((entries.length - 1) & hashCode);
   }
 
-  private long hashCode(long fileId, long filePosition) {
+  private long hashCode(final long fileId, final long filePosition) {
     final byte[] result = new byte[2 * OLongSerializer.LONG_SIZE];
-    OLongSerializer.INSTANCE.serialize(fileId, result, OLongSerializer.LONG_SIZE);
-    OLongSerializer.INSTANCE.serialize(filePosition, result, OLongSerializer.LONG_SIZE);
+    OLongSerializer.INSTANCE.serializeLiteral(fileId, result, OLongSerializer.LONG_SIZE);
+    OLongSerializer.INSTANCE.serializeLiteral(filePosition, result, OLongSerializer.LONG_SIZE);
 
     return OMurmurHash3.murmurHash3_x64_64(result, SEED);
   }

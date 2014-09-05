@@ -51,18 +51,18 @@ public class BinarySerializerTest {
   }
 
   public void testSerializeNative() {
-    binarySerializer.serializeNative(OBJECT, stream, 0);
-    Assert.assertEquals(binarySerializer.deserializeNative(stream, 0), OBJECT);
+    binarySerializer.serializeNativeObject(OBJECT, stream, 0);
+    Assert.assertEquals(binarySerializer.deserializeNativeObject(stream, 0), OBJECT);
 
   }
 
   public void testNativeDirectMemoryCompatibility() {
-    binarySerializer.serializeNative(OBJECT, stream, 0);
+    binarySerializer.serializeNativeObject(OBJECT, stream, 0);
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
 
     try {
-      Assert.assertEquals(binarySerializer.deserializeFromDirectMemory(pointer, 0), OBJECT);
+      Assert.assertEquals(binarySerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);
     } finally {
       pointer.free();
     }

@@ -49,7 +49,7 @@ public class LongSerializerTest {
 
   public void testSerializeNative() {
     longSerializer.serializeNative(OBJECT, stream, 0);
-    Assert.assertEquals(longSerializer.deserializeNative(stream, 0), OBJECT);
+    Assert.assertEquals(longSerializer.deserializeNativeObject(stream, 0), OBJECT);
   }
 
   public void testNativeDirectMemoryCompatibility() {
@@ -57,7 +57,7 @@ public class LongSerializerTest {
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(longSerializer.deserializeFromDirectMemory(pointer, 0), OBJECT);
+      Assert.assertEquals(longSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);
     } finally {
       pointer.free();
     }

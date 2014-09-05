@@ -26,18 +26,18 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
  */
 public class OStringSerializer implements OBinarySerializer<String> {
   public static final OStringSerializer INSTANCE = new OStringSerializer();
-  public static final byte ID = 13;
+  public static final byte              ID       = 13;
 
   public int getObjectSize(final String object, Object... hints) {
     return object.length() * 2 + OIntegerSerializer.INT_SIZE;
   }
 
   public void serialize(final String object, final byte[] stream, int startPosition, Object... hints) {
-    int length = object.length();
-    OIntegerSerializer.INSTANCE.serialize(length, stream, startPosition);
+    final int length = object.length();
+    OIntegerSerializer.INSTANCE.serializeLiteral(length, stream, startPosition);
 
     startPosition += OIntegerSerializer.INT_SIZE;
-    char[] stringContent = new char[length];
+    final char[] stringContent = new char[length];
 
     object.getChars(0, length, stringContent, 0);
 
@@ -51,8 +51,8 @@ public class OStringSerializer implements OBinarySerializer<String> {
   }
 
   public String deserialize(final byte[] stream, int startPosition) {
-    int len = OIntegerSerializer.INSTANCE.deserialize(stream, startPosition);
-    char[] buffer = new char[len];
+    final int len = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, startPosition);
+    final char[] buffer = new char[len];
 
     startPosition += OIntegerSerializer.INT_SIZE;
 
@@ -64,8 +64,8 @@ public class OStringSerializer implements OBinarySerializer<String> {
     return new String(buffer);
   }
 
-  public int getObjectSize(byte[] stream, int startPosition) {
-    return OIntegerSerializer.INSTANCE.deserialize(stream, startPosition) * 2 + OIntegerSerializer.INT_SIZE;
+  public int getObjectSize(final byte[] stream, final int startPosition) {
+    return OIntegerSerializer.INSTANCE.deserializeLiteral(stream, startPosition) * 2 + OIntegerSerializer.INT_SIZE;
   }
 
   public byte getId() {
@@ -76,7 +76,8 @@ public class OStringSerializer implements OBinarySerializer<String> {
     return OIntegerSerializer.INSTANCE.deserializeNative(stream, startPosition) * 2 + OIntegerSerializer.INT_SIZE;
   }
 
-  public void serializeNative(String object, byte[] stream, int startPosition, Object... hints) {
+  @Override
+  public void serializeNativeObject(String object, byte[] stream, int startPosition, Object... hints) {
     int length = object.length();
     OIntegerSerializer.INSTANCE.serializeNative(length, stream, startPosition);
 
@@ -94,7 +95,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
     }
   }
 
-  public String deserializeNative(byte[] stream, int startPosition) {
+  public String deserializeNativeObject(byte[] stream, int startPosition) {
     int len = OIntegerSerializer.INSTANCE.deserializeNative(stream, startPosition);
     char[] buffer = new char[len];
 
@@ -109,7 +110,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
   }
 
   @Override
-  public void serializeInDirectMemory(String object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeInDirectMemoryObject(String object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     int length = object.length();
     pointer.setInt(offset, length);
 
@@ -133,7 +134,7 @@ public class OStringSerializer implements OBinarySerializer<String> {
   }
 
   @Override
-  public String deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public String deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
     int len = pointer.getInt(offset);
 
     final char[] buffer = new char[len];

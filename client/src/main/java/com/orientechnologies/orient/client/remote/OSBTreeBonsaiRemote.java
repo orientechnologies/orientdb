@@ -1,11 +1,5 @@
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -18,6 +12,12 @@ import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Implementation of {@link OSBTreeBonsai} for remote storage.
@@ -68,7 +68,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
       byte[] stream = client.readBytes();
       storage.endResponse(client);
 
-      final byte serializerId = OByteSerializer.INSTANCE.deserialize(stream, 0);
+      final byte serializerId = OByteSerializer.INSTANCE.deserializeLiteral(stream, 0);
       final OBinarySerializer<V> serializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance().getObjectSerializer(
           serializerId);
       return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
@@ -160,7 +160,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
       storage.beginResponse(client);
       byte[] stream = client.readBytes();
       int offset = 0;
-      final int count = OIntegerSerializer.INSTANCE.deserialize(stream, 0);
+      final int count = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, 0);
       offset += OIntegerSerializer.INT_SIZE;
 
       List<Map.Entry<K, V>> list = new ArrayList<Map.Entry<K, V>>(count);
@@ -200,7 +200,7 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
       byte[] stream = client.readBytes();
       storage.endResponse(client);
 
-      final byte serializerId = OByteSerializer.INSTANCE.deserialize(stream, 0);
+      final byte serializerId = OByteSerializer.INSTANCE.deserializeLiteral(stream, 0);
       final OBinarySerializer<K> serializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance().getObjectSerializer(
           serializerId);
       return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);

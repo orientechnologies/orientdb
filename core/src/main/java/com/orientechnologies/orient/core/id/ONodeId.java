@@ -16,13 +16,13 @@
 
 package com.orientechnologies.orient.core.id;
 
-import java.math.BigInteger;
-import java.security.SecureRandom;
-import java.util.Arrays;
-
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.MersenneTwister;
+
+import java.math.BigInteger;
+import java.security.SecureRandom;
+import java.util.Arrays;
 
 /**
  * Id of the server node in autoshareded storage. It is presented as 192 bit number with values from -2<sup>192</sup>+1 till
@@ -57,7 +57,7 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
   private static final SecureRandom    secureRandom           = new SecureRandom();
 
   static {
-    random.setSeed(OLongSerializer.INSTANCE.deserialize(secureRandom.generateSeed(OLongSerializer.LONG_SIZE), 0));
+    random.setSeed(OLongSerializer.INSTANCE.deserializeLiteral(secureRandom.generateSeed(OLongSerializer.LONG_SIZE), 0));
   }
 
   private final int[]                  chunks;
@@ -225,11 +225,11 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     chunks[0] = (int) (clusterPosition >>> 32);
     chunks[1] = (int) clusterPosition;
 
-    chunks[2] = OIntegerSerializer.INSTANCE.deserialize(uuid, 0);
-    chunks[3] = OIntegerSerializer.INSTANCE.deserialize(uuid, 4);
+    chunks[2] = OIntegerSerializer.INSTANCE.deserializeLiteral(uuid, 0);
+    chunks[3] = OIntegerSerializer.INSTANCE.deserializeLiteral(uuid, 4);
 
-    chunks[4] = OIntegerSerializer.INSTANCE.deserialize(uuid, 8);
-    chunks[5] = OIntegerSerializer.INSTANCE.deserialize(uuid, 12);
+    chunks[4] = OIntegerSerializer.INSTANCE.deserializeLiteral(uuid, 8);
+    chunks[5] = OIntegerSerializer.INSTANCE.deserializeLiteral(uuid, 12);
 
     return new ONodeId(chunks, 1);
   }
@@ -345,7 +345,7 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
 
     int pos = 0;
     for (int i = 0; i < CHUNKS_SIZE; i++) {
-      OIntegerSerializer.INSTANCE.serialize(chunks[i], bytes, pos);
+      OIntegerSerializer.INSTANCE.serializeLiteral(chunks[i], bytes, pos);
       pos += OIntegerSerializer.INT_SIZE;
     }
 
@@ -359,7 +359,7 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
 
     int pos = 0;
     for (int i = 0; i < CHUNKS_SIZE; i++) {
-      OIntegerSerializer.INSTANCE.serialize(chunks[i], bytes, pos);
+      OIntegerSerializer.INSTANCE.serializeLiteral(chunks[i], bytes, pos);
       pos += OIntegerSerializer.INT_SIZE;
     }
 
@@ -453,12 +453,12 @@ public class ONodeId extends Number implements Comparable<ONodeId> {
     return new ONodeId(result, signum);
   }
 
-  public static ONodeId fromStream(byte[] content, int start) {
+  public static ONodeId fromStream(final byte[] content, final int start) {
     final int[] chunks = new int[CHUNKS_SIZE];
 
     int pos = start;
     for (int i = 0; i < CHUNKS_SIZE; i++) {
-      chunks[i] = OIntegerSerializer.INSTANCE.deserialize(content, pos);
+      chunks[i] = OIntegerSerializer.INSTANCE.deserializeLiteral(content, pos);
       pos += OIntegerSerializer.INT_SIZE;
     }
 

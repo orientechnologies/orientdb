@@ -85,7 +85,7 @@ public class ThreadCountersHashTableTest {
 
     private static final MersenneTwister rnd;
     static {
-      long seed = OLongSerializer.INSTANCE.deserialize(SecureRandom.getSeed(8), 0);
+      long seed = OLongSerializer.INSTANCE.deserializeLiteral(SecureRandom.getSeed(8), 0);
       System.out.println("RandomThread seed : " + seed);
       rnd = new MersenneTwister(seed);
     }

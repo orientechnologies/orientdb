@@ -16,7 +16,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -310,7 +309,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
   /**
    * Register the cluster internally.
-   * 
+   *
    * @param cluster
    *          OCluster implementation
    * @return The id (physical position into the array) of the new cluster just created. First is 0.
@@ -848,6 +847,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
         if (content == null)
           throw new IllegalArgumentException("Record is null");
+
+//        System.out.printf("- %s: %d -", rid, content.length);
 
         OPhysicalPosition ppos = new OPhysicalPosition(recordType);
         try {

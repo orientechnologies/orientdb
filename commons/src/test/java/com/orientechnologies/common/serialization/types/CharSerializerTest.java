@@ -16,13 +16,12 @@
 
 package com.orientechnologies.common.serialization.types;
 
-import java.util.Random;
-
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import java.util.Random;
 
 /**
  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
@@ -51,14 +50,14 @@ public class CharSerializerTest {
 
   public void testSerializeNative() {
     charSerializer.serializeNative(OBJECT, stream, 0);
-    Assert.assertEquals(charSerializer.deserializeNative(stream, 0), OBJECT);
+    Assert.assertEquals(charSerializer.deserializeNativeObject(stream, 0), OBJECT);
   }
 
   public void testNativeDirectMemoryCompatibility() {
     charSerializer.serializeNative(OBJECT, stream, 0);
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(charSerializer.deserializeFromDirectMemory(pointer, 0), OBJECT);
+      Assert.assertEquals(charSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);
     } finally {
       pointer.free();
     }

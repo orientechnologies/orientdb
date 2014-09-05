@@ -29,9 +29,9 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 @Test
 public class ShortSerializerTest {
   private static final int   FIELD_SIZE = 2;
+  byte[]                     stream     = new byte[FIELD_SIZE];
   private static final Short OBJECT     = 1;
   private OShortSerializer   shortSerializer;
-  byte[]                     stream     = new byte[FIELD_SIZE];
 
   @BeforeClass
   public void beforeClass() {
@@ -49,7 +49,7 @@ public class ShortSerializerTest {
 
   public void testSerializeNative() {
     shortSerializer.serializeNative(OBJECT, stream, 0);
-    Assert.assertEquals(shortSerializer.deserializeNative(stream, 0), OBJECT);
+    Assert.assertEquals(shortSerializer.deserializeNativeObject(stream, 0), OBJECT);
   }
 
   public void testNativeDirectMemoryCompatibility() {
@@ -57,7 +57,7 @@ public class ShortSerializerTest {
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(shortSerializer.deserializeFromDirectMemory(pointer, 0), OBJECT);
+      Assert.assertEquals(shortSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);
     } finally {
       pointer.free();
     }

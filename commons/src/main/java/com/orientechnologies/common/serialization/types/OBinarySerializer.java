@@ -63,7 +63,7 @@ public interface OBinarySerializer<T> {
    * @param startPosition is the position to start reading from
    * @return instance of the deserialized object
    */
-  T deserialize(byte[] stream, int startPosition);
+   T deserialize(byte[] stream, int startPosition);
 
   /**
    * @return Identifier of given serializer.
@@ -90,21 +90,21 @@ public interface OBinarySerializer<T> {
    * @param startPosition
    * @param hints         List of parameters which may be used to choose appropriate serialization approach.
    */
-  void serializeNative(T object, byte[] stream, int startPosition, Object... hints);
+  void serializeNativeObject(T object, byte[] stream, int startPosition, Object... hints);
 
   /**
    * Reads object from the stream starting from the startPosition, in case there were serialized using
-   * {@link #serializeNative(T, byte[], int, Object...)} method.
+   * {@link #serializeNativeObject(T, byte[], int, Object...)} method.
    *
    * @param stream        is the stream from object will be read
    * @param startPosition is the position to start reading from
    * @return instance of the deserialized object
    */
-  T deserializeNative(byte[] stream, int startPosition);
+  T deserializeNativeObject(byte[] stream, int startPosition);
 
   /**
    * Return size serialized presentation of given object, if it was serialized using
-   * {@link #serializeNative(T, byte[], int, Object...)} method.
+   * {@link #serializeNativeObject(T, byte[], int, Object...)} method.
    *
    * @param stream        Serialized content.
    * @param startPosition Position from which serialized presentation of given object is stored.
@@ -112,9 +112,9 @@ public interface OBinarySerializer<T> {
    */
   int getObjectSizeNative(byte[] stream, int startPosition);
 
-  void serializeInDirectMemory(T object, ODirectMemoryPointer pointer, long offset, Object... hints);
+  void serializeInDirectMemoryObject(T object, ODirectMemoryPointer pointer, long offset, Object... hints);
 
-  T deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset);
+  T deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset);
 
   int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset);
 

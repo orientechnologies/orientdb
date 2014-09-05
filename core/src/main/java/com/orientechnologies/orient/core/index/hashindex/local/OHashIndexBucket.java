@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local;
 
-import java.io.IOException;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -29,6 +24,11 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * @author Andrey Lomakin
@@ -177,7 +177,7 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
       return -1;
 
     byte[] newSerializedValue = new byte[newSize];
-    valueSerializer.serializeNative(value, newSerializedValue, 0);
+    valueSerializer.serializeNativeObject(value, newSerializedValue, 0);
 
     byte[] oldSerializedValue = getBinaryValue(entryPosition, oldSize);
 
@@ -278,14 +278,14 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
 
     final int keySize = keySerializer.getObjectSize(key, (Object[]) keyTypes);
     byte[] binaryKey = new byte[keySize];
-    keySerializer.serializeNative(key, binaryKey, 0, (Object[]) keyTypes);
+    keySerializer.serializeNativeObject(key, binaryKey, 0, (Object[]) keyTypes);
     setBinaryValue(entryOffset, binaryKey);
 
     entryOffset += keySize;
 
     final int valueSize = valueSerializer.getObjectSize(value);
     final byte[] binaryValue = new byte[valueSize];
-    valueSerializer.serializeNative(value, binaryValue, 0);
+    valueSerializer.serializeNativeObject(value, binaryValue, 0);
 
     setBinaryValue(entryOffset, binaryValue);
   }

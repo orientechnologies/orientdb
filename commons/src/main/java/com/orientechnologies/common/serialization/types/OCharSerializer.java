@@ -27,26 +27,32 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OCharSerializer implements OBinarySerializer<Character> {
-  private static final OBinaryConverter BINARY_CONVERTER = OBinaryConverterFactory.getConverter();
-
   /**
    * size of char value in bytes
    */
-  public static final int CHAR_SIZE = 2;
-
-  public static OCharSerializer INSTANCE = new OCharSerializer();
-  public static final byte ID = 3;
+  public static final int               CHAR_SIZE        = 2;
+  public static final byte              ID               = 3;
+  private static final OBinaryConverter BINARY_CONVERTER = OBinaryConverterFactory.getConverter();
+  public static OCharSerializer         INSTANCE         = new OCharSerializer();
 
   public int getObjectSize(final Character object, Object... hints) {
     return CHAR_SIZE;
   }
 
-  public void serialize(final Character object, final byte[] stream, final int startPosition, Object... hints) {
-    stream[startPosition] = (byte) (object >>> 8);
-    stream[startPosition + 1] = (byte) (object.charValue());
+  public void serialize(final Character object, final byte[] stream, final int startPosition, final Object... hints) {
+    serializeLiteral(object.charValue(), stream, startPosition);
+  }
+
+  public void serializeLiteral(final char value, final byte[] stream, final int startPosition) {
+    stream[startPosition] = (byte) (value >>> 8);
+    stream[startPosition + 1] = (byte) (value);
   }
 
   public Character deserialize(final byte[] stream, final int startPosition) {
+    return deserializeLiteral(stream, startPosition);
+  }
+
+  public char deserializeLiteral(final byte[] stream, final int startPosition) {
     return (char) (((stream[startPosition] & 0xFF) << 8) + (stream[startPosition + 1] & 0xFF));
   }
 
@@ -62,26 +68,46 @@ public class OCharSerializer implements OBinarySerializer<Character> {
     return CHAR_SIZE;
   }
 
-  public void serializeNative(Character object, byte[] stream, int startPosition, Object... hints) {
+  @Override
+  public void serializeNativeObject(Character object, byte[] stream, int startPosition, Object... hints) {
     BINARY_CONVERTER.putChar(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
-  public Character deserializeNative(byte[] stream, int startPosition) {
+  @Override
+  public Character deserializeNativeObject(final byte[] stream, final int startPosition) {
     return BINARY_CONVERTER.getChar(stream, startPosition, ByteOrder.nativeOrder());
   }
 
-  @Override
-  public void serializeInDirectMemory(Character object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeNative(final char object, final byte[] stream, final int startPosition, final Object... hints) {
+    BINARY_CONVERTER.putChar(stream, startPosition, object, ByteOrder.nativeOrder());
+  }
+
+  public char deserializeNative(final byte[] stream, final int startPosition) {
+    return BINARY_CONVERTER.getChar(stream, startPosition, ByteOrder.nativeOrder());
+  }
+
+  public void serializeInDirectMemory(final char object, final ODirectMemoryPointer pointer, final long offset,
+      final Object... hints) {
     pointer.setChar(offset, object);
   }
 
-  @Override
-  public Character deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public Character deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return pointer.getChar(offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemoryObject(final Character object, final ODirectMemoryPointer pointer, final long offset,
+      final Object... hints) {
+    pointer.setChar(offset, object);
+  }
+
+  @Override
+  public Character deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
+    return pointer.getChar(offset);
+  }
+
+  @Override
+  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return CHAR_SIZE;
   }
 
@@ -94,7 +120,7 @@ public class OCharSerializer implements OBinarySerializer<Character> {
   }
 
   @Override
-  public Character preprocess(Character value, Object... hints) {
+  public Character preprocess(final Character value, final Object... hints) {
     return value;
   }
 }

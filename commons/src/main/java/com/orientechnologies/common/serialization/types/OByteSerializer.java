@@ -28,20 +28,27 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
   /**
    * size of byte value in bytes
    */
-  public static final int BYTE_SIZE = 1;
-
-  public static OByteSerializer INSTANCE = new OByteSerializer();
-  public static final byte ID = 2;
+  public static final int       BYTE_SIZE = 1;
+  public static final byte      ID        = 2;
+  public static OByteSerializer INSTANCE  = new OByteSerializer();
 
   public int getObjectSize(Byte object, Object... hints) {
     return BYTE_SIZE;
   }
 
-  public void serialize(Byte object, byte[] stream, int startPosition, Object... hints) {
-    stream[startPosition] = object;
+  public void serialize(final Byte object, final byte[] stream, final int startPosition, final Object... hints) {
+    stream[startPosition] = object.byteValue();
   }
 
-  public Byte deserialize(byte[] stream, int startPosition) {
+  public void serializeLiteral(final byte value, final byte[] stream, final int startPosition) {
+    stream[startPosition] = value;
+  }
+
+  public Byte deserialize(final byte[] stream, final int startPosition) {
+    return stream[startPosition];
+  }
+
+  public byte deserializeLiteral(final byte[] stream, final int startPosition) {
     return stream[startPosition];
   }
 
@@ -57,26 +64,44 @@ public class OByteSerializer implements OBinarySerializer<Byte> {
     return getObjectSize(stream, startPosition);
   }
 
-  public void serializeNative(Byte object, byte[] stream, int startPosition, Object... hints) {
+  @Override
+  public void serializeNativeObject(final Byte object, final byte[] stream, final int startPosition, final Object... hints) {
     serialize(object, stream, startPosition);
   }
 
-  public Byte deserializeNative(byte[] stream, int startPosition) {
-    return deserialize(stream, startPosition);
+  public void serializeNative(byte object, byte[] stream, int startPosition, Object... hints) {
+    serializeLiteral(object, stream, startPosition);
   }
 
   @Override
-  public void serializeInDirectMemory(Byte object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public Byte deserializeNativeObject(final byte[] stream, final int startPosition) {
+    return stream[startPosition];
+  }
+
+  public byte deserializeNative(final byte[] stream, final int startPosition) {
+    return stream[startPosition];
+  }
+
+  @Override
+  public void serializeInDirectMemoryObject(final Byte object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    pointer.setByte(offset, object);
+  }
+
+  public void serializeInDirectMemory(final byte object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setByte(offset, object);
   }
 
   @Override
-  public Byte deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public Byte deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
+    return pointer.getByte(offset);
+  }
+
+  public byte deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return pointer.getByte(offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return BYTE_SIZE;
   }
 

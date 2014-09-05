@@ -29,29 +29,27 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OFloatSerializer implements OBinarySerializer<Float> {
-  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
-
-  public static OFloatSerializer INSTANCE = new OFloatSerializer();
-  public static final byte ID = 7;
-
+  public static final byte              ID         = 7;
   /**
    * size of float value in bytes
    */
-  public static final int FLOAT_SIZE = 4;
+  public static final int               FLOAT_SIZE = 4;
+  private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
+  public static OFloatSerializer        INSTANCE   = new OFloatSerializer();
 
   public int getObjectSize(Float object, Object... hints) {
     return FLOAT_SIZE;
   }
 
   public void serialize(Float object, byte[] stream, int startPosition, Object... hints) {
-    OIntegerSerializer.INSTANCE.serialize(Float.floatToIntBits(object), stream, startPosition);
+    OIntegerSerializer.INSTANCE.serializeLiteral(Float.floatToIntBits(object), stream, startPosition);
   }
 
-  public Float deserialize(byte[] stream, int startPosition) {
-    return Float.intBitsToFloat(OIntegerSerializer.INSTANCE.deserialize(stream, startPosition));
+  public Float deserialize(final byte[] stream, final int startPosition) {
+    return Float.intBitsToFloat(OIntegerSerializer.INSTANCE.deserializeLiteral(stream, startPosition));
   }
 
-  public int getObjectSize(byte[] stream, int startPosition) {
+  public int getObjectSize(final byte[] stream, final int startPosition) {
     return FLOAT_SIZE;
   }
 
@@ -63,26 +61,45 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
     return FLOAT_SIZE;
   }
 
-  public void serializeNative(Float object, byte[] stream, int startPosition, Object... hints) {
+  @Override
+  public void serializeNativeObject(Float object, byte[] stream, int startPosition, Object... hints) {
     CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object), ByteOrder.nativeOrder());
   }
 
-  public Float deserializeNative(byte[] stream, int startPosition) {
+  @Override
+  public Float deserializeNativeObject(byte[] stream, int startPosition) {
     return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()));
   }
 
   @Override
-  public void serializeInDirectMemory(Float object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeInDirectMemoryObject(Float object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setInt(offset, Float.floatToIntBits(object));
   }
 
   @Override
-  public Float deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public Float deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
+    return Float.intBitsToFloat(pointer.getInt(offset));
+  }
+
+  public void serializeNative(final float object, final byte[] stream, final int startPosition, final Object... hints) {
+    CONVERTER.putInt(stream, startPosition, Float.floatToIntBits(object), ByteOrder.nativeOrder());
+  }
+
+  public float deserializeNative(final byte[] stream, final int startPosition) {
+    return Float.intBitsToFloat(CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()));
+  }
+
+  public void serializeInDirectMemory(final float object, final ODirectMemoryPointer pointer, final long offset,
+      final Object... hints) {
+    pointer.setInt(offset, Float.floatToIntBits(object));
+  }
+
+  public float deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return Float.intBitsToFloat(pointer.getInt(offset));
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return FLOAT_SIZE;
   }
 
@@ -95,7 +112,7 @@ public class OFloatSerializer implements OBinarySerializer<Float> {
   }
 
   @Override
-  public Float preprocess(Float value, Object... hints) {
+  public Float preprocess(final Float value, final Object... hints) {
     return value;
   }
 }

@@ -229,9 +229,9 @@ public class OCompositeKeyTest {
 
     int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKeyOne);
     byte[] data = new byte[len];
-    OCompositeKeySerializer.INSTANCE.serializeNative(compositeKeyOne, data, 0);
+    OCompositeKeySerializer.INSTANCE.serializeNativeObject(compositeKeyOne, data, 0);
 
-    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeNative(data, 0);
+    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeNativeObject(data, 0);
 
     assertEquals(compositeKeyOne, compositeKeyTwo);
     assertNotSame(compositeKeyOne, compositeKeyTwo);
@@ -246,9 +246,9 @@ public class OCompositeKeyTest {
     int len = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKeyOne);
     ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(len);
 
-    OCompositeKeySerializer.INSTANCE.serializeInDirectMemory(compositeKeyOne, directMemoryPointer, 0);
+    OCompositeKeySerializer.INSTANCE.serializeInDirectMemoryObject(compositeKeyOne, directMemoryPointer, 0);
 
-    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeFromDirectMemory(directMemoryPointer, 0);
+    final OCompositeKey compositeKeyTwo = OCompositeKeySerializer.INSTANCE.deserializeFromDirectMemoryObject(directMemoryPointer, 0);
 
     assertEquals(compositeKeyOne, compositeKeyTwo);
     assertNotSame(compositeKeyOne, compositeKeyTwo);

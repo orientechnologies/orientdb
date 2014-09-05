@@ -20,7 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient.asynch;
 
-import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
@@ -179,7 +178,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           for (int retry = 0;; retry++) {
             try {
               return g.addEdge(id, vOut, vIn, label);
-            } catch (ONeedRetryException e) {
+            } catch (Exception e) {
               if (retry < 20) {
                 OLogManager.instance().debug(this,
                     "Conflict on addEdge(" + id + "," + outVertex + "," + inVertex + "," + label + "), retrying " + retry);

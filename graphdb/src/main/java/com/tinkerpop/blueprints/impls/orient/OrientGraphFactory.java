@@ -125,8 +125,6 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
       // USE THE POOL
       return (OrientGraphNoTx) pool.getResource(url, 0, user, password);
 
-    initGraph(g);
-
     return g;
   }
 

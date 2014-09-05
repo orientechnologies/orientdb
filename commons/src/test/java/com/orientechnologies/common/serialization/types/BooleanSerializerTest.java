@@ -29,10 +29,10 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 @Test
 public class BooleanSerializerTest {
   private static final int     FIELD_SIZE   = 1;
+  byte[]                       stream       = new byte[FIELD_SIZE];
   private static final Boolean OBJECT_TRUE  = true;
   private static final Boolean OBJECT_FALSE = false;
   private OBooleanSerializer   booleanSerializer;
-  byte[]                       stream       = new byte[FIELD_SIZE];
 
   @BeforeClass
   public void beforeClass() {
@@ -52,9 +52,9 @@ public class BooleanSerializerTest {
 
   public void testSerializeNative() {
     booleanSerializer.serializeNative(OBJECT_TRUE, stream, 0);
-    Assert.assertEquals(booleanSerializer.deserializeNative(stream, 0), OBJECT_TRUE);
+    Assert.assertEquals(booleanSerializer.deserializeNativeObject(stream, 0), OBJECT_TRUE);
     booleanSerializer.serializeNative(OBJECT_FALSE, stream, 0);
-    Assert.assertEquals(booleanSerializer.deserializeNative(stream, 0), OBJECT_FALSE);
+    Assert.assertEquals(booleanSerializer.deserializeNativeObject(stream, 0), OBJECT_FALSE);
   }
 
   public void testNativeDirectMemoryCompatibility() {
@@ -62,7 +62,7 @@ public class BooleanSerializerTest {
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(booleanSerializer.deserializeFromDirectMemory(pointer, 0), OBJECT_TRUE);
+      Assert.assertEquals(booleanSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT_TRUE);
     } finally {
       pointer.free();
     }
@@ -70,7 +70,7 @@ public class BooleanSerializerTest {
     booleanSerializer.serializeNative(OBJECT_FALSE, stream, 0);
     pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(booleanSerializer.deserializeFromDirectMemory(pointer, 0), OBJECT_FALSE);
+      Assert.assertEquals(booleanSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT_FALSE);
     } finally {
       pointer.free();
     }

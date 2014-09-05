@@ -22,15 +22,16 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
   }
 
   @Override
-  public void serialize(UUID object, byte[] stream, int startPosition, Object... hints) {
-    OLongSerializer.INSTANCE.serialize(object.getMostSignificantBits(), stream, startPosition, hints);
-    OLongSerializer.INSTANCE.serialize(object.getLeastSignificantBits(), stream, startPosition + OLongSerializer.LONG_SIZE, hints);
+  public void serialize(final UUID object, final byte[] stream, final int startPosition, final Object... hints) {
+    OLongSerializer.INSTANCE.serializeLiteral(object.getMostSignificantBits(), stream, startPosition);
+    OLongSerializer.INSTANCE.serializeLiteral(object.getLeastSignificantBits(), stream, startPosition + OLongSerializer.LONG_SIZE);
   }
 
   @Override
   public UUID deserialize(byte[] stream, int startPosition) {
-    Long mostSignificantBits = OLongSerializer.INSTANCE.deserialize(stream, startPosition);
-    Long leastSignificantBits = OLongSerializer.INSTANCE.deserialize(stream, startPosition + OLongSerializer.LONG_SIZE);
+    final long mostSignificantBits = OLongSerializer.INSTANCE.deserializeLiteral(stream, startPosition);
+    final long leastSignificantBits = OLongSerializer.INSTANCE
+        .deserializeLiteral(stream, startPosition + OLongSerializer.LONG_SIZE);
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 
@@ -50,35 +51,36 @@ public class OUUIDSerializer implements OBinarySerializer<UUID> {
   }
 
   @Override
-  public void serializeNative(UUID object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(final UUID object, final byte[] stream, final int startPosition, final Object... hints) {
     OLongSerializer.INSTANCE.serializeNative(object.getMostSignificantBits(), stream, startPosition, hints);
     OLongSerializer.INSTANCE.serializeNative(object.getLeastSignificantBits(), stream, startPosition + OLongSerializer.LONG_SIZE,
         hints);
   }
 
   @Override
-  public UUID deserializeNative(byte[] stream, int startPosition) {
-    Long mostSignificantBits = OLongSerializer.INSTANCE.deserializeNative(stream, startPosition);
-    Long leastSignificantBits = OLongSerializer.INSTANCE.deserializeNative(stream, startPosition + OLongSerializer.LONG_SIZE);
+  public UUID deserializeNativeObject(final byte[] stream, final int startPosition) {
+    final long mostSignificantBits = OLongSerializer.INSTANCE.deserializeNative(stream, startPosition);
+    final long leastSignificantBits = OLongSerializer.INSTANCE.deserializeNative(stream, startPosition + OLongSerializer.LONG_SIZE);
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 
   @Override
-  public int getObjectSizeNative(byte[] stream, int startPosition) {
+  public int getObjectSizeNative(final byte[] stream, final int startPosition) {
     return UUID_SIZE;
   }
 
   @Override
-  public void serializeInDirectMemory(UUID object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeInDirectMemoryObject(UUID object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     OLongSerializer.INSTANCE.serializeInDirectMemory(object.getMostSignificantBits(), pointer, offset, hints);
     OLongSerializer.INSTANCE.serializeInDirectMemory(object.getLeastSignificantBits(), pointer, offset + OLongSerializer.LONG_SIZE,
         hints);
   }
 
   @Override
-  public UUID deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    Long mostSignificantBits = OLongSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
-    Long leastSignificantBits = OLongSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset + OLongSerializer.LONG_SIZE);
+  public UUID deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
+    final long mostSignificantBits = OLongSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
+    final long leastSignificantBits = OLongSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset
+        + OLongSerializer.LONG_SIZE);
     return new UUID(mostSignificantBits, leastSignificantBits);
   }
 

@@ -25,8 +25,8 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
  */
 public class ONullSerializer implements OBinarySerializer<Object> {
 
+  public static final byte      ID       = 11;
   public static ONullSerializer INSTANCE = new ONullSerializer();
-  public static final byte ID = 11;
 
   public int getObjectSize(final Object object, Object... hints) {
     return 0;
@@ -53,19 +53,19 @@ public class ONullSerializer implements OBinarySerializer<Object> {
     return 0;
   }
 
-  public void serializeNative(Object object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(Object object, byte[] stream, int startPosition, Object... hints) {
   }
 
-  public Object deserializeNative(byte[] stream, int startPosition) {
+  public Object deserializeNativeObject(byte[] stream, int startPosition) {
     return null;
   }
 
   @Override
-  public void serializeInDirectMemory(Object object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeInDirectMemoryObject(Object object, ODirectMemoryPointer pointer, long offset, Object... hints) {
   }
 
   @Override
-  public Object deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public Object deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
     return null;
   }
 

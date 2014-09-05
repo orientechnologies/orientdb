@@ -29,22 +29,23 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OLongSerializer implements OBinarySerializer<Long> {
-  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
-
-  public static OLongSerializer INSTANCE = new OLongSerializer();
-  public static final byte ID = 10;
-
+  public static final byte              ID        = 10;
   /**
    * size of long value in bytes
    */
-  public static final int LONG_SIZE = 8;
+  public static final int               LONG_SIZE = 8;
+  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
+  public static OLongSerializer         INSTANCE  = new OLongSerializer();
 
-  public int getObjectSize(Long object, Object... hints) {
+  public int getObjectSize(final Long object, final Object... hints) {
     return LONG_SIZE;
   }
 
-  public void serialize(Long object, byte[] stream, int startPosition, Object... hints) {
-    final long value = object;
+  public void serialize(final Long object, final byte[] stream, final int startPosition, final Object... hints) {
+    serializeLiteral(object.longValue(), stream, startPosition);
+  }
+
+  public void serializeLiteral(final long value, final byte[] stream, final int startPosition) {
     stream[startPosition] = (byte) ((value >>> 56) & 0xFF);
     stream[startPosition + 1] = (byte) ((value >>> 48) & 0xFF);
     stream[startPosition + 2] = (byte) ((value >>> 40) & 0xFF);
@@ -55,13 +56,17 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     stream[startPosition + 7] = (byte) ((value >>> 0) & 0xFF);
   }
 
-  public Long deserialize(byte[] stream, int startPosition) {
+  public Long deserialize(final byte[] stream, final int startPosition) {
+    return deserializeLiteral(stream, startPosition);
+  }
+
+  public long deserializeLiteral(final byte[] stream, final int startPosition) {
     return ((0xff & stream[startPosition + 7]) | (0xff & stream[startPosition + 6]) << 8 | (0xff & stream[startPosition + 5]) << 16
         | (long) (0xff & stream[startPosition + 4]) << 24 | (long) (0xff & stream[startPosition + 3]) << 32
         | (long) (0xff & stream[startPosition + 2]) << 40 | (long) (0xff & stream[startPosition + 1]) << 48 | (long) (0xff & stream[startPosition]) << 56);
   }
 
-  public int getObjectSize(byte[] stream, int startPosition) {
+  public int getObjectSize(final byte[] stream, final int startPosition) {
     return LONG_SIZE;
   }
 
@@ -69,30 +74,50 @@ public class OLongSerializer implements OBinarySerializer<Long> {
     return ID;
   }
 
-  public int getObjectSizeNative(byte[] stream, int startPosition) {
+  public int getObjectSizeNative(final byte[] stream, final int startPosition) {
     return LONG_SIZE;
   }
 
-  public void serializeNative(Long object, byte[] stream, int startPosition, Object... hints) {
+  @Override
+  public void serializeNativeObject(final Long object, final byte[] stream, final int startPosition, final Object... hints) {
     CONVERTER.putLong(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
-  public Long deserializeNative(byte[] stream, int startPosition) {
+  @Override
+  public Long deserializeNativeObject(final byte[] stream, final int startPosition) {
     return CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder());
   }
 
   @Override
-  public void serializeInDirectMemory(Long object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeInDirectMemoryObject(final Long object, final ODirectMemoryPointer pointer, final long offset,
+      final Object... hints) {
     pointer.setLong(offset, object);
   }
 
   @Override
-  public Long deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public Long deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
+    return pointer.getLong(offset);
+  }
+
+  public void serializeNative(final long object, final byte[] stream, final int startPosition, final Object... hints) {
+    CONVERTER.putLong(stream, startPosition, object, ByteOrder.nativeOrder());
+  }
+
+  public long deserializeNative(final byte[] stream, final int startPosition) {
+    return CONVERTER.getLong(stream, startPosition, ByteOrder.nativeOrder());
+  }
+
+  public void serializeInDirectMemory(final long object, final ODirectMemoryPointer pointer, final long offset,
+      final Object... hints) {
+    pointer.setLong(offset, object);
+  }
+
+  public long deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return pointer.getLong(offset);
   }
 
   @Override
-  public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public int getObjectSizeInDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return LONG_SIZE;
   }
 
@@ -105,7 +130,7 @@ public class OLongSerializer implements OBinarySerializer<Long> {
   }
 
   @Override
-  public Long preprocess(Long value, Object... hints) {
+  public Long preprocess(final Long value, final Object... hints) {
     return value;
   }
 }

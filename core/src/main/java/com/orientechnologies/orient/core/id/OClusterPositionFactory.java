@@ -16,13 +16,13 @@
 
 package com.orientechnologies.orient.core.id;
 
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
 import java.io.DataInput;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
-
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * Factory is used to create new instances of {@link OClusterPosition} class.
@@ -124,7 +124,7 @@ public abstract class OClusterPositionFactory {
 
     @Override
     public OClusterPosition fromStream(byte[] content, int start) {
-      return new OClusterPositionLong(OLongSerializer.INSTANCE.deserialize(content, start));
+      return new OClusterPositionLong(OLongSerializer.INSTANCE.deserializeLiteral(content, start));
     }
 
     @Override

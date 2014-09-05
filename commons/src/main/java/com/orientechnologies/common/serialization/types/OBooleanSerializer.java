@@ -28,23 +28,27 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   /**
    * size of boolean value in bytes
    */
-  public static final int BOOLEAN_SIZE = 1;
-
-  public static OBooleanSerializer INSTANCE = new OBooleanSerializer();
-  public static final byte ID = 1;
+  public static final int          BOOLEAN_SIZE = 1;
+  public static final byte         ID           = 1;
+  public static OBooleanSerializer INSTANCE     = new OBooleanSerializer();
 
   public int getObjectSize(Boolean object, Object... hints) {
     return BOOLEAN_SIZE;
   }
 
-  public void serialize(Boolean object, byte[] stream, int startPosition, Object... hints) {
-    if (object)
-      stream[startPosition] = (byte) 1;
-    else
-      stream[startPosition] = (byte) 0;
+  public void serialize(final Boolean object, final byte[] stream, final int startPosition, final Object... hints) {
+    stream[startPosition] = object ? (byte) 1 : (byte) 0;
   }
 
-  public Boolean deserialize(byte[] stream, int startPosition) {
+  public void serializeLiteral(final boolean value, final byte[] stream, final int startPosition) {
+    stream[startPosition] = value ? (byte) 1 : (byte) 0;
+  }
+
+  public Boolean deserialize(final byte[] stream, final int startPosition) {
+    return stream[startPosition] == 1;
+  }
+
+  public boolean deserializeLiteral(final byte[] stream, final int startPosition) {
     return stream[startPosition] == 1;
   }
 
@@ -60,21 +64,45 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
     return BOOLEAN_SIZE;
   }
 
-  public void serializeNative(Boolean object, byte[] stream, int startPosition, Object... hints) {
+  @Override
+  public void serializeNativeObject(final Boolean object, final byte[] stream, final int startPosition, final Object... hints) {
     serialize(object, stream, startPosition);
   }
 
-  public Boolean deserializeNative(byte[] stream, int startPosition) {
-    return deserialize(stream, startPosition);
+  public void serializeNative(final boolean object, final byte[] stream, final int startPosition, final Object... hints) {
+    serializeLiteral(object, stream, startPosition);
   }
 
   @Override
+  public Boolean deserializeNativeObject(final byte[] stream, final int startPosition) {
+    return deserialize(stream, startPosition);
+  }
+
+  public boolean deserializeNative(final byte[] stream, final int startPosition) {
+    return deserializeLiteral(stream, startPosition);
+  }
+
   public void serializeInDirectMemory(Boolean object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setByte(offset, object ? (byte) 1 : 0);
   }
 
   @Override
-  public Boolean deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public void serializeInDirectMemoryObject(final Boolean object, final ODirectMemoryPointer pointer, final long offset,
+      final Object... hints) {
+    pointer.setByte(offset, object.booleanValue() ? (byte) 1 : 0);
+  }
+
+  public void serializeInDirectMemory(final boolean object, final ODirectMemoryPointer pointer, final long offset,
+      final Object... hints) {
+    pointer.setByte(offset, object ? (byte) 1 : 0);
+  }
+
+  @Override
+  public Boolean deserializeFromDirectMemoryObject(final ODirectMemoryPointer pointer, final long offset) {
+    return pointer.getByte(offset) > 0;
+  }
+
+  public boolean deserializeFromDirectMemory(final ODirectMemoryPointer pointer, final long offset) {
     return pointer.getByte(offset) > 0;
   }
 
@@ -92,7 +120,7 @@ public class OBooleanSerializer implements OBinarySerializer<Boolean> {
   }
 
   @Override
-  public Boolean preprocess(Boolean value, Object... hints) {
+  public Boolean preprocess(final Boolean value, final Object... hints) {
     return value;
   }
 }

@@ -16,14 +16,6 @@
 
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -41,6 +33,14 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This is implementation which is based on B+-tree implementation threaded tree.
@@ -1102,7 +1102,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
   private long createLinkToTheValue(V value) throws IOException {
     byte[] serializeValue = new byte[valueSerializer.getObjectSize(value)];
-    valueSerializer.serializeNative(value, serializeValue, 0);
+    valueSerializer.serializeNativeObject(value, serializeValue, 0);
 
     final int amountOfPages = OSBTreeValuePage.calculateAmountOfPage(serializeValue.length);
 
@@ -1892,7 +1892,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     diskCache.release(cacheEntry);
 
-    return valueSerializer.deserializeNative(value, 0);
+    return valueSerializer.deserializeNativeObject(value, 0);
   }
 
   private Map.Entry<K, V> convertToMapEntry(OSBTreeBucket.SBTreeEntry<K, V> treeEntry) throws IOException {

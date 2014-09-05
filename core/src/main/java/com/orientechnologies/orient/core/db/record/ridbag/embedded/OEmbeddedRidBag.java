@@ -274,7 +274,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public int getSerializedSize(byte[] stream, int offset) {
-    return OIntegerSerializer.INSTANCE.deserialize(stream, offset) * OLinkSerializer.RID_SIZE + OIntegerSerializer.INT_SIZE;
+    return OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset) * OLinkSerializer.RID_SIZE + OIntegerSerializer.INT_SIZE;
   }
 
   @Override
@@ -297,7 +297,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       System.arraycopy(serializedContent, 0, stream, offset, serializedContent.length);
 
       if (contentWasChanged) {
-        OIntegerSerializer.INSTANCE.serialize(size, stream, offset);
+        OIntegerSerializer.INSTANCE.serializeLiteral(size, stream, offset);
         offset += serializedContent.length;
       } else {
         offset += serializedContent.length;
@@ -305,7 +305,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       }
 
     } else {
-      OIntegerSerializer.INSTANCE.serialize(size, stream, offset);
+      OIntegerSerializer.INSTANCE.serializeLiteral(size, stream, offset);
       offset += OIntegerSerializer.INT_SIZE;
     }
 
@@ -320,10 +320,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public int deserialize(byte[] stream, int offset) {
+  public int deserialize(final byte[] stream, final int offset) {
     final int contentSize = getSerializedSize(stream, offset);
 
-    this.size = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
+    this.size = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset);
 
     this.serializedContent = new byte[contentSize];
     System.arraycopy(stream, offset, this.serializedContent, 0, contentSize);
@@ -337,7 +337,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       return;
 
     int offset = 0;
-    int entriesSize = OIntegerSerializer.INSTANCE.deserialize(serializedContent, offset);
+    int entriesSize = OIntegerSerializer.INSTANCE.deserializeLiteral(serializedContent, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     for (int i = 0; i < entriesSize; i++) {

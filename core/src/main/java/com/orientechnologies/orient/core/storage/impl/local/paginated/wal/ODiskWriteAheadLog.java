@@ -16,6 +16,17 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,17 +49,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
-
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * @author Andrey Lomakin
@@ -1002,17 +1002,17 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   private OLogSequenceNumber readMasterRecord(String storageName, int index) throws IOException {
-    CRC32 crc32 = new CRC32();
+    final CRC32 crc32 = new CRC32();
     try {
       masterRecordLSNHolder.seek(index * (OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE));
 
       int firstCRC = masterRecordLSNHolder.readInt();
-      long segment = masterRecordLSNHolder.readLong();
-      long position = masterRecordLSNHolder.readLong();
+      final long segment = masterRecordLSNHolder.readLong();
+      final long position = masterRecordLSNHolder.readLong();
 
       byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
-      OLongSerializer.INSTANCE.serialize(segment, serializedLSN, 0);
-      OLongSerializer.INSTANCE.serialize(position, serializedLSN, OLongSerializer.LONG_SIZE);
+      OLongSerializer.INSTANCE.serializeLiteral(segment, serializedLSN, 0);
+      OLongSerializer.INSTANCE.serializeLiteral(position, serializedLSN, OLongSerializer.LONG_SIZE);
       crc32.update(serializedLSN);
 
       if (firstCRC != ((int) crc32.getValue())) {
@@ -1030,11 +1030,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   private void writeMasterRecord(int index, OLogSequenceNumber masterRecord) throws IOException {
     masterRecordLSNHolder.seek(index * (OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE));
-    CRC32 crc32 = new CRC32();
+    final CRC32 crc32 = new CRC32();
 
-    byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
-    OLongSerializer.INSTANCE.serialize(masterRecord.getSegment(), serializedLSN, 0);
-    OLongSerializer.INSTANCE.serialize(masterRecord.getPosition(), serializedLSN, OLongSerializer.LONG_SIZE);
+    final byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
+    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getSegment(), serializedLSN, 0);
+    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getPosition(), serializedLSN, OLongSerializer.LONG_SIZE);
     crc32.update(serializedLSN);
 
     masterRecordLSNHolder.writeInt((int) crc32.getValue());

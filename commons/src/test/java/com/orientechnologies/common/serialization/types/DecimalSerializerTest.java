@@ -32,9 +32,9 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 @Test
 public class DecimalSerializerTest {
   private final static int        FIELD_SIZE = 9;
+  private static final byte[]     stream     = new byte[FIELD_SIZE];
   private static final BigDecimal OBJECT     = new BigDecimal(new BigInteger("20"), 2);
   private ODecimalSerializer      decimalSerializer;
-  private static final byte[]     stream     = new byte[FIELD_SIZE];
 
   @BeforeClass
   public void beforeClass() {
@@ -51,15 +51,15 @@ public class DecimalSerializerTest {
   }
 
   public void testSerializeNative() {
-    decimalSerializer.serializeNative(OBJECT, stream, 0);
-    Assert.assertEquals(decimalSerializer.deserializeNative(stream, 0), OBJECT);
+    decimalSerializer.serializeNativeObject(OBJECT, stream, 0);
+    Assert.assertEquals(decimalSerializer.deserializeNativeObject(stream, 0), OBJECT);
   }
 
   public void testNativeDirectMemoryCompatibility() {
-    decimalSerializer.serializeNative(OBJECT, stream, 0);
+    decimalSerializer.serializeNativeObject(OBJECT, stream, 0);
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(decimalSerializer.deserializeFromDirectMemory(pointer, 0), OBJECT);
+      Assert.assertEquals(decimalSerializer.deserializeFromDirectMemoryObject(pointer, 0), OBJECT);
     } finally {
       pointer.free();
     }

@@ -1,13 +1,5 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -23,7 +15,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -39,6 +30,14 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
@@ -147,7 +146,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         if (type == null)
           continue;
         pointer = writeSingleValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
-        OIntegerSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
+        OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         if (properties[i] == null || properties[i].getType() == OType.ANY)
           writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
@@ -375,12 +374,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case DOUBLE:
       long dg = Double.doubleToLongBits((Double) value);
       pointer = bytes.alloc(OLongSerializer.LONG_SIZE);
-      OLongSerializer.INSTANCE.serialize(dg, bytes.bytes, pointer);
+      OLongSerializer.INSTANCE.serializeLiteral(dg, bytes.bytes, pointer);
       break;
     case FLOAT:
       int fg = Float.floatToIntBits((Float) value);
       pointer = bytes.alloc(OIntegerSerializer.INT_SIZE);
-      OIntegerSerializer.INSTANCE.serialize(fg, bytes.bytes, pointer);
+      OIntegerSerializer.INSTANCE.serializeLiteral(fg, bytes.bytes, pointer);
       break;
     case BYTE:
       pointer = bytes.alloc(1);
@@ -509,7 +508,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         if (type == null)
           continue;
         pointer = writeSingleValue(bytes, value, type, null);
-        OIntegerSerializer.INSTANCE.serialize(pointer, bytes.bytes, pos[i]);
+        OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
     }
@@ -617,25 +616,25 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return type;
   }
 
-  private String readString(BytesContainer bytes) {
+  private String readString(final BytesContainer bytes) {
     final int len = OVarIntSerializer.readAsInteger(bytes);
     final String res = new String(bytes.bytes, bytes.offset, len, utf8);
     bytes.skip(len);
     return res;
   }
 
-  private int readInteger(BytesContainer container) {
-    final int value = OIntegerSerializer.INSTANCE.deserialize(container.bytes, container.offset);
+  private int readInteger(final BytesContainer container) {
+    final int value = OIntegerSerializer.INSTANCE.deserializeLiteral(container.bytes, container.offset);
     container.offset += OIntegerSerializer.INT_SIZE;
     return value;
   }
 
-  private byte readByte(BytesContainer container) {
+  private byte readByte(final BytesContainer container) {
     return container.bytes[container.offset++];
   }
 
-  private long readLong(BytesContainer container) {
-    final long value = OLongSerializer.INSTANCE.deserialize(container.bytes, container.offset);
+  private long readLong(final BytesContainer container) {
+    final long value = OLongSerializer.INSTANCE.deserializeLiteral(container.bytes, container.offset);
     container.offset += OLongSerializer.LONG_SIZE;
     return value;
   }

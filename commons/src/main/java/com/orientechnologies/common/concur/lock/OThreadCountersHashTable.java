@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
@@ -435,7 +434,7 @@ public final class OThreadCountersHashTable {
     return hashCodes[0] & ((size >> 1) - 1);
   }
 
-  private static int[] hashCodesByThreadId(long threadId) {
+  private static int[] hashCodesByThreadId(final long threadId) {
     final byte[] serializedId = new byte[8];
     OLongSerializer.INSTANCE.serializeNative(threadId, serializedId, 0);
 

@@ -18,13 +18,13 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Abstract Delegate for OClass interface.
@@ -97,6 +97,11 @@ public abstract class OClassAbstractDelegate implements OClass {
   @Override
   public Collection<OProperty> properties() {
     return delegate.properties();
+  }
+
+  @Override
+  public Map<String, OProperty> propertiesMap() {
+    return delegate.propertiesMap();
   }
 
   @Override

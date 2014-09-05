@@ -32,9 +32,9 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 @Test
 public class DateSerializerTest {
   private final static int FIELD_SIZE = 8;
+  private final byte[]     stream     = new byte[FIELD_SIZE];
   private final Date       OBJECT     = new Date();
   private ODateSerializer  dateSerializer;
-  private final byte[]     stream     = new byte[FIELD_SIZE];
 
   @BeforeClass
   public void beforeClass() {
@@ -57,18 +57,18 @@ public class DateSerializerTest {
   }
 
   public void testSerializeNative() {
-    dateSerializer.serializeNative(OBJECT, stream, 0);
+    dateSerializer.serializeNativeObject(OBJECT, stream, 0);
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(OBJECT);
     calendar.set(Calendar.HOUR_OF_DAY, 0);
     calendar.set(Calendar.MINUTE, 0);
     calendar.set(Calendar.SECOND, 0);
     calendar.set(Calendar.MILLISECOND, 0);
-    Assert.assertEquals(dateSerializer.deserializeNative(stream, 0), calendar.getTime());
+    Assert.assertEquals(dateSerializer.deserializeNativeObject(stream, 0), calendar.getTime());
   }
 
   public void testNativeDirectMemoryCompatibility() {
-    dateSerializer.serializeNative(OBJECT, stream, 0);
+    dateSerializer.serializeNativeObject(OBJECT, stream, 0);
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(OBJECT);
     calendar.set(Calendar.HOUR_OF_DAY, 0);
@@ -78,7 +78,7 @@ public class DateSerializerTest {
 
     ODirectMemoryPointer pointer = new ODirectMemoryPointer(stream);
     try {
-      Assert.assertEquals(dateSerializer.deserializeFromDirectMemory(pointer, 0), calendar.getTime());
+      Assert.assertEquals(dateSerializer.deserializeFromDirectMemoryObject(pointer, 0), calendar.getTime());
     } finally {
       pointer.free();
     }

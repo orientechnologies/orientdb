@@ -479,18 +479,36 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
+  public Map<String, OProperty> propertiesMap() {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+
+    acquireSchemaReadLock();
+    try {
+      final Map<String, OProperty> props = new HashMap<String, OProperty>(20);
+
+      OClassImpl currentClass = this;
+      do {
+        props.putAll(currentClass.properties);
+
+        currentClass = (OClassImpl) currentClass.getSuperClass();
+
+      } while (currentClass != null);
+
+      return props;
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
   public Collection<OProperty> properties() {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
 
     acquireSchemaReadLock();
     try {
-      Collection<OProperty> props = null;
+      final Collection<OProperty> props = new ArrayList<OProperty>();
 
       OClassImpl currentClass = this;
-
       do {
-        if (props == null)
-          props = new ArrayList<OProperty>();
         props.addAll(currentClass.properties.values());
 
         currentClass = (OClassImpl) currentClass.getSuperClass();

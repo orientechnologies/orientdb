@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Schema class
@@ -74,6 +74,8 @@ public interface OClass extends Comparable<OClass> {
   public Collection<OProperty> declaredProperties();
 
   public Collection<OProperty> properties();
+
+  public Map<String, OProperty> propertiesMap();
 
   public Collection<OProperty> getIndexedProperties();
 

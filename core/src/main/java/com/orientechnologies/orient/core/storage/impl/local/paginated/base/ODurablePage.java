@@ -16,8 +16,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.base;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
@@ -29,6 +27,8 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePoint
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
+
+import java.io.IOException;
 
 /**
  * Base page class for all durable data structures, that is data structures state of which can be consistently restored after system
@@ -110,7 +110,7 @@ public class ODurablePage {
   }
 
   protected <T> T deserializeFromDirectMemory(OBinarySerializer<T> binarySerializer, long offset) {
-    return binarySerializer.deserializeFromDirectMemory(pagePointer, offset + PAGE_PADDING);
+    return binarySerializer.deserializeFromDirectMemoryObject(pagePointer, offset + PAGE_PADDING);
   }
 
   protected byte getByteValue(int pageOffset) {

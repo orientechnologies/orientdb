@@ -29,31 +29,36 @@ import java.nio.ByteOrder;
  * @since 18.01.12
  */
 public class OShortSerializer implements OBinarySerializer<Short> {
-  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
-
-  public static OShortSerializer INSTANCE = new OShortSerializer();
-  public static final byte ID = 12;
-
+  public static final byte              ID         = 12;
   /**
    * size of short value in bytes
    */
-  public static final int SHORT_SIZE = 2;
+  public static final int               SHORT_SIZE = 2;
+  private static final OBinaryConverter CONVERTER  = OBinaryConverterFactory.getConverter();
+  public static OShortSerializer        INSTANCE   = new OShortSerializer();
 
   public int getObjectSize(Short object, Object... hints) {
     return SHORT_SIZE;
   }
 
-  public void serialize(Short object, byte[] stream, int startPosition, Object... hints) {
-    final short value = object;
+  public void serialize(final Short object, final byte[] stream, final int startPosition, final Object... hints) {
+    serializeLiteral(object.shortValue(), stream, startPosition);
+  }
+
+  public void serializeLiteral(final short value, final byte[] stream, final int startPosition) {
     stream[startPosition] = (byte) ((value >>> 8) & 0xFF);
     stream[startPosition + 1] = (byte) ((value >>> 0) & 0xFF);
   }
 
-  public Short deserialize(byte[] stream, int startPosition) {
+  public Short deserialize(final byte[] stream, final int startPosition) {
+    return deserializeLiteral(stream, startPosition);
+  }
+
+  public short deserializeLiteral(final byte[] stream, final int startPosition) {
     return (short) ((stream[startPosition] << 8) | (stream[startPosition + 1] & 0xff));
   }
 
-  public int getObjectSize(byte[] stream, int startPosition) {
+  public int getObjectSize(final byte[] stream, final int startPosition) {
     return SHORT_SIZE;
   }
 
@@ -61,25 +66,43 @@ public class OShortSerializer implements OBinarySerializer<Short> {
     return ID;
   }
 
-  public int getObjectSizeNative(byte[] stream, int startPosition) {
+  public int getObjectSizeNative(final byte[] stream, final int startPosition) {
     return SHORT_SIZE;
   }
 
-  public void serializeNative(Short object, byte[] stream, int startPosition, Object... hints) {
+  @Override
+  public void serializeNativeObject(final Short object, final byte[] stream, final int startPosition, final Object... hints) {
     CONVERTER.putShort(stream, startPosition, object, ByteOrder.nativeOrder());
   }
 
-  public Short deserializeNative(byte[] stream, int startPosition) {
+  @Override
+  public Short deserializeNativeObject(byte[] stream, int startPosition) {
     return CONVERTER.getShort(stream, startPosition, ByteOrder.nativeOrder());
   }
 
   @Override
-  public void serializeInDirectMemory(Short object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeInDirectMemoryObject(Short object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     pointer.setShort(offset, object);
   }
 
   @Override
-  public Short deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public Short deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
+    return pointer.getShort(offset);
+  }
+
+  public void serializeNative(final short object, final byte[] stream, final int startPosition, final Object... hints) {
+    CONVERTER.putShort(stream, startPosition, object, ByteOrder.nativeOrder());
+  }
+
+  public short deserializeNative(byte[] stream, int startPosition) {
+    return CONVERTER.getShort(stream, startPosition, ByteOrder.nativeOrder());
+  }
+
+  public void serializeInDirectMemory(short object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    pointer.setShort(offset, object);
+  }
+
+  public short deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
     return pointer.getShort(offset);
   }
 

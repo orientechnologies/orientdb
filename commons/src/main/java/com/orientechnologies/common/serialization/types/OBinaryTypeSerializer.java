@@ -30,10 +30,9 @@ import java.util.Arrays;
  * @since 20.01.12
  */
 public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
-  private static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();
-
-  public static final OBinaryTypeSerializer INSTANCE = new OBinaryTypeSerializer();
-  public static final byte ID = 17;
+  public static final OBinaryTypeSerializer INSTANCE  = new OBinaryTypeSerializer();
+  public static final byte                  ID        = 17;
+  private static final OBinaryConverter     CONVERTER = OBinaryConverterFactory.getConverter();
 
   public int getObjectSize(int length) {
     return length + OIntegerSerializer.INT_SIZE;
@@ -43,49 +42,49 @@ public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {
     return object.length + OIntegerSerializer.INT_SIZE;
   }
 
-  public void serialize(byte[] object, byte[] stream, int startPosition, Object... hints) {
+  public void serialize(final byte[] object, final byte[] stream, final int startPosition, final Object... hints) {
     int len = object.length;
-    OIntegerSerializer.INSTANCE.serialize(len, stream, startPosition);
+    OIntegerSerializer.INSTANCE.serializeLiteral(len, stream, startPosition);
     System.arraycopy(object, 0, stream, startPosition + OIntegerSerializer.INT_SIZE, len);
   }
 
-  public byte[] deserialize(byte[] stream, int startPosition) {
-    int len = OIntegerSerializer.INSTANCE.deserialize(stream, startPosition);
+  public byte[] deserialize(final byte[] stream, final int startPosition) {
+    final int len = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, startPosition);
     return Arrays.copyOfRange(stream, startPosition + OIntegerSerializer.INT_SIZE, startPosition + OIntegerSerializer.INT_SIZE
         + len);
   }
 
-  public int getObjectSize(byte[] stream, int startPosition) {
-    return OIntegerSerializer.INSTANCE.deserialize(stream, startPosition) + OIntegerSerializer.INT_SIZE;
+  public int getObjectSize(final byte[] stream, final int startPosition) {
+    return OIntegerSerializer.INSTANCE.deserializeLiteral(stream, startPosition) + OIntegerSerializer.INT_SIZE;
   }
 
   public int getObjectSizeNative(byte[] stream, int startPosition) {
     return CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder()) + OIntegerSerializer.INT_SIZE;
   }
 
-  public void serializeNative(byte[] object, byte[] stream, int startPosition, Object... hints) {
-    int len = object.length;
+  public void serializeNativeObject(byte[] object, byte[] stream, int startPosition, Object... hints) {
+    final int len = object.length;
     CONVERTER.putInt(stream, startPosition, len, ByteOrder.nativeOrder());
     System.arraycopy(object, 0, stream, startPosition + OIntegerSerializer.INT_SIZE, len);
   }
 
-  public byte[] deserializeNative(byte[] stream, int startPosition) {
-    int len = CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
+  public byte[] deserializeNativeObject(byte[] stream, int startPosition) {
+    final int len = CONVERTER.getInt(stream, startPosition, ByteOrder.nativeOrder());
     return Arrays.copyOfRange(stream, startPosition + OIntegerSerializer.INT_SIZE, startPosition + OIntegerSerializer.INT_SIZE
         + len);
   }
 
   @Override
-  public void serializeInDirectMemory(byte[] object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    int len = object.length;
+  public void serializeInDirectMemoryObject(final byte[] object, final ODirectMemoryPointer pointer, long offset,
+      final Object... hints) {
+    final int len = object.length;
     pointer.setInt(offset, len);
     offset += OIntegerSerializer.INT_SIZE;
-
     pointer.set(offset, object, 0, len);
   }
 
   @Override
-  public byte[] deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public byte[] deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
     int len = pointer.getInt(offset);
     offset += OIntegerSerializer.INT_SIZE;
 
