@@ -51,7 +51,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   @Override
   public void deserialize(final ODocument document, final BytesContainer bytes) {
-//    System.out.printf("\n- deserialize %s", document );
 
     final String className = readString(bytes);
     if (className.length() != 0)
@@ -115,7 +114,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   @SuppressWarnings("unchecked")
   @Override
   public void serialize(final ODocument document, final BytesContainer bytes) {
-//    System.out.printf("\n- serialize %s", document );
 
     final Map<String, OProperty> props;
     final OClass clazz = document.getSchemaClass();
@@ -567,9 +565,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   private int writeLinkCollection(BytesContainer bytes, Collection<OIdentifiable> value) {
-    if (value instanceof OMVRBTreeRIDSet) {
-      ((OMVRBTreeRIDSet) value).toStream();
-    }
+    assert (!(value instanceof OMVRBTreeRIDSet));
     int pos = OVarIntSerializer.write(bytes, value.size());
     for (OIdentifiable itemValue : value) {
       // TODO: handle the null links
