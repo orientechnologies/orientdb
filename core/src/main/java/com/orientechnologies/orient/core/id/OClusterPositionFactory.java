@@ -17,7 +17,6 @@
 package com.orientechnologies.orient.core.id;
 
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 import java.io.DataInput;
 import java.io.IOException;
@@ -35,10 +34,39 @@ public abstract class OClusterPositionFactory {
   public static final OClusterPositionFactory INSTANCE;
 
   static {
-    if (OGlobalConfiguration.USE_NODE_ID_CLUSTER_POSITION.getValueAsBoolean())
-      INSTANCE = new OClusterPositionFactoryNodeId();
-    else
-      INSTANCE = new OClusterPositionFactoryLong();
+    INSTANCE = new OClusterPositionFactoryLong();
+  }
+
+  public static final class OClusterPositionFactoryLong extends OClusterPositionFactory {
+    @Override
+    public OClusterPosition generateUniqueClusterPosition() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public OClusterPosition valueOf(long value) {
+      return new OClusterPositionLong(value);
+    }
+
+    @Override
+    public OClusterPosition valueOf(String value) {
+      return new OClusterPositionLong(Long.valueOf(value));
+    }
+
+    @Override
+    public OClusterPosition fromStream(byte[] content, int start) {
+      return new OClusterPositionLong(OLongSerializer.INSTANCE.deserializeLiteral(content, start));
+    }
+
+    @Override
+    public int getSerializedSize() {
+      return OLongSerializer.LONG_SIZE;
+    }
+
+    @Override
+    public OClusterPosition getMaxValue() {
+      return new OClusterPositionLong(Long.MAX_VALUE);
+    }
   }
 
   public abstract OClusterPosition generateUniqueClusterPosition();
@@ -105,69 +133,4 @@ public abstract class OClusterPositionFactory {
   }
 
   public abstract OClusterPosition getMaxValue();
-
-  public static final class OClusterPositionFactoryLong extends OClusterPositionFactory {
-    @Override
-    public OClusterPosition generateUniqueClusterPosition() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public OClusterPosition valueOf(long value) {
-      return new OClusterPositionLong(value);
-    }
-
-    @Override
-    public OClusterPosition valueOf(String value) {
-      return new OClusterPositionLong(Long.valueOf(value));
-    }
-
-    @Override
-    public OClusterPosition fromStream(byte[] content, int start) {
-      return new OClusterPositionLong(OLongSerializer.INSTANCE.deserializeLiteral(content, start));
-    }
-
-    @Override
-    public int getSerializedSize() {
-      return OLongSerializer.LONG_SIZE;
-    }
-
-    @Override
-    public OClusterPosition getMaxValue() {
-      return new OClusterPositionLong(Long.MAX_VALUE);
-    }
-  }
-
-  public static final class OClusterPositionFactoryNodeId extends OClusterPositionFactory {
-    @Override
-    public OClusterPosition generateUniqueClusterPosition() {
-      return new OClusterPositionNodeId(ONodeId.generateUniqueId());
-    }
-
-    @Override
-    public OClusterPosition valueOf(long value) {
-      return new OClusterPositionNodeId(ONodeId.valueOf(value));
-    }
-
-    @Override
-    public OClusterPosition valueOf(String value) {
-      return new OClusterPositionNodeId(ONodeId.parseString(value));
-    }
-
-    @Override
-    public OClusterPosition fromStream(byte[] content, int start) {
-      return new OClusterPositionNodeId(ONodeId.fromStream(content, start));
-    }
-
-    @Override
-    public int getSerializedSize() {
-      return ONodeId.SERIALIZED_SIZE;
-    }
-
-    @Override
-    public OClusterPosition getMaxValue() {
-      return new OClusterPositionNodeId(ONodeId.MAX_VALUE);
-    }
-  }
-
 }

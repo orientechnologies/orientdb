@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core;
 
-import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -34,7 +33,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 
 import java.io.IOException;
 import java.util.*;

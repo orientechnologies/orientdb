@@ -28,8 +28,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -62,14 +60,17 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientGraphAsynch implements OrientExtendedGraph {
-  private final Features                              FEATURES           = new Features();
-  private final OrientGraphFactory                    factory;
-  private ConcurrentLinkedHashMap<ORID, OrientVertex> vertexCache;
-  private int                                         maxPoolSize        = 32;
-  private int                                         maxRetries         = 16;
-  private boolean                                     transactional      = false;
-  private AtomicLong                                  operationStarted   = new AtomicLong();
-  private AtomicLong                                  operationCompleted = new AtomicLong();
+  private final Features                                FEATURES           = new Features();
+  private final OrientGraphFactory                      factory;
+  private ConcurrentLinkedHashMap<Object, OrientVertex> vertexCache;
+  private Object                                        lastCachedId;
+  private OrientVertex                                  lastCachedVertex;
+  private int                                           maxPoolSize        = 32;
+  private int                                           maxRetries         = 16;
+  private boolean                                       transactional      = false;
+  private AtomicLong                                    operationStarted   = new AtomicLong();
+  private AtomicLong                                    operationCompleted = new AtomicLong();
+  private String                                        keyFieldName;
 
   public OrientGraphAsynch(final String url) {
     factory = new OrientGraphFactory(url).setupPool(1, maxPoolSize).setTransactional(transactional);
@@ -79,8 +80,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     factory = new OrientGraphFactory(url, username, password).setupPool(1, maxPoolSize).setTransactional(transactional);
   }
 
-  public OrientGraphAsynch setCache(final long iElements) {
-    vertexCache = new ConcurrentLinkedHashMap.Builder<ORID, OrientVertex>().maximumWeightedCapacity(iElements).build();
+  public OrientGraphAsynch setCache(final String iKeyFieldName, final long iElements) {
+    keyFieldName = iKeyFieldName;
+    vertexCache = new ConcurrentLinkedHashMap.Builder<Object, OrientVertex>().maximumWeightedCapacity(iElements).build();
     return this;
   }
 
@@ -95,8 +97,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           try {
             final OrientVertex v = g.addVertex(id, prop);
 
-            if (vertexCache != null)
-              vertexCache.put(v.getIdentity(), v);
+            addInCache(id, v);
 
             return v;
 
@@ -135,8 +136,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
               final OrientVertex v = (OrientVertex) getVertex(existent);
 
-              if (vertexCache != null)
-                vertexCache.put(v.getIdentity(), v);
+              addInCache(id, v);
 
               return v;
             }
@@ -160,8 +160,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
         try {
           final OrientVertex v = g.addVertex(id);
 
-          if (vertexCache != null)
-            vertexCache.put(v.getIdentity(), v);
+          addInCache(id, v);
 
           return v;
         } finally {
@@ -179,29 +178,21 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Vertex getVertex(final Object id) {
+    if (id == null)
+      return null;
+
     if (id instanceof OrientVertex)
       return (Vertex) id;
 
+    OrientVertex v = getFromCache(id);
+    if (v != null)
+      return v;
+
     final OrientBaseGraph g = acquire();
     try {
-      if (id != null)
-        return null;
-
-      OrientVertex v;
-      if (vertexCache != null) {
-        if (id instanceof OIdentifiable) {
-          OIdentifiable objId = (OIdentifiable) id;
-          v = vertexCache.get(objId.getIdentity());
-          if (v != null)
-            // FOUND
-            return v;
-        }
-      }
-
       // LOAD FROM DATABASE AND STORE IN CACHE
       v = g.getVertex(id);
-      if (v != null && vertexCache != null)
-        vertexCache.put(v.getIdentity(), v);
+      addInCache(id, v);
 
       return v;
 
@@ -219,8 +210,16 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
       public Object call() throws Exception {
         final OrientBaseGraph g = acquire();
         try {
-          if (vertexCache != null)
-            vertexCache.remove(vertex.getId());
+          if (vertexCache != null) {
+            final Object field = vertex.getProperty(keyFieldName);
+            if (field != null)
+              vertexCache.remove(field);
+
+            if (vertex.equals(lastCachedVertex)) {
+              lastCachedId = null;
+              lastCachedVertex = null;
+            }
+          }
 
           g.removeVertex(vertex);
         } finally {
@@ -708,6 +707,26 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   public void setMaxRetries(final int maxRetries) {
     this.maxRetries = maxRetries;
+  }
+
+  protected OrientVertex getFromCache(final Object id) {
+    if (id.equals(lastCachedId))
+      return lastCachedVertex;
+
+    if (vertexCache != null)
+      return vertexCache.get(id);
+
+    return null;
+  }
+
+  protected void addInCache(final Object id, final OrientVertex v) {
+    if (id != null && v != null) {
+      if (vertexCache != null)
+        vertexCache.put(id, v);
+
+      lastCachedId = id;
+      lastCachedVertex = v;
+    }
   }
 
   protected void config() {

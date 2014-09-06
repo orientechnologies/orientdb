@@ -30,7 +30,6 @@ public class OFileFactory extends OConfigurableStatefulFactory<String, OFile> {
   protected static final OFileFactory instance = new OFileFactory();
 
   public OFileFactory() {
-    register(OFileMMap.NAME, OFileMMap.class);
     register(OFileClassic.NAME, OFileClassic.class);
   }
 

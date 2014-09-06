@@ -384,7 +384,7 @@ public interface OClass extends Comparable<OClass> {
 
   public String getCustom(String iName);
 
-  public OClassImpl setCustom(String iName, String iValue);
+  public OClass setCustom(String iName, String iValue);
 
   public void removeCustom(String iName);
 

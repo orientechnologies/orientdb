@@ -21,16 +21,14 @@ import com.orientechnologies.common.test.SpeedTestGroup;
 
 @Test(enabled = false)
 public class IOSpeedTest extends SpeedTestGroup {
-	protected static final int	TEST_CYCLES	= 1;
+  protected static final int TEST_CYCLES = 1;
 
-	public static void main(String[] iArgs) {
-		new IOSpeedTest().testOnce();
-	}
+  public static void main(String[] iArgs) {
+    new IOSpeedTest().testOnce();
+  }
 
-	public void testOnce() {
-		addTest(new OMMapFileTest()).data().setCycles(TEST_CYCLES);
-
-		addTest(new OClassicFileTest()).data().setCycles(TEST_CYCLES);
-		go();
-	}
+  public void testOnce() {
+    addTest(new OClassicFileTest()).data().setCycles(TEST_CYCLES);
+    go();
+  }
 }
