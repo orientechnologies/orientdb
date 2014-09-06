@@ -139,9 +139,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
             for (int retry = 0;; retry++) {
               indexUniqueException.incrementAndGet();
 
-              // if (OLogManager.instance().isDebugEnabled())
-              OLogManager.instance().warn(this, "Vertex %s already created, merge it and retry again (retry=%d/%d)", id, retry,
-                  maxRetries);
+              if (OLogManager.instance().isDebugEnabled())
+                OLogManager.instance().debug(this, "Vertex %s already created, merge it and retry again (retry=%d/%d)", id, retry,
+                    maxRetries);
 
               final ODocument existent = e.getRid().getRecord();
 
@@ -249,11 +249,10 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
             final Object field = vertex.getProperty(keyFieldName);
             if (field != null)
               vertexCache.remove(field);
-          }
-
-          if (vertex.equals(lastCachedVertex)) {
-            lastCachedId = null;
-            lastCachedVertex = null;
+            if (vertex.equals(lastCachedVertex)) {
+              lastCachedId = null;
+              lastCachedVertex = null;
+            }
           }
 
           g.removeVertex(vertex);
@@ -307,10 +306,17 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           vOut.attach(g);
           vIn.attach(g);
 
+          boolean reloaded = false;
+
           for (int retry = 0;; retry++) {
             try {
 
               final OrientEdge e = g.addEdge(id, vOut, vIn, label);
+
+              if (reloaded) {
+                addInCache(vOut.getProperty(keyFieldName), vOut);
+                addInCache(vIn.getProperty(keyFieldName), vIn);
+              }
 
               edgesCreated.incrementAndGet();
 
@@ -319,9 +325,11 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
             } catch (OConcurrentModificationException e) {
               concurrentException.incrementAndGet();
               reloadVertices(vOut, vIn, retry, e);
+              reloaded = true;
             } catch (ORecordDuplicatedException e) {
               indexUniqueException.incrementAndGet();
               reloadVertices(vOut, vIn, retry, e);
+              reloaded = true;
             } catch (Exception e) {
               unknownException.incrementAndGet();
               OLogManager.instance().warn(
@@ -339,29 +347,25 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
       protected void reloadVertices(final OrientVertex vOut, final OrientVertex vIn, final int retry, final OException e) {
         if (retry < maxRetries) {
-          // if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().warn(
-              this,
-              "Conflict on addEdge(" + id + "," + outVertex + "," + inVertex + "," + label + "), retrying (retry=" + retry + "/"
-                  + maxRetries + "). Cause: " + e);
+          if (OLogManager.instance().isDebugEnabled())
+            OLogManager.instance().debug(
+                this,
+                "Conflict on addEdge(" + id + "," + outVertex + "," + inVertex + "," + label + "), retrying (retry=" + retry + "/"
+                    + maxRetries + "). Cause: " + e);
 
           if (e instanceof OConcurrentModificationException) {
             // LOAD ONLY THE CONFLICTED RECORD ONLY
-            if (((OConcurrentModificationException) e).getRid().equals(vOut.getIdentity())) {
+            if (((OConcurrentModificationException) e).getRid().equals(vOut.getIdentity()))
               vOut.reload();
-              addInCache(vOut.getProperty(keyFieldName), vOut);
-            } else {
+            else
               vIn.reload();
-              addInCache(vIn.getProperty(keyFieldName), vIn);
-            }
+
             verticesReloaded.incrementAndGet();
           } else {
             // LOAD BOTH VERTICES'S RECORD
             vOut.reload();
-            addInCache(vOut.getProperty(keyFieldName), vOut);
             verticesReloaded.incrementAndGet();
             vIn.reload();
-            addInCache(vIn.getProperty(keyFieldName), vIn);
             verticesReloaded.incrementAndGet();
           }
 
@@ -837,12 +841,12 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   }
 
   protected OrientVertex getFromCache(final Object id) {
-    if (id.equals(lastCachedId)) {
-      reusedLastVertex.incrementAndGet();
-      return lastCachedVertex.copy();
-    }
-
     if (vertexCache != null) {
+      if (id.equals(lastCachedId)) {
+        reusedLastVertex.incrementAndGet();
+        return lastCachedVertex.copy();
+      }
+
       final OrientVertex v = vertexCache.get(id);
       if (v != null) {
         reusedCachedVertex.incrementAndGet();
@@ -855,11 +859,12 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   protected void addInCache(final Object id, final OrientVertex v) {
     if (id != null && v != null) {
-      if (vertexCache != null)
-        vertexCache.put(id, v);
+      if (vertexCache != null) {
+        vertexCache.put(id, v.copy());
 
-      lastCachedId = id;
-      lastCachedVertex = v;
+        lastCachedId = id;
+        lastCachedVertex = v;
+      }
     }
   }
 
