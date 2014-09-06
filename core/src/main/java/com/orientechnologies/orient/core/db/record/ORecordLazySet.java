@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -47,6 +48,12 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
 
   public ORecordLazySet(final ODocument iSourceRecord) {
     super(iSourceRecord);
+  }
+
+  public ORecordLazySet(ODocument iSourceRecord, Collection<OIdentifiable> iOrigin) {
+    this(iSourceRecord);
+    if (iOrigin != null && !iOrigin.isEmpty())
+      addAll(iOrigin);
   }
 
   @Override
