@@ -15,21 +15,19 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import java.io.PrintStream;
-import java.lang.management.OperatingSystemMXBean;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.FileHandler;
-import java.util.logging.Level;
-
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
+
+import java.io.PrintStream;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -140,9 +138,6 @@ public enum OGlobalConfiguration {
 
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
       + " in page which is tracked in paginated storage", Integer.class, 16),
-
-  USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
-      + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),
 
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
@@ -337,76 +332,9 @@ public enum OGlobalConfiguration {
   // FILE
   FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, true),
 
-  FILE_DEFRAG_STRATEGY("file.defrag.strategy", "Strategy to recycle free space: 0 = synchronous defrag, 1 = asynchronous defrag, ",
-      Integer.class, 0),
+  FILE_DELETE_DELAY("file.deleteDelay", "Delay time in ms to wait for another attempt to delete a locked file", Integer.class, 10),
 
-  FILE_DEFRAG_HOLE_MAX_DISTANCE(
-      "file.defrag.holeMaxDistance",
-      "Max distance in bytes between holes to cause their defrag. Set it to -1 to use dynamic size. Beware that if the db is huge moving blocks to defrag could be expensive",
-      Integer.class, 32768),
-
-  @Deprecated
-  FILE_MMAP_USE_OLD_MANAGER("file.mmap.useOldManager",
-      "Manager that will be used to handle mmap files. true = USE OLD MANAGER, false = USE NEW MANAGER", boolean.class, false),
-
-  @Deprecated
-  FILE_MMAP_AUTOFLUSH_TIMER("file.mmap.autoFlush.timer", "Auto flushes memory mapped blocks every X seconds. 0 = disabled",
-      int.class, 30),
-
-  @Deprecated
-  FILE_MMAP_AUTOFLUSH_UNUSED_TIME("file.mmap.autoFlush.unusedTime",
-      "Remove memory mapped blocks with unused time major than this value. Time is in seconds", int.class, 30),
-
-  @Deprecated
-  FILE_MMAP_LOCK_MEMORY("file.mmap.lockMemory",
-      "When using new map manager this parameter specify prevent memory swap or not. true = LOCK MEMORY, false = NOT LOCK MEMORY",
-      boolean.class, true),
-
-  @Deprecated
-  FILE_MMAP_STRATEGY(
-      "file.mmap.strategy",
-      "Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE, 4 = NEVER USE MMAP",
-      Integer.class, 0),
-
-  @Deprecated
-  FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block, default is 1Mb", Integer.class, 1048576,
-      new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManagerOld.setBlockSize(((Number) iNewValue).intValue());
-        }
-      }),
-
-  @Deprecated
-  FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file through the channel",
-      Integer.class, 8192),
-
-  @Deprecated
-  FILE_MMAP_MAX_MEMORY(
-      "file.mmap.maxMemory",
-      "Max memory allocatable by memory mapping manager. Note that on 32bit operating systems, the limit is 2Gb but will vary between operating systems",
-      Long.class, 134217728, new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManagerOld.setMaxMemory(OFileUtils.getSizeAsNumber(iNewValue));
-        }
-      }),
-
-  @Deprecated
-  FILE_MMAP_OVERLAP_STRATEGY(
-      "file.mmap.overlapStrategy",
-      "Strategy to use when a request overlaps in-memory buffers: 0 = Use the channel access, 1 = force the in-memory buffer and use the channel access, 2 = always create an overlapped in-memory buffer (default)",
-      Integer.class, 2, new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManagerOld.setOverlapStrategy((Integer) iNewValue);
-        }
-      }),
-
-  @Deprecated
-  FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay",
-      "Delay time in ms to wait for another forced flush of the memory-mapped block to disk", Integer.class, 10),
-
-  @Deprecated
-  FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory-mapped block will try to flush to disk", Integer.class,
-      50),
+  FILE_DELETE_RETRY("file.deleteRetry", "Number of retries to delete a locked file", Integer.class, 50),
 
   JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
       "This property disable to using JNA installed in your system. And use JNA bundled with database.", boolean.class, true),
@@ -541,7 +469,7 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
 
   DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT("distributed.deployChunkTaskTimeout",
-                                           "Maximum timeout in milliseconds to wait for database chunk deployment", Long.class, 15000l),
+      "Maximum timeout in milliseconds to wait for database chunk deployment", Long.class, 15000l),
 
   DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression",
       "Compression level between 0 and 9 to use in backup for database deployment", Integer.class, 7),
@@ -651,28 +579,6 @@ public enum OGlobalConfiguration {
   }
 
   private static void autoConfig() {
-    if (System.getProperty("os.arch").indexOf("64") > -1) {
-      // 64 BIT
-
-      if (FILE_MMAP_MAX_MEMORY.getValueAsInteger() == 134217728) {
-        final OperatingSystemMXBean bean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-
-        try {
-          final Class<?> cls = Class.forName("com.sun.management.OperatingSystemMXBean");
-          if (cls.isAssignableFrom(bean.getClass())) {
-            final Long maxOsMemory = (Long) cls.getMethod("getTotalPhysicalMemorySize", new Class[] {}).invoke(bean);
-            final long maxProcessMemory = Runtime.getRuntime().maxMemory();
-            long mmapBestMemory = (maxOsMemory.longValue() - maxProcessMemory) / 2;
-            FILE_MMAP_MAX_MEMORY.setValue(mmapBestMemory);
-          }
-        } catch (Exception e) {
-          // SUN JMX CLASS NOT AVAILABLE: CAN'T AUTO TUNE THE ENGINE
-        }
-      }
-    } else {
-      // 32 BIT, USE THE DEFAULT CONFIGURATION
-    }
-
     System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
     System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
   }
