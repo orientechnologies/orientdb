@@ -107,6 +107,21 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return new ORidBag(stream);
   }
 
+  public ORidBag copy() {
+    final ORidBag copy = new ORidBag();
+    copy.topThreshold = topThreshold;
+    copy.bottomThreshold = bottomThreshold;
+    copy.uuid = uuid;
+
+    if (delegate instanceof OSBTreeRidBag)
+      // ALREADY MULTI-THREAD
+      copy.delegate = delegate;
+    else
+      copy.delegate = ((OEmbeddedRidBag) delegate).copy();
+
+    return copy;
+  }
+
   public void addAll(Collection<OIdentifiable> values) {
     delegate.addAll(values);
   }

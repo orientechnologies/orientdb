@@ -20,15 +20,15 @@
 
 package com.tinkerpop.blueprints.impls.orient.asynch;
 
+import java.util.Set;
+import java.util.concurrent.Future;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
-
-import java.util.Set;
-import java.util.concurrent.Future;
 
 public abstract class OrientElementFuture<T extends OrientElement> implements Element, OIdentifiable {
   protected final Future<T> future;
@@ -38,7 +38,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
   }
 
   @Override
-  public <T> T getProperty(String key) {
+  public <T> T getProperty(final String key) {
     try {
       return future.get().getProperty(key);
     } catch (Exception e) {
@@ -56,7 +56,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
   }
 
   @Override
-  public void setProperty(String key, Object value) {
+  public void setProperty(final String key, final Object value) {
     try {
       future.get().setProperty(key, value);
     } catch (Exception e) {
@@ -65,7 +65,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
   }
 
   @Override
-  public <T> T removeProperty(String key) {
+  public <T> T removeProperty(final String key) {
     try {
       return future.get().removeProperty(key);
     } catch (Exception e) {
@@ -105,6 +105,14 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
     }
   }
 
+  public void reload() {
+    try {
+      future.get().reload();
+    } catch (Exception e) {
+      throw new OException("Cannot reload current element", e);
+    }
+  }
+
   @Override
   public int hashCode() {
     try {
@@ -115,7 +123,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
   }
 
   @Override
-  public void lock(boolean iExclusive) {
+  public void lock(final boolean iExclusive) {
     try {
       future.get().lock(iExclusive);
     } catch (Exception e) {
@@ -133,7 +141,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
   }
 
   @Override
-  public int compareTo(OIdentifiable o) {
+  public int compareTo(final OIdentifiable o) {
     try {
       return future.get().compareTo(o);
     } catch (Exception e) {
@@ -142,7 +150,7 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
   }
 
   @Override
-  public int compare(OIdentifiable o1, OIdentifiable o2) {
+  public int compare(final OIdentifiable o1, final OIdentifiable o2) {
     try {
       return future.get().compare(o1, o2);
     } catch (Exception e) {
@@ -153,6 +161,15 @@ public abstract class OrientElementFuture<T extends OrientElement> implements El
   public T get() {
     try {
       return (T) future.get();
+    } catch (Exception e) {
+      throw new OException("Cannot retrieve the requested information", e);
+    }
+  }
+
+  @Override
+  public String toString() {
+    try {
+      return future.get().toString();
     } catch (Exception e) {
       throw new OException("Cannot retrieve the requested information", e);
     }

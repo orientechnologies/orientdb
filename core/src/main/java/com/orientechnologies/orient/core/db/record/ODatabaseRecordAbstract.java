@@ -91,7 +91,7 @@ import java.util.concurrent.Callable;
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
 
   @Deprecated
-  private static final String                               DEF_RECORD_FORMAT   = "csv";
+  private static final String                               DEF_RECORD_FORMAT = "csv";
   private final Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
   protected ORecordSerializer                               serializer;
   private OSBTreeCollectionManager                          sbTreeCollectionManager;
@@ -100,8 +100,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   private byte                                              recordType;
   @Deprecated
   private String                                            recordFormat;
-  private Map<ORecordHook, ORecordHook.HOOK_POSITION>       hooks               = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
-  private boolean                                           retainRecords       = true;
+  private Map<ORecordHook, ORecordHook.HOOK_POSITION>       hooks             = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
+  private boolean                                           retainRecords     = true;
   private OLocalRecordCache                                 level1Cache;
   private boolean                                           mvcc;
   private boolean                                           validation;
@@ -358,9 +358,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return create(null);
   }
 
-    /**
-     * {@inheritDoc}
-     */
+  /**
+   * {@inheritDoc}
+   */
   @Override
   public <DB extends ODatabase> DB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     setCurrentDatabaseinThreadLocal();
@@ -1144,8 +1144,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
         try {
           // SAVE IT
-          operationResult = underlying.save(rid, record.isContentChanged(), stream == null ? new byte[0] : stream,
-              realVersion, record.getRecordType(), iMode.ordinal(), iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+          operationResult = underlying.save(rid, record.isContentChanged(), stream == null ? new byte[0] : stream, realVersion,
+              record.getRecordType(), iMode.ordinal(), iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
           final ORecordVersion version = operationResult.getResult();
 
@@ -1174,30 +1174,16 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     } catch (OException e) {
       throw e;
     } catch (Throwable t) {
-      throw new ODatabaseException("Error on saving record in cluster #" + record.getIdentity().getClusterId(), t);
+      if (!record.getIdentity().getClusterPosition().isValid())
+        throw new ODatabaseException("Error on saving record in cluster #" + record.getIdentity().getClusterId(), t);
+      else
+        throw new ODatabaseException("Error on saving record " + record.getIdentity(), t);
+
     } finally {
       releaseIndexModificationLock(lockedIndexes);
       record.setInternalStatus(ORecordElement.STATUS.LOADED);
     }
     return (RET) record;
-  }
-
-  private void callbackHookFailure(ORecordInternal<?> record, boolean iCallTriggers, boolean wasNew, byte[] stream) {
-    if (iCallTriggers && stream != null && stream.length > 0)
-      callbackHooks(wasNew ? TYPE.CREATE_FAILED : TYPE.UPDATE_FAILED, record);
-  }
-
-  private void callbackHookSuccess(ORecordInternal<?> record, boolean iCallTriggers, boolean wasNew, byte[] stream,
-      OStorageOperationResult<ORecordVersion> operationResult) {
-    if (iCallTriggers && stream != null && stream.length > 0) {
-      final TYPE hookType;
-      if (!operationResult.isMoved()) {
-        hookType = wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE;
-      } else {
-        hookType = wasNew ? TYPE.CREATE_REPLICATED : TYPE.UPDATE_REPLICATED;
-      }
-      callbackHooks(hookType, record);
-    }
   }
 
   public boolean executeUpdateReplica(final ORecordInternal<?> record) {
@@ -1558,6 +1544,24 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
     registerHook(new ORidBagDeleteHook(), ORecordHook.HOOK_POSITION.LAST);
+  }
+
+  private void callbackHookFailure(ORecordInternal<?> record, boolean iCallTriggers, boolean wasNew, byte[] stream) {
+    if (iCallTriggers && stream != null && stream.length > 0)
+      callbackHooks(wasNew ? TYPE.CREATE_FAILED : TYPE.UPDATE_FAILED, record);
+  }
+
+  private void callbackHookSuccess(ORecordInternal<?> record, boolean iCallTriggers, boolean wasNew, byte[] stream,
+      OStorageOperationResult<ORecordVersion> operationResult) {
+    if (iCallTriggers && stream != null && stream.length > 0) {
+      final TYPE hookType;
+      if (!operationResult.isMoved()) {
+        hookType = wasNew ? TYPE.AFTER_CREATE : TYPE.AFTER_UPDATE;
+      } else {
+        hookType = wasNew ? TYPE.CREATE_REPLICATED : TYPE.UPDATE_REPLICATED;
+      }
+      callbackHooks(hookType, record);
+    }
   }
 
   private void checkRecordClass(ORecordInternal<?> record, String iClusterName, ORecordId rid, boolean isNew) {

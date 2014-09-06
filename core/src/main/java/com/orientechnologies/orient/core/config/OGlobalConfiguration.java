@@ -317,7 +317,7 @@ public enum OGlobalConfiguration {
 
   // RIDBAG
   RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("ridBag.embeddedToSbtreeBonsaiThreshold",
-      "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 80),
+      "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 40),
 
   RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
       "Amount of values after which LINKBAG implementation will use embedded values container (disabled by default)",

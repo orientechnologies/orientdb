@@ -57,7 +57,7 @@ public class OrientVertex extends OrientElement implements Vertex {
     setProperties(fields);
   }
 
-  protected OrientVertex(final OrientBaseGraph graph, final OIdentifiable record) {
+  public OrientVertex(final OrientBaseGraph graph, final OIdentifiable record) {
     super(graph, record);
   }
 
@@ -425,6 +425,12 @@ public class OrientVertex extends OrientElement implements Vertex {
       throw new IllegalStateException("Invalid content found in " + fieldName + " field: " + fieldRecord);
 
     return toAdd;
+  }
+
+  public OrientVertex copy() {
+    final OrientVertex v = new OrientVertex();
+    super.copyTo(v);
+    return v;
   }
 
   /**
