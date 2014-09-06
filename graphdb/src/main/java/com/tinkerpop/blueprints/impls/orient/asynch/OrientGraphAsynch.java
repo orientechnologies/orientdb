@@ -22,6 +22,7 @@ package com.tinkerpop.blueprints.impls.orient.asynch;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
@@ -317,25 +318,10 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
             } catch (OConcurrentModificationException e) {
               concurrentException.incrementAndGet();
-              if (retry < maxRetries) {
-                // if (OLogManager.instance().isDebugEnabled())
-                OLogManager.instance().warn(
-                    this,
-                    "Conflict on addEdge(" + id + "," + outVertex + "," + inVertex + "," + label + "), retrying (retry=" + retry
-                        + "/" + maxRetries + "). Cause: " + e);
-
-                // LOAD ONLY THE CONFLICTED RECORD
-                if (e.getRid().equals(vOut.getIdentity())) {
-                  vOut.reload();
-                  addInCache(vOut.getProperty(keyFieldName), vOut);
-                } else {
-                  vIn.reload();
-                  addInCache(vIn.getProperty(keyFieldName), vIn);
-                }
-                verticesReloaded.incrementAndGet();
-
-              } else
-                throw e;
+              reloadVertices(vOut, vIn, retry, e);
+            } catch (ORecordDuplicatedException e) {
+              indexUniqueException.incrementAndGet();
+              reloadVertices(vOut, vIn, retry, e);
             } catch (Exception e) {
               unknownException.incrementAndGet();
               OLogManager.instance().warn(
@@ -349,6 +335,38 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           g.shutdown();
           asynchOperationCompleted();
         }
+      }
+
+      protected void reloadVertices(final OrientVertex vOut, final OrientVertex vIn, final int retry, final OException e) {
+        if (retry < maxRetries) {
+          // if (OLogManager.instance().isDebugEnabled())
+          OLogManager.instance().warn(
+              this,
+              "Conflict on addEdge(" + id + "," + outVertex + "," + inVertex + "," + label + "), retrying (retry=" + retry + "/"
+                  + maxRetries + "). Cause: " + e);
+
+          if (e instanceof OConcurrentModificationException) {
+            // LOAD ONLY THE CONFLICTED RECORD ONLY
+            if (((OConcurrentModificationException) e).getRid().equals(vOut.getIdentity())) {
+              vOut.reload();
+              addInCache(vOut.getProperty(keyFieldName), vOut);
+            } else {
+              vIn.reload();
+              addInCache(vIn.getProperty(keyFieldName), vIn);
+            }
+            verticesReloaded.incrementAndGet();
+          } else {
+            // LOAD BOTH VERTICES'S RECORD
+            vOut.reload();
+            addInCache(vOut.getProperty(keyFieldName), vOut);
+            verticesReloaded.incrementAndGet();
+            vIn.reload();
+            addInCache(vIn.getProperty(keyFieldName), vIn);
+            verticesReloaded.incrementAndGet();
+          }
+
+        } else
+          throw e;
       }
     }));
   }
