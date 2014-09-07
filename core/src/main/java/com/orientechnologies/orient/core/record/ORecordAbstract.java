@@ -190,7 +190,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   public void onAfterIdentityChanged(final ORecord<?> iRecord) {
     invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
 
-    if (!prevRid.equals(this._recordId)) {
+    if (prevRid != null && !prevRid.equals(this._recordId)) {
       for (OIdentityChangeListener changeListener : identityChangeListeners)
         changeListener.onIdentityChanged(prevRid, this);
     }
@@ -300,9 +300,6 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
 
     try {
       getDatabase().reload(this, iFetchPlan, iIgnoreCache);
-
-      // GET CONTENT
-      // fromStream(toStream());
 
       return this;
     } catch (Exception e) {

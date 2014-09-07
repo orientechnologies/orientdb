@@ -16,6 +16,7 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyAbstractDelegate;
@@ -66,14 +67,19 @@ public class OrientVertexType extends OrientElementType {
     return createEdgeProperty(iDirection, iEdgeClassName, OType.ANY);
   }
 
-  public OrientVertexProperty createEdgeProperty(final Direction iDirection, String iEdgeClassName, final OType iType ) {
-    iEdgeClassName = OrientBaseGraph.encodeClassName(iEdgeClassName);
+  public OrientVertexProperty createEdgeProperty(final Direction iDirection, final String iEdgeClassName, final OType iType) {
+    return graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+      @Override
+      public OrientVertexProperty call(OrientBaseGraph iArgument) {
+        final String clsName = OrientBaseGraph.encodeClassName(iEdgeClassName);
 
-    final boolean useVertexFieldsForEdgeLabels = graph.isUseVertexFieldsForEdgeLabels();
+        final boolean useVertexFieldsForEdgeLabels = graph.isUseVertexFieldsForEdgeLabels();
 
-    final String fieldName = OrientVertex.getConnectionFieldName(iDirection, iEdgeClassName, useVertexFieldsForEdgeLabels);
+        final String fieldName = OrientVertex.getConnectionFieldName(iDirection, clsName, useVertexFieldsForEdgeLabels);
 
-    return new OrientVertexProperty(graph, delegate.createProperty(fieldName, iType));
+        return new OrientVertexProperty(graph, delegate.createProperty(fieldName, iType));
+      }
+    });
   }
 
   @Override

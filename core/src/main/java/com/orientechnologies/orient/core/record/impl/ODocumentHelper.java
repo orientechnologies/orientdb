@@ -733,7 +733,9 @@ public class ODocumentHelper {
         // EMBEDDED DOCUMENT
         iCloned._fieldValues.put(iEntry.getKey(), ((ODocument) fieldValue).copy());
 
-        // LISTS
+      } else if (fieldValue instanceof ORidBag) {
+        iCloned._fieldValues.put(iEntry.getKey(), ((ORidBag) fieldValue).copy());
+
       } else if (fieldValue instanceof ORecordLazyList) {
         iCloned._fieldValues.put(iEntry.getKey(), ((ORecordLazyList) fieldValue).copy(iCloned));
 

@@ -433,6 +433,23 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       throw ExceptionFactory.propertyKeyCanNotBeEmpty();
   }
 
+  public void reload() {
+    final ODocument rec = getRecord();
+    if (rec != null)
+      rec.reload(null, true);
+  }
+
+  protected void copyTo(final OrientElement iCopy) {
+    iCopy.graph = graph;
+    iCopy.settings = settings;
+    if (rawElement instanceof ODocument) {
+      iCopy.rawElement = new ODocument().fromStream(((ODocument) rawElement).toStream());
+    } else if (rawElement instanceof ORID)
+      iCopy.rawElement = ((ORID) rawElement).copy();
+    else
+      throw new IllegalArgumentException("Cannot clone element " + rawElement);
+  }
+
   protected void checkClass() {
     // FORCE EARLY UNMARSHALLING
     final ODocument doc = getRecord();
