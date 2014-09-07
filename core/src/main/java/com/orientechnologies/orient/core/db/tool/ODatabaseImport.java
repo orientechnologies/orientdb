@@ -700,7 +700,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     } while (jsonReader.lastChar() == ',');
 
-    listener.onMessage("\nDone. Imported " + n + " indexes.");
+    listener.onMessage("\nDone. Imported " + String.format("%,d", n) + " indexes.");
 
     jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
   }
@@ -976,9 +976,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           }
         }
 
-      int id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"").readInteger(OJSONReader.COMMA_SEPARATOR);
-      String type = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"")
-          .readString(OJSONReader.NEXT_IN_OBJECT);
+      int id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"").readInteger(OJSONReader.NEXT_IN_OBJECT);
+
+      String type;
+      if (jsonReader.lastChar() == ',')
+        type = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"").readString(OJSONReader.NEXT_IN_OBJECT);
+      else
+        type = "PHYSICAL";
 
       if (jsonReader.lastChar() == ',') {
         rid = new ORecordId(jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"rid\"")
@@ -1114,19 +1118,19 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           lastClusterId = rid.getClusterId();
           // CHANGED CLUSTERID: DUMP STATISTICS
           System.out.print("\n- Importing records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
-              + lastClusterId + "): ");
+              + lastClusterId + ")");
 
         } else if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
           // CHANGED CLUSTERID: DUMP STATISTICS
-          System.out.print(" = " + clusterRecords + " records");
+          System.out.printf(" = %,d records", clusterRecords);
           clusterRecords = 0;
 
           lastClusterId = rid.getClusterId();
           System.out.print("\n- Importing records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
-              + lastClusterId + "): ");
+              + lastClusterId + ")");
         } else if (clusterRecords % 10000 == 0)
           // DUMP PROGRESS
-          System.out.print(".");
+          System.out.printf("\n  - %,d records imported...", clusterRecords);
 
         ++totalRecords;
       }
@@ -1136,7 +1140,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     if (migrateLinks)
       migrateLinksInImportedDocuments();
 
-    listener.onMessage("\n\nDone. Imported " + totalRecords + " records\n");
+    listener.onMessage("\n\nDone. Imported " + String.format("%,d", totalRecords) + " records\n");
 
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 
@@ -1372,7 +1376,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       listener.onMessage("\n- Cluster " + clusterName + "...");
 
-      int clusterId = database.getClusterIdByName(clusterName);
+      final int clusterId = database.getClusterIdByName(clusterName);
+      final long clusterRecords = database.countClusterElements(clusterId);
       OStorage storage = database.getStorage();
 
       OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(
@@ -1388,13 +1393,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             totalDocuments++;
 
             if (documents % 10000 == 0)
-              listener.onMessage("\n" + documents + " documents were processed...");
+              listener.onMessage("\n  - " + String.format("%,d", documents) + "/" + String.format("%,d", clusterRecords) + " "
+                  + String.format("%.2f", (float) ((float) documents * 100 / (float) clusterRecords)) + " documents processed...");
           }
         }
 
         positions = storage.higherPhysicalPositions(clusterId, positions[positions.length - 1]);
       }
-      listener.onMessage(" Processed: " + documents);
+      listener.onMessage(" Processed: " + String.format("%,d", documents));
     }
 
     listener.onMessage("\nTotal links updated: " + totalDocuments);

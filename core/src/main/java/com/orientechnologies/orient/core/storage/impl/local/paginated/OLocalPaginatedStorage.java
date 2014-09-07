@@ -1852,6 +1852,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
           final long fileId = updatePageRecord.getFileId();
           final long pageIndex = updatePageRecord.getPageIndex();
 
+          if (!diskCache.exists(fileId)) {
+            OLogManager.instance().warn(this,
+                "Record %s will be skipped during data restore because file which it is related to was deleted.", walRecord);
+            continue;
+          }
+
           if (!diskCache.isOpen(fileId))
             diskCache.openFile(fileId);
 

@@ -32,7 +32,11 @@ public class OJNADirectMemory implements ODirectMemory {
 
   @Override
   public long allocate(long size) {
-    return Native.malloc(size);
+		final long pointer = Native.malloc(size);
+		if (pointer == 0)
+			throw new OutOfMemoryError();
+
+    return pointer;
   }
 
   @Override

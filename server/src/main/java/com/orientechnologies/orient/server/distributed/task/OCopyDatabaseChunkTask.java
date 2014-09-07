@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
@@ -76,6 +77,11 @@ public class OCopyDatabaseChunkTask extends OAbstractReplicatedTask {
   @Override
   public RESULT_STRATEGY getResultStrategy() {
     return RESULT_STRATEGY.ANY;
+  }
+
+  @Override
+  public long getTimeout() {
+    return OGlobalConfiguration.DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT.getValueAsLong();
   }
 
   @Override

@@ -607,7 +607,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     if (iAttribute == null)
       throw new IllegalArgumentException("attribute is null");
 
-    final String stringValue = iValue != null ? iValue.toString() : null;
+    final String stringValue = OStringSerializerHelper.getStringContent(iValue != null ? iValue.toString() : null);
 
     switch (iAttribute) {
     case STATUS:
@@ -642,7 +642,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case TIMEZONE:
-      storage.getConfiguration().setTimeZone(TimeZone.getTimeZone(stringValue.toUpperCase()));
+      storage.getConfiguration().setTimeZone(TimeZone.getTimeZone(stringValue));
       storage.getConfiguration().update();
       break;
 

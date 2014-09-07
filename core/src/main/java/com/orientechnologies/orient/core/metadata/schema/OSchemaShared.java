@@ -351,8 +351,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         final int minimumClusters = storage.getConfiguration().getMinimumClusters();
 
         clusterIds = new int[minimumClusters];
-        if (minimumClusters <= 1)
-          clusterIds[0] = database.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), className, null, null);
+        if (minimumClusters <= 1) {
+          clusterIds[0] = database.getClusterIdByName(className);
+          if (clusterIds[0] == -1)
+            clusterIds[0] = database.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), className, null, null);
+        }
         else
           for (int i = 0; i < minimumClusters; ++i) {
             clusterIds[i] = database.getClusterIdByName(className + "_" + i);
@@ -477,7 +480,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#dropClass(java.lang.String)
    */
   public void dropClass(final String className) {
@@ -605,7 +608,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#getClass(java.lang.Class)
    */
   public OClass getClass(final Class<?> iClass) {
@@ -614,7 +617,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   /*
    * (non-Javadoc)
-   * 
+   *
    * @see com.orientechnologies.orient.core.metadata.schema.OSchema#getClass(java.lang.String)
    */
   public OClass getClass(final String iClassName) {

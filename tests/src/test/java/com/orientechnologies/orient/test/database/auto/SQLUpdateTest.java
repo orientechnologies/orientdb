@@ -15,18 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -34,6 +22,17 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -41,7 +40,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  */
 @Test(groups = "sql-update", sequential = true)
 public class SQLUpdateTest extends DocumentDBBaseTest {
-  private int               updatedRecords;
+  private int updatedRecords;
 
   @Parameters(value = "url")
   public SQLUpdateTest(@Optional String iURL) {
@@ -61,7 +60,6 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
   }
 
-
   @Test
   public void updateWithWhereRid() {
 
@@ -76,21 +74,22 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
   }
 
-    @Test
-    public void updateUpsertOperator() {
+  @Test
+  public void updateUpsertOperator() {
 
-        List<ODocument> result = database.command(new OCommandSQL("UPDATE Profile SET surname='Merkel' RETURN AFTER where surname = 'Merkel'")).execute();
-        Assert.assertEquals(result.size(), 0);
+    List<ODocument> result = database.command(
+        new OCommandSQL("UPDATE Profile SET surname='Merkel' RETURN AFTER where surname = 'Merkel'")).execute();
+    Assert.assertEquals(result.size(), 0);
 
-        result = database.command(new OCommandSQL("UPDATE Profile SET surname='Merkel' UPSERT RETURN AFTER  where surname = 'Merkel'")).execute();
-        Assert.assertEquals(result.size(), 1);
+    result = database.command(new OCommandSQL("UPDATE Profile SET surname='Merkel' UPSERT RETURN AFTER  where surname = 'Merkel'"))
+        .execute();
+    Assert.assertEquals(result.size(), 1);
 
-        result = database.command(new OCommandSQL("SELECT FROM Profile  where surname = 'Merkel'")).execute();
-        Assert.assertEquals(result.size(), 1);
-    }
+    result = database.command(new OCommandSQL("SELECT FROM Profile  where surname = 'Merkel'")).execute();
+    Assert.assertEquals(result.size(), 1);
+  }
 
-
-    @Test(dependsOnMethods = "updateWithWhereOperator")
+  @Test(dependsOnMethods = "updateWithWhereOperator")
   public void updateCollectionsAddWithWhereOperator() {
     updatedRecords = database.command(new OCommandSQL("update Account add addresses = #13:0")).execute();
   }
@@ -203,7 +202,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
   @Test
   public void updateWithWildcards() {
 
-    int updated = database.command(new OCommandSQL("update Profile set sex = ? where sex = 'male' limit 1")).execute(        "male");
+    int updated = database.command(new OCommandSQL("update Profile set sex = ? where sex = 'male' limit 1")).execute("male");
 
     Assert.assertEquals(updated, 1);
 
@@ -242,43 +241,41 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
   }
 
-    public void updateWithReturn() {
-        ODocument doc = new ODocument("Data");
-        doc.field("name", "Pawel");
-        doc.field("city", "Wroclaw");
-        doc.field("really_big_field", "BIIIIIIIIIIIIIIIGGGGGGG!!!");
-        doc.save();
-        // check AFTER
-        String sqlString = "UPDATE "+doc.getIdentity().toString()+" SET gender='male' RETURN AFTER";
-        List<ODocument> result1 = database.command(new OCommandSQL(sqlString)).execute();
-        Assert.assertEquals(result1.size(),1);
-        Assert.assertEquals(result1.get(0).getIdentity(), doc.getIdentity());
-        Assert.assertEquals((String) result1.get(0).field("gender"), "male");
-        final ODocument lastOne = result1.get(0).copy();
-        // check record attributes and BEFORE
-        sqlString = "UPDATE "+doc.getIdentity().toString()+" SET Age=1 RETURN BEFORE @this";
-        result1 = database.command(new OCommandSQL(sqlString)).execute();
-        Assert.assertEquals(result1.size(),1);
-        Assert.assertEquals(lastOne.getVersion(), result1.get(0).getVersion());
-        Assert.assertFalse(result1.get(0).containsField("Age"));
-        // check INCREMENT, AFTER + $current + field
-        sqlString = "UPDATE "+doc.getIdentity().toString()+" INCREMENT Age = 100 RETURN AFTER $current.Age";
-        result1 = database.command(new OCommandSQL(sqlString)).execute();
-        Assert.assertEquals(result1.size(),1);
-        Assert.assertTrue(result1.get(0).containsField("result"));
-        Assert.assertEquals(result1.get(0).field("result"), 101);
-        Assert.assertTrue(result1.get(0).containsField("rid"));
-        Assert.assertTrue(result1.get(0).containsField("version"));
-        // check exclude   + WHERE + LIMIT
-        sqlString = "UPDATE "+doc.getIdentity().toString()+" INCREMENT Age = 100 RETURN AFTER $current.Exclude('really_big_field') WHERE Age=101 LIMIT 1";
-        result1 = database.command(new OCommandSQL(sqlString)).execute();
-        Assert.assertEquals(result1.size(),1);
-        Assert.assertTrue(result1.get(0).containsField("Age"));
-        Assert.assertEquals(result1.get(0).field("Age"), 201);
-        Assert.assertFalse(result1.get(0).containsField("really_big_field"));
+  public void updateWithReturn() {
+    ODocument doc = new ODocument("Data");
+    doc.field("name", "Pawel");
+    doc.field("city", "Wroclaw");
+    doc.field("really_big_field", "BIIIIIIIIIIIIIIIGGGGGGG!!!");
+    doc.save();
+    // check AFTER
+    String sqlString = "UPDATE " + doc.getIdentity().toString() + " SET gender='male' RETURN AFTER";
+    List<ODocument> result1 = database.command(new OCommandSQL(sqlString)).execute();
+    Assert.assertEquals(result1.size(), 1);
+    Assert.assertEquals(result1.get(0).getIdentity(), doc.getIdentity());
+    Assert.assertEquals((String) result1.get(0).field("gender"), "male");
+    final ODocument lastOne = result1.get(0).copy();
+    // check record attributes and BEFORE
+    sqlString = "UPDATE " + doc.getIdentity().toString() + " SET Age=1 RETURN BEFORE @this";
+    result1 = database.command(new OCommandSQL(sqlString)).execute();
+    Assert.assertEquals(result1.size(), 1);
+    Assert.assertEquals(lastOne.getVersion(), result1.get(0).getVersion());
+    Assert.assertFalse(result1.get(0).containsField("Age"));
+    // check INCREMENT, AFTER + $current + field
+    sqlString = "UPDATE " + doc.getIdentity().toString() + " INCREMENT Age = 100 RETURN AFTER $current.Age";
+    result1 = database.command(new OCommandSQL(sqlString)).execute();
+    Assert.assertEquals(result1.size(), 1);
+    Assert.assertTrue(result1.get(0).containsField("value"));
+    Assert.assertEquals(result1.get(0).field("value"), 101);
+    // check exclude + WHERE + LIMIT
+    sqlString = "UPDATE " + doc.getIdentity().toString()
+        + " INCREMENT Age = 100 RETURN AFTER $current.Exclude('really_big_field') WHERE Age=101 LIMIT 1";
+    result1 = database.command(new OCommandSQL(sqlString)).execute();
+    Assert.assertEquals(result1.size(), 1);
+    Assert.assertTrue(result1.get(0).containsField("Age"));
+    Assert.assertEquals(result1.get(0).field("Age"), 201);
+    Assert.assertFalse(result1.get(0).containsField("really_big_field"));
 
-    }
-
+  }
 
   @Test
   public void updateWithNamedParameters() {
@@ -307,7 +304,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     List<ODocument> result1 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();
     Assert.assertFalse(result1.isEmpty());
 
-    updatedRecords = database.command(new OCommandSQL("update Account increment salary = 10 where salary is defined"))       .execute();
+    updatedRecords = database.command(new OCommandSQL("update Account increment salary = 10 where salary is defined")).execute();
     Assert.assertTrue(updatedRecords > 0);
 
     List<ODocument> result2 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();
@@ -317,10 +314,10 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     for (int i = 0; i < result1.size(); ++i) {
       float salary1 = result1.get(i).field("salary");
       float salary2 = result2.get(i).field("salary");
-   Assert.assertEquals(salary2, salary1 + 10);
+      Assert.assertEquals(salary2, salary1 + 10);
     }
 
-    updatedRecords = database.command(new OCommandSQL("update Account increment salary = -10 where salary is defined"))  .execute();
+    updatedRecords = database.command(new OCommandSQL("update Account increment salary = -10 where salary is defined")).execute();
     Assert.assertTrue(updatedRecords > 0);
 
     List<ODocument> result3 = database.command(new OCommandSQL("select salary from Account where salary is defined")).execute();

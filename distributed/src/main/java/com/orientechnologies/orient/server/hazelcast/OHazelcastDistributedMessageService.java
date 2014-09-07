@@ -77,6 +77,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), null, DIRECTION.NONE,
           "listening for incoming responses on queue: %s", queueName);
 
+    // TODO: CHECK IF SET TO TRUE (UNQUEUE MSG) WHEN HOT-ALIGNMENT = TRUE
     checkForPendingMessages(nodeResponseQueue, queueName, false);
 
     // CREATE TASK THAT CHECK ASYNCHRONOUS MESSAGE RECEIVED
@@ -186,6 +187,19 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
   public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {
     responsesByRequestIds.put(id, currentResponseMgr);
+  }
+
+  public void handleUnreachableNode(String nodeName) {
+    final Set<String> dbs = getDatabases();
+    if (dbs != null)
+      for (String dbName : dbs)
+        getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
+
+    // REMOVE THE SERVER'S RESPONSE QUEUE
+    // removeQueue(OHazelcastDistributedMessageService.getResponseQueueName(nodeName));
+
+    for (ODistributedResponseManager r : responsesByRequestIds.values())
+      r.notifyWaiters();
   }
 
   @Override
@@ -363,11 +377,11 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     if (queueSize > 0) {
       if (!iUnqueuePendingMessages) {
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-            "found %d previous messages in queue %s, clearing them...", queueSize, iQueueName);
+            "found %d messages in queue %s, clearing them...", queueSize, iQueueName);
         iQueue.clear();
       } else {
         ODistributedServerLog.warn(this, manager.getLocalNodeName(), null, DIRECTION.NONE,
-            "found %d previous messages in queue %s, aligning the database...", queueSize, iQueueName);
+            "found %d messages in queue %s, aligning the database...", queueSize, iQueueName);
         return true;
       }
     } else

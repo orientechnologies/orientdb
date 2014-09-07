@@ -162,7 +162,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         ' ', '\n', '\r', '\t');
 
     if (fields.size() % 2 != 0)
-      throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>");
+      throw new OSerializationException("Error on unmarshalling JSON content: wrong format. Use <field> : <value>, but found: " + iSource);
 
     Map<String, Character> fieldTypes = null;
 
@@ -374,7 +374,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
     iSource = iSource.trim();
     if (!iSource.startsWith("{") || !iSource.endsWith("}"))
-      throw new OSerializationException("Error on unmarshalling JSON content: content must be between { }");
+      throw new OSerializationException("Error on unmarshalling JSON content '" + iSource + "': content must be between { }");
 
     iSource = iSource.substring(1, iSource.length() - 1).trim();
     return iSource;
@@ -473,25 +473,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             iType = ORecordSerializerStringAbstract.getType(iFieldValueAsString, c);
         }
 
-        if (iType == null) {
-          if (iFieldValueAsString.length() == ODateHelper.getDateFormat().length())
-            // TRY TO PARSE AS DATE
-            try {
-              return ODateHelper.getDateFormatInstance().parseObject(iFieldValueAsString);
-            } catch (Exception e) {
-              // IGNORE IT
-            }
-
-          if (iFieldValueAsString.length() == ODateHelper.getDateTimeFormat().length())
-            // TRY TO PARSE AS DATETIME
-            try {
-              return ODateHelper.getDateTimeFormatInstance().parseObject(iFieldValueAsString);
-            } catch (Exception e) {
-              // IGNORE IT
-            }
-
+        if (iType == null)
           iType = OType.STRING;
-        }
       }
 
     if (iType != null)

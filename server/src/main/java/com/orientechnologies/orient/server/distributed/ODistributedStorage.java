@@ -15,22 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
@@ -77,6 +61,22 @@ import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -144,6 +144,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   public Object command(final OCommandRequestText iCommand) {
+
+    List<String> servers = (List<String>) iCommand.getContext().getVariable("servers");
+    if (servers == null) {
+      servers = new ArrayList<String>();
+      iCommand.getContext().setVariable("servers", servers);
+    }
+    servers.add(dManager.getLocalNodeName());
+
     if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
       // ALREADY DISTRIBUTED
       return wrapped.command(iCommand);
@@ -192,7 +200,25 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         if (iCommand instanceof ODistributedCommand)
           nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
 
-        if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName()))
+        boolean executeLocally = false;
+        if (exec.isIdempotent()) {
+          // IDEMPOTENT: CHECK IF CAN WORK LOCALLY ONLY
+          int maxReadQuorum;
+          if (involvedClusters.isEmpty())
+            maxReadQuorum = dbCfg.getReadQuorum(null);
+          else {
+            maxReadQuorum = 0;
+            for (String cl : involvedClusters)
+              maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl));
+          }
+
+          if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName()) && maxReadQuorum <= 1)
+            executeLocally = true;
+
+        } else if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName()))
+          executeLocally = true;
+
+        if (executeLocally)
           // LOCAL NODE, AVOID TO DISTRIBUTE IT
           return wrapped.command(iCommand);
 
@@ -275,7 +301,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 // TODO: ONCE OPTIMIZED (SEE ABOVE) AVOID TO FILTER HERE
                 final Set<Object> set = new HashSet<Object>();
                 for (Map.Entry<String, Object> entry : ((Map<String, Object>) result).entrySet()) {
-                  set.addAll((Collection<?>) entry.getValue());
+                  final Object nodeResult = entry.getValue();
+                  if (nodeResult instanceof Collection)
+                    set.addAll((Collection<?>) nodeResult);
+                  else if (nodeResult instanceof Exception)
+                    // RECEIVED EXCEPTION
+                    throw (Exception) nodeResult;
                 }
                 result = new ArrayList<Object>(set);
               }
@@ -353,9 +384,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // DELETED
       throw new ORecordNotFoundException("Record " + iRecordId + " was not found");
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
-      // ALREADY DISTRIBUTED
-      return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
+    // COMMENTED BECAUSE WHILE RUNNING DISTRIBUTED IT COULD NEED A REMORE ACCESS TO ANOTHER SHARD
+    // if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
+    // // ALREADY DISTRIBUTED
+    // return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
@@ -366,8 +398,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         // DON'T REPLICATE
         return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
-      if (serverList.contains(dManager.getLocalNodeName()))
-        // LOCAL NODE OWNS THE DATA: GET IT LOCALLY BECAUSE IT'S FASTER
+      if (serverList.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName) <= 1)
+        // LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
         return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
 
       // DISTRIBUTE IT
