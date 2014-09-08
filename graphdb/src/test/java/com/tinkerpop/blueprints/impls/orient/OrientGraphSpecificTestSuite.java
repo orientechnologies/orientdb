@@ -4,16 +4,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hamcrest.core.AnyOf;
-import org.hamcrest.core.IsEqual;
 import org.junit.Assert;
-
-import com.tinkerpop.blueprints.*;
-import com.tinkerpop.blueprints.impls.GraphTest;
-import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.TestSuite;
+import com.tinkerpop.blueprints.TransactionalGraph;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.GraphTest;
 
 /**
  * @author Stephen Mallette (http://stephen.genoprime.com)
@@ -54,7 +55,6 @@ public class OrientGraphSpecificTestSuite extends TestSuite {
     Assert.assertEquals(1, count(v2.getEdges(v1, Direction.IN)));
 
     graph.shutdown();
-    graphTest.dropGraph(((OrientGraphTest) graphTest).getWorkingDirectory() + "/graph");
   }
 
   @Test
