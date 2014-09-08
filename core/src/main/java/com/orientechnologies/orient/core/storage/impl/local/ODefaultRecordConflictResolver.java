@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -34,7 +33,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 public class ODefaultRecordConflictResolver implements ORecordConflictResolver {
   @Override
-  public ORecord<?> onUpdate(ORecordId rid, ORecordVersion iRecordVersion, byte[] iRecordContent, ORecordVersion iDatabaseVersion) {
+  public byte[] onUpdate(ORecordId rid, ORecordVersion iRecordVersion, byte[] iRecordContent, ORecordVersion iDatabaseVersion) {
     if (OFastConcurrentModificationException.enabled())
       throw OFastConcurrentModificationException.instance();
     else

@@ -892,19 +892,21 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
     _source = null;
 
     for (String f : iOther.keySet()) {
+      final Object value = field(f);
+      final Object otherValue = iOther.get(f);
+
       if (containsField(f) && iMergeSingleItemsOfMultiValueFields) {
-        Object field = field(f);
-        if (field instanceof Map<?, ?>) {
-          final Map<String, Object> map = (Map<String, Object>) field;
-          final Map<String, Object> otherMap = (Map<String, Object>) iOther.get(f);
+        if (value instanceof Map<?, ?>) {
+          final Map<String, Object> map = (Map<String, Object>) value;
+          final Map<String, Object> otherMap = (Map<String, Object>) otherValue;
 
           for (Entry<String, Object> entry : otherMap.entrySet()) {
             map.put(entry.getKey(), entry.getValue());
           }
           continue;
-        } else if (field instanceof Collection<?>) {
-          final Collection<Object> coll = (Collection<Object>) field;
-          final Collection<Object> otherColl = (Collection<Object>) iOther.get(f);
+        } else if (value instanceof Collection<?>) {
+          final Collection<Object> coll = (Collection<Object>) value;
+          final Collection<Object> otherColl = (Collection<Object>) otherValue;
 
           for (Object item : otherColl) {
             if (coll.contains(item))
@@ -921,16 +923,12 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       // RESET THE FIELD TYPE
       setFieldType(f, null);
 
-      // RAW SET/REPLACE
-      final Object value = field(f);
-      final Object otherValue = iOther.get(f);
-
       boolean bagsMerged = false;
       if (value instanceof ORidBag && otherValue instanceof ORidBag)
-        bagsMerged = ((ORidBag) value).tryMerge((ORidBag) otherValue);
+        bagsMerged = ((ORidBag) value).tryMerge((ORidBag) otherValue, iMergeSingleItemsOfMultiValueFields);
 
       if (!bagsMerged && (value != null && !value.equals(otherValue)) || (value == null && otherValue != null))
-        field(f, iOther.get(f));
+        field(f, otherValue);
     }
 
     if (!iUpdateOnlyMode) {

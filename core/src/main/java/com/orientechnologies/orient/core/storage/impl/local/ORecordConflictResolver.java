@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -30,5 +29,5 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @author Luca Garulli
  */
 public interface ORecordConflictResolver {
-  ORecord<?> onUpdate(ORecordId rid, ORecordVersion iRecordVersion, byte[] iRecordContent, ORecordVersion iDatabaseVersion);
+  byte[] onUpdate(ORecordId rid, ORecordVersion iRecordVersion, byte[] iRecordContent, ORecordVersion iDatabaseVersion);
 }

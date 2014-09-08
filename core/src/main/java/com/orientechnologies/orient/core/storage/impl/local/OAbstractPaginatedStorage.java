@@ -654,7 +654,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
   }
 
   @Override
-  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId rid, boolean updateContent, final byte[] content,
+  public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId rid, boolean updateContent, byte[] content,
       final ORecordVersion version, final byte recordType, final int mode, ORecordCallback<ORecordVersion> callback) {
     checkOpeness();
 
@@ -681,8 +681,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
               return new OStorageOperationResult<ORecordVersion>(recordVersion);
             }
 
-            if (updateContent)
-              checkAndIncrementVersion(rid, version, ppos.recordVersion, content);
+            if (updateContent) {
+              byte[] newContent = checkAndIncrementVersion(rid, version, ppos.recordVersion, content);
+              if (newContent != null)
+                content = newContent;
+            }
 
             makeStorageDirty();
             atomicOperationsManager.startAtomicOperation();
@@ -1597,7 +1600,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     }
   }
 
-  private void checkAndIncrementVersion(final ORecordId rid, final ORecordVersion version, final ORecordVersion iDatabaseVersion,
+  private byte[] checkAndIncrementVersion(final ORecordId rid, final ORecordVersion version, final ORecordVersion iDatabaseVersion,
       final byte[] iRecordContent) {
     // VERSION CONTROL CHECK
     switch (version.getCounter()) {
@@ -1615,9 +1618,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
       // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
       // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
       if (!version.equals(iDatabaseVersion))
-        conflictResolver.onUpdate(rid, version, iRecordContent, iDatabaseVersion);
+        return conflictResolver.onUpdate(rid, version, iRecordContent, iDatabaseVersion);
+
       iDatabaseVersion.increment();
     }
+
+    return null;
   }
 
   private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {

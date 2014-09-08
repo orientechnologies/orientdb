@@ -362,7 +362,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   /**
    * IMPORTANT! Only for internal usage.
    */
-  public boolean tryMerge(ORidBag otherValue) {
+  public boolean tryMerge(final ORidBag otherValue, boolean iMergeSingleItemsOfMultiValueFields) {
     if (!isEmbedded() && !otherValue.isEmbedded()) {
       final OSBTreeRidBag thisTree = (OSBTreeRidBag) delegate;
       final OSBTreeRidBag otherTree = (OSBTreeRidBag) otherValue.delegate;
@@ -374,6 +374,25 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
         return true;
       }
+    } else if (iMergeSingleItemsOfMultiValueFields) {
+      final Iterator<OIdentifiable> iter = otherValue.rawIterator();
+      while (iter.hasNext()) {
+        final OIdentifiable value = iter.next();
+        if (value != null) {
+          final Iterator<OIdentifiable> localIter = rawIterator();
+          boolean found = false;
+          while (localIter.hasNext()) {
+            final OIdentifiable v = localIter.next();
+            if (value.equals(v)) {
+              found = true;
+              break;
+            }
+          }
+          if (!found)
+            add(value);
+        }
+      }
+      return true;
     }
     return false;
   }
