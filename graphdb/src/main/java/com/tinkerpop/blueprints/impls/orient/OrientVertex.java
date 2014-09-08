@@ -35,7 +35,7 @@ import java.util.Set;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 @SuppressWarnings("unchecked")
-public class OrientVertex extends OrientElement implements Vertex {
+public class OrientVertex extends OrientElement implements OrientExtendedVertex {
   public static final String CONNECTION_OUT_PREFIX = OrientBaseGraph.CONNECTION_OUT + "_";
   public static final String CONNECTION_IN_PREFIX  = OrientBaseGraph.CONNECTION_IN + "_";
 
@@ -431,6 +431,11 @@ public class OrientVertex extends OrientElement implements Vertex {
     final OrientVertex v = new OrientVertex();
     super.copyTo(v);
     return v;
+  }
+
+  @Override
+  public OrientVertex getVertexInstance() {
+    return this;
   }
 
   /**

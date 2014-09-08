@@ -496,6 +496,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       // WRAPPED: GET THE BASE VERTEX
       inVertex = ((PartitionVertex) inVertex).getBaseVertex();
 
+    ((OrientExtendedVertex) outVertex).attach(this);
+    ((OrientExtendedVertex) inVertex).attach(this);
+
     return ((OrientVertex) outVertex).addEdge(label, (OrientVertex) inVertex, className, clusterName, fields);
 
   }
@@ -656,6 +659,37 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     // NO INDEX: EXECUTE A QUERY
     return query().has(key, iValue).vertices();
+  }
+
+  /**
+   * Lookup for a vertex by id using an index.<br>
+   * Example:<code>
+   *   Vertex v = getVertexByIndex("V.name", "name", "Jay");
+   * </code>
+   *
+   * @param iKey
+   *          Name of the indexed property
+   * @param iValue
+   *          Field value
+   * @return Vertex instance if found, otherwise null
+   */
+  public Vertex getVertexByKey(final String iKey, Object iValue) {
+    String indexName;
+    if (iKey.indexOf('.') > -1)
+      indexName = iKey;
+    else
+      indexName = OrientVertexType.CLASS_NAME + "." + iKey;
+
+    final OIndex<?> idx = getContext(true).rawGraph.getMetadata().getIndexManager().getIndex(indexName);
+    if (idx != null) {
+      iValue = convertKey(idx, iValue);
+
+      Object v = idx.get(iValue);
+      if (v != null)
+        return getVertex(v);
+      return null;
+    } else
+      throw new IllegalArgumentException("Index '" + indexName + "' not found");
   }
 
   /**

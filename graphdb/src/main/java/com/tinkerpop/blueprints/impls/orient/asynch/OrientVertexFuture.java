@@ -25,11 +25,14 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.VertexQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientElement;
+import com.tinkerpop.blueprints.impls.orient.OrientExtendedVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.concurrent.Future;
 
-public class OrientVertexFuture extends OrientElementFuture<OrientVertex> implements Vertex {
+public class OrientVertexFuture extends OrientElementFuture<OrientVertex> implements OrientExtendedVertex {
   public OrientVertexFuture(final Future<OrientVertex> future) {
     super(future);
   }
@@ -70,4 +73,30 @@ public class OrientVertexFuture extends OrientElementFuture<OrientVertex> implem
     }
   }
 
+  @Override
+  public OrientElement attach(OrientBaseGraph g) {
+    try {
+      return future.get().attach(g);
+    } catch (Exception e) {
+      throw new OException("Cannot retrieve the requested information", e);
+    }
+  }
+
+  @Override
+  public OrientVertex copy() {
+    try {
+      return future.get().copy();
+    } catch (Exception e) {
+      throw new OException("Cannot retrieve the requested information", e);
+    }
+  }
+
+  @Override
+  public OrientVertex getVertexInstance() {
+    try {
+      return future.get();
+    } catch (Exception e) {
+      throw new OException("Cannot get the underlying future content", e);
+    }
+  }
 }
