@@ -321,8 +321,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public ORecordAbstract<T> save(String iClusterName, boolean forceCreate) {
-    getDatabase().save(this, iClusterName, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
-    return this;
+    return getDatabase().save(this, iClusterName, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
   }
 
   public ORecordAbstract<T> delete() {

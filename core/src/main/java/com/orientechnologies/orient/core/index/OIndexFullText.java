@@ -59,7 +59,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
   public OIndexFullText(String typeId, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
       String valueContainerAlgorithm, ODocument metadata) {
-    super(typeId, algorithm, indexEngine, valueContainerAlgorithm);
+    super(typeId, algorithm, indexEngine, valueContainerAlgorithm, metadata);
     config();
     configWithMetadata(metadata);
 

@@ -231,9 +231,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
 
     if (rawElement instanceof ODocument)
       if (iClusterName != null)
-        ((ODocument) rawElement).save(iClusterName);
+        rawElement = ((ODocument) rawElement).save(iClusterName);
       else
-        ((ODocument) rawElement).save();
+        rawElement = ((ODocument) rawElement).save();
   }
 
   public int hashCode() {

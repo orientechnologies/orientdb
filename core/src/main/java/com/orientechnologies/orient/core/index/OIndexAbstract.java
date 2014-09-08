@@ -15,18 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
@@ -57,6 +45,18 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
 /**
  * Handles indexing when records change.
  * 
@@ -73,6 +73,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected String                     valueContainerAlgorithm;
   @ODocumentInstance
   protected ODocument                  configuration;
+  protected ODocument                  metadata;
   private String                       name;
   private String                       algorithm;
   private Set<String>                  clustersToIndex  = new HashSet<String>();
@@ -98,7 +99,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     public boolean             clear         = false;
   }
 
-  public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine, String valueContainerAlgorithm) {
+  public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine, String valueContainerAlgorithm,
+      ODocument metadata) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
     acquireExclusiveLock();
@@ -107,6 +109,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       this.type = type;
       this.indexEngine = indexEngine;
       this.algorithm = algorithm;
+      this.metadata = metadata;
       this.valueContainerAlgorithm = valueContainerAlgorithm;
 
       indexEngine.init();
@@ -566,7 +569,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
+  public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
+    return null;
   }
 
   public ODocument updateConfiguration() {

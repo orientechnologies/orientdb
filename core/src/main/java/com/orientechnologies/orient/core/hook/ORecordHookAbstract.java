@@ -227,39 +227,6 @@ public abstract class ORecordHookAbstract implements ORecordHook {
       onRecordDeleteReplicated(iRecord);
       break;
 
-    case BEFORE_REPLICA_ADD:
-      return onRecordBeforeReplicaAdd(iRecord);
-
-    case AFTER_REPLICA_ADD:
-      onRecordAfterReplicaAdd(iRecord);
-      break;
-
-    case REPLICA_ADD_FAILED:
-      onRecordAfterReplicaAdd(iRecord);
-      break;
-
-    case BEFORE_REPLICA_UPDATE:
-      return onRecordBeforeReplicaUpdate(iRecord);
-
-    case AFTER_REPLICA_UPDATE:
-      onRecordAfterReplicaUpdate(iRecord);
-      break;
-
-    case REPLICA_UPDATE_FAILED:
-      onRecordReplicaUpdateFailed(iRecord);
-      break;
-
-    case BEFORE_REPLICA_DELETE:
-      return onRecordBeforeReplicaDelete(iRecord);
-
-    case AFTER_REPLICA_DELETE:
-      onRecordAfterReplicaDelete(iRecord);
-      break;
-
-    case REPLICA_DELETE_FAILED:
-      onRecordReplicaDeleteFailed(iRecord);
-      break;
-
     }
     return RESULT.RECORD_NOT_CHANGED;
   }

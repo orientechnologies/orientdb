@@ -1226,6 +1226,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         String indexType = OClass.INDEX_TYPE.NOTUNIQUE.name();
         OType keyType = OType.STRING;
         String className = null;
+        ODocument metadata = null;
 
         final String ancestorClassName = getClassName(elementClass);
 
@@ -1237,6 +1238,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
             keyType = OType.valueOf(p.getValue().toString().toUpperCase());
           else if (p.getKey().equals("class"))
             className = p.getValue().toString();
+          else if (p.getKey().toString().startsWith("metadata.")) {
+            if (metadata == null)
+              metadata = new ODocument();
+            metadata.field(p.getKey().toString().substring("metadata.".length()), p.getValue());
+          }
         }
 
         if (className == null)
@@ -1253,7 +1259,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         db.getMetadata()
             .getIndexManager()
             .createIndex(className + "." + key, indexType, new OPropertyIndexDefinition(className, key, keyType),
-                cls.getPolymorphicClusterIds(), null, null);
+                cls.getPolymorphicClusterIds(), null, metadata);
         return null;
 
       }

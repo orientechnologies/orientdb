@@ -15,17 +15,22 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.*;
-
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -35,23 +40,190 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTran
  * 
  */
 public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
+  private class PureTxBetweenIndexForwardCursor extends OIndexAbstractCursor {
+    private final OTransactionIndexChanges indexChanges;
+    private Object                         firstKey;
+    private Object                         lastKey;
+
+    private Object                         nextKey;
+
+    public PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+        OTransactionIndexChanges indexChanges) {
+      this.indexChanges = indexChanges;
+
+      fromKey = enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
+      toKey = enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
+
+      if (toInclusive)
+        firstKey = indexChanges.getCeilingKey(fromKey);
+      else
+        firstKey = indexChanges.getHigherKey(fromKey);
+
+      if (fromInclusive)
+        lastKey = indexChanges.getFloorKey(toKey);
+      else
+        lastKey = indexChanges.getLowerKey(toKey);
+
+      nextKey = firstKey;
+    }
+
+    @Override
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
+      if (nextKey == null)
+        return null;
+
+      Map.Entry<Object, OIdentifiable> result;
+
+      do {
+        result = calculateTxIndexEntry(nextKey, null, indexChanges);
+        nextKey = indexChanges.getHigherKey(nextKey);
+
+        if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, lastKey) > 0)
+          nextKey = null;
+
+      } while (result == null && nextKey != null);
+
+      return result;
+    }
+  }
+
+  private class PureTxBetweenIndexBackwardCursor extends OIndexAbstractCursor {
+    private final OTransactionIndexChanges indexChanges;
+    private Object                         firstKey;
+    private Object                         lastKey;
+
+    private Object                         nextKey;
+
+    public PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
+        OTransactionIndexChanges indexChanges) {
+      this.indexChanges = indexChanges;
+
+      fromKey = enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
+      toKey = enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
+
+      if (toInclusive)
+        firstKey = indexChanges.getCeilingKey(fromKey);
+      else
+        firstKey = indexChanges.getHigherKey(fromKey);
+
+      if (fromInclusive)
+        lastKey = indexChanges.getFloorKey(toKey);
+      else
+        lastKey = indexChanges.getLowerKey(toKey);
+
+      nextKey = lastKey;
+    }
+
+    @Override
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
+      if (nextKey == null)
+        return null;
+
+      Map.Entry<Object, OIdentifiable> result;
+      do {
+        result = calculateTxIndexEntry(nextKey, null, indexChanges);
+        nextKey = indexChanges.getLowerKey(nextKey);
+
+        if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, firstKey) < 0)
+          nextKey = null;
+      } while (result == null && nextKey != null);
+
+      return result;
+    }
+  }
+
+  private class OIndexTxCursor extends OIndexAbstractCursor {
+
+    private final OIndexCursor               backedCursor;
+    private final boolean                    ascOrder;
+    private final OTransactionIndexChanges   indexChanges;
+    private OIndexCursor                     txBetweenIndexCursor;
+
+    private Map.Entry<Object, OIdentifiable> nextTxEntry;
+    private Map.Entry<Object, OIdentifiable> nextBackedEntry;
+
+    private boolean                          firstTime;
+
+    public OIndexTxCursor(OIndexCursor txCursor, OIndexCursor backedCursor, boolean ascOrder, OTransactionIndexChanges indexChanges) {
+      this.backedCursor = backedCursor;
+      this.ascOrder = ascOrder;
+      this.indexChanges = indexChanges;
+      txBetweenIndexCursor = txCursor;
+      firstTime = true;
+    }
+
+    @Override
+    public Map.Entry<Object, OIdentifiable> nextEntry() {
+      if (firstTime) {
+        nextTxEntry = txBetweenIndexCursor.nextEntry();
+        nextBackedEntry = backedCursor.nextEntry();
+        firstTime = false;
+      }
+
+      Map.Entry<Object, OIdentifiable> result = null;
+
+      while (result == null && (nextTxEntry != null || nextBackedEntry != null)) {
+        if (nextTxEntry == null && nextBackedEntry != null) {
+          result = nextBackedEntry(getPrefetchSize());
+        } else if (nextBackedEntry == null && nextTxEntry != null) {
+          result = nextTxEntry(getPrefetchSize());
+        } else if (nextTxEntry != null && nextBackedEntry != null) {
+          if (ascOrder) {
+            if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.getKey(), nextTxEntry.getKey()) <= 0) {
+              result = nextBackedEntry(getPrefetchSize());
+            } else {
+              result = nextTxEntry(getPrefetchSize());
+            }
+          } else {
+            if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.getKey(), nextTxEntry.getKey()) >= 0) {
+              result = nextBackedEntry(getPrefetchSize());
+            } else {
+              result = nextTxEntry(getPrefetchSize());
+            }
+          }
+        }
+      }
+
+      return result;
+    }
+
+    private Map.Entry<Object, OIdentifiable> nextTxEntry(int prefetchSize) {
+      Map.Entry<Object, OIdentifiable> result = nextTxEntry;
+      nextTxEntry = txBetweenIndexCursor.nextEntry();
+      return result;
+    }
+
+    private Map.Entry<Object, OIdentifiable> nextBackedEntry(int prefetchSize) {
+      Map.Entry<Object, OIdentifiable> result;
+      result = calculateTxIndexEntry(nextBackedEntry.getKey(), nextBackedEntry.getValue(), indexChanges);
+      nextBackedEntry = backedCursor.nextEntry();
+      return result;
+    }
+  }
+
   public OIndexTxAwareOneValue(final ODatabaseRecord iDatabase, final OIndex<OIdentifiable> iDelegate) {
     super(iDatabase, iDelegate);
   }
 
   @Override
-  public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
+  public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
     // CHECK IF ALREADY EXISTS IN TX
     String storageType = database.getStorage().getType();
     if (!database.getTransaction().isActive()) {
       final OIdentifiable previousRecord = get(iKey);
-      if (previousRecord != null && !previousRecord.equals(iRecord))
-        throw new ORecordDuplicatedException(String.format(
-            "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", iRecord, iKey,
-            getName(), previousRecord), previousRecord.getIdentity());
-
-      super.checkEntry(iRecord, iKey);
+      if (previousRecord != null && !previousRecord.equals(iRecord)) {
+        final ODocument metadata = getMetadata();
+        final boolean mergeSameKey = metadata != null && (Boolean) metadata.field(OIndex.MERGE_KEYS);
+        if (mergeSameKey) {
+          return (ODocument) previousRecord.getRecord();
+        } else
+          throw new ORecordDuplicatedException(String.format(
+              "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s", iRecord,
+              iKey, getName(), previousRecord), previousRecord.getIdentity());
+      }
+      return super.checkEntry(iRecord, iKey);
     }
+    return null;
   }
 
   @Override
@@ -233,166 +405,5 @@ public class OIndexTxAwareOneValue extends OIndexTxAware<OIdentifiable> {
         throw new UnsupportedOperationException("setValue");
       }
     };
-  }
-
-  private class PureTxBetweenIndexForwardCursor extends OIndexAbstractCursor {
-    private final OTransactionIndexChanges indexChanges;
-    private Object                         firstKey;
-    private Object                         lastKey;
-
-    private Object                         nextKey;
-
-    public PureTxBetweenIndexForwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
-        OTransactionIndexChanges indexChanges) {
-      this.indexChanges = indexChanges;
-
-      fromKey = enhanceFromCompositeKeyBetweenAsc(fromKey, fromInclusive);
-      toKey = enhanceToCompositeKeyBetweenAsc(toKey, toInclusive);
-
-      if (toInclusive)
-        firstKey = indexChanges.getCeilingKey(fromKey);
-      else
-        firstKey = indexChanges.getHigherKey(fromKey);
-
-      if (fromInclusive)
-        lastKey = indexChanges.getFloorKey(toKey);
-      else
-        lastKey = indexChanges.getLowerKey(toKey);
-
-      nextKey = firstKey;
-    }
-
-    @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-      if (nextKey == null)
-        return null;
-
-      Map.Entry<Object, OIdentifiable> result;
-
-      do {
-        result = calculateTxIndexEntry(nextKey, null, indexChanges);
-        nextKey = indexChanges.getHigherKey(nextKey);
-
-        if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, lastKey) > 0)
-          nextKey = null;
-
-      } while (result == null && nextKey != null);
-
-      return result;
-    }
-  }
-
-  private class PureTxBetweenIndexBackwardCursor extends OIndexAbstractCursor {
-    private final OTransactionIndexChanges indexChanges;
-    private Object                         firstKey;
-    private Object                         lastKey;
-
-    private Object                         nextKey;
-
-    public PureTxBetweenIndexBackwardCursor(Object fromKey, boolean fromInclusive, Object toKey, boolean toInclusive,
-        OTransactionIndexChanges indexChanges) {
-      this.indexChanges = indexChanges;
-
-      fromKey = enhanceFromCompositeKeyBetweenDesc(fromKey, fromInclusive);
-      toKey = enhanceToCompositeKeyBetweenDesc(toKey, toInclusive);
-
-      if (toInclusive)
-        firstKey = indexChanges.getCeilingKey(fromKey);
-      else
-        firstKey = indexChanges.getHigherKey(fromKey);
-
-      if (fromInclusive)
-        lastKey = indexChanges.getFloorKey(toKey);
-      else
-        lastKey = indexChanges.getLowerKey(toKey);
-
-      nextKey = lastKey;
-    }
-
-    @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-      if (nextKey == null)
-        return null;
-
-      Map.Entry<Object, OIdentifiable> result;
-      do {
-        result = calculateTxIndexEntry(nextKey, null, indexChanges);
-        nextKey = indexChanges.getLowerKey(nextKey);
-
-        if (nextKey != null && ODefaultComparator.INSTANCE.compare(nextKey, firstKey) < 0)
-          nextKey = null;
-      } while (result == null && nextKey != null);
-
-      return result;
-    }
-  }
-
-  private class OIndexTxCursor extends OIndexAbstractCursor {
-
-    private final OIndexCursor               backedCursor;
-    private final boolean                    ascOrder;
-    private final OTransactionIndexChanges   indexChanges;
-    private OIndexCursor                     txBetweenIndexCursor;
-
-    private Map.Entry<Object, OIdentifiable> nextTxEntry;
-    private Map.Entry<Object, OIdentifiable> nextBackedEntry;
-
-    private boolean                          firstTime;
-
-    public OIndexTxCursor(OIndexCursor txCursor, OIndexCursor backedCursor, boolean ascOrder, OTransactionIndexChanges indexChanges) {
-      this.backedCursor = backedCursor;
-      this.ascOrder = ascOrder;
-      this.indexChanges = indexChanges;
-      txBetweenIndexCursor = txCursor;
-      firstTime = true;
-    }
-
-    @Override
-    public Map.Entry<Object, OIdentifiable> nextEntry() {
-      if (firstTime) {
-        nextTxEntry = txBetweenIndexCursor.nextEntry();
-        nextBackedEntry = backedCursor.nextEntry();
-        firstTime = false;
-      }
-
-      Map.Entry<Object, OIdentifiable> result = null;
-
-      while (result == null && (nextTxEntry != null || nextBackedEntry != null)) {
-        if (nextTxEntry == null && nextBackedEntry != null) {
-          result = nextBackedEntry(getPrefetchSize());
-        } else if (nextBackedEntry == null && nextTxEntry != null) {
-          result = nextTxEntry(getPrefetchSize());
-        } else if (nextTxEntry != null && nextBackedEntry != null) {
-          if (ascOrder) {
-            if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.getKey(), nextTxEntry.getKey()) <= 0) {
-              result = nextBackedEntry(getPrefetchSize());
-            } else {
-              result = nextTxEntry(getPrefetchSize());
-            }
-          } else {
-            if (ODefaultComparator.INSTANCE.compare(nextBackedEntry.getKey(), nextTxEntry.getKey()) >= 0) {
-              result = nextBackedEntry(getPrefetchSize());
-            } else {
-              result = nextTxEntry(getPrefetchSize());
-            }
-          }
-        }
-      }
-
-      return result;
-    }
-
-    private Map.Entry<Object, OIdentifiable> nextTxEntry(int prefetchSize) {
-      Map.Entry<Object, OIdentifiable> result = nextTxEntry;
-      nextTxEntry = txBetweenIndexCursor.nextEntry();
-      return result;
-    }
-
-    private Map.Entry<Object, OIdentifiable> nextBackedEntry(int prefetchSize) {
-      Map.Entry<Object, OIdentifiable> result;
-      result = calculateTxIndexEntry(nextBackedEntry.getKey(), nextBackedEntry.getValue(), indexChanges);
-      nextBackedEntry = backedCursor.nextEntry();
-      return result;
-    }
   }
 }

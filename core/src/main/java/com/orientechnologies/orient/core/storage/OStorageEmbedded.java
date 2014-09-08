@@ -24,11 +24,12 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.impl.local.ODefaultRecordConflictResolver;
+import com.orientechnologies.orient.core.storage.impl.local.ORecordConflictResolver;
 
 import java.io.IOException;
 
@@ -39,10 +40,11 @@ import java.io.IOException;
  */
 public abstract class OStorageEmbedded extends OStorageAbstract {
   protected final ONewLockManager<ORID> lockManager;
-  protected final String                         PROFILER_CREATE_RECORD;
-  protected final String                         PROFILER_READ_RECORD;
-  protected final String                         PROFILER_UPDATE_RECORD;
-  protected final String                         PROFILER_DELETE_RECORD;
+  protected final String                PROFILER_CREATE_RECORD;
+  protected final String                PROFILER_READ_RECORD;
+  protected final String                PROFILER_UPDATE_RECORD;
+  protected final String                PROFILER_DELETE_RECORD;
+  protected ORecordConflictResolver     conflictResolver = new ODefaultRecordConflictResolver();
 
   public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
     super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -53,9 +55,6 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     PROFILER_UPDATE_RECORD = "db." + name + ".updateRecord";
     PROFILER_DELETE_RECORD = "db." + name + ".deleteRecord";
   }
-
-  protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock,
-      boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy);
 
   /**
    * Executes the command request and return the result back.
@@ -93,8 +92,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
         Orient
             .instance()
             .getProfiler()
-            .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
-                "Command executed against the database", beginTime, "db.*.command.*");
+            .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(), "Command executed against the database", beginTime, "db.*.command.*");
     }
   }
 
@@ -216,6 +214,17 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
     return null;
   }
+
+  public ORecordConflictResolver getConflictResolver() {
+    return conflictResolver;
+  }
+
+  public void setConflictResolver(final ORecordConflictResolver conflictResolver) {
+    this.conflictResolver = conflictResolver;
+  }
+
+  protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock,
+      boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy);
 
   /**
    * Checks if the storage is open. If it's closed an exception is raised.

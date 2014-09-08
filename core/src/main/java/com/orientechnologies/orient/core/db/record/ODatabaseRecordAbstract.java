@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
+import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
@@ -73,7 +74,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
@@ -997,8 +997,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
               stream = updateStream(record);
             else if (hookResult == RESULT.SKIP_IO)
               return (RET) record;
-            else if (hookResult == RESULT.SKIP_IO)
-              return (RET) record;
+            else if (hookResult == RESULT.RECORD_REPLACED)
+              // RETURNED THE REPLACED RECORD
+              return (RET) OHookReplacedRecordThreadLocal.INSTANCE.get();
           }
         }
 

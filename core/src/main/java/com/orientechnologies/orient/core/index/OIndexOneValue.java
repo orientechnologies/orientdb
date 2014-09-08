@@ -15,6 +15,13 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,16 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-
 /**
  * Abstract Index implementation that allows only one value for a key.
  * 
@@ -41,8 +38,9 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  * 
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
-  public OIndexOneValue(final String type, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm) {
-    super(type, algorithm, engine, valueContainerAlgorithm);
+  public OIndexOneValue(final String type, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm,
+      ODocument metadata) {
+    super(type, algorithm, engine, valueContainerAlgorithm, metadata);
   }
 
   public OIdentifiable get(Object iKey) {
@@ -72,16 +70,22 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   @Override
-  public void checkEntry(final OIdentifiable record, Object key) {
+  public ODocument checkEntry(final OIdentifiable record, Object key) {
     checkForRebuild();
 
     key = getCollatingValue(key);
 
     // CHECK IF ALREADY EXIST
     final OIdentifiable indexedRID = get(key);
-    if (indexedRID != null && !indexedRID.getIdentity().equals(record.getIdentity()))
-      throw new OIndexException("Cannot index record : " + record + " found duplicated key '" + key + "' in index " + getName()
-          + " previously assigned to the record " + indexedRID);
+    if (indexedRID != null && !indexedRID.getIdentity().equals(record.getIdentity())) {
+      final Boolean mergeSameKey = metadata != null && (Boolean) metadata.field(OIndex.MERGE_KEYS);
+      if (mergeSameKey != null && mergeSameKey)
+        return (ODocument) indexedRID.getRecord();
+      else
+        throw new OIndexException("Cannot index record : " + record + " found duplicated key '" + key + "' in index " + getName()
+            + " previously assigned to the record " + indexedRID);
+    }
+    return null;
   }
 
   public OIndexOneValue create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,

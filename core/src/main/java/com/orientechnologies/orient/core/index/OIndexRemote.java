@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -34,6 +26,14 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Proxied abstract index.
@@ -312,7 +312,8 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return Collections.unmodifiableSet(clustersToIndex);
   }
 
-  public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
+  public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
+    return null;
   }
 
   @Override

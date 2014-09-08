@@ -698,7 +698,10 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       // CREATE A LIGHTWEIGHT DYNAMIC EDGE
       from = rawElement;
       to = inDocument;
-      edge = new OrientEdge(graph, from, to, label);
+      if (settings.keepInMemoryReferences)
+        edge = new OrientEdge(graph, from.getIdentity(), to.getIdentity(), label);
+      else
+        edge = new OrientEdge(graph, from, to, label);
     } else {
       // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
       edge = new OrientEdge(graph, label, fields);

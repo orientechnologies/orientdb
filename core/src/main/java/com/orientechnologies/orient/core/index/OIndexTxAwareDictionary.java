@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Transactional wrapper for dictionary index. Stores changes locally to the transaction until tx.commit(). All the other operations
@@ -31,6 +32,7 @@ public class OIndexTxAwareDictionary extends OIndexTxAwareOneValue {
 	}
 
 	@Override
-	public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
+	public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
+    return null;
 	}
 }

@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,18 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
-import com.orientechnologies.orient.core.iterator.OEmptyIterator;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
 /**
  * Abstract index implementation that supports multi-values for the same key.
  * 
@@ -45,8 +46,8 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  */
 public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
   public OIndexMultiValues(final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
-      String valueContainerAlgorithm) {
-    super(type, algorithm, indexEngine, valueContainerAlgorithm);
+      String valueContainerAlgorithm, final ODocument metadata) {
+    super(type, algorithm, indexEngine, valueContainerAlgorithm, metadata);
   }
 
   public Set<OIdentifiable> get(Object key) {

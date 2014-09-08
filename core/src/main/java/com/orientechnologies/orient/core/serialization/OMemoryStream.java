@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.core.serialization;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.util.Arrays;
 
 /**
  * Class to parse and write buffers in very fast way.
@@ -45,7 +45,7 @@ public class OMemoryStream extends OutputStream {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue("system.memory.stream.resize", "Number of resizes of memory stream buffer", METRIC_TYPE.COUNTER,
+      .registerHookValue("system.memory.stream.resize", "Number of resizes of memory stream buffer", METRIC_TYPE.COUNTER,
             new OProfilerHookValue() {
               public Object getValue() {
                 return metricResize;
