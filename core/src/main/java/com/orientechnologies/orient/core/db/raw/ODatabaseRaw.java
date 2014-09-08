@@ -316,26 +316,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public boolean updateReplica(final ORecordId rid, final byte[] content, final ORecordVersion version,
-															 final byte recordType) {
-    // CHECK IF RECORD TYPE IS SUPPORTED
-    Orient.instance().getRecordFactoryManager().getRecordTypeClass(recordType);
-
-    try {
-      if (rid.clusterPosition.isNew()) {
-        throw new ODatabaseException("Passed in record was not stored and can not be treated as replica.");
-      } else {
-        // UPDATE REPLICA
-        return storage.updateReplica(rid, content, version, recordType);
-      }
-    } catch (OException e) {
-      // PASS THROUGH
-      throw e;
-    } catch (Throwable t) {
-      throw new ODatabaseException("Error on replica update " + rid, t);
-    }
-  }
-
   public OStorageOperationResult<Boolean> delete(final ORecordId rid, final ORecordVersion iVersion, final boolean iRequired,
       final int iMode) {
     try {

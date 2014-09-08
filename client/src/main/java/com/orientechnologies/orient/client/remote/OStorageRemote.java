@@ -403,11 +403,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public boolean updateReplica(ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
-    throw new UnsupportedOperationException("updateReplica()");
-  }
-
-  @Override
   public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
     throw new UnsupportedOperationException("callInRecordLock()");
   }

@@ -72,16 +72,15 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
   /**
    * Update the record.
-   * 
+   *
+   * @param iRecord
    * @param iForceCreate
    * @param iRecordCreatedCallback
    * @param iRecordUpdatedCallback
    */
-  public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public ORecordInternal<?> saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     try {
-      database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
+      return database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
           iRecordCreatedCallback, null);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
@@ -95,20 +94,6 @@ public class OTransactionNoTx extends OTransactionAbstract {
     }
   }
 
-  @Override
-  public boolean updateReplica(ORecordInternal<?> iRecord) {
-    try {
-      return database.executeUpdateReplica(iRecord);
-    } catch (Exception e) {
-      // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
-      final ORecordId rid = (ORecordId) iRecord.getIdentity();
-      database.getLocalCache().freeRecord(rid);
-
-      if (e instanceof RuntimeException)
-        throw (RuntimeException) e;
-      throw new OException(e);
-    }
-  }
 
   /**
    * Deletes the record.

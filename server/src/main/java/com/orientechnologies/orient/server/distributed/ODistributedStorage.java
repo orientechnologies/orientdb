@@ -533,11 +533,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   @Override
-  public boolean updateReplica(ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
-    return wrapped.updateReplica(rid, content, recordVersion, recordType);
-  }
-
-  @Override
   public ORecordMetadata getRecordMetadata(ORID rid) {
     return wrapped.getRecordMetadata(rid);
   }

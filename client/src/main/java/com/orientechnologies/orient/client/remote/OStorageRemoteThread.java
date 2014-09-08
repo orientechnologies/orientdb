@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -48,6 +39,15 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
@@ -281,17 +281,6 @@ public class OStorageRemoteThread implements OStorageProxy {
   @Override
   public OCluster getClusterByName(String clusterName) {
     return delegate.getClusterByName(clusterName);
-  }
-
-  @Override
-  public boolean updateReplica(ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
-      throws IOException {
-    pushSession();
-    try {
-      return delegate.updateReplica(rid, content, recordVersion, recordType);
-    } finally {
-      popSession();
-    }
   }
 
   @Override

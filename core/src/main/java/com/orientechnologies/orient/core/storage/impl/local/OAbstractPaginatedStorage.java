@@ -1342,11 +1342,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     return new OStorageOperationResult<Boolean>(false);
   }
 
-  public boolean updateReplica(final ORecordId rid, final byte[] content, final ORecordVersion recordVersion, final byte recordType)
-      throws IOException {
-    throw new OStorageException("Support of hash based clusters is required.");
-  }
-
   @Override
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
     if (iExclusiveLock) {

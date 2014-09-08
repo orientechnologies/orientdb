@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.orient.object.db;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -64,6 +57,13 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.metadata.OMetadataObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx that handles conversion between ODocument instances and
@@ -370,30 +370,6 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    */
   public <RET> RET save(final Object iPojo, final String iClusterName) {
     return (RET) save(iPojo, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
-  }
-
-  @Override
-  public boolean updatedReplica(Object iPojo) {
-    OSerializationThreadLocal.INSTANCE.get().clear();
-
-    // GET THE ASSOCIATED DOCUMENT
-    final Object proxiedObject = OObjectEntitySerializer.serializeObject(iPojo, this);
-    final ODocument record = getRecordByUserObject(proxiedObject, true);
-    boolean result;
-    try {
-      record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.MARSHALLING);
-
-      result = underlying.updatedReplica(record);
-
-      ((OObjectProxyMethodHandler) ((ProxyObject) proxiedObject).getHandler()).updateLoadedFieldMap(proxiedObject, false);
-
-      // RE-REGISTER FOR NEW RECORDS SINCE THE ID HAS CHANGED
-      registerUserObject(proxiedObject, record);
-    } finally {
-      record.setInternalStatus(com.orientechnologies.orient.core.db.record.ORecordElement.STATUS.LOADED);
-    }
-
-    return result;
   }
 
   /**

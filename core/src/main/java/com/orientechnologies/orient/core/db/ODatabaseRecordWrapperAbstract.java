@@ -15,6 +15,12 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -43,12 +49,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord> extends ODatabaseWrapperAbstract<DB> implements
     ODatabaseComplex<ORecordInternal<?>> {
@@ -65,7 +65,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
   }
 
   @Override
-  public <THISDB extends ODatabase> THISDB create(final Map<OGlobalConfiguration,Object> iInitialSettings) {
+  public <THISDB extends ODatabase> THISDB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_CREATE);
     return (THISDB) super.create(iInitialSettings);
   }
@@ -77,21 +77,21 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     super.drop();
   }
 
-	@Override
-	public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
-		checkOpeness();
-		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
-		return super.addCluster(iClusterName, iRequestedId, iParameters);
-	}
+  @Override
+  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+    checkOpeness();
+    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+    return super.addCluster(iClusterName, iRequestedId, iParameters);
+  }
 
-	@Override
-	public int addCluster(String iClusterName, Object... iParameters) {
-		checkOpeness();
-		checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
-		return super.addCluster(iClusterName, iParameters);
-	}
+  @Override
+  public int addCluster(String iClusterName, Object... iParameters) {
+    checkOpeness();
+    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+    return super.addCluster(iClusterName, iParameters);
+  }
 
-	@Override
+  @Override
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
     checkClusterBoundedToClass(getClusterIdByName(iClusterName));
@@ -279,11 +279,6 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return (RET) underlying.save(iRecord, iClusterName);
   }
 
-  @Override
-  public boolean updatedReplica(ORecordInternal<?> iObject) {
-    return underlying.updatedReplica(iObject);
-  }
-
   public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
@@ -388,8 +383,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
    * @param iListener
    *          Listener called for backup messages
    * @param compressionLevel
-   *          ZIP Compression level between 0 (no compression) and 9 (maximum). The bigger is the compression, the smaller will be the
-   *          final backup content, but will consume more CPU and time to execute
+   *          ZIP Compression level between 0 (no compression) and 9 (maximum). The bigger is the compression, the smaller will be
+   *          the final backup content, but will consume more CPU and time to execute
    * @param bufferSize
    *          Buffer size in bytes, the bigger is the buffer, the more efficient will be the compression
    * @throws IOException
