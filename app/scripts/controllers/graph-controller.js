@@ -218,6 +218,7 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
         }
     };
     $scope.query = function () {
+
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: $scope.queryText, limit: $scope.limit, verbose: false }, function (data) {
             if (data.result) {
                 $scope.headers = Database.getPropertyTableFromResults(data.result);
@@ -672,12 +673,12 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: $scope.language, text: $scope.queryText, limit: 20, shallow: false, verbose: false}, function (data) {
 
             if (data.result) {
-
                 $scope.graph.data(data.result).redraw();
             }
             Spinner.stopSpinner();
         }, function (data) {
             Spinner.stopSpinner();
+            Notification.push({content: data, error: true, autoHide: true});
         });
 
     }

@@ -10,7 +10,7 @@ a.navbar-brand > img {
 }
 
 .aside .aside-dialog .aside-content .aside-header {
-    background: none repeat scroll 0 0 #222222;
+    background: none repeat scroll 0 0 #2C2C2C;
     box-shadow: 0px 0px 2px 2px #080808;
     border-bottom: none;
     z-index: 1000;
@@ -597,4 +597,53 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 
 .code-editor .form-group {
     margin-bottom: 0px;
+}
+
+.aside-list a.list-group-item.active {
+    background-color: #46484e !important;
+    text-shadow: none;
+    background-image: none;
+}
+
+.aside-list a.list-group-item:hover {
+    background-color: #46484e !important;
+    text-shadow: none;
+    background-image: none;
+}
+
+.aside-list div.list-group-item.active {
+    background-color: #46484e !important;
+    text-shadow: none;
+    background-image: none;
+}
+
+.aside-list div.list-group-item a {
+    color: white;
+}
+
+.aside-list div.list-group-item div.bookmarks-actions > a {
+    font-size: 17px;
+}
+
+.aside-list div.list-group-item:hover {
+    background-color: #46484e !important;
+    text-shadow: none;
+    background-image: none;
+}
+
+.aside-list .list-group-item {
+    background-color: #2e2f33;
+    margin-bottom: 2px;
+    border: none;
+    color: white;
+}
+
+.aside-list .list-group-item:first-child {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+}
+
+.aside-list .list-group-item:last-child {
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
 }

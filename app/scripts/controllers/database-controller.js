@@ -493,7 +493,7 @@ dbModule.controller("BookmarkEditController", ['$scope', '$rootScope', 'Bookmark
     $scope.addBookmark = function () {
         Bookmarks.update(Database.getName(), $scope.bookmark).then(function () {
             $rootScope.$broadcast('bookmarks:changed');
-            $scope.hide();
+            $scope.$hide();
         });
     }
 }]);
