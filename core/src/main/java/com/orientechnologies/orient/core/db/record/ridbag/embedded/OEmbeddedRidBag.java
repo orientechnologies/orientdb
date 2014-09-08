@@ -237,7 +237,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         final OIdentifiable identifiable = (OIdentifiable) entry;
         if (identifiable instanceof ORecord) {
           final ORecord record = (ORecord) identifiable;
-          if (record.isDirty() || record.getIdentity().isNew()) {
+          if (record.getIdentity().isNew()) {
             record.save();
           }
 
