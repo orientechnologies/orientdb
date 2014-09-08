@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
@@ -59,9 +60,9 @@ public class OHashTableDirectory extends ODurableComponent {
       logFileCreation(name + defaultExtension, fileId);
       init();
       endAtomicOperation(false);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       endAtomicOperation(true);
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -94,9 +95,9 @@ public class OHashTableDirectory extends ODurableComponent {
     } catch (IOException e) {
       endAtomicOperation(true);
       throw e;
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       endAtomicOperation(true);
-      throw e;
+      throw new OStorageException(null, e);
     }
   }
 
@@ -238,9 +239,9 @@ public class OHashTableDirectory extends ODurableComponent {
     } catch (IOException e) {
       endAtomicOperation(true);
       throw e;
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       endAtomicOperation(true);
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -291,9 +292,9 @@ public class OHashTableDirectory extends ODurableComponent {
     } catch (IOException e) {
       endAtomicOperation(true);
       throw e;
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       endAtomicOperation(true);
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -333,9 +334,9 @@ public class OHashTableDirectory extends ODurableComponent {
     } catch (IOException e) {
       endAtomicOperation(true);
       throw e;
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       endAtomicOperation(true);
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -375,9 +376,9 @@ public class OHashTableDirectory extends ODurableComponent {
     } catch (IOException e) {
       endAtomicOperation(true);
       throw e;
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       endAtomicOperation(true);
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -417,9 +418,9 @@ public class OHashTableDirectory extends ODurableComponent {
     } catch (IOException e) {
       endAtomicOperation(true);
       throw e;
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       endAtomicOperation(true);
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -467,9 +468,9 @@ public class OHashTableDirectory extends ODurableComponent {
     } catch (IOException e) {
       endAtomicOperation(true);
       throw e;
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       endAtomicOperation(true);
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -509,9 +510,9 @@ public class OHashTableDirectory extends ODurableComponent {
     } catch (IOException e) {
       endAtomicOperation(true);
       throw e;
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       endAtomicOperation(true);
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }

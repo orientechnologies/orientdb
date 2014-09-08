@@ -18,10 +18,12 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageLocalAbstract;
@@ -201,9 +203,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       } catch (IOException e) {
         endAtomicOperation(true);
         throw e;
-      } catch (RuntimeException e) {
+      } catch (Throwable e) {
         endAtomicOperation(true);
-        throw e;
+        throw new OStorageException(null, e);
       }
 
     } catch (IOException e) {
@@ -295,9 +297,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       rollback();
 
       throw new OIndexException("Can not set serializer for index keys", e);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       rollback();
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -343,9 +345,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     } catch (IOException e) {
       rollback();
       throw new OIndexException("Can not set serializer for index values", e);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       rollback();
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -428,9 +430,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     } catch (IOException e) {
       rollback();
       throw new OIndexException("Error during index update", e);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       rollback();
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -521,9 +523,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     } catch (IOException e) {
       rollback();
       throw new OIndexException("Error during index removal", e);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       rollback();
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -581,9 +583,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     } catch (IOException e) {
       rollback();
       throw new OIndexException("Error during hash table clear", e);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       rollback();
-      throw e;
+      throw new OSBTreeException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -977,7 +979,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     }
   }
 
-  public OHashIndexBucket.Entry<K, V>[] lowerEntries(K key)  {
+  public OHashIndexBucket.Entry<K, V>[] lowerEntries(K key) {
     acquireSharedLock();
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
@@ -1084,8 +1086,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         diskCache.release(cacheEntry);
       }
     } catch (IOException ioe) {
-			throw new OIndexException("Exception during data read", ioe);
-		} finally {
+      throw new OIndexException("Exception during data read", ioe);
+    } finally {
       releaseSharedLock();
     }
   }

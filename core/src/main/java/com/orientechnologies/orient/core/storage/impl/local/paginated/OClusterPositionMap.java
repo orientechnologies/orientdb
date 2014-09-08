@@ -169,7 +169,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
         endAtomicOperation(false);
         return result;
-      } catch (Exception e) {
+      } catch (Throwable e) {
         endAtomicOperation(true);
         throw new OStorageException("Error during creation of mapping between logical adn physical record position.", e);
       } finally {
@@ -229,7 +229,7 @@ public class OClusterPositionMap extends ODurableComponent {
 
         endAtomicOperation(false);
         return positionEntry;
-      } catch (Exception e) {
+      } catch (Throwable e) {
         endAtomicOperation(true);
 
         throw new OStorageException("Error during removal of mapping between logical and physical record position.", e);

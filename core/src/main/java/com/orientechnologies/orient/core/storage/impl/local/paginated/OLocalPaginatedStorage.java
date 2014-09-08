@@ -677,9 +677,17 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               if (context != null)
                 context.executeOperations(this);
               atomicOperationsManager.endAtomicOperation(false);
-            } catch (RuntimeException e) {
+            } catch (Throwable e) {
               atomicOperationsManager.endAtomicOperation(true);
-              throw e;
+
+              try {
+                if (ppos.clusterPosition != null && ppos.clusterPosition.compareTo(OClusterPosition.INVALID_POSITION) != 0)
+                  cluster.deleteRecord(ppos.clusterPosition);
+              } catch (IOException ioe) {
+                OLogManager.instance().error(this, "Error on removing record in cluster: " + cluster, ioe);
+              }
+
+              throw new OStorageException("Error on creating record in cluster: " + cluster, e);
             }
 
             if (callback != null)
@@ -805,9 +813,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
               if (context != null)
                 context.executeOperations(this);
               atomicOperationsManager.endAtomicOperation(false);
-            } catch (RuntimeException e) {
+            } catch (Throwable e) {
               atomicOperationsManager.endAtomicOperation(true);
-              throw e;
+              throw new OStorageException("Error on updating record " + rid + " (cluster: " + cluster + ")", e);
             }
 
             if (callback != null)
@@ -877,8 +885,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
               cluster.deleteRecord(ppos.clusterPosition);
               atomicOperationsManager.endAtomicOperation(false);
-            } catch (RuntimeException e) {
+            } catch (Throwable e) {
               atomicOperationsManager.endAtomicOperation(true);
+              throw new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
             }
 
             return new OStorageOperationResult<Boolean>(true);
@@ -933,8 +942,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
               cluster.hideRecord(ppos.clusterPosition);
               atomicOperationsManager.endAtomicOperation(false);
-            } catch (RuntimeException e) {
+            } catch (Throwable e) {
               atomicOperationsManager.endAtomicOperation(true);
+              throw new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
             }
 
             return new OStorageOperationResult<Boolean>(true);
