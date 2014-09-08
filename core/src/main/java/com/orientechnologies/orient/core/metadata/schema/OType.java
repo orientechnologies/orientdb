@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OBinary;
@@ -161,11 +160,11 @@ public enum OType {
     EMBEDDEDLIST.castable.add(EMBEDDEDSET);
   }
 
-  protected String                            name;
-  protected int                               id;
-  protected Class<?>                          javaDefaultType;
-  protected Class<?>[]                        allowAssignmentFrom;
-  protected Set<OType>                        castable;
+  protected final String                      name;
+  protected final int                         id;
+  protected final Class<?>                    javaDefaultType;
+  protected final Class<?>[]                  allowAssignmentFrom;
+  protected final Set<OType>                  castable;
 
   private OType(final String iName, final int iId, final Class<?> iJavaDefaultType, final Class<?>[] iAllowAssignmentBy) {
     name = iName;
@@ -250,25 +249,32 @@ public enum OType {
       if (value instanceof ODocument && ((ODocument) value).hasOwners())
         return EMBEDDED;
     } else if (EMBEDDEDSET == byType) {
-      if (OMultiValue.getFirstValue((Set<?>) value) instanceof OIdentifiable)
+      if (checkLinkCollection(((Collection<?>) value)))
         return LINKSET;
     } else if (EMBEDDEDLIST == byType && !clazz.isArray()) {
       if (value instanceof OMultiCollectionIterator<?>)
         type = ((OMultiCollectionIterator<?>) value).isEmbedded() ? OType.EMBEDDEDLIST : OType.LINKLIST;
-      else if (OMultiValue.getFirstValue((List<?>) value) instanceof OIdentifiable)
+      else if (checkLinkCollection(((Collection<?>) value)))
         return LINKLIST;
+
     } else if (EMBEDDEDMAP == byType) {
-      boolean empty = true;
-      for (Object object : ((Map<?, ?>) value).values()) {
-        if (object != null && !(object instanceof OIdentifiable))
-          return EMBEDDEDMAP;
-        else if (object != null)
-          empty = false;
-      }
-      if (!empty)
+      if (checkLinkCollection(((Map<?, ?>) value).values()))
         return LINKMAP;
     }
     return byType;
+  }
+
+  private static boolean checkLinkCollection(Collection<?> toCheck) {
+    boolean empty = true;
+    for (Object object : toCheck) {
+      if (object != null && !(object instanceof OIdentifiable))
+        return false;
+      else if (object != null)
+        empty = false;
+    }
+    if (!empty)
+      return true;
+    return false;
   }
 
   public static boolean isSimpleType(final Object iObject) {

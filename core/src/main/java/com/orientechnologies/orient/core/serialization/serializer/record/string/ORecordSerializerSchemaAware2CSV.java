@@ -382,114 +382,114 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             type = OType.DECIMAL;
           else if (fieldValue instanceof ORidBag)
             type = OType.LINKBAG;
-        }
 
-        if (fieldValue instanceof OMultiCollectionIterator<?>) {
-          type = ((OMultiCollectionIterator<?>) fieldValue).isEmbedded() ? OType.EMBEDDEDLIST : OType.LINKLIST;
-          linkedType = ((OMultiCollectionIterator<?>) fieldValue).isEmbedded() ? OType.EMBEDDED : OType.LINK;
-        } else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
-          final int size = OMultiValue.getSize(fieldValue);
+          if (fieldValue instanceof OMultiCollectionIterator<?>) {
+            type = ((OMultiCollectionIterator<?>) fieldValue).isEmbedded() ? OType.EMBEDDEDLIST : OType.LINKLIST;
+            linkedType = ((OMultiCollectionIterator<?>) fieldValue).isEmbedded() ? OType.EMBEDDED : OType.LINK;
+          } else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
+            final int size = OMultiValue.getSize(fieldValue);
 
-          Boolean autoConvertLinks = null;
-          if (fieldValue instanceof ORecordLazyMultiValue) {
-            autoConvertLinks = ((ORecordLazyMultiValue) fieldValue).isAutoConvertToRecord();
-            if (autoConvertLinks)
-              // DISABLE AUTO CONVERT
-              ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
-          }
+            Boolean autoConvertLinks = null;
+            if (fieldValue instanceof ORecordLazyMultiValue) {
+              autoConvertLinks = ((ORecordLazyMultiValue) fieldValue).isAutoConvertToRecord();
+              if (autoConvertLinks)
+                // DISABLE AUTO CONVERT
+                ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
+            }
 
-          if (autoDetectCollectionType)
-            if (size > 0) {
-              final Object firstValue = OMultiValue.getFirstValue(fieldValue);
+            if (autoDetectCollectionType)
+              if (size > 0) {
+                final Object firstValue = OMultiValue.getFirstValue(fieldValue);
 
-              if (firstValue != null) {
-                if (firstValue instanceof ORID) {
-                  linkedClass = null;
-                  linkedType = OType.LINK;
-                  if (fieldValue instanceof Set<?>)
-                    type = OType.LINKSET;
-                  else
-                    type = OType.LINKLIST;
-                } else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
-                    && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
-                    && (firstValue instanceof ORecord<?> || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
-                        .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
-                  linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
-                  if (type == null) {
-                    // LINK: GET THE CLASS
+                if (firstValue != null) {
+                  if (firstValue instanceof ORID) {
+                    linkedClass = null;
                     linkedType = OType.LINK;
-
                     if (fieldValue instanceof Set<?>)
                       type = OType.LINKSET;
                     else
                       type = OType.LINKLIST;
-                  } else
-                    linkedType = OType.EMBEDDED;
-                } else {
-                  // EMBEDDED COLLECTION
-                  if (firstValue instanceof ODocument
-                      && ((((ODocument) firstValue).hasOwners()) || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP))
-                    linkedType = OType.EMBEDDED;
-                  else if (firstValue instanceof Enum<?>)
-                    linkedType = OType.STRING;
-                  else {
-                    linkedType = OType.getTypeByClass(firstValue.getClass());
+                  } else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
+                      && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
+                      && (firstValue instanceof ORecord<?> || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
+                          .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
+                    linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
+                    if (type == null) {
+                      // LINK: GET THE CLASS
+                      linkedType = OType.LINK;
 
-                    if (linkedType != OType.LINK)
-                      // EMBEDDED FOR SURE DON'T USE THE LINKED TYPE
-                      linkedType = null;
+                      if (fieldValue instanceof Set<?>)
+                        type = OType.LINKSET;
+                      else
+                        type = OType.LINKLIST;
+                    } else
+                      linkedType = OType.EMBEDDED;
+                  } else {
+                    // EMBEDDED COLLECTION
+                    if (firstValue instanceof ODocument
+                        && ((((ODocument) firstValue).hasOwners()) || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP))
+                      linkedType = OType.EMBEDDED;
+                    else if (firstValue instanceof Enum<?>)
+                      linkedType = OType.STRING;
+                    else {
+                      linkedType = OType.getTypeByClass(firstValue.getClass());
+
+                      if (linkedType != OType.LINK)
+                        // EMBEDDED FOR SURE DON'T USE THE LINKED TYPE
+                        linkedType = null;
+                    }
+
+                    if (type == null)
+                      if (fieldValue instanceof OMVRBTreeRIDSet || fieldValue instanceof ORecordLazySet)
+                        type = OType.LINKSET;
+                      else if (fieldValue instanceof Set<?>)
+                        type = OType.EMBEDDEDSET;
+                      else
+                        type = OType.EMBEDDEDLIST;
                   }
+                }
+              } else if (type == null)
+                type = OType.EMBEDDEDLIST;
 
-                  if (type == null)
-                    if (fieldValue instanceof OMVRBTreeRIDSet || fieldValue instanceof ORecordLazySet)
-                      type = OType.LINKSET;
-                    else if (fieldValue instanceof Set<?>)
-                      type = OType.EMBEDDEDSET;
-                    else
-                      type = OType.EMBEDDEDLIST;
+            if (fieldValue instanceof ORecordLazyMultiValue && autoConvertLinks) {
+              // REPLACE PREVIOUS SETTINGS
+              ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(true);
+            }
+
+          } else if (fieldValue instanceof Map<?, ?> && type == null) {
+            final int size = OMultiValue.getSize(fieldValue);
+
+            Boolean autoConvertLinks = null;
+            if (fieldValue instanceof ORecordLazyMap) {
+              autoConvertLinks = ((ORecordLazyMap) fieldValue).isAutoConvertToRecord();
+              if (autoConvertLinks)
+                // DISABLE AUTO CONVERT
+                ((ORecordLazyMap) fieldValue).setAutoConvertToRecord(false);
+            }
+
+            if (size > 0) {
+              final Object firstValue = OMultiValue.getFirstValue(fieldValue);
+
+              if (firstValue != null) {
+                if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
+                    && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
+                    && (firstValue instanceof ORecord<?> || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
+                        .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
+                  linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
+                  // LINK: GET THE CLASS
+                  linkedType = OType.LINK;
+                  type = OType.LINKMAP;
                 }
               }
-            } else if (type == null)
-              type = OType.EMBEDDEDLIST;
-
-          if (fieldValue instanceof ORecordLazyMultiValue && autoConvertLinks) {
-            // REPLACE PREVIOUS SETTINGS
-            ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(true);
-          }
-
-        } else if (fieldValue instanceof Map<?, ?> && type == null) {
-          final int size = OMultiValue.getSize(fieldValue);
-
-          Boolean autoConvertLinks = null;
-          if (fieldValue instanceof ORecordLazyMap) {
-            autoConvertLinks = ((ORecordLazyMap) fieldValue).isAutoConvertToRecord();
-            if (autoConvertLinks)
-              // DISABLE AUTO CONVERT
-              ((ORecordLazyMap) fieldValue).setAutoConvertToRecord(false);
-          }
-
-          if (size > 0) {
-            final Object firstValue = OMultiValue.getFirstValue(fieldValue);
-
-            if (firstValue != null) {
-              if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
-                  && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
-                  && (firstValue instanceof ORecord<?> || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
-                      .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
-                linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
-                // LINK: GET THE CLASS
-                linkedType = OType.LINK;
-                type = OType.LINKMAP;
-              }
             }
+
+            if (type == null)
+              type = OType.EMBEDDEDMAP;
+
+            if (fieldValue instanceof ORecordLazyMap && autoConvertLinks)
+              // REPLACE PREVIOUS SETTINGS
+              ((ORecordLazyMap) fieldValue).setAutoConvertToRecord(true);
           }
-
-          if (type == null)
-            type = OType.EMBEDDEDMAP;
-
-          if (fieldValue instanceof ORecordLazyMap && autoConvertLinks)
-            // REPLACE PREVIOUS SETTINGS
-            ((ORecordLazyMap) fieldValue).setAutoConvertToRecord(true);
         }
       }
 
