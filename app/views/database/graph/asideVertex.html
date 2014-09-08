@@ -35,7 +35,7 @@
                     <label for="inputDisplay" class="col-md-4 control-label">Display</label>
 
                     <div class="col-md-8">
-                        <select ng-model="config.display" id="inputDisplay"
+                        <select ng-model="config.display" ng-change="setDirty()" id="inputDisplay"
                                 ng-options="h for h in headers">
 
                         </select>
@@ -45,7 +45,7 @@
                     <label for="inputIcon" class="col-md-4 control-label">Icon</label>
 
                     <div class="col-md-8">
-                        <select fontpicker id="inputIcon" class="form-control"
+                        <select fontpicker id="inputIcon" class="form-control" ng-change="setDirty()"
                                 ng-options="icon.css as icon.code for icon in icons track by icon.css"
                                 ng-model="config.icon">
                         </select>
@@ -57,7 +57,7 @@
                     <label for="inputRadius" class="col-md-4 control-label">Radius</label>
 
                     <div class="col-md-8">
-                        <input id="inputRadius" ng-model="config.r" class="form-control">
+                        <input id="inputRadius" ng-model="config.r" ng-change="setDirty()" class="form-control">
                     </div>
                 </div>
                 <div class="form-group">
@@ -65,7 +65,7 @@
 
                     <div class="col-md-8">
                         <spectrum-colorpicker
-                                ng-model="config.fill"
+                                ng-model="config.fill" ng-change="setDirty()"
                                 options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
                     </div>
                 </div>
@@ -73,12 +73,20 @@
                     <label class="col-md-4 control-label">Stroke</label>
 
                     <div class="col-md-8">
-                        <spectrum-colorpicker
-                                ng-model="config.stroke"
-                                options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
+                        <spectrum-colorpicker ng-change="setDirty()"
+                                              ng-model="config.stroke"
+                                              options="{preferredFormat: 'hex'}"></spectrum-colorpicker>
                     </div>
                 </div>
-
+                <div class="form-group">
+                    <label class="col-md-4 control-label"></label>
+                    <div class="col-md-8 btn-group">
+                        <button href="javascript:void(0)" class="btn btn-primary btn-sm"
+                                ng-click="save()"><i
+                                class="fa fa-save"> Save configuration</i>
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>

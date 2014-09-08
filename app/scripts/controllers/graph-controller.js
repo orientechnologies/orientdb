@@ -260,12 +260,19 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
 //    }, 2000);
 }]);
 
-GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification) {
+GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope) {
 
 
     var data = [];
 
 
+    $scope.dirty = false;
+    $rootScope.$on('graphConfig:changed', function (val) {
+        $scope.dirty = val;
+    })
+    $rootScope.$on('graphConfig:onSave', function (val) {
+        $scope.saveConfig();
+    })
     $scope.editorOptions = {
         lineWrapping: true,
         lineNumbers: true,
@@ -651,7 +658,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         $scope.gConfig.config = $scope.graph.getConfig();
         GraphConfig.set($scope.gConfig).then(function (data) {
             $scope.gConfig = data;
-            Notification.push({content: 'Configuration Saved Correctly'});
+            Notification.push({content: 'Configuration Saved Correctly', autoHide: true});
         });
     }
     $scope.query = function () {
@@ -681,7 +688,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     }
 }])
 ;
-GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', 'Icon', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside, Icon) {
+GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', 'Icon', '$rootScope', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside, Icon, $rootScope) {
 
 
     $scope.database = $routeParams.database;
@@ -699,6 +706,10 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
         $scope.config = $scope.graph.getClazzConfig($scope.doc['@class']);
     }
 
+    $scope.setDirty = function () {
+        $rootScope.$broadcast('graphConfig:changed', true);
+
+    }
     $scope.$watch('config.display', function (val) {
         if (val) {
             $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', null);
@@ -735,6 +746,9 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
         }
     })
 
+    $scope.save = function () {
+        $rootScope.$broadcast("graphConfig:onSave");
+    }
 
 }]);
 GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'Spinner', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, Spinner, Aside) {
