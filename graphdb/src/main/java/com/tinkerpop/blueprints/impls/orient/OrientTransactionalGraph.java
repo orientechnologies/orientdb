@@ -95,12 +95,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   @SuppressWarnings("deprecation")
   @Override
   public void stopTransaction(final Conclusion conclusion) {
-    final OrientGraphContext context = getContext(false);
-    if (context == null)
-      return;
-
-    if (context.rawGraph.isClosed() || context.rawGraph.getTransaction() instanceof OTransactionNoTx
-        || context.rawGraph.getTransaction().getStatus() != TXSTATUS.BEGUN)
+    if (database.isClosed() || database.getTransaction() instanceof OTransactionNoTx
+        || database.getTransaction().getStatus() != TXSTATUS.BEGUN)
       return;
 
     if (Conclusion.SUCCESS == conclusion)
@@ -113,11 +109,10 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * Commits the current active transaction.
    */
   public void commit() {
-    final OrientGraphContext context = getContext(false);
-    if (context == null)
+    if (database == null)
       return;
 
-    context.rawGraph.commit();
+    database.commit();
     if (autoStartTx)
       beginTransaction();
   }
@@ -126,11 +121,10 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * Rollbacks the current active transaction. All the pending changes are rollbacked.
    */
   public void rollback() {
-    final OrientGraphContext context = getContext(false);
-    if (context == null)
+    if (database == null)
       return;
 
-    context.rawGraph.rollback();
+    database.rollback();
     if (autoStartTx)
       beginTransaction();
   }
@@ -160,16 +154,13 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     if (!autoStartTx)
       return;
 
-    final OrientGraphContext context = getContext(true);
-    if (context.rawGraph.getTransaction() instanceof OTransactionNoTx
-        && context.rawGraph.getTransaction().getStatus() != TXSTATUS.BEGUN) {
-      context.rawGraph.begin();
+    if (database.getTransaction() instanceof OTransactionNoTx && database.getTransaction().getStatus() != TXSTATUS.BEGUN) {
+      database.begin();
     }
   }
 
   protected void beginTransaction() {
-    final ODatabaseDocumentTx db = getContext(false).rawGraph;
-    db.begin();
-    db.getTransaction().setUsingLog(useLog);
+    database.begin();
+    database.getTransaction().setUsingLog(useLog);
   }
 }
