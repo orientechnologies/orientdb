@@ -697,7 +697,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       } finally {
         endResponse();
       }
-      channel.close();
       runShutdownInNonDaemonThread();
     }
 
@@ -705,6 +704,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.socket.getInetAddress(), channel.socket.getPort());
 
     sendError(clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+    }
+    channel.close();
   }
 
   protected void copyDatabase() throws IOException {
