@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Test(enabled = false)
 public class ThreadCountersHashTableMTTst {
   private OThreadCountersHashTable threadCounters;
-  private final Queue<Thread>      addedThreads    = new ConcurrentLinkedDeque<Thread>();
+  private final Queue<Thread>      addedThreads    = new ConcurrentLinkedQueue<Thread>();
 
   private final ExecutorService    executorService = Executors.newCachedThreadPool();
   private CountDownLatch           latch           = new CountDownLatch(1);

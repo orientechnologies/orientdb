@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.AbstractOwnableSynchronizer;
 import java.util.concurrent.locks.LockSupport;
@@ -158,7 +159,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
   }
 
   private final class WNode {
-    private final Queue<Thread> waitingReaders = new ConcurrentLinkedDeque<Thread>();
+    private final Queue<Thread> waitingReaders = new ConcurrentLinkedQueue<Thread>();
 
     private volatile boolean    locked         = true;
     private volatile Thread     waitingWriter;
