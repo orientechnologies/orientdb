@@ -44,6 +44,14 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.imageio.spi.ServiceRegistry;
+
+import com.orientechnologies.common.console.annotation.ConsoleCommand;
+import com.orientechnologies.common.console.annotation.ConsoleParameter;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.OArrays;
+
 public class OConsoleApplication {
   protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" }; ;
   protected final StringBuilder   commandBuffer   = new StringBuilder(2048);
@@ -115,7 +123,10 @@ public class OConsoleApplication {
     int result = 0;
 
     if (interactiveMode) {
-      String consoleInput;
+      // EXECUTE IN INTERACTIVE MODE
+      // final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+      String consoleInput = null;
 
       while (true) {
         try {
@@ -133,7 +144,7 @@ public class OConsoleApplication {
             break;
         } catch (Exception e) {
           result = 1;
-          OLogManager.instance().error(this, "Error on reading console input: %s", e);
+          OLogManager.instance().error(this, "Error on reading console input: %s", e, consoleInput);
         }
       }
     } else {

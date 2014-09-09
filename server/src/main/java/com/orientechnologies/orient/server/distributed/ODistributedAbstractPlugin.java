@@ -173,8 +173,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       cachedDatabaseConfiguration.put(iDatabaseName, cfg);
 
       // PRINT THE NEW CONFIGURATION
-      OLogManager.instance().info(this, "updated distributed configuration for database: %s:\n----------\n%s\n----------",
-          iDatabaseName, cfg.toJSON("prettyPrint"));
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "updated distributed configuration for database: %s:\n----------\n%s\n----------", iDatabaseName,
+          cfg.toJSON("prettyPrint"));
 
       if (iSaveToDisk) {
         // SAVE THE CONFIGURATION TO DISK
@@ -182,7 +183,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         try {
           File file = getDistributedConfigFile(iDatabaseName);
 
-          OLogManager.instance().info(this, "Saving distributed configuration file for database '%s' to: %s", iDatabaseName, file);
+          ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Saving distributed configuration file for database '%s' to: %s", iDatabaseName, file);
 
           if (!file.exists()) {
             file.getParentFile().mkdirs();
@@ -193,7 +195,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
           f.write(cfg.toJSON().getBytes());
           f.flush();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on saving distributed configuration file", e);
+          ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Error on saving distributed configuration file", e);
 
         } finally {
           if (f != null)

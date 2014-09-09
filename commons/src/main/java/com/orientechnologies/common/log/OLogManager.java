@@ -75,7 +75,7 @@ public class OLogManager {
           else
             log.log(iLevel, msg);
         } catch (Exception e) {
-          OLogManager.instance().warn(this, "Error on formatting message", e);
+          OLogManager.instance().warn(this, "Error on formatting message '%s'", e, iMessage);
         }
       }
     }

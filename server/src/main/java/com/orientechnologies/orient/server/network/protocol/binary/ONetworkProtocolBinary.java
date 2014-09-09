@@ -1659,18 +1659,23 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     final byte[] changeStream = channel.readBytes();
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
-    final Map<OIdentifiable, OSBTreeRidBag.Change> changes = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE.deserializeChanges(
-        changeStream, 0);
-
-    int realSize = tree.getRealBagSize(changes);
-
-    beginResponse();
+    final OSBTreeCollectionManager sbTreeCollectionManager = connection.database.getSbTreeCollectionManager();
+    final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
     try {
-      sendOk(clientTxId);
-      channel.writeInt(realSize);
+      final Map<OIdentifiable, OSBTreeRidBag.Change> changes = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE.deserializeChanges(
+          changeStream, 0);
+
+      int realSize = tree.getRealBagSize(changes);
+
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeInt(realSize);
+      } finally {
+        endResponse();
+      }
     } finally {
-      endResponse();
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
   }
 
@@ -1685,25 +1690,29 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection.data.protocolVersion >= 21)
       pageSize = channel.readInt();
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
-
-    final OBinarySerializer<OIdentifiable> keySerializer = tree.getKeySerializer();
-    OIdentifiable key = keySerializer.deserialize(keyStream, 0);
-
-    final OBinarySerializer<Integer> valueSerializer = tree.getValueSerializer();
-
-    OTreeInternal.AccumulativeListener<OIdentifiable, Integer> listener = new OTreeInternal.AccumulativeListener<OIdentifiable, Integer>(
-        pageSize);
-    tree.loadEntriesMajor(key, inclusive, true, listener);
-    List<Entry<OIdentifiable, Integer>> result = listener.getResult();
-    byte[] stream = serializeSBTreeEntryCollection(result, keySerializer, valueSerializer);
-
-    beginResponse();
+    final OSBTreeCollectionManager sbTreeCollectionManager = connection.database.getSbTreeCollectionManager();
+    final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
     try {
-      sendOk(clientTxId);
-      channel.writeBytes(stream);
+      final OBinarySerializer<OIdentifiable> keySerializer = tree.getKeySerializer();
+      OIdentifiable key = keySerializer.deserialize(keyStream, 0);
+
+      final OBinarySerializer<Integer> valueSerializer = tree.getValueSerializer();
+
+      OTreeInternal.AccumulativeListener<OIdentifiable, Integer> listener = new OTreeInternal.AccumulativeListener<OIdentifiable, Integer>(
+          pageSize);
+      tree.loadEntriesMajor(key, inclusive, true, listener);
+      List<Entry<OIdentifiable, Integer>> result = listener.getResult();
+      byte[] stream = serializeSBTreeEntryCollection(result, keySerializer, valueSerializer);
+
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeBytes(stream);
+      } finally {
+        endResponse();
+      }
     } finally {
-      endResponse();
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
   }
 
@@ -1730,26 +1739,31 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("SB-Tree bonsai get first key");
 
     OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
-    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
 
-    OIdentifiable result = tree.firstKey();
-    final OBinarySerializer<? super OIdentifiable> keySerializer;
-    if (result == null) {
-      keySerializer = ONullSerializer.INSTANCE;
-    } else {
-      keySerializer = tree.getKeySerializer();
-    }
-
-    byte[] stream = new byte[OByteSerializer.BYTE_SIZE + keySerializer.getObjectSize(result)];
-    OByteSerializer.INSTANCE.serializeLiteral(keySerializer.getId(), stream, 0);
-    keySerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
-
-    beginResponse();
+    final OSBTreeCollectionManager sbTreeCollectionManager = connection.database.getSbTreeCollectionManager();
+    final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
     try {
-      sendOk(clientTxId);
-      channel.writeBytes(stream);
+      OIdentifiable result = tree.firstKey();
+      final OBinarySerializer<? super OIdentifiable> keySerializer;
+      if (result == null) {
+        keySerializer = ONullSerializer.INSTANCE;
+      } else {
+        keySerializer = tree.getKeySerializer();
+      }
+
+      byte[] stream = new byte[OByteSerializer.BYTE_SIZE + keySerializer.getObjectSize(result)];
+      OByteSerializer.INSTANCE.serialize(keySerializer.getId(), stream, 0);
+      keySerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
+
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeBytes(stream);
+      } finally {
+        endResponse();
+      }
     } finally {
-      endResponse();
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
   }
 
@@ -1759,28 +1773,32 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     final byte[] keyStream = channel.readBytes();
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
-
-    final OIdentifiable key = tree.getKeySerializer().deserialize(keyStream, 0);
-
-    Integer result = tree.get(key);
-    final OBinarySerializer<? super Integer> valueSerializer;
-    if (result == null) {
-      valueSerializer = ONullSerializer.INSTANCE;
-    } else {
-      valueSerializer = tree.getValueSerializer();
-    }
-
-    byte[] stream = new byte[OByteSerializer.BYTE_SIZE + valueSerializer.getObjectSize(result)];
-    OByteSerializer.INSTANCE.serializeLiteral(valueSerializer.getId(), stream, 0);
-    valueSerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
-
-    beginResponse();
+    final OSBTreeCollectionManager sbTreeCollectionManager = connection.database.getSbTreeCollectionManager();
+    final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
     try {
-      sendOk(clientTxId);
-      channel.writeBytes(stream);
+      final OIdentifiable key = tree.getKeySerializer().deserialize(keyStream, 0);
+
+      Integer result = tree.get(key);
+      final OBinarySerializer<? super Integer> valueSerializer;
+      if (result == null) {
+        valueSerializer = ONullSerializer.INSTANCE;
+      } else {
+        valueSerializer = tree.getValueSerializer();
+      }
+
+      byte[] stream = new byte[OByteSerializer.BYTE_SIZE + valueSerializer.getObjectSize(result)];
+      OByteSerializer.INSTANCE.serialize(valueSerializer.getId(), stream, 0);
+      valueSerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
+
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeBytes(stream);
+      } finally {
+        endResponse();
+      }
     } finally {
-      endResponse();
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
   }
 

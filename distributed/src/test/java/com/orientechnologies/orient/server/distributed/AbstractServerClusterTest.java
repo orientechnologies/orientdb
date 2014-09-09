@@ -133,21 +133,27 @@ public abstract class AbstractServerClusterTest {
 
   protected abstract void executeTest() throws Exception;
 
+  protected void prepare(final boolean iCopyDatabaseToNodes) throws IOException {
+    prepare(iCopyDatabaseToNodes, true);
+  }
+
   /**
    * Create the database on first node only
-   * 
+   *
    * @throws IOException
    */
-  protected void prepare(final boolean iCopyDatabaseToNodes) throws IOException {
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws IOException {
     // CREATE THE DATABASE
     final Iterator<ServerRun> it = serverInstance.iterator();
     final ServerRun master = it.next();
 
-    final ODatabaseDocumentTx db = master.createDatabase(getDatabaseName());
-    try {
-      onAfterDatabaseCreation(db);
-    } finally {
-      db.close();
+    if (iCreateDatabase) {
+      final ODatabaseDocumentTx db = master.createDatabase(getDatabaseName());
+      try {
+        onAfterDatabaseCreation(db);
+      } finally {
+        db.close();
+      }
     }
 
     // COPY DATABASE TO OTHER SERVERS

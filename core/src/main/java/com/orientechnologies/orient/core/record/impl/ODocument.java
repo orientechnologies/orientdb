@@ -851,14 +851,14 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   /**
    * Merge current document with the document passed as parameter. If the field already exists then the conflicts are managed based
    * on the value of the parameter 'iConflictsOtherWins'.
-   * 
+   *
    * @param iOther
    *          Other ODocument instance to merge
    * @param iUpdateOnlyMode
    *          if true, the other document properties will always be added or overwritten. If false, the missed properties in the
    *          "other" document will be removed by original document
    * @param iMergeSingleItemsOfMultiValueFields
-   * 
+   *
    * @return
    */
   public ODocument merge(final ODocument iOther, boolean iUpdateOnlyMode, boolean iMergeSingleItemsOfMultiValueFields) {
@@ -874,14 +874,14 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   /**
    * Merge current document with the document passed as parameter. If the field already exists then the conflicts are managed based
    * on the value of the parameter 'iConflictsOtherWins'.
-   * 
+   *
    * @param iOther
    *          Other ODocument instance to merge
    * @param iUpdateOnlyMode
    *          if true, the other document properties will always be added or overwritten. If false, the missed properties in the
    *          "other" document will be removed by original document
    * @param iMergeSingleItemsOfMultiValueFields
-   * 
+   *
    * @return
    */
   public ODocument merge(final Map<String, Object> iOther, final boolean iUpdateOnlyMode,
@@ -947,7 +947,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * <li>Value of field itself was changed by calling of {@link #field(String, Object)} method for example.</li>
    * <li>Internal state of field was changed but was not saved. This case currently is applicable for for collections only.</li>
    * </ol>
-   * 
+   *
    * @return List of fields, values of which were changed.
    */
   public String[] getDirtyFields() {
@@ -967,7 +967,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   /**
    * Returns the original value of a field before it has been changed.
-   * 
+   *
    * @param iFieldName
    *          Property name to retrieve the original value
    */
@@ -1024,7 +1024,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   /**
    * Checks if a field exists.
-   * 
+   *
    * @return True if exists, otherwise false.
    */
   public boolean containsField(final String iFieldName) {
@@ -1052,7 +1052,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   /**
    * Internal.
-   * 
+   *
    * @return this
    */
   public ODocument addOwner(final ORecordElement iOwner) {
@@ -1205,7 +1205,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   /**
    * Returns the forced field type if any.
-   * 
+   *
    * @param iFieldName
    *          name of field to check
    */
@@ -1224,7 +1224,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * <p>
    * Clears all the field values and types. Clears only record content, but saves its identity.
    * </p>
-   * 
+   *
    * <p>
    * The following code will clear all data from specified document.
    * </p>
@@ -1232,7 +1232,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    *   doc.clear();
    *   doc.save();
    * </code>
-   * 
+   *
    * @return this
    * @see #reset()
    */
@@ -1249,7 +1249,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * Resets the record values and class type to being reused. It's like you create a ODocument from scratch. This method is handy
    * when you want to insert a bunch of documents and don't want to strain GC.
    * </p>
-   * 
+   *
    * <p>
    * The following code will create a new document in database.
    * </p>
@@ -1257,15 +1257,15 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    *   doc.clear();
    *   doc.save();
    * </code>
-   * 
+   *
    * <p>
    * IMPORTANT! This can be used only if no transactions are begun.
    * </p>
-   * 
+   *
    * @return this
    * @throws IllegalStateException
    *           if transaction is begun.
-   * 
+   *
    * @see #clear()
    */
   @Override
@@ -1326,7 +1326,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   /**
    * Enabled or disabled the tracking of changes in the document. This is needed by some triggers like
    * {@link com.orientechnologies.orient.core.index.OClassIndexManager} to determine what fields are changed to update indexes.
-   * 
+   *
    * @param iTrackingChanges
    *          True to enable it, otherwise false
    * @return this
@@ -1391,7 +1391,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   /**
    * Sets the field type. This overrides the schema property settings if any.
-   * 
+   *
    * @param iFieldName
    *          Field name
    * @param iFieldType
@@ -1509,7 +1509,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
   /**
    * Converts all non-tracked collections implementations contained in document fields to tracked ones.
-   * 
+   *
    * @see OTrackedMultiValue
    */
   public void convertAllMultiValuesToTrackedVersions() {

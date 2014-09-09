@@ -237,7 +237,7 @@ public class OSQLHelper {
       return ((OSQLFilterItem) iObject).getValue(iRecord, null, iContext);
     else if (iObject instanceof String) {
       final String s = ((String) iObject).trim();
-      if (!s.isEmpty() && !OIOUtils.isStringContent(iObject) && !Character.isDigit(s.charAt(0)))
+      if (iRecord != null & !s.isEmpty() && !OIOUtils.isStringContent(iObject) && !Character.isDigit(s.charAt(0)))
         // INTERPRETS IT
         return ODocumentHelper.getFieldValue(iRecord, s, iContext);
     }

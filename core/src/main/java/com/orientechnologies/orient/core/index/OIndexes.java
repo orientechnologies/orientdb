@@ -101,6 +101,20 @@ public final class OIndexes {
   }
 
   /**
+   * Iterates on all factories and append all index engines.
+   *
+   * @return Set of all index engines.
+   */
+  public static Set<String> getIndexEngines() {
+    final Set<String> engines = new HashSet<String>();
+    final Iterator<OIndexFactory> ite = getAllFactories();
+    while (ite.hasNext()) {
+      engines.addAll(ite.next().getAlgorithms());
+    }
+    return engines;
+  }
+
+  /**
    * 
    * 
    * 
@@ -117,7 +131,18 @@ public final class OIndexes {
    */
   public static OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException, OIndexException {
-    final Iterator<OIndexFactory> ite = getAllFactories();
+    Iterator<OIndexFactory> ite = getAllFactories();
+    boolean found = false;
+    while (ite.hasNext()) {
+      final OIndexFactory factory = ite.next();
+      found = found || factory.getAlgorithms().contains(algorithm);
+    }
+    if (!found) {
+      throw new OIndexException("Engine type: '" + algorithm + "' is not supported. Types are "
+          + OCollections.toString(getIndexEngines()) + ". Please check the engine name or verify that the engine '" + algorithm
+          + "' is installed correctly");
+    }
+    ite = getAllFactories();
     while (ite.hasNext()) {
       final OIndexFactory factory = ite.next();
       if (factory.getTypes().contains(indexType) && factory.getAlgorithms().contains(algorithm)) {
@@ -125,8 +150,7 @@ public final class OIndexes {
       }
     }
 
-    throw new OIndexException("Index type : " + indexType + " is not supported. " + "Types are "
-        + OCollections.toString(getIndexTypes()));
+    throw new OIndexException("Index type: " + indexType + " is not supported. Types are " + OCollections.toString(getIndexTypes()));
   }
 
   /**

@@ -393,8 +393,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       }
     }
 
-    return new ODocument().addOwner(indexDoc).setAllowChainedAccess(false).field("k", keyContainer, OType.EMBEDDED)
-        .field("ops", operations, OType.EMBEDDEDLIST);
+    return new ODocument().addOwner(indexDoc).setAllowChainedAccess(false)
+        .field("k", key != null ? OStringSerializerHelper.encode(key) : null).field("ops", operations, OType.EMBEDDEDLIST);
   }
 
   private void updateChangesIdentity(ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {

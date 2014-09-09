@@ -1113,6 +1113,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (indexIsUsedInOrderBy)
             fullySortedByIndex = indexDefinition.getFields().size() >= orderedFields.size();
 
+          context.setVariable("$limit", limit);
           cursor = operator.executeIndexQuery(context, index, keyParams, ascSortOrder);
         } catch (Exception e) {
           OLogManager
