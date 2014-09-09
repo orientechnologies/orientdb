@@ -288,6 +288,7 @@ Widget.directive('orientdate', function (Database) {
 
 
     return {
+        priority: 1001,
         restrict: 'A',
         require: 'ngModel',
         link: function (scope, element, attr, ngModel) {
@@ -301,23 +302,34 @@ Widget.directive('orientdate', function (Database) {
                         formatter = val.value;
                     }
                 });
+
                 var form = input;
                 if (input) {
-                    var form = moment(input, 'DD/MM/YYYY').format(formatter.toUpperCase());
+                    var form = moment(input).format(formatter.toUpperCase());
                 }
+
                 return form;
             }
 
             function out(data) {
+                var values = Database.getMetadata()['config']['values'];
+                var formatter = undefined;
+                values.forEach(function (val, idx, array) {
+                    if (val.name == 'dateFormat') {
+                        formatter = val.value;
+                    }
+                });
                 var form = data
                 if (data) {
-                    form = moment(data).format('DD/MM/YYYY');
+                    form = moment(data, formatter.toUpperCase()).toDate();
                 }
+                console.log(form);
                 return form;
             }
 
             ngModel.$parsers.push(into);
             ngModel.$formatters.push(out);
+            console.log(ngModel.$formatters);
 
 
         }

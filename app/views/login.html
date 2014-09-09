@@ -1,5 +1,5 @@
 <div class="row">
-    <div class="col-md-5 col-md-offset-4">
+    <div class="col-md-5">
         <div class="jumbotron ologin">
             <form id="signin" name="loginForm" class="form-horizontal" novalidate>
                 <fieldset>
@@ -12,12 +12,12 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <a class="btn btn-primary btn-sm" ng-click="createNew()"> New DB
+                            <a class="btn btn-warning btn-sm" ng-click="createNew()"> New DB
                             </a>
 
                         </div>
                         <div class="col-md-1">
-                            <a class="btn btn-primary btn-sm" ng-click="importPublic()"> <i
+                            <a class="btn btn-warning btn-sm" ng-click="importPublic()"> <i
                                     class="fa fa-cloud-download"></i>
                             </a>
                         </div>
@@ -45,9 +45,14 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <div class="col-md-offset-10 col-md-2">
+                        <div class="col-md-offset-2 col-md-2">
+                            <!--<i data-trigger="hover" data-placement="bottom" data-content="{{ 'login.help' | translate }}"-->
+                               <!--bs-popover-->
+                               <!--class="fa fa-question-circle"></i>-->
+                        </div>
+                        <div class="col-md-offset-6 col-md-2">
                             <button ng-click="connect()" type="submit" ng-disabled="loginForm.$invalid"
-                                    class="btn btn-sm btn-primary"
+                                    class="btn btn-sm btn-warning"
                                     rel="tooltip" data-placement="right"
                                     data-original-title="Connect to the database">
                                 Connect

@@ -1,0 +1,3 @@
+{
+    "login.help": "To Login use any database user. By default <b>reader/reader</b> can read records from the database, <b>writer/writer</b> can read, create, update and delete records. <b>admin/admin</b> is God."
+}

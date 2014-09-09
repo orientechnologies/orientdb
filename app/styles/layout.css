@@ -37,14 +37,14 @@ body {
 }
 
 .landing-page {
-    background: url("../img/orient_home_bg.jpg") no-repeat 0 0 #f6f6f6;
+    background: url("../img/colored-chameleon.png") no-repeat 0 0 #f6f6f6;
     background-size: cover;
 }
 
 .ologin {
-    margin-top: 50px;
+    margin-top: 100px;
     border-color: #c5c5c5 #c5c5c5 #c5c5c5;
-    box-shadow: 0px 0px 1px 1px #c5c5c5;
+    box-shadow: 0px 0px 1px 1px #929292;
 }
 
 body div.container-notification {
@@ -646,4 +646,8 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 .aside-list .list-group-item:last-child {
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
+}
+
+.ologin .fa-question-circle {
+    font-size: 24px;
 }

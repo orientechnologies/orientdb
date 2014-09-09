@@ -30,12 +30,13 @@ var deps = ['header.controller',
     'ngRoute',
     'ngAnimate',
     'angularSpectrumColorpicker',
+    'pascalprecht.translate',
     'ngTagsInput'];
 
 
 var App = angular.module('OrientDBStudioApp', deps);
 
-App.config(function ($routeProvider, $httpProvider) {
+App.config(function ($routeProvider, $httpProvider, $translateProvider, $translatePartialLoaderProvider) {
     $routeProvider
         .when('/', {
             templateUrl: 'views/login.html',
@@ -136,9 +137,17 @@ App.config(function ($routeProvider, $httpProvider) {
             redirectTo: '/'
         });
 
+    $translateProvider.useLoader('$translatePartialLoader', {
+        urlTemplate: 'translations/{lang}/{part}.json'
+    });
+
+    $translatePartialLoaderProvider.addPart('hint');
+
+    $translateProvider.preferredLanguage('en-US');
+
 });
 App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner) {
-    $rootScope.$on('$routeChangeSuccess', function (event, currentRoute) {
+    $rootScope.$on('$routeChangeSuccess', function (event, currentRoute, oldRoute) {
         switch (currentRoute.templateUrl) {
             case 'views/login.html':
                 $rootScope.bodyClass = 'landing-page';
@@ -147,9 +156,10 @@ App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner) {
                 $rootScope.bodyClass = 'normal-page';
                 break;
         }
-        Notification.clear();
+        if (oldRoute && currentRoute.originalPath != oldRoute.originalPath) {
+            Notification.clear();
+        }
         NProgress.done();
-
     });
     $rootScope.$on("$routeChangeStart", function (event, next, current) {
         NProgress.start();

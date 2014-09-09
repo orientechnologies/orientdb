@@ -671,7 +671,6 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             $scope.language = 'sql';
         }
         CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: $scope.language, text: $scope.queryText, limit: 20, shallow: false, verbose: false}, function (data) {
-
             if (data.result) {
                 $scope.graph.data(data.result).redraw();
             }
