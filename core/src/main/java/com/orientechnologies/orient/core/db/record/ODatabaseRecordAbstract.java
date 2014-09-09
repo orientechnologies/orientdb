@@ -1025,6 +1025,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
             // UPDATE INFORMATION: CLUSTER ID+POSITION
           }
 
+          if( operationResult.getModifiedRecordContent() != null )
+            stream = operationResult.getModifiedRecordContent();
+
           record.fill(rid, version, stream, stream == null || stream.length == 0);
 
           callbackHookSuccess(record, iCallTriggers, wasNew, stream, operationResult);

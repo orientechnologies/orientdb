@@ -215,8 +215,10 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
           g = (OrientGraphNoTx) new OrientGraphNoTx(getDatabase(), user, password) {
             @Override
             public void shutdown() {
-              if (pool != null)
+              if (pool != null) {
                 pool.returnResource(this);
+                ODatabaseRecordThreadLocal.INSTANCE.remove();
+              }
               else
                 super.shutdown();
             }
@@ -229,7 +231,6 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
       @Override
       public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final OrientBaseGraph iValue) {
         // LEAVE THE DATABASE OPEN
-        iValue.getContext(true);
         ODatabaseRecordThreadLocal.INSTANCE.set(iValue.getRawGraph());
         return true;
       }
