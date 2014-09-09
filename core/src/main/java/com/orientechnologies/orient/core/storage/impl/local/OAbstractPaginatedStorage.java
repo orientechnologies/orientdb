@@ -681,10 +681,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
               return new OStorageOperationResult<ORecordVersion>(recordVersion);
             }
 
+            boolean contentModified = false;
             if (updateContent) {
-              byte[] newContent = checkAndIncrementVersion(rid, version, ppos.recordVersion, content);
-              if (newContent != null)
+              final byte[] newContent = checkAndIncrementVersion(rid, version, ppos.recordVersion, content);
+              if (newContent != null) {
+                contentModified = true;
                 content = newContent;
+              }
             }
 
             makeStorageDirty();
@@ -705,7 +708,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
             if (callback != null)
               callback.call(rid, ppos.recordVersion);
 
-            return new OStorageOperationResult<ORecordVersion>(ppos.recordVersion);
+            if (contentModified)
+              return new OStorageOperationResult<ORecordVersion>(ppos.recordVersion, content, false);
+            else
+              return new OStorageOperationResult<ORecordVersion>(ppos.recordVersion);
 
           } finally {
             lockManager.releaseLock(recordLock);
