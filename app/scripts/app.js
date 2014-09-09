@@ -148,11 +148,13 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
         return {
             responseError: function (rejection) {
 
-                console.log(rejection);
+
                 if (rejection.status == 0) {
                     Notification.clear();
                     $rootScope.$broadcast("server:down");
-                    return $q.reject(rejection);
+
+                } else if (rejection.status == 401) {
+                    Notification.push({content: rejection.data, error: true, autoHide: true});
                 }
                 return $q.reject(rejection);
             }

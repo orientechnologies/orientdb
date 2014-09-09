@@ -230,18 +230,16 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.logLevel = '';
         if ($scope.functionToExecute['language'] != undefined && $scope.functionToExecute['name'] != undefined && $scope.functionToExecute['name'] != '') {
             if ($scope.isNewFunction == true) {
-
-                DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
-                        $scope.getListFunction();
-                        $scope.isNewFunction = false;
-                        var message = 'Function {{name}} saved successfully.';
-                        Notification.push({content: S(message).template({ name: $scope.functionToExecute['name']}).s, autoHide: true });
-                    }
-                );
+                DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute).then(function (data) {
+                    $scope.getListFunction();
+                    $scope.isNewFunction = false;
+                    var message = 'Function {{name}} saved successfully.';
+                    Notification.push({content: S(message).template({ name: $scope.functionToExecute['name']}).s, autoHide: true });
+                });
 
             }
             else {
-                DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute, function (data) {
+                DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute).then(function (data) {
                     $scope.getListFunction();
                     var message = 'Function {{name}} saved successfully.';
                     Notification.push({content: S(message).template({ name: $scope.functionToExecute['name']}).s, autoHide: true });
