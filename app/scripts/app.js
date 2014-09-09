@@ -144,6 +144,20 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
     $translatePartialLoaderProvider.addPart('hint');
 
     $translateProvider.preferredLanguage('en-US');
+    $httpProvider.interceptors.push(function ($q, Notification, $rootScope) {
+        return {
+            responseError: function (rejection) {
+
+                console.log(rejection);
+                if (rejection.status == 0) {
+                    Notification.clear();
+                    $rootScope.$broadcast("server:down");
+                    return $q.reject(rejection);
+                }
+                return $q.reject(rejection);
+            }
+        };
+    });
 
 });
 App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner) {

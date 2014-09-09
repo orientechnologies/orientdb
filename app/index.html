@@ -69,13 +69,8 @@
         </div>
     </div>
 
-    <div class="server-down-container" ng-controller="ServerStatusController">
-        <div class="server-down" ng-show="isDown">
-
-        </div>
-        <div class="alert alert-danger" ng-show="isDown" role="alert">Server may be offline. Please check your server
-            status.
-        </div>
+    <div class="server-down-container">
+        <div ng-include src="'views/status.html'"></div>
     </div>
     <div id="spinner-circle" class="circle-stop">
         <div class="circle-container">
@@ -170,7 +165,7 @@
 
 
 <!--<script type="text/javascript"-->
-        <!--src="components/bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"></script>-->
+<!--src="components/bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js"></script>-->
 <script type="text/javascript"
         src="components/fontIconPicker/jquery.fonticonpicker.min.js"></script>
 

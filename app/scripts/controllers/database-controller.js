@@ -222,7 +222,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                 $scope.nContext = $scope.items[1];
                 Notification.clear();
             } else {
-                Notification.push({content: "The command has been executed"});
+                Notification.push({content: "The command has been executed", autoHide: true});
             }
             Spinner.stopSpinner();
         }, function (data) {
@@ -230,7 +230,10 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
             $scope.headers = undefined;
             $scope.resultTotal = undefined;
             $scope.results = undefined;
-            Notification.push({content: data, error: true});
+            if (!data) {
+                data = "The command has not been executed"
+            }
+            Notification.push({content: data, error: true, autoHide: true});
         });
 
     }
