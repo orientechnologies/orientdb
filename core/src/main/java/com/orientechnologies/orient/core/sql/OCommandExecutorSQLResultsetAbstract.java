@@ -47,6 +47,8 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.*;
+
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
  * condition.
@@ -314,7 +316,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected void assignLetClauses(final ORecord<?> iRecord) {
     if (let != null && !let.isEmpty()) {
       // BIND CONTEXT VARIABLES
-      for (Entry<String, Object> entry : let.entrySet()) {
+      for (Map.Entry<String, Object> entry : let.entrySet()) {
         String varName = entry.getKey();
         if (varName.startsWith("$"))
           varName = varName.substring(1);

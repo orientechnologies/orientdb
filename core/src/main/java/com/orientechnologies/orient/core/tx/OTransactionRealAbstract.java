@@ -39,6 +39,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -393,8 +395,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       }
     }
 
-    return new ODocument().addOwner(indexDoc).setAllowChainedAccess(false)
-        .field("k", key != null ? OStringSerializerHelper.encode(key) : null).field("ops", operations, OType.EMBEDDEDLIST);
+    return new ODocument().addOwner(indexDoc).setAllowChainedAccess(false).field("k", keyContainer, OType.EMBEDDED)
+        .field("ops", operations, OType.EMBEDDEDLIST);
   }
 
   private void updateChangesIdentity(ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {

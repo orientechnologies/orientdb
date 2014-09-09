@@ -563,8 +563,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
         if (content == null)
           throw new IllegalArgumentException("Record is null");
 
-        // System.out.printf("- %s: %d -", rid, content.length);
-
         OPhysicalPosition ppos = new OPhysicalPosition(recordType);
         try {
           lock.acquireSharedLock();
@@ -584,9 +582,19 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
               if (context != null)
                 context.executeOperations(this);
               atomicOperationsManager.endAtomicOperation(false);
-            } catch (RuntimeException e) {
+            } catch (Throwable throwable) {
               atomicOperationsManager.endAtomicOperation(true);
-              throw e;
+
+              OLogManager.instance().error(this, "Error on creating record in cluster: " + cluster, throwable);
+
+              try {
+                if (ppos.clusterPosition != null && ppos.clusterPosition.compareTo(OClusterPosition.INVALID_POSITION) != 0)
+                  cluster.deleteRecord(ppos.clusterPosition);
+              } catch (IOException e) {
+                OLogManager.instance().error(this, "Error on removing record in cluster: " + cluster, e);
+              }
+
+              return null;
             }
 
             if (callback != null)
@@ -700,9 +708,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
               if (context != null)
                 context.executeOperations(this);
               atomicOperationsManager.endAtomicOperation(false);
-            } catch (RuntimeException e) {
+            } catch (Throwable e) {
               atomicOperationsManager.endAtomicOperation(true);
-              throw e;
+
+              OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
+
+              final ORecordVersion recordVersion = OVersionFactory.instance().createUntrackedVersion();
+              if (callback != null)
+                callback.call(rid, recordVersion);
+
+              return new OStorageOperationResult<ORecordVersion>(recordVersion);
             }
 
             if (callback != null)
@@ -787,8 +802,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
               cluster.deleteRecord(ppos.clusterPosition);
               atomicOperationsManager.endAtomicOperation(false);
-            } catch (RuntimeException e) {
+            } catch (Throwable e) {
               atomicOperationsManager.endAtomicOperation(true);
+              OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
+              return new OStorageOperationResult<Boolean>(false);
             }
 
             return new OStorageOperationResult<Boolean>(true);
@@ -843,8 +860,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
               cluster.hideRecord(ppos.clusterPosition);
               atomicOperationsManager.endAtomicOperation(false);
-            } catch (RuntimeException e) {
+            } catch (Throwable e) {
               atomicOperationsManager.endAtomicOperation(true);
+              OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
+
+              return new OStorageOperationResult<Boolean>(false);
             }
 
             return new OStorageOperationResult<Boolean>(true);
