@@ -16,17 +16,6 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -250,7 +239,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (iRecord == null)
       return null;
-    final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
+    final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isPersistent() ? ORecordOperation.UPDATED
         : ORecordOperation.CREATED;
     addRecord(iRecord, operation, iClusterName);
     return iRecord;
