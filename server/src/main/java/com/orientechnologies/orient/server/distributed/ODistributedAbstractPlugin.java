@@ -61,6 +61,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   protected File                                           defaultDatabaseConfigFile;
   protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
 
+  @Override
+  public PRIORITY getPriority() {
+    return PRIORITY.LAST;
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {

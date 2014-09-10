@@ -40,6 +40,8 @@ public class SuperNodeGraphSpeedTest extends SpeedTestMonoThread {
     graph = factory.getNoTx();
 
     superNode = graph.addVertex(null);
+
+    factory.close();
   }
 
   @Override

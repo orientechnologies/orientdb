@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.server.handler;
 
-import java.lang.reflect.Method;
-import java.util.List;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -12,6 +9,9 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHookConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+
+import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * User: kasper fock Date: 09/11/12 Time: 22:35 Registers hooks defined the in xml configuration.
@@ -30,6 +30,11 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
     configuredHooks = iCfg.hooks;
     if (configuredHooks != null && !configuredHooks.isEmpty())
       Orient.instance().addDbLifecycleListener(this);
+  }
+
+  @Override
+  public PRIORITY getPriority() {
+    return PRIORITY.LAST;
   }
 
   @Override

@@ -1,7 +1,12 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
@@ -14,7 +19,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public class OrientGraphFactory {
+public class OrientGraphFactory implements ODatabaseLifecycleListener {
   protected final String                   url;
   protected final String                   user;
   protected final String                   password;
@@ -46,6 +51,8 @@ public class OrientGraphFactory {
     url = iURL;
     user = iUser;
     password = iPassword;
+
+    Orient.instance().addDbLifecycleListener(this);
   }
 
   /**
@@ -56,6 +63,8 @@ public class OrientGraphFactory {
       pool.close();
       pool = null;
     }
+
+    Orient.instance().removeDbLifecycleListener(this);
   }
 
   /**
@@ -66,6 +75,11 @@ public class OrientGraphFactory {
    */
   public void drop() {
     getDatabase(false).drop();
+  }
+
+  @Override
+  public PRIORITY getPriority() {
+    return PRIORITY.FIRST;
   }
 
   /**
@@ -197,7 +211,7 @@ public class OrientGraphFactory {
    * 
    * @see #get()
    */
-  public OrientGraphFactory setTransactional(boolean transactional) {
+  public OrientGraphFactory setTransactional(final boolean transactional) {
     this.transactional = transactional;
     return this;
   }
@@ -209,6 +223,29 @@ public class OrientGraphFactory {
     if (pool != null)
       return pool.getAvailableConnections(url, user);
     return 0;
+  }
+
+  @Override
+  public void onCreate(final ODatabase iDatabase) {
+    if (iDatabase instanceof ODatabaseRecord) {
+      final ODatabaseComplex<?> db = ((ODatabaseRecord) iDatabase).getDatabaseOwner();
+      if (db instanceof ODatabaseDocumentTx)
+        OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
+    }
+  }
+
+  @Override
+  public void onOpen(final ODatabase iDatabase) {
+    if (iDatabase instanceof ODatabaseRecord) {
+      final ODatabaseComplex<?> db = ((ODatabaseRecord) iDatabase).getDatabaseOwner();
+      if (db instanceof ODatabaseDocumentTx)
+        OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
+    }
+  }
+
+  @Override
+  public void onClose(final ODatabase iDatabase) {
+
   }
 
   @Override

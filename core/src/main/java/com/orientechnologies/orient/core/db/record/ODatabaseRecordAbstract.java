@@ -329,6 +329,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         // @COMPATIBILITY 1.0RC9
         metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
+      // WAKE UP LISTENERS
+      callOnOpenListeners();
+
     } catch (OException e) {
       close();
       throw e;
@@ -424,7 +427,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     setCurrentDatabaseinThreadLocal();
 
-    underlying.callOnCloseListeners();
+    callOnCloseListeners();
 
     if (metadata != null) {
       metadata.close();
@@ -441,7 +444,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   public void close() {
     setCurrentDatabaseinThreadLocal();
 
-    underlying.callOnCloseListeners();
+    callOnCloseListeners();
 
     for (ORecordHook h : hooks.keySet())
       h.onUnregister();
@@ -1521,6 +1524,34 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy) {
     this.dataSegmentStrategy = dataSegmentStrategy;
+  }
+
+  public void callOnOpenListeners() {
+    // WAKE UP DB LIFECYCLE LISTENER
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      it.next().onOpen(getDatabaseOwner());
+
+    // WAKE UP LISTENERS
+    for (ODatabaseListener listener : underlying.getListenersCopy())
+      try {
+        listener.onOpen(getDatabaseOwner());
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
+  }
+
+  public void callOnCloseListeners() {
+    // WAKE UP DB LIFECYCLE LISTENER
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      it.next().onClose(getDatabaseOwner());
+
+    // WAKE UP LISTENERS
+    for (ODatabaseListener listener : underlying.getListenersCopy())
+      try {
+        listener.onClose(getDatabaseOwner());
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
   }
 
   protected ORecordSerializer resolveFormat(final Object iObject) {

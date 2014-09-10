@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.cache.OLevel2RecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -108,9 +107,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       storage.open(iUserName, iUserPassword, properties);
 
       status = STATUS.OPEN;
-
-      // WAKE UP LISTENERS
-      callOnOpenListeners();
 
     } catch (OStorageException e) {
       // UNREGISTER STORAGE
@@ -753,34 +749,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   @Override
   public ORecordMetadata getRecordMetadata(final ORID rid) {
     return storage.getRecordMetadata(rid);
-  }
-
-  public void callOnOpenListeners() {
-    // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-      it.next().onOpen(getDatabaseOwner());
-
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : getListenersCopy())
-      try {
-        listener.onOpen(getDatabaseOwner());
-      } catch (Throwable t) {
-        t.printStackTrace();
-      }
-  }
-
-  public void callOnCloseListeners() {
-    // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-      it.next().onClose(getDatabaseOwner());
-
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : getListenersCopy())
-      try {
-        listener.onClose(getDatabaseOwner());
-      } catch (Throwable t) {
-        t.printStackTrace();
-      }
   }
 
   public long getSize() {
