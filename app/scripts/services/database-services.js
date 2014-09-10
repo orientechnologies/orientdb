@@ -357,6 +357,18 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             }
             return clazzes;
         },
+        getClazzVertex: function () {
+            var metadata = this.getMetadata();
+            var classes = metadata['classes'];
+            var clazzes = new Array;
+            for (var entry in classes) {
+                var name = classes[entry]['name'];
+                if (this.isVertex(name)) {
+                    clazzes.push(name);
+                }
+            }
+            return clazzes;
+        },
         /**
          * Creates a new Array from a document with property name.
          *
@@ -567,7 +579,7 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
         var startTime = new Date().getTime();
         var limit = params.limit || 20;
         var verbose = params.verbose != undefined ? params.verbose : true;
-        var shallow =  ''; //disabled shallow params.shallow ? ',shallow' :
+        var shallow = ''; //disabled shallow params.shallow ? ',shallow' :
         var contentType = params.contentType || 'application/json';
         //rid,type,version,class,attribSameRow,indent:2,dateAsLong,shalow,graph
         var text = API + 'command/' + params.database + "/" + params.language + "/-/" + limit + '?format=rid,type,version' + shallow + ',class,graph';

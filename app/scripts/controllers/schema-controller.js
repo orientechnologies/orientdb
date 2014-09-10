@@ -28,7 +28,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
         $location.path("/database/" + $scope.database.getName() + "/schema/editclass/" + clazz.name);
     }
     $scope.refreshWindow = function () {
-        $window.location.reload();
+        $route.reload();
     }
     Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Schema");
 
@@ -74,11 +74,12 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
             success: function () {
                 var sql = 'DROP CLASS ' + nameClass['name'];
 
-                CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+                CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit, verbose: false }, function (data) {
 
                     var elem = $scope.listClassesTotal.indexOf(nameClass);
                     $scope.listClassesTotal.splice(elem, 1)
                     $scope.listClassesTotal.splice();
+                    Notification.push({content: "Class '" + nameClass['name'] + "' dropped."});
                 });
             }
         });
@@ -116,6 +117,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
         Spinner.start();
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
             Spinner.stopSpinner();
+            Notification.push({content: "All Indexes rebuilded."})
         }, function (err) {
             Spinner.stopSpinner();
         });
@@ -323,6 +325,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
                     var index = $scope.indexes.indexOf(nameIndex)
                     $scope.indexes.splice(index, 1);
                     $scope.indexes.splice();
+                    Notification.push({content: "Index '" + nameIndex.name + "' dropped."})
                 });
             }
         });
@@ -341,6 +344,7 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
                             // ($scope.property[entry])
                             var index = $scope.property.indexOf($scope.property[entry])
                             $scope.property.splice(index, 1)
+                            Notification.push({content: "Property '" + elementName + "' succesfully dropped."})
                         }
                     }
                 });
@@ -386,14 +390,16 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     $scope.rebuildIndex = function (indexName) {
         var sql = 'REBUILD INDEX ' + indexName;
         Spinner.start();
-        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit, verbose: false}, function (data) {
             Spinner.stopSpinner();
+            Notification.push({content: "Index '" + indexName + "' rebuilded."})
         }, function (err) {
             Spinner.stopSpinner();
+            Notification.push({content: err, error: true});
         });
     }
 }]);
-schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, Spinner) {
+schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', 'Spinner', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, Spinner, Notification) {
 
     $scope.listTypeIndex = [ 'DICTIONARY', 'FULLTEXT', 'UNIQUE', 'NOTUNIQUE', 'DICTIONARY_HASH_INDEX', 'FULLTEXT_HASH_INDEX', 'UNIQUE_HASH_INDEX', 'NOTUNIQUE_HASH_INDEX' ];
     $scope.newIndex = {"name": "", "type": "", "fields": "" }
@@ -457,10 +463,11 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
         $scope.newIndex['name'] = $scope.nameIndexToShow;
         $scope.newIndex['fields'] = proppps;
         Spinner.startSpinnerPopup();
-        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-            $scope.hide();
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit, verbose: false}, function (data) {
+            $scope.$hide();
             $scope.parentScope.addIndexFromExt($scope.newIndex);
             Spinner.stopSpinnerPopup();
+            Notification.push({content: "Index '" + $scope.newIndex['name'] + "' created."})
         }, function (error) {
             $scope.testMsgClass = 'alert alert-error';
             $scope.testMsg = error;
@@ -575,7 +582,7 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
         return true;
     }
 }]);
-schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route) {
+schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, Notification) {
 
     $scope.property = {"name": "", "alias": null, "superclass": null, "abstract": false}
     $scope.database = Database;
@@ -589,11 +596,12 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
         var supercl = $scope.property['superclass'] != null ? ' extends ' + $scope.property['superclass'] : '';
         sql = sql + supercl;
 
-        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit, verbose: false}, function (data) {
             if (alias != null) {
                 sql = 'ALTER CLASS ' + $scope.property['name'] + ' SHORTNAME ' + alias;
                 CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
-                    $scope.hide();
+                    $scope.$hide();
+                    Notification.push({content: "Class '" + $scope.property['name'] + "' correclty created."})
                     $scope.parentScope.refreshPage();
                 }, function (error) {
                     $scope.testMsg = error;
@@ -601,8 +609,10 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
                 });
             }
             else {
+                $scope.$hide();
+                Notification.push({content: "Class '" + $scope.property['name'] + "' correclty created."})
                 $scope.parentScope.refreshWindow();
-                $scope.hide();
+
             }
         }, function (error) {
             $scope.testMsgClass = 'alert alert-error'
@@ -610,17 +620,19 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
         });
     }
 }]);
-schemaModule.controller("IndexesController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', 'Spinner', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, Spinner) {
+schemaModule.controller("IndexesController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', 'Spinner', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, Spinner, Notification) {
 
     $scope.indexes = Database.getMetadata()["indexes"];
 
     $scope.rebuildIndex = function (indexName) {
         var sql = 'REBUILD INDEX ' + indexName;
         Spinner.start();
-        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit, verbose: false}, function (data) {
             Spinner.stopSpinner();
+            Notification.push({content: "Index '" + indexName + "' rebuilded."})
         }, function (err) {
             Spinner.stopSpinner();
+            Notification.push({content: err, error: true});
         });
     }
 
@@ -633,10 +645,11 @@ schemaModule.controller("IndexesController", ['$scope', '$routeParams', '$locati
             success: function () {
                 var sql = 'DROP INDEX ' + nameIndex.name;
 
-                CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit}, function (data) {
+                CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit, verbose: false}, function (data) {
                     var index = $scope.indexes.indexOf(nameIndex)
                     $scope.indexes.splice(index, 1);
                     $scope.indexes.splice();
+                    Notification.push({content: "Index '" + nameIndex.name + "' dropped."})
                 });
             }
         });

@@ -94,7 +94,6 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
                     $scope.confirmSave(data)
                 } else {
                     Notification.push({content: JSON.stringify(data)});
-
                     $location.path('#/database/' + $scope.db + '/browse/edit/' + data['@rid'].replace('#', ''));
                 }
 
@@ -140,7 +139,7 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
         $scope.reload();
     } else {
         $scope.selectClass = true;
-        $scope.listClasses = Database.listNameOfClasses();
+        $scope.listClasses = Database.getClazzVertex();
 
     }
 

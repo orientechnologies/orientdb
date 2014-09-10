@@ -153,7 +153,7 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
                     Notification.clear();
                     $rootScope.$broadcast("server:down");
 
-                } else if (rejection.status == 401) {
+                } else if (rejection.status == 401 && rejection.data != "Logged out") {
                     Notification.push({content: rejection.data, error: true, autoHide: false});
                 }
                 return $q.reject(rejection);
@@ -189,5 +189,5 @@ App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner) {
         }, function error(data) {
             $rootScope.$broadcast("server:down");
         })
-    }, 3000);
+    }, 10000);
 })

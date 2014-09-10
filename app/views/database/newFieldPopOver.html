@@ -4,12 +4,14 @@
     </h3>
 
     <div class="popover-content">
-        <form class="form-inline" name="popoverForm">
+        <form name="popoverForm">
             <div class="form-group">
+                <label>Field Name</label>
                 <input type="text" class="form-control" ng-model="name" placeholder="Field name"/>
             </div>
             <div class="form-group">
-                <select class='form-control' ng-model="type" ng-options="c for c in types">
+                <label>Field Type</label>
+                <select class='form-control' placeholder="Field Type" ng-model="type" ng-options="c for c in types">
                 </select>
             </div>
             <div class="form-actions">

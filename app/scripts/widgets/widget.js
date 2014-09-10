@@ -323,13 +323,12 @@ Widget.directive('orientdate', function (Database) {
                 if (data) {
                     form = moment(data, formatter.toUpperCase()).toDate();
                 }
-                console.log(form);
+
                 return form;
             }
 
             ngModel.$parsers.push(into);
             ngModel.$formatters.push(out);
-            console.log(ngModel.$formatters);
 
 
         }
@@ -570,6 +569,7 @@ Widget.directive('autofill', function ($timeout) {
         require: 'ngModel',
         link: function (scope, elem, attrs, ngModel) {
             var origVal = elem.val();
+            console.log(origVal);
             $timeout(function () {
                 var newVal = elem.val();
                 if (ngModel.$pristine && origVal !== newVal) {
