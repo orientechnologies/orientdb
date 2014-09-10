@@ -1377,7 +1377,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return getRawGraph().countClass(iClassName);
   }
 
-  protected void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
+  protected static void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
     final OSchema schema = iDatabase.getMetadata().getSchema();
 
     schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
@@ -1398,24 +1398,24 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     if (vertexBaseClass != null) {
       if (!vertexBaseClass.getName().equals(OrientVertexType.CLASS_NAME)) {
-        OLogManager.instance().warn(this, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
+        OLogManager.instance().warn(null, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
         warn = true;
       }
 
       if (vertexBaseClass.existsProperty(CONNECTION_OUT) || vertexBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(this, "Found property in/out against V");
+        OLogManager.instance().warn(null, "Found property in/out against V");
         warn = true;
       }
     }
 
     if (edgeBaseClass != null) {
       if (!warn && !edgeBaseClass.getName().equals(OrientEdgeType.CLASS_NAME)) {
-        OLogManager.instance().warn(this, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
+        OLogManager.instance().warn(null, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
         warn = true;
       }
 
       if (edgeBaseClass.existsProperty(CONNECTION_OUT) || edgeBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(this, "Found property in/out against E");
+        OLogManager.instance().warn(null, "Found property in/out against E");
         warn = true;
       }
     }

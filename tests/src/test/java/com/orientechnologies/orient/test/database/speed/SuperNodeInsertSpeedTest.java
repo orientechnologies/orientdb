@@ -53,6 +53,7 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
     public void init() {
       OrientGraphFactory factory = new OrientGraphFactory(URL);
       graph = factory.getNoTx();
+      factory.close();
 
       graph.getRawGraph().declareIntent(new OIntentMassiveInsert());
 

@@ -1,14 +1,19 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A factory to create instances of {@link OrientGraph}. OrientGraph is a Blueprints implementation of the graph database OrientDB
@@ -20,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
-public class OrientGraphFactory extends OrientConfigurableGraph {
+public class OrientGraphFactory extends OrientConfigurableGraph implements ODatabaseLifecycleListener {
   protected final String                                    url;
   protected final String                                    user;
   protected final String                                    password;
@@ -54,6 +59,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     url = iURL;
     user = iUser;
     password = iPassword;
+    Orient.instance().addDbLifecycleListener(this);
   }
 
   public boolean isLeaveGraphsOpen() {
@@ -70,6 +76,12 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   public void close() {
     closePool();
     pool = null;
+    Orient.instance().removeDbLifecycleListener(this);
+  }
+
+  @Override
+  public PRIORITY getPriority() {
+    return PRIORITY.FIRST;
   }
 
   /**
@@ -218,8 +230,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
               if (pool != null) {
                 pool.returnResource(this);
                 ODatabaseRecordThreadLocal.INSTANCE.remove();
-              }
-              else
+              } else
                 super.shutdown();
             }
           }.configure(settings);
@@ -275,6 +286,30 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     intent = iIntent;
   }
 
+  @Override
+  public void onCreate(final ODatabase iDatabase) {
+    if (iDatabase instanceof ODatabaseRecord) {
+      final ODatabaseComplex<?> db = ((ODatabaseRecord) iDatabase).getDatabaseOwner();
+
+      if (db instanceof ODatabaseDocumentTx)
+        OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
+    }
+  }
+
+  @Override
+  public void onOpen(final ODatabase iDatabase) {
+    if (iDatabase instanceof ODatabaseRecord) {
+      final ODatabaseComplex<?> db = ((ODatabaseRecord) iDatabase).getDatabaseOwner();
+      if (db instanceof ODatabaseDocumentTx)
+        OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
+    }
+  }
+
+  @Override
+  public void onClose(final ODatabase iDatabase) {
+
+  }
+
   protected void closePool() {
     if (pool != null) {
       final OResourcePool<String, OrientBaseGraph> closingPool = pool;
@@ -320,5 +355,4 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
     close();
     super.finalize();
   }
-
 }

@@ -33,6 +33,11 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
   }
 
   @Override
+  public PRIORITY getPriority() {
+    return PRIORITY.LAST;
+  }
+
+  @Override
   public void onCreate(final ODatabase iDatabase) {
     onOpen(iDatabase);
   }

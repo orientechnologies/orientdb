@@ -29,6 +29,7 @@ public class BackupTest {
       Object entry = enumeration.nextElement();
       System.out.format("  Entry : %s%n", entry);
     }
+    factory.close();
 
   }
 }

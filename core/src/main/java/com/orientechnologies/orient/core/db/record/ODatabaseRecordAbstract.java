@@ -142,7 +142,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
       if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
         // TODO: I need a better message!
-        throw new ODatabaseException("Persistet record serializer version is not support by the current implementation");
+        throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
 
       componentsFactory = getStorage().getComponentsFactory();
 
@@ -208,7 +208,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
       // WAKE UP LISTENERS
-      underlying.callOnOpenListeners();
+      callOnOpenListeners();
 
     } catch (OException e) {
       close();
@@ -1025,7 +1025,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
             // UPDATE INFORMATION: CLUSTER ID+POSITION
           }
 
-          if( operationResult.getModifiedRecordContent() != null )
+          if (operationResult.getModifiedRecordContent() != null)
             stream = operationResult.getModifiedRecordContent();
 
           record.fill(rid, version, stream, stream == null || stream.length == 0);
@@ -1056,7 +1056,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     }
     return (RET) record;
   }
-
 
   public void executeDeleteRecord(OIdentifiable record, final ORecordVersion iVersion, final boolean iRequired,
       boolean iCallTriggers, final OPERATION_MODE iMode, boolean prohibitTombstones) {
@@ -1375,6 +1374,34 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   public <DB extends ODatabaseRecord> DB setValidationEnabled(final boolean iEnabled) {
     validation = iEnabled;
     return (DB) this;
+  }
+
+  public void callOnOpenListeners() {
+    // WAKE UP DB LIFECYCLE LISTENER
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      it.next().onOpen(getDatabaseOwner());
+
+    // WAKE UP LISTENERS
+    for (ODatabaseListener listener : underlying.getListenersCopy())
+      try {
+        listener.onOpen(getDatabaseOwner());
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
+  }
+
+  public void callOnCloseListeners() {
+    // WAKE UP DB LIFECYCLE LISTENER
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+      it.next().onClose(getDatabaseOwner());
+
+    // WAKE UP LISTENERS
+    for (ODatabaseListener listener : underlying.getListenersCopy())
+      try {
+        listener.onClose(getDatabaseOwner());
+      } catch (Throwable t) {
+        t.printStackTrace();
+      }
   }
 
   // Never used so can be deprecate.
