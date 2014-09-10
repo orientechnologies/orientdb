@@ -554,10 +554,18 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
       throw new UnsupportedOperationException("getName");
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Object transform(Object obj) {
-      final OCompositeKey compositeKey = (OCompositeKey) obj;
-      List<Object> keys = compositeKey.getKeys();
+      List<Object> keys = null;
+      if (obj instanceof OCompositeKey) {
+        final OCompositeKey compositeKey = (OCompositeKey) obj;
+        keys = compositeKey.getKeys();
+      } else if (obj instanceof List) {
+        keys = (List<Object>) obj;
+      } else {
+        throw new OIndexException("Impossible add as key of a CompositeIndex a value of type " + obj.getClass());
+      }
 
       OCompositeKey transformedKey = new OCompositeKey();
 
