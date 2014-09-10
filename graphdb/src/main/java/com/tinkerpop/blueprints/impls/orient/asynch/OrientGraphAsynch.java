@@ -937,9 +937,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     if (outStats == null)
       return;
 
-    outStats.printf("\n-----------------------");
+    outStats.printf("\n---------------------------------");
     outStats.printf("\nOrientGraphAsynch stats");
-    outStats.printf("\n-----------------------");
+    outStats.printf("\n---------------------------------");
 
     outStats.printf("\npool instances used.: %d", factory.getAvailableInstancesInPool());
     outStats.printf("\nverticesCreated.....: %d", verticesCreated.get());

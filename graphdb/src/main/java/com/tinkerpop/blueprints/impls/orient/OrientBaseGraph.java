@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.tinkerpop.blueprints.Edge;
@@ -529,11 +530,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (!rid.isValid())
       return null;
 
-    final ODocument doc = rid.getRecord();
-    if (doc == null)
+    ORecord<?> rec  = rid.getRecord();
+    if (rec == null || !( rec instanceof ODocument) )
       return null;
 
-    return new OrientVertex(this, doc);
+    return new OrientVertex(this, rec);
   }
 
   @Override

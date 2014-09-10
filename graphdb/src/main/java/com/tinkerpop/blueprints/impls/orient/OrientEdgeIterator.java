@@ -66,7 +66,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
       // EDGE
       edge = new OrientEdge(this.sourceVertex.graph, rec.getIdentity());
     } else
-      throw new IllegalStateException("Invalid content found between connections:" + value);
+      throw new IllegalStateException("Invalid content found while iterating edges, value '" + value + "' is not an edge");
 
     if (this.sourceVertex.settings.useVertexFieldsForEdgeLabels || edge.isLabeled(labels))
       return edge;

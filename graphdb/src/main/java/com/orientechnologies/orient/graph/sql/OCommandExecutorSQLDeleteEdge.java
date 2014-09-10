@@ -37,6 +37,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -169,20 +170,27 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
                 if (fromIds != null && toIds != null) {
                   // REMOVE ALL THE EDGES BETWEEN VERTICES
-                  for (OIdentifiable fromId : fromIds)
-                    for (Edge e : graph.getVertex(fromId).getEdges(Direction.OUT))
-                      if (toIds.contains(((OrientEdge) e).getInVertex().getIdentity()))
-                        edges.add((OrientEdge) e);
+                  for (OIdentifiable fromId : fromIds) {
+                    final OrientVertex v = graph.getVertex(fromId);
+                    if (v != null)
+                      for (Edge e : v.getEdges(Direction.OUT))
+                        if (toIds.contains(((OrientEdge) e).getInVertex().getIdentity()))
+                          edges.add((OrientEdge) e);
+                  }
                 } else if (fromIds != null)
                   // REMOVE ALL THE EDGES THAT START FROM A VERTEXES
                   for (OIdentifiable fromId : fromIds)
                     edges.add((OrientEdge) graph.getVertex(fromId).getEdges(Direction.OUT));
-                else if (toIds != null)
+                else if (toIds != null) {
                   // REMOVE ALL THE EDGES THAT ARRIVE TO A VERTEXES
-                  for (OIdentifiable toId : toIds)
-                    edges.add((OrientEdge) graph.getVertex(toId).getEdges(Direction.IN));
-                else
-                  throw new OCommandExecutionException("Invalid target");
+                  for (OIdentifiable toId : toIds) {
+                    final OrientVertex v = graph.getVertex(toId);
+                    if (v != null) {
+                      edges.add((OrientEdge) v.getEdges(Direction.IN));
+                    }
+                  }
+                } else
+                  throw new OCommandExecutionException("Invalid target: " + toIds);
 
                 if (compiledFilter != null) {
                   // ADDITIONAL FILTERING
