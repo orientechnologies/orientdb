@@ -1,14 +1,18 @@
 <div class="alerts panelAlerts">
-    <div class="alert alert-info alert-item" tabindex="-1" ng-repeat="alert in alerts">
-        <button type="button" class="close" ng-click="clear()">×</button>
+    <div class="container-alerts">
+        <div class="alert alert-info alert-item" ng-mouseover="onAlertHover()" ng-mouseout="onAlertOut()" tabindex="-1"
+             ng-repeat="alert in alerts">
+            <button type="button" class="close" ng-click="clear()">×</button>
         <span>
             {{alert.content}}
         </span>
-    </div>
-    <div class="alert alert-error alert-item" tabindex="-1" ng-repeat="a in errors">
-        <button type="button" class="close" ng-click="clear()">×</button>
+        </div>
+        <div class="alert alert-error alert-item" ng-mouseover="onAlertHover()" ng-mouseout="onAlertOut()" tabindex="-1"
+             ng-repeat="a in errors">
+            <button type="button" class="close" ng-click="clear()">×</button>
         <span>
             {{a.content}}
         </span>
+        </div>
     </div>
 </div>

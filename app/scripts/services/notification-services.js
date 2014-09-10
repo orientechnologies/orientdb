@@ -1,8 +1,9 @@
 var notification = angular.module('notification.services', []);
 
-notification.factory('Notification', function ($timeout) {
+notification.factory('Notification', function ($timeout, $rootScope) {
 
-    return {
+
+    var notiService = {
         notifications: new Array,
         errors: new Array,
 
@@ -16,10 +17,18 @@ notification.factory('Notification', function ($timeout) {
                 this.notifications.push(notification);
             }
             var self = this;
-            if (notification.autoHide) {
-                $timeout(function () {
-                    self.clear();
-                }, 3000)
+            self.startTimer();
+        },
+        startTimer: function () {
+            var self = this;
+            self.timePromise = $timeout(function () {
+                self.clear();
+            }, 3000)
+        },
+        stopTimer: function () {
+            var self = this;
+            if (self.timePromise) {
+                $timeout.cancel(self.timePromise);
             }
         },
         clear: function () {
@@ -28,4 +37,12 @@ notification.factory('Notification', function ($timeout) {
         }
 
     }
+
+    $rootScope.$on('alert:hover', function () {
+        notiService.stopTimer();
+    })
+    $rootScope.$on('alert:out', function () {
+        notiService.startTimer();
+    })
+    return notiService;
 });

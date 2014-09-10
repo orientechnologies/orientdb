@@ -86,15 +86,7 @@
     <div class="circle-interrupt-stop">
 
     </div>
-    <div class="container-fluid container-notification">
-        <div class="row">
-            <div class="col-md-8 col-md-offset-2">
-                <div ng-controller="NotificationController">
-                    <div ng-include src="'views/notification.html'"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+
     <!-- Add your site or application content here -->
 
     <div class="container-fluid container-studio" ng-controller="AsideManagerController">
@@ -103,6 +95,15 @@
         </div>
         <div ng-class="containerClass">
             <div class="container-fluid slideLeft" ng-view>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid container-notification">
+        <div class="row">
+            <div class="col-md-12">
+                <div ng-controller="NotificationController">
+                    <div ng-include src="'views/notification.html'"></div>
+                </div>
             </div>
         </div>
     </div>

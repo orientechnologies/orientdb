@@ -488,8 +488,20 @@ ul.horizontallist, ol.horizontallist {
 
 .panelAlerts {
     margin-top: 5px;
+    position: fixed;
+    bottom: 0;
+    margin: 0 auto;
+    width: 100%;
+    z-index: 9999;
 }
-
+.container-alerts {
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    width: 80%;
+    text-align: center;
+    z-index: 9999;
+}
 .queryHelp {
     list-style: none;
     margin: 0;
@@ -922,7 +934,7 @@ span.badge-edge {
 }
 
 .panelAlerts .alert {
-    padding: px 10px;
+    padding:  10px;
 
 }
 
