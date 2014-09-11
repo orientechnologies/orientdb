@@ -26,7 +26,7 @@ import java.io.IOException;
 public interface OCluster {
 
   public static enum ATTRIBUTES {
-    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION
+    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY
   }
 
   public void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;

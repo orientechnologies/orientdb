@@ -574,6 +574,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
     case MINIMUMCLUSTERS:
       return storage.getConfiguration().getMinimumClusters();
+
+    case CONFLICTSTRATEGY:
+      return storage.getConfiguration().getConflictStrategy();
     }
 
     return null;
@@ -669,6 +672,10 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
 
       storage.getConfiguration().update();
       break;
+
+    case CONFLICTSTRATEGY:
+      storage.getConfiguration().setConflictStrategy(stringValue);
+      storage.getConfiguration().update();
 
     default:
       throw new IllegalArgumentException("Option '" + iAttribute + "' not supported on alter database");

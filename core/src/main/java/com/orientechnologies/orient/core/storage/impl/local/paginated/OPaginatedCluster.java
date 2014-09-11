@@ -272,6 +272,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
                 + "' because it is not empty");
           setCompressionInternal(stringValue);
           break;
+        case CONFLICTSTRATEGY:
+          setRecordConflictStrategy(stringValue);
+          break;
         default:
           throw new IllegalArgumentException("Runtime change of attribute '" + attribute + " is not supported");
         }
@@ -1141,6 +1144,12 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   public ORecordConflictStrategy getRecordConflictStrategy() {
     return recordConflictStrategy;
+  }
+
+  private void setRecordConflictStrategy(final String stringValue) {
+    recordConflictStrategy = Orient.instance().getRecordConflictStrategy().getStrategy(stringValue);
+    config.conflictStrategy = stringValue;
+    storageLocal.getConfiguration().update();
   }
 
   @Override
