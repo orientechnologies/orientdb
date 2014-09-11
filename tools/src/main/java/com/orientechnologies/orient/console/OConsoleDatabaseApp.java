@@ -1057,6 +1057,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\n--------------------------------+----------------------------------------------------+");
       message("\n %-30s | %-50s |", "Name", format(dbCfg.name, 50));
       message("\n %-30s | %-50s |", "Version", format("" + dbCfg.version, 50));
+      message("\n %-30s | %-50s |", "Conflict Strategy", format(dbCfg.getConflictStrategy(), 50));
       message("\n %-30s | %-50s |", "Date format", format(dbCfg.dateFormat, 50));
       message("\n %-30s | %-50s |", "Datetime format", format(dbCfg.dateTimeFormat, 50));
       message("\n %-30s | %-50s |", "Timezone", format(dbCfg.getTimeZone().getID(), 50));
@@ -1215,9 +1216,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void listClusters() {
     if (currentDatabaseName != null) {
       message("\n\nCLUSTERS");
-      message("\n----------------------------------------------+-------+-----------------+");
-      message("\n NAME                                         |   ID  | RECORDS         |");
-      message("\n----------------------------------------------+-------+-----------------+");
+      message("\n----------------------------------------------+-------+-------------------+----------------+");
+      message("\n NAME                                         | ID    | CONFLICT STRATEGY | RECORDS        |");
+      message("\n----------------------------------------------+-------+-------------------+----------------+");
 
       int clusterId;
       String clusterType;
@@ -1231,19 +1232,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         try {
           clusterId = currentDatabase.getClusterIdByName(clusterName);
           final OCluster cluster = currentDatabase.getStorage().getClusterById(clusterId);
+          
+          final String conflictStrategy = cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy().getName() : "";
 
           count = currentDatabase.countClusterElements(clusterName);
           totalElements += count;
 
-          message("\n %-45s| %5d | %15d |", format(clusterName, 45), clusterId, count);
+          message("\n %-45s| %5d | %-17s |%15d |", format(clusterName, 45), clusterId, format(conflictStrategy, 15), count);
         } catch (Exception e) {
           if (e instanceof OIOException)
             break;
         }
       }
-      message("\n----------------------------------------------+-------+-----------------+");
-      message("\n TOTAL = %-3d                                         | %15s |", clusters.size(), totalElements);
-      message("\n------------------------------------------------------+-----------------+");
+      message("\n----------------------------------------------+-------+-------------------+----------------+");
+      message("\n TOTAL = %-3d                                                              |%15d |", clusters.size(),
+          totalElements);
+      message("\n------------------------------------------------------+-------------------+----------------+");
     } else
       message("\nNo database selected yet.");
   }
