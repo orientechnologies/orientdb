@@ -1,9 +1,22 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.configuration.Configuration;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
@@ -37,17 +50,6 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
-import org.apache.commons.configuration.Configuration;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -234,6 +236,50 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     }
   }
 
+  protected static void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
+    final OSchema schema = iDatabase.getMetadata().getSchema();
+
+    schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+
+    final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
+    final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
+
+    if (vertexBaseClass == null)
+      // CREATE THE META MODEL USING THE ORIENT SCHEMA
+      schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
+
+    if (edgeBaseClass == null)
+      schema.createClass(OrientEdgeType.CLASS_NAME);
+
+    // @COMPATIBILITY < 1.4.0:
+    boolean warn = false;
+    final String MSG_SUFFIX = ". Probably you are using a database created with a previous version of OrientDB. Export in graphml format and reimport it";
+
+    if (vertexBaseClass != null) {
+      if (!vertexBaseClass.getName().equals(OrientVertexType.CLASS_NAME)) {
+        OLogManager.instance().warn(null, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
+        warn = true;
+      }
+
+      if (vertexBaseClass.existsProperty(CONNECTION_OUT) || vertexBaseClass.existsProperty(CONNECTION_IN)) {
+        OLogManager.instance().warn(null, "Found property in/out against V");
+        warn = true;
+      }
+    }
+
+    if (edgeBaseClass != null) {
+      if (!warn && !edgeBaseClass.getName().equals(OrientEdgeType.CLASS_NAME)) {
+        OLogManager.instance().warn(null, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
+        warn = true;
+      }
+
+      if (edgeBaseClass.existsProperty(CONNECTION_OUT) || edgeBaseClass.existsProperty(CONNECTION_IN)) {
+        OLogManager.instance().warn(null, "Found property in/out against E");
+        warn = true;
+      }
+    }
+  }
+
   /**
    * (Blueprints Extension) Configure the Graph instance.
    * 
@@ -356,8 +402,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return database.getStorage().getConflictStrategy();
   }
 
+  public OrientBaseGraph setConflictStrategy(final String iStrategyName) {
+    database.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+    return this;
+  }
+
   public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    database.getStorage().setConflictStrategy( iResolver );
+    database.setConflictStrategy(iResolver);
     return this;
   }
 
@@ -540,8 +591,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (!rid.isValid())
       return null;
 
-    ORecord<?> rec  = rid.getRecord();
-    if (rec == null || !( rec instanceof ODocument) )
+    ORecord<?> rec = rid.getRecord();
+    if (rec == null || !(rec instanceof ODocument))
       return null;
 
     return new OrientVertex(this, rec);
@@ -1385,50 +1436,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       throw new UnsupportedOperationException("Graph set to use Lightweight Edges, count against edges is not supported");
 
     return getRawGraph().countClass(iClassName);
-  }
-
-  protected static void checkForGraphSchema(final ODatabaseDocumentTx iDatabase) {
-    final OSchema schema = iDatabase.getMetadata().getSchema();
-
-    schema.getOrCreateClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
-
-    final OClass vertexBaseClass = schema.getClass(OrientVertexType.CLASS_NAME);
-    final OClass edgeBaseClass = schema.getClass(OrientEdgeType.CLASS_NAME);
-
-    if (vertexBaseClass == null)
-      // CREATE THE META MODEL USING THE ORIENT SCHEMA
-      schema.createClass(OrientVertexType.CLASS_NAME).setOverSize(2);
-
-    if (edgeBaseClass == null)
-      schema.createClass(OrientEdgeType.CLASS_NAME);
-
-    // @COMPATIBILITY < 1.4.0:
-    boolean warn = false;
-    final String MSG_SUFFIX = ". Probably you are using a database created with a previous version of OrientDB. Export in graphml format and reimport it";
-
-    if (vertexBaseClass != null) {
-      if (!vertexBaseClass.getName().equals(OrientVertexType.CLASS_NAME)) {
-        OLogManager.instance().warn(null, "Found Vertex class %s" + MSG_SUFFIX, vertexBaseClass.getName());
-        warn = true;
-      }
-
-      if (vertexBaseClass.existsProperty(CONNECTION_OUT) || vertexBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(null, "Found property in/out against V");
-        warn = true;
-      }
-    }
-
-    if (edgeBaseClass != null) {
-      if (!warn && !edgeBaseClass.getName().equals(OrientEdgeType.CLASS_NAME)) {
-        OLogManager.instance().warn(null, "Found Edge class %s" + MSG_SUFFIX, edgeBaseClass.getName());
-        warn = true;
-      }
-
-      if (edgeBaseClass.existsProperty(CONNECTION_OUT) || edgeBaseClass.existsProperty(CONNECTION_IN)) {
-        OLogManager.instance().warn(null, "Found property in/out against E");
-        warn = true;
-      }
-    }
   }
 
   protected void autoStartTransaction() {

@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -437,4 +438,9 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
     return this;
   }
 
+  @Override
+  public ODatabaseRecordWrapperAbstract<DB> setConflictStrategy(final String iStrategyName) {
+    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+    return this;
+  }
 }

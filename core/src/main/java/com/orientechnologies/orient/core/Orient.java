@@ -23,6 +23,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
@@ -65,6 +66,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected final AtomicInteger                                                        serialId               = new AtomicInteger();
   private final ReadWriteLock                                                          engineLock             = new ReentrantReadWriteLock();
   protected ORecordFactoryManager                                                      recordFactoryManager   = new ORecordFactoryManager();
+  protected ORecordConflictStrategyFactory                                             recordConflictStrategy = new ORecordConflictStrategyFactory();
   protected OrientShutdownHook                                                         shutdownHook;
   protected OMemoryWatchDog                                                            memoryWatchDog;
   protected OProfilerMBean                                                             profiler               = new OProfiler();
@@ -99,7 +101,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Tells if to register database by path. Default is false. Setting to true allows to have multiple databases in different path
    * with the same name.
-   * 
+   *
    * @see #setRegisterDatabaseByPath(boolean)
    * @return
    */
@@ -110,11 +112,15 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Register database by path. Default is false. Setting to true allows to have multiple databases in different path with the same
    * name.
-   * 
+   *
    * @param iValue
    */
   public static void setRegisterDatabaseByPath(final boolean iValue) {
     registerDatabaseByPath = iValue;
+  }
+
+  public ORecordConflictStrategyFactory getRecordConflictStrategy() {
+    return recordConflictStrategy;
   }
 
   public Orient startup() {

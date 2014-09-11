@@ -20,28 +20,27 @@
 
 package com.orientechnologies.orient.core.conflict;
 
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
- * Auto merges new record with the existent. Collections are also merged, item by item.
+ * Default strategy that checks the record version number: if the current update has a version different than stored one, then a
+ * OConcurrentModificationException is thrown.
  * 
  * @author Luca Garulli
  */
-public class OAutoMergeRecordConflictStrategy implements ORecordConflictStrategy {
-  public static final String NAME = "automerge";
+public class OVersionRecordConflictStrategy implements ORecordConflictStrategy {
+  public static final String NAME = "version";
 
   @Override
   public byte[] onUpdate(final ORecordId rid, final ORecordVersion iRecordVersion, final byte[] iRecordContent,
       final ORecordVersion iDatabaseVersion) {
-    final ODocument storedRecord = rid.getRecord();
-    final ODocument newRecord = new ODocument().fromStream(iRecordContent);
-
-    storedRecord.merge(newRecord, false, true);
-
-    iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()));
-
-    return storedRecord.toStream();
+    if (OFastConcurrentModificationException.enabled())
+      throw OFastConcurrentModificationException.instance();
+    else
+      throw new OConcurrentModificationException(rid, iDatabaseVersion, iRecordVersion, ORecordOperation.UPDATED);
   }
 }

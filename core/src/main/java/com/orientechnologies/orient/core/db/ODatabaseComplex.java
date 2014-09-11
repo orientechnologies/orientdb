@@ -457,10 +457,21 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   public ORecordConflictStrategy getConflictStrategy();
 
   /**
-   * Overrides record conflict strategy.
-   * 
-   * @param iResolver ORecordConflictStrategy implementation
+   * Overrides record conflict strategy selecting the strategy by name.
+   *
+   * @param iStrategyName
+   *          ORecordConflictStrategy strategy name
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <DB extends ODatabaseComplex<?>> DB setConflictStrategy(final ORecordConflictStrategy iResolver);
+  public <DB extends ODatabaseComplex<?>> DB setConflictStrategy(String iStrategyName);
+
+  /**
+   * Overrides record conflict strategy.
+   * 
+   * @param iResolver
+   *          ORecordConflictStrategy implementation
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabaseComplex<?>> DB setConflictStrategy(ORecordConflictStrategy iResolver);
+
 }

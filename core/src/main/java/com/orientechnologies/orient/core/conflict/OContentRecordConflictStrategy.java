@@ -24,20 +24,34 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
- * Default strategy: check only for record versions. If are not equals, a OConcurrentModificationException is thrown.
+ * Record conflict strategy that check the records content: if content is the same, se the higher version number.
  * 
  * @author Luca Garulli
  */
-public class ODefaultRecordConflictStrategy implements ORecordConflictStrategy {
+public class OContentRecordConflictStrategy implements ORecordConflictStrategy {
+  public static final String NAME = "content";
+
   @Override
   public byte[] onUpdate(final ORecordId rid, final ORecordVersion iRecordVersion, final byte[] iRecordContent,
       final ORecordVersion iDatabaseVersion) {
-    if (OFastConcurrentModificationException.enabled())
-      throw OFastConcurrentModificationException.instance();
-    else
-      throw new OConcurrentModificationException(rid, iDatabaseVersion, iRecordVersion, ORecordOperation.UPDATED);
+    final ODocument storedRecord = rid.getRecord();
+    final ODocument newRecord = new ODocument().fromStream(iRecordContent);
+
+    if (storedRecord.hasSameContentOf(newRecord)) {
+      // SAME CONTENT: USE HIGHER VERSION NUMBER
+      iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()));
+    } else {
+      // EXCEPTION
+      if (OFastConcurrentModificationException.enabled())
+        throw OFastConcurrentModificationException.instance();
+      else
+        throw new OConcurrentModificationException(rid, iDatabaseVersion, iRecordVersion, ORecordOperation.UPDATED);
+    }
+
+    return null;
   }
 }

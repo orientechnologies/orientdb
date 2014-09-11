@@ -249,4 +249,5 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
 
   public OrientExtendedGraph setConflictStrategy(ORecordConflictStrategy iResolver);
 
+  public OrientExtendedGraph setConflictStrategy(String iStrategyName);
 }

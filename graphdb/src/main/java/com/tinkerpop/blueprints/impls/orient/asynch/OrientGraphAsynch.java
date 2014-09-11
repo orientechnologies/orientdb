@@ -88,7 +88,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   private AtomicLong                                    verticesRemoved      = new AtomicLong();
   private AtomicLong                                    verticesReloaded     = new AtomicLong();
   private PrintStream                                   outStats             = null;
-  private ORecordConflictStrategy                       conflictResolver     = null;
+  private ORecordConflictStrategy                       conflictStrategy     = null;
 
   protected enum MERGE_RESULT {
     MERGED, RETRY, ERROR
@@ -770,10 +770,10 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   public OrientBaseGraph acquire() {
     final OrientBaseGraph g = factory.get();
 
-    if (conflictResolver != null) {
+    if (conflictStrategy != null) {
       final OStorage stg = g.getRawGraph().getStorage().getUnderlying();
       if (stg instanceof OStorageEmbedded)
-        stg.setConflictStrategy(conflictResolver);
+        stg.setConflictStrategy(conflictStrategy);
     }
 
     return g;
@@ -870,11 +870,16 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   }
 
   public ORecordConflictStrategy getConflictStrategy() {
-    return conflictResolver;
+    return conflictStrategy;
+  }
+
+  public OrientGraphAsynch setConflictStrategy(final String iStrategyName) {
+    conflictStrategy = Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName);
+    return this;
   }
 
   public OrientGraphAsynch setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    conflictResolver = iResolver;
+    conflictStrategy = iResolver;
     return this;
   }
 

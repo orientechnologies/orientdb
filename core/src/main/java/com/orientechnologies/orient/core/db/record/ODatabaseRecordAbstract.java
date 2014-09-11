@@ -1521,4 +1521,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     getStorage().setConflictStrategy( iResolver );
     return this;
   }
+
+  public ODatabaseRecordAbstract setConflictStrategy(final String iStrategyName) {
+    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+    return this;
+  }
 }

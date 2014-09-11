@@ -17,6 +17,7 @@ package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -695,13 +696,19 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
+  public OObjectDatabaseTx setConflictStrategy(final String iStrategyName) {
+    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+    return this;
+  }
+
+  @Override
   public OObjectDatabaseTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
     underlying.setConflictStrategy(iResolver);
     return this;
   }
 
   @Override
-  public ODocument getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
+  public ODocument getRecordByUserObject(final Object iPojo, final boolean iCreateIfNotAvailable) {
     if (iPojo instanceof Proxy)
       return OObjectEntitySerializer.getDocument((Proxy) iPojo);
     return OObjectEntitySerializer.getDocument((Proxy) OObjectEntitySerializer.serializeObject(iPojo, this));
