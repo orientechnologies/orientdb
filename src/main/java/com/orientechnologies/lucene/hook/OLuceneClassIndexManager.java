@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-
 public class OLuceneClassIndexManager extends ODocumentHookAbstract implements ODatabaseLifecycleListener {
 
   @Override
@@ -539,6 +538,11 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract implements O
       }
     }
     return iRecord;
+  }
+
+  @Override
+  public PRIORITY getPriority() {
+    return null;
   }
 
   @Override
