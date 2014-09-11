@@ -15,12 +15,13 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
 
 public interface OCluster {
 
@@ -153,4 +154,6 @@ public interface OCluster {
    * @return false if record does not exist.
    */
   public boolean hideRecord(OClusterPosition position) throws IOException;
+
+  public ORecordConflictStrategy getRecordConflictStrategy();
 }

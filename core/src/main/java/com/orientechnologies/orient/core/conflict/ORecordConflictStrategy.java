@@ -29,5 +29,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * @author Luca Garulli
  */
 public interface ORecordConflictStrategy {
-  byte[] onUpdate(ORecordId rid, ORecordVersion iRecordVersion, byte[] iRecordContent, ORecordVersion iDatabaseVersion);
+  byte[] onUpdate(byte iRecordType, ORecordId rid, ORecordVersion iRecordVersion, byte[] iRecordContent, ORecordVersion iDatabaseVersion);
+
+  String getName();
 }

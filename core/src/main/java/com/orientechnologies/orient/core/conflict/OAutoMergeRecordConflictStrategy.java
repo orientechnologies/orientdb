@@ -29,19 +29,31 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * 
  * @author Luca Garulli
  */
-public class OAutoMergeRecordConflictStrategy implements ORecordConflictStrategy {
+public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStrategy {
   public static final String NAME = "automerge";
 
   @Override
-  public byte[] onUpdate(final ORecordId rid, final ORecordVersion iRecordVersion, final byte[] iRecordContent,
+  public byte[] onUpdate(byte iRecordType, final ORecordId rid, final ORecordVersion iRecordVersion, final byte[] iRecordContent,
       final ORecordVersion iDatabaseVersion) {
-    final ODocument storedRecord = rid.getRecord();
-    final ODocument newRecord = new ODocument().fromStream(iRecordContent);
 
-    storedRecord.merge(newRecord, false, true);
+    if (iRecordType == ODocument.RECORD_TYPE) {
+      final ODocument storedRecord = rid.getRecord();
+      final ODocument newRecord = new ODocument().fromStream(iRecordContent);
 
-    iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()));
+      storedRecord.merge(newRecord, false, true);
 
-    return storedRecord.toStream();
+      iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()));
+
+      return storedRecord.toStream();
+    } else
+      // NO DOCUMENT, CANNOT MERGE SO RELY TO THE VERSION CHECK
+      checkVersions(rid, iRecordVersion, iDatabaseVersion);
+
+    return null;
+  }
+
+  @Override
+  public String getName() {
+    return NAME;
   }
 }

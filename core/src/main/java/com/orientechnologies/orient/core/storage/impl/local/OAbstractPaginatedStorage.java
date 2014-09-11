@@ -16,6 +16,23 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -24,6 +41,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
@@ -66,23 +84,6 @@ import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
 
 /**
  * @author Andrey Lomakin
@@ -691,7 +692,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
             boolean contentModified = false;
             if (updateContent) {
-              final byte[] newContent = checkAndIncrementVersion(rid, version, ppos.recordVersion, content);
+              final byte[] newContent = checkAndIncrementVersion(cluster, rid, version, ppos.recordVersion, content, recordType);
               if (newContent != null) {
                 contentModified = true;
                 content = newContent;
@@ -1456,19 +1457,21 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     final String storageCompression = getConfiguration().getContextConfiguration().getValueAsString(
         OGlobalConfiguration.STORAGE_COMPRESSION_METHOD);
 
+    final String stgConflictStrategy = getConflictStrategy().getName();
+
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
-        OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression));
+        OMetadataDefault.CLUSTER_INTERNAL_NAME, null, true, 20, 4, storageCompression, stgConflictStrategy));
 
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
         OMetadataDefault.CLUSTER_INDEX_NAME, null, false, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
+        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression, stgConflictStrategy));
 
     createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
-        OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, false, 1, 1, storageCompression));
+        OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, false, 1, 1, storageCompression, stgConflictStrategy));
 
     defaultClusterId = createClusterFromConfig(new OStoragePaginatedClusterConfiguration(configuration, clusters.size(),
         CLUSTER_DEFAULT_NAME, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression));
+        OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, storageCompression, stgConflictStrategy));
   }
 
   private int createClusterFromConfig(final OStorageClusterConfiguration config) throws IOException {
@@ -1626,8 +1629,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     }
   }
 
-  private byte[] checkAndIncrementVersion(final ORecordId rid, final ORecordVersion version, final ORecordVersion iDatabaseVersion,
-      final byte[] iRecordContent) {
+  private byte[] checkAndIncrementVersion(final OCluster iCluster, final ORecordId rid, final ORecordVersion version,
+      final ORecordVersion iDatabaseVersion, final byte[] iRecordContent, final byte iRecordType) {
     // VERSION CONTROL CHECK
     switch (version.getCounter()) {
     // DOCUMENT UPDATE, NO VERSION CONTROL
@@ -1643,8 +1646,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     default:
       // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
       // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-      if (!version.equals(iDatabaseVersion))
-        return conflictResolver.onUpdate(rid, version, iRecordContent, iDatabaseVersion);
+      if (!version.equals(iDatabaseVersion)) {
+        final ORecordConflictStrategy strategy = iCluster.getRecordConflictStrategy() != null ? iCluster
+            .getRecordConflictStrategy() : recordConflictStrategy;
+        return strategy.onUpdate(iRecordType, rid, version, iRecordContent, iDatabaseVersion);
+      }
 
       iDatabaseVersion.increment();
     }

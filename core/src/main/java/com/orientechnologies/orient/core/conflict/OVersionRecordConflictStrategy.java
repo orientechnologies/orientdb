@@ -36,8 +36,18 @@ public class OVersionRecordConflictStrategy implements ORecordConflictStrategy {
   public static final String NAME = "version";
 
   @Override
-  public byte[] onUpdate(final ORecordId rid, final ORecordVersion iRecordVersion, final byte[] iRecordContent,
-      final ORecordVersion iDatabaseVersion) {
+  public byte[] onUpdate(final byte iRecordType, final ORecordId rid, final ORecordVersion iRecordVersion,
+      final byte[] iRecordContent, final ORecordVersion iDatabaseVersion) {
+    checkVersions(rid, iDatabaseVersion, iRecordVersion);
+    return null;
+  }
+
+  @Override
+  public String getName() {
+    return NAME;
+  }
+
+  protected void checkVersions(final ORecordId rid, final ORecordVersion iRecordVersion, final ORecordVersion iDatabaseVersion) {
     if (OFastConcurrentModificationException.enabled())
       throw OFastConcurrentModificationException.instance();
     else

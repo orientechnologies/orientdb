@@ -21,12 +21,14 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.compression.OCompressionFactory;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -55,29 +57,29 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGI
  * @since 10/7/13
  */
 public class OPaginatedCluster extends ODurableComponent implements OCluster {
-  public static final String                    DEF_EXTENSION            = ".pcl";
-  private static final int                      DISK_PAGE_SIZE           = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
-  private static final int                      LOWEST_FREELIST_BOUNDARY = PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY
-                                                                             .getValueAsInteger();
-  private final static int                      FREE_LIST_SIZE           = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
-  private static final int                      PAGE_INDEX_OFFSET        = 16;
-  private static final int                      RECORD_POSITION_MASK     = 0xFFFF;
-  private static final int                      ONE_KB                   = 1024;
-  private final OModificationLock               externalModificationLock = new OModificationLock();
-  private volatile OCompression                 compression;
-  private ODiskCache                            diskCache;
-  private OClusterPositionMap                   clusterPositionMap;
-  private volatile String                       name;
-  private OAbstractPaginatedStorage             storageLocal;
-  private volatile int                          id;
-  private long                                  fileId;
-  private OStoragePaginatedClusterConfiguration config;
-  private OCacheEntry                           pinnedStateEntry;
-  private boolean                               useCRC32;
+  public static final  String            DEF_EXTENSION            = ".pcl";
+  private static final int               DISK_PAGE_SIZE           = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+  private static final int               LOWEST_FREELIST_BOUNDARY = PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
+  private final static int               FREE_LIST_SIZE           = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
+  private static final int               PAGE_INDEX_OFFSET        = 16;
+  private static final int               RECORD_POSITION_MASK     = 0xFFFF;
+  private static final int               ONE_KB                   = 1024;
+  private final        OModificationLock externalModificationLock = new OModificationLock();
+  private volatile OCompression                          compression;
+  private          ODiskCache                            diskCache;
+  private          OClusterPositionMap                   clusterPositionMap;
+  private volatile String                                name;
+  private          OAbstractPaginatedStorage             storageLocal;
+  private volatile int                                   id;
+  private          long                                  fileId;
+  private          OStoragePaginatedClusterConfiguration config;
+  private          OCacheEntry                           pinnedStateEntry;
+  private          boolean                               useCRC32;
+  private          ORecordConflictStrategy               recordConflictStrategy;
 
   private static final class AddEntryResult {
-    private final long           pageIndex;
-    private final int            pagePosition;
+    private final long pageIndex;
+    private final int  pagePosition;
 
     private final ORecordVersion recordVersion;
     private final int            recordsSizeDiff;
@@ -114,10 +116,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
         final String cfgCompression = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD);
 
-        config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true,
-            OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR,
-            cfgCompression);
-
+        config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, cfgCompression, null);
         config.name = clusterName;
 
         init((OAbstractPaginatedStorage) storage, config);
@@ -162,7 +161,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
         endAtomicOperation(false);
 
-        if (config.root.clusters.size() <= config.id)
+        if (config.root.clusters.size()<=config.id)
           config.root.clusters.add(config);
         else
           config.root.clusters.set(config.id, config);
@@ -497,26 +496,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       }
     } finally {
       externalModificationLock.releaseModificationLock();
-    }
-  }
-
-  private long createPagePointer(long pageIndex, int pagePosition) {
-    return pageIndex << PAGE_INDEX_OFFSET | pagePosition;
-  }
-
-  private void updateClusterState(ODurablePage.TrackMode trackMode, long sizeDiff, long recordsSizeDiff) throws IOException {
-    diskCache.loadPinnedPage(pinnedStateEntry);
-    pinnedStateEntry.acquireExclusiveLock();
-    try {
-      OPaginatedClusterState paginatedClusterState = new OPaginatedClusterState(pinnedStateEntry, trackMode);
-      paginatedClusterState.setSize(paginatedClusterState.getSize() + sizeDiff);
-      paginatedClusterState.setRecordsSize(paginatedClusterState.getRecordsSize() + recordsSizeDiff);
-
-      logPageChanges(paginatedClusterState, fileId, pinnedStateEntry.getPageIndex(), false);
-      pinnedStateEntry.markDirty();
-    } finally {
-      pinnedStateEntry.releaseExclusiveLock();
-      diskCache.release(pinnedStateEntry);
     }
   }
 
@@ -1160,6 +1139,10 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     return externalModificationLock;
   }
 
+  public ORecordConflictStrategy getRecordConflictStrategy() {
+    return recordConflictStrategy;
+  }
+
   @Override
   protected void endAtomicOperation(boolean rollback) throws IOException {
     if (!config.useWal)
@@ -1192,11 +1175,34 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     return super.getTrackMode();
   }
 
+  private long createPagePointer(long pageIndex, int pagePosition) {
+    return pageIndex << PAGE_INDEX_OFFSET | pagePosition;
+  }
+
+  private void updateClusterState(ODurablePage.TrackMode trackMode, long sizeDiff, long recordsSizeDiff) throws IOException {
+    diskCache.loadPinnedPage(pinnedStateEntry);
+    pinnedStateEntry.acquireExclusiveLock();
+    try {
+      OPaginatedClusterState paginatedClusterState = new OPaginatedClusterState(pinnedStateEntry, trackMode);
+      paginatedClusterState.setSize(paginatedClusterState.getSize() + sizeDiff);
+      paginatedClusterState.setRecordsSize(paginatedClusterState.getRecordsSize() + recordsSizeDiff);
+
+      logPageChanges(paginatedClusterState, fileId, pinnedStateEntry.getPageIndex(), false);
+      pinnedStateEntry.markDirty();
+    } finally {
+      pinnedStateEntry.releaseExclusiveLock();
+      diskCache.release(pinnedStateEntry);
+    }
+  }
+
   private void init(OAbstractPaginatedStorage storage, OStorageClusterConfiguration config) throws IOException {
     OFileUtils.checkValidName(config.getName());
 
     this.config = (OStoragePaginatedClusterConfiguration) config;
     this.compression = OCompressionFactory.INSTANCE.getCompression(this.config.compression);
+    if (((OStoragePaginatedClusterConfiguration) config).conflictStrategy != null)
+      this.recordConflictStrategy = Orient.instance().getRecordConflictStrategy()
+          .getStrategy(((OStoragePaginatedClusterConfiguration) config).conflictStrategy);
 
     storageLocal = storage;
 
@@ -1582,5 +1588,4 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
     return positions;
   }
-
 }

@@ -15,10 +15,9 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -27,6 +26,8 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
 
 /**
  * Remote cluster implementation
@@ -245,5 +246,10 @@ public class OClusterRemote implements OCluster {
   @Override
   public boolean hideRecord(OClusterPosition position) {
     throw new UnsupportedOperationException("Operation is not supported for given cluster implementation");
+  }
+
+  @Override
+  public ORecordConflictStrategy getRecordConflictStrategy() {
+    return null;
   }
 }

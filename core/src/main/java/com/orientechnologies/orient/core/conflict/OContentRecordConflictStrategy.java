@@ -20,38 +20,50 @@
 
 package com.orientechnologies.orient.core.conflict;
 
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.Arrays;
 
 /**
  * Record conflict strategy that check the records content: if content is the same, se the higher version number.
  * 
  * @author Luca Garulli
  */
-public class OContentRecordConflictStrategy implements ORecordConflictStrategy {
+public class OContentRecordConflictStrategy extends OVersionRecordConflictStrategy {
   public static final String NAME = "content";
 
   @Override
-  public byte[] onUpdate(final ORecordId rid, final ORecordVersion iRecordVersion, final byte[] iRecordContent,
-      final ORecordVersion iDatabaseVersion) {
-    final ODocument storedRecord = rid.getRecord();
-    final ODocument newRecord = new ODocument().fromStream(iRecordContent);
+  public byte[] onUpdate(final byte iRecordType, final ORecordId rid, final ORecordVersion iRecordVersion,
+      final byte[] iRecordContent, final ORecordVersion iDatabaseVersion) {
 
-    if (storedRecord.hasSameContentOf(newRecord)) {
-      // SAME CONTENT: USE HIGHER VERSION NUMBER
-      iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()));
+    final boolean hasSameContent;
+
+    if (iRecordType == ODocument.RECORD_TYPE) {
+      final ODocument storedRecord = rid.getRecord();
+      final ODocument newRecord = new ODocument().fromStream(iRecordContent);
+
+      hasSameContent = storedRecord.hasSameContentOf(newRecord);
     } else {
-      // EXCEPTION
-      if (OFastConcurrentModificationException.enabled())
-        throw OFastConcurrentModificationException.instance();
-      else
-        throw new OConcurrentModificationException(rid, iDatabaseVersion, iRecordVersion, ORecordOperation.UPDATED);
+      // CHECK BYTE PER BYTE
+      final ORecordInternal<?> storedRecord = rid.getRecord();
+      hasSameContent = Arrays.equals(storedRecord.toStream(), iRecordContent);
     }
 
+    if (hasSameContent)
+      // OK
+      iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()));
+    else
+      // NO DOCUMENT, CANNOT MERGE SO RELY TO THE VERSION CHECK
+      checkVersions(rid, iRecordVersion, iDatabaseVersion);
+
     return null;
+  }
+
+  @Override
+  public String getName() {
+    return NAME;
   }
 }

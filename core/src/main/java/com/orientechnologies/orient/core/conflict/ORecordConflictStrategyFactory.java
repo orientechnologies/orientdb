@@ -34,4 +34,8 @@ public class ORecordConflictStrategyFactory extends OConfigurableStatefulFactory
   public ORecordConflictStrategy getStrategy(final String iStrategy) {
     return newInstance(iStrategy);
   }
+
+  public String getDefaultStrategy() {
+    return OVersionRecordConflictStrategy.NAME;
+  }
 }

@@ -44,7 +44,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   protected final String                PROFILER_READ_RECORD;
   protected final String                PROFILER_UPDATE_RECORD;
   protected final String                PROFILER_DELETE_RECORD;
-  protected ORecordConflictStrategy conflictResolver = new OVersionRecordConflictStrategy();
+  protected ORecordConflictStrategy recordConflictStrategy = new OVersionRecordConflictStrategy();
 
   public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
     super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -213,11 +213,11 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   }
 
   public ORecordConflictStrategy getConflictStrategy() {
-    return conflictResolver;
+    return recordConflictStrategy;
   }
 
   public void setConflictStrategy(final ORecordConflictStrategy conflictResolver) {
-    this.conflictResolver = conflictResolver;
+    this.recordConflictStrategy = conflictResolver;
   }
 
   protected abstract ORawBuffer readRecord(final OCluster iClusterSegment, final ORecordId iRid, boolean iAtomicLock,
