@@ -31,12 +31,14 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.index.OIndexNotUnique;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneIndex {
 
-  public OLuceneIndexNotUnique(String typeId, String algorithm, OLuceneIndexEngine engine, String valueContainerAlgorithm) {
-    super(typeId, algorithm, engine, valueContainerAlgorithm);
+  public OLuceneIndexNotUnique(String typeId, String algorithm, OLuceneIndexEngine engine, String valueContainerAlgorithm,
+      ODocument metadata) {
+    super(typeId, algorithm, engine, valueContainerAlgorithm, metadata);
   }
 
   @Override

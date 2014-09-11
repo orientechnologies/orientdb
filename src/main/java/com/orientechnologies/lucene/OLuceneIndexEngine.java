@@ -156,12 +156,12 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     return lucene.cursor(valuesTransformer);
   }
 
-    @Override
-    public OIndexCursor descCursor(ValuesTransformer<V> valuesTransformer) {
+  @Override
+  public OIndexCursor descCursor(ValuesTransformer<V> valuesTransformer) {
     return null;
-    }
+  }
 
-    @Override
+  @Override
   public OIndexKeyCursor keyCursor() {
     return lucene.keyCursor();
   }

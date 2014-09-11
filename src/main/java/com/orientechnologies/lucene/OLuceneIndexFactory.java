@@ -77,7 +77,7 @@ public class OLuceneIndexFactory implements OIndexFactory {
           new OLuceneFullTextIndexManager(), indexType), valueContainerAlgorithm, metadata);
     } else if (OClass.INDEX_TYPE.SPATIAL.toString().equals(indexType)) {
       return new OLuceneSpatialIndex(indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
-          new OLuceneSpatialIndexManager(new OShapeFactoryImpl()), indexType), valueContainerAlgorithm);
+          new OLuceneSpatialIndexManager(new OShapeFactoryImpl()), indexType), valueContainerAlgorithm, metadata);
     }
     throw new OConfigurationException("Unsupported type : " + indexType);
   }

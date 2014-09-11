@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-
 public class OLuceneClassIndexManager extends ODocumentHookAbstract implements ODatabaseLifecycleListener {
 
   @Override
@@ -51,18 +50,7 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract implements O
   }
 
   @Override
-  public RESULT onRecordBeforeReplicaAdd(ODocument iDocument) {
-    checkIndexes(iDocument, BEFORE_CREATE);
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  @Override
   public void onRecordAfterCreate(ODocument iDocument) {
-    addIndexesEntries(iDocument);
-  }
-
-  @Override
-  public void onRecordAfterReplicaAdd(ODocument iDocument) {
     addIndexesEntries(iDocument);
   }
 
@@ -94,10 +82,6 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract implements O
   }
 
   @Override
-  public void onRecordReplicaAddFailed(ODocument iDocument) {
-  }
-
-  @Override
   public void onRecordCreateReplicated(ODocument iDocument) {
   }
 
@@ -108,18 +92,7 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract implements O
   }
 
   @Override
-  public RESULT onRecordBeforeReplicaUpdate(ODocument iDocument) {
-    checkIndexes(iDocument, BEFORE_UPDATE);
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  @Override
   public void onRecordAfterUpdate(ODocument iDocument) {
-    updateIndexEntries(iDocument);
-  }
-
-  @Override
-  public void onRecordAfterReplicaUpdate(ODocument iDocument) {
     updateIndexEntries(iDocument);
   }
 
@@ -162,10 +135,6 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract implements O
   }
 
   @Override
-  public void onRecordReplicaUpdateFailed(ODocument iDocument) {
-  }
-
-  @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
     final ORecordVersion version = iDocument.getRecordVersion(); // Cache the transaction-provided value
     if (iDocument.fields() == 0) {
@@ -183,18 +152,7 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract implements O
   }
 
   @Override
-  public RESULT onRecordBeforeReplicaDelete(ODocument iDocument) {
-    checkForLoading(iDocument);
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  @Override
   public void onRecordAfterDelete(final ODocument iDocument) {
-    deleteIndexEntries(iDocument);
-  }
-
-  @Override
-  public void onRecordAfterReplicaDelete(ODocument iDocument) {
     deleteIndexEntries(iDocument);
   }
 
@@ -245,10 +203,6 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract implements O
 
   @Override
   public void onRecordDeleteReplicated(ODocument iDocument) {
-  }
-
-  @Override
-  public void onRecordReplicaDeleteFailed(ODocument iDocument) {
   }
 
   private static void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {
@@ -539,6 +493,11 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract implements O
       }
     }
     return iRecord;
+  }
+
+  @Override
+  public PRIORITY getPriority() {
+    return null;
   }
 
   @Override

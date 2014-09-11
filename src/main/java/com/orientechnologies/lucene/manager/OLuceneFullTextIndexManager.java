@@ -104,8 +104,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     Query q = null;
 
     try {
-      q = OLuceneIndexType.createFullQuery(index, (OCompositeKey) key, mgrWriter.getIndexWriter().getAnalyzer(),
-          getVersion(metadata));
+      q = OLuceneIndexType.createFullQuery(index, key, mgrWriter.getIndexWriter().getAnalyzer(), getVersion(metadata));
       OCommandContext context = null;
       if (key instanceof OFullTextCompositeKey) {
         context = ((OFullTextCompositeKey) key).getContext();
@@ -145,18 +144,22 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
     try {
       IndexSearcher searcher = getSearcher();
 
-      Map<String, Float> scores = new HashMap<String, Float>();
-      TopDocs docs = searcher.search(query, Integer.MAX_VALUE);
+      Integer limit = null;
+      if (context != null) {
+        limit = (Integer) context.getVariable("$limit");
+      }
+      // Map<String, Float> scores = new HashMap<String, Float>();
+      TopDocs docs = searcher.search(query, (limit != null && limit > 0) ? limit : Integer.MAX_VALUE);
       ScoreDoc[] hits = docs.scoreDocs;
       for (ScoreDoc score : hits) {
         Document ret = searcher.doc(score.doc);
         String rId = ret.get(RID);
         results.add(new ORecordId(rId));
-        scores.put(rId, score.score);
+        // scores.put(rId, score.score);
       }
-      if (context != null) {
-        context.setVariable("$luceneScore", scores);
-      }
+      // if (context != null) {
+      // context.setVariable("$luceneScore", scores);
+      // }
     } catch (IOException e) {
       throw new OIndexException("Error reading from Lucene index", e);
     }

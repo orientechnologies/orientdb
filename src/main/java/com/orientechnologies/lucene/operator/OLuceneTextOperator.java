@@ -25,6 +25,7 @@ import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -50,6 +51,7 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
     else
       cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OFullTextCompositeKey(
           keyParams));
+    iContext.setVariable("$luceneIndex", true);
     return cursor;
   }
 
@@ -84,11 +86,15 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
 
-    Map<String, Float> scores = (Map<String, Float>) iContext.getVariable("$luceneScore");
-    if (scores != null) {
-      iContext.setVariable("$score", scores.get(iRecord.getIdentity().toString()));
+    // Map<String, Float> scores = (Map<String, Float>) iContext.getVariable("$luceneScore");
+    // if (scores != null) {
+    // iContext.setVariable("$score", scores.get(iRecord.getIdentity().toString()));
+    // }
+    if (iContext.getVariable("$luceneIndex") != null) {
+      return true;
+    } else {
+      return false;
     }
-    return super.evaluateRecord(iRecord, iCurrentResult, iCondition, iLeft, iRight, iContext);
 
   }
 }
