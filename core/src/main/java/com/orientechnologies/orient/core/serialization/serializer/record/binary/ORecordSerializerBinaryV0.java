@@ -519,7 +519,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       int pointer = 0;
       Object value = values[i].getValue();
       if (value != null) {
-        OType type = getTypeFromValue(value, true);
+        OType type = getTypeFromValueEmbedded(value);
         // temporary skip serialization of unknown types
         if (type == null)
           continue;
@@ -589,7 +589,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       }
       OType type;
       if (linkedType == null)
-        type = getTypeFromValue(itemValue, true);
+        type = getTypeFromValueEmbedded(itemValue);
       else
         type = linkedType;
       if (type != null) {
@@ -609,14 +609,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         type = prop.getType();
 
       if (type == null || OType.ANY == type)
-        type = getTypeFromValue(fieldValue, false);
+        type = OType.getTypeByValue(fieldValue);
     }
     return type;
   }
 
-  private OType getTypeFromValue(final Object fieldValue, final boolean forceEmbedded) {
+  private OType getTypeFromValueEmbedded(final Object fieldValue) {
     OType type = OType.getTypeByValue(fieldValue);
-    if (type == OType.LINK && fieldValue instanceof ODocument && forceEmbedded)
+    if (type == OType.LINK && fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid())
       type = OType.EMBEDDED;
     return type;
   }
