@@ -7,6 +7,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
@@ -349,6 +350,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   @Override
   public OrientVertex addVertex(final Object id) {
     return addVertex(id, (Object[]) null);
+  }
+
+  public ORecordConflictStrategy getConflictStrategy() {
+    return database.getStorage().getConflictStrategy();
+  }
+
+  public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    database.getStorage().setConflictStrategy( iResolver );
+    return this;
   }
 
   /**

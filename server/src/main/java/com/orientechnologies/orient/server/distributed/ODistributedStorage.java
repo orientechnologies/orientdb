@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.ODistributedCommand;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -549,6 +550,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   public OCluster getClusterByName(final String iName) {
     return wrapped.getClusterByName(iName);
+  }
+
+  @Override
+  public ORecordConflictStrategy getConflictStrategy() {
+    return getUnderlying().getConflictStrategy();
+  }
+
+  @Override
+  public void setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    getUnderlying().setConflictStrategy(iResolver);
   }
 
   @Override

@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -281,6 +282,16 @@ public class OStorageRemoteThread implements OStorageProxy {
   @Override
   public OCluster getClusterByName(String clusterName) {
     return delegate.getClusterByName(clusterName);
+  }
+
+  @Override
+  public ORecordConflictStrategy getConflictStrategy() {
+    throw new UnsupportedOperationException("getConflictStrategy");
+  }
+
+  @Override
+  public void setConflictStrategy(ORecordConflictStrategy iResolver) {
+    throw new UnsupportedOperationException("setConflictStrategy");
   }
 
   @Override

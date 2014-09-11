@@ -18,6 +18,7 @@ package com.orientechnologies.orient.object.db;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -686,6 +687,17 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public String getType() {
     return TYPE;
+  }
+
+  @Override
+  public ORecordConflictStrategy getConflictStrategy() {
+    return underlying.getConflictStrategy();
+  }
+
+  @Override
+  public OObjectDatabaseTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    underlying.setConflictStrategy(iResolver);
+    return this;
   }
 
   @Override

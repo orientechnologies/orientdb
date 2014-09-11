@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -1510,5 +1511,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         }
       }
     }
+  }
+
+  public ORecordConflictStrategy getConflictStrategy() {
+    return getStorage().getConflictStrategy();
+  }
+
+  public ODatabaseRecordAbstract setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    getStorage().setConflictStrategy( iResolver );
+    return this;
   }
 }

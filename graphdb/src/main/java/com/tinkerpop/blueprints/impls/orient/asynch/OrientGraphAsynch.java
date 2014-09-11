@@ -28,6 +28,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -38,7 +39,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.impl.local.ORecordConflictResolver;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Features;
@@ -88,7 +88,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   private AtomicLong                                    verticesRemoved      = new AtomicLong();
   private AtomicLong                                    verticesReloaded     = new AtomicLong();
   private PrintStream                                   outStats             = null;
-  private ORecordConflictResolver                       conflictResolver     = null;
+  private ORecordConflictStrategy                       conflictResolver     = null;
 
   protected enum MERGE_RESULT {
     MERGED, RETRY, ERROR
@@ -773,7 +773,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     if (conflictResolver != null) {
       final OStorage stg = g.getRawGraph().getStorage().getUnderlying();
       if (stg instanceof OStorageEmbedded)
-        ((OStorageEmbedded) stg).setConflictResolver(conflictResolver);
+        stg.setConflictStrategy(conflictResolver);
     }
 
     return g;
@@ -869,11 +869,11 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     this.maxRetries = maxRetries;
   }
 
-  public ORecordConflictResolver getConflictResolver() {
+  public ORecordConflictStrategy getConflictStrategy() {
     return conflictResolver;
   }
 
-  public OrientGraphAsynch setConflictStrategy(final ORecordConflictResolver iResolver) {
+  public OrientGraphAsynch setConflictStrategy(final ORecordConflictStrategy iResolver) {
     conflictResolver = iResolver;
     return this;
   }

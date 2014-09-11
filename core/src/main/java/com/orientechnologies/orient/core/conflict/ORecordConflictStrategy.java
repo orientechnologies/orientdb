@@ -18,25 +18,16 @@
  *  
  */
 
-package com.orientechnologies.orient.core.storage.impl.local;
+package com.orientechnologies.orient.core.conflict;
 
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
- * Default strategy: check only for record versions.
+ * Manages the MVCC conflicts.
  * 
  * @author Luca Garulli
  */
-public class ODefaultRecordConflictResolver implements ORecordConflictResolver {
-  @Override
-  public byte[] onUpdate(ORecordId rid, ORecordVersion iRecordVersion, byte[] iRecordContent, ORecordVersion iDatabaseVersion) {
-    if (OFastConcurrentModificationException.enabled())
-      throw OFastConcurrentModificationException.instance();
-    else
-      throw new OConcurrentModificationException(rid, iDatabaseVersion, iRecordVersion, ORecordOperation.UPDATED);
-  }
+public interface ORecordConflictStrategy {
+  byte[] onUpdate(ORecordId rid, ORecordVersion iRecordVersion, byte[] iRecordContent, ORecordVersion iDatabaseVersion);
 }

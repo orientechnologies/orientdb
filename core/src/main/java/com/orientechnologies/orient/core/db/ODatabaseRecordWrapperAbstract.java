@@ -15,15 +15,10 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -48,6 +43,12 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord> extends ODatabaseWrapperAbstract<DB> implements
@@ -424,4 +425,16 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecord>
       }
     }
   }
+
+  @Override
+  public ORecordConflictStrategy getConflictStrategy() {
+    return getStorage().getConflictStrategy();
+  }
+
+  @Override
+  public ODatabaseRecordWrapperAbstract<DB> setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    getStorage().setConflictStrategy( iResolver );
+    return this;
+  }
+
 }

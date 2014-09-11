@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -449,4 +450,17 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   public <DB extends ODatabaseComplex<?>> DB setMVCC(boolean iValue);
 
   public String getType();
+
+  /**
+   * Returns the current record conflict strategy.
+   */
+  public ORecordConflictStrategy getConflictStrategy();
+
+  /**
+   * Overrides record conflict strategy.
+   * 
+   * @param iResolver ORecordConflictStrategy implementation
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabaseComplex<?>> DB setConflictStrategy(final ORecordConflictStrategy iResolver);
 }

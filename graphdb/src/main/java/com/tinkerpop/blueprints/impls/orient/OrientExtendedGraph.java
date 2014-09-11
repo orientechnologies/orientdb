@@ -22,6 +22,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -243,4 +244,9 @@ public interface OrientExtendedGraph extends IndexableGraph, MetaGraph<ODatabase
    * Declare an intent.
    */
   public void declareIntent(OIntent iIntent);
+
+  public ORecordConflictStrategy getConflictStrategy();
+
+  public OrientExtendedGraph setConflictStrategy(ORecordConflictStrategy iResolver);
+
 }

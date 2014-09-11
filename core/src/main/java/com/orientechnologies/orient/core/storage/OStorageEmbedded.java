@@ -23,13 +23,13 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.impl.local.ODefaultRecordConflictResolver;
-import com.orientechnologies.orient.core.storage.impl.local.ORecordConflictResolver;
+import com.orientechnologies.orient.core.conflict.ODefaultRecordConflictStrategy;
 
 import java.io.IOException;
 
@@ -44,7 +44,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   protected final String                PROFILER_READ_RECORD;
   protected final String                PROFILER_UPDATE_RECORD;
   protected final String                PROFILER_DELETE_RECORD;
-  protected ORecordConflictResolver     conflictResolver = new ODefaultRecordConflictResolver();
+  protected ORecordConflictStrategy conflictResolver = new ODefaultRecordConflictStrategy();
 
   public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
     super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -89,10 +89,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
     } finally {
       if (Orient.instance().getProfiler().isRecording())
-        Orient
-            .instance()
-            .getProfiler()
-            .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(), "Command executed against the database", beginTime, "db.*.command.*");
+        Orient.instance().getProfiler().stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(), "Command executed against the database", beginTime, "db.*.command.*");
     }
   }
 
@@ -215,11 +212,11 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     return null;
   }
 
-  public ORecordConflictResolver getConflictResolver() {
+  public ORecordConflictStrategy getConflictStrategy() {
     return conflictResolver;
   }
 
-  public void setConflictResolver(final ORecordConflictResolver conflictResolver) {
+  public void setConflictStrategy(final ORecordConflictStrategy conflictResolver) {
     this.conflictResolver = conflictResolver;
   }
 
