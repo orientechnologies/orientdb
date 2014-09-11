@@ -4,40 +4,40 @@
             <form id="signin" name="loginForm" class="form-horizontal" novalidate>
                 <fieldset>
                     <div class="form-group">
-                        <label class="control-label col-md-2">Database</label>
+                        <label class="control-label col-md-2 col-xs-2">Database</label>
 
-                        <div class="col-md-6">
+                        <div class="col-md-6 col-xs-6">
                             <select ng-model="database" class="form-control" required
                                     ng-options="i for i in databases">
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-2 col-xs-2">
                             <a class="btn btn-warning btn-sm" ng-click="createNew()"> New DB
                             </a>
 
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-1 col-xs-1">
                             <a class="btn btn-warning btn-sm" ng-click="importPublic()"> <i
                                     class="fa fa-cloud-download"></i>
                             </a>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-1 col-xs-1">
                             <a class="btn btn-danger btn-sm" ng-click="deleteDb()"> <i class="fa fa-trash-o"></i>
                             </a>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="control-label col-md-2">User</label>
+                        <label class="control-label col-md-2 col-xs-2">User</label>
 
-                        <div class="col-md-10">
+                        <div class="col-md-10 col-xs-10">
                             <input id="user" type="text" class="form-control" ng-model="username"
                                    autofill="autofill" value=""/>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="control-label col-md-2">Password</label>
+                        <label class="control-label col-md-2 col-xs-2">Password</label>
 
-                        <div class="controls col-md-10">
+                        <div class="controls col-md-10 col-xs-10">
                             <input id="password" type="password" class="form-control"
                                    ng-model="password"
                                    autofill="autofill"
@@ -45,12 +45,19 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <div class="col-md-offset-2 col-md-2">
-                            <!--<i data-trigger="hover" data-placement="bottom" data-content="{{ 'login.help' | translate }}"-->
-                               <!--bs-popover-->
-                               <!--class="fa fa-question-circle"></i>-->
+                        <div class="col-md-2 col-xs-2">
+
                         </div>
-                        <div class="col-md-offset-6 col-md-2">
+                        <div class="col-md-2 col-xs-2">
+                            <button class="btn btn-trasparent"
+                                    data-trigger="hover" data-placement="bottom"
+                                    data-animation="am-flip-x"
+                                    data-container="body"
+                                    data-content="{{ 'login.help' | translate }}" bs-popover>
+                                <i class="fa fa-question-circle"></i>
+                            </button>
+                        </div>
+                        <div class="col-md-offset-6 col-md-2 col-xs-2 col-xs-offset-6">
                             <button ng-click="connect()" type="submit" ng-disabled="loginForm.$invalid"
                                     class="btn btn-sm btn-warning"
                                     rel="tooltip" data-placement="right"

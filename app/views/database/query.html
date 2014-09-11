@@ -6,18 +6,31 @@
     </div>
     <div class="query-actions bookmarks">
 
-        <a class="ng-binding" href="javascript:void(0)" data-title="Send to Graph" ng-click="sendToGraph(item)">
-            <i class="fa fa-circle-o"></i>
-        </a>
-        <a class="ng-binding" href="javascript:void(0)" data-placement="bottom"
-           data-title="Add bookmark"
-           data-template="views/database/bookmark.html"
-           bs-popover>
-            <i data-title="Add to bookmarks" bs-tooltip ng-class="bookIcon"></i>
-        </a>
-        <a class="ng-binding" href="javascript:void(0)" ng-click="removeItem(item)">
-            <i class="fa fa-trash-o"></i>
-        </a>
+        <div class="btn-toolbar">
+            <div class="btn-group">
+                <a class="" href="javascript:void(0)"
+                   data-title="Send to Graph"
+                   ng-click="sendToGraph(item)"
+                   data-animation="am-fade-and-scale" data-container="body"
+                   bs-tooltip>
+                    <i class="fa fa-circle-o"></i>
+                </a>
+            </div>
+            <div class="btn-group">
+                <a class="" href="javascript:void(0)" data-placement="bottom"
+                   data-title="Add bookmark"
+                   data-template="views/database/bookmark.html"
+                   bs-popover>
+                    <i data-title="Add to bookmarks" bs-tooltip ng-class="bookIcon"></i>
+                </a>
+            </div>
+            <div class="btn-group">
+                <a class="" href="javascript:void(0)" ng-click="removeItem(item)"
+                   data-title="Remove from history" data-animation="am-fade-and-scale" data-container="body" bs-tooltip>
+                    <i class="fa fa-trash-o"></i>
+                </a>
+            </div>
+        </div>
     </div>
     <div class="query-body">
         <div ng-show="current == 'table'">

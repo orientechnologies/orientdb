@@ -162,7 +162,7 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
     });
 
 });
-App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner) {
+App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $templateCache,Aside) {
     $rootScope.$on('$routeChangeSuccess', function (event, currentRoute, oldRoute) {
         switch (currentRoute.templateUrl) {
             case 'views/login.html':
@@ -178,11 +178,13 @@ App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner) {
         NProgress.done();
     });
     $rootScope.$on("$routeChangeStart", function (event, next, current) {
+        Aside.destroy();
         NProgress.start();
         NProgress.set(0.2);
         NProgress.set(0.4);
 
     })
+
     $interval(function () {
         DatabaseApi.listDatabases().then(function (data) {
             $rootScope.$broadcast("server:up");
@@ -190,4 +192,6 @@ App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner) {
             $rootScope.$broadcast("server:down");
         })
     }, 10000);
+
+    $templateCache.put('popover/popover.tpl.html', '<div class="popover"><div class="arrow"></div><h3 class="popover-title" ng-bind="title" ng-show="title"></h3><div class="popover-content" ng-bind-html="content"></div></div>');
 })

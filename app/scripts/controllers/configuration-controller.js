@@ -164,13 +164,20 @@ configModule.controller("UMLController", ['$scope', '$routeParams', '$location',
 
 }]);
 
-configModule.controller("StructureController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {
+configModule.controller("StructureController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', 'ClusterAlterApi', "Notification", function ($scope, $routeParams, $location, DatabaseApi, Database, ClusterAlterApi, Notification) {
 
     $scope.clusters = Database.getMetadata()['clusters'];
+    $scope.conflictStrategies = ['version', 'content', 'automerge']
     $scope.dataSegments = Database.getMetadata()['dataSegments'];
     $scope.txSegments = Database.getMetadata()['txSegment'];
 
 
+    $scope.changeStrategy = function (cluster) {
+
+        ClusterAlterApi.changeProperty(Database.getName(), { cluster: cluster.name, name: "conflictStrategy", value: cluster.conflictStrategy}).then(function () {
+            Notification.push({content: "Conflict strategy for cluster '" + cluster.name + "' changed in '" + cluster.conflictStrategy + "'."});
+        });
+    }
 }]);
 configModule.controller("DbConfigController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', 'DatabaseAlterApi', 'Notification', '$q', function ($scope, $routeParams, $location, DatabaseApi, Database, DatabaseAlterApi, Notification, $q) {
 
@@ -189,12 +196,13 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
         $scope.properties.push({name: 'useLightweightEdges', value: 'false' });
     }
 
-    $scope.canChange = ["clusterSelection", "minimumClusters", "localeCountry", "useLightweightEdges"];
-    $scope.changeTemplate = { clusterSelection: "views/database/config/clusterSelection.html", useLightweightEdges: "views/database/config/boolenaCustom.html"}
+    $scope.canChange = ["clusterSelection", "minimumClusters", "localeCountry", "useLightweightEdges", "conflictStrategy"];
+    $scope.changeTemplate = { clusterSelection: "views/database/config/clusterSelection.html", useLightweightEdges: "views/database/config/boolenaCustom.html", conflictStrategy: "views/database/config/conflictStrategy.html"}
     $scope.dirty = [];
     $scope.customDirty = [];
     $scope.clusterStrategies = ['round-robin', "default", "balanced"];
 
+    $scope.conflictStrategies = ['version', 'content', 'automerge']
     $scope.isDisabledVal = function (val) {
         return $scope.canChange.indexOf(val.name) == -1
     }

@@ -52,6 +52,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.getListFunction = function () {
         $scope.functions = new Array;
         $scope.functionsrid = new Array;
+        var deferred = $q.defer();
         CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: sqlText, limit: $scope.limit, shallow: false}, function (data) {
             if (data.result) {
                 for (i in data.result) {
@@ -68,16 +69,22 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                     var index = $scope.functionsrid.indexOf($scope.functionToExecute['name']);
                     if (index != -1)
                         $scope.showInConsoleAfterSave($scope.functions[index]);
+                } else {
+                    $scope.createNewFunction();
                 }
-                Aside.show({scope: $scope, title: "Functions", template: 'views/database/function/functionAside.html', show: true, absolute: false});
+                deferred.resolve();
             }
+
         });
+        return deferred.promise;
 
     }
     $scope.clearConsole = function () {
         $scope.functionToExecute['code'] = '';
     }
-    $scope.getListFunction();
+    $scope.getListFunction().then(function () {
+        Aside.show({scope: $scope, title: "Functions", template: 'views/database/function/functionAside.html', show: true, absolute: false});
+    });
 
     $scope.removeParam = function (index) {
         if ($scope.functionToExecute != undefined) {

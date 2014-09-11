@@ -53,60 +53,62 @@
             <div class="row">
                 <div class="col-md-12 nomargin">
 
-                    <table class="table table-striped table-bordered table-hover table-condensed pointer">
-                        <thead>
-                        <tr>
-                            <th ng-repeat="header in headers">
-                                {{header}}
-                            </th>
-                            <th>Actions</th>
-                        </tr>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered table-hover table-condensed pointer">
+                            <thead>
+                            <tr>
+                                <th ng-repeat="header in headers">
+                                    {{header}}
+                                </th>
+                                <th>Actions</th>
+                            </tr>
 
-                        </thead>
-                        <tbody>
-                        <tr ng-repeat="result in listClassesTotal | filter: queryy ">
-                            <td ng-click="openClass(result)">{{result['name']}} </td>
-                            <td ng-click="openClass(result)">{{result['superClass']}}</td>
-                            <td ng-click="openClass(result)">{{result['alias']}}</td>
-                            <td ng-click="openClass(result)">
-                                <input type="checkbox" ng-model="result['abstract']" ng-disabled="true">
-                            </td>
+                            </thead>
+                            <tbody>
+                            <tr ng-repeat="result in listClassesTotal | filter: queryy ">
+                                <td ng-click="openClass(result)">{{result['name']}}</td>
+                                <td ng-click="openClass(result)">{{result['superClass']}}</td>
+                                <td ng-click="openClass(result)">{{result['alias']}}</td>
+                                <td ng-click="openClass(result)">
+                                    <input type="checkbox" ng-model="result['abstract']" ng-disabled="true">
+                                </td>
 
-                            <td ng-click="openClass(result)">{{result['clusters']}}</td>
-                            <td ng-click="openClass(result)">{{result['defaultCluster']}}</td>
-                            <td>
-                                <select type="text" ng-options="opt for opt in clusterStrategies"
-                                        ng-change="setClusterStrategy(result)"
-                                        ng-model="result['clusterSelection']">
-                                </select>
-                            </td>
-                            <td ng-click="openClass(result)">{{result['records']}}</td>
-                            <td>
-                                <button href="javascript:void(0)" class="btn btn-primary btn-xs"
-                                        ng-click="rename(result)">
-                                    Rename
-                                </button>
-                                <button href="javascript:void(0)" class="btn btn-default btn-xs"
-                                        ng-click="queryAll(result['name'])">
-                                    <i
-                                            class="fa fa-list-alt"></i> Query All
-                                </button>
+                                <td ng-click="openClass(result)">{{result['clusters']}}</td>
+                                <td ng-click="openClass(result)">{{result['defaultCluster']}}</td>
+                                <td>
+                                    <select type="text" ng-options="opt for opt in clusterStrategies"
+                                            ng-change="setClusterStrategy(result)"
+                                            ng-model="result['clusterSelection']">
+                                    </select>
+                                </td>
+                                <td ng-click="openClass(result)">{{result['records']}}</td>
+                                <td>
+                                    <button href="javascript:void(0)" class="btn btn-primary btn-xs"
+                                            ng-click="rename(result)">
+                                        Rename
+                                    </button>
+                                    <button href="javascript:void(0)" class="btn btn-default btn-xs"
+                                            ng-click="queryAll(result['name'])">
+                                        <i
+                                                class="fa fa-list-alt"></i> Query All
+                                    </button>
 
-                                <button href="javascript:void(0)" class="btn btn-default btn-xs"
-                                        ng-click="createRecord(result['name'])">
-                                    <i
-                                            class="fa fa-plus"></i> New Record
-                                </button>
+                                    <button href="javascript:void(0)" class="btn btn-default btn-xs"
+                                            ng-click="createRecord(result['name'])">
+                                        <i
+                                                class="fa fa-plus"></i> New Record
+                                    </button>
 
-                                <button href="javascript:void(0)" ng-disabled="!canDrop(result['name'])"
-                                        class="btn btn-danger btn-xs"
-                                        ng-click="dropClass(result)">
-                                    <i class="fa fa-trash-o"></i> Drop
-                                </button>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                                    <button href="javascript:void(0)" ng-disabled="!canDrop(result['name'])"
+                                            class="btn btn-danger btn-xs"
+                                            ng-click="dropClass(result)">
+                                        <i class="fa fa-trash-o"></i> Drop
+                                    </button>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

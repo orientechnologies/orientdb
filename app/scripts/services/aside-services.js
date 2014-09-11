@@ -28,6 +28,14 @@ aside.factory('Aside', function ($rootScope) {
                 this.params.scope.$apply();
             }
         },
+        destroy: function () {
+            $rootScope.$broadcast("aside:close");
+            delete this.params.scope;
+            delete this.params.tpl;
+            delete this.params.title;
+            delete this.params.absolute;
+            delete this.params.cls;
+        },
         hide: function () {
             this.params.cls = "";
             $rootScope.$broadcast("aside:close");

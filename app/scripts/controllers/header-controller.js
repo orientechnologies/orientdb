@@ -63,10 +63,9 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
         var modalScope = $scope.$new(true);
         modalScope.oVersion = Database.getMetadata()["server"].version;
         modalScope.version = STUDIO_VERSION;
-        var modalPromise = $modal({template: 'views/server/about.html', persist: true, show: false, backdrop: 'static', scope: modalScope});
-        $q.when(modalPromise).then(function (modalEl) {
-            modalEl.modal('show');
-        });
+        var modalPromise = $modal({template: 'views/server/about.html', show: false, scope: modalScope});
+        modalPromise.$promise.then(modalPromise.show);
+
     }
     $scope.manageServer = function () {
         $location.path("/server");

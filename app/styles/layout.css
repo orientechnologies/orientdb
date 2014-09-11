@@ -330,6 +330,11 @@ text.vicon {
 
 .btn {
     border-radius: 0;
+    background-color: #acacad;
+}
+
+.btn-trasparent {
+    background-color: transparent;
 }
 
 #wrap {
@@ -650,4 +655,29 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 
 .ologin .fa-question-circle {
     font-size: 24px;
+}
+
+.popover-md {
+    max-width: 400px;
+}
+
+.popover-lg {
+    max-width: 800px;
+}
+
+.popover.bottom-left .arrow:after {
+
+}
+
+.popover.bottom-left .arrow {
+    margin-left: -32px;
+}
+
+.popover-help .popover-content {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.query-info .btn-help {
+    font-size: 20px;
 }

@@ -850,7 +850,7 @@ ul.arrayrid > li {
 .circle-interrupt {
     position: fixed;
     top: 55%;
-    left: 45.5%;
+    left: 45%;
     opacity: 1;
     z-index: 9999;
 }

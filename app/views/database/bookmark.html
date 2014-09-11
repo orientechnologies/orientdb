@@ -4,23 +4,19 @@
 
     <div class="popover-content" ng-controller="BookmarkNewController">
 
-        <form class="form-horizontal" ng-if="viewTags">
+        <form ng-if="viewTags">
             <div class="form-group">
-                <label class="col-sm-2 control-label">Name</label>
-
-                <div class="col-sm-10">
-                    <input type="text" class="form-control" ng-model="bookmark.name"/>
-                </div>
+                <label class=" control-label">Name</label>
+                <input type="text" class="form-control" ng-model="bookmark.name"/>
             </div>
             <div class="form-group">
-                <label class="col-sm-2 control-label">Category</label>
+                <label class="control-label">Category</label>
 
-                <div class="col-sm-10">
-                    <input type="hidden" ng-model="bookmark.tags" ui-select2="select2Options"
 
-                           data-placeholder="Pick a tag">
-                    </input>
-                </div>
+                <input type="hidden" ng-model="bookmark.tags" ui-select2="select2Options"
+
+                       data-placeholder="Pick a tag">
+                </input>
             </div>
             <div class="form-actions">
                 <button type="button" class="btn btn-sm" ng-click="cancel();$hide()">Cancel</button>

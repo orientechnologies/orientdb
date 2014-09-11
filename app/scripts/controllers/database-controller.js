@@ -10,6 +10,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         {name: "bookmarks", title: "Bookmarks"}
     ];
 
+
     Aside.show({scope: $scope, title: "Bookmarks", template: 'views/database/context/bookmarksAside.html', show: false});
     $scope.item = {};
     $scope.queries = [];
