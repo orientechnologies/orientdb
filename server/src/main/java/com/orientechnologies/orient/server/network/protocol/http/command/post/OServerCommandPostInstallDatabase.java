@@ -66,12 +66,13 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
       String url = iRequest.content;
       String name = getDbName(url);
       if (name != null) {
+       
         String folder = server.getDatabaseDirectory() + File.separator + name;
         File f = new File(folder);
         if (f.exists()) {
           throw new ODatabaseException("Database named '" + name + "' already exists: ");
         } else {
-          f.mkdir();
+          f.mkdirs();
           URL uri = new URL(url);
           URLConnection conn = uri.openConnection();
           OZIPCompressionUtil.uncompressDirectory(conn.getInputStream(), folder, new OCommandOutputListener() {
