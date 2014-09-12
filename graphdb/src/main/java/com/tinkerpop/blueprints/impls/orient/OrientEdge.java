@@ -359,17 +359,19 @@ public class OrientEdge extends OrientElement implements Edge {
     final boolean useVertexFieldsForEdgeLabels = settings.useVertexFieldsForEdgeLabels;
 
     final String outFieldName = OrientVertex.getConnectionFieldName(Direction.OUT, edgeClassName, useVertexFieldsForEdgeLabels);
-    dropEdgeFromVertex(inVertexEdge, outVertex, outFieldName, outVertex.field(outFieldName));
+    final boolean outVertexChanged = dropEdgeFromVertex(inVertexEdge, outVertex, outFieldName, outVertex.field(outFieldName));
 
     // IN VERTEX
     final OIdentifiable outVertexEdge = vOut != null ? vOut : rawElement;
     final ODocument inVertex = getInVertex().getRecord();
 
     final String inFieldName = OrientVertex.getConnectionFieldName(Direction.IN, edgeClassName, useVertexFieldsForEdgeLabels);
-    dropEdgeFromVertex(outVertexEdge, inVertex, inFieldName, inVertex.field(inFieldName));
+    final boolean inVertexChanged = dropEdgeFromVertex(outVertexEdge, inVertex, inFieldName, inVertex.field(inFieldName));
 
-    outVertex.save();
-    inVertex.save();
+    if (outVertexChanged)
+      outVertex.save();
+    if (inVertexChanged)
+      inVertex.save();
 
     if (rawElement != null)
       // NON-LIGHTWEIGHT EDGE
@@ -520,22 +522,25 @@ public class OrientEdge extends OrientElement implements Edge {
     return doc;
   }
 
-  protected void dropEdgeFromVertex(final OIdentifiable iEdge, final ODocument iVertex, final String iFieldName,
+  protected boolean dropEdgeFromVertex(final OIdentifiable iEdge, final ODocument iVertex, final String iFieldName,
       final Object iFieldValue) {
     if (iFieldValue == null) {
       // NO EDGE? WARN
       OLogManager.instance().debug(this, "Edge not found in vertex's property %s.%s while removing the edge %s",
           iVertex.getIdentity(), iFieldName, iEdge.getIdentity());
+      return false;
 
     } else if (iFieldValue instanceof OIdentifiable) {
       // FOUND A SINGLE ITEM: JUST REMOVE IT
 
       if (iFieldValue.equals(iEdge))
         iVertex.removeField(iFieldName);
-      else
+      else {
         // NO EDGE? WARN
         OLogManager.instance().warn(this, "Edge not found in vertex's property %s.%s link while removing the edge %s",
             iVertex.getIdentity(), iFieldName, iEdge.getIdentity());
+        return false;
+      }
 
     } else if (iFieldValue instanceof ORidBag) {
       // ALREADY A SET: JUST REMOVE THE NEW EDGE
@@ -545,9 +550,11 @@ public class OrientEdge extends OrientElement implements Edge {
       // CONVERT COLLECTION IN TREE-SET AND REMOVE THE EDGE
       final Collection<Object> coll = (Collection<Object>) iFieldValue;
 
-      if (!coll.remove(iEdge))
+      if (!coll.remove(iEdge)) {
         OLogManager.instance().warn(this, "Edge not found in vertex's property %s.%s set while removing the edge %s",
             iVertex.getIdentity(), iFieldName, iEdge.getIdentity());
+        return false;
+      }
 
       if (coll.size() == 1)
         iVertex.field(iFieldName, coll.iterator().next());
@@ -555,6 +562,8 @@ public class OrientEdge extends OrientElement implements Edge {
         iVertex.removeField(iFieldName);
     } else
       throw new IllegalStateException("Wrong type found in the field '" + iFieldName + "': " + iFieldValue.getClass());
+
+    return true;
   }
 
 }
