@@ -52,10 +52,7 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
           // AGGREGATION MODE (STATEFULL)
           context = new ArrayList<Object>();
 
-        if (value instanceof ODocument)
-          context.add(value);
-        else
-          OMultiValue.add(context, value);
+        context.add(value);
       }
     }
     return prepareResult(context);

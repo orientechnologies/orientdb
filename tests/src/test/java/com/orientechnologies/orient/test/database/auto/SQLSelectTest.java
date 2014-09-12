@@ -1635,55 +1635,56 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(classResult.isEmpty());
   }
 
-	public void testSelectFromIndexValuesAsc() {
-		database.command(new OCommandSQL("create index selectFromIndexValuesAsc on Profile (name) notunique")).execute();
+  public void testSelectFromIndexValuesAsc() {
+    database.command(new OCommandSQL("create index selectFromIndexValuesAsc on Profile (name) notunique")).execute();
 
-		final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
-						"select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
+        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
 
-		final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
-						"select from indexvaluesasc:selectFromIndexValuesAsc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+    final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
+        "select from indexvaluesasc:selectFromIndexValuesAsc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
 
-		Assert.assertEquals(indexValuesResult.size(), classResult.size());
+    Assert.assertEquals(indexValuesResult.size(), classResult.size());
 
-		String lastName = null;
+    String lastName = null;
 
-		for (ODocument document : indexValuesResult) {
-			String name = document.field("name");
+    for (ODocument document : indexValuesResult) {
+      String name = document.field("name");
 
-			if (lastName != null)
-				Assert.assertTrue(lastName.compareTo(name) <= 0);
+      if (lastName != null)
+        Assert.assertTrue(lastName.compareTo(name) <= 0);
 
-			lastName = name;
-			Assert.assertTrue(classResult.remove(document));
-		}
+      lastName = name;
+      Assert.assertTrue(classResult.remove(document));
+    }
 
-		Assert.assertTrue(classResult.isEmpty());
-	}
+    Assert.assertTrue(classResult.isEmpty());
+  }
 
-	public void testSelectFromIndexValuesDesc() {
-		database.command(new OCommandSQL("create index selectFromIndexValuesDesc on Profile (name) notunique")).execute();
+  public void testSelectFromIndexValuesDesc() {
+    database.command(new OCommandSQL("create index selectFromIndexValuesDesc on Profile (name) notunique")).execute();
 
-		final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
-						"select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
+        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
 
-		final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
-						"select from indexvaluesdesc:selectFromIndexValuesDesc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+    final List<ODocument> indexValuesResult = database
+        .query(new OSQLSynchQuery<ODocument>(
+            "select from indexvaluesdesc:selectFromIndexValuesDesc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
 
-		Assert.assertEquals(indexValuesResult.size(), classResult.size());
+    Assert.assertEquals(indexValuesResult.size(), classResult.size());
 
-		String lastName = null;
+    String lastName = null;
 
-		for (ODocument document : indexValuesResult) {
-			String name = document.field("name");
+    for (ODocument document : indexValuesResult) {
+      String name = document.field("name");
 
-			if (lastName != null)
-				Assert.assertTrue(lastName.compareTo(name) >= 0);
+      if (lastName != null)
+        Assert.assertTrue(lastName.compareTo(name) >= 0);
 
-			lastName = name;
-			Assert.assertTrue(classResult.remove(document));
-		}
+      lastName = name;
+      Assert.assertTrue(classResult.remove(document));
+    }
 
-		Assert.assertTrue(classResult.isEmpty());
-	}
+    Assert.assertTrue(classResult.isEmpty());
+  }
 }
