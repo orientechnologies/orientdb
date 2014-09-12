@@ -197,6 +197,32 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     }
   }
 
+  public void testSelectMap() {
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
+        "select list( 1, 4, 5.00, 'john', map( 'kAA', 'vAA' ) ) as myresult"));
+
+    Assert.assertEquals(result.size(), 1);
+
+    ODocument document = result.get(0);
+    List myresult = document.field("myresult");
+    Assert.assertNotNull(myresult);
+
+    Assert.assertTrue(myresult.remove(Integer.valueOf(1)));
+    Assert.assertTrue(myresult.remove(Integer.valueOf(4)));
+    Assert.assertTrue(myresult.remove(Float.valueOf(5)));
+    Assert.assertTrue(myresult.remove("john"));
+
+    Assert.assertEquals(myresult.size(), 1);
+
+    Assert.assertTrue(myresult.get(0) instanceof Map);
+    Map map = (Map) myresult.get(0);
+
+    String value = (String) map.get("kAA");
+    Assert.assertEquals(value, "vAA");
+
+    Assert.assertEquals(map.size(), 1);
+  }
+
   @Test
   public void querySet() {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select set(name) as names from City")).execute();
