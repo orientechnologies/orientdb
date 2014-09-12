@@ -40,4 +40,15 @@ public class OMetricRecorder {
   OCommandContext orderByElapsed(long startOrderBy) {
     return context.setVariable("orderByElapsed", (System.currentTimeMillis() - startOrderBy));
   }
+
+  public void recordRangeQueryConvertedInBetween() {
+    if (context.isRecordingMetrics()) {
+      Integer counter = (Integer) context.getVariable("rangeQueryConvertedInBetween");
+      if (counter == null)
+        counter = 0;
+
+      counter++;
+      context.setVariable("rangeQueryConvertedInBetween", counter);
+    }
+  }
 }
