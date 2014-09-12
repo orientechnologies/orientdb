@@ -2098,7 +2098,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private boolean isDistributedCommand() {
-    return getDatabase().getStorage().getUnderlying() instanceof OAutoshardedStorage
+    return getDatabase().getStorage() instanceof OAutoshardedStorage
         && OScenarioThreadLocal.INSTANCE.get() != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED;
   }
 

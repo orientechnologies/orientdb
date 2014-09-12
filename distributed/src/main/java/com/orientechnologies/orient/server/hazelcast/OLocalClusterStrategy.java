@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -85,6 +86,8 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
     ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
     final String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
+    if (bestCluster == null)
+      throw new OException("Cannot find best cluster for class '" + cls.getName() + "'. ClusterStrategy=" + getName());
 
     bestClusterId = db.getClusterIdByName(bestCluster);
   }

@@ -28,8 +28,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityNull;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -152,14 +150,14 @@ public class ODistributedWorker extends Thread {
 
     } else {
       // After initialize database, create replicator user in DB and reset database with OSecurityShared instead of OSecurityNull
-      OSecurity security = database.getMetadata().getSecurity();
-      if (security == null || security instanceof OSecurityNull) {
-        final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-            ODistributedAbstractPlugin.REPLICATOR_USER);
-        createReplicatorUser(database, replicatorUser);
-        database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
-            replicatorUser.password);
-      }
+//      OSecurity security = database.getMetadata().getSecurity();
+//      if (security == null || security instanceof OSecurityNull) {
+//        final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
+//            ODistributedAbstractPlugin.REPLICATOR_USER);
+//        createReplicatorUser(database, replicatorUser);
+//        database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
+//            replicatorUser.password);
+//      }
     }
   }
 

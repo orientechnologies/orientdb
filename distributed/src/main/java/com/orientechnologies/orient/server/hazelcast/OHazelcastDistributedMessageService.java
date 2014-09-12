@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
@@ -395,7 +396,14 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
    * Returns the queue. If not exists create and register it.
    */
   protected <T> IQueue<T> getQueue(final String iQueueName) {
+    // configureQueue(iQueueName, 0, 0);
     return manager.getHazelcastInstance().getQueue(iQueueName);
+  }
+
+  protected void configureQueue(final String iQueueName, final int synchReplica, final int asynchReplica) {
+    final QueueConfig queueCfg = manager.getHazelcastInstance().getConfig().getQueueConfig(iQueueName);
+    queueCfg.setBackupCount(synchReplica);
+    queueCfg.setAsyncBackupCount(asynchReplica);
   }
 
   /**
