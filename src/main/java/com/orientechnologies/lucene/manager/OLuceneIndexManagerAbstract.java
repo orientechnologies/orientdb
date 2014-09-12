@@ -133,6 +133,8 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
       OLuceneIndexUtils.deleteFolder(f);
 
+      f = new File(getIndexBasePath(storageLocalAbstract));
+      OLuceneIndexUtils.deleteFolderIfEmpty(f);
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting Lucene index", e);
     }
@@ -310,6 +312,10 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {
     return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR + File.separator + indexName;
+  }
+
+  private String getIndexBasePath(OLocalPaginatedStorage storageLocalAbstract) {
+    return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR;
   }
 
   private ODatabaseRecord getDatabase() {

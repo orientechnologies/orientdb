@@ -33,4 +33,11 @@ public class OLuceneIndexUtils {
     }
     folder.delete();
   }
+
+  public static void deleteFolderIfEmpty(File f) {
+
+    if (f.listFiles().length == 0) {
+      deleteFolder(f);
+    }
+  }
 }

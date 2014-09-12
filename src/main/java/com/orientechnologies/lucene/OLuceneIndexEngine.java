@@ -146,6 +146,10 @@ public class OLuceneIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     return lucene.iterateEntriesMajor(fromKey, isInclusive, ascSortOrder, transformer);
   }
 
+  public void commit() {
+
+  }
+
   @Override
   public OIndexCursor iterateEntriesMinor(Object toKey, boolean isInclusive, boolean ascSortOrder, ValuesTransformer<V> transformer) {
     return lucene.iterateEntriesMinor(toKey, isInclusive, ascSortOrder, transformer);

@@ -52,7 +52,7 @@ public class LuceneInsertMultithread {
       buildDirectory = ".";
 
     url = "plocal:" + buildDirectory + "/multiThread";
-    //url = "remote:localhost/multiThread";
+
   }
 
   @Test(enabled = false)
@@ -109,7 +109,7 @@ public class LuceneInsertMultithread {
       keys.add("andato");
 
       for (int i = 0; i < cycle; i++) {
-        Collection<?> coll = (Collection<?>) idx.get(new OFullTextCompositeKey(keys));
+        Collection<?> coll = (Collection<?>) idx.get("andato");
       }
 
     }
@@ -128,7 +128,7 @@ public class LuceneInsertMultithread {
       databaseDocumentTx.drop();
       databaseDocumentTx.create();
     } else {
-      databaseDocumentTx.open("admin", "admin");
+      databaseDocumentTx.create();
     }
 
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -159,5 +159,6 @@ public class LuceneInsertMultithread {
     OIndex idx = schema.getClass("City").getClassIndex("City.name");
 
     Assert.assertEquals(idx.getSize(), THREADS * CYCLE);
+    databaseDocumentTx.drop();
   }
 }

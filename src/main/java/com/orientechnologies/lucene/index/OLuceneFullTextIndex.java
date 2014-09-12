@@ -194,6 +194,7 @@ public class OLuceneFullTextIndex extends OIndexMultiValues implements OLuceneIn
       super.rebuild(iProgressListener);
     } finally {
       engine.setRebuilding(false);
+
     }
 
     return size;
