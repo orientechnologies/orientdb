@@ -1,7 +1,7 @@
 <div class="row">
     <div class="col-md-5">
         <div class="jumbotron ologin">
-            <form id="signin" name="loginForm" class="form-horizontal" novalidate>
+            <form id="signin" name="loginForm" ng-submit="connect()" class="form-horizontal" novalidate>
                 <fieldset>
                     <div class="form-group">
                         <label class="control-label col-md-2 col-xs-2">Database</label>
@@ -30,7 +30,7 @@
                         <label class="control-label col-md-2 col-xs-2">User</label>
 
                         <div class="col-md-10 col-xs-10">
-                            <input id="user" type="text" class="form-control" ng-model="username"
+                            <input id="user" type="text" class="form-control" required ng-model="username"
                                    autofill="autofill" value=""/>
                         </div>
                     </div>
@@ -38,7 +38,7 @@
                         <label class="control-label col-md-2 col-xs-2">Password</label>
 
                         <div class="controls col-md-10 col-xs-10">
-                            <input id="password" type="password" class="form-control"
+                            <input id="password" type="password" required class="form-control"
                                    ng-model="password"
                                    autofill="autofill"
                                    value=""/>

@@ -45,18 +45,27 @@
                 </div>
                 <div class="modal-footer">
 
-                    <button type="button" ng-show="lightweight" ng-disabled="!selectedClass"
-                            class="btn btn-sm pull-right"
-                            ng-click="createLightEdge(selectedClass)"> Create
-                    </button>
-                    <button type="button" ng-show="!lightweight" ng-disabled="!selectedClass"
-                            class="btn btn-sm pull-right"
-                            ng-click="setSelectClass(selectedClass)"> Next
-                    </button>
-                    <button type="button"
-                            class="btn btn-sm pull-right"
-                            ng-click="$hide();cancelSave()"> Cancel
-                    </button>
+                    <div class="btn-toolbar pull-right">
+                        <div class="btn-group">
+                            <button type="button"
+                                    class="btn btn-sm "
+                                    ng-click="$hide();cancelSave()"> Cancel
+                            </button>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" ng-show="lightweight" ng-disabled="!selectedClass"
+                                    class="btn btn-sm "
+                                    ng-click="createLightEdge(selectedClass)"> Create
+                            </button>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" ng-show="!lightweight" ng-disabled="!selectedClass"
+                                    class="btn btn-sm "
+                                    ng-click="setSelectClass(selectedClass)"> Next
+                            </button>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
