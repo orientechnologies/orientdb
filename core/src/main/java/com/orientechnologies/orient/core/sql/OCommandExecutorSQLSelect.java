@@ -43,20 +43,11 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
+import com.orientechnologies.orient.core.sql.filter.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
+import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -873,6 +864,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean optimizeExecution() {
+    if (compiledFilter != null)
+      mergeRangeConditionsToBetweenOperators(compiledFilter);
+
     if ((compiledFilter == null || (compiledFilter.getRootCondition() == null)) && groupByFields == null && projections != null
         && projections.size() == 1) {
 
@@ -922,6 +916,145 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return false;
+  }
+
+  private void mergeRangeConditionsToBetweenOperators(OSQLFilter filter) {
+    OSQLFilterCondition condition = filter.getRootCondition();
+
+    OSQLFilterCondition newCondition = convertToBetweenClause(condition);
+    if (newCondition != null) {
+      filter.setRootCondition(newCondition);
+      return;
+    }
+
+    mergeRangeConditionsToBetweenOperators(condition);
+  }
+
+  private void mergeRangeConditionsToBetweenOperators(OSQLFilterCondition condition) {
+    if (condition == null)
+      return;
+
+    OSQLFilterCondition newCondition;
+
+    if (condition.getLeft() instanceof OSQLFilterCondition) {
+      OSQLFilterCondition leftCondition = (OSQLFilterCondition) condition.getLeft();
+      newCondition = convertToBetweenClause(leftCondition);
+
+      if (newCondition != null)
+        condition.setLeft(newCondition);
+      else
+        mergeRangeConditionsToBetweenOperators(leftCondition);
+    }
+
+    if (condition.getRight() instanceof OSQLFilterCondition) {
+      OSQLFilterCondition rightCondition = (OSQLFilterCondition) condition.getRight();
+
+      newCondition = convertToBetweenClause(rightCondition);
+      if (newCondition != null)
+        condition.setRight(newCondition);
+      else
+        mergeRangeConditionsToBetweenOperators(rightCondition);
+    }
+  }
+
+  private OSQLFilterCondition convertToBetweenClause(OSQLFilterCondition condition) {
+    if (condition == null)
+      return null;
+
+    final Object right = condition.getRight();
+    final Object left = condition.getLeft();
+
+    final OQueryOperator operator = condition.getOperator();
+    if (!(operator instanceof OQueryOperatorAnd))
+      return null;
+
+    if (!(right instanceof OSQLFilterCondition))
+      return null;
+
+    if (!(left instanceof OSQLFilterCondition))
+      return null;
+
+    String rightField;
+
+    final OSQLFilterCondition rightCondition = (OSQLFilterCondition) right;
+    final OSQLFilterCondition leftCondition = (OSQLFilterCondition) left;
+
+    if (rightCondition.getLeft() instanceof OSQLFilterItemField && rightCondition.getRight() instanceof OSQLFilterItemField)
+      return condition;
+
+    if (!(rightCondition.getLeft() instanceof OSQLFilterItemField) && !(rightCondition.getRight() instanceof OSQLFilterItemField))
+      return condition;
+
+    final List<Object> betweenBoundaries = new ArrayList<Object>();
+
+    if (rightCondition.getLeft() instanceof OSQLFilterItemField) {
+      OSQLFilterItemField itemField = (OSQLFilterItemField) rightCondition.getLeft();
+      if (itemField.isFieldChain())
+        return null;
+
+      rightField = itemField.getRoot();
+      betweenBoundaries.add(rightCondition.getRight());
+    } else {
+      OSQLFilterItemField itemField = (OSQLFilterItemField) rightCondition.getRight();
+      if (itemField.isFieldChain())
+        return null;
+
+      rightField = itemField.getRoot();
+      betweenBoundaries.add(rightCondition.getLeft());
+    }
+
+    String leftField;
+    if (leftCondition.getLeft() instanceof OSQLFilterItemField) {
+      OSQLFilterItemField itemField = (OSQLFilterItemField) leftCondition.getLeft();
+      if (itemField.isFieldChain())
+        return null;
+
+      leftField = itemField.getRoot();
+      betweenBoundaries.add(leftCondition.getRight());
+    } else {
+      OSQLFilterItemField itemField = (OSQLFilterItemField) leftCondition.getRight();
+      if (itemField.isFieldChain())
+        return null;
+
+      leftField = itemField.getRoot();
+      betweenBoundaries.add(leftCondition.getLeft());
+    }
+
+    if (!leftField.equalsIgnoreCase(rightField))
+      return null;
+
+    final OQueryOperator rightOperator = ((OSQLFilterCondition) right).getOperator();
+    final OQueryOperator leftOperator = ((OSQLFilterCondition) left).getOperator();
+
+    if ((rightOperator instanceof OQueryOperatorMajor || rightOperator instanceof OQueryOperatorMajorEquals)
+        && (leftOperator instanceof OQueryOperatorMinor || leftOperator instanceof OQueryOperatorMinorEquals)) {
+
+      final OQueryOperatorBetween between = new OQueryOperatorBetween();
+
+      if (rightOperator instanceof OQueryOperatorMajor)
+        between.setLeftInclusive(false);
+
+      if (leftOperator instanceof OQueryOperatorMinor)
+        between.setRightInclusive(false);
+
+      return new OSQLFilterCondition(new OSQLFilterItemField(this, leftField), between, betweenBoundaries);
+    }
+
+    if ((leftOperator instanceof OQueryOperatorMajor || leftOperator instanceof OQueryOperatorMajorEquals)
+        && (rightOperator instanceof OQueryOperatorMinor || rightOperator instanceof OQueryOperatorMinorEquals)) {
+      final OQueryOperatorBetween between = new OQueryOperatorBetween();
+
+      if (leftOperator instanceof OQueryOperatorMajor)
+        between.setLeftInclusive(false);
+
+      if (rightOperator instanceof OQueryOperatorMinor)
+        between.setRightInclusive(false);
+
+      return new OSQLFilterCondition(new OSQLFilterItemField(this, leftField), between, betweenBoundaries);
+
+    }
+
+    return null;
   }
 
   private void initContext() {

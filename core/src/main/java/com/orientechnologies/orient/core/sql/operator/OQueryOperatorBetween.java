@@ -38,28 +38,49 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
  * 
  */
 public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
+  private boolean leftInclusive  = true;
+  private boolean rightInclusive = true;
 
   public OQueryOperatorBetween() {
     super("BETWEEN", 5, false, 3);
   }
 
+  public boolean isLeftInclusive() {
+    return leftInclusive;
+  }
+
+  public void setLeftInclusive(boolean leftInclusive) {
+    this.leftInclusive = leftInclusive;
+  }
+
+  public boolean isRightInclusive() {
+    return rightInclusive;
+  }
+
+  public void setRightInclusive(boolean rightInclusive) {
+    this.rightInclusive = rightInclusive;
+  }
+
   @Override
   @SuppressWarnings("unchecked")
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
-    validate(iRight);
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition condition, final Object left,
+      final Object right, OCommandContext iContext) {
+    validate(right);
 
-    final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
+    final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(right);
 
-    final Object right1 = OType.convert(valueIterator.next(), iLeft.getClass());
+    final Object right1 = OType.convert(valueIterator.next(), left.getClass());
     if (right1 == null)
       return false;
     valueIterator.next();
-    final Object right2 = OType.convert(valueIterator.next(), iLeft.getClass());
+    final Object right2 = OType.convert(valueIterator.next(), left.getClass());
     if (right2 == null)
       return false;
 
-    return ((Comparable<Object>) iLeft).compareTo(right1) >= 0 && ((Comparable<Object>) iLeft).compareTo(right2) <= 0;
+    final int leftResult = ((Comparable<Object>) left).compareTo(right1);
+    final int rightResult = ((Comparable<Object>) left).compareTo(right2);
+
+    return (leftInclusive ? leftResult >= 0 : leftResult > 0) && (rightInclusive ? rightResult <= 0 : rightResult < 0);
   }
 
   private void validate(Object iRight) {
@@ -99,7 +120,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyOne == null || keyTwo == null)
         return null;
 
-      cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+      cursor = index.iterateEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
     } else {
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
 
@@ -133,7 +154,7 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       if (keyTwo == null)
         return null;
 
-      cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, true, ascSortOrder);
+      cursor = index.iterateEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
     }
 
     updateProfiler(iContext, index, keyParams, indexDefinition);
