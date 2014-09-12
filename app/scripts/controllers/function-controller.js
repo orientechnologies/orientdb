@@ -31,7 +31,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         }
 
     };
-    Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Functions");
+    Database.setWiki("Functions.html");
     $scope.functions = new Array;
 
     $scope.consoleValue = '';                           //code of the function

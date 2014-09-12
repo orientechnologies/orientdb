@@ -5,6 +5,16 @@
 
             <div class="btn-toolbar pull-right">
                 <div class="btn-group">
+                    <a href="{{ database.getWiki() }}" class="btn btn-sm btn-trasparent"
+                       data-placement="top"
+                       data-title="Help"
+                       data-trigger="hover"
+                       data-animation="am-flip-x"
+                       bs-tooltip>
+                        <i class="fa fa-question-circle fa-lg"></i>
+                    </a>
+                </div>
+                <div class="btn-group">
                     <button ng-click="query()" ng-disabled="!queryText" class="btn btn-sm btn-success"><i
                             class="fa fa-cog"></i>
                         Run
@@ -51,22 +61,28 @@
                         <!--<i class="fa fa-question-circle fa-lg"></i>-->
                         <!--</a>-->
                         <div class="query-hint">
-                            <b>Run:</b>
-                            Ctrl + Return
-                            <b>Undo:</b>
-                            Ctrl/Cmd + Z
-                            <b>Redo:</b>
-                            Ctrl/Cmd + Shift + Z
-                            <br>
-                            <b class="clear-hint">
-                                Search :</b>
-                            Ctrl/Cmd + F
-                            <b>
-                                Toggle Comment:</b>
-                            Ctrl/Cmd + /
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <b>Run:</b>
+                                    Ctrl + Return
+                                    <b>Undo:</b>
+                                    Ctrl/Cmd + Z
+                                    <b>Redo:</b>
+                                    Ctrl/Cmd + Shift + Z
+                                    <br>
+                                    <b class="clear-hint">
+                                        Search :</b>
+                                    Ctrl/Cmd + F
+                                    <b>
+                                        Toggle Comment:</b>
+                                    Ctrl/Cmd + /
+                                </div>
+                            </div>
+
                             <!--<b class="clear-hint">Hint:</b>-->
                             <!--You can select-->
                         </div>
+
                     </div>
                     <div class="col-md-6 command">
                         <form class="form-inline pull-right" ng-show="!hideSettings">
@@ -85,6 +101,14 @@
                                         <input type="checkbox" class="" ng-model="hideSettings"/> Hide settings
                                     </label>
                                 </div>
+                                <a href="{{ database.getWiki() }}" class="btn btn-sm btn-trasparent"
+                                   data-placement="top"
+                                   data-title="Help"
+                                   data-trigger="hover"
+                                   data-animation="am-flip-x"
+                                   bs-tooltip>
+                                    <i class="fa fa-question-circle fa-lg"></i>
+                                </a>
                                 <button ng-click="query()" ng-disabled="!queryText" class="btn btn-sm btn-success"><i
                                         class="fa fa-cog"></i>
                                     Run

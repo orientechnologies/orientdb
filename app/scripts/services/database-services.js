@@ -34,11 +34,16 @@ var InstantDatabaseResolve = {
     }
 }
 database.factory('Database', function (DatabaseApi, localStorageService) {
+
+
+    var version = STUDIO_VERSION.indexOf("SNAPSHOT") == -1 ? STUDIO_VERSION : "last";
+    var wikiBase = 'http://www.orientechnologies.com/docs/' + version + "/orientdb-studio.wiki/";
     var current = {
         name: null,
         username: null,
         metadata: null,
-        wiki: "https://github.com/orientechnologies/orientdb-studio/wiki"
+        wiki: wikiBase
+
     }
     return {
 
@@ -63,7 +68,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
             return current.wiki;
         },
         setWiki: function (urlWiki) {
-            current.wiki = urlWiki;
+            current.wiki = wikiBase + urlWiki;
         },
         getMappingFor: function (type) {
             return this.mapping[type];

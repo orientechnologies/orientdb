@@ -14,21 +14,20 @@
             </a>
         </div>
 
-        <div class="collapse navbar-collapse navbar-ex1-collapse">
-            <ul class="nav navbar-nav">
+        <div class="collapse navbar-collapse navbar-ex1-collapse"  >
+            <ul class="nav navbar-nav"  ng-show="database.getName()">
                 <li data-match-route="{{menu.link}}" ng-class="getClass(menu)" ng-repeat="menu in menus">
                     <a href="{{menu.link}}"><i class="{{menu.icon}} "></i> {{menu.name | capitalize}}</a>
                 </li>
 
-                <li>
-                    <a href="{{urlWiki}}" target="_blank"><i class="fa fa-question-circle"></i> Help</a>
-                </li>
+                <!--<li>-->
+                    <!--<a href="{{urlWiki}}" target="_blank"><i class="fa fa-question-circle"></i> Help</a>-->
+                <!--</li>-->
 
 
                 <li>
                     <!-- report issue -->
-                    <a href="https://github.com/orientechnologies/orientdb-studio/issues" target="_blank"><i
-                            class="fa fa-bug "></i> Report Issue</a>
+
                 </li>
 
 
@@ -51,8 +50,13 @@
                     <ul class="dropdown-menu">
                         <li><a href="javascript:void(0)" ng-click="refreshMetadata()"><i
                                 class="fa fa-refresh "></i> Refresh Metadata</a></li>
+                        <li>
+                            <a href="https://github.com/orientechnologies/orientdb-studio/issues" target="_blank"><i
+                                    class="fa fa-bug "></i> Report Issue</a>
+                        </li>
                         <li><a href="javascript:void(0)" ng-click="showAbout()"><i class="fa fa-info-circle"></i> About</a>
                         </li>
+
                         <li><a href="#" ng-click="logout()"><i class="fa fa-power-off "></i> Log Out</a></li>
                     </ul>
                 </li>

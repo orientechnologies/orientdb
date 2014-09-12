@@ -267,6 +267,8 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     var data = [];
 
 
+    $scope.database = Database;
+    Database.setWiki("GraphEditor.html")
     $scope.dirty = false;
     $rootScope.$on('graphConfig:changed', function (val) {
         $scope.dirty = val;

@@ -52,7 +52,7 @@ body div.container-notification {
 }
 
 body div.container-studio {
-    padding-top: 80px;
+    padding-top: 70px;
 }
 
 .class-body .row {
@@ -410,6 +410,10 @@ table.result-table > thead > tr > th {
     padding-left: 5px;
 }
 
+.query-hint {
+    /*width: 90%;*/
+}
+
 .query-info input.form-control {
     width: 50px;
 }
@@ -680,4 +684,36 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 
 .query-info .btn-help {
     font-size: 20px;
+}
+
+.btn-help:hover, .btn-help:focus {
+    color: #428bca;
+}
+
+.btn-help {
+    padding: 0;
+
+}
+
+.panel-heading .btn-help .fa-question {
+    vertical-align: -10%;
+    color: white;
+    background-color: #428bca;
+    border-radius: 50%;
+    padding: 3px 5px;
+
+}
+
+.panel-heading .btn-help {
+    /*padding-left: 10px;*/
+
+}
+
+.panel-heading .tooltip-inner {
+    background-color: #428bca;
+}
+
+.panel-heading .tooltip.right .tooltip-arrow {
+    border-right: 5px solid #428bca;
+
 }

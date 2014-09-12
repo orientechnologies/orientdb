@@ -79,7 +79,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
     }
     $scope.tm = $scope.timeline;
-    Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Query");
+    Database.setWiki("Query.html");
 
     $scope.language = 'sql';
 

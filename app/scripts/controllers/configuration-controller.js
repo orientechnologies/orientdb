@@ -9,20 +9,23 @@
 var configModule = angular.module('configuration.controller', []);
 configModule.controller("ConfigurationController", ['$scope', '$routeParams', '$location', 'DatabaseApi', 'Database', function ($scope, $routeParams, $location, DatabaseApi, Database) {
 
+    $scope.database = Database;
     $scope.active = $routeParams.tab || "structure";
     $scope.db = $routeParams.database;
-    $scope.tabs = ['structure', 'configuration', 'import-export', 'uml'];
+    $scope.tabs = ['structure', 'configuration', 'import-export'];
 
     $scope.tabsI18n = new Array;
 
-    if ($scope.active == "allocation") {
-        Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Defragmentation");
+    if ($scope.active == "structure") {
+        Database.setWiki("Structure.html");
     }
-    else {
-        Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Uml");
+
+    else if ($scope.active == "configuration") {
+        Database.setWiki("Configuration.html");
+    } else if ($scope.active == "import-export") {
+        Database.setWiki("Configuration.html");
     }
     $scope.tabsI18n['structure'] = 'Structure';
-//    $scope.tabsI18n['allocation'] = 'Defragmentation';
     $scope.tabsI18n['configuration'] = 'Configuration';
     $scope.tabsI18n['import-export'] = 'Export';
     $scope.tabsI18n['uml'] = 'UML Class Diagram';
@@ -230,12 +233,13 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
             promises.push(p);
         });
         $scope.customDirty.forEach(function (val) {
-
             var p = DatabaseAlterApi.changeCustomProperty(Database.getName(), val);
             promises.push(p);
         });
         $q.all(promises).then(function () {
             Notification.push({content: "Configuration Saved."});
+        }, function (err) {
+            Notification.push({content: err, error: true});
         });
     }
 

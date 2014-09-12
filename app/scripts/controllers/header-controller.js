@@ -2,10 +2,13 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
     $scope.database = Database;
     $scope.selectedMenu = null;
     $scope.menus = [];
-//    $scope.urlWiki = Database.getWiki();
+
+
+
 
     $scope.$watch(Database.getWiki, function (data) {
         if (data != null) {
+
             $scope.urlWiki = data;
         }
 
@@ -18,11 +21,11 @@ angular.module('header.controller', ['database.services']).controller("HeaderCon
         if (data != null) {
 
             $scope.menus = [
-                { name: "browse", link: '#/database/' + data + '/browse', icon: "fa fa-eye", wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Query"},
-                { name: "schema", link: '#/database/' + data + '/schema', icon: "fa fa-tasks", wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Schema"},
-                { name: "security", link: '#/database/' + data + '/security', icon: 'fa fa-user', wiki: ""},
-                { name: "graph", link: '#/database/' + data + '/graph', icon: 'fa fa-circle-o', wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Graph"},
-                { name: "functions", link: '#/database/' + data + '/functions', icon: 'fa fa-code', wiki: "https://github.com/orientechnologies/orientdb-studio/wiki/Functions"},
+                { name: "browse", link: '#/database/' + data + '/browse', icon: "fa fa-eye"},
+                { name: "schema", link: '#/database/' + data + '/schema', icon: "fa fa-tasks"},
+                { name: "security", link: '#/database/' + data + '/security', icon: 'fa fa-user'},
+                { name: "graph", link: '#/database/' + data + '/graph', icon: 'fa fa-circle-o'},
+                { name: "functions", link: '#/database/' + data + '/functions', icon: 'fa fa-code'},
                 { name: "DB", link: '#/database/' + data + '/db', icon: 'fa fa-database'}
 
             ];

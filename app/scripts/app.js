@@ -105,12 +105,12 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
         .when('/database/:database/db', {
             templateUrl: 'views/database/configuration.html',
             controller: 'ConfigurationController',
-            resolve: DatabaseResolve
+            resolve: InstantDatabaseResolve
         })
         .when('/database/:database/db/:tab', {
             templateUrl: 'views/database/configuration.html',
             controller: 'ConfigurationController',
-            resolve: DatabaseResolve
+            resolve: InstantDatabaseResolve
         })
         .when('/database/:database/graph', {
             templateUrl: 'views/database/graph/graph.html',

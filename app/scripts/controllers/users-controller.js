@@ -1,6 +1,7 @@
 var schemaModule = angular.module('users.controller', ['database.services']);
 schemaModule.controller("SecurityController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route) {
 
+    $scope.database = Database;
     $scope.db = $routeParams.database;
     $scope.active = $routeParams.tab || "users";
     $scope.tabs = ['users', 'roles'];
@@ -8,6 +9,7 @@ schemaModule.controller("SecurityController", ['$scope', '$routeParams', '$locat
     $scope.tabsI18n['users'] = 'Users';
     $scope.tabsI18n['roles'] = 'Roles';
 
+    Database.setWiki("Security.html");
     $scope.getTemplate = function (tab) {
         return 'views/database/security/' + tab + '.html';
     }
