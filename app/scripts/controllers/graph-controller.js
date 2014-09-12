@@ -52,7 +52,7 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
         var modalScope = $scope.$new(true);
         modalScope.db = $scope.database;
         modalScope.rid = rid;
-        var modalPromise = $modal({template: 'views/database/modalEdit.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
+        var modalPromise = $modal({template: 'views/database/modalEdit.html', persist: false, show: true, scope: modalScope, modalClass: 'editEdge'});
 
     };
     $scope.showModalConnection = function (label) {
@@ -61,7 +61,7 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
         modalScope.originRid = $scope.rid;
         modalScope.container = $scope;
         modalScope.label = label
-        var modalPromise = $modal({template: 'views/vertex/modalConnection.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'createEdge'});
+        var modalPromise = $modal({template: 'views/vertex/modalConnection.html', persist: false, show: true, scope: modalScope, modalClass: 'createEdge'});
 
     }
     if (!$scope.doc) {
@@ -625,7 +625,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         modalScope.cancelSave = function () {
             $scope.graph.endEdgeCreation();
         }
-        $modal({template: 'views/database/modalNewEdge.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
+        $modal({template: 'views/database/modalNewEdge.html', persist: false, show: true, scope: modalScope, modalClass: 'editEdge'});
 
     };
     $scope.showModalNew = function () {
@@ -636,7 +636,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         modalScope.confirmSave = function (doc) {
             $scope.graph.data([doc]).redraw();
         }
-        $modal({template: 'views/database/modalNew.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
+        $modal({template: 'views/database/modalNew.html', persist: false, show: true, scope: modalScope, modalClass: 'editEdge'});
 
     };
     $scope.addNode = function () {
@@ -654,7 +654,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                 v.source = doc;
             }
         }
-        $modal({template: 'views/database/modalEdit.html', persist: false, show: true, backdrop: 'static', scope: modalScope, modalClass: 'editEdge'});
+        $modal({template: 'views/database/modalEdit.html', persist: false, show: true, scope: modalScope, modalClass: 'editEdge'});
 
     };
     $scope.saveConfig = function () {

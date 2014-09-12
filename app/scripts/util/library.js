@@ -25,7 +25,7 @@ Utilities.confirm = function ($scope, $modal, $q, params) {
         modalScope.msg = params.body;
 
 
-        var modalPromise = $modal({template: 'views/modal/yesno.html', persist: true, show: false, backdrop: 'static', scope: modalScope, modalClass: ''});
+        var modalPromise = $modal({template: 'views/modal/yesno.html', persist: true, show: false, scope: modalScope, modalClass: ''});
 
         modalPromise.$promise.then(function () {
             modalPromise.show();

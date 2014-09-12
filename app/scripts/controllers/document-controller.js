@@ -13,7 +13,7 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
         modalScope = $scope.$new(true);
         modalScope.db = $scope.database;
         modalScope.rid = rid;
-        var modalPromise = $modal({template: 'views/document/modalEdit.html', persist: true, show: false, backdrop: 'static', modalClass: 'editEdge', scope: modalScope});
+        var modalPromise = $modal({template: 'views/document/modalEdit.html', persist: true, show: false, modalClass: 'editEdge', scope: modalScope});
         $q.when(modalPromise).then(function (modalEl) {
             modalEl.modal('show');
         });
@@ -54,7 +54,7 @@ DocController.controller("DocumentEditController", ['$scope', '$injector', '$rou
         modalScope.originRid = $scope.rid;
         modalScope.container = $scope;
         modalScope.label = label
-        var modalPromise = $modal({template: 'views/document/modalConnection.html', persist: true, show: true, backdrop: 'static', scope: modalScope, modalClass: 'createEdge'});
+        var modalPromise = $modal({template: 'views/document/modalConnection.html', persist: true, show: true, scope: modalScope, modalClass: 'createEdge'});
 
 
     }
@@ -384,7 +384,7 @@ function BaseEditController($scope, $routeParams, $route, $location, $modal, $q,
             var modalScope = $scope.$new(true);
             modalScope.addField = $scope.addField;
             modalScope.types = Database.getSupportedTypes();
-            var modalPromise = $modal({template: 'views/database/newField.html', persist: true, show: true, backdrop: 'static', scope: modalScope});
+            var modalPromise = $modal({template: 'views/database/newField.html', persist: true, show: true, scope: modalScope});
 
         }
 

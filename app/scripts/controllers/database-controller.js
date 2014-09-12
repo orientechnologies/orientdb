@@ -150,6 +150,8 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
         if (queryBuffer.startsWith('g.')) {
             $scope.language = 'gremlin';
+        }else {
+            $scope.language = 'sql';
         }
         if (queryBuffer.startsWith('#')) {
             $location.path('/database/' + $routeParams.database + '/browse/edit/' + queryBuffer.replace('#', ''));

@@ -162,7 +162,7 @@ App.config(function ($routeProvider, $httpProvider, $translateProvider, $transla
     });
 
 });
-App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $templateCache,Aside) {
+App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $templateCache, Aside) {
     $rootScope.$on('$routeChangeSuccess', function (event, currentRoute, oldRoute) {
         switch (currentRoute.templateUrl) {
             case 'views/login.html':
@@ -194,4 +194,12 @@ App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $te
     }, 10000);
 
     $templateCache.put('popover/popover.tpl.html', '<div class="popover"><div class="arrow"></div><h3 class="popover-title" ng-bind="title" ng-show="title"></h3><div class="popover-content" ng-bind-html="content"></div></div>');
+})
+
+$('body').on('keyup', function (e) {
+
+    if (e.keyCode == 27) {
+        console.log(e);
+        $('.modal-backdrop').click()
+    }
 })

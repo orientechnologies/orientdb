@@ -1,7 +1,8 @@
 var schemaModule = angular.module('function.controller', ['database.services']);
-schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', 'Notification', 'Aside', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner, Notification, Aside) {
+schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', 'Notification', 'Aside','$rootScope', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner, Notification, Aside,$rootScope) {
 
     $scope.database = Database;
+    $scope.listClass = 'fa-mail-reply';
     $scope.logLevel = ""
     $scope.listClasses = $scope.database.listClasses();
     $scope.editorOptions = {
@@ -98,8 +99,16 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         return result;
     }
     $scope.showAllFunctions = function () {
+
         Aside.toggle();
+
     }
+    $rootScope.$on("aside:close", function () {
+        $scope.listClass = 'fa-mail-forward';
+    })
+    $rootScope.$on("aside:open", function () {
+        $scope.listClass = 'fa-mail-reply';
+    })
     $scope.copyFunction = function () {
         if ($scope.functionToExecute != undefined) {
 
