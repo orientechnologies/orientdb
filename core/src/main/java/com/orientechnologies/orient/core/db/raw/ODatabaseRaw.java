@@ -676,6 +676,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     case CONFLICTSTRATEGY:
       storage.getConfiguration().setConflictStrategy(stringValue);
       storage.getConfiguration().update();
+      break;
 
     default:
       throw new IllegalArgumentException("Option '" + iAttribute + "' not supported on alter database");
