@@ -2040,6 +2040,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * Creates a new ODocument.
    */
   public ODocument newInstance() {
+    ODatabaseRecordThreadLocal.INSTANCE.set(this);
     return new ODocument();
   }
 
@@ -2052,6 +2053,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    */
   @Override
   public ODocument newInstance(final String iClassName) {
+    ODatabaseRecordThreadLocal.INSTANCE.set(this);
     return new ODocument(iClassName);
   }
 
