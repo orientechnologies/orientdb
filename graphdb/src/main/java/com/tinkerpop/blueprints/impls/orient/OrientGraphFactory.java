@@ -1,7 +1,5 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -14,6 +12,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A factory to create instances of {@link OrientGraph}. OrientGraph is a Blueprints implementation of the graph database OrientDB
@@ -116,9 +116,14 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
     if (pool == null) {
       g = (OrientGraph) new OrientGraph(getDatabase()).configure(settings);
       initGraph(g);
-    } else
+    } else {
+      if (!transactional)
+        throw new IllegalStateException(
+            "Cannot create a transactional graph instance after the pool has been set as non-transactional");
+
       // USE THE POOL
       return (OrientGraph) pool.getResource(url, 0, user, password);
+    }
 
     return g;
   }
@@ -134,9 +139,14 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
     if (pool == null) {
       g = (OrientGraphNoTx) new OrientGraphNoTx(getDatabase(), user, password).configure(settings);
       initGraph(g);
-    } else
+    } else {
+      if (transactional)
+        throw new IllegalStateException(
+            "Cannot create a non-transactional graph instance after the pool has been set as transactional");
+
       // USE THE POOL
       return (OrientGraphNoTx) pool.getResource(url, 0, user, password);
+    }
 
     return g;
   }
@@ -214,7 +224,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
       public OrientBaseGraph createNewResource(final String iKey, final Object... iAdditionalArgs) {
         final OrientBaseGraph g;
         if (transactional)
-          g = (OrientGraph) new OrientGraph(getDatabase(), user, password) {
+          g = new OrientGraph(getDatabase(), user, password) {
             @Override
             public void shutdown() {
               if (pool != null)
@@ -224,7 +234,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
             }
           }.configure(settings);
         else
-          g = (OrientGraphNoTx) new OrientGraphNoTx(getDatabase(), user, password) {
+          g = new OrientGraphNoTx(getDatabase(), user, password) {
             @Override
             public void shutdown() {
               if (pool != null) {
@@ -261,14 +271,16 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
   /**
    * Configure current factory to create transactional of non transactional graphs by default.
    * 
-   * @param transactional
+   * @param iTransactional
    *          defines should the factory return transactional graph by default.
    * @return this
    * 
    * @see #get()
    */
-  public OrientGraphFactory setTransactional(final boolean transactional) {
-    this.transactional = transactional;
+  public OrientGraphFactory setTransactional(final boolean iTransactional) {
+    if (pool != null && transactional != iTransactional)
+      throw new IllegalArgumentException("Cannot change transactional state after creating the pool");
+    this.transactional = iTransactional;
     return this;
   }
 
