@@ -1040,6 +1040,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     FEATURES.supportsMapProperty = true;
     FEATURES.supportsStringProperty = true;
     FEATURES.supportsThreadedTransactions = false;
+    FEATURES.supportsThreadIsolatedTransactions = false;
   }
 
   private void asynchOperationCompleted() {
