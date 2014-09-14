@@ -143,9 +143,13 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     } catch (OLockException e) {
       OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
     } finally {
-      if (db == null)
-        // WRONG USER/PASSWD
-        sendAuthorizationRequest(iRequest, iResponse, iDatabaseName);
+      if (db == null) {
+          // WRONG USER/PASSWD
+          sendAuthorizationRequest(iRequest, iResponse, iDatabaseName);
+      }
+      else {
+          db.close();
+      }
     }
     return false;
   }
