@@ -362,9 +362,9 @@ public class OMultiValue {
         } else
           coll = (OCollection<Object>) iObject;
 
-        if (iToAdd instanceof Iterable<?>) {
+        if (isMultiValue(iToAdd)) {
           // COLLECTION - COLLECTION
-          for (Object o : (Iterable<Object>) iToAdd) {
+          for (Object o : getMultiValueIterable(iToAdd)) {
             if (isMultiValue(o))
               add(coll, o);
             else
@@ -652,5 +652,43 @@ public class OMultiValue {
     if (col1.size() != col2.size())
       return false;
     return col1.containsAll(col2) && col2.containsAll(col1);
+  }
+
+  public static boolean contains(final Object iObject, final Object iItem) {
+    if (iObject == null)
+      return false;
+
+    if (iObject instanceof Collection)
+      return ((Collection) iObject).contains(iItem);
+
+    else if (iObject.getClass().isArray()) {
+      final int size = Array.getLength(iObject);
+      for (int i = 0; i < size; ++i) {
+        final Object item = Array.get(iObject, i);
+        if (item != null && item.equals(iItem))
+          return true;
+      }
+    }
+
+    return false;
+  }
+
+  public static int indexOf(final Object iObject, final Object iItem) {
+    if (iObject == null)
+      return -1;
+
+    if (iObject instanceof List)
+      return ((List) iObject).indexOf(iItem);
+
+    else if (iObject.getClass().isArray()) {
+      final int size = Array.getLength(iObject);
+      for (int i = 0; i < size; ++i) {
+        final Object item = Array.get(iObject, i);
+        if (item != null && item.equals(iItem))
+          return i;
+      }
+    }
+
+    return -1;
   }
 }
