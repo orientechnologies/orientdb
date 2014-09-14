@@ -146,6 +146,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       if (db == null)
         // WRONG USER/PASSWD
         sendAuthorizationRequest(iRequest, iResponse, iDatabaseName);
+      else
+        db.close();
     }
     return false;
   }
