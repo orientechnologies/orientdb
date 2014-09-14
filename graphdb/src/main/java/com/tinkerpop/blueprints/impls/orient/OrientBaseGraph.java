@@ -61,7 +61,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public static final String          CONNECTION_IN   = "in";
   public static final String          CLASS_PREFIX    = "class:";
   public static final String          CLUSTER_PREFIX  = "cluster:";
-  protected final static String       ADMIN           = "admin";
+  public static final String          ADMIN           = "admin";
   private static final Object         manualIndexLock = new Object();
   private final ODatabaseDocumentPool pool;
   protected ODatabaseDocumentTx       database;
@@ -402,13 +402,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return database.getStorage().getConflictStrategy();
   }
 
-  public OrientBaseGraph setConflictStrategy(final String iStrategyName) {
-    database.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+  public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    database.setConflictStrategy(iResolver);
     return this;
   }
 
-  public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    database.setConflictStrategy(iResolver);
+  public OrientBaseGraph setConflictStrategy(final String iStrategyName) {
+    database.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
   }
 

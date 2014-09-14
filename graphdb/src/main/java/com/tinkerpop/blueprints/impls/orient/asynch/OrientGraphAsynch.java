@@ -69,7 +69,12 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class OrientGraphAsynch implements OrientExtendedGraph {
   private final Features                                FEATURES             = new Features();
-  private final OrientGraphFactory                      factory;
+
+  private final String                                  url;
+  private final String                                  userName;
+  private final String                                  userPassword;
+
+  private OrientGraphFactory                            factory;
   private ConcurrentLinkedHashMap<Object, OrientVertex> vertexCache;
   private int                                           maxPoolSize          = 32;
   private int                                           maxRetries           = 16;
@@ -95,11 +100,15 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   }
 
   public OrientGraphAsynch(final String url) {
-    factory = new OrientGraphFactory(url).setupPool(1, maxPoolSize).setTransactional(transactional);
+    this.url = url;
+    this.userName = OrientBaseGraph.ADMIN;
+    this.userPassword = OrientBaseGraph.ADMIN;
   }
 
-  public OrientGraphAsynch(final String url, final String username, final String password) {
-    factory = new OrientGraphFactory(url, username, password).setupPool(1, maxPoolSize).setTransactional(transactional);
+  public OrientGraphAsynch(final String url, final String userName, final String userPassword) {
+    this.url = url;
+    this.userName = userName;
+    this.userPassword = userPassword;
   }
 
   public String getKeyFieldName() {
@@ -119,13 +128,14 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   }
 
   public OrientGraphAsynch setCache(final long iElements) {
+    init();
     vertexCache = new ConcurrentLinkedHashMap.Builder<Object, OrientVertex>().maximumWeightedCapacity(iElements).build();
     factory.setKeepInMemoryReferences(true);
     return this;
   }
 
   public Vertex addOrUpdateVertex(final Object id, final Object... prop) {
-    operationStarted.incrementAndGet();
+    beginAsynchOperation();
 
     return new OrientVertexFuture(Orient.instance().getWorkers().submit(new Callable<OrientVertex>() {
       @Override
@@ -184,14 +194,14 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           }
         } finally {
           g.shutdown();
-          asynchOperationCompleted();
+          endAsynchOperation();
         }
       }
     }));
   }
 
   public Vertex addVertex(final Object id, final Object... prop) {
-    operationStarted.incrementAndGet();
+    beginAsynchOperation();
 
     return new OrientVertexFuture(Orient.instance().getWorkers().submit(new Callable<OrientVertex>() {
       @Override
@@ -206,7 +216,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
         } finally {
           g.shutdown();
-          asynchOperationCompleted();
+          endAsynchOperation();
         }
       }
     }));
@@ -232,7 +242,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Vertex addVertex(final Object id) {
-    operationStarted.incrementAndGet();
+    beginAsynchOperation();
 
     return new OrientVertexFuture(Orient.instance().getWorkers().submit(new Callable<OrientVertex>() {
       @Override
@@ -246,7 +256,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           return v;
         } finally {
           g.shutdown();
-          asynchOperationCompleted();
+          endAsynchOperation();
         }
       }
     }));
@@ -254,6 +264,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public void declareIntent(final OIntent iIntent) {
+    init();
     factory.declareIntent(iIntent);
   }
 
@@ -264,6 +275,8 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
     if (id instanceof OrientVertex)
       return (Vertex) id;
+
+    init();
 
     if (id instanceof OIdentifiable)
       return new OrientVertex((OrientBaseGraph) null, (OIdentifiable) id);
@@ -290,7 +303,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public void removeVertex(final Vertex vertex) {
-    operationStarted.incrementAndGet();
+    beginAsynchOperation();
 
     Orient.instance().getWorkers().submit(new Callable<Object>() {
       @Override
@@ -308,7 +321,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           verticesRemoved.incrementAndGet();
         } finally {
           g.shutdown();
-          asynchOperationCompleted();
+          endAsynchOperation();
         }
         return null;
       }
@@ -317,7 +330,6 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Iterable<Vertex> getVertices() {
-
     final OrientBaseGraph g = acquire();
     try {
       return g.getVertices();
@@ -328,7 +340,6 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Iterable<Vertex> getVertices(final String key, final Object value) {
-
     final OrientBaseGraph g = acquire();
     try {
       return g.getVertices(key, value);
@@ -338,7 +349,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   }
 
   public Edge addEdgeByVerticesKeys(final Object iOutVertex, final Object iInVertex, final String iEdgeLabel) {
-    operationStarted.incrementAndGet();
+    beginAsynchOperation();
 
     return new OrientEdgeFuture(Orient.instance().getWorkers().submit(new Callable<OrientEdge>() {
       @Override
@@ -381,7 +392,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           }
         } finally {
           g.shutdown();
-          asynchOperationCompleted();
+          endAsynchOperation();
         }
       }
     }));
@@ -389,7 +400,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Edge addEdge(final Object id, final Vertex outVertex, final Vertex inVertex, final String label) {
-    operationStarted.incrementAndGet();
+    beginAsynchOperation();
 
     return new OrientEdgeFuture(Orient.instance().getWorkers().submit(new Callable<OrientEdge>() {
       @Override
@@ -438,7 +449,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           }
         } finally {
           g.shutdown();
-          asynchOperationCompleted();
+          endAsynchOperation();
         }
       }
     }));
@@ -446,7 +457,6 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Edge getEdge(final Object id) {
-
     final OrientBaseGraph g = acquire();
     try {
       return g.getEdge(id);
@@ -457,7 +467,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public void removeEdge(final Edge edge) {
-    operationStarted.incrementAndGet();
+    beginAsynchOperation();
 
     Orient.instance().getWorkers().submit(new Callable<Object>() {
       @Override
@@ -467,7 +477,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           g.removeEdge(edge);
         } finally {
           g.shutdown();
-          asynchOperationCompleted();
+          endAsynchOperation();
         }
         return null;
       }
@@ -476,7 +486,6 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Iterable<Edge> getEdges() {
-
     final OrientBaseGraph g = acquire();
     try {
       return g.getEdges();
@@ -768,6 +777,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   }
 
   public OrientBaseGraph acquire() {
+    init();
     final OrientBaseGraph g = factory.get();
 
     if (conflictStrategy != null) {
@@ -881,6 +891,15 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   public OrientGraphAsynch setConflictStrategy(final ORecordConflictStrategy iResolver) {
     conflictStrategy = iResolver;
     return this;
+  }
+
+  protected void init() {
+    if (factory == null) {
+      synchronized (this) {
+        if (factory == null)
+          factory = new OrientGraphFactory(url, userName, userPassword).setTransactional(transactional).setupPool(1, maxPoolSize);
+      }
+    }
   }
 
   protected MERGE_RESULT mergeAndSaveRecord(final int retry, final ODocument existent, final Object[] prop)
@@ -1011,6 +1030,18 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     }
   }
 
+  protected void beginAsynchOperation() {
+    init();
+    operationStarted.incrementAndGet();
+  }
+
+  protected void endAsynchOperation() {
+    operationCompleted.incrementAndGet();
+    synchronized (operationCompleted) {
+      operationCompleted.notifyAll();
+    }
+  }
+
   protected void config() {
     FEATURES.supportsDuplicateEdges = true;
     FEATURES.supportsSelfLoops = true;
@@ -1041,12 +1072,5 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     FEATURES.supportsStringProperty = true;
     FEATURES.supportsThreadedTransactions = false;
     FEATURES.supportsThreadIsolatedTransactions = false;
-  }
-
-  private void asynchOperationCompleted() {
-    operationCompleted.incrementAndGet();
-    synchronized (operationCompleted) {
-      operationCompleted.notifyAll();
-    }
   }
 }

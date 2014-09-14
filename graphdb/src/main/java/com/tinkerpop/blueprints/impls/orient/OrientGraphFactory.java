@@ -42,7 +42,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
    *          to the database
    */
   public OrientGraphFactory(final String iURL) {
-    this(iURL, "admin", "admin");
+    this(iURL, OrientBaseGraph.ADMIN, OrientBaseGraph.ADMIN);
   }
 
   /**
