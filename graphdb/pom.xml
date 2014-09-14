@@ -46,7 +46,7 @@
             com.orientechnologies.orient.graph.*,
             com.tinkerpop.blueprints.impls.orient
         </osgi.export>
-        <blueprints.version>2.5.0</blueprints.version>
+        <blueprints.version>2.6.0-SNAPSHOT</blueprints.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -152,4 +152,11 @@
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <repository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype Nexus Snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+    </repositories>
 </project>
