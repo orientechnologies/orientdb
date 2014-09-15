@@ -29,6 +29,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientExtendedVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 import java.util.concurrent.Future;
 
@@ -95,6 +96,15 @@ public class OrientVertexFuture extends OrientElementFuture<OrientVertex> implem
   public OrientVertex getVertexInstance() {
     try {
       return future.get();
+    } catch (Exception e) {
+      throw new OException("Cannot get the underlying future content", e);
+    }
+  }
+
+  @Override
+  public OrientVertexType getType() {
+    try {
+      return future.get().getType();
     } catch (Exception e) {
       throw new OException("Cannot get the underlying future content", e);
     }

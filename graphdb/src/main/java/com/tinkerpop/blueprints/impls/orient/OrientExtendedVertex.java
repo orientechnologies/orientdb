@@ -42,4 +42,9 @@ public interface OrientExtendedVertex extends Vertex {
   ORID getIdentity();
 
   OrientVertex getVertexInstance();
+
+  /**
+   * (Blueprints Extension) Returns the Vertex type as OrientVertexType object.
+   */
+  OrientVertexType getType();
 }

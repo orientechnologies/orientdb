@@ -133,6 +133,10 @@ public class OrientEdge extends OrientElement implements Edge {
     }
   }
 
+  public OrientEdgeType getType() {
+    return isLightweight() ? null : new OrientEdgeType(graph, ((ODocument) rawElement.getRecord()).getSchemaClass());
+  }
+
   /**
    * Returns the connected incoming or outgoing vertex.
    * 
