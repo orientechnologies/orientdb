@@ -186,6 +186,7 @@ public enum OGlobalConfiguration {
 
   DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
 
+  @Deprecated
   DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Use extended version that is safe in distributed environment",
       Boolean.class, Boolean.FALSE),
 

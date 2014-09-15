@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
@@ -784,7 +785,7 @@ public class OObjectSerializerHelper {
       if (iRecord != null && iType.equals(OType.EMBEDDEDSET))
         result = new OTrackedSet<Object>(iRecord);
       else
-        result = new HashSet<Object>();
+        result = new ORecordLazySet(iRecord);
     } else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
       if (iRecord != null && iType.equals(OType.EMBEDDEDLIST))
         result = new OTrackedList<Object>(iRecord);

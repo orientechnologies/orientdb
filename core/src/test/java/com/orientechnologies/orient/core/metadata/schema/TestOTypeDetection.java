@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -108,11 +109,13 @@ public class TestOTypeDetection {
 
     assertEquals(OType.INTEGER, OType.getTypeByClass(BigInteger.class));
 
-    assertEquals(OType.LINK, OType.getTypeByClass(ODocument.class));
+    assertEquals(OType.LINK, OType.getTypeByClass(OIdentifiable.class));
+
+    assertEquals(OType.LINK, OType.getTypeByClass(ORecordId.class));
 
     assertEquals(OType.LINK, OType.getTypeByClass(ORecord.class));
 
-    assertEquals(OType.LINK, OType.getTypeByClass(ORecordId.class));
+    assertEquals(OType.LINK, OType.getTypeByClass(ODocument.class));
 
     assertEquals(OType.EMBEDDEDLIST, OType.getTypeByClass(ArrayList.class));
 

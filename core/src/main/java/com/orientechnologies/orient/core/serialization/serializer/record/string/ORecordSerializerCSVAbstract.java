@@ -569,7 +569,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           fieldTypeToString(iOutput, OType.STRING, o.getKey());
           iOutput.append(OStringSerializerHelper.ENTRY_SEPARATOR);
 
-          if (o.getValue() instanceof ORecord<?> || o.getValue() instanceof ODocumentSerializable) {
+          if (o.getValue() instanceof ODocument && ((ODocument) o.getValue()).getIdentity().isValid()) {
+            fieldTypeToString(iOutput, OType.LINK, o.getValue());
+          } else if (o.getValue() instanceof ORecord<?> || o.getValue() instanceof ODocumentSerializable) {
             final ODocument record;
             if (o.getValue() instanceof ODocument)
               record = (ODocument) o.getValue();
