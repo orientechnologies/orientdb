@@ -904,15 +904,10 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
             map.put(entry.getKey(), entry.getValue());
           }
           continue;
-        } else if (value instanceof Collection<?>) {
-          final Collection<Object> coll = (Collection<Object>) value;
-          final Collection<Object> otherColl = (Collection<Object>) otherValue;
-
-          for (Object item : otherColl) {
-            if (coll.contains(item))
-              // REMOVE PREVIOUS ITEM BECAUSE THIS COULD BE UPDATED INSIDE OF IT
-              coll.remove(item);
-            coll.add(item);
+        } else if (OMultiValue.isMultiValue(value)) {
+          for (Object item : OMultiValue.getMultiValueIterable(otherValue)) {
+            if (!OMultiValue.contains(value, item))
+              OMultiValue.add(value, item);
           }
 
           // JUMP RAW REPLACE

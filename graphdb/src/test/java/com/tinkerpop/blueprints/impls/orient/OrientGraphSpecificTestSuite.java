@@ -1,20 +1,19 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.TestSuite;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.GraphTest;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Stephen Mallette (http://stephen.genoprime.com)
@@ -155,6 +154,6 @@ public class OrientGraphSpecificTestSuite extends TestSuite {
     assertNotNull(d);
     assertTrue(d.containsKey("telefax"));
     graph.shutdown();
-    graphTest.dropGraph(((OrientGraphTest) graphTest).getWorkingDirectory() + "/complex-map");
+    //graphTest.dropGraph(((OrientGraphTest) graphTest).getWorkingDirectory() + "/complex-map");
   }
 }

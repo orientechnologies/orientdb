@@ -239,8 +239,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (iRecord == null)
       return null;
-    final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isPersistent() ? ORecordOperation.UPDATED
-        : ORecordOperation.CREATED;
+    final byte operation = iForceCreate ? ORecordOperation.CREATED
+        : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
     addRecord(iRecord, operation, iClusterName);
     return iRecord;
   }
@@ -391,6 +391,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             switch (iStatus) {
             case ORecordOperation.DELETED:
               recordEntries.remove(rid);
+//              txEntry.type = ORecordOperation.DELETED;
               break;
             }
             break;

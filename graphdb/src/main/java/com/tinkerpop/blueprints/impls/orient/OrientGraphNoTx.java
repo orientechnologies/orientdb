@@ -88,5 +88,6 @@ public class OrientGraphNoTx extends OrientBaseGraph {
     FEATURES.supportsMapProperty = true;
     FEATURES.supportsStringProperty = true;
     FEATURES.supportsThreadedTransactions = false;
+    FEATURES.supportsThreadIsolatedTransactions = false;
   }
 }

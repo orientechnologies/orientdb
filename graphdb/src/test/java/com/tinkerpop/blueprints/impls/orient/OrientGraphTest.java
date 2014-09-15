@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
@@ -141,8 +142,10 @@ public abstract class OrientGraphTest extends GraphTest {
     if (graph != null) {
       if (graph.isClosed())
         currentGraphs.remove(url);
-      else
+      else {
+        ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());
         return graph;
+      }
     }
 
     graph = new OrientGraph(url);

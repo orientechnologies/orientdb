@@ -38,7 +38,7 @@ public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStra
 
     if (iRecordType == ODocument.RECORD_TYPE) {
       final ODocument storedRecord = rid.getRecord();
-      final ODocument newRecord = new ODocument().fromStream(iRecordContent);
+      final ODocument newRecord = new ODocument(rid).fromStream(iRecordContent);
 
       storedRecord.merge(newRecord, false, true);
 

@@ -836,6 +836,21 @@ public class ODocumentHelper {
   }
 
   /**
+   * Makes a deep comparison field by field to check if the passed ODocument instance is identical as identity and content to the current
+   * one. Instead equals() just checks if the RID are the same.
+   *
+   * @param iOther
+   *          ODocument instance
+   * @return true if the two document are identical, otherwise false
+   * @see #equals(Object);
+   */
+  @SuppressWarnings("unchecked")
+  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseRecord iMyDb, final ODocument iOther,
+                                          final ODatabaseRecord iOtherDb, RIDMapper ridMapper) {
+    return hasSameContentOf(iCurrent, iMyDb, iOther, iOtherDb, ridMapper, true);
+  }
+
+  /**
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical in the content to the current
    * one. Instead equals() just checks if the RID are the same.
    * 
@@ -846,11 +861,11 @@ public class ODocumentHelper {
    */
   @SuppressWarnings("unchecked")
   public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseRecord iMyDb, final ODocument iOther,
-      final ODatabaseRecord iOtherDb, RIDMapper ridMapper) {
+      final ODatabaseRecord iOtherDb, RIDMapper ridMapper, final boolean iCheckAlsoIdentity) {
     if (iOther == null)
       return false;
 
-    if (!iCurrent.equals(iOther) && iCurrent.getIdentity().isValid())
+    if (iCheckAlsoIdentity && !iCurrent.equals(iOther) && iCurrent.getIdentity().isValid())
       return false;
 
     if (iMyDb != null)
