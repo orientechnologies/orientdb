@@ -6,10 +6,10 @@ import org.junit.Test;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.Vertex;
 
-public class OrientGraphVertexInDocumentTest {
+public class OrientGraphVertexInPropertyTest {
 
   @Test
-  public void testOutLinksUniqueness() {
+  public void testVertexInAProperty() {
     final String url = "memory:" + this.getClass().getSimpleName();
     OrientGraph graph = new OrientGraph(url);
     graph.drop();

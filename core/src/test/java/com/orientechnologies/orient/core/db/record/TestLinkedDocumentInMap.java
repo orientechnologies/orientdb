@@ -42,15 +42,12 @@ public class TestLinkedDocumentInMap {
     List<Map<String, OIdentifiable>> res = tyrionDoc.field("emergency_contact");
     Map<String, OIdentifiable> doc = res.get(0);
     Assert.assertTrue(doc.get("contact").getIdentity().isValid());
-    System.out.println(db.load(tyrionDoc.getIdentity()).toJSON());
 
     db.close();
     db.open("admin", "admin");
     List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from " + tyrionDoc.getIdentity()));
     res = result.get(0).field("emergency_contact");
     doc = res.get(0);
-    System.out.println(db.load(tyrionDoc.getIdentity()).toJSON());
-    System.out.println(doc.get("contact").getIdentity());
     Assert.assertTrue(doc.get("contact").getIdentity().isValid());
 
   }
