@@ -83,7 +83,7 @@ public enum OType {
 
   EMBEDDEDMAP("EmbeddedMap", 12, Map.class, new Class<?>[] { Map.class }),
 
-  LINK("Link", 13, Object.class, new Class<?>[] { ORecord.class, ORID.class }),
+  LINK("Link", 13, Object.class, new Class<?>[] { OIdentifiable.class, ORID.class }),
 
   LINKLIST("LinkList", 14, List.class, new Class<?>[] { List.class }),
 
