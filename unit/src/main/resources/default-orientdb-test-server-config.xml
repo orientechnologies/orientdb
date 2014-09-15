@@ -1,0 +1,14 @@
+<orient-server>
+    <properties>
+        <entry name="db.pool.min" value="1" />
+        <entry name="db.pool.max" value="20" />
+
+        <entry name="cache.level1.enabled" value="false" />
+        <entry name="cache.level2.enabled" value="false" />
+
+        <entry name="profiler.enabled" value="false" />
+
+        <entry name="log.console.level" value="fine" />
+        <entry name="log.file.level" value="fine" />
+    </properties>
+</orient-server>
