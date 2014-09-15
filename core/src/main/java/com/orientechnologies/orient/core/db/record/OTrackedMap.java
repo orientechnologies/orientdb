@@ -188,7 +188,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<Object, T> event = listIterator.previous();
-      switch (event.getChangeType()) {
+      switch (event.getChangeType()) {  
       case ADD:
         reverted.remove(event.getKey());
         break;

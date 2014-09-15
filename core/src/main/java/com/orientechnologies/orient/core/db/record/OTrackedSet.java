@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
@@ -28,7 +25,6 @@ import java.util.ListIterator;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;

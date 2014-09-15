@@ -13,6 +13,7 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.server.OServer;
@@ -31,7 +32,7 @@ public class TestNetworkSerializerIndipendency {
 
   @Test
   public void createCsvDatabaseConnectBinary() throws IOException {
-
+    ORecordSerializer prev = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
     createDatabase();
 
@@ -53,6 +54,7 @@ public class TestNetworkSerializerIndipendency {
       if (dbTx != null)
         dbTx.close();
       dropDatabase();
+      ODatabaseDocumentTx.setDefaultSerializer(prev);
     }
   }
 
@@ -70,7 +72,7 @@ public class TestNetworkSerializerIndipendency {
 
   @Test
   public void createBinaryDatabaseConnectCsv() throws IOException {
-
+    ORecordSerializer prev = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerBinary.INSTANCE);
     createDatabase();
 
@@ -93,6 +95,7 @@ public class TestNetworkSerializerIndipendency {
         dbTx.close();
 
       dropDatabase();
+      ODatabaseDocumentTx.setDefaultSerializer(prev);
     }
   }
 

@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -36,13 +38,13 @@ public class ODocumentSchemalessSerializationTest {
     this(new ORecordSerializerSchemaAware2CSV());
   }
 
-  @BeforeTest
+  @BeforeClass
   public void before() {
     defaultSerializer = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(serializer);
   }
 
-  @AfterTest
+  @AfterClass
   public void after() {
     ODatabaseDocumentTx.setDefaultSerializer(defaultSerializer);
   }
