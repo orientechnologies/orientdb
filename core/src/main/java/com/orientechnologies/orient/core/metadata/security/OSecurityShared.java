@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -27,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -39,6 +37,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Shared security class. It's shared by all the database instances that point to the same storage.
@@ -457,6 +458,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   protected OUser getUser(final String iUserName, final boolean iAllowRepair) {
+    if (iUserName == null)
+      return null;
+
     List<ODocument> result;
     try {
       result = getDatabase().<OCommandRequest> command(
@@ -470,6 +474,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
             new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
             .execute();
       }
+    } catch (OSecurityException e) {
+      throw e;
     } catch (Exception e) {
       if (iAllowRepair)
         repair();
