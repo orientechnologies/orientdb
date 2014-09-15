@@ -375,6 +375,10 @@ public class OFetchHelper {
   public static boolean isEmbedded(Object fieldValue) {
     boolean isEmbedded = fieldValue instanceof ODocument
         && (((ODocument) fieldValue).isEmbedded() || !((ODocument) fieldValue).getIdentity().isPersistent());
+
+    // ridbag can contain only edges no embedded documents are allowed.
+    if (fieldValue instanceof ORidBag)
+      return false;
     if (!isEmbedded) {
       try {
         final Object f = OMultiValue.getFirstValue(fieldValue);
