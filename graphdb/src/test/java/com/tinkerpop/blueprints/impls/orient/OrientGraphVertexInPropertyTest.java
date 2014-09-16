@@ -31,7 +31,7 @@ public class OrientGraphVertexInPropertyTest {
     Assert.assertNotEquals(OType.CUSTOM, ((OrientVertex) vertb).getRecord().fieldType("test"));
     Object val = vertb.getProperty("test");
     if (val instanceof String) {
-      Assert.assertEquals(aid.toString(), (String) val);
+      Assert.assertTrue(((String) val).contains(aid.toString()));
     } else {
       Assert.assertEquals(aid, ((Vertex) vertb.getProperty("test")).getId());
     }

@@ -30,6 +30,11 @@ public class ODFACommandStreamTest {
     test("\tone  ; two   ", "one", "two");
   }
 
+	@Test
+  public void testEscaping() {
+			test("one \\\n two \\\r 'aaa \\' bbb';  \"ccc \\\" \"", "one \\\n two \\\r 'aaa \\' bbb'", "\"ccc \\\" \"");
+  }
+
   private void test(String source, String... expectedResults) {
     final ODFACommandStream stream = new ODFACommandStream(source);
 
