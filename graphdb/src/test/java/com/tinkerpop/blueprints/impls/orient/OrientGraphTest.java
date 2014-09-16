@@ -5,15 +5,28 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.tinkerpop.blueprints.*;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.tinkerpop.blueprints.EdgeTestSuite;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.GraphQueryTestSuite;
+import com.tinkerpop.blueprints.GraphTestSuite;
+import com.tinkerpop.blueprints.IndexTestSuite;
+import com.tinkerpop.blueprints.IndexableGraphTestSuite;
+import com.tinkerpop.blueprints.KeyIndexableGraphTestSuite;
+import com.tinkerpop.blueprints.TestSuite;
+import com.tinkerpop.blueprints.TransactionalGraphTestSuite;
+import com.tinkerpop.blueprints.VertexQueryTestSuite;
+import com.tinkerpop.blueprints.VertexTestSuite;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Test suite for OrientDB graph implementation.
@@ -157,13 +170,12 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   public void doTestSuite(final TestSuite testSuite) throws Exception {
-    String directory = getWorkingDirectory();
-    deleteDirectory(new File(directory));
+    dropGraph("graph");
     for (Method method : testSuite.getClass().getDeclaredMethods()) {
       if (method.getName().startsWith("test")) {
         System.out.println("Testing " + method.getName() + "...");
         method.invoke(testSuite);
-        dropGraph(directory + "/graph");
+        dropGraph("graph");
       }
     }
   }
@@ -184,6 +196,9 @@ public abstract class OrientGraphTest extends GraphTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
+    
+    OStorage storage = Orient.instance().getStorage(graphDirectoryName);
+    assertNull(storage);
 
     deleteDirectory(new File(graphDirectory));
   }
