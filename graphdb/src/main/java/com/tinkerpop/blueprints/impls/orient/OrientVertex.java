@@ -10,9 +10,11 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -370,14 +372,14 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       // COLLECTION OF RECORDS: REMOVE THE ENTRY
       final ORidBag bag = (ORidBag) fieldValue;
 
-      bag.remove(iVertexToRemove);
-      bag.add(iNewVertex);
+      if (bag.remove(iVertexToRemove))
+        bag.add(iNewVertex);
 
     } else if (fieldValue instanceof Collection) {
       final Collection col = (Collection) fieldValue;
 
-      col.remove(iVertexToRemove);
-      col.add(iNewVertex);
+      if (col.remove(iVertexToRemove))
+        col.add(iNewVertex);
     }
 
     iVertex.save();
@@ -635,12 +637,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    *
    * @param iClassName
    *          New class name to assign
-   * @return New vertex created
+   * @return New vertex's identity
    * 
    * @see #moveToCluster(String)
    * @see #moveTo(String,String)
    */
-  public OrientVertex moveToClass(final String iClassName) {
+  public ORID moveToClass(final String iClassName) {
     return moveTo(iClassName, null);
   }
 
@@ -649,12 +651,12 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    *
    * @param iClusterName
    *          Cluster name where to save the new vertex
-   * @return New vertex created
+   * @return New vertex's identity
    * 
    * @see #moveToClass(String)
    * @see #moveTo(String,String)
    */
-  public OrientVertex moveToCluster(final String iClusterName) {
+  public ORID moveToCluster(final String iClusterName) {
     return moveTo(null, iClusterName);
   }
 
@@ -665,28 +667,37 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    *          New class name to assign
    * @param iClusterName
    *          Cluster name where to save the new vertex
-   * @return New vertex created
+   * @return New vertex's identity
    * 
    * @see #moveToClass(String)
    * @see #moveToCluster(String)
    */
-  public OrientVertex moveTo(final String iClassName, final String iClusterName) {
-    final ODocument doc = getRecord();
+  public ORID moveTo(final String iClassName, final String iClusterName) {
+    final ORID oldIdentity = getIdentity().copy();
 
-    final OrientVertex newVertex = graph.addVertex(iClassName != null ? iClassName : doc.getClassName());
+    final ODocument doc = ((ODocument)rawElement.getRecord()).copy();
 
-    // COPY ALL THE FIELDS
-    for (String fieldName : doc.fieldNames()) {
-      if (!fieldName.startsWith(CONNECTION_OUT_PREFIX) && !fieldName.startsWith(CONNECTION_IN_PREFIX)) {
-        newVertex.getRecord().field(fieldName, doc.field(fieldName));
-      }
-    }
+    final Iterable<Edge> outEdges = getEdges(Direction.OUT);
+    final Iterable<Edge> inEdges = getEdges(Direction.IN);
 
-    final ORID oldIdentity = getIdentity();
-    final ORID newIdentity = newVertex.getIdentity();
+    if (iClassName != null)
+      // OVERWRITE CLASS
+      doc.setClassName(iClassName);
+
+    // SAVE THE NEW VERTEX
+    doc.setDirty();
+
+    // RESET IDENTITY
+    doc.setIdentity(new ORecordId());
+
+    if (iClusterName != null)
+      doc.save(iClusterName);
+    else
+      doc.save();
+
+    final ORID newIdentity = doc.getIdentity();
 
     // CONVERT OUT EDGES
-    final Iterable<Edge> outEdges = getEdges(Direction.OUT);
     for (Edge e : outEdges) {
       final OrientEdge oe = (OrientEdge) e;
       if (oe.isLightweight()) {
@@ -699,11 +710,10 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         replaceLinks(inV.getRecord(), inFieldName, oldIdentity, newIdentity);
       } else {
         // REPLACE WITH NEW VERTEX
-        oe.vOut = newVertex.getIdentity();
+        oe.vOut = newIdentity;
       }
     }
 
-    final Iterable<Edge> inEdges = getEdges(Direction.IN);
     for (Edge e : inEdges) {
       final OrientEdge oe = (OrientEdge) e;
       if (oe.isLightweight()) {
@@ -716,17 +726,19 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         replaceLinks(outV.getRecord(), outFieldName, oldIdentity, newIdentity);
       } else {
         // REPLACE WITH NEW VERTEX
-        oe.vIn = newVertex.getIdentity();
+        oe.vIn = newIdentity;
       }
     }
 
-    // SAVE THE NEW VERTEX
-    if (iClusterName != null)
-      newVertex.save(iClusterName);
-    else
-      newVertex.save();
+    // FINAL SAVE
+    doc.save();
 
-    return newVertex;
+    // DELETE OLD RECORD
+    final ORecord<?> oldRecord = oldIdentity.getRecord();
+    if (oldRecord != null)
+      oldRecord.delete();
+
+    return newIdentity;
   }
 
   /**
