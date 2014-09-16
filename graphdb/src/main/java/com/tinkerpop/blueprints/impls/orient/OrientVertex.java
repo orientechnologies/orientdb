@@ -372,7 +372,17 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       // COLLECTION OF RECORDS: REMOVE THE ENTRY
       final ORidBag bag = (ORidBag) fieldValue;
 
-      if (bag.remove(iVertexToRemove))
+      boolean found = false;
+      final Iterator<OIdentifiable> it = bag.rawIterator();
+      while (it.hasNext()) {
+        if (it.next().equals(iVertexToRemove)) {
+          // REMOVE THE OLD ENTRY
+          found = true;
+          it.remove();
+        }
+      }
+      if (found)
+        // ADD THE NEW ONE
         bag.add(iNewVertex);
 
     } else if (fieldValue instanceof Collection) {
@@ -675,7 +685,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
   public ORID moveTo(final String iClassName, final String iClusterName) {
     final ORID oldIdentity = getIdentity().copy();
 
-    final ODocument doc = ((ODocument)rawElement.getRecord()).copy();
+    final ODocument doc = ((ODocument) rawElement.getRecord()).copy();
 
     final Iterable<Edge> outEdges = getEdges(Direction.OUT);
     final Iterable<Edge> inEdges = getEdges(Direction.IN);
