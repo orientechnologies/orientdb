@@ -643,17 +643,17 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case CUSTOM:
-      if (iValue == null)
-        throw new IllegalArgumentException("CUSTOM attribute value can't be null. expected <name> = <value> or clear");
-
-      if (!iValue.toString().contains("=")) {
-        if (iValue.toString().equalsIgnoreCase("clear")) {
+      int indx = stringValue!=null?stringValue.indexOf('='):-1;
+      if (indx<0) {
+        if ("clear".equalsIgnoreCase(stringValue)) {
           clearCustomInternal();
         } else
           throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
       } else {
-        final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
-        setCustomInternal(words.get(0).trim(), words.get(1).trim());
+        String customName = stringValue.substring(0, indx).trim();
+        String customValue = stringValue.substring(indx+1).trim();
+        if(customValue.isEmpty()) removeCustomInternal(customName);
+        else setCustomInternal(customName, customValue);
       }
       break;
 
@@ -694,6 +694,10 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
         return e.value;
     }
     return null;
+  }
+  
+  public void removeCustomInternal(final String iName) {
+	  setCustomInternal(iName, null);
   }
 
   public void setCustomInternal(final String iName, final String iValue) {
