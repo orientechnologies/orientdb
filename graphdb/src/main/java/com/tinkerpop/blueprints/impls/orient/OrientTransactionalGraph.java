@@ -82,8 +82,9 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     return useLog;
   }
 
-  public void setUseLog(boolean useLog) {
+  public OrientTransactionalGraph setUseLog(final boolean useLog) {
     this.useLog = useLog;
+    return this;
   }
 
   /**
