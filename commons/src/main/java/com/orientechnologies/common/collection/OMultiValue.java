@@ -345,8 +345,8 @@ public class OMultiValue {
             }
 
             @Override
-            public void remove(Object value) {
-              collection.remove(value);
+            public boolean remove(Object value) {
+              return collection.remove(value);
             }
 
             @Override
@@ -463,8 +463,8 @@ public class OMultiValue {
             }
 
             @Override
-            public void remove(Object value) {
-              collection.remove(value);
+            public boolean remove(Object value) {
+              return collection.remove(value);
             }
 
             @Override
