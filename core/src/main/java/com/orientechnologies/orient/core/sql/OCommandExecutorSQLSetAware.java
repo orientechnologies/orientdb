@@ -16,9 +16,9 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Map;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Map;
 
 /**
  * @author luca.molino
@@ -33,11 +33,8 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
   protected int                 parameterCounter = 0;
 
   protected void parseContent() {
-    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE)) {
-      final String contentAsString = parserRequiredWord(false, "Content expected").trim();
-      content = new ODocument().fromJSON(contentAsString);
-      parserSkipWhiteSpaces();
-    }
+    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE))
+      content = parseJSON();
 
     if (content == null)
       throwSyntaxErrorException("Content not provided. Example: CONTENT { \"name\": \"Jay\" }");
@@ -70,6 +67,13 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
     if (fieldValue.trim().equals("?"))
       parameterCounter++;
     return OSQLHelper.parseValue(this, fieldValue, context);
+  }
+
+  protected ODocument parseJSON() {
+    final String contentAsString = parserRequiredWord(false, "JSON expected").trim();
+    final ODocument json = new ODocument().fromJSON(contentAsString);
+    parserSkipWhiteSpaces();
+    return json;
   }
 
 }
