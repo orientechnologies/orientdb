@@ -638,7 +638,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
           identifiable, identifiable, null, false));
   }
 
-  public boolean remove(OIdentifiable identifiable) {
+  public void remove(OIdentifiable identifiable) {
     if (removeFromNewEntries(identifiable)) {
       if (size >= 0)
         size--;
@@ -651,7 +651,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
           size = -1;
         } else
           // Return immediately to prevent firing of event
-          return false;
+          return;
       } else {
         counter.decrement();
 
@@ -666,8 +666,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (updateOwner)
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
           OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable, false));
-
-    return true;
   }
 
   public int size() {

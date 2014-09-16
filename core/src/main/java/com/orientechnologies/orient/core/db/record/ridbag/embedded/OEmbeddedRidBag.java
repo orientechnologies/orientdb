@@ -183,7 +183,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public boolean remove(final OIdentifiable identifiable) {
+  public void remove(OIdentifiable identifiable) {
     doDeserialization();
 
     if (removeEntry(identifiable)) {
@@ -192,9 +192,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
           OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
-      return true;
     }
-    return false;
   }
 
   @Override
