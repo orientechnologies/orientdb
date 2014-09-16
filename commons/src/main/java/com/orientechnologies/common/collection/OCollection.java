@@ -28,5 +28,5 @@ public interface OCollection<T> extends Iterable<T>, OSizeable {
 
   void add(T value);
 
-  boolean remove(T value);
+  void remove(T value);
 }

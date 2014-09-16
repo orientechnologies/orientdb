@@ -130,8 +130,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     delegate.add(identifiable);
   }
 
-  public boolean remove(OIdentifiable identifiable) {
-    return delegate.remove(identifiable);
+  public void remove(OIdentifiable identifiable) {
+    delegate.remove(identifiable);
   }
 
   public boolean isEmpty() {
