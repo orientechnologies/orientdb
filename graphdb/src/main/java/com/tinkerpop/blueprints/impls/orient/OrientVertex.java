@@ -848,7 +848,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     // since the label for the edge can potentially get re-assigned
     // before being pushed into the OrientEdge, the
     // null check has to go here.
-    if (label == null)
+    if (label == null && graph.isStandardElementConstraints())
       label = "E";
 
     if (canCreateDynamicEdge(outDocument, inDocument, outFieldName, inFieldName, fields, label)) {
