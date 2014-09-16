@@ -1069,7 +1069,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     final String clsName = getRecord().getClassName();
 
-    if (clsName.equals(OrientVertexType.CLASS_NAME))
+    if (OrientVertexType.CLASS_NAME.equals(clsName))
       return StringFactory.vertexString(this);
 
     return StringFactory.V + "(" + clsName + ")" + StringFactory.L_BRACKET + getId() + StringFactory.R_BRACKET;
