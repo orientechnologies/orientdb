@@ -92,6 +92,11 @@ public class ORemoteConnectionManager implements OChannelListener {
     try {
       // RETURN THE RESOURCE
       return pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration, iListener);
+
+    } catch (RuntimeException e) {
+      // ERROR ON RETRIEVING THE INSTANCE FROM THE POOL
+      connections.remove(iServerURL);
+      throw e;
     } catch (Exception e) {
       // ERROR ON RETRIEVING THE INSTANCE FROM THE POOL
       OLogManager.instance().error(this, "Error on retrieving the connection from pool: " + iServerURL, e);
