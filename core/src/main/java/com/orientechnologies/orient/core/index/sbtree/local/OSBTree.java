@@ -1820,8 +1820,6 @@ public class OSBTree<K, V> extends ODurableComponent {
     long pageIndex = ROOT_INDEX;
     final ArrayList<Long> path = new ArrayList<Long>();
 
-    int hop = 0;
-
     while (true) {
       path.add(pageIndex);
       final OCacheEntry bucketEntry = diskCache.load(fileId, pageIndex, false);
@@ -1852,16 +1850,6 @@ public class OSBTree<K, V> extends ODurableComponent {
         pageIndex = entry.rightChild;
       else
         pageIndex = entry.leftChild;
-
-      if (hop++ > 1000) {
-        OLogManager
-            .instance()
-            .error(
-                this,
-                "Index '%s' (engine=OSBTree) reached maximum hop=%d on lookup. Index could be corrupted, due to a previous hard kill. Please drop and recreate it",
-                getName(), hop);
-        return null;
-      }
     }
   }
 
