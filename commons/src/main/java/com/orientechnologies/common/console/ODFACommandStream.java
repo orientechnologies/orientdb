@@ -19,11 +19,8 @@ public class ODFACommandStream implements OCommandStream {
   public static final int      BUFFER_SIZE = 1024;
   private final Set<Character> separators  = new HashSet<Character>(Arrays.asList(';', '\n'));
   private Reader               reader;
-  private CharBuffer           buffer;
-  private int                  position;
-  private int                  start;
-  private int                  end;
-  private StringBuilder        partialResult;
+
+  private Character            nextCharacter;
   private State                state;
 
   private enum State {
@@ -36,80 +33,106 @@ public class ODFACommandStream implements OCommandStream {
 
   public ODFACommandStream(String commands) {
     reader = new StringReader(commands);
+
     init();
   }
 
   public ODFACommandStream(File file) throws FileNotFoundException {
-    reader = new BufferedReader(new FileReader(file));
+    reader = new BufferedReader(new FileReader(file), BUFFER_SIZE);
+
     init();
   }
 
-  @Override
-  public boolean hasNext() {
+  private void init() {
     try {
-      fillBuffer();
+      final int next = reader.read();
+      if (next > -1)
+        nextCharacter = (char) next;
+      else
+        nextCharacter = null;
 
-      return buffer.hasRemaining();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
+  private Character nextCharacter() throws IOException {
+    if (nextCharacter == null)
+      return null;
+
+    final Character result = nextCharacter;
+    final int next = reader.read();
+    if (next < 0)
+      nextCharacter = null;
+    else
+      nextCharacter = (char) next;
+
+    return result;
+  }
+
+  @Override
+  public boolean hasNext() {
+    return nextCharacter != null;
+  }
+
   @Override
   public String nextCommand() {
     try {
-      fillBuffer();
-
-      partialResult = new StringBuilder(512);
       state = State.S;
-      start = 0;
-      end = -1;
-      position = 0;
-      Symbol s = null;
+      final StringBuilder result = new StringBuilder();
+
+      StringBuilder stateWord = new StringBuilder();
+
       while (state != State.E) {
-        s = nextSymbol();
+        Character c = nextCharacter();
+        String sch = null;
+
+        Symbol s;
+        if (c == null)
+          s = Symbol.EOF;
+        else if (c.equals('\''))
+          s = Symbol.AP;
+        else if (c.equals('"'))
+          s = Symbol.QT;
+        else if (separators.contains(c))
+          s = Symbol.SEP;
+        else if (Character.isWhitespace(c))
+          s = Symbol.WS;
+        else if (c == '\\') {
+          final Character nextCharacter = nextCharacter();
+
+          sch = "" + c + nextCharacter;
+          s = Symbol.LATTER;
+        } else
+          s = Symbol.LATTER;
 
         final State newState = transition(state, s);
-
-        if (state == State.S && newState != State.S)
-          start = position;
-
-        if (newState == State.A)
-          end = position;
 
         if (newState == State.F)
           throw new IllegalStateException("Unexpected end of file");
 
+        State oldState = state;
         state = newState;
-        position++;
-      }
 
-      if (s == Symbol.EOF) {
-        position--;
-        if (end == -1) {
-          start = 0;
-          end = 0;
+        if (state != State.E && state != State.S) {
+          if (state != oldState) {
+            result.append(stateWord);
+            stateWord = new StringBuilder();
+          }
+
+          if (sch != null)
+            stateWord.append(sch);
+          else
+            stateWord.append(c);
+        }
+
+        if (state == State.E) {
+          if (stateWord.length() > 0 && (oldState != State.D))
+            result.append(stateWord);
         }
       }
 
-      String result;
-      if (partialResult.length() > 0) {
-        if (end > 0) {
-          result = partialResult.append(buffer.subSequence(start, end + 1).toString()).toString();
-        } else {
-          partialResult.setLength(partialResult.length() + end + 1);
-          result = partialResult.toString();
-        }
-      } else {
-        // DON'T PUT THIS ON ONE LINE ONLY BECAUSE WITH JDK6 subSequence() RETURNS A CHAR CharSequence while JDK7+ RETURNS
-        // CharBuffer
-        final CharSequence cs = buffer;
-        result = cs.subSequence(start, end + 1).toString();
-      }
-
-      buffer.position(buffer.position() + position);
-      return result;
-
+      return result.toString();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -135,50 +158,6 @@ public class ODFACommandStream implements OCommandStream {
       return Symbol.WS;
 
     return Symbol.LATTER;
-  }
-
-  private void init() {
-    buffer = CharBuffer.allocate(BUFFER_SIZE);
-    buffer.flip();
-  }
-
-  private void fillBuffer() throws IOException {
-    if (!buffer.hasRemaining()) {
-      buffer.clear();
-      reader.read(buffer);
-      buffer.flip();
-    }
-  }
-
-  private Symbol nextSymbol() throws IOException {
-    Symbol s;
-    if (buffer.position() + position < buffer.limit()) {
-      s = symbol(buffer.charAt(position));
-    } else {
-      buffer.compact();
-      int read = reader.read(buffer);
-      buffer.flip();
-
-      if (read == 0) {
-        // There is something in source, but buffer is full
-
-        if (state != State.S)
-          partialResult.append(buffer.subSequence(start, position).toString());
-        start = 0;
-        end = end - position;
-        buffer.clear();
-        read = reader.read(buffer);
-        buffer.flip();
-        position = 0;
-      }
-
-      if (read == -1) {
-        s = Symbol.EOF;
-      } else {
-        s = symbol(buffer.charAt(position));
-      }
-    }
-    return s;
   }
 
   private State transition(State s, Symbol c) {

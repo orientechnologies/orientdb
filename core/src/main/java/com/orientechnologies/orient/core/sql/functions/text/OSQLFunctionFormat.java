@@ -29,16 +29,17 @@ public class OSQLFunctionFormat extends OSQLFunctionAbstract {
   public static final String NAME = "format";
 
   public OSQLFunctionFormat() {
-    super(NAME, 2, -1);
+    super(NAME, 1, -1);
   }
 
-  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams, OCommandContext iContext) {
-    final Object[] args = new Object[iParams.length - 1];
+  public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] params,
+      OCommandContext iContext) {
+    final Object[] args = new Object[params.length - 1];
 
     for (int i = 0; i < args.length; ++i)
-      args[i] = iParams[i + 1];
+      args[i] = params[i + 1];
 
-    return String.format((String) iParams[0], args);
+    return String.format((String) params[0], args);
   }
 
   public String getSyntax() {

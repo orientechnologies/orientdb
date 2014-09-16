@@ -519,7 +519,19 @@ public abstract class OBaseParser {
             if (nextChar == 'u') {
               parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
             } else {
-              parserLastWord.append(nextChar);
+							if (nextChar == 'n')
+								parserLastWord.append('\n');
+							else if (nextChar == 'r')
+								parserLastWord.append('\r');
+							else if (nextChar == 't')
+								parserLastWord.append('\t');
+							else if(nextChar == 'b')
+								parserLastWord.append('\b');
+							else if(nextChar == 'f')
+								parserLastWord.append('\f');
+							else
+              	parserLastWord.append(nextChar);
+
               parserCurrentPos++;
             }
 
