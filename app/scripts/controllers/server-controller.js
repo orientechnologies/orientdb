@@ -7,10 +7,13 @@
  */
 
 var ctrl = angular.module('server.controller', []);
-ctrl.controller("ServerController", ['$scope', '$routeParams', 'ServerApi', function ($scope, $routeParams, ServerApi) {
+ctrl.controller("ServerController", ['$scope', '$routeParams', 'ServerApi', 'Database', function ($scope, $routeParams, ServerApi, Database) {
 
     $scope.active = $routeParams.tab || "conn";
-    $scope.tabs = ["conn", "config", "pool", "storage"];
+    $scope.database = Database;
+    $scope.tabs = ["conn", "config", "storage"];
+    $scope.version = Database.getVersion();
+    Database.setWiki("Server-Management.html")
     ServerApi.getServerInfo(function (data) {
         $scope.connections = data.connections;
         $scope.properties = data.properties;

@@ -3,6 +3,8 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
 
     $scope.server = "http://localhost:2480"
 
+    var doc = "http://www.orientechnologies.com/docs/" + Database.getVersion() + "/orientdb.wiki/Security.html"
+    $scope.link = { link: doc};
     DatabaseApi.listDatabases(function (data) {
         $scope.databases = data.databases;
         if ($scope.databases.length > 0) {

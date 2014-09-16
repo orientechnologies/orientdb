@@ -211,7 +211,6 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.resultExecute = '';
         $scope.logLevel = '';
         $scope.showInConsole(selected);
-        Aside.toggle();
     }
     $scope.showInConsole = function (selectedFunction) {
 

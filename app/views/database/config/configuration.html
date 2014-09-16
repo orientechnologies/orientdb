@@ -22,7 +22,14 @@
                 </thead>
                 <tbody>
                 <tr ng-repeat="val in values">
-                    <td>{{ val.name }}</td>
+                    <td>{{ val.name }}
+                        <a ng-show="links[val.name]" href="javascript:void(0)" tabindex="1"
+                           data-trigger="focus" data-placement="right"
+                           data-container="body"
+                           data-content="{{ 'configuration.'  + val.name | translate:links }}" bs-popover>
+                            <i class="fa fa-question-circle"></i>
+                        </a>
+                    </td>
                     <td>
                         <ng-include src="getRender(val)"></ng-include>
                     </td>
@@ -42,7 +49,14 @@
                 </thead>
                 <tbody>
                 <tr ng-repeat="val in properties">
-                    <td>{{ val.name }}</td>
+                    <td>{{ val.name }}
+                        <a ng-show="links[val.name]" href="javascript:void(0)" tabindex="1"
+                           data-trigger="focus" data-placement="right"
+                           data-container="body"
+                           data-content="{{ 'configuration.'  + val.name | translate:links }}" bs-popover>
+                            <i class="fa fa-question-circle"></i>
+                        </a>
+                    </td>
                     <td>
                         <ng-include src="getRender(val)"></ng-include>
                     </td>

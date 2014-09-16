@@ -2,12 +2,12 @@ var DocController = angular.module('document.controller', []);
 DocController.controller("DocumentEditController", ['$scope', '$injector', '$routeParams', '$location', '$modal', '$q', 'DocumentApi', 'Database', 'Notification', function ($scope, $injector, $routeParams, $location, $modal, $q, DocumentApi, Database, Notification) {
 
     $injector.invoke(BaseEditController, this, {$scope: $scope});
+    Database.setWiki("Edit-document.html");
     $scope.fixed = Database.header;
     $scope.canSave = true;
     $scope.canDelete = true;
     $scope.canCreate = true;
     $scope.canAdd = true;
-    Database.setWiki("https://github.com/orientechnologies/orientdb-studio/wiki/Edit-record");
     // Toggle modal
     $scope.showModal = function (rid) {
         modalScope = $scope.$new(true);
@@ -292,6 +292,7 @@ DocController.controller("DocumentPopoverLinkController", ['$scope', '$routePara
 }]);
 function BaseEditController($scope, $routeParams, $route, $location, $modal, $q, DocumentApi, Database, Notification, CommandApi) {
     $scope.database = $routeParams.database;
+    $scope.dbWiki = Database;
     $scope.rid = $routeParams.rid;
     $scope.label = 'Document';
 

@@ -5,11 +5,26 @@
             href="#/database/{{database}}/schema/editclass/{{doc['@class']}}">{{doc['@class']}}</a> -
         {{doc['@rid']}} - Version
         {{doc['@version']}}
+
+        <a href="{{ dbWiki.getWiki() }}" class="btn btn-trasparent btn-help"
+           data-placement="right"
+           data-title="Help"
+           data-trigger="hover"
+           data-animation="am-flip-x"
+           bs-tooltip>
+            <i class="fa fa-question fa-lg"></i>
+        </a>
+
         <div class="panel-actions">
             <div class="btn-toolbar">
                 <div class="btn-group">
                     <button type="submit" class="btn btn-sm btn-primary" ng-show="canSave" ng-click="save(docForm)"
                             ng-disabled="!docValid" tooltip="Save"><i class="fa fa-save"></i> Save
+                    </button>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-default" ng-show="canAdd"
+                            ng-click="addField()" tooltip="Add field"><i class="fa fa-plus-circle"></i> Add field
                     </button>
                 </div>
                 <div class="btn-group" ng-show="canAdd">
@@ -20,8 +35,6 @@
                     <ul class="dropdown-menu">
                         <li><a href="javascript:void(0)" ng-click="create()"><i class="fa fa-plus-circle"></i>
                             New</a></li>
-                        <li><a href="javascript:void(0)" ng-click="addField()"><i class="fa fa-list"></i>
-                            Add field</a></li>
                         <li><a href="javascript:void(0)" ng-click="delete()"><i class="fa fa-trash-o"></i>
                             Delete</a></li>
                     </ul>

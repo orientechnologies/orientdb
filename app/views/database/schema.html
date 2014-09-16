@@ -66,9 +66,38 @@
                         <table class="table table-striped table-bordered table-hover table-condensed pointer">
                             <thead>
                             <tr>
-                                <th ng-repeat="header in headers">
-                                    {{header}}
+
+                                <th>Name</th>
+                                <th>SuperClass
+                                    <a href="javascript:void(0)" tabindex="1"
+                                       data-trigger="focus" data-placement="bottom"
+                                       data-container="body"
+                                       data-content="{{ 'schema.superClass' | translate:links }}" bs-popover>
+                                        <i class="fa fa-question-circle"></i>
+                                    </a>
                                 </th>
+                                <th>Alias</th>
+                                <th>Abstract</th>
+                                <th>Clusters
+                                    <a href="javascript:void(0)" tabindex="1"
+                                       data-trigger="focus" data-placement="bottom"
+                                       data-container="body"
+                                       data-content="{{ 'schema.clusters' | translate:links }}" bs-popover>
+                                        <i class="fa fa-question-circle"></i>
+                                    </a>
+                                </th>
+                                <th>Default Cluster</th>
+                                <th>
+                                    Cluster Selection
+                                    <a href="javascript:void(0)" tabindex="1"
+                                       data-trigger="focus" data-placement="bottom"
+                                       data-container="body"
+                                       data-content="{{ 'schema.clusterSelection' | translate:links }}" bs-popover>
+                                        <i class="fa fa-question-circle"></i>
+                                    </a>
+                                </th>
+                                <th>Records</th>
+
                                 <th>Actions</th>
                             </tr>
 

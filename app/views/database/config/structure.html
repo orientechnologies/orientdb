@@ -2,17 +2,13 @@
     <div class="row-fluid">
         <p>
             <b><a
-                    href="https://github.com/orientechnologies/orientdb/wiki/Concepts#cluster">Clusters</a>
+                    href="http://www.orientechnologies.com/docs/{{version}}/orientdb.wiki/Clusters.html">Clusters</a>
             </b> are sets of records grouped by a mean. Any mean you want to
             assign. You can use a Cluster like a Table of the Relational DBMS
             world, namely to group records of the same type. Or you could
-            want to group records by different logics. <br/> <br/> There
-            are two kinds of clusters: <b><a
-                href="https://github.com/orientechnologies/orientdb/wiki/Concepts#wiki-Local_Physical_Cluster">Physical</a>
-        </b> and <b><a
-                href="https://github.com/orientechnologies/orientdb/wiki/Concepts#in-memory-cluster">In-memory</a>
-
-        </b>.The first one is persistent, the second one is volatile.
+            want to group records by different logics. <br/> There
+            are two kinds of clusters: <b>Physical</b> and <b>In-memory</b>.The first one is persistent, the second one
+            is volatile.
         </p>
     </div>
     <div class="row-fluid">
@@ -22,7 +18,14 @@
                 <th>ID</th>
                 <th>Name</th>
                 <th>Records</th>
-                <th>Conflict Strategy</th>
+                <th>Conflict Strategy
+                    <a href="javascript:void(0)" tabindex="1"
+                       data-trigger="focus" data-placement="bottom"
+                       data-container="body"
+                       data-content="{{ 'structure.conflictStrategy' | translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                    </a>
+                </th>
             </tr>
             </thead>
             <tbody>

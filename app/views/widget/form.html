@@ -1,18 +1,18 @@
 <ng-form name="formID">
     <div class="form-group" ng-repeat="header in headers">
-        <label class="control-label col-md-3"> {{header}} {{requiredString(header)}}</label>
+        <label class="control-label col-md-3 col-xs-3"> {{header}} {{requiredString(header)}}</label>
 
-        <div class="col-md-9">
+        <div class="col-md-9 col-xs-9">
             <div class="row">
-                <ng-include src="fieldTypes[header]" class='col-md-8'></ng-include>
+                <ng-include src="fieldTypes[header]" class='col-md-8 col-xs-7'></ng-include>
 
-                <div class="col-md-3">
+                <div class="col-md-3 col-xs-3">
                     <select class='form-control input-sm' ng-disabled='inSchema(header)' ng-model="selectedHeader"
                             ng-change="changeType('{{ header }}',selectedHeader)">
                         <option ng-repeat="t in types" ng-selected="isSelected(header,t)">{{ t }}</option>
                     </select>
                 </div>
-                <div class="del-field col-md-1">
+                <div class="del-field col-md-1 col-xs-1">
                     <a href='javascript:void(0)' class='btn btn-danger btn-sm' tooltip='Delete field'
                        ng-click='deleteField(header)'><i class='fa fa-trash-o'></i></a>
                 </div>

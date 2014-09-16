@@ -8,7 +8,7 @@
        data-trigger="hover"
        data-animation="am-flip-x"
        bs-tooltip>
-        <i class="fa fa-question-circle fa-lg"></i>
+        <i class="fa fa-question fa-lg"></i>
     </a>
     <div class="panel-actions">
         <div class="btn-toolbar">
@@ -54,7 +54,14 @@
         <div class="row properties">
 
             <div class="page-header">
-                <h4>Properties</h4>
+                <h4>Properties
+                    <a href="javascript:void(0)" tabindex="1"
+                       data-trigger="focus" data-placement="right"
+                       data-container="body"
+                       data-content="{{ 'class.property' | translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                    </a>
+                </h4>
             </div>
 
             <button href="javascript:void(0)" class="btn  btn-default btn-sm" ng-click="newProperty()"><i
@@ -157,7 +164,14 @@
 
         <div class="row">
             <div class="page-header">
-                <h4>Indexes</h4>
+                <h4>Indexes
+                    <a href="javascript:void(0)" tabindex="1"
+                       data-trigger="focus" data-placement="right"
+                       data-container="body"
+                       data-content="{{ 'class.indexes' | translate:links }}" bs-popover>
+                        <i class="fa fa-question-circle"></i>
+                    </a>
+                </h4>
             </div>
             <button href="javascript:void(0)" class="btn btn-sm btn-default" ng-click="newIndex()"><i
                     class="fa fa-plus"></i> New Index

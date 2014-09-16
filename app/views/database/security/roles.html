@@ -35,6 +35,7 @@
                     <thead>
                     <tr>
                         <th>Name</th>
+                        <th>Inherited Role</th>
                         <th>Mode</th>
                         <th>Actions</th>
                     </tr>
@@ -43,6 +44,7 @@
                     <tr ng-repeat="result in usersResult | filter:queryy |orderBy:predicate:reverse"
                         ng-class="{ info : selectedRole == result}">
                         <td ng-click="selectRole(result)">{{result['name']}}</td>
+                        <td ng-click="selectRole(result)">{{result['inheritedRole'].name}}</td>
                         <td ng-click="selectRole(result)">
                             <select ng-change="changeMode(result)" ng-model="result['mode']">
                                 <option value="1">Allow all but</option>

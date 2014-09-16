@@ -38,11 +38,14 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
     var version = STUDIO_VERSION.indexOf("SNAPSHOT") == -1 ? STUDIO_VERSION : "last";
     var wikiBase = 'http://www.orientechnologies.com/docs/' + version + "/orientdb-studio.wiki/";
+    var oWikiBase = 'http://www.orientechnologies.com/docs/' + version + "/orientdb.wiki/";
     var current = {
         name: null,
         username: null,
         metadata: null,
-        wiki: wikiBase
+        wiki: wikiBase,
+        oWiki: oWikiBase,
+        version: version
 
     }
     return {
@@ -482,6 +485,12 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
 
             }
             return all;
+        },
+        getVersion: function () {
+            return current.version;
+        },
+        getOWikiFor: function (page) {
+            return current.oWiki + page;
         }
 
     };

@@ -11,43 +11,64 @@
                bs-tooltip>
                 <i class="fa fa-question fa-lg"></i>
             </a>
+
             <div class="panel-actions">
                 <div class="btn-toolbar">
                     <div class="btn-group">
-                        <button href="javascript:void(0)"  class="btn btn-primary btn-sm"
+                        <button href="javascript:void(0)" class="btn btn-primary btn-sm"
                                 ng-click="saveConfig()"><i
-                                class="fa fa-save"></i>
-
-                        </button>
-                    </div>
-                    <div class="btn-group">
-                        <button href="javascript:void(0)" class="btn btn-default btn-sm" bs-checkbox
-                                ng-model="queryClass"><i
-                                class="fa fa-search"></i>
-
-                        </button>
-                    </div>
-
-                    <div class="btn-group">
-                        <button href="javascript:void(0)" class="btn btn-default btn-sm" bs-checkbox
-                                ng-model="hideL" ng-click="hideLegend()"><i
-                                class="fa fa-book"></i>
+                                class="fa fa-save"> Save Configuration</i>
 
                         </button>
                     </div>
                     <div class="btn-group">
                         <button href="javascript:void(0)" class="btn btn-default btn-sm" ng-click="addNode()"><i
-                                class="fa fa-plus-circle"></i>
+                                class="fa fa-plus-circle"> Add Vertex</i>
 
                         </button>
                     </div>
+                    <!--<div class="btn-group">-->
+                    <!--<button href="javascript:void(0)" class="btn btn-default btn-sm" bs-checkbox-->
+                    <!--ng-model="queryClass"><i-->
+                    <!--class="fa fa-search"> Hide Query</i>-->
+
+                    <!--</button>-->
+                    <!--</div>-->
+
+                    <!--<div class="btn-group">-->
+                    <!--<button class="btn btn-default btn-sm" bs-checkbox-->
+                    <!--ng-model="hideL" ng-click="hideLegend()"><i-->
+                    <!--class="fa fa-book"> Hide Legend</i>-->
+
+                    <!--</button>-->
+                    <!--</div>-->
+
 
                     <div class="btn-group">
-                        <button href="javascript:void(0)" class="btn btn-danger btn-sm"
+                        <button href="javascript:void(0)" class="btn btn-default btn-sm"
                                 ng-click="clear()"><i
-                                class="fa fa-trash-o"></i>
+                                class="fa fa-trash-o"> Clear Canvas</i>
 
                         </button>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                            More <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu pull-right" role="menu">
+                            <li>
+                                <a href="javascript:void(0)">
+                                    <i class="fa fa-search"> Hide Query</i>
+                                    <input type="checkbox" bs-checkbox
+                                           ng-model="queryClass" ng-click="hideLegend()">
+                                </a></li>
+                            <li><a href="javascript:void(0)"><i
+                                    class="fa fa-book"> Hide Legend</i>
+                                <input type="checkbox" bs-checkbox
+                                       ng-model="hideL" ng-click="hideLegend()">
+                            </a></li>
+
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -64,7 +85,9 @@
                     </div>
                     <div class="run-container">
                         <div class="btn-group run-action ">
-                            <button type="button" ng-click="query()" ng-disabled="!queryText" class="btn btn-sm btn-primary">Run</button>
+                            <button type="button" ng-click="query()" ng-disabled="!queryText"
+                                    class="btn btn-sm btn-primary">Run
+                            </button>
                         </div>
                     </div>
                 </div>

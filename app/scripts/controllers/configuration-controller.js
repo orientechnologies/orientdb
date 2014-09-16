@@ -23,7 +23,7 @@ configModule.controller("ConfigurationController", ['$scope', '$routeParams', '$
     else if ($scope.active == "configuration") {
         Database.setWiki("Configuration.html");
     } else if ($scope.active == "import-export") {
-        Database.setWiki("Configuration.html");
+        Database.setWiki("Export-Import.html");
     }
     $scope.tabsI18n['structure'] = 'Structure';
     $scope.tabsI18n['configuration'] = 'Configuration';
@@ -174,6 +174,10 @@ configModule.controller("StructureController", ['$scope', '$routeParams', '$loca
     $scope.dataSegments = Database.getMetadata()['dataSegments'];
     $scope.txSegments = Database.getMetadata()['txSegment'];
 
+    $scope.links = {
+        linkConflictStrategy: Database.getOWikiFor("SQL-Alter-Cluster.html")
+    }
+    $scope.version = Database.getVersion();
 
     $scope.changeStrategy = function (cluster) {
 
@@ -187,6 +191,13 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
 
     $scope.values = Database.getMetadata()['config']['values'];
     $scope.properties = Database.getMetadata()['config']['properties'];
+
+    $scope.links = {
+        useLightweightEdges: Database.getOWikiFor("Tutorial-Working-with-graphs.html#lightweight-edges"),
+        clusterSelection: Database.getOWikiFor("SQL-Alter-Database.html"),
+        minimumClusters: Database.getOWikiFor("SQL-Alter-Database.html"),
+        conflictStrategy: Database.getOWikiFor("SQL-Alter-Database.html")
+    }
 
 
     var found = false;

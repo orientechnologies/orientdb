@@ -5,7 +5,11 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     $scope.countPage = 10;
     $scope.countPageOptions = [10, 20, 50, 100];
     $scope.currentPage = 1;
-
+    $scope.links = {
+        linkClusterSelection: Database.getOWikiFor("SQL-Alter-Class.html"),
+        linkClusters: Database.getOWikiFor("Tutorial-Clusters.html"),
+        linkInheritance: Database.getOWikiFor("Inheritance.html")
+    }
     $scope.popover = { title: "Rename Class"};
     $scope.clusterStrategies = ['round-robin', "default", "balanced"];
     $scope.database = Database;
@@ -134,6 +138,11 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
 schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', '$window', 'DatabaseApi', 'Spinner', 'PropertyAlterApi', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, $window, DatabaseApi, Spinner, PropertyAlterApi, Notification) {
     Database.setWiki("Class.html");
     var clazz = $routeParams.clazz;
+
+    $scope.links = {
+        properties: Database.getOWikiFor("Schema.html#property"),
+        indexes: Database.getOWikiFor("Indexes.html")
+    }
     $scope.class2show = clazz;
     $scope.database = Database;
     $scope.database.refreshMetadata($routeParams.database);

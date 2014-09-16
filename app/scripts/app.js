@@ -199,7 +199,6 @@ App.run(function ($rootScope, $interval, DatabaseApi, Notification, Spinner, $te
 $('body').on('keyup', function (e) {
 
     if (e.keyCode == 27) {
-        console.log(e);
         $('.modal-backdrop').click()
     }
 })

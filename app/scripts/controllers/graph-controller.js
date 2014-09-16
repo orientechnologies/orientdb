@@ -37,6 +37,7 @@ GrapgController.controller("VertexModalController", ['$scope', '$routeParams', '
 GrapgController.controller("VertexEditController", ['$scope', '$injector', '$routeParams', '$location', '$modal', '$q', 'DocumentApi', 'Database', 'CommandApi', 'Notification', function ($scope, $injector, $routeParams, $location, $modal, $q, DocumentApi, Database, CommandApi, Notification) {
 
     $injector.invoke(BaseEditController, this, {$scope: $scope});
+    Database.setWiki("Edit-vertex.html");
     $scope.label = 'Vertex';
     $scope.fixed = Database.header;
     $scope.canSave = true;
@@ -268,7 +269,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
 
     $scope.database = Database;
-    Database.setWiki("GraphEditor.html")
+    Database.setWiki("Graph-Editor.html")
     $scope.dirty = false;
     $rootScope.$on('graphConfig:changed', function (val) {
         $scope.dirty = val;
@@ -758,6 +759,7 @@ GrapgController.controller("EdgeAsideController", ['$scope', '$routeParams', '$l
 
     $scope.database = $routeParams.database;
 
+    $scope.active = 'properties';
     if ($scope.doc) {
         $scope.headers = Database.getPropertyFromDoc($scope.doc);
         $scope.active = 'properties';

@@ -42,12 +42,15 @@
                         <td>{{value.description}}</td>
                         <td>{{value.license}}</td>
                         <td><a href="javascript:void(0)" ng-click="import(key,value,username,password)"><i
-                                class="fa fa-cloud-download"></i></a></td>
+                                class="fa fa-cloud-download fa-lg"></i></a></td>
                     </tr>
                     </tbody>
                 </table>
                 <div class="progress progress-striped active" ng-show="creating">
-                    <div class="bar" style="width: 100%;">Importing database {{ name }}</div>
+                    <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0"
+                         aria-valuemax="100" style="width: 100%">
+                        <span class="progress-value">Importing database {{ name }}</span>
+                    </div>
                 </div>
                 <div class="alerts">
                     <div class="alert alert-danger" ng-show="error">
