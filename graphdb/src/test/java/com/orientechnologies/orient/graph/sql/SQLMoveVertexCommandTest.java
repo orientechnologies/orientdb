@@ -67,8 +67,8 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
     OrientVertex v3 = graph.addVertex("class:Customer").setProperties("name", "Jay3", "test",
         "testMoveSingleRecordToAnotherCluster");
 
-    v1.addEdge(null, v1); // SELF
-    v1.addEdge(null, v2);
+    v1.addEdge("knows", v1); // SELF
+    v1.addEdge("knows", v2);
     v1.addEdge("knows", v3);
     v2.addEdge("knows", v1);
 
