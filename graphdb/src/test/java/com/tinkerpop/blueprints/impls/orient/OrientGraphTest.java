@@ -170,8 +170,7 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   public void doTestSuite(final TestSuite testSuite) throws Exception {
-    String directory = getWorkingDirectory();
-    deleteDirectory(new File(directory+"/graph"));
+    dropGraph("graph");
     for (Method method : testSuite.getClass().getDeclaredMethods()) {
       if (method.getName().startsWith("test")) {
         System.out.println("Testing " + method.getName() + "...");
