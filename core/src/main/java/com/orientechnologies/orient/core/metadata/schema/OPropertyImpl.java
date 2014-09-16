@@ -840,14 +840,17 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       setCollate(stringValue);
       break;
     case CUSTOM:
-      if (iValue.toString().indexOf("=") == -1) {
-        if (iValue.toString().equalsIgnoreCase("clear")) {
+      int indx = stringValue!=null?stringValue.indexOf('='):-1;
+      if (indx<0) {
+        if ("clear".equalsIgnoreCase(stringValue)) {
           clearCustom();
         } else
           throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
       } else {
-        final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
-        setCustom(words.get(0).trim(), words.get(1).trim());
+        String customName = stringValue.substring(0, indx).trim();
+        String customValue = stringValue.substring(indx+1).trim();
+        if(customValue.isEmpty()) removeCustom(customName);
+        else setCustom(customName, customValue);
       }
       break;
     }

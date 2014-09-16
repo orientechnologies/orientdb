@@ -1305,13 +1305,17 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       setClusterSelection(stringValue);
       break;
     case CUSTOM:
-      if (isNull || stringValue.equalsIgnoreCase("clear"))
-        clearCustom();
-      else if (stringValue.contains("=")) {
-        final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
-        setCustom(words.get(0).trim(), words.get(1).trim());
+      int indx = stringValue!=null?stringValue.indexOf('='):-1;
+      if (indx<0) {
+        if (isNull || "clear".equalsIgnoreCase(stringValue)) {
+          clearCustom();
+        } else
+          throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
       } else {
-        throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
+        String customName = stringValue.substring(0, indx).trim();
+        String customValue = stringValue.substring(indx+1).trim();
+        if(customValue.isEmpty()) removeCustom(customName);
+        else setCustom(customName, customValue);
       }
       break;
     }
