@@ -3,13 +3,16 @@ package com.tinkerpop.blueprints.impls.orient;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.tinkerpop.blueprints.Vertex;
 
 public class OrientGraphVertexInPropertyTest {
 
   @Test
   public void testVertexInAProperty() {
+    OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.setValue(ORecordSerializerSchemaAware2CSV.NAME);
     final String url = "memory:" + this.getClass().getSimpleName();
     OrientGraph graph = new OrientGraph(url);
     graph.drop();
@@ -26,7 +29,12 @@ public class OrientGraphVertexInPropertyTest {
     graph.getRawGraph().open("admin", "admin");
     Vertex vertb = graph.getVertex(id);
     Assert.assertNotEquals(OType.CUSTOM, ((OrientVertex) vertb).getRecord().fieldType("test"));
-    Assert.assertEquals(aid, ((Vertex) vertb.getProperty("test")).getId());
+    Object val = vertb.getProperty("test");
+    if (val instanceof String) {
+      Assert.assertEquals(aid.toString(), (String) val);
+    } else {
+      Assert.assertEquals(aid, ((Vertex) vertb.getProperty("test")).getId());
+    }
     graph.drop();
   }
 
