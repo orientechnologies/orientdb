@@ -26,7 +26,12 @@ public class OrientGraphVertexInPropertyTest {
     graph.getRawGraph().open("admin", "admin");
     Vertex vertb = graph.getVertex(id);
     Assert.assertNotEquals(OType.CUSTOM, ((OrientVertex) vertb).getRecord().fieldType("test"));
-    Assert.assertEquals(aid, ((Vertex) vertb.getProperty("test")).getId());
+    Object val = vertb.getProperty("test");
+    if (val instanceof String) {
+      Assert.assertTrue(((String) val).contains(aid.toString()));
+    } else {
+      Assert.assertEquals(aid, ((Vertex) vertb.getProperty("test")).getId());
+    }
     graph.drop();
   }
 
