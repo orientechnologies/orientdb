@@ -46,7 +46,7 @@
             com.orientechnologies.orient.graph.*,
             com.tinkerpop.blueprints.impls.orient
         </osgi.export>
-        <blueprints.version>2.6.0-SNAPSHOT</blueprints.version>
+        <blueprints.version>2.6.0</blueprints.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
