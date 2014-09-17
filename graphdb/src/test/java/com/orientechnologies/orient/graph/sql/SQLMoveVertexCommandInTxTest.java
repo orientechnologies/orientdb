@@ -20,12 +20,6 @@
 
 package com.orientechnologies.orient.graph.sql;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -35,16 +29,18 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-@Test
 public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
-  OrientVertexType customer;
-  OrientVertexType provider;
-  OrientEdgeType   knows;
-  int              customerGeniusCluster;
+  private static OrientVertexType customer;
+  private static OrientVertexType provider;
+  private static OrientEdgeType   knows;
+  private static int              customerGeniusCluster;
 
   @BeforeClass
-  public void setUp() throws Exception {
+  public static void setUp() throws Exception {
     graph.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
       @Override
       public Object call(OrientBaseGraph iArgument) {
@@ -59,14 +55,7 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
     });
   }
 
-  @BeforeMethod
-  public void beforeMethod() {
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-  }
-
+  @Test
   public void testMoveSingleRecordToAnotherCluster() {
     OrientVertex v1 = graph.addVertex("class:Customer").setProperties("name", "Jay1", "test",
         "testMoveSingleRecordToAnotherCluster");
@@ -107,6 +96,7 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
     Assert.assertEquals(tot, 1);
   }
 
+  @Test
   public void testMoveSingleRecordToAnotherClass() {
     ODocument doc = new ODocument("Customer").field("name", "Jay").field("test", "testMoveSingleRecordToAnotherClass").save();
 
@@ -135,6 +125,7 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
     Assert.assertEquals(newDocument.field("test"), "testMoveSingleRecordToAnotherClass");
   }
 
+  @Test
   public void testMoveMultipleRecordToAnotherCluster() {
     new ODocument("Customer").field("name", "Jay").field("workedOn", "Amiga").save();
     new ODocument("Customer").field("name", "Steve").field("workedOn", "Mac").save();
@@ -167,6 +158,7 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
 
   }
 
+  @Test
   public void testMoveMultipleRecordToAnotherClass() {
     new ODocument("Customer").field("name", "Luca").field("city", "Rome").save();
     new ODocument("Customer").field("name", "Jill").field("city", "Austin").save();
@@ -198,6 +190,7 @@ public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
     Assert.assertEquals(tot, 2);
   }
 
+  @Test
   public void testMoveMultipleRecordToAnotherClassInTx() {
     new ODocument("Customer").field("name", "Luca").field("city", "Rome").save();
     new ODocument("Customer").field("name", "Jill").field("city", "Austin").save();

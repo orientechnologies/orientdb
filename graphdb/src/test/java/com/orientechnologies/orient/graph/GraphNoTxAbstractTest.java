@@ -22,8 +22,8 @@ package com.orientechnologies.orient.graph;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import java.io.File;
 
@@ -33,7 +33,7 @@ import java.io.File;
  * @author Luca Garulli
  */
 public abstract class GraphNoTxAbstractTest {
-  protected OrientGraphNoTx graph;
+  protected static OrientGraphNoTx graph;
 
   public static enum ENV {
     DEV, RELEASE, CI
@@ -61,8 +61,8 @@ public abstract class GraphNoTxAbstractTest {
   }
 
   @BeforeClass
-  public void beforeClass() {
-    final String dbName = this.getClass().getSimpleName();
+  public static void beforeClass() {
+    final String dbName = GraphNoTxAbstractTest.class.getSimpleName();
     final String storageType = getStorageType();
     final String buildDirectory = System.getProperty("buildDirectory", ".");
 
@@ -72,7 +72,7 @@ public abstract class GraphNoTxAbstractTest {
   }
 
   @AfterClass
-  public void afterClass() throws Exception {
+  public static void afterClass() throws Exception {
     graph.shutdown();
   }
 }
