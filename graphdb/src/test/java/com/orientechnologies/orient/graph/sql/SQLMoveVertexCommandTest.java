@@ -20,12 +20,6 @@
 
 package com.orientechnologies.orient.graph.sql;
 
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -34,31 +28,33 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
-@Test
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
-  OrientVertexType customer;
-  OrientVertexType provider;
-  OrientEdgeType   knows;
-  int              customerGeniusCluster;
+  private static OrientVertexType customer;
+	private static OrientVertexType provider;
+	private static OrientEdgeType   knows;
+	private static int              customerGeniusCluster;
 
   @BeforeClass
-  public void setUp() throws Exception {
-    customer = (OrientVertexType) graph.createVertexType("Customer").setClusterSelection("default");
-    customer.addCluster("Customer_genius");
-    customerGeniusCluster = graph.getRawGraph().getClusterIdByName("Customer_genius");
+  public static void setUp() throws Exception {
+    if (graph.getVertexType("Customer") == null) {
+      customer = (OrientVertexType) graph.createVertexType("Customer").setClusterSelection("default");
+      customer.addCluster("Customer_genius");
+      customerGeniusCluster = graph.getRawGraph().getClusterIdByName("Customer_genius");
+    }
 
-    provider = (OrientVertexType) graph.createVertexType("Provider").setClusterSelection("default");
-    knows = graph.createEdgeType("Knows");
+    if (graph.getVertexType("Provider") == null)
+      provider = (OrientVertexType) graph.createVertexType("Provider").setClusterSelection("default");
+
+    if (graph.getEdgeType("Knows") == null)
+      knows = graph.createEdgeType("Knows");
   }
 
-  @BeforeMethod
-  public void beforeMethod() {
-  }
-
-  @AfterMethod
-  public void afterMethod() {
-  }
-
+  @Test
   public void testMoveSingleRecordToAnotherCluster() {
     OrientVertex v1 = graph.addVertex("class:Customer").setProperties("name", "Jay1", "test",
         "testMoveSingleRecordToAnotherCluster");
@@ -67,8 +63,8 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
     OrientVertex v3 = graph.addVertex("class:Customer").setProperties("name", "Jay3", "test",
         "testMoveSingleRecordToAnotherCluster");
 
-    v1.addEdge(null, v1); // SELF
-    v1.addEdge(null, v2);
+    v1.addEdge("knows", v1); // SELF
+    v1.addEdge("knows", v2);
     v1.addEdge("knows", v3);
     v2.addEdge("knows", v1);
 
@@ -99,6 +95,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
     Assert.assertEquals(tot, 1);
   }
 
+  @Test
   public void testMoveSingleRecordToAnotherClass() {
     ODocument doc = new ODocument("Customer").field("name", "Jay").field("test", "testMoveSingleRecordToAnotherClass").save();
 
@@ -127,6 +124,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
     Assert.assertEquals(newDocument.field("test"), "testMoveSingleRecordToAnotherClass");
   }
 
+  @Test
   public void testMoveMultipleRecordToAnotherCluster() {
     new ODocument("Customer").field("name", "Jay").field("workedOn", "Amiga").save();
     new ODocument("Customer").field("name", "Steve").field("workedOn", "Mac").save();
@@ -159,6 +157,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
 
   }
 
+  @Test
   public void testMoveMultipleRecordToAnotherClass() {
     new ODocument("Customer").field("name", "Luca").field("city", "Rome").save();
     new ODocument("Customer").field("name", "Jill").field("city", "Austin").save();
@@ -190,6 +189,7 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
     Assert.assertEquals(tot, 2);
   }
 
+  @Test
   public void testMoveMultipleRecordToAnotherClassInTx() {
     new ODocument("Customer").field("name", "Luca").field("city", "Rome").save();
     new ODocument("Customer").field("name", "Jill").field("city", "Austin").save();

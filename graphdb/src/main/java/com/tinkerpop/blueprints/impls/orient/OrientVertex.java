@@ -848,8 +848,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     // since the label for the edge can potentially get re-assigned
     // before being pushed into the OrientEdge, the
     // null check has to go here.
-    if (label == null && graph.isStandardElementConstraints())
-      label = "E";
+    if (label == null)
+      throw ExceptionFactory.edgeLabelCanNotBeNull();
 
     if (canCreateDynamicEdge(outDocument, inDocument, outFieldName, inFieldName, fields, label)) {
       // CREATE A LIGHTWEIGHT DYNAMIC EDGE
@@ -1069,7 +1069,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     final String clsName = getRecord().getClassName();
 
-    if (clsName.equals(OrientVertexType.CLASS_NAME))
+    if (OrientVertexType.CLASS_NAME.equals(clsName))
       return StringFactory.vertexString(this);
 
     return StringFactory.V + "(" + clsName + ")" + StringFactory.L_BRACKET + getId() + StringFactory.R_BRACKET;

@@ -122,13 +122,6 @@
             <artifactId>gremlin-groovy</artifactId>
             <version>${blueprints.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.8.8</version>
-            <scope>test</scope>
-        </dependency>
-
     </dependencies>
     <build>
         <plugins>
@@ -146,8 +139,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
                 <configuration>
-                    <argLine>-ea -Xmx3G -Xss2048k -Dindex.flushAfterCreate=false -Dstorage.makeFullCheckpointAfterCreate=false
+                    <argLine>-ea -Xmx3G -Xss2048k -Dindex.flushAfterCreate=false
+                        -Dstorage.makeFullCheckpointAfterCreate=false
                         -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
                         -Dstorage.configuration.syncOnUpdate=false
                     </argLine>

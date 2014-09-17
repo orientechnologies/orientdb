@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -129,7 +130,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   }
 
   /**
-   * Set a Property value.
+   * Sets a Property value.
    * 
    * @param key
    *          Property name
@@ -147,7 +148,27 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   }
 
   /**
-   * Removed a Property.
+   * Sets a Property value specifying a type. This is useful when you don't have a schema on this property but you want to force the
+   * type.
+   *
+   * @param key
+   *          Property name
+   * @param value
+   *          Property value
+   * @param iType
+   *          Type to set
+   */
+  public void setProperty(final String key, final Object value, final OType iType) {
+    validateProperty(this, key, value);
+    if (!isDetached())
+      graph.autoStartTransaction();
+    getRecord().field(key, value, iType);
+    if (!isDetached())
+      save();
+  }
+
+  /**
+   * Removes a Property.
    * 
    * @param key
    *          Property name
