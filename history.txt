@@ -27,6 +27,39 @@
 This document contains the last changes to OrientDB Community Edition.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 2.0-M1 - (September, 17th 2014)
+
+- Studio: New Layout, new Graph Editor, new Security panel (Users and Roles management)
+- Security: Added configurable SSL keystore and truststore
+- Memory: In-Memory database uses off-heap cache
+- Graph API: New OrientGraphAsynch, first experimental version of asynchronous graph
+             New SQL MOVE VERTEX command to refactor portion of graphs and to move vertices between
+               distributed nodes
+             Improved OrientGraphFactory performance reducing recycling time. Added central config
+               of generated graphs in Factory
+             Creation of edges doesn’t update both vertices anymore. Much faster now
+- Console: Improved layout
+- Distributed: 3x of performance improvement
+- Core: New Schema Driver Serialization: avoid writing field names for records with Schema
+         
+        Added strategies to manage conflict: by content and auto-merge. Furthermore can be injected
+          custom strategy via Java API
+        New RWLocks to speedup internal parallelism        
+        Disabled SNAPPY compression by default
+        Improved schema concurrency
+        Removed 2nd level cache
+- SQL: New UUID() function to generate Unique IDs
+       New statistic functions: mode(), variance(), stddev(), median(), percentile()
+       New SQL MOVE VERTEX command to refactor portion of graphs and to move vertices between
+       Rewritten implementation of shortestPath() function
+       Improvement for “order by @rid desc” to browse results in opposite direction without
+          use an index or RAM.
+- Configuration: Global settings are copied in database at creation time and can be update
+- Bug fixing: 20 from 1.7.9, hundreds from 1.7.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0-M1+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
 VERSION 1.7.8 - (August, 13th 2014)
 
 - DevOps: new bin/backup.sh with -lvm option to execute a non-blocking backup on Linux with LVM
