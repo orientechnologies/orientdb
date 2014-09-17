@@ -726,3 +726,7 @@ div.users-ui div.container-fluid, div.role-ui div.container-fluid {
 .clusterSelection {
     padding-left: 5px;
 }
+
+.indexType {
+    padding-left: 15px;
+}

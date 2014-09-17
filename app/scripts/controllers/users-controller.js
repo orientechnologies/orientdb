@@ -19,6 +19,10 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
     $scope.database = Database;
     $scope.usersResult = new Array;
 
+
+    $scope.links = {
+        users: Database.getOWikiFor("Security.html#users")
+    }
     var selectAllUsers = 'select * from oUser fetchPlan *:1 order by name  ';
     var selectAllRoles = 'select * from oRole fetchPlan *:1 order by name  ';
 
@@ -156,6 +160,12 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
 
     $scope.database = Database;
     var selectAllUsers = 'select * from oRole fetchPlan *:1 order by name  ';
+
+
+    $scope.links = {
+        resources: Database.getOWikiFor("Security.html#resources"),
+        roles: Database.getOWikiFor("Security.html#roles")
+    }
     $scope.usersResult = new Array;
     $scope.selectedRole = null;
     $scope.roleMode = [ 'DENY_ALL_BUT', 'ALLOW_ALL_BUT'];

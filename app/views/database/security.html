@@ -17,6 +17,7 @@
                 <div class="col-md-12">
                     <ul class="nav nav-tabs">
                         <li ng-repeat="tab in tabs" ng-class="{active : tab == active}">
+
                             <a href="#/database/{{ db }}/security/{{ tab }}">{{ tabsI18n[tab] }}</a>
                         </li>
                     </ul>

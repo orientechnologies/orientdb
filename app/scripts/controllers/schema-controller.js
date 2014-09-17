@@ -6,6 +6,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
     $scope.countPageOptions = [10, 20, 50, 100];
     $scope.currentPage = 1;
     $scope.links = {
+        linkClasses: Database.getOWikiFor("Schema.html#class"),
         linkClusterSelection: Database.getOWikiFor("SQL-Alter-Class.html"),
         linkClusters: Database.getOWikiFor("Tutorial-Clusters.html"),
         linkInheritance: Database.getOWikiFor("Inheritance.html")
@@ -141,8 +142,11 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
 
     $scope.links = {
         properties: Database.getOWikiFor("Schema.html#property"),
-        indexes: Database.getOWikiFor("Indexes.html")
+        indexes: Database.getOWikiFor("Indexes.html"),
+        type: Database.getOWikiFor("Indexes.html#index-types"),
+        engine: Database.getOWikiFor("Indexes.html")
     }
+
     $scope.class2show = clazz;
     $scope.database = Database;
     $scope.database.refreshMetadata($routeParams.database);
@@ -633,6 +637,10 @@ schemaModule.controller("IndexesController", ['$scope', '$routeParams', '$locati
 
     $scope.indexes = Database.getMetadata()["indexes"];
 
+    $scope.links = {
+        type: Database.getOWikiFor("Indexes.html#index-types"),
+        engine: Database.getOWikiFor("Indexes.html")
+    }
     $scope.rebuildIndex = function (indexName) {
         var sql = 'REBUILD INDEX ' + indexName;
         Spinner.start();

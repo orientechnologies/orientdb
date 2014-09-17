@@ -6,9 +6,10 @@
             <div class="btn-toolbar pull-right">
                 <div class="btn-group">
                     <a href="{{ database.getWiki() }}" class="btn btn-sm btn-trasparent"
-                       data-placement="top"
+                       data-placement="left"
                        data-title="{{'browse.help' | translate}}"
                        data-trigger="hover"
+                       data-container="body"
                        data-animation="am-fade-and-scale"
                        bs-tooltip>
                         <i class="fa fa-question-circle fa-lg"></i>
@@ -147,7 +148,7 @@
                         data-animation="am-fade-and-scale"
                         bs-tooltip
                         ng-click="toggleBookmarks()">
-                    <i class="fa fa-star"></i>
+                    <i class="fa fa-star"> Bookmarks</i>
                 </button>
             </div>
         </div>

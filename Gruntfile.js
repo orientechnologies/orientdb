@@ -320,14 +320,14 @@ module.exports = function (grunt) {
         //'compass:dist',
         'useminPrepare',
         //'imagemin',
-        // 'cssmin',
+        'cssmin',
         'htmlmin',
         'concat',
+        'ngmin',
         'copy',
-        // 'cdnify',
-        // 'ngmin',
-        // 'uglify',
-        // 'rev',
+        'cdnify',
+//        'uglify',
+//        'rev',
         'usemin'
     ]);
 
