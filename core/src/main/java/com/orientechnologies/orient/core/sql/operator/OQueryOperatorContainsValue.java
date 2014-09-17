@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -146,7 +146,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
         // CHECK AGAINST A CONDITION
         for (Object o : map.values()) {
           o = loadIfNeed(o);
-          if ((Boolean) condition.evaluate((ORecordSchemaAware) o, null, iContext))
+          if ((Boolean) condition.evaluate((ODocument) o, null, iContext))
             return true;
         }
       } else
@@ -159,7 +159,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
         // CHECK AGAINST A CONDITION
         for (Object o : map.values()) {
           o = loadIfNeed(o);
-          if ((Boolean) condition.evaluate((ORecordSchemaAware) o, null, iContext))
+          if ((Boolean) condition.evaluate((ODocument) o, null, iContext))
             return true;
           else
             return map.containsValue(iLeft);

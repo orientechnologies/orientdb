@@ -19,7 +19,7 @@ package com.orientechnologies.orient.core.fetch.remote;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Fetch context for {@class ONetworkBinaryProtocol} class
@@ -34,38 +34,38 @@ public class ORemoteFetchContext implements OFetchContext {
   public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
   }
 
-  public void onBeforeMap(ORecordSchemaAware iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  public void onBeforeMap(ODocument iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
   }
 
-  public void onBeforeFetch(ORecordSchemaAware iRootRecord) throws OFetchException {
+  public void onBeforeFetch(ODocument iRootRecord) throws OFetchException {
   }
 
-  public void onBeforeArray(ORecordSchemaAware iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
+  public void onBeforeArray(ODocument iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
       throws OFetchException {
   }
 
-  public void onAfterArray(ORecordSchemaAware iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
+  public void onAfterArray(ODocument iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
   }
 
-  public void onBeforeDocument(ORecordSchemaAware iRecord, final ORecordSchemaAware iDocument, String iFieldName,
+  public void onBeforeDocument(ODocument iRecord, final ODocument iDocument, String iFieldName,
       final Object iUserObject) throws OFetchException {
   }
 
-  public void onBeforeCollection(ORecordSchemaAware iRootRecord, String iFieldName, final Object iUserObject,
+  public void onBeforeCollection(ODocument iRootRecord, String iFieldName, final Object iUserObject,
       final Iterable<?> iterable) throws OFetchException {
   }
 
-  public void onAfterMap(ORecordSchemaAware iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  public void onAfterMap(ODocument iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
   }
 
-  public void onAfterFetch(ORecordSchemaAware iRootRecord) throws OFetchException {
+  public void onAfterFetch(ODocument iRootRecord) throws OFetchException {
   }
 
-  public void onAfterDocument(ORecordSchemaAware iRootRecord, final ORecordSchemaAware iDocument, String iFieldName,
+  public void onAfterDocument(ODocument iRootRecord, final ODocument iDocument, String iFieldName,
       final Object iUserObject) throws OFetchException {
   }
 
-  public void onAfterCollection(ORecordSchemaAware iRootRecord, String iFieldName, final Object iUserObject)
+  public void onAfterCollection(ODocument iRootRecord, String iFieldName, final Object iUserObject)
       throws OFetchException {
   }
 

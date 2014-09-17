@@ -15,6 +15,16 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -31,7 +41,6 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -46,8 +55,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.*;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -73,7 +80,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected static final String                    KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
   protected static final String                    KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
 
-  protected OSQLAsynchQuery<ORecordSchemaAware> request;
+  protected OSQLAsynchQuery<ODocument> request;
   protected OSQLTarget                             parsedTarget;
   protected OSQLFilter                             compiledFilter;
   protected Map<String, Object>                    let                = null;
@@ -91,12 +98,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     init(textRequest);
 
     if (iRequest instanceof OSQLSynchQuery) {
-      request = (OSQLSynchQuery<ORecordSchemaAware>) iRequest;
+      request = (OSQLSynchQuery<ODocument>) iRequest;
     } else if (iRequest instanceof OSQLAsynchQuery)
-      request = (OSQLAsynchQuery<ORecordSchemaAware>) iRequest;
+      request = (OSQLAsynchQuery<ODocument>) iRequest;
     else {
       // BUILD A QUERY OBJECT FROM THE COMMAND REQUEST
-      request = new OSQLSynchQuery<ORecordSchemaAware>(textRequest.getText());
+      request = new OSQLSynchQuery<ODocument>(textRequest.getText());
       if (textRequest.getResultListener() != null)
         request.setResultListener(textRequest.getResultListener());
     }
@@ -170,7 +177,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     }
 
     if (request instanceof OSQLSynchQuery)
-      return ((OSQLSynchQuery<ORecordSchemaAware>) request).getResult();
+      return ((OSQLSynchQuery<ODocument>) request).getResult();
 
     return null;
   }
@@ -286,9 +293,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   protected boolean filter(final ORecord iRecord) {
-    if (iRecord instanceof ORecordSchemaAware) {
+    if (iRecord instanceof ODocument) {
       // CHECK THE TARGET CLASS
-      final ORecordSchemaAware recordSchemaAware = (ORecordSchemaAware) iRecord;
+      final ODocument recordSchemaAware = (ODocument) iRecord;
       Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
       // check only classes that specified in query will go to result set
       if ((targetClasses != null) && (!targetClasses.isEmpty())) {
@@ -530,7 +537,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     final OSQLFilterCondition rootCondition = compiledFilter == null ? null : compiledFilter.getRootCondition();
     if (compiledFilter == null || rootCondition == null) {
       if (request instanceof OSQLSynchQuery)
-        beginRange = ((OSQLSynchQuery<ORecordSchemaAware>) request).getNextPageRID();
+        beginRange = ((OSQLSynchQuery<ODocument>) request).getNextPageRID();
       else
         beginRange = null;
       endRange = null;
@@ -540,7 +547,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       final ORID nextPageRid;
 
       if (request instanceof OSQLSynchQuery)
-        nextPageRid = ((OSQLSynchQuery<ORecordSchemaAware>) request).getNextPageRID();
+        nextPageRid = ((OSQLSynchQuery<ODocument>) request).getNextPageRID();
       else
         nextPageRid = null;
 

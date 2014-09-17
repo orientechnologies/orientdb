@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 
@@ -49,7 +48,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
     return 0;
   }
 
-  protected ORecordSchemaAware newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException,
+  protected ODocument newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException,
       IllegalAccessException {
     return new ODocument();
   }

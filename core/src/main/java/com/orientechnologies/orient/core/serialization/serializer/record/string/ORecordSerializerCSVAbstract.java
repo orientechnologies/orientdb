@@ -53,7 +53,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -76,7 +75,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
    *          Can be an instance of ORID or a Record<?>
    * @return
    */
-  private static OIdentifiable linkToStream(final StringBuilder buffer, final ORecordSchemaAware iParentRecord, Object iLinked) {
+  private static OIdentifiable linkToStream(final StringBuilder buffer, final ODocument iParentRecord, Object iLinked) {
     if (iLinked == null)
       // NULL REFERENCE
       return null;
@@ -837,7 +836,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     return iOutput;
   }
 
-  protected abstract ORecordSchemaAware newObject(final String iClassName);
+  protected abstract ODocument newObject(final String iClassName);
 
   protected boolean isConvertToLinkedMap(Map<?, ?> map, final OType linkedType) {
     boolean convert = (linkedType == OType.LINK && !(map instanceof ORecordLazyMap));

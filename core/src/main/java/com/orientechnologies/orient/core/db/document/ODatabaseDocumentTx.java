@@ -361,7 +361,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
    *           if the document breaks some validation constraints defined in the schema
-   * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
+   * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
    */
   @Override
   public <RET extends ORecordInternal> RET save(final ORecordInternal iRecord, final String iClusterName) {
@@ -398,7 +398,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
    *           if the document breaks some validation constraints defined in the schema
-   * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
+   * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
    */
   @Override
   public <RET extends ORecordInternal> RET save(final ORecordInternal iRecord, String iClusterName,

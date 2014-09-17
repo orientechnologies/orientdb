@@ -16,6 +16,15 @@
 
 package com.orientechnologies.orient.core.tx;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -40,21 +49,11 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAwareAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
@@ -338,8 +337,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
             rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
 
-          if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ORecordSchemaAwareAbstract) {
-            final ORecordSchemaAwareAbstract recordSchemaAware = (ORecordSchemaAwareAbstract) iRecord;
+          if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
+            final ODocument recordSchemaAware = (ODocument) iRecord;
             final OClass recordClass = recordSchemaAware.getSchemaClass();
             final OClass clusterIdClass = database.getMetadata().getSchema().getClassByClusterId(rid.clusterId);
             if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null

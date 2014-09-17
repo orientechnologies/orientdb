@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
@@ -157,7 +156,7 @@ public class OFetchHelper {
     return depthLevel.intValue();
   }
 
-  public static void processRecordRidMap(final ORecordSchemaAware record, Map<String, Integer> iFetchPlan,
+  public static void processRecordRidMap(final ODocument record, Map<String, Integer> iFetchPlan,
       final int iCurrentLevel, final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
       final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
     if (iFetchPlan == null)
@@ -204,7 +203,7 @@ public class OFetchHelper {
     }
   }
 
-  private static void fetchRidMap(final ORecordSchemaAware iRootRecord, final Map<String, Integer> iFetchPlan,
+  private static void fetchRidMap(final ODocument iRootRecord, final Map<String, Integer> iFetchPlan,
       final Object fieldValue, final String fieldName, final int iCurrentLevel, final int iLevelFromRoot,
       final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot,
       final OFetchContext iContext) throws IOException {
@@ -391,7 +390,7 @@ public class OFetchHelper {
     return isEmbedded;
   }
 
-  private static void fetch(final ORecordSchemaAware iRootRecord, final Object iUserObject,
+  private static void fetch(final ODocument iRootRecord, final Object iUserObject,
       final Map<String, Integer> iFetchPlan, final Object fieldValue, final String fieldName, final int iCurrentLevel,
       final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final int depthLevel,
       final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext) throws IOException {
@@ -426,7 +425,7 @@ public class OFetchHelper {
   }
 
   @SuppressWarnings("unchecked")
-  private static void fetchMap(final ORecordSchemaAware iRootRecord, final Object iUserObject,
+  private static void fetchMap(final ODocument iRootRecord, final Object iUserObject,
       final Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
       final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
       final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext) throws IOException {
@@ -470,7 +469,7 @@ public class OFetchHelper {
     iContext.onAfterMap(iRootRecord, fieldName, iUserObject);
   }
 
-  private static void fetchArray(final ORecordSchemaAware iRootRecord, final Object iUserObject,
+  private static void fetchArray(final ODocument iRootRecord, final Object iUserObject,
       final Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
       final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
       final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext) throws IOException {
@@ -498,7 +497,7 @@ public class OFetchHelper {
   }
 
   @SuppressWarnings("unchecked")
-  private static void fetchCollection(final ORecordSchemaAware iRootRecord, final Object iUserObject,
+  private static void fetchCollection(final ODocument iRootRecord, final Object iUserObject,
       final Map<String, Integer> iFetchPlan, final Object fieldValue, final String fieldName, final int iCurrentLevel,
       final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
       final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext) throws IOException {
@@ -566,7 +565,7 @@ public class OFetchHelper {
     }
   }
 
-  private static void fetchDocument(final ORecordSchemaAware iRootRecord, final Object iUserObject,
+  private static void fetchDocument(final ODocument iRootRecord, final Object iUserObject,
       final Map<String, Integer> iFetchPlan, final OIdentifiable fieldValue, final String fieldName, final int iCurrentLevel,
       final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
       final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext) throws IOException {

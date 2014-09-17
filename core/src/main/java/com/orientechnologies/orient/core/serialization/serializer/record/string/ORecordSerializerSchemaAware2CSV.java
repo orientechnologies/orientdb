@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
@@ -54,7 +53,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   private static final long                            serialVersionUID = 1L;
 
   @Override
-  public ORecordSchemaAware newObject(String iClassName) {
+  public ODocument newObject(String iClassName) {
     return new ODocument(iClassName);
   }
 
@@ -270,8 +269,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       return result;
 
     // Fix of nasty IBM JDK bug. In case of very depth recursive graph serialization
-    // ORecordSchemaAware#_source property may be initialized incorrectly.
-    final ORecordSchemaAware recordSchemaAware = (ORecordSchemaAware) iRecord;
+    // ODocument#_source property may be initialized incorrectly.
+    final ODocument recordSchemaAware = (ODocument) iRecord;
     if (recordSchemaAware.fields() > 0)
       return null;
 
@@ -547,8 +546,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   private String getClassName(final Object iValue) {
-    if (iValue instanceof ORecordSchemaAware)
-      return ((ORecordSchemaAware) iValue).getClassName();
+    if (iValue instanceof ODocument)
+      return ((ODocument) iValue).getClassName();
 
     return iValue != null ? iValue.getClass().getSimpleName() : null;
   }

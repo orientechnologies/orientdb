@@ -20,7 +20,7 @@ import java.util.Collection;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -77,11 +77,11 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 
 		} else if (iLeft instanceof Collection<?>) {
 
-			final Collection<ORecordSchemaAware> collection = (Collection<ORecordSchemaAware>) iLeft;
+			final Collection<ODocument> collection = (Collection<ODocument>) iLeft;
 
 			if (condition != null) {
 				// CHECK AGAINST A CONDITION
-				for (final ORecordSchemaAware o : collection) {
+				for (final ODocument o : collection) {
 					if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.FALSE)
 						return false;
 				}
@@ -95,10 +95,10 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 		} else if (iRight instanceof Collection<?>) {
 
 			// CHECK AGAINST A CONDITION
-			final Collection<ORecordSchemaAware> collection = (Collection<ORecordSchemaAware>) iRight;
+			final Collection<ODocument> collection = (Collection<ODocument>) iRight;
 
 			if (condition != null) {
-				for (final ORecordSchemaAware o : collection) {
+				for (final ODocument o : collection) {
 					if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.FALSE)
 						return false;
 				}
