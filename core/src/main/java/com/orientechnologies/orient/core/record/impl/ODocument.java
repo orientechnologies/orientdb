@@ -1744,4 +1744,18 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
 
     _fieldCollectionChangeTimeLines.remove(fieldName);
   }
+  
+  
+  /**
+   * convert ODocument to map
+   * @return
+   */
+  public Map<String, Object> toMap() {
+    Map<String, Object> map = new HashMap<String, Object>();
+    String[] fields = this.fieldNames();
+    for(String field : fields) {
+      map.put(field, this.field(field));
+    }
+    return map;
+  }
 }
