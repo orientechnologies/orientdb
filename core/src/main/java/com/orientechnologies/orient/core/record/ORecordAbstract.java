@@ -41,7 +41,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 
 @SuppressWarnings({ "unchecked", "serial" })
-public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
+public abstract class ORecordAbstract implements ORecord, ORecordInternal {
   protected ORecordId                            _recordId;
   protected ORecordVersion                       _recordVersion          = OVersionFactory.instance().createVersion();
 
@@ -67,7 +67,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     unsetDirty();
   }
 
-  public ORecordAbstract<?> fill(final ORID iRid, final ORecordVersion iVersion, final byte[] iBuffer, boolean iDirty) {
+  public ORecordAbstract fill(final ORID iRid, final ORecordVersion iVersion, final byte[] iBuffer, boolean iDirty) {
     _recordId.clusterId = iRid.getClusterId();
     _recordId.clusterPosition = iRid.getClusterPosition();
     _recordVersion.copyFrom(iVersion);
@@ -86,7 +86,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _recordId;
   }
 
-  public ORecordAbstract<?> setIdentity(final ORecordId iIdentity) {
+  public ORecordAbstract setIdentity(final ORecordId iIdentity) {
     _recordId = iIdentity;
     return this;
   }
@@ -96,11 +96,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return null;
   }
 
-  public ORecord<?> getRecord() {
+  public ORecord getRecord() {
     return this;
   }
 
-  public ORecordAbstract<?> setIdentity(final int iClusterId, final OClusterPosition iClusterPosition) {
+  public ORecordAbstract setIdentity(final int iClusterId, final OClusterPosition iClusterPosition) {
     if (_recordId == null || _recordId == ORecordId.EMPTY_RECORD_ID)
       _recordId = new ORecordId(iClusterId, iClusterPosition);
     else {
@@ -114,13 +114,13 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return true;
   }
 
-  public ORecordAbstract<T> clear() {
+  public ORecordAbstract clear() {
     setDirty();
     invokeListenerEvent(ORecordListener.EVENT.CLEAR);
     return this;
   }
 
-  public ORecordAbstract<T> reset() {
+  public ORecordAbstract reset() {
     _status = ORecordElement.STATUS.LOADED;
     _recordVersion.reset();
     _size = 0;
@@ -144,7 +144,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _source;
   }
 
-  public ORecordAbstract<T> fromStream(final byte[] iRecordBuffer) {
+  public ORecordAbstract fromStream(final byte[] iRecordBuffer) {
     _dirty = false;
     _contentChanged = false;
     if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null) {
@@ -165,7 +165,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     _dirty = false;
   }
 
-  public ORecordAbstract<T> setDirty() {
+  public ORecordAbstract setDirty() {
     if (!_dirty && _status != STATUS.UNMARSHALLING) {
       _dirty = true;
       _source = null;
@@ -183,11 +183,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     }
   }
 
-  public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
+  public void onBeforeIdentityChanged(final ORecord iRecord) {
     prevRid = _recordId.copy();
   }
 
-  public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+  public void onAfterIdentityChanged(final ORecord iRecord) {
     invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
 
     if (prevRid != null && !prevRid.equals(this._recordId)) {
@@ -202,24 +202,24 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _dirty;
   }
 
-  public <RET extends ORecord<T>> RET fromJSON(final String iSource, final String iOptions) {
+  public <RET extends ORecord> RET fromJSON(final String iSource, final String iOptions) {
     // ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions);
     ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions, false); // Add new parameter to accommodate new API,
                                                                                      // nothing change
     return (RET) this;
   }
 
-  public <RET extends ORecord<T>> RET fromJSON(final String iSource) {
+  public <RET extends ORecord> RET fromJSON(final String iSource) {
     ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null);
     return (RET) this;
   }
 
   // Add New API to load record if rid exist
-  public <RET extends ORecord<T>> RET fromJSON(final String iSource, boolean needReload) {
+  public <RET extends ORecord> RET fromJSON(final String iSource, boolean needReload) {
     return (RET) ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, needReload);
   }
 
-  public <RET extends ORecord<T>> RET fromJSON(final InputStream iContentResult) throws IOException {
+  public <RET extends ORecord> RET fromJSON(final InputStream iContentResult) throws IOException {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     OIOUtils.copyStream(iContentResult, out, -1);
     ORecordSerializerJSON.INSTANCE.fromString(out.toString(), this, null);
@@ -254,7 +254,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _recordVersion;
   }
 
-  public ORecordAbstract<T> unload() {
+  public ORecordAbstract unload() {
     _status = ORecordElement.STATUS.NOT_LOADED;
     _source = null;
     unsetDirty();
@@ -262,17 +262,17 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return this;
   }
 
-  public ORecordInternal<T> load() {
+  public ORecordInternal load() {
     if (!getIdentity().isValid())
       throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
 
     try {
-      final ORecordInternal<?> result = getDatabase().load(this);
+      final ORecordInternal result = getDatabase().load(this);
 
       if (result == null)
         throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found");
 
-      return (ORecordInternal<T>) result;
+      return (ORecordInternal) result;
     } catch (Exception e) {
       throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
     }
@@ -286,15 +286,15 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
 
-  public ORecordInternal<T> reload() {
+  public ORecordInternal reload() {
     return reload(null);
   }
 
-  public ORecordInternal<T> reload(final String iFetchPlan) {
+  public ORecordInternal reload(final String iFetchPlan) {
     return reload(null, true);
   }
 
-  public ORecordInternal<T> reload(final String iFetchPlan, final boolean iIgnoreCache) {
+  public ORecordInternal reload(final String iFetchPlan, final boolean iIgnoreCache) {
     if (!getIdentity().isValid())
       throw new ORecordNotFoundException("The record has no id. It is probably new or still transient");
 
@@ -307,24 +307,24 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     }
   }
 
-  public ORecordAbstract<T> save() {
+  public ORecordAbstract save() {
     return save(false);
   }
 
-  public ORecordAbstract<T> save(final String iClusterName) {
+  public ORecordAbstract save(final String iClusterName) {
     return save(iClusterName, false);
   }
 
-  public ORecordAbstract<T> save(boolean forceCreate) {
+  public ORecordAbstract save(boolean forceCreate) {
     getDatabase().save(this, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
     return this;
   }
 
-  public ORecordAbstract<T> save(String iClusterName, boolean forceCreate) {
+  public ORecordAbstract save(String iClusterName, boolean forceCreate) {
     return getDatabase().save(this, iClusterName, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
   }
 
-  public ORecordAbstract<T> delete() {
+  public ORecordAbstract delete() {
     getDatabase().delete(this);
     setDirty();
     return this;
@@ -387,7 +387,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     this._status = iStatus;
   }
 
-  public ORecordAbstract<T> copyTo(final ORecordAbstract<T> cloned) {
+  public ORecordAbstract copyTo(final ORecordAbstract cloned) {
     cloned._source = _source;
     cloned._size = _size;
     cloned._recordId = _recordId.copy();
@@ -427,7 +427,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     }
   }
 
-  public <RET extends ORecord<T>> RET flatCopy() {
+  public <RET extends ORecord> RET flatCopy() {
     return (RET) copy();
   }
 

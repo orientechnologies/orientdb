@@ -202,7 +202,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  public ODictionary<ORecordInternal<?>> getDictionary() {
+  public ODictionary<ORecordInternal> getDictionary() {
     OIndex<?> idx;
     acquireSharedLock();
     try {
@@ -214,7 +214,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     if (idx == null) {
       idx = createDictionaryIfNeeded();
     }
-    return new ODictionary<ORecordInternal<?>>((OIndex<OIdentifiable>) idx);
+    return new ODictionary<ORecordInternal>((OIndex<OIdentifiable>) idx);
   }
 
   public ODocument getConfiguration() {

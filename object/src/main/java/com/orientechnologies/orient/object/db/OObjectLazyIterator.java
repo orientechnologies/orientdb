@@ -69,7 +69,7 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
 
     if (value instanceof ORID && autoConvert2Object) {
       currentElement = (OIdentifiable) value;
-      ORecordInternal<?> record = (ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan);
+      ORecordInternal record = (ORecordInternal) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan);
       if (record == null) {
         OLogManager.instance().warn(
             this,

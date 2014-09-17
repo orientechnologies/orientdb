@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * using the reset() at every re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ORecordFlat extends ORecordAbstract<String> implements ORecordStringable {
+public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
   private static final long serialVersionUID = 1L;
   public static final byte  RECORD_TYPE      = 'f';
   protected String          value;
@@ -115,13 +115,13 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
   }
 
   @Override
-  public ORecordInternal<String> reload() {
+  public ORecordInternal reload() {
     value = null;
     return super.reload();
   }
 
   @Override
-  public ORecordAbstract<String> fromStream(final byte[] iRecordBuffer) {
+  public ORecordAbstract fromStream(final byte[] iRecordBuffer) {
     super.fromStream(iRecordBuffer);
     value = null;
     return this;

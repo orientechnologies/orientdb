@@ -112,7 +112,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         }
 
         if (!iSingleValue.getIdentity().isValid())
-          ((ORecord<?>) iSingleValue).save();
+          ((ORecord) iSingleValue).save();
 
         values.add(iSingleValue.getIdentity());
         indexEngine.put(key, values);

@@ -138,7 +138,7 @@ public abstract class OStringSerializerHelper {
       else if (iValue instanceof String)
         return new ORecordId((String) iValue);
       else
-        return ((ORecord<?>) iValue).getIdentity().toString();
+        return ((ORecord) iValue).getIdentity().toString();
 
     case EMBEDDED:
       // EMBEDDED

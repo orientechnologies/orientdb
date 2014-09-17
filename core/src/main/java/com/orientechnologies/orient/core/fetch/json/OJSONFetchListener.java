@@ -32,7 +32,7 @@ import java.io.IOException;
  */
 public class OJSONFetchListener implements OFetchListener {
 
-  public void processStandardField(final ORecordSchemaAware<?> iRecord, final Object iFieldValue, final String iFieldName,
+  public void processStandardField(final ORecordSchemaAware iRecord, final Object iFieldValue, final String iFieldName,
       final OFetchContext iContext, final Object iusObject, final String iFormat) {
     try {
       ((OJSONFetchContext) iContext).getJsonWriter().writeAttribute(((OJSONFetchContext) iContext).getIndentLevel(), true,
@@ -51,17 +51,17 @@ public class OJSONFetchListener implements OFetchListener {
     }
   }
 
-  public Object fetchLinked(final ORecordSchemaAware<?> iRecord, final Object iUserObject, final String iFieldName,
-      final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException {
+  public Object fetchLinked(final ORecordSchemaAware iRecord, final Object iUserObject, final String iFieldName,
+      final ORecordSchemaAware iLinked, final OFetchContext iContext) throws OFetchException {
     return iLinked;
   }
 
-  public Object fetchLinkedMapEntry(final ORecordSchemaAware<?> iRecord, final Object iUserObject, final String iFieldName,
-      final String iKey, final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException {
+  public Object fetchLinkedMapEntry(final ORecordSchemaAware iRecord, final Object iUserObject, final String iFieldName,
+      final String iKey, final ORecordSchemaAware iLinked, final OFetchContext iContext) throws OFetchException {
     return iLinked;
   }
 
-  public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
+  public void parseLinked(final ORecordSchemaAware iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
       final String iFieldName, final OFetchContext iContext) throws OFetchException {
     try {
       ((OJSONFetchContext) iContext).writeLinkedAttribute(iLinked, iFieldName);
@@ -71,7 +71,7 @@ public class OJSONFetchListener implements OFetchListener {
     }
   }
 
-  public void parseLinkedCollectionValue(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject,
+  public void parseLinkedCollectionValue(ORecordSchemaAware iRootRecord, OIdentifiable iLinked, Object iUserObject,
       String iFieldName, OFetchContext iContext) throws OFetchException {
     try {
       if (((OJSONFetchContext) iContext).isInCollection(iRootRecord)) {
@@ -85,8 +85,8 @@ public class OJSONFetchListener implements OFetchListener {
     }
   }
 
-  public Object fetchLinkedCollectionValue(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName,
-      ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
+  public Object fetchLinkedCollectionValue(ORecordSchemaAware iRoot, Object iUserObject, String iFieldName,
+      ORecordSchemaAware iLinked, OFetchContext iContext) throws OFetchException {
     return iLinked;
   }
 

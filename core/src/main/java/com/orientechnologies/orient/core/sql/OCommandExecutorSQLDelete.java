@@ -60,7 +60,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   private int                  recordCount     = 0;
   private String               lockStrategy    = "NONE";
   private String               returning       = "COUNT";
-  private List<ORecord<?>>     allDeletedRecords;
+  private List<ORecord>     allDeletedRecords;
 
   private OSQLFilter           compiledFilter;
 
@@ -139,7 +139,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     if (!returning.equalsIgnoreCase("COUNT"))
-      allDeletedRecords = new ArrayList<ORecord<?>>();
+      allDeletedRecords = new ArrayList<ORecord>();
 
     if (query != null) {
       // AGAINST CLUSTERS AND CLASSES
@@ -182,7 +182,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
             OIdentifiable rec = entry.getValue();
             rec = rec.getRecord();
             if (rec != null)
-              allDeletedRecords.add((ORecord<?>) rec);
+              allDeletedRecords.add((ORecord) rec);
           }
 
           index.clear();
@@ -231,7 +231,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
    * Delete the current record.
    */
   public boolean result(final Object iRecord) {
-    final ORecordAbstract<?> record = (ORecordAbstract<?>) iRecord;
+    final ORecordAbstract record = (ORecordAbstract) iRecord;
 
     try {
       if (record.getIdentity().isValid()) {

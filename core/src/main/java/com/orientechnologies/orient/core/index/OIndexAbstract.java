@@ -823,7 +823,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected long[] indexCluster(final String clusterName, final OProgressListener iProgressListener, long documentNum,
       long documentIndexed, long documentTotal) {
     try {
-      for (final ORecord<?> record : getDatabase().browseCluster(clusterName)) {
+      for (final ORecord record : getDatabase().browseCluster(clusterName)) {
         if (Thread.interrupted())
           throw new OCommandExecutionException("The index rebuild has been interrupted");
 

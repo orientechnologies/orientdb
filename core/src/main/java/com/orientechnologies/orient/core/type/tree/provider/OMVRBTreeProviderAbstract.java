@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -32,18 +31,18 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvider<K, V>, OSerializableStream {
-  private static final long          serialVersionUID = 1L;
+  private static final long       serialVersionUID = 1L;
 
-  protected final String             clusterName;
-  protected final int                clusterId;
-  protected final ORecordInternal<?> record;
-  protected final OStorage           storage;
-  protected int                      size;
-  protected int                      pageSize;
-  protected ORecordId                root;
-  protected int                      keySize          = 1;
+  protected final String          clusterName;
+  protected final int             clusterId;
+  protected final ORecordInternal record;
+  protected final OStorage        storage;
+  protected int                   size;
+  protected int                   pageSize;
+  protected ORecordId             root;
+  protected int                   keySize          = 1;
 
-  public OMVRBTreeProviderAbstract(final ORecordInternal<?> iRecord, final OStorage iStorage, final String iClusterName) {
+  public OMVRBTreeProviderAbstract(final ORecordInternal iRecord, final OStorage iStorage, final String iClusterName) {
     storage = iStorage;
     clusterName = iClusterName;
     if (storage != null) {
@@ -229,7 +228,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
     return rid == null ? 0 : rid.hashCode();
   }
 
-  public ORecord<?> getRecord() {
+  public ORecordInternal getRecord() {
     return record;
   }
 

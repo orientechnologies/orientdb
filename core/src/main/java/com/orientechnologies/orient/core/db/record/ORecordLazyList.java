@@ -499,10 +499,10 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     final Object o = super.get(iIndex);
 
     if (o != null && o instanceof OIdentifiable && ((OIdentifiable) o).getIdentity().isPersistent()) {
-      if (o instanceof ORecord<?> && !((ORecord<?>) o).isDirty()) {
+      if (o instanceof ORecord && !((ORecord) o).isDirty()) {
         marshalling = true;
         try {
-          super.set(iIndex, ((ORecord<?>) o).getIdentity());
+          super.set(iIndex, ((ORecord) o).getIdentity());
           // CONVERTED
           return true;
         } catch (ORecordNotFoundException e) {

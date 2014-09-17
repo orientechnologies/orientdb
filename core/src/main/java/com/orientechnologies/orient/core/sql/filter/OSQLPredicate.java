@@ -101,7 +101,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     return evaluate(null, null, iContext);
   }
 
-  public Object evaluate(final ORecord<?> iRecord, ODocument iCurrentResult, final OCommandContext iContext) {
+  public Object evaluate(final ORecord iRecord, ODocument iCurrentResult, final OCommandContext iContext) {
     if (rootCondition == null)
       return true;
 

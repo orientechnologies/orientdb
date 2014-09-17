@@ -195,11 +195,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.ROLLED_BACK;
   }
 
-  public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,
+  public ORecordInternal loadRecord(final ORID iRid, final ORecordInternal iRecord, final String iFetchPlan,
       final boolean ignoreCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkTransaction();
 
-    final ORecordInternal<?> txRecord = getRecord(iRid);
+    final ORecordInternal txRecord = getRecord(iRid);
     if (txRecord == OTransactionRealAbstract.DELETED_RECORD)
       // DELETED IN TX
       return null;
@@ -218,7 +218,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       return null;
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
-    final ORecordInternal<?> record = database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false,
+    final ORecordInternal record = database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false,
         iLockingStrategy);
 
     if (record != null)
@@ -227,14 +227,14 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     return record;
   }
 
-  public void deleteRecord(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
+  public void deleteRecord(final ORecordInternal iRecord, final OPERATION_MODE iMode) {
     if (!iRecord.getIdentity().isValid())
       return;
 
     addRecord(iRecord, ORecordOperation.DELETED, null);
   }
 
-  public ORecordInternal saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode,
+  public ORecordInternal saveRecord(final ORecordInternal iRecord, final String iClusterName, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (iRecord == null)
@@ -263,7 +263,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = iStatus;
   }
 
-  protected void addRecord(final ORecordInternal<?> iRecord, final byte iStatus, final String iClusterName) {
+  protected void addRecord(final ORecordInternal iRecord, final byte iStatus, final String iClusterName) {
     checkTransaction();
 
     switch (iStatus) {

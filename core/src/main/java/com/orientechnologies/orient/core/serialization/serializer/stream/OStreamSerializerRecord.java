@@ -40,7 +40,7 @@ public class OStreamSerializerRecord implements OStreamSerializer {
 			// NULL VALUE
 			return null;
 
-		final ORecordInternal<?> obj = Orient.instance().getRecordFactoryManager().newInstance();
+		final ORecordInternal obj = Orient.instance().getRecordFactoryManager().newInstance();
 
 		final ORID rid = new ORecordId().fromStream(iStream);
 
@@ -52,9 +52,9 @@ public class OStreamSerializerRecord implements OStreamSerializer {
 		if (iObject == null)
 			return null;
 
-		if (((ORecord<?>) iObject).getIdentity() == null)
+		if (((ORecord) iObject).getIdentity() == null)
 			throw new OSerializationException("Cannot serialize record without identity. Store it before to serialize.");
 
-		return ((ORecord<?>) iObject).getIdentity().toStream();
+		return ((ORecord) iObject).getIdentity().toStream();
 	}
 }

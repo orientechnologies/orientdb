@@ -590,7 +590,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (!rid.isValid())
       return null;
 
-    ORecord<?> rec = rid.getRecord();
+    ORecord rec = rid.getRecord();
     if (rec == null || !(rec instanceof ODocument))
       return null;
 

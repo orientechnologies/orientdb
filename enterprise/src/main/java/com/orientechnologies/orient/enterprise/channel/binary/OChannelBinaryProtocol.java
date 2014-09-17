@@ -121,7 +121,7 @@ public class OChannelBinaryProtocol {
     if (classId == RECORD_RID) {
       return network.readRID();
     } else {
-      final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
+      final ORecordInternal record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
 
       final ORecordId rid = network.readRID();
       final ORecordVersion version = network.readVersion();

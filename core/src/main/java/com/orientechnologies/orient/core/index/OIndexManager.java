@@ -165,7 +165,7 @@ public interface OIndexManager {
    * 
    * @return a dictionary
    */
-  public ODictionary<ORecordInternal<?>> getDictionary();
+  public ODictionary<ORecordInternal> getDictionary();
 
   /**
    * Flushes all indexes that is registered in this manager. There might be some changes stored in memory, this method ensures that

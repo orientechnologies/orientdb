@@ -190,7 +190,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   public void onRecordDeleteReplicated(final ODocument iDocument) {
   }
 
-  public RESULT onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+  public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
     if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
       return RESULT.RECORD_NOT_CHANGED;
 

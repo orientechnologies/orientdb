@@ -60,7 +60,7 @@ public class OLocalRecordCache extends OAbstractRecordCache {
    * @param record
    *          record that should be cached
    */
-  public void updateRecord(final ORecordInternal<?> record) {
+  public void updateRecord(final ORecordInternal record) {
     if (isEnabled() && record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid()
         && !record.getRecordVersion().isTombstone()) {
       if (underlying.get(record.getIdentity()) != record)
@@ -75,13 +75,13 @@ public class OLocalRecordCache extends OAbstractRecordCache {
    *          unique identifier of record
    * @return record stored in cache if any, otherwise - {@code null}
    */
-  public ORecordInternal<?> findRecord(final ORID rid) {
+  public ORecordInternal findRecord(final ORID rid) {
     if (!isEnabled()) {
       return null;
     }
     // DELEGATE TO THE 2nd LEVEL CACHE
 
-    ORecordInternal<?> record;
+    ORecordInternal record;
     record = underlying.get(rid);
 
     if (record != null)

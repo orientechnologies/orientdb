@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 /**
  * Generic record representation with a schema definition. The record has multiple fields. Fields are also called properties.
  */
-public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
+public interface ORecordSchemaAware extends ORecordInternal {
 
 	/**
 	 * Returns the value of a field.
@@ -54,7 +54,7 @@ public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 	 *          Field value to set
 	 * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
 	 */
-	public ORecordSchemaAware<T> field(String iFieldName, Object iFieldValue);
+	public ORecordSchemaAware field(String iFieldName, Object iFieldValue);
 
 	/**
 	 * Sets the value for a field forcing the type.This is useful when you want avoid automatic conversions (for example record id ->
@@ -70,7 +70,7 @@ public interface ORecordSchemaAware<T> extends ORecordInternal<T> {
 	 *          Type between the values defined in the {@link com.orientechnologies.orient.core.metadata.schema.OType} enum
 	 * @return
 	 */
-	public ORecordSchemaAware<T> field(String iFieldName, Object iFieldValue, OType... iType);
+	public ORecordSchemaAware field(String iFieldName, Object iFieldValue, OType... iType);
 
 	/**
 	 * Removes a field. This operation does not set the field value to null but remove the field itself.

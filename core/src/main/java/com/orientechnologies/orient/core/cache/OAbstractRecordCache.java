@@ -75,7 +75,7 @@ public abstract class OAbstractRecordCache {
    *          unique identifier of record
    * @return record stored in cache if any, otherwise - {@code null}
    */
-  public ORecordInternal<?> freeRecord(final ORID rid) {
+  public ORecordInternal freeRecord(final ORID rid) {
     return underlying.remove(rid);
   }
 

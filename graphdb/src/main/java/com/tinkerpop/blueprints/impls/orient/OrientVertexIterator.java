@@ -28,7 +28,7 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     if (iObject instanceof OrientVertex)
       return (OrientVertex) iObject;
 
-    final ORecord<?> rec = ((OIdentifiable) iObject).getRecord();
+    final ORecord rec = ((OIdentifiable) iObject).getRecord();
 
     if (rec == null || !(rec instanceof ODocument))
       return null;

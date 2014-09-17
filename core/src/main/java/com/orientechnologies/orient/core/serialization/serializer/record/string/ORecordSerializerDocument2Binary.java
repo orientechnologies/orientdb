@@ -49,17 +49,17 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
     return 0;
   }
 
-  protected ORecordSchemaAware<?> newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException,
+  protected ORecordSchemaAware newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException,
       IllegalAccessException {
     return new ODocument();
   }
 
-  public ORecordInternal<?> fromStream(ODatabaseRecord iDatabase, byte[] iSource) {
+  public ORecordInternal fromStream(ODatabaseRecord iDatabase, byte[] iSource) {
     // TODO: HANDLE FACTORIES
     return fromStream(iSource, null, null);
   }
 
-  public ORecordInternal<?> fromStream(byte[] iSource, ORecordInternal<?> iRecord, String[] iFields) {
+  public ORecordInternal fromStream(byte[] iSource, ORecordInternal iRecord, String[] iFields) {
     ODocument record = (ODocument) iRecord;
     if (iRecord == null)
       record = new ODocument();
@@ -155,7 +155,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
     return iRecord;
   }
 
-  public byte[] toStream(final ORecordInternal<?> iRecord, boolean iOnlyDelta) {
+  public byte[] toStream(final ORecordInternal iRecord, boolean iOnlyDelta) {
     ODocument record = (ODocument) iRecord;
 
     ByteArrayOutputStream stream = null;
@@ -201,7 +201,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
             // NULL: WRITE -1 AS LENGTH
             out.writeInt(-1);
           else {
-            buffer = ((ORecordInternal<?>) value).toStream();
+            buffer = ((ORecordInternal) value).toStream();
             out.writeInt(buffer.length);
             out.write(buffer);
           }
@@ -223,11 +223,11 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
         case LINK:
           out.writeBoolean(value != null);
           if (value != null) {
-            if (!(value instanceof ORecord<?>))
+            if (!(value instanceof ORecord))
               throw new ODatabaseException("Invalid property value in '" + p.getName() + "': found " + value.getClass()
                   + " while it was expected a ORecord");
 
-            ORID rid = ((ORecord<?>) value).getIdentity();
+            ORID rid = ((ORecord) value).getIdentity();
             out.writeInt(rid.getClusterId());
             out.write(rid.getClusterPosition().toStream());
           }

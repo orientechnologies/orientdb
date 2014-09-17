@@ -138,7 +138,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   }
 
   @Override
-  public void onAfterIdentityChanged(ORecord<?> iRecord) {
+  public void onAfterIdentityChanged(ORecord iRecord) {
     if (iRecord instanceof ORecord)
       map.put(iRecord, iRecord);
     else

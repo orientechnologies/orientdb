@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 public class ORecordSerializerRaw implements ORecordSerializer {
   public static final String NAME = "ORecordDocumentRaw";
 
-  public ORecordInternal<?> fromStream(final byte[] iSource) {
+  public ORecordInternal fromStream(final byte[] iSource) {
     return new ORecordBytes(iSource);
   }
 
@@ -42,7 +42,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
     return NAME;
   }
 
-  public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord, String[] iFields) {
+  public ORecordInternal fromStream(final byte[] iSource, final ORecordInternal iRecord, String[] iFields) {
     final ORecordBytes record = (ORecordBytes) iRecord;
     record.fromStream(iSource);
     record.reset(iSource);
@@ -50,7 +50,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
     return record;
   }
 
-  public byte[] toStream(final ORecordInternal<?> iSource, boolean iOnlyDelta) {
+  public byte[] toStream(final ORecordInternal iSource, boolean iOnlyDelta) {
     try {
       return iSource.toStream();
     } catch (Exception e) {

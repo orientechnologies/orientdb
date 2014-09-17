@@ -60,7 +60,7 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     }
   }
 
-  public Object evaluate(final ORecord<?> iRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
+  public Object evaluate(final ORecord iRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
     if (rootCondition == null)
       return true;
 

@@ -100,11 +100,11 @@ public class ODocumentHelper {
         return (RET) iValue;
       } else if (iValue instanceof String) {
         return (RET) new ORecordId((String) iValue);
-      } else if (iValue instanceof ORecord<?>) {
-        return (RET) ((ORecord<?>) iValue).getIdentity();
+      } else if (iValue instanceof ORecord) {
+        return (RET) ((ORecord) iValue).getIdentity();
       }
     } else if (ORecord.class.isAssignableFrom(iFieldType)) {
-      if (iValue instanceof ORID || iValue instanceof ORecord<?>) {
+      if (iValue instanceof ORID || iValue instanceof ORecord) {
         return (RET) iValue;
       } else if (iValue instanceof String) {
         return (RET) new ORecordId((String) iValue);
@@ -293,7 +293,7 @@ public class ODocumentHelper {
           value = ((OCommandContext) value).getVariables();
 
         if (value instanceof OIdentifiable) {
-          final ORecord<?> record = currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord)
+          final ORecord record = currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord)
               .getRecord() : null;
 
           final Object index = getIndexPart(iContext, indexPart);
@@ -463,9 +463,9 @@ public class ODocumentHelper {
           } else if (currentRecord != null) {
             // GET THE LINKED OBJECT IF ANY
             value = getIdentifiableValue(currentRecord, fieldName);
-            if (value != null && value instanceof ORecord<?> && ((ORecord<?>) value).getInternalStatus() == STATUS.NOT_LOADED)
+            if (value != null && value instanceof ORecord && ((ORecord) value).getInternalStatus() == STATUS.NOT_LOADED)
               // RELOAD IT
-              ((ORecord<?>) value).reload();
+              ((ORecord) value).reload();
           } else if (value instanceof Map<?, ?>)
             value = getMapEntry((Map<String, ?>) value, fieldName);
           else if (OMultiValue.isMultiValue(value)) {
@@ -525,7 +525,7 @@ public class ODocumentHelper {
   @SuppressWarnings("unchecked")
   protected static Object filterItem(final String iConditionFieldName, final Object iConditionFieldValue, final Object iValue) {
     if (iValue instanceof OIdentifiable) {
-      final ORecord<?> rec = ((OIdentifiable) iValue).getRecord();
+      final ORecord rec = ((OIdentifiable) iValue).getRecord();
       if (rec instanceof ODocument) {
         final ODocument doc = (ODocument) rec;
 
@@ -611,14 +611,14 @@ public class ODocumentHelper {
         return ((ODocument) iCurrent.getRecord()).getClassName();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
         return Orient.instance().getRecordFactoryManager()
-            .getRecordTypeName(((ORecordInternal<?>) iCurrent.getRecord()).getRecordType());
+            .getRecordTypeName(((ORecordInternal) iCurrent.getRecord()).getRecordType());
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
-        final byte[] stream = ((ORecordInternal<?>) iCurrent.getRecord()).toStream();
+        final byte[] stream = ((ORecordInternal) iCurrent.getRecord()).toStream();
         return stream != null ? stream.length : 0;
       } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
         return ((ODocument) iCurrent.getRecord()).fieldNames();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
-        return new String(((ORecordInternal<?>) iCurrent.getRecord()).toStream());
+        return new String(((ORecordInternal) iCurrent.getRecord()).toStream());
     }
 
     if (iCurrent == null)
@@ -638,7 +638,7 @@ public class ODocumentHelper {
     final String function = iFunction.toUpperCase();
 
     if (function.startsWith("SIZE("))
-      result = currentValue instanceof ORecord<?> ? 1 : OMultiValue.getSize(currentValue);
+      result = currentValue instanceof ORecord ? 1 : OMultiValue.getSize(currentValue);
     else if (function.startsWith("LENGTH("))
       result = currentValue.toString().length();
     else if (function.startsWith("TOUPPERCASE("))
@@ -695,7 +695,7 @@ public class ODocumentHelper {
       // EXTRACT ARGUMENTS
       final List<String> args = OStringSerializerHelper.getParameters(iFunction.substring(iFunction.indexOf('(')));
 
-      final ORecordInternal<?> currentRecord = iContext != null ? (ORecordInternal<?>) iContext.getVariable("$current") : null;
+      final ORecordInternal currentRecord = iContext != null ? (ORecordInternal) iContext.getVariable("$current") : null;
       for (int i = 0; i < args.size(); ++i) {
         final String arg = args.get(i);
         final Object o = OSQLHelper.getValue(arg, currentRecord, iContext);
@@ -836,8 +836,8 @@ public class ODocumentHelper {
   }
 
   /**
-   * Makes a deep comparison field by field to check if the passed ODocument instance is identical as identity and content to the current
-   * one. Instead equals() just checks if the RID are the same.
+   * Makes a deep comparison field by field to check if the passed ODocument instance is identical as identity and content to the
+   * current one. Instead equals() just checks if the RID are the same.
    *
    * @param iOther
    *          ODocument instance
@@ -846,7 +846,7 @@ public class ODocumentHelper {
    */
   @SuppressWarnings("unchecked")
   public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseRecord iMyDb, final ODocument iOther,
-                                          final ODatabaseRecord iOtherDb, RIDMapper ridMapper) {
+      final ODatabaseRecord iOtherDb, RIDMapper ridMapper) {
     return hasSameContentOf(iCurrent, iMyDb, iOther, iOtherDb, ridMapper, true);
   }
 

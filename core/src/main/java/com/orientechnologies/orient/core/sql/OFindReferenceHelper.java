@@ -88,7 +88,7 @@ public class OFindReferenceHelper {
 
   private static void browseCluster(final ODatabaseRecord iDatabase, final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map,
       final String iClusterName) {
-    for (ORecordInternal<?> record : iDatabase.browseCluster(iClusterName)) {
+    for (ORecordInternal record : iDatabase.browseCluster(iClusterName)) {
       if (record instanceof ODocument) {
         try {
           for (String fieldName : ((ODocument) record).fieldNames()) {
@@ -115,7 +115,7 @@ public class OFindReferenceHelper {
   }
 
   private static void checkObject(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Object value,
-      final ORecord<?> iRootObject) {
+      final ORecord iRootObject) {
     if (value instanceof OIdentifiable) {
       checkRecord(iSourceRIDs, map, (OIdentifiable) value, iRootObject);
     } else if (value instanceof Collection<?>) {
@@ -126,7 +126,7 @@ public class OFindReferenceHelper {
   }
 
   private static void checkCollection(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Collection<?> values,
-      final ORecord<?> iRootObject) {
+      final ORecord iRootObject) {
     final Iterator<?> it;
     if (values instanceof OLazyObjectListInterface<?>) {
       ((OLazyObjectListInterface<?>) values).setConvertToRecord(false);
@@ -145,7 +145,7 @@ public class OFindReferenceHelper {
   }
 
   private static void checkMap(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Map<?, ?> values,
-      final ORecord<?> iRootObject) {
+      final ORecord iRootObject) {
     final Iterator<?> it;
     if (values instanceof OLazyObjectMapInterface<?>) {
       ((OLazyObjectMapInterface<?>) values).setConvertToRecord(false);
@@ -161,7 +161,7 @@ public class OFindReferenceHelper {
   }
 
   private static void checkRecord(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final OIdentifiable value,
-      final ORecord<?> iRootObject) {
+      final ORecord iRootObject) {
     if (iSourceRIDs.contains(value.getIdentity()))
       map.get(value.getIdentity()).add(iRootObject.getIdentity());
   }

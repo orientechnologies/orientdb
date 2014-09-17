@@ -87,7 +87,7 @@ import java.util.Map.Entry;
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected ODatabaseDocument   currentDatabase;
   protected String              currentDatabaseName;
-  protected ORecordInternal<?>  currentRecord;
+  protected ORecordInternal  currentRecord;
   protected int                 currentRecordIdx;
   protected List<OIdentifiable> currentResultSet;
   protected OServerAdmin        serverAdmin;
@@ -1308,7 +1308,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (currentRecord == null)
       message("\nEntry not found in dictionary.");
     else {
-      currentRecord = (ORecordInternal<?>) currentRecord.load();
+      currentRecord = (ORecordInternal) currentRecord.load();
       displayRecord(null);
     }
   }
@@ -1414,7 +1414,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\n- Fixing dirty links...");
     try {
       for (String clusterName : currentDatabase.getClusterNames()) {
-        for (ORecord<?> rec : currentDatabase.browseCluster(clusterName)) {
+        for (ORecord rec : currentDatabase.browseCluster(clusterName)) {
           try {
             if (rec instanceof ODocument) {
               boolean changed = false;
@@ -1846,7 +1846,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   /** Should be used only by console commands */
-  public ORecordInternal<?> getCurrentRecord() {
+  public ORecordInternal getCurrentRecord() {
     return currentRecord;
   }
 
@@ -1966,7 +1966,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected boolean fixLink(final Object fieldValue) {
     if (fieldValue instanceof OIdentifiable) {
       if (((OIdentifiable) fieldValue).getIdentity().isValid()) {
-        final ORecord<?> connected = ((OIdentifiable) fieldValue).getRecord();
+        final ORecord connected = ((OIdentifiable) fieldValue).getRecord();
         if (connected == null)
           return true;
       }
@@ -2020,7 +2020,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected OIdentifiable setCurrentRecord(final int iIndex) {
     currentRecordIdx = iIndex;
     if (iIndex < currentResultSet.size())
-      currentRecord = (ORecordInternal<?>) currentResultSet.get(iIndex);
+      currentRecord = (ORecordInternal) currentResultSet.get(iIndex);
     else
       currentRecord = null;
     return currentRecord;
@@ -2090,7 +2090,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected void setResultset(final List<OIdentifiable> iResultset) {
     currentResultSet = iResultset;
     currentRecordIdx = 0;
-    currentRecord = currentResultSet.isEmpty() ? null : (ORecordInternal<?>) currentResultSet.get(0).getRecord();
+    currentRecord = currentResultSet.isEmpty() ? null : (ORecordInternal) currentResultSet.get(0).getRecord();
   }
 
   protected void resetResultSet() {

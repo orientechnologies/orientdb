@@ -35,7 +35,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   }
 
   @Override
-  public ORecordInternal<?> fromStream(final byte[] iSource, ORecordInternal<?> iRecord, final String[] iFields) {
+  public ORecordInternal fromStream(final byte[] iSource, ORecordInternal iRecord, final String[] iFields) {
     if (iSource.length == 0)
       return iRecord;
     if (iRecord == null)
@@ -51,7 +51,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   }
 
   @Override
-  public byte[] toStream(final ORecordInternal<?> iSource, final boolean iOnlyDelta) {
+  public byte[] toStream(final ORecordInternal iSource, final boolean iOnlyDelta) {
     checkTypeODocument(iSource);
     if (!OSerializationSetThreadLocal.checkAndAdd((ODocument) iSource))
       return null;
@@ -63,7 +63,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     return container.fitBytes();
   }
 
-  private void checkTypeODocument(final ORecordInternal<?> iRecord) {
+  private void checkTypeODocument(final ORecordInternal iRecord) {
     if (!(iRecord instanceof ODocument)) {
       throw new UnsupportedOperationException("The " + ORecordSerializerBinary.NAME + " don't support record of type "
           + iRecord.getClass().getName());

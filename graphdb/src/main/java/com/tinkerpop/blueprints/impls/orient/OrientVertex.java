@@ -744,7 +744,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     doc.save();
 
     // DELETE OLD RECORD
-    final ORecord<?> oldRecord = oldIdentity.getRecord();
+    final ORecord oldRecord = oldIdentity.getRecord();
     if (oldRecord != null)
       oldRecord.delete();
 

@@ -57,9 +57,9 @@ public interface ORidBagDelegate extends Iterable<OIdentifiable>, ORecordLazyMul
 
   public void requestDelete();
 
-  public void setOwner(ORecord<?> owner);
+  public void setOwner(ORecord owner);
 
-  public ORecord<?> getOwner();
+  public ORecord getOwner();
 
   public String toString();
 }

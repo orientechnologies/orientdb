@@ -55,10 +55,10 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
       return false;
 
     // RECORD & ORID
-    if (iLeft instanceof ORecord<?>)
-      return comparesValues(iRight, (ORecord<?>) iLeft, true);
-    else if (iRight instanceof ORecord<?>)
-      return comparesValues(iLeft, (ORecord<?>) iRight, true);
+    if (iLeft instanceof ORecord)
+      return comparesValues(iRight, (ORecord) iLeft, true);
+    else if (iRight instanceof ORecord)
+      return comparesValues(iLeft, (ORecord) iRight, true);
 
     // ALL OTHER CASES
     final Object right = OType.convert(iRight, iLeft.getClass());
@@ -67,9 +67,9 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
     return iLeft.equals(right);
   }
 
-  protected static boolean comparesValues(final Object iValue, final ORecord<?> iRecord, final boolean iConsiderIn) {
+  protected static boolean comparesValues(final Object iValue, final ORecord iRecord, final boolean iConsiderIn) {
     // ORID && RECORD
-    final ORID other = ((ORecord<?>) iRecord).getIdentity();
+    final ORID other = ((ORecord) iRecord).getIdentity();
 
     if (!other.isPersistent() && iRecord instanceof ODocument) {
       // ODOCUMENT AS RESULT OF SUB-QUERY: GET THE FIRST FIELD IF ANY

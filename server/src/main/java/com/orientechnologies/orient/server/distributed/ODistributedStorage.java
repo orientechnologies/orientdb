@@ -631,7 +631,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           for (ORecordOperation op : iTx.getCurrentRecordEntries()) {
             final OAbstractRecordReplicatedTask task;
 
-            final ORecordInternal<?> record = op.getRecord();
+            final ORecordInternal record = op.getRecord();
 
             final ORecordId rid = (ORecordId) op.record.getIdentity();
 

@@ -286,7 +286,7 @@ public class ORecordId implements ORID {
   }
 
   @SuppressWarnings("unchecked")
-  public <T extends ORecord<?>> T getRecord() {
+  public <T extends ORecord> T getRecord() {
     if (!isValid())
       return null;
 

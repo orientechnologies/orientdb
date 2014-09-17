@@ -146,7 +146,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
         // CHECK AGAINST A CONDITION
         for (Object o : map.values()) {
           o = loadIfNeed(o);
-          if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, null, iContext))
+          if ((Boolean) condition.evaluate((ORecordSchemaAware) o, null, iContext))
             return true;
         }
       } else
@@ -159,7 +159,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
         // CHECK AGAINST A CONDITION
         for (Object o : map.values()) {
           o = loadIfNeed(o);
-          if ((Boolean) condition.evaluate((ORecordSchemaAware<?>) o, null, iContext))
+          if ((Boolean) condition.evaluate((ORecordSchemaAware) o, null, iContext))
             return true;
           else
             return map.containsValue(iLeft);
@@ -170,7 +170,7 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   private Object loadIfNeed(Object o) {
-    final ORecord<?> record = (ORecord<?>) o;
+    final ORecord record = (ORecord) o;
     if (record.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
       try {
         o = record.<ORecord> load();

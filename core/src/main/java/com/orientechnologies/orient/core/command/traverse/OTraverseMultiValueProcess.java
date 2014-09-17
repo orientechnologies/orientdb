@@ -37,7 +37,7 @@ public class OTraverseMultiValueProcess extends OTraverseAbstractProcess<Iterato
       index++;
 
       if (value instanceof OIdentifiable) {
-        final ORecord<?> rec = ((OIdentifiable) value).getRecord();
+        final ORecord rec = ((OIdentifiable) value).getRecord();
 
         if (rec instanceof ODocument) {
           final OTraverseAbstractProcess<ODocument> subProcess = new OTraverseRecordProcess(command, (ODocument) rec, getPath());

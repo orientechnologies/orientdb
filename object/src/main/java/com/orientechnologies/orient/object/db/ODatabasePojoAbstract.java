@@ -125,7 +125,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
       final Set<ORID> rids = new HashSet<ORID>(rid2Records.keySet());
 
-      ORecord<?> record;
+      ORecord record;
       Object object;
       for (ORID rid : rids) {
         if (rid.isTemporary()) {
@@ -260,7 +260,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return (RET) resultPojo;
   }
 
-  public ODatabaseComplex<T> delete(final ORecordInternal<?> iRecord) {
+  public ODatabaseComplex<T> delete(final ORecordInternal iRecord) {
     underlying.delete(iRecord);
     return this;
   }
@@ -437,7 +437,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   /**
    * Register a new POJO
    */
-  public void registerUserObject(final Object iObject, final ORecordInternal<?> iRecord) {
+  public void registerUserObject(final Object iObject, final ORecordInternal iRecord) {
     if (!(iRecord instanceof ODocument))
       return;
 

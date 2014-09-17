@@ -47,7 +47,7 @@ public class OReadRecordTask extends OAbstractRemoteTask {
   @Override
   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
       throws Exception {
-    final ORecordInternal<?> record = database.load(rid);
+    final ORecordInternal record = database.load(rid);
     if (record == null)
       return null;
 

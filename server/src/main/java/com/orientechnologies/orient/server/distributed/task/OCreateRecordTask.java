@@ -42,7 +42,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   private static final long              serialVersionUID  = 1L;
   protected byte[]                       content;
   protected byte                         recordType;
-  protected transient ORecordInternal<?> record;
+  protected transient ORecordInternal record;
 
   public OCreateRecordTask() {
   }
@@ -135,7 +135,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     return "record_create";
   }
 
-  public ORecordInternal<?> getRecord() {
+  public ORecordInternal getRecord() {
     if (record == null) {
       record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
       record.fill(rid, version, content, true);

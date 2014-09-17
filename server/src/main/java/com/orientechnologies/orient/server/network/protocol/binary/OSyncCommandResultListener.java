@@ -13,20 +13,20 @@ import java.util.Set;
  * 
  */
 public class OSyncCommandResultListener extends OAbstractCommandResultListener {
-  private final Set<ORecord<?>> fetchedRecordsToSend = new HashSet<ORecord<?>>();
+  private final Set<ORecord> fetchedRecordsToSend = new HashSet<ORecord>();
 
   @Override
   public boolean result(final Object iRecord) {
     fetchRecord(iRecord, new ORemoteFetchListener() {
       @Override
-      protected void sendRecord(ORecord<?> iLinked) {
+      protected void sendRecord(ORecord iLinked) {
         fetchedRecordsToSend.add(iLinked);
       }
     });
     return true;
   }
 
-  public Set<ORecord<?>> getFetchedRecordsToSend() {
+  public Set<ORecord> getFetchedRecordsToSend() {
     return fetchedRecordsToSend;
   }
 

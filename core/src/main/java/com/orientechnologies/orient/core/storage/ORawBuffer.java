@@ -46,7 +46,7 @@ public class ORawBuffer extends OBuffer {
    * 
    * @param iRecord
    */
-  public ORawBuffer(final ORecordInternal<?> iRecord) {
+  public ORawBuffer(final ORecordInternal iRecord) {
     this.buffer = iRecord.toStream();
     this.version = iRecord.getRecordVersion().copy();
     this.recordType = iRecord.getRecordType();

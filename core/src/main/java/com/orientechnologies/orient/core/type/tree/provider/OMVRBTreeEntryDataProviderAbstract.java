@@ -212,7 +212,7 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
     iSt.deleteRecord((ORecordId) record.getIdentity(), record.getRecordVersion(), (byte) 0, null);
   }
 
-  public void onEvent(ORecord<?> record, ORecordListener.EVENT event) {
+  public void onEvent(ORecord record, ORecordListener.EVENT event) {
     if (ORecordListener.EVENT.IDENTITY_CHANGED.equals(event))
       if (identityChangedListener != null) {
         final OIdentityChangedListener listener = identityChangedListener.get();

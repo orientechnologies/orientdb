@@ -622,7 +622,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test
   public void polymorphicQuery() {
-    final ORecordAbstract<Object> newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
+    final ORecordAbstract newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
 
     List<ODocument> superClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
     List<ODocument> subClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Company"));
@@ -666,7 +666,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testCreate")
   public void nonPolymorphicQuery() {
-    final ORecordAbstract<Object> newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
+    final ORecordAbstract newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
 
     List<ODocument> allResult = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
     List<ODocument> superClassResult = database

@@ -49,7 +49,7 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
       final int limit = urlParts.length > 3 ? Integer.parseInt(urlParts[3]) : 20;
 
       final List<OIdentifiable> response = new ArrayList<OIdentifiable>();
-      for (ORecord<?> rec : db.browseCluster(urlParts[2])) {
+      for (ORecord rec : db.browseCluster(urlParts[2])) {
         if (limit > 0 && response.size() >= limit)
           break;
 

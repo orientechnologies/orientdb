@@ -33,19 +33,19 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements OObjectLazyCustomSerializer<Set<TYPE>>, Serializable {
   private static final long serialVersionUID = -7698875159671927472L;
 
-  private final ORecord<?>  sourceRecord;
+  private final ORecord  sourceRecord;
   private final Set<Object> underlying;
   private boolean           converted        = false;
   private final Class<?>    deserializeClass;
 
-  public OObjectCustomSerializerSet(final Class<?> iDeserializeClass, final ORecord<?> iSourceRecord,
+  public OObjectCustomSerializerSet(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
       final Set<Object> iRecordSource) {
     this.sourceRecord = iSourceRecord;
     this.underlying = iRecordSource;
     this.deserializeClass = iDeserializeClass;
   }
 
-  public OObjectCustomSerializerSet(final Class<?> iDeserializeClass, final ORecord<?> iSourceRecord,
+  public OObjectCustomSerializerSet(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
       final Set<Object> iRecordSource, final Set<? extends TYPE> iSourceCollection) {
     this.sourceRecord = iSourceRecord;
     this.underlying = iRecordSource;

@@ -38,21 +38,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings("serial")
 public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
-  protected final ORecord<?>                   sourceRecord;
+  protected final ORecord                      sourceRecord;
   private final boolean                        embeddedCollection;
   protected Class<?>                           genericClass;
   private STATUS                               status          = STATUS.NOT_LOADED;
   private Set<OMultiValueChangeListener<T, T>> changeListeners = Collections
                                                                    .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<T, T>, Boolean>());
 
-  public OTrackedSet(final ORecord<?> iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
+  public OTrackedSet(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
     this(iRecord);
     genericClass = cls;
     if (iOrigin != null && !iOrigin.isEmpty())
       addAll(iOrigin);
   }
 
-  public OTrackedSet(final ORecord<?> iSourceRecord) {
+  public OTrackedSet(final ORecord iSourceRecord) {
     this.sourceRecord = iSourceRecord;
     embeddedCollection = this.getClass().equals(OTrackedSet.class);
   }
@@ -141,7 +141,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   @SuppressWarnings("unchecked")
   public OTrackedSet<T> setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
+        && !(sourceRecord.isDirty() && ((ORecordInternal) sourceRecord).isContentChanged()))
       sourceRecord.setDirty();
     return this;
   }
@@ -152,10 +152,10 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       sourceRecord.setDirtyNoChanged();
   }
 
-  public void onBeforeIdentityChanged(ORecord<?> iRecord) {
+  public void onBeforeIdentityChanged(ORecord iRecord) {
   }
 
-  public void onAfterIdentityChanged(ORecord<?> iRecord) {
+  public void onAfterIdentityChanged(ORecord iRecord) {
   }
 
   public STATUS getInternalStatus() {

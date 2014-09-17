@@ -34,13 +34,13 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public class OLazyRecordMultiIterator implements OLazyIterator<OIdentifiable>, OResettable {
-  final private ORecord<?> sourceRecord;
+  final private ORecord sourceRecord;
   final private Object[]   underlyingSources;
   final private Object[]   underlyingIterators;
   final private boolean    convertToRecord;
   private int              iteratorIndex = 0;
 
-  public OLazyRecordMultiIterator(final ORecord<?> iSourceRecord, final Object[] iIterators, final boolean iConvertToRecord) {
+  public OLazyRecordMultiIterator(final ORecord iSourceRecord, final Object[] iIterators, final boolean iConvertToRecord) {
     this.sourceRecord = iSourceRecord;
     this.underlyingSources = iIterators;
     this.underlyingIterators = new Object[iIterators.length];

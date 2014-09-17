@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -29,23 +37,15 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 @SuppressWarnings({ "unchecked", "serial" })
-public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> implements ORecordSchemaAware<T> {
+public abstract class ORecordSchemaAwareAbstract extends ORecordAbstract implements ORecordSchemaAware {
 
   protected OClass _clazz;
 
   public ORecordSchemaAwareAbstract() {
   }
 
-  public static void validateField(ORecordSchemaAwareAbstract<?> iRecord, OProperty p) throws OValidationException {
+  public static void validateField(ORecordSchemaAwareAbstract iRecord, OProperty p) throws OValidationException {
     final Object fieldValue;
 
     if (iRecord.containsField(p.getName())) {
@@ -254,7 +254,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
       throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
           + " but contains a null record (probably a deleted record?)");
 
-    final ORecord<?> linkedRecord;
+    final ORecord linkedRecord;
     if (fieldValue instanceof OIdentifiable)
       linkedRecord = ((OIdentifiable) fieldValue).getRecord();
     else if (fieldValue instanceof String)
@@ -289,7 +289,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
 
       final OClass embeddedClass = p.getLinkedClass();
       if (embeddedClass != null) {
-        final ORecord<?> rec = ((OIdentifiable) fieldValue).getRecord();
+        final ORecord rec = ((OIdentifiable) fieldValue).getRecord();
         if (!(rec instanceof ODocument))
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record was not a document");
@@ -369,8 +369,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
       return _clazz.getName();
 
     final ODatabaseRecord database = getDatabaseIfDefined();
-    if (database != null && database.getStorageVersions() != null
-						&& database.getStorageVersions().classesAreDetectedByClusterId()) {
+    if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
       if (_recordId.clusterId < 0) {
         checkForLoading();
         checkForFields("@class");
@@ -407,7 +406,7 @@ public abstract class ORecordSchemaAwareAbstract<T> extends ORecordAbstract<T> i
   }
 
   @Override
-  public ORecordSchemaAwareAbstract<T> reset() {
+  public ORecordSchemaAwareAbstract reset() {
     super.reset();
     _clazz = null;
     return this;

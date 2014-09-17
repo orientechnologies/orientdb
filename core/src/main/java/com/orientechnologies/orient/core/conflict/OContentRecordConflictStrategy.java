@@ -52,7 +52,7 @@ public class OContentRecordConflictStrategy extends OVersionRecordConflictStrate
       hasSameContent = ODocumentHelper.hasSameContentOf(storedRecord, currentDb, newRecord, currentDb, null, false);
     } else {
       // CHECK BYTE PER BYTE
-      final ORecordInternal<?> storedRecord = rid.getRecord();
+      final ORecordInternal storedRecord = rid.getRecord();
       hasSameContent = Arrays.equals(storedRecord.toStream(), iRecordContent);
     }
 

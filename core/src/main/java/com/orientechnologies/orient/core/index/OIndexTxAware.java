@@ -84,9 +84,9 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     final ORID rid = iValue.getIdentity();
 
     if (!rid.isValid())
-      if (iValue instanceof ORecord<?>)
+      if (iValue instanceof ORecord)
         // EARLY SAVE IT
-        ((ORecord<?>) iValue).save();
+        ((ORecord) iValue).save();
       else
         throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + "'");
 

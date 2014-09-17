@@ -1014,7 +1014,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
           // SEND BACK ALL THE RECORD IDS FOR THE CREATED RECORDS
           channel.writeInt(tx.getCreatedRecords().size());
-          for (Entry<ORecordId, ORecordInternal<?>> entry : tx.getCreatedRecords().entrySet()) {
+          for (Entry<ORecordId, ORecordInternal> entry : tx.getCreatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
             channel.writeRID(entry.getValue().getIdentity());
 
@@ -1025,7 +1025,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
           // SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
           channel.writeInt(tx.getUpdatedRecords().size());
-          for (Entry<ORecordId, ORecordInternal<?>> entry : tx.getUpdatedRecords().entrySet()) {
+          for (Entry<ORecordId, ORecordInternal> entry : tx.getUpdatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
             channel.writeVersion(entry.getValue().getRecordVersion());
           }
@@ -1155,7 +1155,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         if (connection.data.protocolVersion >= 17) {
           // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
-          for (ORecord<?> rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
+          for (ORecord rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
             channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
             // ISN'T PART OF THE
             // RESULT SET
@@ -1293,7 +1293,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final byte recordType = channel.readByte();
     final byte mode = channel.readByte();
 
-    final ORecord<?> record = createRecord(connection.database, rid, buffer, recordType);
+    final ORecord record = createRecord(connection.database, rid, buffer, recordType);
 
     if (mode < 2) {
       beginResponse();
@@ -1361,7 +1361,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } else {
-      final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
+      final ORecordInternal record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
           OStorage.LOCKING_STRATEGY.DEFAULT);
 
       beginResponse();
@@ -1380,11 +1380,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             if (record instanceof ODocument) {
               final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
 
-              final Set<ORecord<?>> recordsToSend = new HashSet<ORecord<?>>();
+              final Set<ORecord> recordsToSend = new HashSet<ORecord>();
               final ODocument doc = (ODocument) record;
               final OFetchListener listener = new ORemoteFetchListener() {
                 @Override
-                protected void sendRecord(ORecord<?> iLinked) {
+                protected void sendRecord(ORecord iLinked) {
                   recordsToSend.add(iLinked);
                 }
               };
@@ -1392,7 +1392,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
               OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
 
               // SEND RECORDS TO LOAD IN CLIENT CACHE
-              for (ORecord<?> d : recordsToSend) {
+              for (ORecord d : recordsToSend) {
                 if (d.getIdentity().isValid()) {
                   channel.writeByte((byte) 2); // CLIENT CACHE
                   // RECORD. IT ISN'T PART OF THE RESULT SET

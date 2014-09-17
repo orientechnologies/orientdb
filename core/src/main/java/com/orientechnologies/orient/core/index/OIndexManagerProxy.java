@@ -95,7 +95,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
     delegate.setDefaultClusterName(defaultClusterName);
   }
 
-  public ODictionary<ORecordInternal<?>> getDictionary() {
+  public ODictionary<ORecordInternal> getDictionary() {
     return delegate.getDictionary();
   }
 

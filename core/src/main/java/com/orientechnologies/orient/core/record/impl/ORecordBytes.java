@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  * using the reset() at every re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ORecordBytes extends ORecordAbstract<byte[]> {
+public class ORecordBytes extends ORecordAbstract {
   private static final long   serialVersionUID = 1L;
 
   public static final byte    RECORD_TYPE      = 'b';

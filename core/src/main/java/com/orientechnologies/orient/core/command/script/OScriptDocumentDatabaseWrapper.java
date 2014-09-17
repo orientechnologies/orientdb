@@ -209,11 +209,11 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public ODocument save(final String iString) {
-    // return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString));
-    return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString, true));
+    // return database.save((ORecordInternal) new ODocument().fromJSON(iString));
+    return database.save((ORecordInternal) new ODocument().fromJSON(iString, true));
   }
 
-  public ODocument save(ORecordInternal<?> iRecord) {
+  public ODocument save(ORecordInternal iRecord) {
     return database.save(iRecord);
   }
 
@@ -245,7 +245,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getTransaction();
   }
 
-  public ODatabaseComplex<ORecordInternal<?>> begin() {
+  public ODatabaseComplex<ORecordInternal> begin() {
     return database.begin();
   }
 
@@ -289,7 +289,7 @@ public class OScriptDocumentDatabaseWrapper {
     database.setUser(user);
   }
 
-  public ODocument save(ORecordInternal<?> iRecord, OPERATION_MODE iMode, boolean iForceCreate,
+  public ODocument save(ORecordInternal iRecord, OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return database.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
@@ -298,7 +298,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getMetadata();
   }
 
-  public ODictionary<ORecordInternal<?>> getDictionary() {
+  public ODictionary<ORecordInternal> getDictionary() {
     return database.getDictionary();
   }
 
@@ -306,23 +306,23 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getRecordType();
   }
 
-  public ODatabaseComplex<ORecordInternal<?>> delete(ORID iRid) {
+  public ODatabaseComplex<ORecordInternal> delete(ORID iRid) {
     return database.delete(iRid);
   }
 
-  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId) {
+  public <RET extends ORecordInternal> RET load(ORID iRecordId) {
     return (RET) database.load(iRecordId);
   }
 
-  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan) {
+  public <RET extends ORecordInternal> RET load(ORID iRecordId, String iFetchPlan) {
     return (RET) database.load(iRecordId, iFetchPlan);
   }
 
-  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache) {
+  public <RET extends ORecordInternal> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache) {
     return (RET) database.load(iRecordId, iFetchPlan, iIgnoreCache);
   }
 
-  public <RET extends ORecordInternal<?>> RET getRecord(OIdentifiable iIdentifiable) {
+  public <RET extends ORecordInternal> RET getRecord(OIdentifiable iIdentifiable) {
     return (RET) database.getRecord(iIdentifiable);
   }
 
@@ -330,7 +330,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getDefaultClusterId();
   }
 
-  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord) {
+  public <RET extends ORecordInternal> RET load(ORecordInternal iRecord) {
     return (RET) database.load(iRecord);
   }
 
@@ -338,11 +338,11 @@ public class OScriptDocumentDatabaseWrapper {
     return database.declareIntent(iIntent);
   }
 
-  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan) {
+  public <RET extends ORecordInternal> RET load(ORecordInternal iRecord, String iFetchPlan) {
     return (RET) database.load(iRecord, iFetchPlan);
   }
 
-  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
+  public <RET extends ORecordInternal> RET load(ORecordInternal iRecord, String iFetchPlan, boolean iIgnoreCache) {
     return (RET) database.load(iRecord, iFetchPlan, iIgnoreCache);
   }
 
@@ -350,11 +350,11 @@ public class OScriptDocumentDatabaseWrapper {
     return database.setDatabaseOwner(iOwner);
   }
 
-  public void reload(ORecordInternal<?> iRecord) {
+  public void reload(ORecordInternal iRecord) {
     database.reload(iRecord);
   }
 
-  public void reload(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
+  public void reload(ORecordInternal iRecord, String iFetchPlan, boolean iIgnoreCache) {
     database.reload(iRecord, iFetchPlan, iIgnoreCache);
   }
 
@@ -362,7 +362,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.setProperty(iName, iValue);
   }
 
-  public ODocument save(ORecordInternal<?> iRecord, String iClusterName) {
+  public ODocument save(ORecordInternal iRecord, String iClusterName) {
     return database.save(iRecord, iClusterName);
   }
 
@@ -398,11 +398,11 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getSize();
   }
 
-  public ORecordInternal<?> getRecordByUserObject(Object iUserObject, boolean iCreateIfNotAvailable) {
+  public ORecordInternal getRecordByUserObject(Object iUserObject, boolean iCreateIfNotAvailable) {
     return database.getRecordByUserObject(iUserObject, iCreateIfNotAvailable);
   }
 
-  public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+  public ODocument save(ORecordInternal iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return database.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
@@ -415,11 +415,11 @@ public class OScriptDocumentDatabaseWrapper {
     return database.countClass(iClassName);
   }
 
-  public ODatabaseComplex<ORecordInternal<?>> commit() {
+  public ODatabaseComplex<ORecordInternal> commit() {
     return database.commit();
   }
 
-  public ODatabaseComplex<ORecordInternal<?>> rollback() {
+  public ODatabaseComplex<ORecordInternal> rollback() {
     return database.rollback();
   }
 

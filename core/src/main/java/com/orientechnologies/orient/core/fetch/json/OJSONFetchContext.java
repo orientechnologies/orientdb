@@ -46,18 +46,18 @@ public class OJSONFetchContext implements OFetchContext {
   protected final OJSONWriter                  jsonWriter;
   protected final FormatSettings               settings;
   protected final Stack<StringBuilder>         typesStack      = new Stack<StringBuilder>();
-  protected final Stack<ORecordSchemaAware<?>> collectionStack = new Stack<ORecordSchemaAware<?>>();
+  protected final Stack<ORecordSchemaAware> collectionStack = new Stack<ORecordSchemaAware>();
 
   public OJSONFetchContext(final OJSONWriter iJsonWriter, final FormatSettings iSettings) {
     jsonWriter = iJsonWriter;
     settings = iSettings;
   }
 
-  public void onBeforeFetch(final ORecordSchemaAware<?> iRootRecord) {
+  public void onBeforeFetch(final ORecordSchemaAware iRootRecord) {
     typesStack.add(new StringBuilder());
   }
 
-  public void onAfterFetch(final ORecordSchemaAware<?> iRootRecord) {
+  public void onAfterFetch(final ORecordSchemaAware iRootRecord) {
     StringBuilder buffer = typesStack.pop();
     if (settings.keepTypes && buffer.length() > 0)
       try {
@@ -75,16 +75,16 @@ public class OJSONFetchContext implements OFetchContext {
   public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
   }
 
-  public void onBeforeArray(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject,
+  public void onBeforeArray(final ORecordSchemaAware iRootRecord, final String iFieldName, final Object iUserObject,
       final OIdentifiable[] iArray) {
     onBeforeCollection(iRootRecord, iFieldName, iUserObject, null);
   }
 
-  public void onAfterArray(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject) {
+  public void onAfterArray(final ORecordSchemaAware iRootRecord, final String iFieldName, final Object iUserObject) {
     onAfterCollection(iRootRecord, iFieldName, iUserObject);
   }
 
-  public void onBeforeCollection(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject,
+  public void onBeforeCollection(final ORecordSchemaAware iRootRecord, final String iFieldName, final Object iUserObject,
       final Iterable<?> iterable) {
     try {
       manageTypes(iFieldName, iterable);
@@ -95,7 +95,7 @@ public class OJSONFetchContext implements OFetchContext {
     }
   }
 
-  public void onAfterCollection(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject) {
+  public void onAfterCollection(final ORecordSchemaAware iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
       jsonWriter.endCollection(settings.indentLevel, false);
       collectionStack.pop();
@@ -104,7 +104,7 @@ public class OJSONFetchContext implements OFetchContext {
     }
   }
 
-  public void onBeforeMap(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject) {
+  public void onBeforeMap(final ORecordSchemaAware iRootRecord, final String iFieldName, final Object iUserObject) {
     settings.indentLevel++;
     try {
       jsonWriter.beginObject(settings.indentLevel, true, iFieldName);
@@ -113,7 +113,7 @@ public class OJSONFetchContext implements OFetchContext {
     }
   }
 
-  public void onAfterMap(final ORecordSchemaAware<?> iRootRecord, final String iFieldName, final Object iUserObject) {
+  public void onAfterMap(final ORecordSchemaAware iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
       jsonWriter.endObject(settings.indentLevel, true);
     } catch (IOException e) {
@@ -122,7 +122,7 @@ public class OJSONFetchContext implements OFetchContext {
     settings.indentLevel--;
   }
 
-  public void onBeforeDocument(final ORecordSchemaAware<?> iRootRecord, final ORecordSchemaAware<?> iDocument,
+  public void onBeforeDocument(final ORecordSchemaAware iRootRecord, final ORecordSchemaAware iDocument,
       final String iFieldName, final Object iUserObject) {
     settings.indentLevel++;
     try {
@@ -138,7 +138,7 @@ public class OJSONFetchContext implements OFetchContext {
     }
   }
 
-  public void onAfterDocument(final ORecordSchemaAware<?> iRootRecord, final ORecordSchemaAware<?> iDocument,
+  public void onAfterDocument(final ORecordSchemaAware iRootRecord, final ORecordSchemaAware iDocument,
       final String iFieldName, final Object iUserObject) {
     try {
       jsonWriter.endObject(settings.indentLevel--, true);
@@ -155,7 +155,7 @@ public class OJSONFetchContext implements OFetchContext {
     jsonWriter.writeAttribute(settings.indentLevel, true, iFieldName, OJSONWriter.encode(iRecord.getIdentity()));
   }
 
-  public boolean isInCollection(ORecordSchemaAware<?> record) {
+  public boolean isInCollection(ORecordSchemaAware record) {
     return !collectionStack.isEmpty() && collectionStack.peek().equals(record);
   }
 
@@ -175,7 +175,7 @@ public class OJSONFetchContext implements OFetchContext {
     iBuffer.append(iType);
   }
 
-  public void writeSignature(final OJSONWriter json, final ORecordInternal<?> record) throws IOException {
+  public void writeSignature(final OJSONWriter json, final ORecordInternal record) throws IOException {
     if (record == null) {
       json.write("null");
       return;
@@ -208,9 +208,9 @@ public class OJSONFetchContext implements OFetchContext {
             ODocumentHelper.ATTRIBUTE_VERSION_MACADDRESS, ver.getMacAddress());
       }
     }
-    if (settings.includeClazz && record instanceof ORecordSchemaAware<?> && ((ORecordSchemaAware<?>) record).getClassName() != null) {
+    if (settings.includeClazz && record instanceof ORecordSchemaAware && ((ORecordSchemaAware) record).getClassName() != null) {
       json.writeAttribute(firstAttribute ? settings.indentLevel : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_CLASS,
-          ((ORecordSchemaAware<?>) record).getClassName());
+          ((ORecordSchemaAware) record).getClassName());
       if (settings.attribSameRow)
         firstAttribute = false;
     }

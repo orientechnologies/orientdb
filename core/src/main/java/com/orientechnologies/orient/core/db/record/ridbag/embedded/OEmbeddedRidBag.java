@@ -48,7 +48,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   private boolean                                                      convertToRecord   = true;
   private int                                                          size              = 0;
 
-  private transient ORecord<?>                                         owner;
+  private transient ORecord                                            owner;
 
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners   = Collections
                                                                                              .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
@@ -137,12 +137,12 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public ORecord<?> getOwner() {
+  public ORecord getOwner() {
     return owner;
   }
 
   @Override
-  public void setOwner(ORecord<?> owner) {
+  public void setOwner(ORecord owner) {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");

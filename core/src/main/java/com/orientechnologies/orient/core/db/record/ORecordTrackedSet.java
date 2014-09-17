@@ -40,14 +40,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> implements Set<OIdentifiable>,
     OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordElement {
-  protected final ORecord<?>                                           sourceRecord;
+  protected final ORecord                                              sourceRecord;
   protected Map<OIdentifiable, Object>                                 map             = new HashMap<OIdentifiable, Object>();
   private STATUS                                                       status          = STATUS.NOT_LOADED;
   protected final static Object                                        ENTRY_REMOVAL   = new Object();
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners = Collections
                                                                                            .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
 
-  public ORecordTrackedSet(final ORecord<?> iSourceRecord) {
+  public ORecordTrackedSet(final ORecord iSourceRecord) {
     this.sourceRecord = iSourceRecord;
     if (iSourceRecord != null)
       iSourceRecord.setDirty();
@@ -144,7 +144,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   @SuppressWarnings("unchecked")
   public ORecordTrackedSet setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
+        && !(sourceRecord.isDirty() && ((ORecordInternal) sourceRecord).isContentChanged()))
       sourceRecord.setDirty();
     return this;
   }
@@ -155,12 +155,12 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
       sourceRecord.setDirtyNoChanged();
   }
 
-  public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
+  public void onBeforeIdentityChanged(final ORecord iRecord) {
     map.remove(iRecord);
     setDirty();
   }
 
-  public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+  public void onAfterIdentityChanged(final ORecord iRecord) {
     map.put(iRecord, ENTRY_REMOVAL);
   }
 

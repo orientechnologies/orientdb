@@ -62,7 +62,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void rollback() {
   }
 
-  public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,
+  public ORecordInternal loadRecord(final ORID iRid, final ORecordInternal iRecord, final String iFetchPlan,
       final boolean ignonreCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     if (iRid.isNew())
       return null;
@@ -78,7 +78,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
    * @param iRecordCreatedCallback
    * @param iRecordUpdatedCallback
    */
-  public ORecordInternal<?> saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public ORecordInternal saveRecord(final ORecordInternal iRecord, final String iClusterName, final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     try {
       return database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
           iRecordCreatedCallback, null);
@@ -98,7 +98,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
   /**
    * Deletes the record.
    */
-  public void deleteRecord(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
+  public void deleteRecord(final ORecordInternal iRecord, final OPERATION_MODE iMode) {
     if (!iRecord.getIdentity().isPersistent())
       return;
 
@@ -139,7 +139,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return 0;
   }
 
-  public ORecordInternal<?> getRecord(final ORID rid) {
+  public ORecordInternal getRecord(final ORID rid) {
     return null;
   }
 

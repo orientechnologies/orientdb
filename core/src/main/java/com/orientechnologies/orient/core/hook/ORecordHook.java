@@ -43,7 +43,7 @@ public interface ORecordHook {
 
   public void onUnregister();
 
-  public RESULT onTrigger(TYPE iType, ORecord<?> iRecord);
+  public RESULT onTrigger(TYPE iType, ORecord iRecord);
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode();
 }

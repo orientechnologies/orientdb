@@ -38,7 +38,7 @@ public class ORecordMultiValueHelper {
 		} else if (iPreviousStatus == MULTIVALUE_CONTENT_TYPE.EMPTY) {
 			if (iValue instanceof ORID)
 				return MULTIVALUE_CONTENT_TYPE.ALL_RIDS;
-			else if (iValue instanceof ORecord<?>)
+			else if (iValue instanceof ORecord)
 				return MULTIVALUE_CONTENT_TYPE.ALL_RECORDS;
 			else
 				return MULTIVALUE_CONTENT_TYPE.HYBRID;

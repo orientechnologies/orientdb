@@ -54,7 +54,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   private static final long                            serialVersionUID = 1L;
 
   @Override
-  public ORecordSchemaAware<?> newObject(String iClassName) {
+  public ORecordSchemaAware newObject(String iClassName) {
     return new ODocument(iClassName);
   }
 
@@ -89,7 +89,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  public ORecordInternal<?> fromString(String iContent, final ORecordInternal<?> iRecord, final String[] iFields) {
+  public ORecordInternal fromString(String iContent, final ORecordInternal iRecord, final String[] iFields) {
     iContent = iContent.trim();
 
     if (iContent.length() == 0)
@@ -264,14 +264,14 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  public byte[] toStream(ORecordInternal<?> iRecord, boolean iOnlyDelta) {
+  public byte[] toStream(ORecordInternal iRecord, boolean iOnlyDelta) {
     final byte[] result = super.toStream(iRecord, iOnlyDelta);
     if (result == null || result.length > 0)
       return result;
 
     // Fix of nasty IBM JDK bug. In case of very depth recursive graph serialization
     // ORecordSchemaAware#_source property may be initialized incorrectly.
-    final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
+    final ORecordSchemaAware recordSchemaAware = (ORecordSchemaAware) iRecord;
     if (recordSchemaAware.fields() > 0)
       return null;
 
@@ -279,7 +279,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  protected StringBuilder toString(ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
+  protected StringBuilder toString(ORecordInternal iRecord, final StringBuilder iOutput, final String iFormat,
       OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, final boolean iOnlyDelta,
       final boolean autoDetectCollectionType) {
     if (iRecord == null)
@@ -342,7 +342,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
         if (type == null) {
           if (fieldValue.getClass() == byte[].class)
             type = OType.BINARY;
-          else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && fieldValue instanceof ORecord<?>) {
+          else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && fieldValue instanceof ORecord) {
             if (type == null)
               // DETERMINE THE FIELD TYPE
               if (fieldValue instanceof ODocument && ((ODocument) fieldValue).hasOwners())
@@ -411,7 +411,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
                       type = OType.LINKLIST;
                   } else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
                       && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
-                      && (firstValue instanceof ORecord<?> || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
+                      && (firstValue instanceof ORecord || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
                           .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
                     linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
                     if (type == null) {
@@ -473,7 +473,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
               if (firstValue != null) {
                 if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
                     && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
-                    && (firstValue instanceof ORecord<?> || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
+                    && (firstValue instanceof ORecord || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
                         .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
                   linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
                   // LINK: GET THE CLASS
@@ -547,8 +547,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   private String getClassName(final Object iValue) {
-    if (iValue instanceof ORecordSchemaAware<?>)
-      return ((ORecordSchemaAware<?>) iValue).getClassName();
+    if (iValue instanceof ORecordSchemaAware)
+      return ((ORecordSchemaAware) iValue).getClassName();
 
     return iValue != null ? iValue.getClass().getSimpleName() : null;
   }

@@ -83,7 +83,7 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 
   @Override
   public OIdentifiable put(final Object key, OIdentifiable value) {
-    if (status == MULTIVALUE_CONTENT_TYPE.ALL_RIDS && value instanceof ORecord<?> && !value.getIdentity().isNew())
+    if (status == MULTIVALUE_CONTENT_TYPE.ALL_RIDS && value instanceof ORecord && !value.getIdentity().isNew())
       // IT'S BETTER TO LEAVE ALL RIDS AND EXTRACT ONLY THIS ONE
       value = value.getIdentity();
     else
@@ -158,14 +158,14 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
 
     final Object value = super.get(iKey);
     if (value != null)
-      if (value instanceof ORecord<?> && !((ORecord<?>) value).getIdentity().isNew()) {
-        if (((ORecord<?>) value).isDirty())
-          ODatabaseRecordThreadLocal.INSTANCE.get().save((ORecordInternal<?>) value);
+      if (value instanceof ORecord && !((ORecord) value).getIdentity().isNew()) {
+        if (((ORecord) value).isDirty())
+          ODatabaseRecordThreadLocal.INSTANCE.get().save((ORecordInternal) value);
 
         marshalling = true;
         try {
           // OVERWRITE
-          super.put(iKey, ((ORecord<?>) value).getIdentity());
+          super.put(iKey, ((ORecord) value).getIdentity());
         } finally {
           marshalling = false;
         }

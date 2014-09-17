@@ -94,7 +94,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private Map<OPropertyImpl, String> linkedClasses          = new HashMap<OPropertyImpl, String>();
   private Map<OClass, String>        superClasses           = new HashMap<OClass, String>();
   private OJSONReader                jsonReader;
-  private ORecordInternal<?>         record;
+  private ORecordInternal         record;
   private boolean                    schemaImported         = false;
   private int                        exporterVersion        = -1;
   private ORID                       schemaRecordId;
@@ -1433,7 +1433,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           OClusterPositionFactory.INSTANCE.valueOf(0)));
       while (positions.length > 0) {
         for (OPhysicalPosition position : positions) {
-          ORecord<?> record = database.load(new ORecordId(clusterId, position.clusterPosition));
+          ORecord record = database.load(new ORecordId(clusterId, position.clusterPosition));
           if (record instanceof ODocument) {
             ODocument document = (ODocument) record;
             rewriteLinksInDocument(document);

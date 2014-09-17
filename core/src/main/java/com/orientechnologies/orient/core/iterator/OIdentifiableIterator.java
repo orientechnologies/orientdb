@@ -47,7 +47,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   protected long                      browsedRecords         = 0;
 
   private String                      fetchPlan;
-  private ORecordInternal<?>          reusedRecord           = null;                                          // DEFAULT = NOT
+  private ORecordInternal             reusedRecord           = null;                                          // DEFAULT = NOT
   // REUSE IT
   private Boolean                     directionForward;
 
@@ -96,11 +96,11 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   public abstract OIdentifiableIterator<REC> last();
 
-  public ORecordInternal<?> current() {
+  public ORecordInternal current() {
     return readCurrentRecord(getRecord(), 0);
   }
 
-  protected ORecordInternal<?> getTransactionEntry() {
+  protected ORecordInternal getTransactionEntry() {
     boolean noPhysicalRecordToBrowse;
 
     if (current.clusterPosition.isTemporary())
@@ -160,7 +160,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * @return @see #isReuseSameRecord()
    */
   public OIdentifiableIterator<REC> setReuseSameRecord(final boolean reuseSameRecord) {
-    reusedRecord = (ORecordInternal<?>) (reuseSameRecord ? database.newInstance() : null);
+    reusedRecord = (ORecordInternal) (reuseSameRecord ? database.newInstance() : null);
     return this;
   }
 
@@ -169,8 +169,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * 
    * @return the record to use for the operation.
    */
-  protected ORecordInternal<?> getRecord() {
-    final ORecordInternal<?> record;
+  protected ORecordInternal getRecord() {
+    final ORecordInternal record;
     if (reusedRecord != null) {
       // REUSE THE SAME RECORD AFTER HAVING RESETTED IT
       record = reusedRecord;
@@ -253,7 +253,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    *          to read value from database inside it. If record is null link will be created and stored in it.
    * @return record which was read from db.
    */
-  protected ORecordInternal<?> readCurrentRecord(ORecordInternal<?> iRecord, final int iMovement) {
+  protected ORecordInternal readCurrentRecord(ORecordInternal iRecord, final int iMovement) {
     if (limit > -1 && browsedRecords >= limit)
       // LIMIT REACHED
       return null;

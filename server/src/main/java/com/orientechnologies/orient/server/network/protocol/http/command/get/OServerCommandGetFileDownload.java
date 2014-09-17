@@ -53,7 +53,7 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
     iRequest.data.commandInfo = "Download";
     iRequest.data.commandDetail = rid;
 
-    final ORecordAbstract<?> response;
+    final ORecordAbstract response;
 
     try {
 
@@ -63,10 +63,10 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
           sendORecordBinaryFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType,
               (ORecordBytes) response, fileName);
         } else if (response instanceof ORecordSchemaAware) {
-          for (OProperty prop : ((ORecordSchemaAware<?>) response).getSchemaClass().properties()) {
+          for (OProperty prop : ((ORecordSchemaAware) response).getSchemaClass().properties()) {
             if (prop.getType().equals(OType.BINARY))
               sendBinaryFieldFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION,
-                  fileType, (byte[]) ((ORecordSchemaAware<?>) response).field(prop.getName()), fileName);
+                  fileType, (byte[]) ((ORecordSchemaAware) response).field(prop.getName()), fileName);
           }
         } else {
           iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested is not a file nor has a readable schema",

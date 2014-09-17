@@ -24,21 +24,21 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 /**
  * Interface for internal use only. Don't use this methods unless you're writing an internal component.
  */
-public interface ORecordInternal<T> extends ORecord<T>, OSerializableStream {
+public interface ORecordInternal extends ORecord, OSerializableStream {
   /**
    * Internal only. Fills in one shot the record.
    */
-  public ORecordAbstract<?> fill(ORID iRid, ORecordVersion iVersion, byte[] iBuffer, boolean iDirty);
+  public ORecordAbstract fill(ORID iRid, ORecordVersion iVersion, byte[] iBuffer, boolean iDirty);
 
   /**
    * Internal only. Changes the identity of the record.
    */
-  public ORecordAbstract<?> setIdentity(int iClusterId, OClusterPosition iClusterPosition);
+  public ORecordAbstract setIdentity(int iClusterId, OClusterPosition iClusterPosition);
 
   /**
    * Internal only. Changes the identity of the record.
    */
-  public ORecordAbstract<?> setIdentity(ORecordId iIdentity);
+  public ORecordAbstract setIdentity(ORecordId iIdentity);
 
   /**
    * Internal only. Unsets the dirty status of the record.
@@ -64,7 +64,7 @@ public interface ORecordInternal<T> extends ORecord<T>, OSerializableStream {
    * 
    * @see #copy()
    */
-  public <RET extends ORecord<T>> RET flatCopy();
+  public <RET extends ORecord> RET flatCopy();
 
   public void addListener(final ORecordListener iListener);
 

@@ -229,7 +229,7 @@ public class OSQLHelper {
     return iObject;
   }
 
-  public static Object getValue(final Object iObject, final ORecordInternal<?> iRecord, final OCommandContext iContext) {
+  public static Object getValue(final Object iObject, final ORecordInternal iRecord, final OCommandContext iContext) {
     if (iObject == null)
       return null;
 
@@ -311,7 +311,7 @@ public class OSQLHelper {
             for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
               if (o instanceof OIdentifiable && !((OIdentifiable) o).getIdentity().isPersistent()) {
                 // TEMPORARY / EMBEDDED
-                final ORecord<?> rec = ((OIdentifiable) o).getRecord();
+                final ORecord rec = ((OIdentifiable) o).getRecord();
                 if (rec != null && rec instanceof ODocument) {
                   // CHECK FOR ONE FIELD ONLY
                   final ODocument doc = (ODocument) rec;

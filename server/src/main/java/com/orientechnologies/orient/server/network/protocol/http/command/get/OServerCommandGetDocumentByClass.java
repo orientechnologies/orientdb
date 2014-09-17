@@ -37,7 +37,7 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
 
     iRequest.data.commandInfo = "Load document";
 
-    final ORecord<?> rec;
+    final ORecord rec;
     try {
 
       db = getProfiledDatabaseInstance(iRequest);

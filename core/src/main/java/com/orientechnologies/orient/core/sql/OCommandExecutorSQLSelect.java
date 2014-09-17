@@ -418,10 +418,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OStorage.LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy
         : lockingStrategy;
 
-    ORecordInternal<?> record = null;
+    ORecordInternal record = null;
     try {
-      if (id instanceof ORecordInternal<?>) {
-        record = (ORecordInternal<?>) id;
+      if (id instanceof ORecordInternal) {
+        record = (ORecordInternal) id;
 
         // LOCK THE RECORD IF NEEDED
         if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)

@@ -35,7 +35,7 @@ public class ODictionaryWrapper extends ODictionary<Object> {
 
 	@SuppressWarnings("unchecked")
 	public <RET extends Object> RET get(final String iKey, final String iFetchPlan) {
-		final ORecordInternal<?> record = super.get(iKey);
+		final ORecordInternal record = super.get(iKey);
 		return (RET) database.getUserObjectByRecord(record, iFetchPlan);
 	}
 

@@ -29,9 +29,9 @@ public class OrientTest {
 		url = iURL;
 	}
 
-	public static void printRecords(List<? extends ORecord<?>> iRecords) {
+	public static void printRecords(List<? extends ORecord> iRecords) {
 		int i = 0;
-		for (ORecord<?> record : iRecords) {
+		for (ORecord record : iRecords) {
 			printRecord(i, record);
 		}
 	}

@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  * @author Luca Garulli
  */
-public class ORecordIteratorClassDescendentOrder<REC extends ORecordInternal<?>> extends ORecordIteratorClass<REC> {
+public class ORecordIteratorClassDescendentOrder<REC extends ORecordInternal> extends ORecordIteratorClass<REC> {
   public ORecordIteratorClassDescendentOrder(ODatabaseRecord iDatabase, ODatabaseRecord iLowLevelDatabase, String iClassName,
       boolean iPolymorphic, boolean iUseCache, boolean iterateThroughTombstones, OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iUseCache, iterateThroughTombstones, iLockingStrategy);

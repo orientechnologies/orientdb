@@ -144,9 +144,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public OIndexRemote<T> put(final Object iKey, final OIdentifiable iValue) {
-    if (iValue instanceof ORecord<?> && !iValue.getIdentity().isValid())
+    if (iValue instanceof ORecord && !iValue.getIdentity().isValid())
       // SAVE IT BEFORE TO PUT
-      ((ORecord<?>) iValue).save();
+      ((ORecord) iValue).save();
 
     if (iValue.getIdentity().isNew())
       throw new OIndexException(
@@ -448,7 +448,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return new OCommandSQL(text);
   }
 
-  protected ODatabaseComplex<ORecordInternal<?>> getDatabase() {
+  protected ODatabaseComplex<ORecordInternal> getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

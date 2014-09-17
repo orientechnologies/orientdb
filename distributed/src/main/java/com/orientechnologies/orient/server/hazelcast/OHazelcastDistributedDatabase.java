@@ -483,7 +483,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       // EXECUTE ONLY IF THE RECORD HASN'T BEEN DELETED YET
       executeLastPendingRequest = ((ODeleteRecordTask) task).getRid().getRecord() != null;
     } else if (task instanceof OUpdateRecordTask) {
-      final ORecord<?> rec = ((OUpdateRecordTask) task).getRid().getRecord();
+      final ORecord rec = ((OUpdateRecordTask) task).getRid().getRecord();
       if (rec == null)
         ODistributedServerLog.warn(this, getLocalNodeName(), lastPendingRequest.getSenderNodeName(), DIRECTION.IN,
             "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());

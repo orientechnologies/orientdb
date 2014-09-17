@@ -25,7 +25,7 @@ class OrientElementScanIterable<T extends Element> implements CloseableIterable<
 
   public Iterator<T> iterator() {
     final ODatabaseDocumentTx rawGraph = this.graph.getRawGraph();
-    return new OrientElementIterator<T>(this.graph, new ORecordIteratorClass<ORecordInternal<?>>(rawGraph,
+    return new OrientElementIterator<T>(this.graph, new ORecordIteratorClass<ORecordInternal>(rawGraph,
         (ODatabaseRecordAbstract) rawGraph.getUnderlying(), elementClass, polymorphic));
   }
 

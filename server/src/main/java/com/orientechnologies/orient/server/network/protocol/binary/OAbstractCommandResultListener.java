@@ -37,8 +37,8 @@ public abstract class OAbstractCommandResultListener implements OCommandResultLi
   public abstract boolean isEmpty();
 
   protected void fetchRecord(final Object iRecord, final OFetchListener iFetchListener) {
-    if (fetchPlan != null && iRecord instanceof ORecordInternal<?>) {
-      final ORecordInternal<?> record = (ORecordInternal<?>) iRecord;
+    if (fetchPlan != null && iRecord instanceof ORecordInternal) {
+      final ORecordInternal record = (ORecordInternal) iRecord;
       final OFetchContext context = new ORemoteFetchContext();
       OFetchHelper.fetch(record, record, fetchPlan, iFetchListener, context, "");
     }

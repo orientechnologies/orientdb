@@ -73,7 +73,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected static final String                    KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
   protected static final String                    KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
 
-  protected OSQLAsynchQuery<ORecordSchemaAware<?>> request;
+  protected OSQLAsynchQuery<ORecordSchemaAware> request;
   protected OSQLTarget                             parsedTarget;
   protected OSQLFilter                             compiledFilter;
   protected Map<String, Object>                    let                = null;
@@ -91,12 +91,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     init(textRequest);
 
     if (iRequest instanceof OSQLSynchQuery) {
-      request = (OSQLSynchQuery<ORecordSchemaAware<?>>) iRequest;
+      request = (OSQLSynchQuery<ORecordSchemaAware>) iRequest;
     } else if (iRequest instanceof OSQLAsynchQuery)
-      request = (OSQLAsynchQuery<ORecordSchemaAware<?>>) iRequest;
+      request = (OSQLAsynchQuery<ORecordSchemaAware>) iRequest;
     else {
       // BUILD A QUERY OBJECT FROM THE COMMAND REQUEST
-      request = new OSQLSynchQuery<ORecordSchemaAware<?>>(textRequest.getText());
+      request = new OSQLSynchQuery<ORecordSchemaAware>(textRequest.getText());
       if (textRequest.getResultListener() != null)
         request.setResultListener(textRequest.getResultListener());
     }
@@ -170,7 +170,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     }
 
     if (request instanceof OSQLSynchQuery)
-      return ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getResult();
+      return ((OSQLSynchQuery<ORecordSchemaAware>) request).getResult();
 
     return null;
   }
@@ -179,7 +179,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (iRecord != null) {
       resultCount++;
 
-      OIdentifiable identifiable = iRecord instanceof ORecord<?> ? ((ORecord<?>) iRecord) : iRecord.getIdentity();
+      OIdentifiable identifiable = iRecord instanceof ORecord ? ((ORecord) iRecord) : iRecord.getIdentity();
 
       // CALL THE LISTENER NOW
       if (identifiable != null && request.getResultListener() != null) {
@@ -285,10 +285,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return skip;
   }
 
-  protected boolean filter(final ORecord<?> iRecord) {
-    if (iRecord instanceof ORecordSchemaAware<?>) {
+  protected boolean filter(final ORecord iRecord) {
+    if (iRecord instanceof ORecordSchemaAware) {
       // CHECK THE TARGET CLASS
-      final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
+      final ORecordSchemaAware recordSchemaAware = (ORecordSchemaAware) iRecord;
       Map<OClass, String> targetClasses = parsedTarget.getTargetClasses();
       // check only classes that specified in query will go to result set
       if ((targetClasses != null) && (!targetClasses.isEmpty())) {
@@ -303,7 +303,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return evaluateRecord(iRecord);
   }
 
-  protected boolean evaluateRecord(final ORecord<?> iRecord) {
+  protected boolean evaluateRecord(final ORecord iRecord) {
     context.setVariable("current", iRecord);
     context.updateMetric("evaluated", +1);
 
@@ -313,7 +313,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     return (Boolean) compiledFilter.evaluate(iRecord, null, context);
   }
 
-  protected void assignLetClauses(final ORecord<?> iRecord) {
+  protected void assignLetClauses(final ORecord iRecord) {
     if (let != null && !let.isEmpty()) {
       // BIND CONTEXT VARIABLES
       for (Map.Entry<String, Object> entry : let.entrySet()) {
@@ -365,10 +365,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
     if (iAscendentOrder)
-      target = new ORecordIteratorClass<ORecordInternal<?>>(database, database, cls.getName(), true, request.isUseCache(), false,
+      target = new ORecordIteratorClass<ORecordInternal>(database, database, cls.getName(), true, request.isUseCache(), false,
           locking).setRange(range[0], range[1]);
     else
-      target = new ORecordIteratorClassDescendentOrder<ORecordInternal<?>>(database, database, cls.getName(), true,
+      target = new ORecordIteratorClassDescendentOrder<ORecordInternal>(database, database, cls.getName(), true,
           request.isUseCache(), false, locking).setRange(range[0], range[1]);
   }
 
@@ -411,7 +411,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     final OStorage.LOCKING_STRATEGY locking = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
         .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
 
-    target = new ORecordIteratorClusters<ORecordInternal<?>>(database, database, clIds, request.isUseCache(), false, locking)
+    target = new ORecordIteratorClusters<ORecordInternal>(database, database, clIds, request.isUseCache(), false, locking)
         .setRange(range[0], range[1]);
   }
 
@@ -530,7 +530,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     final OSQLFilterCondition rootCondition = compiledFilter == null ? null : compiledFilter.getRootCondition();
     if (compiledFilter == null || rootCondition == null) {
       if (request instanceof OSQLSynchQuery)
-        beginRange = ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getNextPageRID();
+        beginRange = ((OSQLSynchQuery<ORecordSchemaAware>) request).getNextPageRID();
       else
         beginRange = null;
       endRange = null;
@@ -540,7 +540,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       final ORID nextPageRid;
 
       if (request instanceof OSQLSynchQuery)
-        nextPageRid = ((OSQLSynchQuery<ORecordSchemaAware<?>>) request).getNextPageRID();
+        nextPageRid = ((OSQLSynchQuery<ORecordSchemaAware>) request).getNextPageRID();
       else
         nextPageRid = null;
 

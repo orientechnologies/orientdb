@@ -128,7 +128,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
                 "Resolved conflict automatically between versions on CREATE record %s/%s v.%d (other RID=%s v.%d). Current record version will be overwritten",
                 database.getName(), iCurrentRID, iCurrentVersion, iOtherRID, iOtherVersion);
 
-        final ORecordInternal<?> record = iCurrentRID.getRecord();
+        final ORecordInternal record = iCurrentRID.getRecord();
         record.setVersion(iOtherVersion - 1);
         record.setDirty();
 
@@ -273,7 +273,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
         "Error on saving CONFLICT for record %s/%s...", database.getName(), doc);
   }
 
-  protected boolean areRecordContentIdentical(final ORecordInternal<?> rec1, final ORecordInternal<?> rec2) {
+  protected boolean areRecordContentIdentical(final ORecordInternal rec1, final ORecordInternal rec2) {
     final byte[] rec1Stream = rec1.toStream();
     final byte[] rec2Stream = rec2.toStream();
 

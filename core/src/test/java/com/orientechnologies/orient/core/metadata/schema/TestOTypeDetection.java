@@ -223,7 +223,7 @@ public class TestOTypeDetection {
     linkmap.put("some", new ORecordId());
     assertEquals(OType.LINKMAP, OType.getTypeByValue(linkmap));
 
-    Map<String, ORecord<?>> linkmap2 = new HashMap<String, ORecord<?>>();
+    Map<String, ORecord> linkmap2 = new HashMap<String, ORecord>();
     linkmap2.put("some", new ODocument());
     assertEquals(OType.LINKMAP, OType.getTypeByValue(linkmap2));
 
@@ -231,7 +231,7 @@ public class TestOTypeDetection {
     linkList.add(new ORecordId());
     assertEquals(OType.LINKLIST, OType.getTypeByValue(linkList));
 
-    List<ORecord<?>> linkList2 = new ArrayList<ORecord<?>>();
+    List<ORecord> linkList2 = new ArrayList<ORecord>();
     linkList2.add(new ODocument());
     assertEquals(OType.LINKLIST, OType.getTypeByValue(linkList2));
 
@@ -239,7 +239,7 @@ public class TestOTypeDetection {
     linkSet.add(new ORecordId());
     assertEquals(OType.LINKSET, OType.getTypeByValue(linkSet));
 
-    Set<ORecord<?>> linkSet2 = new HashSet<ORecord<?>>();
+    Set<ORecord> linkSet2 = new HashSet<ORecord>();
     linkSet2.add(new ODocument());
     assertEquals(OType.LINKSET, OType.getTypeByValue(linkSet2));
 

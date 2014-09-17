@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
+import java.util.Arrays;
+import java.util.NoSuchElementException;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -24,9 +27,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.Arrays;
-import java.util.NoSuchElementException;
-
 /**
  * Iterator to browse multiple clusters forward and backward. Once browsed in a direction, the iterator cannot change it. This
  * iterator with "live updates" set is able to catch updates to the cluster sizes while browsing. This is the case when concurrent
@@ -35,13 +35,13 @@ import java.util.NoSuchElementException;
  * 
  * @author Luca Garulli
  */
-public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OIdentifiableIterator<REC> {
-  protected int[]      clusterIds;
-  protected int        currentClusterIdx;
-  protected ORecord<?> currentRecord;
+public class ORecordIteratorClusters<REC extends ORecordInternal> extends OIdentifiableIterator<REC> {
+  protected int[]   clusterIds;
+  protected int     currentClusterIdx;
+  protected ORecord currentRecord;
 
-  protected ORID       beginRange;
-  protected ORID       endRange;
+  protected ORID    beginRange;
+  protected ORID    endRange;
 
   public ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final int[] iClusterIds,
       final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
@@ -81,7 +81,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     if (liveUpdated)
       updateClusterRange();
 
-    ORecordInternal<?> record = getRecord();
+    ORecordInternal record = getRecord();
 
     // ITERATE UNTIL THE PREVIOUS GOOD RECORD
     while (currentClusterIdx > -1) {
@@ -128,7 +128,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     if (liveUpdated)
       updateClusterRange();
 
-    ORecordInternal<?> record = getRecord();
+    ORecordInternal record = getRecord();
 
     // ITERATE UNTIL THE NEXT GOOD RECORD
     while (currentClusterIdx < clusterIds.length) {
@@ -187,7 +187,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
         currentRecord = null;
       }
 
-    ORecordInternal<?> record;
+    ORecordInternal record;
 
     // MOVE FORWARD IN THE CURRENT CLUSTER
     while (hasNext()) {
@@ -235,7 +235,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
         currentRecord = null;
       }
 
-    ORecordInternal<?> record = getRecord();
+    ORecordInternal record = getRecord();
 
     // MOVE BACKWARD IN THE CURRENT CLUSTER
     while (hasPrevious()) {
@@ -263,7 +263,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     return null;
   }
 
-  protected boolean include(final ORecord<?> iRecord) {
+  protected boolean include(final ORecord iRecord) {
     return true;
   }
 
@@ -283,7 +283,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     resetCurrentPosition();
     nextPosition();
 
-    final ORecordInternal<?> record = getRecord();
+    final ORecordInternal record = getRecord();
     currentRecord = readCurrentRecord(record, 0);
 
     if (currentRecord != null && !include(currentRecord)) {
@@ -310,7 +310,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     resetCurrentPosition();
     prevPosition();
 
-    final ORecordInternal<?> record = getRecord();
+    final ORecordInternal record = getRecord();
     currentRecord = readCurrentRecord(record, 0);
 
     if (currentRecord != null && !include(currentRecord)) {

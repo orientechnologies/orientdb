@@ -52,7 +52,7 @@ import java.util.TreeMap;
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
   protected OMVRBTreeProvider<K, V>                        dataProvider;
-  protected ORecord<?>                                     owner;
+  protected ORecord                                        owner;
   protected final Set<OMVRBTreeEntryPersistent<K, V>>      recordsToCommit    = new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 
   // STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
@@ -706,18 +706,18 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   }
 
   protected V internalPut(final K key, final V value) throws OLowMemoryException {
-    ORecordInternal<?> rec;
+    ORecordInternal rec;
 
-    if (key instanceof ORecordInternal<?>) {
+    if (key instanceof ORecordInternal) {
       // RECORD KEY: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-      rec = (ORecordInternal<?>) key;
+      rec = (ORecordInternal) key;
       if (!rec.getIdentity().isValid())
         rec.save();
     }
 
-    if (value instanceof ORecordInternal<?>) {
+    if (value instanceof ORecordInternal) {
       // RECORD VALUE: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-      rec = (ORecordInternal<?>) value;
+      rec = (ORecordInternal) value;
       if (!rec.getIdentity().isValid())
         rec.save();
     }
@@ -981,11 +981,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   protected void markDirty() {
   }
 
-  public ORecord<?> getOwner() {
+  public ORecord getOwner() {
     return owner;
   }
 
-  public OMVRBTreePersistent<K, V> setOwner(ORecord<?> owner) {
+  public OMVRBTreePersistent<K, V> setOwner(ORecord owner) {
     this.owner = owner;
     return this;
   }

@@ -43,7 +43,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 public class OObjectFetchListener implements OFetchListener {
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public void processStandardField(final ORecordSchemaAware<?> iRecord, final Object iFieldValue, final String iFieldName,
+  public void processStandardField(final ORecordSchemaAware iRecord, final Object iFieldValue, final String iFieldName,
       final OFetchContext iContext, final Object iUserObject, final String iFormat) throws OFetchException {
     if (iFieldValue instanceof ORecordLazyList)
       OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OObjectLazyList(iRecord, (ORecordLazyList) iFieldValue,
@@ -61,12 +61,12 @@ public class OObjectFetchListener implements OFetchListener {
   public void processStandardCollectionValue(Object iFieldValue, OFetchContext iContext) throws OFetchException {
   }
 
-  public void parseLinkedCollectionValue(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject,
+  public void parseLinkedCollectionValue(ORecordSchemaAware iRootRecord, OIdentifiable iLinked, Object iUserObject,
       String iFieldName, OFetchContext iContext) throws OFetchException {
   }
 
   @SuppressWarnings("unchecked")
-  public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
+  public void parseLinked(final ORecordSchemaAware iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
       final String iFieldName, final OFetchContext iContext) throws OFetchException {
     final Class<?> type = OObjectSerializerHelper.getFieldType(iUserObject, iFieldName);
     if (type == null || Map.class.isAssignableFrom(type)) {
@@ -83,12 +83,12 @@ public class OObjectFetchListener implements OFetchListener {
       return;
     } else if (iLinked instanceof ORecordSchemaAware
         && !(((OObjectFetchContext) iContext).getObj2RecHandler().existsUserObjectByRID(iLinked.getIdentity()))) {
-      fetchLinked(iRootRecord, iUserObject, iFieldName, (ORecordSchemaAware<?>) iLinked, iContext);
+      fetchLinked(iRootRecord, iUserObject, iFieldName, (ORecordSchemaAware) iLinked, iContext);
     }
   }
 
-  public Object fetchLinkedMapEntry(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
-      String iKey, final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException {
+  public Object fetchLinkedMapEntry(final ORecordSchemaAware iRoot, final Object iUserObject, final String iFieldName,
+      String iKey, final ORecordSchemaAware iLinked, final OFetchContext iContext) throws OFetchException {
     Object value = null;
     final Class<?> type = OObjectSerializerHelper.getFieldType((ODocument) iLinked,
         ((OObjectFetchContext) iContext).getEntityManager());
@@ -102,8 +102,8 @@ public class OObjectFetchListener implements OFetchListener {
   }
 
   @SuppressWarnings("unchecked")
-  public Object fetchLinkedCollectionValue(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
-      final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException {
+  public Object fetchLinkedCollectionValue(final ORecordSchemaAware iRoot, final Object iUserObject, final String iFieldName,
+      final ORecordSchemaAware iLinked, final OFetchContext iContext) throws OFetchException {
     Object value = null;
     final Class<?> fieldClass = OObjectSerializerHelper.getFieldType((ODocument) iLinked,
         ((OObjectFetchContext) iContext).getEntityManager());
@@ -122,7 +122,7 @@ public class OObjectFetchListener implements OFetchListener {
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public Object fetchLinked(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, ORecordSchemaAware<?> iLinked,
+  public Object fetchLinked(ORecordSchemaAware iRoot, Object iUserObject, String iFieldName, ORecordSchemaAware iLinked,
       OFetchContext iContext) throws OFetchException {
     if (iUserObject == null)
       return null;

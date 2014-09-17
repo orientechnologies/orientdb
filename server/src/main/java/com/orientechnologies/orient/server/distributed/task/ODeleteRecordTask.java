@@ -55,7 +55,7 @@ public class ODeleteRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), null, DIRECTION.IN, "delete record %s/%s v.%s",
         database.getName(), rid.toString(), version.toString());
 
-    final ORecordInternal<?> record = database.load(rid);
+    final ORecordInternal record = database.load(rid);
     if (record != null) {
       if (delayed)
         if (record.getRecordVersion().equals(version))

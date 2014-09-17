@@ -196,7 +196,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         for (OIdentifiable identifiable : oldDelegate)
           delegate.add(identifiable);
 
-        final ORecord<?> owner = oldDelegate.getOwner();
+        final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
         owner.setDirty();
 
@@ -212,7 +212,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         for (OIdentifiable identifiable : oldDelegate)
           delegate.add(identifiable);
 
-        final ORecord<?> owner = oldDelegate.getOwner();
+        final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
         owner.setDirty();
 
@@ -317,7 +317,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return delegate.getGenericClass();
   }
 
-  public void setOwner(ORecord<?> owner) {
+  public void setOwner(ORecord owner) {
     delegate.setOwner(owner);
   }
 

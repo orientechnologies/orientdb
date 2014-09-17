@@ -54,8 +54,8 @@ import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProto
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   private final Map<ORID, ORecordOperation>        tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
-  private final Map<ORecordId, ORecordInternal<?>> createdRecords = new HashMap<ORecordId, ORecordInternal<?>>();
-  private final Map<ORecordId, ORecordInternal<?>> updatedRecords = new HashMap<ORecordId, ORecordInternal<?>>();
+  private final Map<ORecordId, ORecordInternal> createdRecords = new HashMap<ORecordId, ORecordInternal>();
+  private final Map<ORecordId, ORecordInternal> updatedRecords = new HashMap<ORecordId, ORecordInternal>();
   @Deprecated
   private final int                                clientTxId;
   private final OChannelBinary                     channel;
@@ -130,8 +130,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         if (entry.getValue().type == ORecordOperation.UPDATED) {
           // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING HOOKS (LIKE INDEXES)
 
-          final ORecordInternal<?> record = entry.getValue().record.getRecord();
-          final ORecordInternal<?> loadedRecord = record.getIdentity().copy().getRecord();
+          final ORecordInternal record = entry.getValue().record.getRecord();
+          final ORecordInternal loadedRecord = record.getIdentity().copy().getRecord();
           if (loadedRecord == null)
             throw new ORecordNotFoundException(record.getIdentity().toString());
 
@@ -151,9 +151,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       tempEntries.clear();
 
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
-      for (ORecord<?> record : createdRecords.values())
+      for (ORecord record : createdRecords.values())
         unmarshallRecord(record);
-      for (ORecordInternal<?> record : updatedRecords.values())
+      for (ORecordInternal record : updatedRecords.values())
         unmarshallRecord(record);
 
     } catch (IOException e) {
@@ -163,13 +163,13 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   }
 
   @Override
-  public ORecordInternal<?> getRecord(final ORID rid) {
-    ORecordInternal<?> record = super.getRecord(rid);
+  public ORecordInternal getRecord(final ORID rid) {
+    ORecordInternal record = super.getRecord(rid);
     if (record == OTransactionRealAbstract.DELETED_RECORD)
       return record;
     else if (record == null && rid.isNew())
       // SEARCH BETWEEN CREATED RECORDS
-      record = (ORecordInternal<?>) createdRecords.get(rid);
+      record = (ORecordInternal) createdRecords.get(rid);
 
     return record;
   }
@@ -254,18 +254,18 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
     }
   }
 
-  public Map<ORecordId, ORecordInternal<?>> getCreatedRecords() {
+  public Map<ORecordId, ORecordInternal> getCreatedRecords() {
     return createdRecords;
   }
 
-  public Map<ORecordId, ORecordInternal<?>> getUpdatedRecords() {
+  public Map<ORecordId, ORecordInternal> getUpdatedRecords() {
     return updatedRecords;
   }
 
   /**
    * Unmarshalls collections. This prevent temporary RIDs remains stored as are.
    */
-  private void unmarshallRecord(final ORecord<?> iRecord) {
+  private void unmarshallRecord(final ORecord iRecord) {
     if (iRecord instanceof ODocument) {
       ((ODocument) iRecord).deserializeFields();
 

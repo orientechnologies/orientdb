@@ -57,7 +57,7 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
         Class<?>[] params = c.getParameterTypes();
 
         if (params.length == 2 && params[1].equals(ORID.class)) {
-          ORecord<?> rec = (ORecord<?>) c.newInstance(new ORecordId(content.toString()));
+          ORecord rec = (ORecord) c.newInstance(new ORecordId(content.toString()));
           // rec.load();
           return rec;
         }
@@ -74,11 +74,11 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
     if (iObject == null)
       return null;
 
-    if (((ORecord<?>) iObject).getIdentity() == null)
+    if (((ORecord) iObject).getIdentity() == null)
       throw new OSerializationException("Cannot serialize record without identity. Store it before serialization.");
 
     final StringBuilder buffer = OStreamSerializerHelper.writeRecordType(iObject.getClass(), new StringBuilder(1024));
-    buffer.append(((ORecord<?>) iObject).getIdentity().toString());
+    buffer.append(((ORecord) iObject).getIdentity().toString());
 
     return OBinaryProtocol.string2bytes(buffer.toString());
   }

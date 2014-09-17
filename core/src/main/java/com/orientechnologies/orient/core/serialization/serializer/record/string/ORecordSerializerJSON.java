@@ -155,16 +155,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return 0;
   }
 
-  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, boolean needReload) {
+  public ORecordInternal fromString(String iSource, ORecordInternal iRecord, final String[] iFields, boolean needReload) {
     return fromString(iSource, iRecord, iFields, null, needReload);
   }
 
   @Override
-  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields) {
+  public ORecordInternal fromString(String iSource, ORecordInternal iRecord, final String[] iFields) {
     return fromString(iSource, iRecord, iFields, null, false);
   }
 
-  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, final String iOptions,
+  public ORecordInternal fromString(String iSource, ORecordInternal iRecord, final String[] iFields, final String iOptions,
       boolean needReload) {
     iSource = unwrapSource(iSource);
 
@@ -205,7 +205,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           }
         } else if (needReload && fieldName.equals(ODocumentHelper.ATTRIBUTE_RID) && iRecord instanceof ODocument) {
           if (fieldValue != null && fieldValue.length() > 0) {
-            ORecordInternal<?> localRecord = ODatabaseRecordThreadLocal.INSTANCE.get().load(new ORecordId(fieldValueAsString));
+            ORecordInternal localRecord = ODatabaseRecordThreadLocal.INSTANCE.get().load(new ORecordId(fieldValueAsString));
             if (localRecord != null)
               iRecord = localRecord;
           }
@@ -273,7 +273,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                 if (type == null) {
                   // TRY TO UNDERSTAND BY FIRST ITEM
                   Object first = ((Collection<?>) v).iterator().next();
-                  if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid())
+                  if (first != null && first instanceof ORecord && !((ORecord) first).getIdentity().isValid())
                     type = v instanceof Set<?> ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST;
                 }
 
@@ -285,7 +285,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
               } else if (v instanceof Map<?, ?> && !((Map<?, ?>) v).isEmpty()) {
                 // CHECK IF THE MAP IS EMBEDDED
                 Object first = ((Map<?, ?>) v).values().iterator().next();
-                if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
+                if (first != null && first instanceof ORecord && !((ORecord) first).getIdentity().isValid()) {
                   doc.field(fieldName, v, OType.EMBEDDEDMAP);
                   continue;
                 }
@@ -329,7 +329,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   @Override
-  public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
+  public StringBuilder toString(final ORecordInternal iRecord, final StringBuilder iOutput, final String iFormat,
       final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType) {
     try {
@@ -341,7 +341,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       OJSONFetchContext context = new OJSONFetchContext(json, settings);
       context.writeSignature(json, iRecord);
 
-      if (iRecord instanceof ORecordSchemaAware<?>) {
+      if (iRecord instanceof ORecordSchemaAware) {
 
         OFetchHelper.fetch(iRecord, null, OFetchHelper.buildFetchPlan(settings.fetchPlan), new OJSONFetchListener(), context,
             iFormat);

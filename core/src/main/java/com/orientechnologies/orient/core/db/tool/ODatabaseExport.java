@@ -178,9 +178,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       long clusterExportedRecordsCurrent = 0;
       if (clusterName != null) {
-        ORecordInternal<?> rec = null;
+        ORecordInternal rec = null;
         try {
-          for (ORecordIteratorCluster<ORecordInternal<?>> it = database.browseCluster(clusterName); it.hasNext();) {
+          for (ORecordIteratorCluster<ORecordInternal> it = database.browseCluster(clusterName); it.hasNext();) {
 
             rec = it.next();
             if (rec instanceof ODocument) {
@@ -532,7 +532,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("OK (" + s.getClasses().size() + " classes)");
   }
 
-  private boolean exportRecord(long recordTot, long recordNum, ORecordInternal<?> rec) throws IOException {
+  private boolean exportRecord(long recordTot, long recordNum, ORecordInternal rec) throws IOException {
     if (rec != null)
       try {
         if (rec.getIdentity().isValid())

@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -262,7 +263,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   @Override
-  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord) {
+  public <RET extends ORecordInternal> RET save(final ORecordInternal iRecord) {
     return (RET) save(iRecord, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
@@ -296,7 +297,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   @Override
-  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
+  public <RET extends ORecordInternal> RET save(final ORecordInternal iRecord, final OPERATION_MODE iMode,
       boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
@@ -305,7 +306,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
     ODocument doc = (ODocument) iRecord;
     doc.validate();
-    doc.convertAllMultiValuesToTrackedVersions();
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     try {
       if (iForceCreate || doc.getIdentity().isNew()) {
@@ -363,7 +364,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
    */
   @Override
-  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final String iClusterName) {
+  public <RET extends ORecordInternal> RET save(final ORecordInternal iRecord, final String iClusterName) {
     return (RET) save(iRecord, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
@@ -400,7 +401,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
    */
   @Override
-  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, String iClusterName,
+  public <RET extends ORecordInternal> RET save(final ORecordInternal iRecord, String iClusterName,
       final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
@@ -445,7 +446,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     }
 
     doc.validate();
-    doc.convertAllMultiValuesToTrackedVersions();
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     doc = super.save(doc, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
     return (RET) doc;
@@ -466,7 +467,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
-  public ODatabaseDocumentTx delete(final ORecordInternal<?> record) {
+  public ODatabaseDocumentTx delete(final ORecordInternal record) {
     checkOpeness();
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
@@ -511,7 +512,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<ORecordInternal<?>> commit() {
+  public ODatabaseComplex<ORecordInternal> commit() {
     return commit(false);
   }
 
@@ -519,7 +520,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<ORecordInternal<?>> commit(boolean force) throws OTransactionException {
+  public ODatabaseComplex<ORecordInternal> commit(boolean force) throws OTransactionException {
     return underlying.commit(force);
   }
 
@@ -527,7 +528,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<ORecordInternal<?>> rollback() {
+  public ODatabaseComplex<ORecordInternal> rollback() {
     return rollback(false);
   }
 
@@ -535,7 +536,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<ORecordInternal<?>> rollback(final boolean force) throws OTransactionException {
+  public ODatabaseComplex<ORecordInternal> rollback(final boolean force) throws OTransactionException {
     return underlying.rollback(force);
   }
 

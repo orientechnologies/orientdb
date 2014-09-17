@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  * @author Luca Garulli
  */
-public interface ODatabaseDocument extends ODatabaseRecord, ODatabaseSchemaAware<ORecordInternal<?>> {
+public interface ODatabaseDocument extends ODatabaseRecord, ODatabaseSchemaAware<ORecordInternal> {
 
   final static String TYPE = "document";
 

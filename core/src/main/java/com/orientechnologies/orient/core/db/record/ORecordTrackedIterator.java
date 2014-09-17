@@ -26,25 +26,25 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public class ORecordTrackedIterator implements Iterator<OIdentifiable> {
-	final private ORecord<?>	sourceRecord;
-	final private Iterator<?>	underlying;
+  final private ORecord     sourceRecord;
+  final private Iterator<?> underlying;
 
-	public ORecordTrackedIterator(final ORecord<?> iSourceRecord, final Iterator<?> iIterator) {
-		this.sourceRecord = iSourceRecord;
-		this.underlying = iIterator;
-	}
+  public ORecordTrackedIterator(final ORecord iSourceRecord, final Iterator<?> iIterator) {
+    this.sourceRecord = iSourceRecord;
+    this.underlying = iIterator;
+  }
 
-	public OIdentifiable next() {
-		return (OIdentifiable) underlying.next();
-	}
+  public OIdentifiable next() {
+    return (OIdentifiable) underlying.next();
+  }
 
-	public boolean hasNext() {
-		return underlying.hasNext();
-	}
+  public boolean hasNext() {
+    return underlying.hasNext();
+  }
 
-	public void remove() {
-		underlying.remove();
-		if (sourceRecord != null)
-			sourceRecord.setDirty();
-	}
+  public void remove() {
+    underlying.remove();
+    if (sourceRecord != null)
+      sourceRecord.setDirty();
+  }
 }

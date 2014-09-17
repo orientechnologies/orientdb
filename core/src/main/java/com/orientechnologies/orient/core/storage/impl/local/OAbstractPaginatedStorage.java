@@ -1660,7 +1660,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
   private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {
 
-    final ORecordInternal<?> rec = txEntry.getRecord();
+    final ORecordInternal rec = txEntry.getRecord();
     if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
       return;
 

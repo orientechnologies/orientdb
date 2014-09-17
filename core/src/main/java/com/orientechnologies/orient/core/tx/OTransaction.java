@@ -53,12 +53,12 @@ public interface OTransaction {
 
   public void clearRecordEntries();
 
-  public ORecordInternal<?> loadRecord(ORID iRid, ORecordInternal<?> iRecord, String iFetchPlan, boolean ignoreCache,
+  public ORecordInternal loadRecord(ORID iRid, ORecordInternal iRecord, String iFetchPlan, boolean ignoreCache,
       boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy);
 
-  public ORecordInternal saveRecord(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate, ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
+  public ORecordInternal saveRecord(ORecordInternal iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate, ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback);
 
-  public void deleteRecord(ORecordInternal<?> iRecord, OPERATION_MODE iMode);
+  public void deleteRecord(ORecordInternal iRecord, OPERATION_MODE iMode);
 
   public int getId();
 
@@ -72,7 +72,7 @@ public interface OTransaction {
 
   public List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds);
 
-  public ORecordInternal<?> getRecord(ORID iRid);
+  public ORecordInternal getRecord(ORID iRid);
 
   public ORecordOperation getRecordEntry(ORID rid);
 

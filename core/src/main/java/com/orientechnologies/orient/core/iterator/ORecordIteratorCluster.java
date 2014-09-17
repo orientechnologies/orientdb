@@ -31,8 +31,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  * @author Luca Garulli
  */
-public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIdentifiableIterator<REC> {
-  private ORecord<?> currentRecord;
+public class ORecordIteratorCluster<REC extends ORecordInternal> extends OIdentifiableIterator<REC> {
+  private ORecord currentRecord;
 
   public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
       final int iClusterId, final boolean iUseCache) {
@@ -99,7 +99,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
     boolean thereAreRecordsToBrowse = getCurrentEntry().compareTo(firstClusterEntry) > 0;
 
     if (thereAreRecordsToBrowse) {
-      ORecordInternal<?> record = getRecord();
+      ORecordInternal record = getRecord();
       currentRecord = readCurrentRecord(record, -1);
     }
 
@@ -136,7 +136,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
       return false;
 
     if (!current.clusterPosition.isTemporary() && getCurrentEntry().compareTo(lastClusterEntry) < 0) {
-      ORecordInternal<?> record = getRecord();
+      ORecordInternal record = getRecord();
       currentRecord = readCurrentRecord(record, +1);
       if (currentRecord != null)
         return true;
@@ -187,7 +187,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
   public REC next() {
     checkDirection(true);
 
-    ORecordInternal<?> record;
+    ORecordInternal record;
 
     // ITERATE UNTIL THE NEXT GOOD RECORD
     while (hasNext()) {

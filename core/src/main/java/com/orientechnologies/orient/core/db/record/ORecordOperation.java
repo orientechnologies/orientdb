@@ -71,8 +71,8 @@ public class ORecordOperation implements OSerializableStream {
         .append("]").toString();
   }
 
-  public ORecordInternal<?> getRecord() {
-    return (ORecordInternal<?>) (record != null ? record.getRecord() : null);
+  public ORecordInternal getRecord() {
+    return (ORecordInternal) (record != null ? record.getRecord() : null);
   }
 
   public byte[] toStream() throws OSerializationException {
@@ -84,8 +84,8 @@ public class ORecordOperation implements OSerializableStream {
       switch (type) {
       case CREATED:
       case UPDATED:
-        stream.set(((ORecordInternal<?>) record.getRecord()).getRecordType());
-        stream.set(((ORecordInternal<?>) record.getRecord()).toStream());
+        stream.set(((ORecordInternal) record.getRecord()).getRecordType());
+        stream.set(((ORecordInternal) record.getRecord()).toStream());
         break;
       }
 
@@ -106,7 +106,7 @@ public class ORecordOperation implements OSerializableStream {
       case CREATED:
       case UPDATED:
         record = Orient.instance().getRecordFactoryManager().newInstance(stream.getAsByte());
-        ((ORecordInternal<?>) record).fill(rid, OVersionFactory.instance().createVersion(), stream.getAsByteArray(), true);
+        ((ORecordInternal) record).fill(rid, OVersionFactory.instance().createVersion(), stream.getAsByteArray(), true);
         break;
       }
 

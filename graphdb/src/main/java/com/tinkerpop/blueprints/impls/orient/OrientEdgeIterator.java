@@ -37,7 +37,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
     final OIdentifiable rec = (OIdentifiable) iObject;
 
-    final ORecord<?> record = rec.getRecord();
+    final ORecord record = rec.getRecord();
     if (record == null) {
       // SKIP IT
       OLogManager.instance().warn(this, "Record (%s) is null", rec);

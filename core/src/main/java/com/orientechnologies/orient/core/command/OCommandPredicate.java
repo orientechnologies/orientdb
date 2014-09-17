@@ -36,5 +36,5 @@ public interface OCommandPredicate {
    *          Context of execution
    * @return The result of predicate
    */
-  public Object evaluate(final ORecord<?> iRecord, ODocument iCurrentResult, final OCommandContext iContext);
+  public Object evaluate(final ORecord iRecord, ODocument iCurrentResult, final OCommandContext iContext);
 }

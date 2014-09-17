@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  * @author Luca Garulli
  */
-public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecordIteratorClusters<REC> {
+public class ORecordIteratorClass<REC extends ORecordInternal> extends ORecordIteratorClusters<REC> {
   protected final OClass targetClass;
   protected boolean      polymorphic;
 
@@ -92,7 +92,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
   }
 
   @Override
-  protected boolean include(final ORecord<?> record) {
+  protected boolean include(final ORecord record) {
     return record instanceof ODocument && targetClass.isSuperClassOf(((ODocument) record).getSchemaClass());
   }
 

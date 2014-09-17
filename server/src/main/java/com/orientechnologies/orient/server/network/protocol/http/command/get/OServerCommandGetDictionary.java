@@ -36,7 +36,7 @@ public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAb
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      final ORecord<?> record = db.getDictionary().get(urlParts[2]);
+      final ORecord record = db.getDictionary().get(urlParts[2]);
       if (record == null)
         throw new ORecordNotFoundException("Key '" + urlParts[2] + "' was not found in the database dictionary");
 

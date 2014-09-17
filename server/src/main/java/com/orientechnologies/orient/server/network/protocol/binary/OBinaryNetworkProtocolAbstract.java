@@ -120,7 +120,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
       channel.writeRID((ORID) o);
     } else {
-      writeRecord((ORecordInternal<?>) o.getRecord());
+      writeRecord((ORecordInternal) o.getRecord());
     }
   }
 
@@ -258,7 +258,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
     try {
       // TRY TO SEE IF THE RECORD EXISTS
-      final ORecord<?> record = rid.getRecord();
+      final ORecord record = rid.getRecord();
       if (record == null)
         return 0;
 
@@ -283,9 +283,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return 1;
   }
 
-  protected ORecordInternal<?> createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
+  protected ORecordInternal createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
       final byte recordType) {
-    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+    final ORecordInternal record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     fillRecord(rid, buffer, OVersionFactory.instance().createVersion(), record, iDatabase);
     iDatabase.save(record);
     return record;
@@ -293,12 +293,12 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
   protected ORecordVersion updateRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
       final ORecordVersion version, final byte recordType, boolean updateContent) {
-    final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+    final ORecordInternal newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     fillRecord(rid, buffer, version, newRecord, null);
 
     newRecord.setContentChanged(updateContent);
 
-    final ORecordInternal<?> currentRecord;
+    final ORecordInternal currentRecord;
     if (newRecord instanceof ODocument) {
       currentRecord = iDatabase.load(rid);
 
@@ -329,7 +329,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
   }
 
-  private void writeRecord(final ORecordInternal<?> iRecord) throws IOException {
+  private void writeRecord(final ORecordInternal iRecord) throws IOException {
     channel.writeShort((short) 0);
     channel.writeByte(iRecord.getRecordType());
     channel.writeRID(iRecord.getIdentity());
@@ -363,7 +363,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
   }
 
-  public void fillRecord(final ORecordId rid, final byte[] buffer, final ORecordVersion version, final ORecordInternal<?> record,
+  public void fillRecord(final ORecordId rid, final byte[] buffer, final ORecordVersion version, final ORecordInternal record,
       ODatabaseRecord iDatabase) {
     String dbSerializerName = "";
     if (iDatabase != null)
@@ -384,7 +384,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       record.fill(rid, version, buffer, true);
   }
 
-  protected byte[] getRecordBytes(final ORecordInternal<?> iRecord) {
+  protected byte[] getRecordBytes(final ORecordInternal iRecord) {
 
     final byte[] stream;
     try {

@@ -54,8 +54,7 @@ import java.util.Map.Entry;
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Iterable<Entry<String, Object>>, ODetachable,
-    Externalizable {
+public class ODocument extends ORecordSchemaAwareAbstract implements Iterable<Entry<String, Object>>, ODetachable, Externalizable {
   public static final byte                                               RECORD_TYPE         = 'd';
   protected static final String[]                                        EMPTY_STRINGS       = new String[] {};
   private static final long                                              serialVersionUID    = 1L;
@@ -259,7 +258,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * Copies all the fields into iDestination document.
    */
   @Override
-  public ORecordAbstract<Object> copyTo(final ORecordAbstract<Object> iDestination) {
+  public ORecordAbstract copyTo(final ORecordAbstract iDestination) {
     // TODO: REMOVE THIS
     checkForFields();
 
@@ -316,7 +315,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * 
    * @return placeholder of this document
    */
-  public ORecord<?> placeholder() {
+  public ORecord placeholder() {
     final ODocument cloned = new ODocument();
     cloned._source = null;
     cloned._recordId = _recordId.copy();
@@ -340,11 +339,11 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
       for (Map.Entry<String, Object> entry : _fieldValues.entrySet()) {
         fieldValue = entry.getValue();
 
-        if (fieldValue instanceof ORecord<?>)
-          if (((ORecord<?>) fieldValue).getIdentity().isNew())
+        if (fieldValue instanceof ORecord)
+          if (((ORecord) fieldValue).getIdentity().isNew())
             fullyDetached = false;
           else
-            _fieldValues.put(entry.getKey(), ((ORecord<?>) fieldValue).getIdentity());
+            _fieldValues.put(entry.getKey(), ((ORecord) fieldValue).getIdentity());
 
         if (fieldValue instanceof ODetachable) {
           if (!((ODetachable) fieldValue).detach())
@@ -459,8 +458,8 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
           buffer.append('[');
           buffer.append(OMultiValue.getSize(f.getValue()));
           buffer.append(']');
-        } else if (f.getValue() instanceof ORecord<?>) {
-          final ORecord<?> record = (ORecord<?>) f.getValue();
+        } else if (f.getValue() instanceof ORecord) {
+          final ORecord record = (ORecord) f.getValue();
 
           if (record.getIdentity().isValid())
             record.getIdentity().toString(buffer);
@@ -1113,7 +1112,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    * Propagates the dirty status to the owner, if any. This happens when the object is embedded in another one.
    */
   @Override
-  public ORecordAbstract<Object> setDirty() {
+  public ORecordAbstract setDirty() {
     if (_owners != null) {
       // PROPAGATES TO THE OWNER
       ORecordElement e;
@@ -1148,7 +1147,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   @Override
-  public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
+  public void onBeforeIdentityChanged(final ORecord iRecord) {
     super.onBeforeIdentityChanged(iRecord);
     if (_owners != null) {
       final List<WeakReference<ORecordElement>> temp = new ArrayList<WeakReference<ORecordElement>>(_owners);
@@ -1163,7 +1162,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
   }
 
   @Override
-  public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+  public void onAfterIdentityChanged(final ORecord iRecord) {
     super.onAfterIdentityChanged(iRecord);
     if (_owners != null) {
       final List<WeakReference<ORecordElement>> temp = new ArrayList<WeakReference<ORecordElement>>(_owners);
@@ -1507,7 +1506,7 @@ public class ODocument extends ORecordSchemaAwareAbstract<Object> implements Ite
    *
    * @see OTrackedMultiValue
    */
-  public void convertAllMultiValuesToTrackedVersions() {
+  protected void convertAllMultiValuesToTrackedVersions() {
     if (_fieldValues == null)
       return;
 

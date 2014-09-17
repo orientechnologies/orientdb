@@ -1579,7 +1579,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   }
 
-  public void checkPersistentPropertyType(ODatabaseComplex<ORecordInternal<?>> database, String propertyName, OType type) {
+  public void checkPersistentPropertyType(ODatabaseComplex<ORecordInternal> database, String propertyName, OType type) {
 
     StringBuilder builder = new StringBuilder(256);
     builder.append("select count(*) from ").append(name).append(" where ");

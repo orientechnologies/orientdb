@@ -77,11 +77,11 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 
 		} else if (iLeft instanceof Collection<?>) {
 
-			final Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iLeft;
+			final Collection<ORecordSchemaAware> collection = (Collection<ORecordSchemaAware>) iLeft;
 
 			if (condition != null) {
 				// CHECK AGAINST A CONDITION
-				for (final ORecordSchemaAware<?> o : collection) {
+				for (final ORecordSchemaAware o : collection) {
 					if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.FALSE)
 						return false;
 				}
@@ -95,10 +95,10 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 		} else if (iRight instanceof Collection<?>) {
 
 			// CHECK AGAINST A CONDITION
-			final Collection<ORecordSchemaAware<?>> collection = (Collection<ORecordSchemaAware<?>>) iRight;
+			final Collection<ORecordSchemaAware> collection = (Collection<ORecordSchemaAware>) iRight;
 
 			if (condition != null) {
-				for (final ORecordSchemaAware<?> o : collection) {
+				for (final ORecordSchemaAware o : collection) {
 					if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.FALSE)
 						return false;
 				}

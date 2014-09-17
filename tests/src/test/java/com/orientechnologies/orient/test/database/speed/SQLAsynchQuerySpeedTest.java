@@ -42,7 +42,7 @@ public class SQLAsynchQuerySpeedTest extends SpeedTestMonoThread {
   @SuppressWarnings("unchecked")
   public void cycle() throws UnsupportedEncodingException {
     System.out.println("1 -----------------------");
-    OrientTest.printRecords((List<? extends ORecord<?>>) database.command(
+    OrientTest.printRecords((List<? extends ORecord>) database.command(
         new OSQLAsynchQuery<ODocument>("select * from animal where column(0) < 5 or column(0) >= 3 and column(5) < 7",
             new OCommandResultListener() {
               @Override

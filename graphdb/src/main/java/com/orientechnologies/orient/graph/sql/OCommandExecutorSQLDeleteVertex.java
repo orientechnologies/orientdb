@@ -52,7 +52,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
   private ODatabaseRecord    database;
   private OCommandRequest    query;
   private String             returning = "COUNT";
-  private List<ORecord<?>>   allDeletedRecords;
+  private List<ORecord>   allDeletedRecords;
   private OrientGraph        graph;
 
   @SuppressWarnings("unchecked")

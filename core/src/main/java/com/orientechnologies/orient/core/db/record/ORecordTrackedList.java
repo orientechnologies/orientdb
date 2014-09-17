@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 @SuppressWarnings({ "serial" })
 public class ORecordTrackedList extends OTrackedList<OIdentifiable> {
-	public ORecordTrackedList(final ORecordInternal<?> iSourceRecord) {
+	public ORecordTrackedList(final ORecordInternal iSourceRecord) {
 		super(iSourceRecord);
 	}
 
@@ -40,12 +40,12 @@ public class ORecordTrackedList extends OTrackedList<OIdentifiable> {
 	/**
 	 * The item's identity does not affect nothing.
 	 */
-	public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
+	public void onBeforeIdentityChanged(final ORecord iRecord) {
 	}
 
 	/**
 	 * The item's identity does not affect nothing.
 	 */
-	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+	public void onAfterIdentityChanged(final ORecord iRecord) {
 	}
 }

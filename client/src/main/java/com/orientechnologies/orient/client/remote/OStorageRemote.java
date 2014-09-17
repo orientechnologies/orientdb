@@ -458,9 +458,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readVersion(), network.readByte());
 
           final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-          ORecordInternal<?> record;
+          ORecordInternal record;
           while (network.readByte() == 2) {
-            record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+            record = (ORecordInternal) OChannelBinaryProtocol.readIdentifiable(network);
 
             if (database != null)
               // PUT IN THE CLIENT LOCAL CACHE
@@ -945,7 +945,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
               // ASYNCH: READ ONE RECORD AT TIME
               while ((status = network.readByte()) > 0) {
-                final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+                final ORecordInternal record = (ORecordInternal) OChannelBinaryProtocol.readIdentifiable(network);
                 if (record == null)
                   continue;
 
@@ -972,8 +972,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
               case 'r':
                 result = OChannelBinaryProtocol.readIdentifiable(network);
-                if (result instanceof ORecord<?>)
-                  database.getLocalCache().updateRecord((ORecordInternal<?>) result);
+                if (result instanceof ORecord)
+                  database.getLocalCache().updateRecord((ORecordInternal) result);
                 break;
 
               case 'l':
@@ -981,8 +981,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>(tot);
                 for (int i = 0; i < tot; ++i) {
                   final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
-                  if (resultItem instanceof ORecord<?>)
-                    database.getLocalCache().updateRecord((ORecordInternal<?>) resultItem);
+                  if (resultItem instanceof ORecord)
+                    database.getLocalCache().updateRecord((ORecordInternal) resultItem);
                   list.add(resultItem);
                 }
                 result = list;
@@ -1002,7 +1002,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 // LOAD THE FETCHED RECORDS IN CACHE
                 byte status;
                 while ((status = network.readByte()) > 0) {
-                  final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+                  final ORecordInternal record = (ORecordInternal) OChannelBinaryProtocol.readIdentifiable(network);
                   if (record != null && status == 2)
                     // PUT IN THE CLIENT LOCAL CACHE
                     database.getLocalCache().updateRecord(record);

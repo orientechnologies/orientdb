@@ -34,38 +34,38 @@ public class ORemoteFetchContext implements OFetchContext {
   public void onAfterStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
   }
 
-  public void onBeforeMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  public void onBeforeMap(ORecordSchemaAware iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
   }
 
-  public void onBeforeFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
+  public void onBeforeFetch(ORecordSchemaAware iRootRecord) throws OFetchException {
   }
 
-  public void onBeforeArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
+  public void onBeforeArray(ORecordSchemaAware iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
       throws OFetchException {
   }
 
-  public void onAfterArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
+  public void onAfterArray(ORecordSchemaAware iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
   }
 
-  public void onBeforeDocument(ORecordSchemaAware<?> iRecord, final ORecordSchemaAware<?> iDocument, String iFieldName,
+  public void onBeforeDocument(ORecordSchemaAware iRecord, final ORecordSchemaAware iDocument, String iFieldName,
       final Object iUserObject) throws OFetchException {
   }
 
-  public void onBeforeCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject,
+  public void onBeforeCollection(ORecordSchemaAware iRootRecord, String iFieldName, final Object iUserObject,
       final Iterable<?> iterable) throws OFetchException {
   }
 
-  public void onAfterMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  public void onAfterMap(ORecordSchemaAware iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
   }
 
-  public void onAfterFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
+  public void onAfterFetch(ORecordSchemaAware iRootRecord) throws OFetchException {
   }
 
-  public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, final ORecordSchemaAware<?> iDocument, String iFieldName,
+  public void onAfterDocument(ORecordSchemaAware iRootRecord, final ORecordSchemaAware iDocument, String iFieldName,
       final Object iUserObject) throws OFetchException {
   }
 
-  public void onAfterCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
+  public void onAfterCollection(ORecordSchemaAware iRootRecord, String iFieldName, final Object iUserObject)
       throws OFetchException {
   }
 

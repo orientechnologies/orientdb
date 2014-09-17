@@ -253,7 +253,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
           add(database.getUserObjectByRecord(
 ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
     else if (e instanceof ODocument)
-          add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
+          add(database.getUserObjectByRecord((ORecordInternal) e, fetchPlan));
         else
           add((TYPE) e);
       }
@@ -276,7 +276,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
               fetchPlan));
         else if (e instanceof ODocument)
-          super.add(database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan));
+          super.add(database.getUserObjectByRecord((ORecordInternal) e, fetchPlan));
         else
           super.add((TYPE) e);
       }
@@ -298,7 +298,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 ((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan);
           super.add((TYPE) ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance));
         } else if (e instanceof ODocument) {
-          e = database.getUserObjectByRecord((ORecordInternal<?>) e, fetchPlan);
+          e = database.getUserObjectByRecord((ORecordInternal) e, fetchPlan);
           super.add((TYPE) ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance));
         } else
           add((TYPE) e);

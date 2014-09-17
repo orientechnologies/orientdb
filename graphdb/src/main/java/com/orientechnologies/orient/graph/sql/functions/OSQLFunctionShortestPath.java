@@ -44,7 +44,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionPathFinder {
       final OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
-    final ORecordInternal<?> record = (ORecordInternal<?>) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
+    final ORecordInternal record = (ORecordInternal) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
 
     Object source = iParams[0];
     if (OMultiValue.isMultiValue(source)) {

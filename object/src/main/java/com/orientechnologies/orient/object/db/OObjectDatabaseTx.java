@@ -456,7 +456,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     if (iRID == null)
       return this;
 
-    final ORecordInternal<?> record = iRID.getRecord();
+    final ORecordInternal record = iRID.getRecord();
     if (record instanceof ODocument) {
       Object iPojo = getUserObjectByRecord(record, null);
 
@@ -534,7 +534,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
           break;
 
         case ORecordOperation.DELETED:
-          final ORecordInternal<?> rec = entry.getRecord();
+          final ORecordInternal rec = entry.getRecord();
           if (rec instanceof ODocument)
             unregisterPojo(pojo, (ODocument) rec);
           break;
@@ -722,10 +722,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public void registerUserObject(final Object iObject, final ORecordInternal<?> iRecord) {
+  public void registerUserObject(final Object iObject, final ORecordInternal iRecord) {
   }
 
-  public void registerUserObjectAfterLinkSave(ORecordInternal<?> iRecord) {
+  public void registerUserObjectAfterLinkSave(ORecordInternal iRecord) {
   }
 
   @Override

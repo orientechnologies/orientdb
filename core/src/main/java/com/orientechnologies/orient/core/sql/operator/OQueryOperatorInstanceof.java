@@ -52,7 +52,7 @@ public class OQueryOperatorInstanceof extends OQueryOperatorEqualityNotNulls {
 		OClass cls = null;
 		if (iLeft instanceof OIdentifiable) {
 			// GET THE RECORD'S CLASS
-			final ORecord<?> record = ((OIdentifiable) iLeft).getRecord();
+			final ORecord record = ((OIdentifiable) iLeft).getRecord();
 			if (record instanceof ODocument) {
 				cls = ((ODocument) record).getSchemaClass();
 			}

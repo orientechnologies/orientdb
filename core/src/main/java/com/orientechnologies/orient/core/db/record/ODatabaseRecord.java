@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  * 
  * @author Luca Garulli
  */
-public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
+public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal> {
 
   /**
    * Browses all the records of the specified cluster.
@@ -38,9 +38,9 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
    *          Cluster name to iterate
    * @return Iterator of ODocument instances
    */
-  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName);
+  public <REC extends ORecordInternal> ORecordIteratorCluster<REC> browseCluster(String iClusterName);
 
-  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName,
+  public <REC extends ORecordInternal> ORecordIteratorCluster<REC> browseCluster(String iClusterName,
       OClusterPosition startClusterPosition, OClusterPosition endClusterPosition, boolean loadTombstones);
 
   /**
@@ -52,9 +52,9 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
    *          The record class expected
    * @return Iterator of ODocument instances
    */
-  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass);
+  public <REC extends ORecordInternal> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass);
 
-  public <REC extends ORecordInternal<?>> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
+  public <REC extends ORecordInternal> ORecordIteratorCluster<REC> browseCluster(String iClusterName, Class<REC> iRecordClass,
       OClusterPosition startClusterPosition, OClusterPosition endClusterPosition, boolean loadTombstones);
 
   /**
@@ -64,7 +64,7 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal<?>> {
    * @param iIdentifiable
    * @return A ORecord instance
    */
-  public <RET extends ORecordInternal<?>> RET getRecord(OIdentifiable iIdentifiable);
+  public <RET extends ORecordInternal> RET getRecord(OIdentifiable iIdentifiable);
 
   /**
    * Returns the default record type for this kind of database.

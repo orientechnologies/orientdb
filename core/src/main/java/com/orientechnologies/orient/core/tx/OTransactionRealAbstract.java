@@ -52,7 +52,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
    */
   public static final ORecordFlat                             DELETED_RECORD        = new ORecordFlat();
   private final OOperationUnitId                              operationUnitId;
-  protected Map<ORID, ORecord<?>>                             temp2persistent       = new HashMap<ORID, ORecord<?>>();
+  protected Map<ORID, ORecord>                                temp2persistent       = new HashMap<ORID, ORecord>();
   protected Map<ORID, ORecordOperation>                       allEntries            = new HashMap<ORID, ORecordOperation>();
   protected Map<ORID, ORecordOperation>                       recordEntries         = new LinkedHashMap<ORID, ORecordOperation>();
   protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
@@ -129,7 +129,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       return e;
 
     if (rid.isTemporary()) {
-      final ORecord<?> record = temp2persistent.get(rid);
+      final ORecord record = temp2persistent.get(rid);
       if (record != null && !record.getIdentity().equals(rid))
         rid = record.getIdentity();
     }
@@ -145,7 +145,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return null;
   }
 
-  public ORecordInternal<?> getRecord(final ORID rid) {
+  public ORecordInternal getRecord(final ORID rid) {
     final ORecordOperation e = getRecordEntry(rid);
     if (e != null)
       if (e.type == ORecordOperation.DELETED)
@@ -381,12 +381,12 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         // SERIALIZE OPERATION
         changeDoc.field("o", e.operation.ordinal());
 
-        if (e.value instanceof ORecord<?> && e.value.getIdentity().isNew()) {
-          final ORecord<?> saved = temp2persistent.get(e.value.getIdentity());
+        if (e.value instanceof ORecord && e.value.getIdentity().isNew()) {
+          final ORecord saved = temp2persistent.get(e.value.getIdentity());
           if (saved != null)
             e.value = saved;
           else
-            ((ORecord<?>) e.value).save();
+            ((ORecord) e.value).save();
         }
 
         changeDoc.field("v", e.value != null ? e.value.getIdentity() : null);

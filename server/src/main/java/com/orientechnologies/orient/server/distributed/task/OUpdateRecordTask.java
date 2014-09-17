@@ -63,7 +63,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%s",
         database.getName(), rid.toString(), version.toString());
 
-    ORecordInternal<?> loadedRecord = rid.getRecord();
+    ORecordInternal loadedRecord = rid.getRecord();
     if (loadedRecord == null)
       throw new ORecordNotFoundException("Record " + rid + " was not found on update");
 

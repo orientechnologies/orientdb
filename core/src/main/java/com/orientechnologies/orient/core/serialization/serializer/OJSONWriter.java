@@ -86,7 +86,7 @@ public class OJSONWriter {
         if (iFormat != null && iFormat.contains("shallow"))
           buffer.append("{}");
         else {
-          final ORecord<?> rec = linked.getRecord();
+          final ORecord rec = linked.getRecord();
           if (rec != null)
             buffer.append(rec.toJSON(iFormat));
           else
@@ -284,7 +284,7 @@ public class OJSONWriter {
     return this;
   }
 
-  public OJSONWriter writeRecord(final int iIdentLevel, final boolean iNewLine, final Object iName, final ORecord<?> iRecord)
+  public OJSONWriter writeRecord(final int iIdentLevel, final boolean iNewLine, final Object iName, final ORecord iRecord)
       throws IOException {
     if (!firstAttribute)
       out.append(",");
