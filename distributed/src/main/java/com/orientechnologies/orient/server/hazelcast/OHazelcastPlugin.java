@@ -717,6 +717,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
+  public void mapEvicted(MapEvent event) {
+
+  }
+
+  @Override
+  public void mapCleared(MapEvent event) {
+
+  }
+
+  @Override
   public boolean isNodeAvailable(final String iNodeName, final String iDatabaseName) {
     return getDatabaseStatus(iNodeName, iDatabaseName) != DB_STATUS.OFFLINE;
   }
