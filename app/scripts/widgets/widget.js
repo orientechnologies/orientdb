@@ -398,7 +398,12 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
                     element.html(link);
                 }
             }
-            if (value instanceof Array) {
+            function isRids(value) {
+                return (value instanceof Array && value.length > 0 && typeof value[0] == "string" && value[0].indexOf('#') == 0 )
+
+            }
+
+            if (isRids(value)) {
 
 
                 var LIMIT = 4;
@@ -412,6 +417,7 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
                 scope.collapse = function () {
                     renderLimit(LIMIT);
                 }
+
                 function renderLimit(limit) {
                     var i = 0;
                     var html = "<div class='rid-list'>";
