@@ -28,9 +28,9 @@ public interface ODatabaseLifecycleListener {
 
   public PRIORITY getPriority();
 
-  public void onCreate(ODatabase iDatabase);
+  public void onCreate(ODatabaseInternal iDatabase);
 
-	public void onOpen(ODatabase iDatabase);
+	public void onOpen(ODatabaseInternal iDatabase);
 
-	public void onClose(ODatabase iDatabase);
+	public void onClose(ODatabaseInternal iDatabase);
 }

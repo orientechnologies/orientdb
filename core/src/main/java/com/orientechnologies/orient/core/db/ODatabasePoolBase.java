@@ -27,7 +27,7 @@ import java.util.Map;
  * @author Luca Garulli
  * 
  */
-public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
+public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Thread {
   protected final String              url;
   protected final String              userName;
   protected final String              userPassword;

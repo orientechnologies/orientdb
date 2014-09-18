@@ -15,14 +15,10 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 
 /**
  * Generic interface for record based Database implementations.
@@ -153,25 +149,4 @@ public interface ODatabaseRecord extends ODatabaseComplex<ORecordInternal> {
    */
   public <DB extends ODatabaseRecord> DB setValidationEnabled(boolean iEnabled);
 
-  /**
-   * Internal. Gets an instance of sb-tree collection manager for current database.
-   */
-  public OSBTreeCollectionManager getSbTreeCollectionManager();
-
-  /**
-   * Internal. Returns the factory that defines a set of components that current database should use to be compatible to current
-   * version of storage. So if you open a database create with old version of OrientDB it defines a components that should be used
-   * to provide backward compatibility with that version of database.
-   */
-  public OCurrentStorageComponentsFactory getStorageVersions();
-
-  /**
-   * @return the factory of binary serializers.
-   */
-  public OBinarySerializerFactory getSerializerFactory();
-
-  /**
-   * @return serializer which is used for document serialization.
-   */
-  public ORecordSerializer getSerializer();
 }

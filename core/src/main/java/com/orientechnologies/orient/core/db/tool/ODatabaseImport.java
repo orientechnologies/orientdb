@@ -39,6 +39,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldVisitor;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldWalker;
@@ -94,7 +95,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private Map<OPropertyImpl, String> linkedClasses          = new HashMap<OPropertyImpl, String>();
   private Map<OClass, String>        superClasses           = new HashMap<OClass, String>();
   private OJSONReader                jsonReader;
-  private ORecordInternal         record;
+  private ORecordInternal            record;
   private boolean                    schemaImported         = false;
   private int                        exporterVersion        = -1;
   private ORID                       schemaRecordId;
@@ -351,7 +352,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
   }
 
-  public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
+  public ODatabaseImport(final ODatabaseDocumentInternal database, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
     super(database, iFileName, iListener);
 
@@ -372,7 +373,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.declareIntent(new OIntentMassiveInsert());
   }
 
-  public ODatabaseImport(final ODatabaseDocument database, final InputStream iStream, final OCommandOutputListener iListener)
+  public ODatabaseImport(final ODatabaseDocumentInternal database, final InputStream iStream, final OCommandOutputListener iListener)
       throws IOException {
     super(database, "streaming", iListener);
     jsonReader = new OJSONReader(new InputStreamReader(iStream));
@@ -496,31 +497,31 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   }
 
   public boolean isMigrateLinks() {
-	return migrateLinks;
+    return migrateLinks;
   }
 
   public void setMigrateLinks(boolean migrateLinks) {
-	this.migrateLinks = migrateLinks;
+    this.migrateLinks = migrateLinks;
   }
 
   public boolean isRebuildIndexes() {
-	return rebuildIndexes;
+    return rebuildIndexes;
   }
 
   public void setRebuildIndexes(boolean rebuildIndexes) {
-	this.rebuildIndexes = rebuildIndexes;
+    this.rebuildIndexes = rebuildIndexes;
   }
 
   public boolean isPreserveClusterIDs() {
-	return preserveClusterIDs;
+    return preserveClusterIDs;
   }
 
   public boolean isMerge() {
-	return merge;
+    return merge;
   }
 
   public void setMerge(boolean merge) {
-	this.merge = merge;
+    this.merge = merge;
   }
 
   public boolean isDeleteRIDMapping() {
@@ -1075,7 +1076,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
               || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
                 .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
-        if(!merge) database.command(new OCommandSQL("truncate cluster " + name)).execute();
+        if (!merge)
+          database.command(new OCommandSQL("truncate cluster " + name)).execute();
 
         for (OIndex existingIndex : database.getMetadata().getIndexManager().getIndexes()) {
           if (existingIndex.getClusters().contains(name)) {

@@ -15,25 +15,6 @@
  */
 package com.orientechnologies.orient.graph.gremlin;
 
-import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
-import com.orientechnologies.common.concur.resource.OResourcePoolListener;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
-import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
-import com.tinkerpop.gremlin.java.GremlinPipeline;
-
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
@@ -47,6 +28,26 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+
+import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
+import com.orientechnologies.common.concur.resource.OResourcePoolListener;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
+import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
+import com.tinkerpop.gremlin.java.GremlinPipeline;
 
 public class OGremlinHelper {
   private static final String                                          PARAM_OUTPUT = "output";
@@ -285,13 +286,13 @@ public class OGremlinHelper {
     return instance;
   }
 
-  public static ODatabaseDocumentTx getGraphDatabase(final ODatabaseRecord iCurrentDatabase) {
-    ODatabaseRecord currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+  public static ODatabaseDocumentTx getGraphDatabase(final ODatabaseRecordInternal iCurrentDatabase) {
+    ODatabaseRecordInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (currentDb == null && iCurrentDatabase != null)
       // GET FROM THE RECORD
       currentDb = iCurrentDatabase;
 
-    currentDb = (ODatabaseRecord) currentDb.getDatabaseOwner();
+    currentDb = (ODatabaseRecordInternal) currentDb.getDatabaseOwner();
 
     final ODatabaseDocumentTx db;
     if (currentDb instanceof ODatabaseDocumentTx)

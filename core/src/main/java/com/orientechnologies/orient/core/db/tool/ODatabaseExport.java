@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
@@ -65,7 +66,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   protected int           compressionLevel  = Deflater.BEST_SPEED;
   protected int           compressionBuffer = 16384;              // 16Kb
 
-  public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
+  public ODatabaseExport(final ODatabaseRecordInternal iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
     super(iDatabase, iFileName, iListener);
 
@@ -92,7 +93,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     iDatabase.getLocalCache().setEnable(false);
   }
 
-  public ODatabaseExport(final ODatabaseRecord iDatabase, final OutputStream iOutputStream, final OCommandOutputListener iListener)
+  public ODatabaseExport(final ODatabaseRecordInternal iDatabase, final OutputStream iOutputStream, final OCommandOutputListener iListener)
       throws IOException {
     super(iDatabase, "streaming", iListener);
 

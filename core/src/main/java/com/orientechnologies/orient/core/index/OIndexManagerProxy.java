@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
@@ -29,7 +30,7 @@ import java.util.Set;
 
 public class OIndexManagerProxy extends OProxedResource<OIndexManager> implements OIndexManager {
 
-  public OIndexManagerProxy(final OIndexManager iDelegate, final ODatabaseRecord iDatabase) {
+  public OIndexManagerProxy(final OIndexManager iDelegate, final ODatabaseRecordInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 

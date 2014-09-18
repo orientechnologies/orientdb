@@ -21,6 +21,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordWrapperAbstract;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -55,7 +56,7 @@ import java.util.Iterator;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
-public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocument {
+public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocumentInternal {
   protected static ORecordSerializer defaultSerializer;
   static {
     defaultSerializer = ORecordSerializerFactory.instance().getFormat(
@@ -297,9 +298,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   @Override
-  public <RET extends ORecordInternal> RET save(final ORecordInternal iRecord, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public <RET extends ORecordInternal> RET save(final ORecordInternal iRecord, final OPERATION_MODE iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
     if (!(iRecord instanceof ODocument))
       return (RET) super.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
@@ -401,8 +401,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
    */
   @Override
-  public <RET extends ORecordInternal> RET save(final ORecordInternal iRecord, String iClusterName,
-      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+  public <RET extends ORecordInternal> RET save(final ORecordInternal iRecord, String iClusterName, final OPERATION_MODE iMode,
+      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
     if (!(iRecord instanceof ODocument))

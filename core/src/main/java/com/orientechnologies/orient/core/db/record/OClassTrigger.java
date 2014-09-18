@@ -270,7 +270,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
     if (func == null)
       return RESULT.RECORD_NOT_CHANGED;
 
-    ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !(db instanceof ODatabaseRecordTx))
       db = db.getUnderlying();
     // final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(funcName);

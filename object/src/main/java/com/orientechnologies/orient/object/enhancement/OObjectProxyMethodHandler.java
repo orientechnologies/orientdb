@@ -37,7 +37,7 @@ import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
@@ -81,7 +81,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   public OObjectProxyMethodHandler(ODocument iDocument) {
     doc = iDocument;
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (db.getDatabaseOwner() instanceof ODatabaseObject && !((ODatabaseObject) db.getDatabaseOwner()).isLazyLoading())
       doc.detach();
     loadedFields = new HashMap<String, ORecordVersion>();

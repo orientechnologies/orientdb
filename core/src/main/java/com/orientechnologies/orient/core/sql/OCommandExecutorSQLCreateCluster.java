@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 
 import java.util.Map;
@@ -40,7 +41,7 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
   private int                requestedId         = -1;
 
   public OCommandExecutorSQLCreateCluster parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
 
     init((OCommandRequestText) iRequest);
 

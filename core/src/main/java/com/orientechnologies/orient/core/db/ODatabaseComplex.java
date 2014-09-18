@@ -370,30 +370,6 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   public OMetadata getMetadata();
 
   /**
-   * Returns the database owner. Used in wrapped instances to know the up level ODatabase instance.
-   * 
-   * @return Returns the database owner.
-   */
-  public ODatabaseComplex<?> getDatabaseOwner();
-
-  /**
-   * Internal. Sets the database owner.
-   */
-  public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplex<?> iOwner);
-
-  /**
-   * Return the underlying database. Used in wrapper instances to know the down level ODatabase instance.
-   * 
-   * @return The underlying ODatabase implementation.
-   */
-  public <DB extends ODatabase> DB getUnderlying();
-
-  /**
-   * Internal method. Don't call it directly unless you're building an internal component.
-   */
-  public void setInternal(ATTRIBUTES attribute, Object iValue);
-
-  /**
    * Registers a hook to listen all events for Records.
    * 
    * @param iHookImpl

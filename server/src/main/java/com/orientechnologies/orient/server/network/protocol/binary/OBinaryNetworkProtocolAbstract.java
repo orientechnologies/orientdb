@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -283,7 +284,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return 1;
   }
 
-  protected ORecordInternal createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
+  protected ORecordInternal createRecord(final ODatabaseRecordInternal iDatabase, final ORecordId rid, final byte[] buffer,
       final byte recordType) {
     final ORecordInternal record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     fillRecord(rid, buffer, OVersionFactory.instance().createVersion(), record, iDatabase);
@@ -291,7 +292,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return record;
   }
 
-  protected ORecordVersion updateRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
+  protected ORecordVersion updateRecord(final ODatabaseRecordInternal iDatabase, final ORecordId rid, final byte[] buffer,
       final ORecordVersion version, final byte recordType, boolean updateContent) {
     final ORecordInternal newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     fillRecord(rid, buffer, version, newRecord, null);
@@ -339,7 +340,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
       int realLength = stream.length;
       // TODO: This Logic should not be here provide an api in the Serializer for ask for trimmed content.
-      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (db != null && db instanceof ODatabaseDocument) {
         if (db.getSerializer() instanceof ORecordSerializerSchemaAware2CSV) {
           // TRIM TAILING SPACES (DUE TO OVERSIZE)
@@ -364,7 +365,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   }
 
   public void fillRecord(final ORecordId rid, final byte[] buffer, final ORecordVersion version, final ORecordInternal record,
-      ODatabaseRecord iDatabase) {
+      ODatabaseRecordInternal iDatabase) {
     String dbSerializerName = "";
     if (iDatabase != null)
       dbSerializerName = iDatabase.getSerializer().toString();
@@ -390,7 +391,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     try {
       String dbSerializerName = null;
       if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
-        dbSerializerName = iRecord.getDatabase().getSerializer().toString();
+        dbSerializerName = ((ODatabaseRecordInternal) iRecord.getDatabase()).getSerializer().toString();
       String name = getRecordSerializerName();
       if (iRecord.getRecordType() == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName.equals(name))) {
         ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(dbSerializerName);

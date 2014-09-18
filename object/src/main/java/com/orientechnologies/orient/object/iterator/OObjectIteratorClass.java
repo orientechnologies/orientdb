@@ -18,11 +18,12 @@ package com.orientechnologies.orient.object.iterator;
 import java.util.Iterator;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClassInterface;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 @SuppressWarnings("unchecked")
 public class OObjectIteratorClass<T> implements OObjectIteratorClassInterface<T> {
@@ -30,10 +31,10 @@ public class OObjectIteratorClass<T> implements OObjectIteratorClassInterface<T>
   private ORecordIteratorClass<ODocument> underlying;
   private String                          fetchPlan;
 
-  public OObjectIteratorClass(final ODatabaseObject iDatabase, final ODatabaseRecordAbstract iUnderlyingDatabase,
+  public OObjectIteratorClass(final OObjectDatabaseTx iDatabase, final ODatabaseRecordAbstract iUnderlyingDatabase,
       final String iClusterName, final boolean iPolymorphic) {
     database = iDatabase;
-    underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecord) iDatabase.getUnderlying(), iUnderlyingDatabase,
+    underlying = new ORecordIteratorClass<ODocument>((ODatabaseRecordInternal) iDatabase.getUnderlying(), iUnderlyingDatabase,
         iClusterName, iPolymorphic, true, false);
   }
 

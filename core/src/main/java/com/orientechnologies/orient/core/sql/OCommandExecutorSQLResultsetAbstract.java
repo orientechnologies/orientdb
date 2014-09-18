@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -362,7 +363,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected void searchInClasses(final boolean iAscendentOrder) {
     final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
 
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
     database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
 
     // NO INDEXES: SCAN THE ENTIRE CLUSTER
@@ -380,7 +381,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   protected void searchInClusters() {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
 
     final Set<Integer> clusterIds = new HashSet<Integer>();
     for (String clusterName : parsedTarget.getTargetClusters().keySet()) {

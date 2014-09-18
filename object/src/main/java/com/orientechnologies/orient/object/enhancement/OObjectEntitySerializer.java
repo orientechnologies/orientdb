@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -375,7 +376,7 @@ public class OObjectEntitySerializer {
     boolean reloadSchema = false;
     boolean automaticSchemaGeneration = false;
 
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
     final OSchema oSchema = db.getMetadata().getSchema();
 
     if (!oSchema.existsClass(iClass.getSimpleName())) {

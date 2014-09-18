@@ -27,6 +27,8 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -400,7 +402,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void onCreate(final ODatabase iDatabase) {
+  public void onCreate(final ODatabaseInternal iDatabase) {
     final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
     distribDatabase.configureDatabase(false, false).setOnline();
     onOpen(iDatabase);
@@ -410,7 +412,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
    * Auto register myself as hook.
    */
   @Override
-  public void onOpen(final ODatabase iDatabase) {
+  public void onOpen(final ODatabaseInternal iDatabase) {
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
     if (dbUrl.startsWith("plocal:")) {
@@ -442,7 +444,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final String nodeName = getLocalNodeName();
         final ODistributedConfiguration dbCfg = getDatabaseConfiguration(iDatabase.getName());
 
-        final OSchema schema = ((ODatabaseComplex) iDatabase).getDatabaseOwner().getMetadata().getSchema();
+        final OSchema schema = ((ODatabaseComplexInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
 
         final Set<String> cfgClusterNames = new HashSet<String>();
         for (String c : cfg.getClusterNames())

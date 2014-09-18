@@ -15,12 +15,19 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -44,12 +51,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Document Database wrapper class to use from scripts.
@@ -346,7 +347,7 @@ public class OScriptDocumentDatabaseWrapper {
     return (RET) database.load(iRecord, iFetchPlan, iIgnoreCache);
   }
 
-  public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplex<?> iOwner) {
+  public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplexInternal<?> iOwner) {
     return database.setDatabaseOwner(iOwner);
   }
 

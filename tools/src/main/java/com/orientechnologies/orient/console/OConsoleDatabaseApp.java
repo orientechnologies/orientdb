@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
@@ -85,15 +86,15 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-  protected ODatabaseDocument   currentDatabase;
-  protected String              currentDatabaseName;
-  protected ORecordInternal  currentRecord;
-  protected int                 currentRecordIdx;
-  protected List<OIdentifiable> currentResultSet;
-  protected OServerAdmin        serverAdmin;
-  private int                   lastPercentStep;
-  private String                currentDatabaseUserName;
-  private String                currentDatabaseUserPassword;
+  protected ODatabaseDocumentInternal currentDatabase;
+  protected String                    currentDatabaseName;
+  protected ORecordInternal           currentRecord;
+  protected int                       currentRecordIdx;
+  protected List<OIdentifiable>       currentResultSet;
+  protected OServerAdmin              serverAdmin;
+  private int                         lastPercentStep;
+  private String                      currentDatabaseUserName;
+  private String                      currentDatabaseUserPassword;
 
   public OConsoleDatabaseApp(final String[] args) {
     super(args);
@@ -1232,8 +1233,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         try {
           clusterId = currentDatabase.getClusterIdByName(clusterName);
           final OCluster cluster = currentDatabase.getStorage().getClusterById(clusterId);
-          
-          final String conflictStrategy = cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy().getName() : "";
+
+          final String conflictStrategy = cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy()
+              .getName() : "";
 
           count = currentDatabase.countClusterElements(clusterName);
           totalElements += count;

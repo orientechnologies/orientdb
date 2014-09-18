@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OIndexTxAwareDictionary extends OIndexTxAwareOneValue {
-	public OIndexTxAwareDictionary(ODatabaseRecord iDatabase, OIndex<OIdentifiable> iDelegate) {
+	public OIndexTxAwareDictionary(ODatabaseRecordInternal iDatabase, OIndex<OIdentifiable> iDelegate) {
 		super(iDatabase, iDelegate);
 	}
 

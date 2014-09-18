@@ -2,8 +2,8 @@ package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -38,11 +38,11 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
   }
 
   @Override
-  public void onCreate(final ODatabase iDatabase) {
+  public void onCreate(final ODatabaseInternal iDatabase) {
     onOpen(iDatabase);
   }
 
-  public void onOpen(ODatabase iDatabase) {
+  public void onOpen(ODatabaseInternal iDatabase) {
     if (iDatabase instanceof ODatabaseComplex) {
       final ODatabaseComplex<?> db = (ODatabaseComplex<?>) iDatabase;
       for (OServerHookConfiguration hook : configuredHooks) {
@@ -72,7 +72,7 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
 
   }
 
-  public void onClose(ODatabase iDatabase) {
+  public void onClose(ODatabaseInternal iDatabase) {
   }
 
   public String getName() {

@@ -21,6 +21,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
@@ -84,7 +85,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
           OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
 
       final ORecordBytes identityRecord = new ORecordBytes();
-      ODatabaseRecord database = getDatabase();
+      ODatabaseRecordInternal database = getDatabase();
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       database.save(identityRecord, clusterIndexName);
@@ -137,7 +138,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   public void deleteWithoutLoad(String indexName) {
     acquireExclusiveLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1,
@@ -156,7 +157,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, determineKeySize(indexDefinition),
           OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
 
-      ODatabaseRecord database = getDatabase();
+      ODatabaseRecordInternal database = getDatabase();
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
@@ -207,7 +208,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     }
   }
 
-
   @Override
   public void close() {
     acquireSharedLock();
@@ -217,7 +217,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       releaseSharedLock();
     }
   }
-
 
   @Override
   public V get(Object key) {
@@ -383,7 +382,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     return true;
   }
 
-  private ODatabaseRecord getDatabase() {
+  private ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 

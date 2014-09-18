@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -45,7 +46,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   private int[]              clusterIds;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
     init((OCommandRequestText) iRequest);
 
     StringBuilder word = new StringBuilder();

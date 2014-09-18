@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -133,7 +134,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public OPropertyImpl setType(final OType type) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
     acquireSchemaWriteLock();
     try {
       final OStorage storage = database.getStorage();
@@ -304,7 +305,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -349,7 +350,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -407,7 +408,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -462,7 +463,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -499,7 +500,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -536,7 +537,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -574,7 +575,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -612,7 +613,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -650,7 +651,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -692,7 +693,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       final String cmd = String.format("alter property %s custom %s=%s", getFullName(), name, value);
 
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -734,7 +735,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       final String cmd = String.format("alter property %s custom clear", getFullName());
@@ -875,7 +876,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       final String cmd = String.format("alter property %s collate %s", getFullName(), collate);
@@ -1044,7 +1045,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
   }
 
-  protected ODatabaseRecord getDatabase() {
+  protected ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
@@ -1246,13 +1247,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     if (iDateAsString != null)
       if (globalRef.getType() == OType.DATE) {
         try {
-          owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
+          getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
           throw new OSchemaException("Invalid date format while formatting date '" + iDateAsString + "'", e);
         }
       } else if (globalRef.getType() == OType.DATETIME) {
         try {
-          owner.owner.getDocument().getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
+          getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
           throw new OSchemaException("Invalid datetime format while formatting date '" + iDateAsString + "'", e);
         }

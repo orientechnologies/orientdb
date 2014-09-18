@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -122,7 +123,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       rid = iLinkedRecord.getIdentity();
 
       if ((rid.isNew() && !rid.isTemporary()) || iLinkedRecord.isDirty()) {
-        final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+        final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
         if (iLinkedRecord instanceof ODocument) {
           final OClass schemaClass = ((ODocument) iLinkedRecord).getSchemaClass();
           database.save(iLinkedRecord, schemaClass != null ? database.getClusterNameById(schemaClass.getClusterForNewInstance())

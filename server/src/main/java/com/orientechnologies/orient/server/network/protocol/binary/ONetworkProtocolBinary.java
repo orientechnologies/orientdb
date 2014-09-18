@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -419,7 +420,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
   }
 
-  protected ODatabaseComplex<?> openDatabase(final ODatabaseComplex<?> database, final String iUser, final String iPassword) {
+  protected ODatabaseComplex<?> openDatabase(final ODatabaseComplexInternal<?> database, final String iUser, final String iPassword) {
 
     if (database.isClosed())
       if (database.getStorage() instanceof ODirectMemoryStorage && !database.exists())
@@ -591,7 +592,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String passwd = channel.readString();
 
     connection.database = (ODatabaseDocumentTx) server.openDatabase(dbType, dbURL, user, passwd);
-    connection.rawDatabase = ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying();
+    connection.rawDatabase = ((ODatabaseComplexInternal<?>) connection.database.getUnderlying()).getUnderlying();
 
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
       sendError(clientTxId, new OSecurityAccessException(connection.database.getName(),
@@ -900,7 +901,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     checkStorageExistence(dbName);
     connection.database = getDatabaseInstance(dbName, dbType, storageType);
     createDatabase(connection.database, null, null);
-    connection.rawDatabase = (((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
+    connection.rawDatabase = (((ODatabaseComplexInternal<?>) connection.database.getUnderlying()).getUnderlying());
 
     beginResponse();
     try {

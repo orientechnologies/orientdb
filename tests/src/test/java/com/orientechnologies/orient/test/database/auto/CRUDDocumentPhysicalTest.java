@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -830,7 +831,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void testSerialization() {
     ORecordSerializer current = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
-    ODatabaseRecord oldDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseRecordInternal oldDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     ORecordSerializer dbser = oldDb.getSerializer();
     if (oldDb instanceof ODatabaseDocumentTx)
       ((ODatabaseDocumentTx) oldDb).setSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);

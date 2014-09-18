@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdaptiveLock implements
+public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extends OAdaptiveLock implements
     OResourcePoolListener<String, DB>, OOrientListener {
 
   private final HashMap<String, OReentrantResourcePool<String, DB>> pools = new HashMap<String, OReentrantResourcePool<String, DB>>();

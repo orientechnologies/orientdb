@@ -34,6 +34,7 @@ import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -154,7 +155,7 @@ public class OTableFormatter {
         value = ((ORecord) value).getIdentity().toString();
       }
     } else if (value instanceof Date) {
-      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (db != null)
         value = db.getStorage().getConfiguration().getDateTimeFormatInstance().format((Date) value);
       else {

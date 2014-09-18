@@ -19,6 +19,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
@@ -85,7 +86,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
     } else
       keySerializer = new OSimpleKeySerializer();
 
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
     final ORecordBytes identityRecord = new ORecordBytes();
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage();
 
@@ -412,7 +413,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
     };
   }
 
-  private ODatabaseRecord getDatabase() {
+  private ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

@@ -23,7 +23,7 @@ import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
@@ -104,12 +104,12 @@ public class OMetadataDefault implements OMetadata {
   }
 
   private void init(final boolean iLoad) {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
     schemaClusterId = database.getClusterIdByName(CLUSTER_INTERNAL_NAME);
 
     schema = new OSchemaProxy(database.getStorage().getResource(OSchema.class.getSimpleName(), new Callable<OSchemaShared>() {
       public OSchemaShared call() {
-        ODatabaseRecord database = getDatabase();
+        ODatabaseRecordInternal database = getDatabase();
         final OSchemaShared instance = new OSchemaShared(database.getStorageVersions().classesAreDetectedByClusterId());
         if (iLoad)
           instance.load();
@@ -199,7 +199,7 @@ public class OMetadataDefault implements OMetadata {
       security.close(false);
   }
 
-  protected ODatabaseRecord getDatabase() {
+  protected ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 

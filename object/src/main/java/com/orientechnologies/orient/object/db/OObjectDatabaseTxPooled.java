@@ -18,6 +18,7 @@ package com.orientechnologies.orient.object.db;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -56,8 +57,8 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
 
     try {
       ODatabase current = underlying;
-      while (!(current instanceof ODatabaseRecordAbstract) && ((ODatabaseComplex<?>) current).getUnderlying() != null)
-        current = ((ODatabaseComplex<?>) current).getUnderlying();
+      while (!(current instanceof ODatabaseRecordAbstract) && ((ODatabaseComplexInternal<?>) current).getUnderlying() != null)
+        current = ((ODatabaseComplexInternal<?>) current).getUnderlying();
       ((ODatabaseRecordAbstract) current).callOnOpenListeners();
 
     } catch (Exception e) {
@@ -108,8 +109,8 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
 
     try {
       ODatabase current = underlying;
-      while (!(current instanceof ODatabaseRecordAbstract) && ((ODatabaseComplex<?>) current).getUnderlying() != null)
-        current = ((ODatabaseComplex<?>) current).getUnderlying();
+      while (!(current instanceof ODatabaseRecordAbstract) && ((ODatabaseComplexInternal<?>) current).getUnderlying() != null)
+        current = ((ODatabaseComplexInternal<?>) current).getUnderlying();
       ((ODatabaseRecordAbstract) current).callOnCloseListeners();
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());

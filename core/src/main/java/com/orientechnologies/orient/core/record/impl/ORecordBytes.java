@@ -22,6 +22,7 @@ import java.util.Arrays;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -46,12 +47,12 @@ public class ORecordBytes extends ORecordAbstract {
     setup();
   }
 
-  public ORecordBytes(final ODatabaseRecord iDatabase) {
+  public ORecordBytes(final ODatabaseRecordInternal iDatabase) {
     setup();
     ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
   }
 
-  public ORecordBytes(final ODatabaseRecord iDatabase, final byte[] iSource) {
+  public ORecordBytes(final ODatabaseRecordInternal iDatabase, final byte[] iSource) {
     this(iSource);
     ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
   }

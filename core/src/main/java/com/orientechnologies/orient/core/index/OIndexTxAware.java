@@ -15,7 +15,9 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import java.util.Map.Entry;
+
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
@@ -24,8 +26,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
-
-import java.util.Map.Entry;
 
 /**
  * Transactional wrapper for indexes. Stores changes locally to the transaction until tx.commit(). All the other operations are
@@ -38,9 +38,9 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   private static final OAlwaysLessKey    ALWAYS_LESS_KEY    = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
-  protected ODatabaseRecord              database;
+  protected ODatabaseRecordInternal      database;
 
-  public OIndexTxAware(final ODatabaseRecord iDatabase, final OIndex<T> iDelegate) {
+  public OIndexTxAware(final ODatabaseRecordInternal iDatabase, final OIndex<T> iDelegate) {
     super(iDelegate);
     database = iDatabase;
   }
@@ -112,7 +112,7 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
     return this;
   }
 
-	@Override
+  @Override
   public Object getFirstKey() {
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
     if (indexChanges == null)

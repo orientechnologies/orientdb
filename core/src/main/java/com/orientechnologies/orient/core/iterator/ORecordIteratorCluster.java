@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.iterator;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -34,13 +35,13 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class ORecordIteratorCluster<REC extends ORecordInternal> extends OIdentifiableIterator<REC> {
   private ORecord currentRecord;
 
-  public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+  public ORecordIteratorCluster(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
       final int iClusterId, final boolean iUseCache) {
     this(iDatabase, iLowLevelDatabase, iClusterId, OClusterPosition.INVALID_POSITION, OClusterPosition.INVALID_POSITION, iUseCache,
         false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
-  public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+  public ORecordIteratorCluster(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
       final int iClusterId, final OClusterPosition firstClusterEntry, final OClusterPosition lastClusterEntry,
       final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);

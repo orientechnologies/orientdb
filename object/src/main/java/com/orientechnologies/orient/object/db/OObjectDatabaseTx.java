@@ -30,6 +30,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -75,7 +77,8 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
  * @author Luca Molino
  */
 @SuppressWarnings("unchecked")
-public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, OUserObject2RecordHandler {
+public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, ODatabaseComplexInternal<Object>,
+    OUserObject2RecordHandler {
 
   public static final String    TYPE = "object";
   protected ODictionary<Object> dictionary;
@@ -575,7 +578,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public ODatabaseDocument getUnderlying() {
+  public ODatabaseDocumentInternal getUnderlying() {
     return underlying;
   }
 

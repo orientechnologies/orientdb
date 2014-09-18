@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -99,7 +100,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecord {
+public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecordInternal {
 
   @Deprecated
   private static final String                               DEF_RECORD_FORMAT = "csv";
@@ -1171,8 +1172,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<?> getDatabaseOwner() {
-    ODatabaseComplex<?> current = databaseOwner;
+  public ODatabaseComplexInternal<?> getDatabaseOwner() {
+    ODatabaseComplexInternal<?> current = databaseOwner;
 
     while (current != null && current != this && current.getDatabaseOwner() != current)
       current = current.getDatabaseOwner();
@@ -1184,7 +1185,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<ORecordInternal> setDatabaseOwner(ODatabaseComplex<?> iOwner) {
+  public ODatabaseComplexInternal<ORecordInternal> setDatabaseOwner(ODatabaseComplexInternal<?> iOwner) {
     databaseOwner = iOwner;
     return this;
   }

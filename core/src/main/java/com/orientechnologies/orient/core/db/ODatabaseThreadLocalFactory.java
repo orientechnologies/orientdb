@@ -16,7 +16,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 
 /**
  * @author luca.molino
@@ -24,6 +24,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
  */
 public interface ODatabaseThreadLocalFactory {
 
-  public ODatabaseRecord getThreadDatabase();
+  public ODatabaseRecordInternal getThreadDatabase();
 
 }

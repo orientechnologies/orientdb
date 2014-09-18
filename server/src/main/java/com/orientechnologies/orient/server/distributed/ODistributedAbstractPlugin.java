@@ -26,8 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -136,7 +136,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
    * Auto register myself as hook.
    */
   @Override
-  public void onOpen(final ODatabase iDatabase) {
+  public void onOpen(final ODatabaseInternal iDatabase) {
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
     if (dbUrl.startsWith("plocal:")) {
@@ -169,7 +169,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   }
 
   @Override
-  public void onCreate(ODatabase iDatabase) {
+  public void onCreate(ODatabaseInternal iDatabase) {
     onOpen(iDatabase);
   }
 
@@ -177,7 +177,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
    * Remove myself as hook.
    */
   @Override
-  public void onClose(final ODatabase iDatabase) {
+  public void onClose(final ODatabaseInternal iDatabase) {
   }
 
   @Override

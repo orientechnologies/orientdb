@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -48,7 +48,7 @@ public interface OIndexFactory {
    * @throws OConfigurationException
    *           if index creation failed
    */
-  OIndexInternal<?> createIndex(ODatabaseRecord database, String indexType, String algorithm, String valueContainerAlgorithm,
+  OIndexInternal<?> createIndex(ODatabaseRecordInternal database, String indexType, String algorithm, String valueContainerAlgorithm,
       ODocument metadata) throws OConfigurationException;
 
 }

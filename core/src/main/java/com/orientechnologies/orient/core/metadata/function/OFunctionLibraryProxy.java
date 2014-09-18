@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.metadata.function;
 
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 
 /**
@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.db.record.OProxedResource;
  * 
  */
 public class OFunctionLibraryProxy extends OProxedResource<OFunctionLibrary> implements OFunctionLibrary {
-  public OFunctionLibraryProxy(final OFunctionLibrary iDelegate, final ODatabaseRecord iDatabase) {
+  public OFunctionLibraryProxy(final OFunctionLibrary iDelegate, final ODatabaseRecordInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 

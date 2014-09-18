@@ -21,12 +21,12 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OLazyObjectListInterface;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -465,8 +465,8 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
     }
   }
 
-  protected ODatabaseObject getDatabase() {
-    return ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
+  protected OObjectDatabaseTx getDatabase() {
+    return ((OObjectDatabaseTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
   }
 
   protected boolean indexLoaded(int iIndex) {

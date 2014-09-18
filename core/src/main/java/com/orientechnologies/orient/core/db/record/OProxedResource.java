@@ -24,15 +24,15 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
  * 
  */
 public abstract class OProxedResource<T> {
-	protected T								delegate;
-	protected ODatabaseRecord	database;
+  protected T                       delegate;
+  protected ODatabaseRecordInternal database;
 
-	public OProxedResource(final T iDelegate, final ODatabaseRecord iDatabase) {
-		this.delegate = iDelegate;
-		this.database = iDatabase;
-	}
+  public OProxedResource(final T iDelegate, final ODatabaseRecordInternal iDatabase) {
+    this.delegate = iDelegate;
+    this.database = iDatabase;
+  }
 
-	protected void setCurrentDatabaseInThreadLocal() {
-		ODatabaseRecordThreadLocal.INSTANCE.set(database);
-	}
+  protected void setCurrentDatabaseInThreadLocal() {
+    ODatabaseRecordThreadLocal.INSTANCE.set(database);
+  }
 }

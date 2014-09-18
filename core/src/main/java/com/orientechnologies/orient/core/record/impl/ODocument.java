@@ -43,6 +43,7 @@ import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ODetachable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
@@ -169,7 +170,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     this(iClassName);
     _recordId = (ORecordId) iRID;
 
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabaseInternal();
     if (_recordId.clusterId > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
       final OSchema schema = database.getMetadata().getSchema();
       final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
@@ -412,7 +413,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   public boolean hasSameContentOf(final ODocument iOther) {
-    final ODatabaseRecord currentDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseRecordInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     return ODocumentHelper.hasSameContentOf(this, currentDb, iOther, currentDb, null);
   }
 
@@ -1655,7 +1656,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected void setup() {
     super.setup();
 
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null)
       _recordFormat = db.getSerializer();
 
@@ -1792,7 +1793,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   public OClass getSchemaClass() {
     if (_clazz == null) {
-      final ODatabaseRecord database = getDatabaseIfDefined();
+      final ODatabaseRecordInternal database = getDatabaseIfDefinedInternal();
       if (database != null && database.getStorageVersions() != null
           && database.getStorageVersions().classesAreDetectedByClusterId()) {
         if (_recordId.clusterId < 0) {
@@ -1931,7 +1932,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       else if (p.getType().equals(OType.DATE)) {
         try {
           if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateFormatInstance()
+              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration().getDateFormatInstance()
                   .parse(min)))
             throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
                 + " which precedes the first acceptable date (" + min + ")");
@@ -1940,8 +1941,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       } else if (p.getType().equals(OType.DATETIME)) {
         try {
           if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance()
-                  .parse(min)))
+              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration()
+                  .getDateTimeFormatInstance().parse(min)))
             throw new OValidationException("The field '" + p.getFullName() + "' contains the datetime " + fieldValue
                 + " which precedes the first acceptable datetime (" + min + ")");
         } catch (ParseException e) {
@@ -1971,7 +1972,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       else if (p.getType().equals(OType.DATE)) {
         try {
           if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateFormatInstance()
+              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration().getDateFormatInstance()
                   .parse(max)))
             throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
                 + " which is after the last acceptable date (" + max + ")");
@@ -1980,8 +1981,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       } else if (p.getType().equals(OType.DATETIME)) {
         try {
           if (fieldValue != null
-              && ((Date) fieldValue).before(iRecord.getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance()
-                  .parse(max)))
+              && ((Date) fieldValue).before(iRecord.getDatabaseInternal().getStorage().getConfiguration()
+                  .getDateTimeFormatInstance().parse(max)))
             throw new OValidationException("The field '" + p.getFullName() + "' contains the datetime " + fieldValue
                 + " which is after the last acceptable datetime (" + max + ")");
         } catch (ParseException e) {

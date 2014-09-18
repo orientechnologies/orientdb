@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.intent;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -27,7 +28,7 @@ public class OIntentMassiveInsert implements OIntent {
     previousLocalCacheEnabled = iDatabase.getDatabaseOwner().getLocalCache().isEnabled();
     iDatabase.getDatabaseOwner().getLocalCache().setEnable(false);
 
-    ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
+    ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseRecord) {
       previousRetainRecords = ((ODatabaseRecord) ownerDb).isRetainRecords();
@@ -64,7 +65,7 @@ public class OIntentMassiveInsert implements OIntent {
       iDatabase.getDatabaseOwner().setUser(currentUser);
 
     iDatabase.getDatabaseOwner().getLocalCache().setEnable(previousLocalCacheEnabled);
-    ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
+    ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseRecord) {
       ((ODatabaseRecord) ownerDb).setRetainRecords(previousRetainRecords);

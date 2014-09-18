@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -286,7 +287,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         }
       }
 
-      final ODatabaseRecord db = getDatabase();
+      final ODatabaseRecordInternal db = getDatabase();
       final OStorage storage = db.getStorage();
 
       if (isDistributedCommand()) {
@@ -330,7 +331,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (wrongCharacter != null)
         throw new OSchemaException("Found invalid class name. Character '" + wrongCharacter + "' cannot be used in class name.");
 
-      final ODatabaseRecord database = getDatabase();
+      final ODatabaseRecordInternal database = getDatabase();
       final OStorage storage = database.getStorage();
       checkEmbedded(storage);
 
@@ -495,7 +496,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         throw new OSchemaException("Class " + className
             + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
-      final ODatabaseRecord db = getDatabase();
+      final ODatabaseRecordInternal db = getDatabase();
       final OStorage storage = db.getStorage();
 
       final StringBuilder cmd = new StringBuilder("drop class ");
@@ -564,7 +565,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   private void deleteDefaultCluster(OClass clazz) {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
     final int clusterId = clazz.getDefaultClusterId();
     final OCluster cluster = database.getStorage().getClusterById(clusterId);
 
@@ -865,7 +866,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   public void create() {
     rwSpinLock.acquireWriteLock();
     try {
-      final ODatabaseRecord db = getDatabase();
+      final ODatabaseRecordInternal db = getDatabase();
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
       db.getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
       db.getStorage().getConfiguration().update();
@@ -1013,7 +1014,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return cls;
   }
 
-  private ODatabaseRecord getDatabase() {
+  private ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 

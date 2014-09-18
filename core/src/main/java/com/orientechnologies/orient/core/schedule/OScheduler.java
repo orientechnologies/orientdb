@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.OScriptOrientWrapper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -47,26 +47,26 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_S
  */
 
 public class OScheduler implements Runnable {
-  public final static String  CLASSNAME      = "OSchedule";
+  public final static String      CLASSNAME      = "OSchedule";
 
-  public static String        PROP_NAME      = "name";
-  public static String        PROP_RULE      = "rule";
-  public static String        PROP_ARGUMENTS = "arguments";
-  public static String        PROP_STATUS    = "status";
-  public static String        PROP_FUNC      = "function";
-  public static String        PROP_STARTTIME = "starttime";
-  public static String        PROP_STARTED   = "start";
+  public static String            PROP_NAME      = "name";
+  public static String            PROP_RULE      = "rule";
+  public static String            PROP_ARGUMENTS = "arguments";
+  public static String            PROP_STATUS    = "status";
+  public static String            PROP_FUNC      = "function";
+  public static String            PROP_STARTTIME = "starttime";
+  public static String            PROP_STARTED   = "start";
 
-  private String              name;
-  private String              rule;
-  private Map<Object, Object> iArgs;
-  private String              status;
-  private OFunction           function;
-  private Date                startTime;
-  private ODocument           document;
-  private ODatabaseRecord     db;
-  private boolean             started;
-  private boolean             isRunning      = false;
+  private String                  name;
+  private String                  rule;
+  private Map<Object, Object>     iArgs;
+  private String                  status;
+  private OFunction               function;
+  private Date                    startTime;
+  private ODocument               document;
+  private ODatabaseRecordInternal db;
+  private boolean                 started;
+  private boolean                 isRunning      = false;
 
   public OScheduler(ODocument doc) {
     this.name = doc.field(PROP_NAME);
@@ -82,7 +82,7 @@ public class OScheduler implements Runnable {
       throw new OCommandScriptException("function cannot be null");
     this.startTime = doc.field(PROP_STARTTIME);
     this.document = doc;
-    this.db = doc.getDatabase();
+    this.db = ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
   public String getSchedulingRule() {
@@ -138,7 +138,7 @@ public class OScheduler implements Runnable {
     else
       throw new OCommandScriptException("function cannot be null");
     this.startTime = doc.field(PROP_STARTTIME);
-    this.db = doc.getDatabase();
+    this.db = ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
   public String toString() {

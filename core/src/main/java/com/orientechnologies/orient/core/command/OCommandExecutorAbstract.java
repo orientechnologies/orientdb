@@ -19,6 +19,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 
@@ -40,7 +41,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   protected Map<Object, Object> parameters;
   protected OCommandContext     context;
 
-  public static ODatabaseRecord getDatabase() {
+  public static ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 

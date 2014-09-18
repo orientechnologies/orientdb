@@ -16,16 +16,16 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
-public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseRecord> {
+public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseRecordInternal> {
 
   public static ODatabaseRecordThreadLocal INSTANCE = new ODatabaseRecordThreadLocal();
 
   @Override
-  public ODatabaseRecord get() {
-    ODatabaseRecord db = super.get();
+  public ODatabaseRecordInternal get() {
+    ODatabaseRecordInternal db = super.get();
     if (db == null) {
       if (Orient.instance().getDatabaseThreadFactory() == null) {
         throw new ODatabaseException(
@@ -47,13 +47,13 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseRecord> {
   public void remove() {
     super.remove();
   }
-  
+
   @Override
-  public void set(final ODatabaseRecord value) {
+  public void set(final ODatabaseRecordInternal value) {
     super.set(value);
   }
 
-  public ODatabaseRecord getIfDefined() {
+  public ODatabaseRecordInternal getIfDefined() {
     return super.get();
   }
 

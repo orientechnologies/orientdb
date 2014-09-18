@@ -1,19 +1,19 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A factory to create instances of {@link OrientGraph}. OrientGraph is a Blueprints implementation of the graph database OrientDB
@@ -299,9 +299,9 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
   }
 
   @Override
-  public void onCreate(final ODatabase iDatabase) {
-    if (iDatabase instanceof ODatabaseRecord) {
-      final ODatabaseComplex<?> db = ((ODatabaseRecord) iDatabase).getDatabaseOwner();
+  public void onCreate(final ODatabaseInternal iDatabase) {
+    if (iDatabase instanceof ODatabaseRecordInternal) {
+      final ODatabaseComplex<?> db = ((ODatabaseRecordInternal) iDatabase).getDatabaseOwner();
 
       if (db instanceof ODatabaseDocumentTx)
         OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
@@ -309,16 +309,16 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
   }
 
   @Override
-  public void onOpen(final ODatabase iDatabase) {
-    if (iDatabase instanceof ODatabaseRecord) {
-      final ODatabaseComplex<?> db = ((ODatabaseRecord) iDatabase).getDatabaseOwner();
+  public void onOpen(final ODatabaseInternal iDatabase) {
+    if (iDatabase instanceof ODatabaseRecordInternal) {
+      final ODatabaseComplex<?> db = ((ODatabaseRecordInternal) iDatabase).getDatabaseOwner();
       if (db instanceof ODatabaseDocumentTx)
         OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
     }
   }
 
   @Override
-  public void onClose(final ODatabase iDatabase) {
+  public void onClose(final ODatabaseInternal iDatabase) {
 
   }
 
