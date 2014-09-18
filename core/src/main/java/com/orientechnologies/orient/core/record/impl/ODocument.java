@@ -39,6 +39,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -84,6 +85,14 @@ import com.orientechnologies.orient.core.storage.OStorage;
 @SuppressWarnings({ "unchecked" })
 public class ODocument extends ORecordAbstract implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable,
     Externalizable {
+
+  private final ThreadLocal<OModifiableInteger>                          TO_STRING_DEPTH     = new ThreadLocal<OModifiableInteger>() {
+                                                                                               @Override
+                                                                                               protected OModifiableInteger initialValue() {
+                                                                                                 return new OModifiableInteger();
+                                                                                               }
+                                                                                             };
+
   public static final byte                                               RECORD_TYPE         = 'd';
   protected static final String[]                                        EMPTY_STRINGS       = new String[] {};
   private static final long                                              serialVersionUID    = 1L;
@@ -436,57 +445,65 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    */
   @Override
   public String toString() {
-    final boolean saveDirtyStatus = _dirty;
-    final boolean oldUpdateContent = _contentChanged;
-
+    TO_STRING_DEPTH.get().increment();
     try {
-      final StringBuilder buffer = new StringBuilder(128);
+      if (TO_STRING_DEPTH.get().intValue() > 1)
+        return "<recursion:rid=" + (_recordId != null ? _recordId : "null") + ">";
 
-      checkForFields();
-      if (_clazz != null)
-        buffer.append(_clazz.getStreamableName());
+      final boolean saveDirtyStatus = _dirty;
+      final boolean oldUpdateContent = _contentChanged;
 
-      if (_recordId != null) {
-        if (_recordId.isValid())
-          buffer.append(_recordId);
+      try {
+        final StringBuilder buffer = new StringBuilder(128);
+
+        checkForFields();
+        if (_clazz != null)
+          buffer.append(_clazz.getStreamableName());
+
+        if (_recordId != null) {
+          if (_recordId.isValid())
+            buffer.append(_recordId);
+        }
+
+        boolean first = true;
+        for (Entry<String, Object> f : _fieldValues.entrySet()) {
+          buffer.append(first ? '{' : ',');
+          buffer.append(f.getKey());
+          buffer.append(':');
+          if (f.getValue() == null)
+            buffer.append("null");
+          else if (f.getValue() instanceof Collection<?> || f.getValue().getClass().isArray()) {
+            buffer.append('[');
+            buffer.append(OMultiValue.getSize(f.getValue()));
+            buffer.append(']');
+          } else if (f.getValue() instanceof ORecord) {
+            final ORecord record = (ORecord) f.getValue();
+
+            if (record.getIdentity().isValid())
+              record.getIdentity().toString(buffer);
+            else
+              buffer.append(record.toString());
+          } else
+            buffer.append(f.getValue());
+
+          if (first)
+            first = false;
+        }
+        if (!first)
+          buffer.append('}');
+
+        if (_recordId != null && _recordId.isValid()) {
+          buffer.append(" v");
+          buffer.append(_recordVersion);
+        }
+
+        return buffer.toString();
+      } finally {
+        _dirty = saveDirtyStatus;
+        _contentChanged = oldUpdateContent;
       }
-
-      boolean first = true;
-      for (Entry<String, Object> f : _fieldValues.entrySet()) {
-        buffer.append(first ? '{' : ',');
-        buffer.append(f.getKey());
-        buffer.append(':');
-        if (f.getValue() == null)
-          buffer.append("null");
-        else if (f.getValue() instanceof Collection<?> || f.getValue().getClass().isArray()) {
-          buffer.append('[');
-          buffer.append(OMultiValue.getSize(f.getValue()));
-          buffer.append(']');
-        } else if (f.getValue() instanceof ORecord) {
-          final ORecord record = (ORecord) f.getValue();
-
-          if (record.getIdentity().isValid())
-            record.getIdentity().toString(buffer);
-          else
-            buffer.append(record.toString());
-        } else
-          buffer.append(f.getValue());
-
-        if (first)
-          first = false;
-      }
-      if (!first)
-        buffer.append('}');
-
-      if (_recordId != null && _recordId.isValid()) {
-        buffer.append(" v");
-        buffer.append(_recordVersion);
-      }
-
-      return buffer.toString();
     } finally {
-      _dirty = saveDirtyStatus;
-      _contentChanged = oldUpdateContent;
+      TO_STRING_DEPTH.get().decrement();
     }
   }
 

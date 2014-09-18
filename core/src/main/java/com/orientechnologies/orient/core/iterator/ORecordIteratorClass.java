@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.Arrays;
+
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
  * it. This iterator with "live updates" set is able to catch updates to the cluster sizes while browsing. This is the case when
@@ -68,6 +70,8 @@ public class ORecordIteratorClass<REC extends ORecordInternal> extends ORecordIt
     polymorphic = iPolymorphic;
     clusterIds = polymorphic ? targetClass.getPolymorphicClusterIds() : targetClass.getClusterIds();
     clusterIds = OClassImpl.readableClusters(iDatabase, clusterIds);
+
+		Arrays.sort(clusterIds);
 
     config();
   }

@@ -215,6 +215,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal> extends OIdenti
    */
   @Override
   public ORecordIteratorCluster<REC> begin() {
+    browsedRecords = 0;
+
     updateRangesOnLiveUpdate();
     resetCurrentPosition();
 
@@ -230,6 +232,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal> extends OIdenti
    */
   @Override
   public ORecordIteratorCluster<REC> last() {
+    browsedRecords = 0;
+
     updateRangesOnLiveUpdate();
     resetCurrentPosition();
 
