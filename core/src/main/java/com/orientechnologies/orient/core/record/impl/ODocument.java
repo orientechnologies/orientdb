@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODetachable;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -99,49 +98,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected boolean                                                      _lazyLoad           = true;
   protected boolean                                                      _allowChainedAccess = true;
   protected transient List<WeakReference<ORecordElement>>                _owners             = null;
-
-  /**
-   * Perform gathering of all operations performed on tracked collection and create mapping between list of collection operations
-   * and field name that contains collection that was changed.
-   * 
-   * @param <K>
-   *          Value that uniquely identifies position of item in collection
-   * @param <V>
-   *          Item value.
-   */
-  private final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeListener<K, V> {
-    private final String fieldName;
-
-    private OSimpleMultiValueChangeListener(final String fieldName) {
-      this.fieldName = fieldName;
-    }
-
-    public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event) {
-      if (_status != STATUS.UNMARSHALLING) {
-        if (event.isChangesOwnerContent())
-          setDirty();
-        else
-          setDirtyNoChanged();
-      }
-
-      if (!(_trackingChanges && _recordId.isValid()) || _status == STATUS.UNMARSHALLING)
-        return;
-
-      if (_fieldOriginalValues != null && _fieldOriginalValues.containsKey(fieldName))
-        return;
-
-      if (_fieldCollectionChangeTimeLines == null)
-        _fieldCollectionChangeTimeLines = new HashMap<String, OMultiValueChangeTimeLine<Object, Object>>();
-
-      OMultiValueChangeTimeLine<Object, Object> timeLine = _fieldCollectionChangeTimeLines.get(fieldName);
-      if (timeLine == null) {
-        timeLine = new OMultiValueChangeTimeLine<Object, Object>();
-        _fieldCollectionChangeTimeLines.put(fieldName, timeLine);
-      }
-
-      timeLine.addCollectionChangeEvent((OMultiValueChangeEvent<Object, Object>) event);
-    }
-  }
 
   /**
    * Internal constructor used on unmarshalling.
@@ -812,10 +768,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
             // SAVE VALUE: UNCHANGED
             return this;
           }
-
-          if (OType.isSimpleType(iPropertyValue) && iPropertyValue.equals(oldValue))
-            // SAVE VALUE: UNCHANGED
-            return this;
 
         } catch (Exception e) {
           OLogManager.instance().warn(this, "Error on checking the value of property %s against the record %s", e, iFieldName,
@@ -1748,7 +1700,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       _fieldChangeListeners = new HashMap<String, OSimpleMultiValueChangeListener<Object, Object>>();
 
     if (!_fieldChangeListeners.containsKey(fieldName)) {
-      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<Object, Object>(
+      final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<Object, Object>(this,
           fieldName);
       multiValue.addChangeListener(listener);
       _fieldChangeListeners.put(fieldName, listener);
@@ -1850,7 +1802,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return _clazz != null ? _clazz.getName() : null;
   }
 
-  public static void validateField(ODocument iRecord, OProperty p) throws OValidationException {
+  protected static void validateField(ODocument iRecord, OProperty p) throws OValidationException {
     final Object fieldValue;
 
     if (iRecord.containsField(p.getName())) {
