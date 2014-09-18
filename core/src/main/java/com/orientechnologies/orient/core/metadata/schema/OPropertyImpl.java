@@ -998,8 +998,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     document.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
     try {
-      // document.field("name", name);
-      // document.field("type", type.id);
+      document.field("name", getName());
+      document.field("type", getType().id);
       document.field("globalId", globalRef.getId());
       document.field("mandatory", mandatory);
       document.field("readonly", readonly);
