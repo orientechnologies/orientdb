@@ -47,6 +47,9 @@ public class ORecordIteratorClusters<REC extends ORecordInternal> extends OIdent
       final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
     clusterIds = iClusterIds;
+
+		Arrays.sort(clusterIds);
+
     config();
   }
 
@@ -61,6 +64,9 @@ public class ORecordIteratorClusters<REC extends ORecordInternal> extends OIdent
     if (currentRecord != null && outsideOfTheRange(currentRecord.getIdentity())) {
       currentRecord = null;
     }
+
+    updateClusterRange();
+    begin();
     return this;
   }
 
@@ -274,6 +280,10 @@ public class ORecordIteratorClusters<REC extends ORecordInternal> extends OIdent
    */
   @Override
   public ORecordIteratorClusters<REC> begin() {
+    if (clusterIds.length == 0)
+      return this;
+
+    browsedRecords = 0;
     currentClusterIdx = 0;
     current.clusterId = clusterIds[currentClusterIdx];
 
@@ -301,6 +311,10 @@ public class ORecordIteratorClusters<REC extends ORecordInternal> extends OIdent
    */
   @Override
   public ORecordIteratorClusters<REC> last() {
+    if (clusterIds.length == 0)
+      return this;
+
+    browsedRecords = 0;
     currentClusterIdx = clusterIds.length - 1;
     if (liveUpdated)
       updateClusterRange();
@@ -344,11 +358,23 @@ public class ORecordIteratorClusters<REC extends ORecordInternal> extends OIdent
   }
 
   protected void updateClusterRange() {
+    if (clusterIds.length == 0)
+      return;
+
     current.clusterId = clusterIds[currentClusterIdx];
     final OClusterPosition[] range = database.getStorage().getClusterDataRange(current.clusterId);
 
-    firstClusterEntry = range[0];
-    lastClusterEntry = range[1];
+    if (beginRange != null && beginRange.getClusterId() == current.clusterId
+        && beginRange.getClusterPosition().compareTo(range[0]) > 0)
+      firstClusterEntry = beginRange.getClusterPosition();
+    else
+      firstClusterEntry = range[0];
+
+    if (endRange != null && endRange.getClusterId() == current.clusterId && endRange.getClusterPosition().compareTo(range[1]) < 0)
+      lastClusterEntry = endRange.getClusterPosition();
+    else
+      lastClusterEntry = range[1];
+
     resetCurrentPosition();
   }
 
