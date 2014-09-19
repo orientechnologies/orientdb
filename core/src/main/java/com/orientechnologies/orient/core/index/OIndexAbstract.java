@@ -218,7 +218,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       if (clustersToIndex != null)
         this.clustersToIndex = new HashSet<String>(clustersToIndex);
       else
-        this.clustersToIndex = new HashSet<String>(clustersToIndex);
+        this.clustersToIndex = new HashSet<String>();
 
       indexEngine.create(this.name, indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
 

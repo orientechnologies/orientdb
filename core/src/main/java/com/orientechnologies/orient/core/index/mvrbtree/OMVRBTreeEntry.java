@@ -329,6 +329,6 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
     int idx = tree.pageIndex;
     if (idx > -1 && idx < getSize())
       return getKeyAt(idx) + "=" + getValueAt(idx);
-    return null;
+    return "null";
   }
 }

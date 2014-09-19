@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import java.util.Objects;
+
 import com.orientechnologies.common.exception.OException;
 
 /**
@@ -46,6 +48,13 @@ public class ODistributedException extends OException {
     if (obj == null || !obj.getClass().equals(getClass()))
       return false;
 
-    return getMessage().equals(((ODistributedException) obj).getMessage());
+    return Objects.equals(getMessage(), ((ODistributedException) obj).getMessage());
   }
+
+  @Override
+  public int hashCode() {
+	return Objects.hashCode(getMessage());
+  }
+  
+  
 }

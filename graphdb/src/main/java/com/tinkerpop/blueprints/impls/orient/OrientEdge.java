@@ -17,6 +17,7 @@ import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -237,7 +238,7 @@ public class OrientEdge extends OrientElement implements Edge {
     if (rawElement == null && object instanceof OrientEdge) {
       final OrientEdge other = (OrientEdge) object;
       return vOut.equals(other.vOut) && vIn.equals(other.vIn)
-          && (label == null && other.label == null || label.equals(other.label));
+          && (Objects.equals(label, other.label));
     }
     return super.equals(object);
   }

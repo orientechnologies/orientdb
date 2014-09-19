@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -25,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OContextConfiguration {
+public class OContextConfiguration implements Serializable {
   private final ConcurrentHashMap<String, Object> config = new ConcurrentHashMap<String, Object>();
 
   /**
