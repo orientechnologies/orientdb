@@ -18,29 +18,29 @@
 
 package com.orientechnologies.test;
 
-import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.tx.OTransaction;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import com.orientechnologies.orient.core.tx.OTransaction;
 
 /**
  * Created by enricorisa on 28/06/14.
  */
 
-public class LuceneInsertMultithread {
+@Test
+public class LuceneInsertMultithreadTest {
 
   private final static int  THREADS = 10;
   private final static int  CYCLE   = 1000;
@@ -115,7 +115,7 @@ public class LuceneInsertMultithread {
     }
   }
 
-  public LuceneInsertMultithread() {
+  public LuceneInsertMultithreadTest() {
     super();
   }
 

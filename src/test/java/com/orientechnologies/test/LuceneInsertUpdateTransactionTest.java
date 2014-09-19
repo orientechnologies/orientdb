@@ -36,7 +36,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Created by enricorisa on 28/06/14.
  */
 
-public class LuceneInsertUpdateTransaction {
+@Test
+public class LuceneInsertUpdateTransactionTest {
 
   private ODatabaseDocument databaseDocumentTx;
   private static String     url;
@@ -49,7 +50,7 @@ public class LuceneInsertUpdateTransaction {
 
   }
 
-  public LuceneInsertUpdateTransaction() {
+  public LuceneInsertUpdateTransactionTest() {
     super();
   }
 

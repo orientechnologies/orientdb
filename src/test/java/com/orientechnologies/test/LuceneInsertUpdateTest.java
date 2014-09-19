@@ -41,7 +41,8 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * Created by enricorisa on 28/06/14.
  */
 
-public class LuceneInsertUpdate {
+@Test
+public class LuceneInsertUpdateTest {
 
   private ODatabaseDocument databaseDocumentTx;
   private static String     url;
@@ -54,7 +55,7 @@ public class LuceneInsertUpdate {
 
   }
 
-  public LuceneInsertUpdate() {
+  public LuceneInsertUpdateTest() {
     super();
   }
 

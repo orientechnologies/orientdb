@@ -27,6 +27,7 @@ import org.testng.annotations.Test;
 /**
  * Created by enricorisa on 03/09/14.
  */
+@Test
 public class TestEmbedded {
 
   private static String url;
