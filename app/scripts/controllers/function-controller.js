@@ -156,8 +156,9 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.resultExecute = '';
 
         if ($scope.functionToExecute != undefined) {
-            var functionNamee = $scope.nameFunction;
-            var buildedParams = $scope.parametersToExecute.join('/');
+            var encodedParams = new Array();
+            $scope.parametersToExecute.forEach(function(param) { encodedParams.push(encodeURIComponent(param)); });
+            var buildedParams = encodedParams.join('/');
             Spinner.start();
             FunctionApi.executeFunction({database: $routeParams.database, functionName: $scope.nameFunction, parameters: buildedParams, limit: $scope.limit}, function (data) {
                 if (data.result) {
