@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
@@ -706,18 +705,18 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   }
 
   protected V internalPut(final K key, final V value) throws OLowMemoryException {
-    ORecordInternal rec;
+    ORecord rec;
 
-    if (key instanceof ORecordInternal) {
+    if (key instanceof ORecord) {
       // RECORD KEY: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-      rec = (ORecordInternal) key;
+      rec = (ORecord) key;
       if (!rec.getIdentity().isValid())
         rec.save();
     }
 
-    if (value instanceof ORecordInternal) {
+    if (value instanceof ORecord) {
       // RECORD VALUE: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-      rec = (ORecordInternal) value;
+      rec = (ORecord) value;
       if (!rec.getIdentity().isValid())
         rec.save();
     }

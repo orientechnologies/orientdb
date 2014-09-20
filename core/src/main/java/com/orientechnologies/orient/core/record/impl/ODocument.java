@@ -296,7 +296,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   @Override
-  public ODocument flatCopy() {
+  protected ODocument flatCopy() {
     if (isDirty())
       throw new IllegalStateException("Cannot execute a flat copy of a dirty record");
 
@@ -1051,7 +1051,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   /**
    * Internal.
    */
-  public byte getRecordType() {
+  protected byte getRecordType() {
     return RECORD_TYPE;
   }
 

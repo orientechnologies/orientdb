@@ -74,6 +74,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -677,7 +678,7 @@ public class OObjectEntitySerializer {
       return OObjectSerializerHelper.serializerContexts.get(null).getBoundClassTarget(type);
 
     return null;
-    }
+  }
 
   public static Object serializeFieldValue(final Class<?> type, final Object iFieldValue) {
 
@@ -967,7 +968,7 @@ public class OObjectEntitySerializer {
     } else {
       OType res = OType.getTypeByClass(f.getType());
       if (res != null) {
-	  return res;
+        return res;
       }
       return OType.getTypeByClass(OObjectEntitySerializer.getBoundClassTarget(f.getType()));
     }
@@ -984,20 +985,25 @@ public class OObjectEntitySerializer {
   }
 
   public static Class<?> getSpecifiedMultiLinkedType(final Field f) {
-	  final OneToMany m1=f.getAnnotation(OneToMany.class);
-	  if (m1!=null && !m1.targetEntity().equals(void.class)) return m1.targetEntity();
-	  final ManyToMany m3=f.getAnnotation(ManyToMany.class);
-	  if (m3!=null && !m3.targetEntity().equals(void.class)) return m3.targetEntity();
-	  return null;
-	  }
+    final OneToMany m1 = f.getAnnotation(OneToMany.class);
+    if (m1 != null && !m1.targetEntity().equals(void.class))
+      return m1.targetEntity();
+    final ManyToMany m3 = f.getAnnotation(ManyToMany.class);
+    if (m3 != null && !m3.targetEntity().equals(void.class))
+      return m3.targetEntity();
+    return null;
+  }
+
   public static Class<?> getSpecifiedLinkedType(final Field f) {
-	  final ManyToOne m=f.getAnnotation(ManyToOne.class);
-	  if (m!=null && !m.targetEntity().equals(void.class)) return m.targetEntity();
-	  final OneToOne m2=f.getAnnotation(OneToOne.class);
-	  if (m2!=null && !m2.targetEntity().equals(void.class)) return m2.targetEntity();
-	
-	  return null;
-	  }
+    final ManyToOne m = f.getAnnotation(ManyToOne.class);
+    if (m != null && !m.targetEntity().equals(void.class))
+      return m.targetEntity();
+    final OneToOne m2 = f.getAnnotation(OneToOne.class);
+    if (m2 != null && !m2.targetEntity().equals(void.class))
+      return m2.targetEntity();
+
+    return null;
+  }
 
   @SuppressWarnings("unchecked")
   public static <T> T getNonProxiedInstance(T iObject) {
@@ -1052,7 +1058,7 @@ public class OObjectEntitySerializer {
       if (id != null) {
         // FOUND
         if (id instanceof ORecordId) {
-          iRecord.setIdentity((ORecordId) id);
+          ORecordInternal.setIdentity(iRecord, (ORecordId) id);
         } else if (id instanceof Number) {
           // TREATS AS CLUSTER POSITION
           ((ORecordId) iRecord.getIdentity()).clusterId = schemaClass.getDefaultClusterId();
@@ -1060,7 +1066,7 @@ public class OObjectEntitySerializer {
         } else if (id instanceof String)
           ((ORecordId) iRecord.getIdentity()).fromString((String) id);
         else if (id.getClass().equals(Object.class))
-          iRecord.setIdentity((ORecordId) id);
+          ORecordInternal.setIdentity(iRecord, (ORecordId) id);
         else
           OLogManager.instance().warn(OObjectSerializerHelper.class,
               "@Id field has been declared as %s while the supported are: ORID, Number, String, Object", id.getClass());

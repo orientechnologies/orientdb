@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 
@@ -48,17 +47,16 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
     return 0;
   }
 
-  protected ODocument newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException,
-      IllegalAccessException {
+  protected ODocument newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException, IllegalAccessException {
     return new ODocument();
   }
 
-  public ORecordInternal fromStream(ODatabaseRecord iDatabase, byte[] iSource) {
+  public ORecord fromStream(ODatabaseRecord iDatabase, byte[] iSource) {
     // TODO: HANDLE FACTORIES
     return fromStream(iSource, null, null);
   }
 
-  public ORecordInternal fromStream(byte[] iSource, ORecordInternal iRecord, String[] iFields) {
+  public ORecord fromStream(byte[] iSource, ORecord iRecord, String[] iFields) {
     ODocument record = (ODocument) iRecord;
     if (iRecord == null)
       record = new ODocument();
@@ -154,7 +152,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
     return iRecord;
   }
 
-  public byte[] toStream(final ORecordInternal iRecord, boolean iOnlyDelta) {
+  public byte[] toStream(final ORecord iRecord, boolean iOnlyDelta) {
     ODocument record = (ODocument) iRecord;
 
     ByteArrayOutputStream stream = null;
@@ -200,7 +198,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
             // NULL: WRITE -1 AS LENGTH
             out.writeInt(-1);
           else {
-            buffer = ((ORecordInternal) value).toStream();
+            buffer = ((ORecord) value).toStream();
             out.writeInt(buffer.length);
             out.write(buffer);
           }

@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -698,7 +699,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     doc.setDirty();
 
     // RESET IDENTITY
-    doc.setIdentity(new ORecordId());
+    ORecordInternal.setIdentity(doc, new ORecordId());
 
     if (iClusterName != null)
       doc.save(iClusterName);

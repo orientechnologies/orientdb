@@ -7,16 +7,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.db.record.*;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.id.ORecordId;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test
@@ -547,7 +553,7 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -622,7 +628,7 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -700,7 +706,7 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedSet<String> trackedSet = new OTrackedSet<String>(doc);
@@ -738,7 +744,7 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedSet<String> trackedMap = new OTrackedSet<String>(doc);
@@ -780,7 +786,7 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedMap<String> trackedMap = new OTrackedMap<String>(doc);
@@ -819,7 +825,7 @@ public class OCompositeIndexDefinitionTest {
     compositeIndexDefinition.addIndex(new OPropertyIndexDefinition("testCollectionClass", "fThree", OType.INTEGER));
 
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedMap<String> trackedMap = new OTrackedMap<String>(doc);

@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -238,59 +237,58 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET load(final ORecordInternal iRecord, final String iFetchPlan) {
+  public <RET extends ORecord> RET load(final ORecord iRecord, final String iFetchPlan) {
     return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET load(ORecordInternal iRecord, String iFetchPlan, boolean iIgnoreCache,
-      boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public <RET extends ORecord> RET load(ORecord iRecord, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
     return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET load(final ORecordInternal iRecord) {
+  public <RET extends ORecord> RET load(final ORecord iRecord) {
     return (RET) currentTx.loadRecord(iRecord.getIdentity(), iRecord, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET load(final ORID recordId) {
+  public <RET extends ORecord> RET load(final ORID recordId) {
     return (RET) currentTx.loadRecord(recordId, null, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET load(final ORID iRecordId, final String iFetchPlan) {
+  public <RET extends ORecord> RET load(final ORID iRecordId, final String iFetchPlan) {
     return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, false, false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET load(final ORID iRecordId, String iFetchPlan, final boolean iIgnoreCache,
+  public <RET extends ORecord> RET load(final ORID iRecordId, String iFetchPlan, final boolean iIgnoreCache,
       final boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
     return (RET) currentTx.loadRecord(iRecordId, null, iFetchPlan, iIgnoreCache, loadTombstone, iLockingStrategy);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET reload(final ORecordInternal iRecord) {
+  public <RET extends ORecord> RET reload(final ORecord iRecord) {
     return reload(iRecord, null, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET reload(final ORecordInternal iRecord, final String iFetchPlan) {
+  public <RET extends ORecord> RET reload(final ORecord iRecord, final String iFetchPlan) {
     return reload(iRecord, iFetchPlan, false);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET reload(final ORecordInternal iRecord, final String iFetchPlan,
-      final boolean iIgnoreCache) {
-    ORecordInternal record = currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
+  public <RET extends ORecord> RET reload(final ORecord iRecord, final String iFetchPlan, final boolean iIgnoreCache) {
+    ORecord record = currentTx.loadRecord(iRecord.getIdentity(), iRecord, iFetchPlan, iIgnoreCache, false,
         OStorage.LOCKING_STRATEGY.DEFAULT);
     if (record != null && iRecord != record) {
       iRecord.fromStream(record.toStream());
@@ -301,28 +299,27 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET save(final ORecordInternal iContent, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public <RET extends ORecord> RET save(final ORecord iContent, final OPERATION_MODE iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return (RET) save(iContent, (String) null, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET save(final ORecordInternal iContent) {
+  public <RET extends ORecord> RET save(final ORecord iContent) {
     return (RET) save(iContent, (String) null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET save(final ORecordInternal iContent, final String iClusterName) {
+  public <RET extends ORecord> RET save(final ORecord iContent, final String iClusterName) {
     return (RET) save(iContent, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   @SuppressWarnings("unchecked")
   @Override
-  public <RET extends ORecordInternal> RET save(final ORecordInternal iContent, final String iClusterName,
-      final OPERATION_MODE iMode, boolean iForceCreate, ORecordCallback<? extends Number> iRecordCreatedCallback,
+  public <RET extends ORecord> RET save(final ORecord iContent, final String iClusterName, final OPERATION_MODE iMode,
+      boolean iForceCreate, ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return (RET) currentTx.saveRecord(iContent, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
@@ -339,7 +336,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   }
 
   @Override
-  public ODatabaseRecord delete(final ORecordInternal iRecord) {
+  public ODatabaseRecord delete(final ORecord iRecord) {
     checkOpeness();
     currentTx.deleteRecord(iRecord, OPERATION_MODE.SYNCHRONOUS);
     return this;
@@ -354,7 +351,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   }
 
   @Override
-  public ODatabaseRecord delete(final ORecordInternal iRecord, final OPERATION_MODE iMode) {
+  public ODatabaseRecord delete(final ORecord iRecord, final OPERATION_MODE iMode) {
     currentTx.deleteRecord(iRecord, iMode);
     return this;
   }
@@ -362,14 +359,14 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   public void executeRollback(final OTransaction iTransaction) {
   }
 
-  public ORecordInternal getRecordByUserObject(final Object iUserObject, final boolean iCreateIfNotAvailable) {
-    return (ORecordInternal) iUserObject;
+  public ORecord getRecordByUserObject(final Object iUserObject, final boolean iCreateIfNotAvailable) {
+    return (ORecord) iUserObject;
   }
 
-  public void registerUserObject(final Object iObject, final ORecordInternal iRecord) {
+  public void registerUserObject(final Object iObject, final ORecord iRecord) {
   }
 
-  public void registerUserObjectAfterLinkSave(ORecordInternal iRecord) {
+  public void registerUserObjectAfterLinkSave(ORecord iRecord) {
   }
 
   public Object getUserObjectByRecord(final OIdentifiable record, final String iFetchPlan) {

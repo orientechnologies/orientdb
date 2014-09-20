@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -43,10 +44,10 @@ import com.orientechnologies.orient.core.version.ODistributedVersion;
  */
 public class OJSONFetchContext implements OFetchContext {
 
-  protected final OJSONWriter                  jsonWriter;
-  protected final FormatSettings               settings;
-  protected final Stack<StringBuilder>         typesStack      = new Stack<StringBuilder>();
-  protected final Stack<ODocument> collectionStack = new Stack<ODocument>();
+  protected final OJSONWriter          jsonWriter;
+  protected final FormatSettings       settings;
+  protected final Stack<StringBuilder> typesStack      = new Stack<StringBuilder>();
+  protected final Stack<ODocument>     collectionStack = new Stack<ODocument>();
 
   public OJSONFetchContext(final OJSONWriter iJsonWriter, final FormatSettings iSettings) {
     jsonWriter = iJsonWriter;
@@ -122,8 +123,8 @@ public class OJSONFetchContext implements OFetchContext {
     settings.indentLevel--;
   }
 
-  public void onBeforeDocument(final ODocument iRootRecord, final ODocument iDocument,
-      final String iFieldName, final Object iUserObject) {
+  public void onBeforeDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName,
+      final Object iUserObject) {
     settings.indentLevel++;
     try {
       final String fieldName;
@@ -138,8 +139,8 @@ public class OJSONFetchContext implements OFetchContext {
     }
   }
 
-  public void onAfterDocument(final ODocument iRootRecord, final ODocument iDocument,
-      final String iFieldName, final Object iUserObject) {
+  public void onAfterDocument(final ODocument iRootRecord, final ODocument iDocument, final String iFieldName,
+      final Object iUserObject) {
     try {
       jsonWriter.endObject(settings.indentLevel--, true);
     } catch (IOException e) {
@@ -175,7 +176,7 @@ public class OJSONFetchContext implements OFetchContext {
     iBuffer.append(iType);
   }
 
-  public void writeSignature(final OJSONWriter json, final ORecordInternal record) throws IOException {
+  public void writeSignature(final OJSONWriter json, final ORecord record) throws IOException {
     if (record == null) {
       json.write("null");
       return;
@@ -185,7 +186,7 @@ public class OJSONFetchContext implements OFetchContext {
 
     if (settings.includeType) {
       json.writeAttribute(firstAttribute ? settings.indentLevel : 0, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE, ""
-          + (char) record.getRecordType());
+          + (char) ORecordInternal.getRecordType(record));
       if (settings.attribSameRow)
         firstAttribute = false;
     }

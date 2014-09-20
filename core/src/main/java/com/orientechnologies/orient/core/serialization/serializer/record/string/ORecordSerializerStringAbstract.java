@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -634,27 +633,27 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     }
   }
 
-  public abstract ORecordInternal fromString(String iContent, ORecordInternal iRecord, String[] iFields);
+  public abstract ORecord fromString(String iContent, ORecord iRecord, String[] iFields);
 
-  public StringBuilder toString(final ORecordInternal iRecord, final String iFormat) {
+  public StringBuilder toString(final ORecord iRecord, final String iFormat) {
     return toString(iRecord, new StringBuilder(1024), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
         OSerializationSetThreadLocal.INSTANCE.get(), false, true);
   }
 
-  public StringBuilder toString(final ORecordInternal iRecord, final String iFormat, final boolean autoDetectCollectionType) {
+  public StringBuilder toString(final ORecord iRecord, final String iFormat, final boolean autoDetectCollectionType) {
     return toString(iRecord, new StringBuilder(1024), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
         OSerializationSetThreadLocal.INSTANCE.get(), false, autoDetectCollectionType);
   }
 
-  public StringBuilder toString(final ORecordInternal iRecord, final StringBuilder iOutput, final String iFormat) {
+  public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat) {
     return toString(iRecord, iOutput, iFormat, null, OSerializationSetThreadLocal.INSTANCE.get(), false, true);
   }
 
-  public ORecordInternal fromString(final String iSource) {
-    return fromString(iSource, (ORecordInternal) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance(), null);
+  public ORecord fromString(final String iSource) {
+    return fromString(iSource, (ORecord) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance(), null);
   }
 
-  public ORecordInternal fromStream(final byte[] iSource, final ORecordInternal iRecord, final String[] iFields) {
+  public ORecord fromStream(final byte[] iSource, final ORecord iRecord, final String[] iFields) {
     final long timer = PROFILER.startChrono();
 
     try {
@@ -666,7 +665,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     }
   }
 
-  public byte[] toStream(final ORecordInternal iRecord, boolean iOnlyDelta) {
+  public byte[] toStream(final ORecord iRecord, boolean iOnlyDelta) {
     final long timer = PROFILER.startChrono();
 
     try {
@@ -678,7 +677,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     }
   }
 
-  protected abstract StringBuilder toString(final ORecordInternal iRecord, final StringBuilder iOutput, final String iFormat,
+  protected abstract StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
       final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType);
 }

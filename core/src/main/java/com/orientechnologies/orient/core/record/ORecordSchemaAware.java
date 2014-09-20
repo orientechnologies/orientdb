@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 /**
  * Generic record representation with a schema definition. The record has multiple fields. Fields are also called properties.
  */
-public interface ORecordSchemaAware extends ORecordInternal {
+public interface ORecordSchemaAware  {
 
 	/**
 	 * Returns the value of a field.

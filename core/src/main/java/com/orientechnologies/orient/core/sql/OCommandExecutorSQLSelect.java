@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -171,7 +172,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final ODocument doc = new ODocument().setOrdered(true);
     doc.field("key", iKey);
     doc.field("rid", iValue);
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     return doc;
   }
 
@@ -441,10 +442,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OStorage.LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy
         : lockingStrategy;
 
-    ORecordInternal record = null;
+    ORecord record = null;
     try {
-      if (id instanceof ORecordInternal) {
-        record = (ORecordInternal) id;
+      if (id instanceof ORecord) {
+        record = (ORecord) id;
 
         // LOCK THE RECORD IF NEEDED
         if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
@@ -457,7 +458,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       context.updateMetric("recordReads", +1);
 
-      if (record == null || record.getRecordType() != ODocument.RECORD_TYPE)
+      if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
         // SKIP IT
         return true;
 
@@ -1413,7 +1414,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final ODocument doc = new ODocument().setOrdered(true);
       doc.field("key", entryRecord.getKey());
       doc.field("rid", entryRecord.getValue().getIdentity());
-      doc.unsetDirty();
+      ORecordInternal.unsetDirty(doc);
 
       if (!handleResult(doc))
         // LIMIT REACHED

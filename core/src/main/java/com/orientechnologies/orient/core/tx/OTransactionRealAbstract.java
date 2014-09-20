@@ -39,8 +39,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
@@ -145,7 +143,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return null;
   }
 
-  public ORecordInternal getRecord(final ORID rid) {
+  public ORecord getRecord(final ORID rid) {
     final ORecordOperation e = getRecordEntry(rid);
     if (e != null)
       if (e.type == ORecordOperation.DELETED)
@@ -316,7 +314,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
         final ORecordId recordId = (ORecordId) rec.getRecord().getIdentity();
         if (recordId == null) {
-          rec.getRecord().setIdentity(new ORecordId(newRid));
+          ORecordInternal.setIdentity(rec.getRecord(), new ORecordId(newRid));
         } else {
           recordId.clusterPosition = newRid.getClusterPosition();
           recordId.clusterId = newRid.getClusterId();

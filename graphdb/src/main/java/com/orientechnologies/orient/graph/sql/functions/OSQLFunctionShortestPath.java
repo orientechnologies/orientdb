@@ -15,11 +15,18 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
@@ -28,13 +35,6 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.pipes.util.structures.ArrayQueue;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Shortest path algorithm to find the shortest path from one node to another node in a directed graph.
@@ -55,7 +55,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       final OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
-    final ORecordInternal record = (ORecordInternal) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
+    final ORecord record = (ORecord) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
 
     Object source = iParams[0];
     if (OMultiValue.isMultiValue(source)) {

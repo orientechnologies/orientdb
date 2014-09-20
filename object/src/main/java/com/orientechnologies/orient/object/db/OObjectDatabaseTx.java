@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
@@ -51,7 +50,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -459,7 +458,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     if (iRID == null)
       return this;
 
-    final ORecordInternal record = iRID.getRecord();
+    final ORecord record = iRID.getRecord();
     if (record instanceof ODocument) {
       Object iPojo = getUserObjectByRecord(record, null);
 
@@ -537,7 +536,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
           break;
 
         case ORecordOperation.DELETED:
-          final ORecordInternal rec = entry.getRecord();
+          final ORecord rec = entry.getRecord();
           if (rec instanceof ODocument)
             unregisterPojo(pojo, (ODocument) rec);
           break;
@@ -725,10 +724,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public void registerUserObject(final Object iObject, final ORecordInternal iRecord) {
+  public void registerUserObject(final Object iObject, final ORecord iRecord) {
   }
 
-  public void registerUserObjectAfterLinkSave(ORecordInternal iRecord) {
+  public void registerUserObjectAfterLinkSave(ORecord iRecord) {
   }
 
   @Override

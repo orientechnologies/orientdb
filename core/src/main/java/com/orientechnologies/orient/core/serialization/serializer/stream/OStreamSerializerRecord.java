@@ -25,36 +25,36 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 
 public class OStreamSerializerRecord implements OStreamSerializer {
-	public static final String									NAME			= "l";
-	public static final OStreamSerializerRecord	INSTANCE	= new OStreamSerializerRecord();
+  public static final String                  NAME     = "l";
+  public static final OStreamSerializerRecord INSTANCE = new OStreamSerializerRecord();
 
-	public String getName() {
-		return NAME;
-	}
+  public String getName() {
+    return NAME;
+  }
 
-	/**
-	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
-	 */
-	public Object fromStream(final byte[] iStream) throws IOException {
-		if (iStream == null || iStream.length == 0)
-			// NULL VALUE
-			return null;
+  /**
+   * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
+   */
+  public Object fromStream(final byte[] iStream) throws IOException {
+    if (iStream == null || iStream.length == 0)
+      // NULL VALUE
+      return null;
 
-		final ORecordInternal obj = Orient.instance().getRecordFactoryManager().newInstance();
+    final ORecord obj = Orient.instance().getRecordFactoryManager().newInstance();
 
-		final ORID rid = new ORecordId().fromStream(iStream);
+    final ORID rid = new ORecordId().fromStream(iStream);
 
-		obj.setIdentity(rid.getClusterId(), rid.getClusterPosition());
-		return obj;
-	}
+    ORecordInternal.setIdentity(obj, rid.getClusterId(), rid.getClusterPosition());
+    return obj;
+  }
 
-	public byte[] toStream(final Object iObject) throws IOException {
-		if (iObject == null)
-			return null;
+  public byte[] toStream(final Object iObject) throws IOException {
+    if (iObject == null)
+      return null;
 
-		if (((ORecord) iObject).getIdentity() == null)
-			throw new OSerializationException("Cannot serialize record without identity. Store it before to serialize.");
+    if (((ORecord) iObject).getIdentity() == null)
+      throw new OSerializationException("Cannot serialize record without identity. Store it before to serialize.");
 
-		return ((ORecord) iObject).getIdentity().toStream();
-	}
+    return ((ORecord) iObject).getIdentity().toStream();
+  }
 }

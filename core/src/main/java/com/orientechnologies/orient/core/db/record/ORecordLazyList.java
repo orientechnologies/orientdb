@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -58,7 +59,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   public ORecordLazyList(final ODocument iSourceRecord) {
     super(iSourceRecord);
     if (iSourceRecord != null) {
-      this.recordType = iSourceRecord.getRecordType();
+      this.recordType = ORecordInternal.getRecordType(iSourceRecord);
       if (!iSourceRecord.isLazyLoad())
         // SET AS NON-LAZY LOAD THE COLLECTION TOO
         autoConvertToRecord = false;

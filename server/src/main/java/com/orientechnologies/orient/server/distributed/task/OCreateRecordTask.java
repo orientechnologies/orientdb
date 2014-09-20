@@ -15,10 +15,15 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
@@ -27,10 +32,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 /**
  * Distributed create record task used for synchronization.
  * 
@@ -38,11 +39,11 @@ import java.io.ObjectOutput;
  * 
  */
 public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
-  public static final String             SUFFIX_QUEUE_NAME = ".insert";
-  private static final long              serialVersionUID  = 1L;
-  protected byte[]                       content;
-  protected byte                         recordType;
-  protected transient ORecordInternal record;
+  public static final String  SUFFIX_QUEUE_NAME = ".insert";
+  private static final long   serialVersionUID  = 1L;
+  protected byte[]            content;
+  protected byte              recordType;
+  protected transient ORecord record;
 
   public OCreateRecordTask() {
   }
@@ -125,20 +126,20 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     recordType = in.readByte();
   }
 
-//  @Override
-//  public String getQueueName(final String iOriginalQueueName) {
-//    return iOriginalQueueName + SUFFIX_QUEUE_NAME;
-//  }
+  // @Override
+  // public String getQueueName(final String iOriginalQueueName) {
+  // return iOriginalQueueName + SUFFIX_QUEUE_NAME;
+  // }
 
   @Override
   public String getName() {
     return "record_create";
   }
 
-  public ORecordInternal getRecord() {
+  public ORecord getRecord() {
     if (record == null) {
       record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
-      record.fill(rid, version, content, true);
+      ORecordInternal.fill(record, rid, version, content, true);
     }
     return record;
   }

@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
@@ -67,7 +67,7 @@ public class OFetchHelper {
     return fetchPlan;
   }
 
-  public static void fetch(final ORecordInternal iRootRecord, final Object iUserObject, final Map<String, Integer> iFetchPlan,
+  public static void fetch(final ORecord iRootRecord, final Object iUserObject, final Map<String, Integer> iFetchPlan,
       final OFetchListener iListener, final OFetchContext iContext, final String iFormat) {
     try {
       if (iRootRecord instanceof ODocument) {
@@ -436,7 +436,7 @@ public class OFetchHelper {
       final Object o = linked.get(key);
 
       if (o instanceof OIdentifiable) {
-        final ORecordInternal r = ((OIdentifiable) o).getRecord();
+        final ORecord r = ((OIdentifiable) o).getRecord();
         if (r != null) {
           if (r instanceof ODocument) {
             // GO RECURSIVELY

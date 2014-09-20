@@ -19,7 +19,7 @@ package com.orientechnologies.orient.core.db.document;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  * @author Luca Garulli
  */
-public interface ODatabaseDocument extends ODatabaseRecord, ODatabaseSchemaAware<ORecordInternal> {
+public interface ODatabaseDocument extends ODatabaseRecord, ODatabaseSchemaAware<ORecord> {
 
   final static String TYPE = "document";
 

@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -229,7 +228,7 @@ public class OSQLHelper {
     return iObject;
   }
 
-  public static Object getValue(final Object iObject, final ORecordInternal iRecord, final OCommandContext iContext) {
+  public static Object getValue(final Object iObject, final ORecord iRecord, final OCommandContext iContext) {
     if (iObject == null)
       return null;
 

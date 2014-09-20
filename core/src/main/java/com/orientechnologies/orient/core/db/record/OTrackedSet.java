@@ -141,7 +141,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   @SuppressWarnings("unchecked")
   public OTrackedSet<T> setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ((ORecordInternal) sourceRecord).isContentChanged()))
+        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
       sourceRecord.setDirty();
     return this;
   }

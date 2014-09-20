@@ -20,8 +20,8 @@ import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
@@ -57,11 +57,6 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
     value = iValue;
     setDirty();
     return this;
-  }
-
-  @Override
-  public void unsetDirty() {
-    super.unsetDirty();
   }
 
   @Override
@@ -115,7 +110,7 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
   }
 
   @Override
-  public ORecordInternal reload() {
+  public ORecord reload() {
     value = null;
     return super.reload();
   }

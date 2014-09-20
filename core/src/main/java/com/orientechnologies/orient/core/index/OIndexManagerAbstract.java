@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -28,24 +41,11 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Abstract class to manage indexes.
@@ -203,7 +203,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  public ODictionary<ORecordInternal> getDictionary() {
+  public ODictionary<ORecord> getDictionary() {
     OIndex<?> idx;
     acquireSharedLock();
     try {
@@ -215,7 +215,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     if (idx == null) {
       idx = createDictionaryIfNeeded();
     }
-    return new ODictionary<ORecordInternal>((OIndex<OIdentifiable>) idx);
+    return new ODictionary<ORecord>((OIndex<OIdentifiable>) idx);
   }
 
   public ODocument getConfiguration() {

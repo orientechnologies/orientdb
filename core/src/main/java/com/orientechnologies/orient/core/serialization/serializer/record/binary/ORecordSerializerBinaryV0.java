@@ -1,5 +1,13 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -22,7 +30,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
@@ -30,14 +38,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
@@ -536,14 +536,14 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     if (link instanceof ORID) {
       if (((ORID) link).isValid() && ((ORID) link).isNew()) {
         final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-        ORecordInternal record = link.getRecord();
+        ORecord record = link.getRecord();
         database.save(record);
         return record;
       }
-    } else if (link instanceof ORecordInternal) {
+    } else if (link instanceof ORecord) {
       ORID rid = link.getIdentity();
-      if (((ORecordInternal) link).isDirty() || (rid.isTemporary())) {
-        ((ORecordInternal) link).save();
+      if (((ORecord) link).isDirty() || (rid.isTemporary())) {
+        ((ORecord) link).save();
       }
     }
     return link;

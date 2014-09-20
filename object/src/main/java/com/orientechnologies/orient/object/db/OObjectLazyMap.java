@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
 
@@ -209,7 +209,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 
     if (super.containsKey(iKey))
       return;
-    final ORecordInternal record = (ORecordInternal) underlying.get(iKey);
+    final ORecord record = (ORecord) underlying.get(iKey);
     if (record == null)
       return;
     TYPE o = getDatabase().getUserObjectByRecord(record, null);
@@ -247,7 +247,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 
     for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet())
       super.put(e.getKey(),
-          getDatabase().getUserObjectByRecord((ORecordInternal) ((OIdentifiable) e.getValue()).getRecord(), null));
+          getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null));
 
     converted = true;
   }
@@ -257,7 +257,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
       return;
 
     for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet()) {
-      Object o = getDatabase().getUserObjectByRecord((ORecordInternal) ((OIdentifiable) e.getValue()).getRecord(), null);
+      Object o = getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null);
       o = ((OObjectDatabaseTx) getDatabase()).detachAll(o, nonProxiedInstance);
       super.put(e.getKey(), o);
     }

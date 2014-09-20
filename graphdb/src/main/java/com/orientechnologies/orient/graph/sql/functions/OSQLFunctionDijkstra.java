@@ -21,7 +21,7 @@ import java.util.LinkedList;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.graph.sql.OGraphCommandExecutorSQLFactory;
@@ -54,7 +54,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
       final Object[] iParams, OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
 
-    final ORecordInternal record = (ORecordInternal) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
+    final ORecord record = (ORecord) (iCurrentRecord != null ? iCurrentRecord.getRecord() : null);
 
     Object source = iParams[0];
     if (OMultiValue.isMultiValue(source)) {

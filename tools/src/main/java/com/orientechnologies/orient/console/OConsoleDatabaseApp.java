@@ -15,6 +15,27 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Scanner;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -57,7 +78,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
@@ -73,22 +93,10 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected ODatabaseDocumentInternal currentDatabase;
   protected String                    currentDatabaseName;
-  protected ORecordInternal           currentRecord;
+  protected ORecord                   currentRecord;
   protected int                       currentRecordIdx;
   protected List<OIdentifiable>       currentResultSet;
   protected OServerAdmin              serverAdmin;
@@ -1310,7 +1318,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (currentRecord == null)
       message("\nEntry not found in dictionary.");
     else {
-      currentRecord = (ORecordInternal) currentRecord.load();
+      currentRecord = (ORecord) currentRecord.load();
       displayRecord(null);
     }
   }
@@ -1848,7 +1856,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   /** Should be used only by console commands */
-  public ORecordInternal getCurrentRecord() {
+  public ORecord getCurrentRecord() {
     return currentRecord;
   }
 
@@ -2022,7 +2030,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected OIdentifiable setCurrentRecord(final int iIndex) {
     currentRecordIdx = iIndex;
     if (iIndex < currentResultSet.size())
-      currentRecord = (ORecordInternal) currentResultSet.get(iIndex);
+      currentRecord = (ORecord) currentResultSet.get(iIndex);
     else
       currentRecord = null;
     return currentRecord;
@@ -2092,7 +2100,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected void setResultset(final List<OIdentifiable> iResultset) {
     currentResultSet = iResultset;
     currentRecordIdx = 0;
-    currentRecord = currentResultSet.isEmpty() ? null : (ORecordInternal) currentResultSet.get(0).getRecord();
+    currentRecord = currentResultSet.isEmpty() ? null : (ORecord) currentResultSet.get(0).getRecord();
   }
 
   protected void resetResultSet() {

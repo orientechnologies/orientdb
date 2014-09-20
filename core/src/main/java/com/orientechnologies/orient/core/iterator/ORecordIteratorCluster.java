@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -23,7 +22,6 @@ import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -32,7 +30,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  * @author Luca Garulli
  */
-public class ORecordIteratorCluster<REC extends ORecordInternal> extends OIdentifiableIterator<REC> {
+public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIterator<REC> {
   private ORecord currentRecord;
 
   public ORecordIteratorCluster(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
@@ -100,7 +98,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal> extends OIdenti
     boolean thereAreRecordsToBrowse = getCurrentEntry().compareTo(firstClusterEntry) > 0;
 
     if (thereAreRecordsToBrowse) {
-      ORecordInternal record = getRecord();
+      ORecord record = getRecord();
       currentRecord = readCurrentRecord(record, -1);
     }
 
@@ -137,7 +135,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal> extends OIdenti
       return false;
 
     if (!current.clusterPosition.isTemporary() && getCurrentEntry().compareTo(lastClusterEntry) < 0) {
-      ORecordInternal record = getRecord();
+      ORecord record = getRecord();
       currentRecord = readCurrentRecord(record, +1);
       if (currentRecord != null)
         return true;
@@ -188,7 +186,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal> extends OIdenti
   public REC next() {
     checkDirection(true);
 
-    ORecordInternal record;
+    ORecord record;
 
     // ITERATE UNTIL THE NEXT GOOD RECORD
     while (hasNext()) {

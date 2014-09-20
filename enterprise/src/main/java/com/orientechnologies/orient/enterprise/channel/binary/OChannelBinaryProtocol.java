@@ -20,6 +20,7 @@ import java.io.IOException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
@@ -121,12 +122,12 @@ public class OChannelBinaryProtocol {
     if (classId == RECORD_RID) {
       return network.readRID();
     } else {
-      final ORecordInternal record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
+      final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
 
       final ORecordId rid = network.readRID();
       final ORecordVersion version = network.readVersion();
       final byte[] content = network.readBytes();
-      record.fill(rid, version, content, false);
+      ORecordInternal.fill(record, rid, version, content, false);
 
       return record;
     }

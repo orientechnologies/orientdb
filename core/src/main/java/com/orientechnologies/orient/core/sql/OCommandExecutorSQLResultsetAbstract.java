@@ -28,7 +28,6 @@ import java.util.Set;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -41,7 +40,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -78,17 +76,17 @@ import com.orientechnologies.orient.core.storage.OStorage;
 @SuppressWarnings("unchecked")
 public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements Iterable<OIdentifiable>,
     OIterableRecordSource {
-  protected static final String                    KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
-  protected static final String                    KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
+  protected static final String               KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
+  protected static final String               KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
 
-  protected OSQLAsynchQuery<ODocument> request;
-  protected OSQLTarget                             parsedTarget;
-  protected OSQLFilter                             compiledFilter;
-  protected Map<String, Object>                    let                = null;
-  protected Iterator<? extends OIdentifiable>      target;
-  protected Iterable<OIdentifiable>                tempResult;
-  protected int                                    resultCount;
-  protected int                                    skip               = 0;
+  protected OSQLAsynchQuery<ODocument>        request;
+  protected OSQLTarget                        parsedTarget;
+  protected OSQLFilter                        compiledFilter;
+  protected Map<String, Object>               let                = null;
+  protected Iterator<? extends OIdentifiable> target;
+  protected Iterable<OIdentifiable>           tempResult;
+  protected int                               resultCount;
+  protected int                               skip               = 0;
 
   /**
    * Compile the filter conditions only the first time.
@@ -346,7 +344,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
             varValue = f.getFunction().getResult();
           } else
             varValue = f.execute(iRecord, iRecord, null, context);
-        } else if( letValue instanceof String )
+        } else if (letValue instanceof String)
           varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim(), context);
         else
           varValue = letValue;
@@ -373,11 +371,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final ORID[] range = getRange();
     if (iAscendentOrder)
-      target = new ORecordIteratorClass<ORecordInternal>(database, database, cls.getName(), true, request.isUseCache(), false,
-          locking).setRange(range[0], range[1]);
+      target = new ORecordIteratorClass<ORecord>(database, database, cls.getName(), true, request.isUseCache(), false, locking)
+          .setRange(range[0], range[1]);
     else
-      target = new ORecordIteratorClassDescendentOrder<ORecordInternal>(database, database, cls.getName(), true,
-          request.isUseCache(), false, locking).setRange(range[0], range[1]);
+      target = new ORecordIteratorClassDescendentOrder<ORecord>(database, database, cls.getName(), true, request.isUseCache(),
+          false, locking).setRange(range[0], range[1]);
   }
 
   protected void searchInClusters() {
@@ -419,8 +417,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     final OStorage.LOCKING_STRATEGY locking = context != null && context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
         .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
 
-    target = new ORecordIteratorClusters<ORecordInternal>(database, database, clIds, request.isUseCache(), false, locking)
-        .setRange(range[0], range[1]);
+    target = new ORecordIteratorClusters<ORecord>(database, database, clIds, request.isUseCache(), false, locking).setRange(
+        range[0], range[1]);
   }
 
   protected void applyLimitAndSkip() {

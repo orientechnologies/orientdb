@@ -15,6 +15,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.io.OIOException;
@@ -90,18 +102,6 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -1015,7 +1015,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
           // SEND BACK ALL THE RECORD IDS FOR THE CREATED RECORDS
           channel.writeInt(tx.getCreatedRecords().size());
-          for (Entry<ORecordId, ORecordInternal> entry : tx.getCreatedRecords().entrySet()) {
+          for (Entry<ORecordId, ORecord> entry : tx.getCreatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
             channel.writeRID(entry.getValue().getIdentity());
 
@@ -1026,7 +1026,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
           // SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
           channel.writeInt(tx.getUpdatedRecords().size());
-          for (Entry<ORecordId, ORecordInternal> entry : tx.getUpdatedRecords().entrySet()) {
+          for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
             channel.writeVersion(entry.getValue().getRecordVersion());
           }
@@ -1362,7 +1362,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } else {
-      final ORecordInternal record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
+      final ORecord record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
           OStorage.LOCKING_STRATEGY.DEFAULT);
 
       beginResponse();
@@ -1373,7 +1373,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           channel.writeByte((byte) 1); // HAS RECORD
           channel.writeBytes(getRecordBytes(record));
           channel.writeVersion(record.getRecordVersion());
-          channel.writeByte(record.getRecordType());
+          channel.writeByte(ORecordInternal.getRecordType(record));
 
           if (fetchPlanString.length() > 0) {
             // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH

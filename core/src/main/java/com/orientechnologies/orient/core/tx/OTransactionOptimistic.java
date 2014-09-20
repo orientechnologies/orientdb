@@ -48,7 +48,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -194,11 +194,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = TXSTATUS.ROLLED_BACK;
   }
 
-  public ORecordInternal loadRecord(final ORID iRid, final ORecordInternal iRecord, final String iFetchPlan,
-      final boolean ignoreCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache,
+      final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkTransaction();
 
-    final ORecordInternal txRecord = getRecord(iRid);
+    final ORecord txRecord = getRecord(iRid);
     if (txRecord == OTransactionRealAbstract.DELETED_RECORD)
       // DELETED IN TX
       return null;
@@ -217,8 +217,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       return null;
 
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
-    final ORecordInternal record = database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false,
-        iLockingStrategy);
+    final ORecord record = database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false, iLockingStrategy);
 
     if (record != null)
       addRecord(record, ORecordOperation.LOADED, null);
@@ -226,20 +225,19 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     return record;
   }
 
-  public void deleteRecord(final ORecordInternal iRecord, final OPERATION_MODE iMode) {
+  public void deleteRecord(final ORecord iRecord, final OPERATION_MODE iMode) {
     if (!iRecord.getIdentity().isValid())
       return;
 
     addRecord(iRecord, ORecordOperation.DELETED, null);
   }
 
-  public ORecordInternal saveRecord(final ORecordInternal iRecord, final String iClusterName, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public ORecord saveRecord(final ORecord iRecord, final String iClusterName, final OPERATION_MODE iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     if (iRecord == null)
       return null;
-    final byte operation = iForceCreate ? ORecordOperation.CREATED
-        : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED : ORecordOperation.CREATED;
+    final byte operation = iForceCreate ? ORecordOperation.CREATED : iRecord.getIdentity().isValid() ? ORecordOperation.UPDATED
+        : ORecordOperation.CREATED;
     addRecord(iRecord, operation, iClusterName);
     return iRecord;
   }
@@ -262,7 +260,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = iStatus;
   }
 
-  protected void addRecord(final ORecordInternal iRecord, final byte iStatus, final String iClusterName) {
+  protected void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName) {
     checkTransaction();
 
     switch (iStatus) {
@@ -390,7 +388,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             switch (iStatus) {
             case ORecordOperation.DELETED:
               recordEntries.remove(rid);
-//              txEntry.type = ORecordOperation.DELETED;
+              // txEntry.type = ORecordOperation.DELETED;
               break;
             }
             break;

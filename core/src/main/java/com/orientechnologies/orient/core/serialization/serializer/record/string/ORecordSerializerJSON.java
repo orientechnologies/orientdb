@@ -135,7 +135,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             dateAsLong = true;
           else if (f.startsWith("prettyPrint"))
             prettyPrint = true;
-          else if (f.startsWith("graph")||f.startsWith("shallow"))
+          else if (f.startsWith("graph") || f.startsWith("shallow"))
             // SUPPORTED IN OTHER PARTS
             ;
           else
@@ -154,17 +154,16 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     return 0;
   }
 
-  public ORecordInternal fromString(String iSource, ORecordInternal iRecord, final String[] iFields, boolean needReload) {
+  public ORecord fromString(String iSource, ORecord iRecord, final String[] iFields, boolean needReload) {
     return fromString(iSource, iRecord, iFields, null, needReload);
   }
 
   @Override
-  public ORecordInternal fromString(String iSource, ORecordInternal iRecord, final String[] iFields) {
+  public ORecord fromString(String iSource, ORecord iRecord, final String[] iFields) {
     return fromString(iSource, iRecord, iFields, null, false);
   }
 
-  public ORecordInternal fromString(String iSource, ORecordInternal iRecord, final String[] iFields, final String iOptions,
-      boolean needReload) {
+  public ORecord fromString(String iSource, ORecord iRecord, final String[] iFields, final String iOptions, boolean needReload) {
     iSource = unwrapSource(iSource);
 
     boolean noMap = false;
@@ -198,13 +197,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
           fieldTypes = loadFieldTypes(fieldTypes, fieldValueAsString);
         } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
-          if (iRecord == null || iRecord.getRecordType() != fieldValueAsString.charAt(0)) {
+          if (iRecord == null || ORecordInternal.getRecordType(iRecord) != fieldValueAsString.charAt(0)) {
             // CREATE THE RIGHT RECORD INSTANCE
             iRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) fieldValueAsString.charAt(0));
           }
         } else if (needReload && fieldName.equals(ODocumentHelper.ATTRIBUTE_RID) && iRecord instanceof ODocument) {
           if (fieldValue != null && fieldValue.length() > 0) {
-            ORecordInternal localRecord = ODatabaseRecordThreadLocal.INSTANCE.get().load(new ORecordId(fieldValueAsString));
+            ORecord localRecord = ODatabaseRecordThreadLocal.INSTANCE.get().load(new ORecordId(fieldValueAsString));
             if (localRecord != null)
               iRecord = localRecord;
           }
@@ -227,7 +226,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
           // RECORD ATTRIBUTES
           if (fieldName.equals(ODocumentHelper.ATTRIBUTE_RID))
-            iRecord.setIdentity(new ORecordId(fieldValueAsString));
+            ORecordInternal.setIdentity(iRecord, new ORecordId(fieldValueAsString));
           else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION))
             if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
               recordVersion = Integer.parseInt(fieldValue);
@@ -328,7 +327,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   @Override
-  public StringBuilder toString(final ORecordInternal iRecord, final StringBuilder iOutput, final String iFormat,
+  public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
       final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType) {
     try {

@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.record;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
+
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -33,16 +41,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 @SuppressWarnings({ "unchecked", "serial" })
-public abstract class ORecordAbstract implements ORecord, ORecordInternal {
+public abstract class ORecordAbstract implements ORecord {
   protected ORecordId                            _recordId;
   protected ORecordVersion                       _recordVersion          = OVersionFactory.instance().createVersion();
 
@@ -68,7 +68,7 @@ public abstract class ORecordAbstract implements ORecord, ORecordInternal {
     unsetDirty();
   }
 
-  public ORecordAbstract fill(final ORID iRid, final ORecordVersion iVersion, final byte[] iBuffer, boolean iDirty) {
+  protected ORecordAbstract fill(final ORID iRid, final ORecordVersion iVersion, final byte[] iBuffer, boolean iDirty) {
     _recordId.clusterId = iRid.getClusterId();
     _recordId.clusterPosition = iRid.getClusterPosition();
     _recordVersion.copyFrom(iVersion);
@@ -87,7 +87,7 @@ public abstract class ORecordAbstract implements ORecord, ORecordInternal {
     return _recordId;
   }
 
-  public ORecordAbstract setIdentity(final ORecordId iIdentity) {
+  protected ORecordAbstract setIdentity(final ORecordId iIdentity) {
     _recordId = iIdentity;
     return this;
   }
@@ -101,7 +101,7 @@ public abstract class ORecordAbstract implements ORecord, ORecordInternal {
     return this;
   }
 
-  public ORecordAbstract setIdentity(final int iClusterId, final OClusterPosition iClusterPosition) {
+  protected ORecordAbstract setIdentity(final int iClusterId, final OClusterPosition iClusterPosition) {
     if (_recordId == null || _recordId == ORecordId.EMPTY_RECORD_ID)
       _recordId = new ORecordId(iClusterId, iClusterPosition);
     else {
@@ -161,10 +161,12 @@ public abstract class ORecordAbstract implements ORecord, ORecordInternal {
     return this;
   }
 
-  public void unsetDirty() {
+  protected void unsetDirty() {
     _contentChanged = false;
     _dirty = false;
   }
+
+  protected abstract byte getRecordType();
 
   public ORecordAbstract setDirty() {
     if (!_dirty && _status != STATUS.UNMARSHALLING) {
@@ -246,7 +248,7 @@ public abstract class ORecordAbstract implements ORecord, ORecordInternal {
     return _recordVersion.getCounter();
   }
 
-  public void setVersion(final int iVersion) {
+  protected void setVersion(final int iVersion) {
     _recordVersion.setCounter(iVersion);
   }
 
@@ -263,17 +265,17 @@ public abstract class ORecordAbstract implements ORecord, ORecordInternal {
     return this;
   }
 
-  public ORecordInternal load() {
+  public ORecord load() {
     if (!getIdentity().isValid())
       throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
 
     try {
-      final ORecordInternal result = getDatabase().load(this);
+      final ORecord result = getDatabase().load(this);
 
       if (result == null)
         throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found");
 
-      return (ORecordInternal) result;
+      return result;
     } catch (Exception e) {
       throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
     }
@@ -295,15 +297,15 @@ public abstract class ORecordAbstract implements ORecord, ORecordInternal {
     return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
 
-  public ORecordInternal reload() {
+  public ORecord reload() {
     return reload(null);
   }
 
-  public ORecordInternal reload(final String iFetchPlan) {
+  public ORecord reload(final String iFetchPlan) {
     return reload(null, true);
   }
 
-  public ORecordInternal reload(final String iFetchPlan, final boolean iIgnoreCache) {
+  public ORecord reload(final String iFetchPlan, final boolean iIgnoreCache) {
     if (!getIdentity().isValid())
       throw new ORecordNotFoundException("The record has no id. It is probably new or still transient");
 
@@ -416,7 +418,7 @@ public abstract class ORecordAbstract implements ORecord, ORecordInternal {
    * @param iListener
    *          ODocumentListener implementation
    */
-  public void addListener(final ORecordListener iListener) {
+  protected void addListener(final ORecordListener iListener) {
     if (_listeners == null)
       _listeners = Collections.newSetFromMap(new WeakHashMap<ORecordListener, Boolean>());
 
@@ -428,7 +430,7 @@ public abstract class ORecordAbstract implements ORecord, ORecordInternal {
    * 
    * @see ORecordListener
    */
-  public void removeListener(final ORecordListener listener) {
+  protected void removeListener(final ORecordListener listener) {
     if (_listeners != null) {
       _listeners.remove(listener);
       if (_listeners.isEmpty())
@@ -436,7 +438,7 @@ public abstract class ORecordAbstract implements ORecord, ORecordInternal {
     }
   }
 
-  public <RET extends ORecord> RET flatCopy() {
+  protected <RET extends ORecord> RET flatCopy() {
     return (RET) copy();
   }
 
@@ -467,13 +469,11 @@ public abstract class ORecordAbstract implements ORecord, ORecordInternal {
       reload(null, true);
   }
 
-  @Override
-  public boolean isContentChanged() {
+  protected boolean isContentChanged() {
     return _contentChanged;
   }
 
-  @Override
-  public void setContentChanged(boolean contentChanged) {
+  protected void setContentChanged(boolean contentChanged) {
     _contentChanged = contentChanged;
   }
 }

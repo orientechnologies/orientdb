@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -88,7 +87,7 @@ public class OFindReferenceHelper {
 
   private static void browseCluster(final ODatabaseRecord iDatabase, final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map,
       final String iClusterName) {
-    for (ORecordInternal record : iDatabase.browseCluster(iClusterName)) {
+    for (ORecord record : iDatabase.browseCluster(iClusterName)) {
       if (record instanceof ODocument) {
         try {
           for (String fieldName : ((ODocument) record).fieldNames()) {

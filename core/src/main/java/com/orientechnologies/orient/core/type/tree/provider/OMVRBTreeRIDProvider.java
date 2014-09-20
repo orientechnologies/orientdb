@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -86,13 +87,13 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
   public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId) {
     this(iStorage, getDatabase().getClusterNameById(iClusterId));
     marshalling = false;
-    record.unsetDirty();
+    ORecordInternal.unsetDirty(record);
   }
 
   public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId, int binaryThreshold) {
     this(iStorage, getDatabase().getClusterNameById(iClusterId));
     marshalling = false;
-    record.unsetDirty();
+    ORecordInternal.unsetDirty(record);
     this.binaryThreshold = binaryThreshold;
   }
 

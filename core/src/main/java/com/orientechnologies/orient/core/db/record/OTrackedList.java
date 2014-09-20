@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings({ "serial" })
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTrackedMultiValue<Integer, T>, Serializable {
-  protected final ORecord                           sourceRecord;
+  protected final ORecord                              sourceRecord;
   private STATUS                                       status          = STATUS.NOT_LOADED;
   protected Set<OMultiValueChangeListener<Integer, T>> changeListeners = Collections
                                                                            .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Integer, T>, Boolean>());
@@ -172,7 +172,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   @SuppressWarnings("unchecked")
   public <RET> RET setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ((ORecordInternal) sourceRecord).isContentChanged()))
+        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
       sourceRecord.setDirty();
     return (RET) this;
   }

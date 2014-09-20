@@ -176,7 +176,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     if (record == null)
       return;
 
-    record.unsetDirty();
+    ORecordInternal.unsetDirty(record);
   }
 
   public void setInternal(final ATTRIBUTES attribute, final Object iValue) {
@@ -261,7 +261,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return (RET) resultPojo;
   }
 
-  public ODatabaseComplex<T> delete(final ORecordInternal iRecord) {
+  public ODatabaseComplex<T> delete(final ORecord iRecord) {
     underlying.delete(iRecord);
     return this;
   }
@@ -438,7 +438,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   /**
    * Register a new POJO
    */
-  public void registerUserObject(final Object iObject, final ORecordInternal iRecord) {
+  public void registerUserObject(final Object iObject, final ORecord iRecord) {
     if (!(iRecord instanceof ODocument))
       return;
 

@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 
@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  * 
  * @author Luca Garulli
  */
-public interface ODatabaseRecordInternal extends ODatabaseRecord, ODatabaseComplexInternal<ORecordInternal> {
+public interface ODatabaseRecordInternal extends ODatabaseRecord, ODatabaseComplexInternal<ORecord> {
 
   /**
    * Internal. Returns the factory that defines a set of components that current database should use to be compatible to current

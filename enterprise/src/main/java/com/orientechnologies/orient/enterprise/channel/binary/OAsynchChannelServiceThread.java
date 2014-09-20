@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import com.orientechnologies.common.thread.OSoftThread;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Service thread that catches internal messages sent by the server

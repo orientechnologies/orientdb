@@ -33,7 +33,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -47,7 +46,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -93,8 +92,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     iDatabase.getLocalCache().setEnable(false);
   }
 
-  public ODatabaseExport(final ODatabaseRecordInternal iDatabase, final OutputStream iOutputStream, final OCommandOutputListener iListener)
-      throws IOException {
+  public ODatabaseExport(final ODatabaseRecordInternal iDatabase, final OutputStream iOutputStream,
+      final OCommandOutputListener iListener) throws IOException {
     super(iDatabase, "streaming", iListener);
 
     writer = new OJSONWriter(new OutputStreamWriter(iOutputStream));
@@ -179,9 +178,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       long clusterExportedRecordsCurrent = 0;
       if (clusterName != null) {
-        ORecordInternal rec = null;
+        ORecord rec = null;
         try {
-          for (ORecordIteratorCluster<ORecordInternal> it = database.browseCluster(clusterName); it.hasNext();) {
+          for (ORecordIteratorCluster<ORecord> it = database.browseCluster(clusterName); it.hasNext();) {
 
             rec = it.next();
             if (rec instanceof ODocument) {
@@ -533,7 +532,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("OK (" + s.getClasses().size() + " classes)");
   }
 
-  private boolean exportRecord(long recordTot, long recordNum, ORecordInternal rec) throws IOException {
+  private boolean exportRecord(long recordTot, long recordNum, ORecord rec) throws IOException {
     if (rec != null)
       try {
         if (rec.getIdentity().isValid())

@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.record.ORecordMultiValueHelper.MULTI
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -160,7 +159,7 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
     if (value != null)
       if (value instanceof ORecord && !((ORecord) value).getIdentity().isNew()) {
         if (((ORecord) value).isDirty())
-          ODatabaseRecordThreadLocal.INSTANCE.get().save((ORecordInternal) value);
+          ODatabaseRecordThreadLocal.INSTANCE.get().save((ORecord) value);
 
         marshalling = true;
         try {

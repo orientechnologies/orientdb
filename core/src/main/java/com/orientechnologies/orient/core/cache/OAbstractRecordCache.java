@@ -22,7 +22,7 @@ import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValu
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Cache of documents. Delegates real work on storing to {@link OCache} implementation passed at creation time leaving only DB
@@ -75,7 +75,7 @@ public abstract class OAbstractRecordCache {
    *          unique identifier of record
    * @return record stored in cache if any, otherwise - {@code null}
    */
-  public ORecordInternal freeRecord(final ORID rid) {
+  public ORecord freeRecord(final ORID rid) {
     return underlying.remove(rid);
   }
 

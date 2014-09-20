@@ -35,10 +35,10 @@ import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -53,7 +53,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -95,10 +94,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
         if (database.getTransaction().isActive()) {
           // USE THE DEFAULT CLUSTER
-          database.save((ORecordInternal) record);
+          database.save((ORecord) record);
 
         } else
-          database.save((ORecordInternal) record);
+          database.save((ORecord) record);
 
         if (record != null)
           rid = record.getIdentity();
@@ -107,7 +106,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     } else {
       if (iLinked instanceof String)
         iLinked = new ORecordId((String) iLinked);
-      else if (!(iLinked instanceof ORecordInternal)) {
+      else if (!(iLinked instanceof ORecord)) {
         // NOT RECORD: TRY TO EXTRACT THE DOCUMENT IF ANY
         final String boundDocumentField = OObjectSerializerHelperManager.getInstance().getDocumentBoundField(iLinked.getClass());
         if (boundDocumentField != null)
@@ -119,7 +118,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
             + iLinked.getClass().getName() + " and value=" + iLinked);
 
       // RECORD
-      ORecordInternal iLinkedRecord = ((OIdentifiable) iLinked).getRecord();
+      ORecord iLinkedRecord = ((OIdentifiable) iLinked).getRecord();
       rid = iLinkedRecord.getIdentity();
 
       if ((rid.isNew() && !rid.isTemporary()) || iLinkedRecord.isDirty()) {
@@ -153,7 +152,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     return resultRid;
   }
 
-  public Object fieldFromStream(final ORecordInternal iSourceRecord, final OType iType, OClass iLinkedClass, OType iLinkedType,
+  public Object fieldFromStream(final ORecord iSourceRecord, final OType iType, OClass iLinkedClass, OType iLinkedType,
       final String iName, final String iValue) {
 
     if (iValue == null)
@@ -502,9 +501,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     }
 
     case EMBEDDED:
-      if (iValue instanceof ORecordInternal) {
+      if (iValue instanceof ORecord) {
         iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
-        toString((ORecordInternal) iValue, iOutput, null, iObjHandler, iMarshalledRecords, false, true);
+        toString((ORecord) iValue, iOutput, null, iObjHandler, iMarshalledRecords, false, true);
         iOutput.append(OStringSerializerHelper.EMBEDDED_END);
       } else if (iValue instanceof ODocumentSerializable) {
         final ODocument doc = ((ODocumentSerializable) iValue).toDocument();
@@ -593,7 +592,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
                       return iRecord;
                     }
 
-                    public ORecordInternal getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
+                    public ORecord getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
                       return new ODocument(iLinkedClass);
                     }
 
@@ -601,10 +600,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
                       return false;
                     }
 
-                    public void registerUserObject(Object iObject, ORecordInternal iRecord) {
+                    public void registerUserObject(Object iObject, ORecord iRecord) {
                     }
 
-                    public void registerUserObjectAfterLinkSave(ORecordInternal iRecord) {
+                    public void registerUserObjectAfterLinkSave(ORecord iRecord) {
                     }
                   }, null, iSaveOnlyDirty);
             }
@@ -786,7 +785,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         iOutput.append(OStringSerializerHelper.EMBEDDED_BEGIN);
 
       if (linkedType == OType.EMBEDDED && o instanceof OIdentifiable)
-        toString((ORecordInternal) ((OIdentifiable) o).getRecord(), iOutput, null);
+        toString((ORecord) ((OIdentifiable) o).getRecord(), iOutput, null);
       else if (linkedType != OType.LINK && (linkedClass != null || doc != null)) {
         if (id == null) {
           // EMBEDDED OBJECTS
@@ -803,7 +802,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
                   return iRecord;
                 }
 
-                public ORecordInternal getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
+                public ORecord getRecordByUserObject(Object iPojo, boolean iCreateIfNotAvailable) {
                   return new ODocument(linkedClass);
                 }
 
@@ -811,10 +810,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
                   return false;
                 }
 
-                public void registerUserObject(Object iObject, ORecordInternal iRecord) {
+                public void registerUserObject(Object iObject, ORecord iRecord) {
                 }
 
-                public void registerUserObjectAfterLinkSave(ORecordInternal iRecord) {
+                public void registerUserObjectAfterLinkSave(ORecord iRecord) {
                 }
               }, null, iSaveOnlyDirty);
         }

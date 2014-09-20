@@ -20,12 +20,14 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -59,7 +61,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertEquals(colNames[2], "followers");
 
       Assert.assertNull(d.getClassName());
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -76,7 +78,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
     for (ODocument d : result) {
       Assert.assertTrue(d.fieldNames().length <= 3);
       Assert.assertNull(d.getClassName());
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
 
     db.close();
@@ -95,7 +97,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
         Assert.assertTrue(d.field("name").equals(((String) d.field("name")).toUpperCase()));
 
       Assert.assertNull(d.getClassName());
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -112,7 +114,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertNotNull(d.field("name2"));
 
       Assert.assertNull(d.getClassName());
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -132,7 +134,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertNull(d.field("address"));
 
       Assert.assertNull(d.getClassName());
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -148,7 +150,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
     for (ODocument d : result) {
       Assert.assertEquals(d.field("test").toString(), "Mr. " + d.field("name") + " " + d.field("surname") + "!");
 
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -166,7 +168,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertTrue(d.field("name").toString().endsWith("."));
 
       Assert.assertNull(d.getClassName());
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -184,7 +186,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertNotNull(d.field("2"));
 
       Assert.assertNull(d.getClassName());
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -200,7 +202,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertEquals(d.field("ciao"), "ciao");
 
       Assert.assertNull(d.getClassName());
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -228,7 +230,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
 
     for (ODocument d : result) {
       Assert.assertTrue(d.getSchemaClass().isSubClassOf("E"));
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 

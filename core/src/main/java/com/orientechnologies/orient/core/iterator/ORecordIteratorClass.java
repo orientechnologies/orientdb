@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -35,7 +34,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  * @author Luca Garulli
  */
-public class ORecordIteratorClass<REC extends ORecordInternal> extends ORecordIteratorClusters<REC> {
+public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorClusters<REC> {
   protected final OClass targetClass;
   protected boolean      polymorphic;
 

@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings("serial")
 public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
-  final protected ORecord                        sourceRecord;
+  final protected ORecord                           sourceRecord;
   private STATUS                                    status          = STATUS.NOT_LOADED;
   private Set<OMultiValueChangeListener<Object, T>> changeListeners = Collections
                                                                         .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Object, T>, Boolean>());
@@ -144,7 +144,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   @SuppressWarnings({ "unchecked" })
   public OTrackedMap<T> setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ((ORecordInternal) sourceRecord).isContentChanged()))
+        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
       sourceRecord.setDirty();
     return this;
   }
@@ -188,7 +188,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
     while (listIterator.hasPrevious()) {
       final OMultiValueChangeEvent<Object, T> event = listIterator.previous();
-      switch (event.getChangeType()) {  
+      switch (event.getChangeType()) {
       case ADD:
         reverted.remove(event.getKey());
         break;

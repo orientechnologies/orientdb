@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -71,8 +72,8 @@ public class ORecordOperation implements OSerializableStream {
         .append("]").toString();
   }
 
-  public ORecordInternal getRecord() {
-    return (ORecordInternal) (record != null ? record.getRecord() : null);
+  public ORecord getRecord() {
+    return (ORecord) (record != null ? record.getRecord() : null);
   }
 
   public byte[] toStream() throws OSerializationException {
@@ -84,8 +85,8 @@ public class ORecordOperation implements OSerializableStream {
       switch (type) {
       case CREATED:
       case UPDATED:
-        stream.set(((ORecordInternal) record.getRecord()).getRecordType());
-        stream.set(((ORecordInternal) record.getRecord()).toStream());
+        stream.set(ORecordInternal.getRecordType(record.getRecord()));
+        stream.set(record.getRecord().toStream());
         break;
       }
 
@@ -106,7 +107,7 @@ public class ORecordOperation implements OSerializableStream {
       case CREATED:
       case UPDATED:
         record = Orient.instance().getRecordFactoryManager().newInstance(stream.getAsByte());
-        ((ORecordInternal) record).fill(rid, OVersionFactory.instance().createVersion(), stream.getAsByteArray(), true);
+        ORecordInternal.fill((ORecord) record, rid, OVersionFactory.instance().createVersion(), stream.getAsByteArray(), true);
         break;
       }
 

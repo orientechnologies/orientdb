@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-
-import java.util.Map;
+import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Abstract class to manage command results.
@@ -37,8 +37,8 @@ public abstract class OAbstractCommandResultListener implements OCommandResultLi
   public abstract boolean isEmpty();
 
   protected void fetchRecord(final Object iRecord, final OFetchListener iFetchListener) {
-    if (fetchPlan != null && iRecord instanceof ORecordInternal) {
-      final ORecordInternal record = (ORecordInternal) iRecord;
+    if (fetchPlan != null && iRecord instanceof ORecord) {
+      final ORecord record = (ORecord) iRecord;
       final OFetchContext context = new ORemoteFetchContext();
       OFetchHelper.fetch(record, record, fetchPlan, iFetchListener, context, "");
     }

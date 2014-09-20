@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -128,8 +129,8 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
                 "Resolved conflict automatically between versions on CREATE record %s/%s v.%d (other RID=%s v.%d). Current record version will be overwritten",
                 database.getName(), iCurrentRID, iCurrentVersion, iOtherRID, iOtherVersion);
 
-        final ORecordInternal record = iCurrentRID.getRecord();
-        record.setVersion(iOtherVersion - 1);
+        final ORecord record = iCurrentRID.getRecord();
+        ORecordInternal.setVersion(record, iOtherVersion - 1);
         record.setDirty();
 
         try {
@@ -271,19 +272,6 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   protected void errorOnWriteConflict(final String iRemoteNode, final ODocument doc) {
     ODistributedServerLog.error(this, cluster.getLocalNodeName(), iRemoteNode, DIRECTION.IN,
         "Error on saving CONFLICT for record %s/%s...", database.getName(), doc);
-  }
-
-  protected boolean areRecordContentIdentical(final ORecordInternal rec1, final ORecordInternal rec2) {
-    final byte[] rec1Stream = rec1.toStream();
-    final byte[] rec2Stream = rec2.toStream();
-
-    if (rec1Stream.length != rec2Stream.length)
-      return false;
-
-    for (int i = 0; i < rec1Stream.length; ++i)
-      if (rec1Stream[i] != rec2Stream[i])
-        return false;
-    return true;
   }
 
 }

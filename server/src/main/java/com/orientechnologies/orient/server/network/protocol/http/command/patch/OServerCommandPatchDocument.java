@@ -15,6 +15,8 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.patch;
 
+import com.orientechnologies.orient.core.record.ORecordInternal;
+
 public class OServerCommandPatchDocument extends
     com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandDocumentAbstract {
   private static final String[] NAMES = { "PATCH|document/*" };
@@ -55,7 +57,7 @@ public class OServerCommandPatchDocument extends
       if (!recordId.isValid())
         recordId = (com.orientechnologies.orient.core.id.ORecordId) doc.getIdentity();
       else
-        doc.setIdentity(recordId);
+        ORecordInternal.setIdentity(doc, recordId);
 
       if (!recordId.isValid())
         throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);

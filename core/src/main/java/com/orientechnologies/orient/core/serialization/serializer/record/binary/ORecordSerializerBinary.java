@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -35,7 +35,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   }
 
   @Override
-  public ORecordInternal fromStream(final byte[] iSource, ORecordInternal iRecord, final String[] iFields) {
+  public ORecord fromStream(final byte[] iSource, ORecord iRecord, final String[] iFields) {
     if (iSource.length == 0)
       return iRecord;
     if (iRecord == null)
@@ -51,7 +51,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   }
 
   @Override
-  public byte[] toStream(final ORecordInternal iSource, final boolean iOnlyDelta) {
+  public byte[] toStream(final ORecord iSource, final boolean iOnlyDelta) {
     checkTypeODocument(iSource);
     if (!OSerializationSetThreadLocal.checkAndAdd((ODocument) iSource))
       return null;
@@ -63,7 +63,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     return container.fitBytes();
   }
 
-  private void checkTypeODocument(final ORecordInternal iRecord) {
+  private void checkTypeODocument(final ORecord iRecord) {
     if (!(iRecord instanceof ODocument)) {
       throw new UnsupportedOperationException("The " + ORecordSerializerBinary.NAME + " don't support record of type "
           + iRecord.getClass().getName());

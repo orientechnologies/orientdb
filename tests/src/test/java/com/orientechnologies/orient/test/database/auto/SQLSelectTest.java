@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -34,6 +35,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -80,7 +82,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(result.size() != 0);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -92,7 +94,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(result.size() != 0);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -117,7 +119,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(result.size() != 0);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -816,7 +818,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(result.size() != 0);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 

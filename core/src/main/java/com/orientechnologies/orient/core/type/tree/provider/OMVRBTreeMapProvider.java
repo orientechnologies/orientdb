@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -51,7 +52,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
   public OMVRBTreeMapProvider(final OStorage iStorage, final String iClusterName, final ORID iRID) {
     this(iStorage, iClusterName, null, null);
-    record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
+    ORecordInternal.setIdentity(record, iRID.getClusterId(), iRID.getClusterPosition());
   }
 
   public OMVRBTreeMapProvider(final OStorage iStorage, final String iClusterName, final OBinarySerializer<K> iKeySerializer,

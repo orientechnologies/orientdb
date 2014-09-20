@@ -40,7 +40,6 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldVisitor;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldWalker;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
@@ -95,7 +94,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private Map<OPropertyImpl, String> linkedClasses          = new HashMap<OPropertyImpl, String>();
   private Map<OClass, String>        superClasses           = new HashMap<OClass, String>();
   private OJSONReader                jsonReader;
-  private ORecordInternal            record;
+  private ORecord                    record;
   private boolean                    schemaImported         = false;
   private int                        exporterVersion        = -1;
   private ORID                       schemaRecordId;
@@ -1259,7 +1258,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if ((clusterId != manualIndexCluster && clusterId != internalCluster && clusterId != indexCluster)) {
         record.getRecordVersion().copyFrom(OVersionFactory.instance().createVersion());
         record.setDirty();
-        record.setIdentity(new ORecordId());
+        ORecordInternal.setIdentity(record, new ORecordId());
 
         if (!preserveRids && record instanceof ODocument && ((ODocument) record).getSchemaClass() != null)
           record.save();

@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Basic interface to handle the mapping between user objects and records. In some database implementation the user objects can be
@@ -37,7 +37,7 @@ public interface OUserObject2RecordHandler {
 	 *          Create the record if not available
 	 * @return The record associated
 	 */
-	public ORecordInternal getRecordByUserObject(Object iUserObject, boolean iCreateIfNotAvailable);
+	public ORecord getRecordByUserObject(Object iUserObject, boolean iCreateIfNotAvailable);
 
 	/**
 	 * Returns the user object associated to a record. If the record is not loaded yet, iFetchPlan will be used as fetch plan.
@@ -63,7 +63,7 @@ public interface OUserObject2RecordHandler {
 	 * @param iRecord
 	 *          record
 	 */
-	public void registerUserObject(final Object iUserObject, final ORecordInternal iRecord);
+	public void registerUserObject(final Object iUserObject, final ORecord iRecord);
 
 	/**
 	 * Registers the saved linked record. Needed only to make the old object database implementation work
@@ -73,5 +73,5 @@ public interface OUserObject2RecordHandler {
 	 * @param iRecord
 	 *          record
 	 */
-	public void registerUserObjectAfterLinkSave(final ORecordInternal iRecord);
+	public void registerUserObjectAfterLinkSave(final ORecord iRecord);
 }

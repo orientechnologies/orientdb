@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -47,7 +48,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   protected long                          browsedRecords         = 0;
 
   private String                          fetchPlan;
-  private ORecordInternal                 reusedRecord           = null;                                          // DEFAULT = NOT
+  private ORecord                         reusedRecord           = null;                                          // DEFAULT = NOT
   // REUSE IT
   private Boolean                         directionForward;
 
@@ -96,11 +97,11 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
   public abstract OIdentifiableIterator<REC> last();
 
-  public ORecordInternal current() {
+  public ORecord current() {
     return readCurrentRecord(getRecord(), 0);
   }
 
-  protected ORecordInternal getTransactionEntry() {
+  protected ORecord getTransactionEntry() {
     boolean noPhysicalRecordToBrowse;
 
     if (current.clusterPosition.isTemporary())
@@ -160,7 +161,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * @return @see #isReuseSameRecord()
    */
   public OIdentifiableIterator<REC> setReuseSameRecord(final boolean reuseSameRecord) {
-    reusedRecord = (ORecordInternal) (reuseSameRecord ? database.newInstance() : null);
+    reusedRecord = (ORecord) (reuseSameRecord ? database.newInstance() : null);
     return this;
   }
 
@@ -169,8 +170,8 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * 
    * @return the record to use for the operation.
    */
-  protected ORecordInternal getRecord() {
-    final ORecordInternal record;
+  protected ORecord getRecord() {
+    final ORecord record;
     if (reusedRecord != null) {
       // REUSE THE SAME RECORD AFTER HAVING RESETTED IT
       record = reusedRecord;
@@ -253,7 +254,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    *          to read value from database inside it. If record is null link will be created and stored in it.
    * @return record which was read from db.
    */
-  protected ORecordInternal readCurrentRecord(ORecordInternal iRecord, final int iMovement) {
+  protected ORecord readCurrentRecord(ORecord iRecord, final int iMovement) {
     if (limit > -1 && browsedRecords >= limit)
       // LIMIT REACHED
       return null;
@@ -279,7 +280,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
 
       try {
         if (iRecord != null) {
-          iRecord.setIdentity(new ORecordId(current.clusterId, current.clusterPosition));
+          ORecordInternal.setIdentity(iRecord, new ORecordId(current.clusterId, current.clusterPosition));
           iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, iterateThroughTombstones, lockingStrategy);
         } else
           iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones, lockingStrategy);

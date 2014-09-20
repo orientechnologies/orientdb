@@ -77,24 +77,24 @@ public class ORecordFactoryManager {
     return cls;
   }
 
-  public ORecordInternal newInstance() {
+  public ORecord newInstance() {
     final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
     try {
-      return (ORecordInternal) getFactory(database.getRecordType()).newRecord();
+      return (ORecord) getFactory(database.getRecordType()).newRecord();
     } catch (Exception e) {
       throw new IllegalArgumentException("Unsupported record type: " + database.getRecordType(), e);
     }
   }
 
-  public ORecordInternal newInstance(final byte iRecordType) {
+  public ORecord newInstance(final byte iRecordType) {
     try {
-      return (ORecordInternal) getFactory(iRecordType).newRecord();
+      return (ORecord) getFactory(iRecordType).newRecord();
     } catch (Exception e) {
       throw new IllegalArgumentException("Unsupported record type: " + iRecordType, e);
     }
   }
 
-  public void declareRecordType(byte iByte, String iName, Class<? extends ORecordInternal> iClass, final ORecordFactory iFactory) {
+  public void declareRecordType(byte iByte, String iName, Class<? extends ORecord> iClass, final ORecordFactory iFactory) {
     if (recordTypes[iByte] != null)
       throw new OException("Record type byte '" + iByte + "' already in use : " + recordTypes[iByte].getName());
     recordTypeNames[iByte] = iName;

@@ -17,13 +17,13 @@ package com.orientechnologies.orient.core.serialization.serializer.record;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class ORecordSerializerRaw implements ORecordSerializer {
   public static final String NAME = "ORecordDocumentRaw";
 
-  public ORecordInternal fromStream(final byte[] iSource) {
+  public ORecord fromStream(final byte[] iSource) {
     return new ORecordBytes(iSource);
   }
 
@@ -42,7 +42,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
     return NAME;
   }
 
-  public ORecordInternal fromStream(final byte[] iSource, final ORecordInternal iRecord, String[] iFields) {
+  public ORecord fromStream(final byte[] iSource, final ORecord iRecord, String[] iFields) {
     final ORecordBytes record = (ORecordBytes) iRecord;
     record.fromStream(iSource);
     record.reset(iSource);
@@ -50,7 +50,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
     return record;
   }
 
-  public byte[] toStream(final ORecordInternal iSource, boolean iOnlyDelta) {
+  public byte[] toStream(final ORecord iSource, boolean iOnlyDelta) {
     try {
       return iSource.toStream();
     } catch (Exception e) {

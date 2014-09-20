@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
@@ -612,14 +611,14 @@ public class ODocumentHelper {
         return ((ODocument) iCurrent.getRecord()).getClassName();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
         return Orient.instance().getRecordFactoryManager()
-            .getRecordTypeName(((ORecordInternal) iCurrent.getRecord()).getRecordType());
+            .getRecordTypeName(ORecordInternal.getRecordType(iCurrent.getRecord()));
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
-        final byte[] stream = ((ORecordInternal) iCurrent.getRecord()).toStream();
+        final byte[] stream = iCurrent.getRecord().toStream();
         return stream != null ? stream.length : 0;
       } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
         return ((ODocument) iCurrent.getRecord()).fieldNames();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
-        return new String(((ORecordInternal) iCurrent.getRecord()).toStream());
+        return new String(iCurrent.getRecord().toStream());
     }
 
     if (iCurrent == null)
@@ -696,7 +695,7 @@ public class ODocumentHelper {
       // EXTRACT ARGUMENTS
       final List<String> args = OStringSerializerHelper.getParameters(iFunction.substring(iFunction.indexOf('(')));
 
-      final ORecordInternal currentRecord = iContext != null ? (ORecordInternal) iContext.getVariable("$current") : null;
+      final ORecord currentRecord = iContext != null ? (ORecord) iContext.getVariable("$current") : null;
       for (int i = 0; i < args.size(); ++i) {
         final String arg = args.get(i);
         final Object o = OSQLHelper.getValue(arg, currentRecord, iContext);
@@ -952,8 +951,8 @@ public class ODocumentHelper {
     return true;
   }
 
-  public static boolean compareMaps(ODatabaseRecordInternal iMyDb, Map<Object, Object> myFieldValue, ODatabaseRecordInternal iOtherDb,
-      Map<Object, Object> otherFieldValue, RIDMapper ridMapper) {
+  public static boolean compareMaps(ODatabaseRecordInternal iMyDb, Map<Object, Object> myFieldValue,
+      ODatabaseRecordInternal iOtherDb, Map<Object, Object> otherFieldValue, RIDMapper ridMapper) {
     // CHECK IF THE ORDER IS RESPECTED
     final Map<Object, Object> myMap = myFieldValue;
     final Map<Object, Object> otherMap = otherFieldValue;
@@ -1043,8 +1042,8 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareCollections(ODatabaseRecordInternal iMyDb, Collection<?> myFieldValue, ODatabaseRecordInternal iOtherDb,
-      Collection<?> otherFieldValue, RIDMapper ridMapper) {
+  public static boolean compareCollections(ODatabaseRecordInternal iMyDb, Collection<?> myFieldValue,
+      ODatabaseRecordInternal iOtherDb, Collection<?> otherFieldValue, RIDMapper ridMapper) {
     final Collection<?> myCollection = myFieldValue;
     final Collection<?> otherCollection = otherFieldValue;
 
@@ -1107,8 +1106,8 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareSets(ODatabaseRecordInternal iMyDb, Set<?> myFieldValue, ODatabaseRecordInternal iOtherDb, Set<?> otherFieldValue,
-      RIDMapper ridMapper) {
+  public static boolean compareSets(ODatabaseRecordInternal iMyDb, Set<?> myFieldValue, ODatabaseRecordInternal iOtherDb,
+      Set<?> otherFieldValue, RIDMapper ridMapper) {
     final Set<?> mySet = myFieldValue;
     final Set<?> otherSet = otherFieldValue;
 
@@ -1193,8 +1192,8 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareBags(ODatabaseRecordInternal iMyDb, ORidBag myFieldValue, ODatabaseRecordInternal iOtherDb, ORidBag otherFieldValue,
-      RIDMapper ridMapper) {
+  public static boolean compareBags(ODatabaseRecordInternal iMyDb, ORidBag myFieldValue, ODatabaseRecordInternal iOtherDb,
+      ORidBag otherFieldValue, RIDMapper ridMapper) {
     final ORidBag myBag = myFieldValue;
     final ORidBag otherBag = otherFieldValue;
 
