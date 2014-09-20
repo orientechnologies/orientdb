@@ -38,7 +38,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.consoleValue = '';                           //code of the function
     $scope.nameFunction = '';                           //name of the function
     $scope.selectedLanguage = '';                       //language of the function
-    $scope.languages = ['SQL', 'Javascript'];
+    $scope.languages = ['SQL', 'Javascript', 'Groovy'];
     $scope.functionToExecute = undefined;
 
     $scope.resultExecute = undefined;
