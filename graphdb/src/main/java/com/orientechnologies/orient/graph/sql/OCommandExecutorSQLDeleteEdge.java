@@ -15,6 +15,11 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -37,11 +42,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * SQL DELETE EDGE command.
@@ -169,15 +170,20 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
                 if (fromIds != null && toIds != null) {
                   // REMOVE ALL THE EDGES BETWEEN VERTICES
-                  for (OIdentifiable fromId : fromIds)
-                    for (Edge e : graph.getVertex(fromId).getEdges(Direction.OUT))
-                      if (toIds.contains(((OrientEdge) e).getInVertex().getIdentity()))
-                        edges.add((OrientEdge) e);
-                } else if (fromIds != null)
+                  for (OIdentifiable fromId : fromIds) {
+                    final OrientVertex v = graph.getVertex(fromId);
+                    if (v != null)
+                      for (Edge e : v.getEdges(Direction.OUT)) {
+                        final OIdentifiable inV = ((OrientEdge) e).getInVertex();
+                        if (inV != null && toIds.contains(inV.getIdentity()))
+                          edges.add((OrientEdge) e);
+                      }
+                  }
+                } else if (fromIds != null) {
                   // REMOVE ALL THE EDGES THAT START FROM A VERTEXES
                   for (OIdentifiable fromId : fromIds)
                     edges.add((OrientEdge) graph.getVertex(fromId).getEdges(Direction.OUT));
-                else if (toIds != null)
+                } else if (toIds != null)
                   // REMOVE ALL THE EDGES THAT ARRIVE TO A VERTEXES
                   for (OIdentifiable toId : toIds)
                     edges.add((OrientEdge) graph.getVertex(toId).getEdges(Direction.IN));
