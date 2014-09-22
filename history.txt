@@ -27,6 +27,12 @@
 This document contains the last changes to OrientDB Community Edition.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 1.7.9 - (September, 22nd 2014)
+
+- Hot fixes:
+   https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+is%3Aclosed+milestone%3A1.7.9
+---------------------------------------------------------------------------------------------------
+
 VERSION 1.7.8 - (August, 13th 2014)
 
 - DevOps: new bin/backup.sh with -lvm option to execute a non-blocking backup on Linux with LVM
