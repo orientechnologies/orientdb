@@ -231,9 +231,9 @@ public class OObjectProxyMethodHandler implements MethodHandler {
     for (String fieldName : fields) {
       try {
         if (iReload) {
-          // FORCE POJO FIELD VALUE TO NULL
-          final Field f = OObjectEntitySerializer.getField(fieldName, proxiedObject.getClass());
-          OObjectEntitySerializer.setFieldValue(f, proxiedObject, null);
+          // FORCE POJO FIELD VALUE TO DEFAULT VALUE, WHICH CAN BE null, 0 or false
+          final Field fieldToReset = OObjectEntitySerializer.getField(fieldName, proxiedObject.getClass());
+          OObjectEntitySerializer.setFieldValue(fieldToReset, proxiedObject, getDefaultValueForField(fieldToReset));
         } else {
           final Object value = getValue(proxiedObject, fieldName, false, null);
 
@@ -255,9 +255,10 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       }
     }
 
-    if (iReload)
-      // RESET LOADED FIELDS
+    if (iReload) {
+      // RESET LOADED FIELDS, SO THE MUST BE RELOADED FROM DATABASE
       loadedFields.clear();
+    }
   }
 
   protected Object manageGetMethod(final Object self, final Method m, final Method proceed, final Object[] args)
@@ -834,5 +835,30 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   private ODatabaseObject getDatabase() {
     return (ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
+  }
+
+  private Object getDefaultValueForField(Field field) {
+    if (field.getType() == Byte.TYPE)
+      return Byte.valueOf("0");
+
+    if (field.getType() == Short.TYPE)
+      return Short.valueOf("0");
+
+    if (field.getType() == Integer.TYPE)
+      return 0;
+
+    if (field.getType() == Long.TYPE)
+      return 0L;
+
+    if (field.getType() == Float.TYPE)
+      return 0.0f;
+
+    if (field.getType() == Double.TYPE)
+      return 0.0d;
+
+    if (field.getType() == Boolean.TYPE)
+      return false;
+
+    return null;
   }
 }
