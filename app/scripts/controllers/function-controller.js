@@ -1,5 +1,5 @@
 var schemaModule = angular.module('function.controller', ['database.services']);
-schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', 'Notification', 'Aside','$rootScope', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner, Notification, Aside,$rootScope) {
+schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'FunctionApi', 'DocumentApi', '$modal', '$q', '$route', 'Spinner', 'Notification', 'Aside', '$rootScope', 'DatabaseApi', function ($scope, $routeParams, $location, Database, CommandApi, FunctionApi, DocumentApi, $modal, $q, $route, Spinner, Notification, Aside, $rootScope, DatabaseApi) {
 
     $scope.database = Database;
     $scope.listClass = 'fa-mail-reply';
@@ -42,6 +42,9 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.languages = ['SQL', 'Javascript'];
     $scope.functionToExecute = undefined;
 
+//    DatabaseApi.getAvailableLanguages($routeParams.database).then(function (data) {
+//        $scope.languages = data.languages;
+//    })
     $scope.resultExecute = undefined;
     $scope.limit = -1;
     $scope.parametersToExecute = new Array;

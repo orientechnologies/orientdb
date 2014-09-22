@@ -572,6 +572,17 @@ database.factory('DatabaseApi', function ($http, $resource, $q) {
     resource.getAllocation = function (database, callback) {
         $http.get(API + 'allocation/' + database).success(callback);
     }
+    resource.getAvailableLanguages = function (database) {
+        var deferred = $q.defer();
+
+        $http.get(API + 'supportedLanguages/' + database).success(function (data) {
+            deferred.resolve(data);
+        }).error(function (err) {
+                deferred.reject(err)
+                ''
+            });
+        return deferred.promise;
+    }
     resource.disconnect = function (callback) {
         $http.get(API + 'disconnect').success(function () {
 
