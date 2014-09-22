@@ -29,7 +29,8 @@ import java.util.Map;
  */
 public class OIndexDictionary extends OIndexOneValue {
 
-  public OIndexDictionary(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm, ODocument metadata) {
+  public OIndexDictionary(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm,
+      ODocument metadata) {
     super(typeId, algorithm, engine, valueContainerAlgorithm, metadata);
   }
 
@@ -42,6 +43,7 @@ public class OIndexDictionary extends OIndexOneValue {
       checkForKeyType(key);
       acquireSharedLock();
       try {
+        markStorageDirty();
         indexEngine.put(key, value);
         return this;
 

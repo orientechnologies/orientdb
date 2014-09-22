@@ -86,7 +86,7 @@ public class OIndexFullText extends OIndexMultiValues {
       // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
       for (final String word : words) {
         acquireExclusiveLock();
-
+        startStorageAtomicOperation();
         try {
           Set<OIdentifiable> refs;
 
@@ -109,6 +109,10 @@ public class OIndexFullText extends OIndexMultiValues {
           // SAVE THE INDEX ENTRY
           indexEngine.put(word, refs);
 
+          commitStorageAtomicOperation();
+        } catch (RuntimeException e) {
+          rollbackStorageAtomicOperation();
+          throw new OIndexException("Error during put of key - value entry", e);
         } finally {
           releaseExclusiveLock();
         }
@@ -143,6 +147,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
       for (final String word : words) {
         acquireExclusiveLock();
+				startStorageAtomicOperation();
         try {
 
           final Set<OIdentifiable> recs = indexEngine.get(word);
@@ -155,7 +160,11 @@ public class OIndexFullText extends OIndexMultiValues {
               removed = true;
             }
           }
-        } finally {
+					commitStorageAtomicOperation();
+        } catch (RuntimeException e) {
+					rollbackStorageAtomicOperation();
+					throw new OIndexException("Error during removal of entry by key and value", e);
+				} finally {
           releaseExclusiveLock();
         }
       }

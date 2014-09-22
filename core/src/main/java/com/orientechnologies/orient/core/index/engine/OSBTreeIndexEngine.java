@@ -47,15 +47,24 @@ import java.util.Map;
  * @since 8/30/13
  */
 public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal implements OIndexEngine<V> {
-  public static final String DATA_FILE_EXTENSION        = ".sbt";
-  public static final String NULL_BUCKET_FILE_EXTENSION = ".nbt";
+  public static final String       DATA_FILE_EXTENSION        = ".sbt";
+  public static final String       NULL_BUCKET_FILE_EXTENSION = ".nbt";
 
-  private ORID               identity;
-  private OSBTree<Object, V> sbTree;
+  private ORID                     identity;
+  private final OSBTree<Object, V> sbTree;
 
-  public OSBTreeIndexEngine() {
+  public OSBTreeIndexEngine(Boolean durableInNonTxMode) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
+
+    boolean durableInNonTx;
+
+    if (durableInNonTxMode == null)
+      durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
+    else
+      durableInNonTx = durableInNonTxMode;
+
+    sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION);
   }
 
   @Override
@@ -81,18 +90,16 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       final OBinarySerializer keySerializer = determineKeySerializer(indexDefinition);
       final int keySize = determineKeySize(indexDefinition);
 
-      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, keySize,
-          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
-
       final ORecordBytes identityRecord = new ORecordBytes();
       ODatabaseRecordInternal database = getDatabase();
+
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       database.save(identityRecord, clusterIndexName);
       identity = identityRecord.getIdentity();
 
       sbTree.create(indexName, keySerializer, (OBinarySerializer<V>) valueSerializer,
-          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, indexDefinition != null
+          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, keySize, indexDefinition != null
               && !indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
@@ -141,8 +148,6 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       final ODatabaseRecordInternal database = getDatabase();
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
-      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, 1,
-          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
       sbTree.deleteWithoutLoad(indexName, storageLocalAbstract);
     } finally {
       releaseExclusiveLock();
@@ -154,15 +159,12 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       boolean isAutomatic) {
     acquireExclusiveLock();
     try {
-      sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, determineKeySize(indexDefinition),
-          OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean(), NULL_BUCKET_FILE_EXTENSION);
-
       ODatabaseRecordInternal database = getDatabase();
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
-          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, indexDefinition != null
-              && indexDefinition.isNullValuesIgnored());
+          indexDefinition != null ? indexDefinition.getTypes() : null, storageLocalAbstract, determineKeySize(indexDefinition),
+          indexDefinition != null && indexDefinition.isNullValuesIgnored());
     } finally {
       releaseExclusiveLock();
     }

@@ -173,9 +173,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
                   for (OIdentifiable fromId : fromIds) {
                     final OrientVertex v = graph.getVertex(fromId);
                     if (v != null)
-                      for (Edge e : v.getEdges(Direction.OUT))
-                        if (toIds.contains(((OrientEdge) e).getInVertex().getIdentity()))
+                      for (Edge e : v.getEdges(Direction.OUT)) {
+                        final OIdentifiable inV = ((OrientEdge) e).getInVertex();
+                        if (inV != null && toIds.contains(inV.getIdentity()))
                           edges.add((OrientEdge) e);
+                      }
                   }
                 } else if (fromIds != null) {
                   // REMOVE ALL THE EDGES THAT START FROM A VERTEXES

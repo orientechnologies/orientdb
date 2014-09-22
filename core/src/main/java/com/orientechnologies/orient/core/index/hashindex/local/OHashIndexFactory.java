@@ -82,17 +82,27 @@ public class OHashIndexFactory implements OIndexFactory {
   public OIndexInternal<?> createIndex(ODatabaseRecordInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
     if (valueContainerAlgorithm == null)
-        valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
+      valueContainerAlgorithm = ODefaultIndexFactory.NONE_VALUE_CONTAINER;
 
     OStorage storage = database.getStorage();
     OIndexEngine indexEngine;
 
+    Boolean durableInNonTxMode;
+    Object durable = null;
+    if (metadata != null)
+      durable = metadata.field("durableInNonTxMode");
+
+    if (durable instanceof Boolean)
+      durableInNonTxMode = (Boolean) durable;
+    else
+      durableInNonTxMode = null;
+
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OHashTableIndexEngine();
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine();
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode);
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
     else

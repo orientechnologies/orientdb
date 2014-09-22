@@ -304,6 +304,39 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     }
   }
 
+  public void startAtomicOperation() throws IOException {
+    lock.acquireSharedLock();
+    try {
+      makeStorageDirty();
+
+      atomicOperationsManager.startAtomicOperation();
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  public void commitAtomicOperation() throws IOException {
+    lock.acquireSharedLock();
+    try {
+      atomicOperationsManager.endAtomicOperation(false);
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  public void rollbackAtomicOperation() throws IOException {
+    lock.acquireSharedLock();
+    try {
+      atomicOperationsManager.endAtomicOperation(true);
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  public void markDirty() throws IOException {
+    makeStorageDirty();
+  }
+
   @Override
   public void close(final boolean force, boolean onDelete) {
     doClose(force, onDelete);
@@ -1441,6 +1474,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     final OStorageTransaction storageTx = transaction.get();
     if (storageTx != null && storageTx.getClientTx().getId() != clientTx.getId())
       rollback(clientTx);
+
+		assert atomicOperationsManager.getCurrentOperation() == null;
 
     atomicOperationsManager.startAtomicOperation();
     transaction.set(new OStorageTransaction(clientTx));

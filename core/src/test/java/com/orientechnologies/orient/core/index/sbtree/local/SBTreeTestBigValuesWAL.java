@@ -44,7 +44,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
   private String                   actualStorageDir;
   private String                   expectedStorageDir;
 
-  private ODiskWriteAheadLog writeAheadLog;
+  private ODiskWriteAheadLog       writeAheadLog;
 
   private ODiskCache               actualDiskCache;
   private ODiskCache               expectedDiskCache;
@@ -120,7 +120,6 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     actualDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, actualStorage, null, false, false);
 
-
     when(actualStorage.getStorageTransaction()).thenReturn(null);
     when(actualStorage.getDiskCache()).thenReturn(actualDiskCache);
     when(actualStorage.getWALInstance()).thenReturn(writeAheadLog);
@@ -129,8 +128,8 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, byte[]>(".sbt", 1, true, ".nbt");
-    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, actualStorage, false);
+    sbTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt");
+    sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, actualStorage, 1, false);
   }
 
   private void createExpectedSBTree() {
@@ -163,8 +162,8 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", 1, true, ".nbt");
-    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, expectedStorage,
+    expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt");
+    expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, expectedStorage, 1,
         false);
   }
 
@@ -300,17 +299,18 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
     writeAheadLog.close();
     expectedSBTree.close();
 
-		((OReadWriteDiskCache)actualDiskCache).clear();
+    ((OReadWriteDiskCache) actualDiskCache).clear();
 
     restoreDataFromWAL();
 
-		((OReadWriteDiskCache)expectedDiskCache).clear();
+    ((OReadWriteDiskCache) expectedDiskCache).clear();
 
     assertFileContentIsTheSame(expectedSBTree.getName(), sbTree.getName());
   }
 
   private void restoreDataFromWAL() throws IOException {
-    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024, actualStorage);
+    ODiskWriteAheadLog log = new ODiskWriteAheadLog(4, -1, 10 * 1024L * OWALPage.PAGE_SIZE, 100L * 1024 * 1024 * 1024,
+        actualStorage);
     OLogSequenceNumber lsn = log.begin();
 
     List<OWALRecord> atomicUnit = new ArrayList<OWALRecord>();

@@ -99,6 +99,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     try {
       checkForKeyType(key);
       acquireExclusiveLock();
+      startStorageAtomicOperation();
       try {
         Set<OIdentifiable> values = indexEngine.get(key);
 
@@ -117,8 +118,12 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         values.add(iSingleValue.getIdentity());
         indexEngine.put(key, values);
 
+        commitStorageAtomicOperation();
         return this;
 
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during insertion of key in index", e);
       } finally {
         releaseExclusiveLock();
       }
@@ -166,23 +171,32 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     try {
       acquireExclusiveLock();
+      startStorageAtomicOperation();
       try {
 
         Set<OIdentifiable> values = indexEngine.get(key);
 
-        if (values == null)
+        if (values == null) {
+          commitStorageAtomicOperation();
           return false;
+        }
 
         if (values.remove(value)) {
           if (values.isEmpty())
             indexEngine.remove(key);
           else
             indexEngine.put(key, values);
+
+          commitStorageAtomicOperation();
           return true;
         }
 
+        commitStorageAtomicOperation();
         return false;
 
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during removal of entry by key", e);
       } finally {
         releaseExclusiveLock();
       }
@@ -393,19 +407,19 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-	@Override
-	public OIndexCursor descCursor() {
-		checkForRebuild();
+  @Override
+  public OIndexCursor descCursor() {
+    checkForRebuild();
 
-		acquireSharedLock();
-		try {
-			return indexEngine.descCursor(MultiValuesTransformer.INSTANCE);
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    acquireSharedLock();
+    try {
+      return indexEngine.descCursor(MultiValuesTransformer.INSTANCE);
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	private static final class MultiValuesTransformer implements OIndexEngine.ValuesTransformer<Set<OIdentifiable>> {
+  private static final class MultiValuesTransformer implements OIndexEngine.ValuesTransformer<Set<OIdentifiable>> {
     private static final MultiValuesTransformer INSTANCE = new MultiValuesTransformer();
 
     @Override

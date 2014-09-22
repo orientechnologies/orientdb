@@ -5,7 +5,9 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -13,20 +15,20 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @since 5/6/14
  */
 public class OPaginatedStorageDirtyFlag {
-  private final String        dirtyFilePath;
+  private final String     dirtyFilePath;
 
-  private File                dirtyFile;
-  private RandomAccessFile    dirtyFileData;
-  private boolean             dirtyFlag;
+  private File             dirtyFile;
+  private RandomAccessFile dirtyFileData;
+  private volatile boolean dirtyFlag;
 
-  private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+  private final Lock       lock = new ReentrantLock();
 
   public OPaginatedStorageDirtyFlag(String dirtyFilePath) {
     this.dirtyFilePath = dirtyFilePath;
   }
 
   public void create() throws IOException {
-    readWriteLock.writeLock().lock();
+    lock.lock();
     try {
       dirtyFile = new File(dirtyFilePath);
 
@@ -48,21 +50,21 @@ public class OPaginatedStorageDirtyFlag {
       dirtyFlag = true;
 
     } finally {
-      readWriteLock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
-  public boolean exits() {
-    readWriteLock.readLock().lock();
+  public boolean exists() {
+    lock.lock();
     try {
       return new File(dirtyFilePath).exists();
     } finally {
-      readWriteLock.readLock().unlock();
+      lock.unlock();
     }
   }
 
   public void open() throws IOException {
-    readWriteLock.writeLock().lock();
+    lock.lock();
     try {
       dirtyFile = new File(dirtyFilePath);
       if (!dirtyFile.exists())
@@ -73,12 +75,12 @@ public class OPaginatedStorageDirtyFlag {
       dirtyFileData.seek(0);
       dirtyFlag = dirtyFileData.readBoolean();
     } finally {
-      readWriteLock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
   public void close() throws IOException {
-    readWriteLock.writeLock().lock();
+    lock.lock();
     try {
       if (dirtyFile == null)
         return;
@@ -87,12 +89,12 @@ public class OPaginatedStorageDirtyFlag {
         dirtyFileData.close();
 
     } finally {
-      readWriteLock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
   public void delete() throws IOException {
-    readWriteLock.writeLock().lock();
+    lock.lock();
     try {
       if (dirtyFile == null)
         return;
@@ -108,12 +110,15 @@ public class OPaginatedStorageDirtyFlag {
         }
       }
     } finally {
-      readWriteLock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
   public void makeDirty() throws IOException {
-    readWriteLock.writeLock().lock();
+    if (dirtyFlag)
+      return;
+
+    lock.lock();
     try {
       if (dirtyFlag)
         return;
@@ -122,12 +127,15 @@ public class OPaginatedStorageDirtyFlag {
       dirtyFileData.writeBoolean(true);
       dirtyFlag = true;
     } finally {
-      readWriteLock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
   public void clearDirty() throws IOException {
-    readWriteLock.writeLock().lock();
+    if (!dirtyFlag)
+      return;
+
+    lock.lock();
     try {
       if (!dirtyFlag)
         return;
@@ -136,17 +144,12 @@ public class OPaginatedStorageDirtyFlag {
       dirtyFileData.writeBoolean(false);
       dirtyFlag = false;
     } finally {
-      readWriteLock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
   public boolean isDirty() {
-    readWriteLock.readLock().lock();
-    try {
-      return dirtyFlag;
-    } finally {
-      readWriteLock.readLock().unlock();
-    }
+    return dirtyFlag;
   }
 
 }
