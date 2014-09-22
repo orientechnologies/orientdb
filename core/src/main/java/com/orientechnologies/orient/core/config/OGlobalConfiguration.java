@@ -23,6 +23,10 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
@@ -582,6 +586,33 @@ public enum OGlobalConfiguration {
   private static void autoConfig() {
     System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
     System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
+
+    if (System.getProperty(DISK_CACHE_SIZE.key) == null) {
+      autoConfigDiskCacheSize();
+    }
+  }
+
+  private static void autoConfigDiskCacheSize() {
+    final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
+    try {
+      final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
+      memorySize.setAccessible(true);
+      final long totalMemory = (Long) memorySize.invoke(mxBean);
+
+      final long maxMemory = Runtime.getRuntime().maxMemory();
+
+      if (maxMemory > 1L * 1024 * 1024 * 1024) {
+        OLogManager.instance().warn(null,
+            "Your maximum JVM heap size is more than 1 GB we recommend you to keep heap size less or equal to this value.");
+      }
+
+      final long result = (totalMemory - maxMemory - 2L * 1024 * 1024 * 1024) / (1024 * 1024);
+      if (result > DISK_CACHE_SIZE.getValueAsLong())
+        DISK_CACHE_SIZE.setValue(result);
+    } catch (NoSuchMethodException e) {
+    } catch (InvocationTargetException e) {
+    } catch (IllegalAccessException e) {
+    }
   }
 
   public Object getValue() {
