@@ -158,7 +158,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     assert lHolds.intValue() == 0;
   }
 
-  private final class WNode {
+  private final static class WNode {
     private final Queue<Thread> waitingReaders = new ConcurrentLinkedQueue<Thread>();
 
     private volatile boolean    locked         = true;

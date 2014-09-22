@@ -136,7 +136,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
       OLogManager.instance().error(this, "Error on loading resource %s", e, iRequest.url);
 
     } finally {
-      if (staticContent.is != null)
+      if (staticContent!=null && staticContent.is != null)
         try {
           staticContent.is.close();
         } catch (IOException e) {

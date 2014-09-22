@@ -63,8 +63,8 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
         final Locale locale = urlParts.length > 6 ? new Locale(urlParts[6]) : Locale.getDefault();
 
         final BufferedReader reader = new BufferedReader(new StringReader(iRequest.content));
-        final String header = reader.readLine().trim();
-        if (header.length() == 0)
+        String header = reader.readLine();
+        if (header==null || (header=header.trim()).length() == 0)
           throw new InputMismatchException("Missing CSV file header");
 
         final List<String> columns = OStringSerializerHelper.smartSplit(header, separator);

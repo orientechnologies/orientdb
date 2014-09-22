@@ -19,6 +19,12 @@ public class OStorageOperationResult<RET> implements Externalizable {
   private RET     result;
   private byte[]  modifiedRecordContent;
   private boolean isMoved;
+  
+  /**
+   * OStorageOperationResult void constructor as required for Exernalizable 
+   */
+  public OStorageOperationResult() {
+  }
 
   public OStorageOperationResult(final RET result) {
     this(result, null, false);

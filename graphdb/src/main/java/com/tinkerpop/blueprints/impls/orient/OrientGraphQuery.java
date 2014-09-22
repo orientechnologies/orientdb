@@ -165,12 +165,12 @@ public class OrientGraphQuery extends DefaultGraphQuery {
       text.append(orderBy);
       text.append(" " + orderByDir + " ");
     }
-    if (skip > 0 && skip < Long.MAX_VALUE) {
+    if (skip > 0 && skip < Integer.MAX_VALUE) {
       text.append(SKIP);
       text.append(skip);
     }
 
-    if (limit > 0 && limit < Long.MAX_VALUE) {
+    if (limit > 0 && limit < Integer.MAX_VALUE) {
       text.append(LIMIT);
       text.append(limit);
     }
@@ -226,7 +226,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (fetchPlan != null)
       query.setFetchPlan(fetchPlan);
 
-    if (limit > 0 && limit < Long.MAX_VALUE)
+    if (limit > 0 && limit < Integer.MAX_VALUE)
       query.setLimit((int) limit);
 
     return new OrientElementIterable<Edge>(((OrientBaseGraph) graph), ((OrientBaseGraph) graph).getRawGraph().query(query));

@@ -176,9 +176,9 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
         } else {
           // RETURNS ALL THE DELETED RECORDS
           OIndexCursor cursor = index.cursor();
-          Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
+          Map.Entry<Object, OIdentifiable> entry;
 
-          while (entry != null) {
+          while ((entry=cursor.nextEntry()) != null) {
             OIdentifiable rec = entry.getValue();
             rec = rec.getRecord();
             if (rec != null)

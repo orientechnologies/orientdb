@@ -384,7 +384,7 @@ public class OJSONWriter {
       out.append(":");
     }
 
-    if (iFormat.contains("graph") && (iName.startsWith("in_") || iName.startsWith("out_"))
+    if (iFormat.contains("graph") && iName!=null && (iName.startsWith("in_") || iName.startsWith("out_"))
         && (iValue == null || iValue instanceof OIdentifiable)) {
       // FORCE THE OUTPUT AS COLLECTION
       out.append('[');

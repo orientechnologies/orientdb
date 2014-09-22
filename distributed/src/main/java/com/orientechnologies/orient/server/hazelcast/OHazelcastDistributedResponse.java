@@ -105,7 +105,7 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
 
   @Override
   public String toString() {
-    return payload != null ? payload.toString() : null;
+    return payload != null ? payload.toString() : "null";
   }
 
 }

@@ -56,13 +56,13 @@ public class OProfilerEntry {
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "firstExecution", firstExecution));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "lastExecution", lastExecution));
     if (payLoad != null)
-      buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "payload", payLoad));
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\":%s", "payload", payLoad));
     buffer.append('}');
   }
 
   @Override
   public String toString() {
-    return String.format("Profiler entry [%s]: total=%d, average=%.2f, items=%d, last=%d, max=%d, min=%d", total, name, average,
+    return String.format("Profiler entry [%s]: total=%d, average=%.2f, items=%d, last=%d, max=%d, min=%d", name, total, average,
         entries, last, max, min);
   }
 }

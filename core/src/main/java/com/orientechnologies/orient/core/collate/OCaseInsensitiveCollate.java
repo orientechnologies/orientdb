@@ -45,7 +45,7 @@ public class OCaseInsensitiveCollate extends ODefaultComparator implements OColl
 
   @Override
   public boolean equals(Object obj) {
-    if (obj.getClass() != this.getClass())
+    if (obj==null || obj.getClass() != this.getClass())
       return false;
 
     final OCaseInsensitiveCollate that = (OCaseInsensitiveCollate) obj;

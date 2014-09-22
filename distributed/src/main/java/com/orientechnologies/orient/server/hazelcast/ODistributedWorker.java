@@ -126,7 +126,7 @@ public class ODistributedWorker extends Thread {
 
       } catch (Throwable e) {
         ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
-            "error on executing distributed request %d: %s", e, message.getId(), message != null ? message.getTask() : "-");
+            "error on executing distributed request %d: %s", e, message!=null? message.getId() : -1, message != null ? message.getTask() : "-");
       }
     }
 

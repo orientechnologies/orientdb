@@ -2001,7 +2001,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           Object orgVal = ((ODocument) iRecord).getOriginalValue(f);
           boolean simple = fieldValue != null ? OType.isSimpleType(fieldValue) : OType.isSimpleType(orgVal);
           if ((simple) || (fieldValue != null && orgVal == null) || (fieldValue == null && orgVal != null)
-              || (!fieldValue.equals(orgVal)))
+              || (fieldValue!=null && !fieldValue.equals(orgVal)))
             throw new OValidationException("The field '" + p.getFullName()
                 + "' is immutable and cannot be altered. Field value is: " + ((ODocument) iRecord).field(f));
         }

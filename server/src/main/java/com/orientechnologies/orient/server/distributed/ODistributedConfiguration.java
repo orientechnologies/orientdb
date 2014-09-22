@@ -442,9 +442,9 @@ public class ODistributedConfiguration {
         // CREATE IT
         cluster = createCluster(iClusterName);
 
-      final List<String> serverList = getOriginalServers(iClusterName);
+      List<String> serverList = getOriginalServers(iClusterName);
       if (serverList == null)
-        initClusterServers(cluster);
+    	  serverList = initClusterServers(cluster);
 
       if (!serverList.isEmpty() && serverList.get(0).equals(iServerName))
         // ALREADY MASTER

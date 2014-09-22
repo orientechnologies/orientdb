@@ -347,7 +347,7 @@ public class ODocumentHelper {
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
             if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null
-                & !fieldValue.equals(conditionFieldValue))
+                && !fieldValue.equals(conditionFieldValue))
               value = null;
           }
         } else if (value instanceof Map<?, ?>) {

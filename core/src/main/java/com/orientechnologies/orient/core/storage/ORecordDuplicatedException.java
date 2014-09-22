@@ -26,8 +26,14 @@ public class ORecordDuplicatedException extends OException {
 
     return rid.equals(((ORecordDuplicatedException) obj).rid);
   }
-
+  
+  
   @Override
+  public int hashCode() {
+	return rid.hashCode();
+  }
+
+@Override
   public String toString() {
     return super.toString() + " RID=" + rid;
   }

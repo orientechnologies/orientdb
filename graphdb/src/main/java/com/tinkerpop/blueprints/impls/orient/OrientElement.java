@@ -416,8 +416,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     final ORID myRID = getIdentity();
     final ORID otherRID = iOther.getIdentity();
 
-    if (myRID == null && otherRID == null)
-      return 0;
+    if (myRID == null && otherRID == null) return 0;
+    if (myRID == null) return -1;
+    if (otherRID == null) return 1;
 
     return myRID.compareTo(otherRID);
   }
