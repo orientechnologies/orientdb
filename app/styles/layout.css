@@ -199,6 +199,12 @@ body div.container-studio {
     height: 100%;
 }
 
+
+
+.bookmarks-container > div {
+    height: 100%;
+}
+
 .aside-list-container .row:first-child {
     height: 20%;
 }
@@ -211,6 +217,13 @@ body div.container-studio {
     height: 100%;
 }
 
+.bookmarks-container .row:first-child {
+    height: 10%;
+}
+
+.bookmarks-container .row:last-child {
+    height: 90%;
+}
 .oaside-body {
     height: 100%;
 

@@ -44,6 +44,9 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
     $scope.canDelete = true;
     $scope.canCreate = true;
     $scope.canAdd = true;
+    $scope.pageLimit = 10;
+    $scope.limitProof = 10;
+    $scope.limits = [];
     $scope.popover = {
         title: 'Add edge'
     }
@@ -65,6 +68,14 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
         var modalPromise = $modal({template: 'views/vertex/modalConnection.html', persist: false, show: true, scope: modalScope, modalClass: 'createEdge'});
 
     }
+    $scope.initLimits = function () {
+        $scope.incomings.forEach(function (i) {
+            $scope.limits[i] = $scope.pageLimit;
+        })
+        $scope.outgoings.forEach(function (i) {
+            $scope.limits[i] = $scope.pageLimit;
+        })
+    }
     if (!$scope.doc) {
         $scope.reload();
     } else {
@@ -77,8 +88,22 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
 
         $scope.label = Database.isEdge($scope.doc['@class']) ? "Edge" : "Vertex";
 
+        $scope.initLimits();
     }
 
+
+    $scope.more = function (i) {
+        $scope.limits[i] += $scope.pageLimit;
+    }
+    $scope.less = function (i) {
+        $scope.limits[i] -= $scope.pageLimit;
+    }
+    $scope.isHideMore = function (i) {
+        return $scope.limits[i] >= $scope.doc[i].length;
+    }
+    $scope.isHideLess = function (i) {
+        return $scope.limits[i] == $scope.pageLimit;
+    }
     $scope.delete = function () {
         var recordID = $scope.doc['@rid']
         Utilities.confirm($scope, $modal, $q, {
@@ -94,7 +119,10 @@ GrapgController.controller("VertexEditController", ['$scope', '$injector', '$rou
         });
     }
 
-    $scope.filterArray = function (arr) {
+    $scope.filterArray = function (arr, i) {
+        if (!$scope.limits[i]) {
+            $scope.limits[i] = {};
+        }
         if (arr instanceof Array) {
             return arr;
         } else {

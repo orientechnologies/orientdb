@@ -1,6 +1,5 @@
-<div ng-controller="BookmarkController" class="container-fluid bookmarks-container">
+<div ng-controller="BookmarkController" class="container-fluid  aside-list-container bookmarks-container">
     <div ng-keydown="closeIfReturn($event)">
-
 
         <div class="row">
             <form class="form-search search-bookmarks">
@@ -11,12 +10,11 @@
             </form>
         </div>
         <div class="row">
-
             <div class="list-group aside-list">
                 <div class="list-group-item" ng-mouseover="hover(bk)"
                      ng-repeat="bk in bks | filter:searchText">
                     <div class="bookmarks-actions" ng-class="{ true : 'visible', false : 'invisible' }[bk == selected]">
-                        <a href="javascript:void(0)" data-placement="right"
+                        <a href="javascript:void(0)" data-placement="right" data-container="body"
                            data-template="views/database/bookmarkEdit.html" bs-popover data-title="Edit bookmark">
                             <i class="fa fa-edit"></i>
                         </a>

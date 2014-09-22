@@ -406,16 +406,19 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
             if (isRids(value)) {
 
 
-                var LIMIT = 4;
-
+                var LIMIT = 5;
+                var PAGE = LIMIT;
                 var dbName = Database.getName();
 
                 scope.$new(true);
+
                 scope.expand = function () {
-                    renderLimit(-1);
+                    PAGE += LIMIT;
+                    renderLimit(PAGE);
                 }
                 scope.collapse = function () {
-                    renderLimit(LIMIT);
+                    PAGE -= LIMIT;
+                    renderLimit(PAGE);
                 }
 
                 function renderLimit(limit) {
@@ -425,8 +428,10 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
                         if (typeof elem == 'string' && elem.indexOf('#') == 0) {
                             var link = '<span class="label label-warning badge-edge"><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></span> ';
                             html += link;
-                            if (i > limit && limit != -1) {
-                                var expand = '<span class="label label-primary badge-edge"><a ng-click="expand()" href="javascript:void(0)">..More</a></span>';
+
+                            if (i == PAGE) {
+                                scope.moreVal = value.length - PAGE;
+                                var expand = '<span class="label label-primary badge-edge"><a ng-click="expand()" href="javascript:void(0)">..More({{moreVal}})</a></span>';
                                 html += expand;
                                 return true;
                             }
@@ -435,7 +440,7 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
                         }
                         return false;
                     });
-                    if (limit == -1 && value.length > LIMIT) {
+                    if (PAGE != LIMIT ) {
                         var expand = '<span class="label label-primary badge-edge"><a ng-click="collapse()" href="javascript:void(0)">..Less</a></span>';
                         html += expand;
                     }

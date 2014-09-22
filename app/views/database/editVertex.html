@@ -23,8 +23,8 @@
                                 <div class="accordion-inner accordion-scroll">
 
 
-                                            <span ng-repeat="out in filterArray(doc[i]) track by $index"
-                                                  class="label label-default badge-edge">
+                                            <span ng-repeat="out in filterArray(doc[i],i) | limitTo:limits[i] track by $index "
+                                                  class="label label-warning badge-edge">
                                                 <a href="javascript:void(0)"
                                                    ng-click="follow(out)">{{out}}</a>
 
@@ -36,6 +36,9 @@
                                                             class="fa fa-times"
                                                             ng-click="deleteLink(i,out)"></i></a>
                                             </span>
+                                   <span class="label label-primary pointer" ng-hide="isHideMore(i)"
+                                         ng-click="more(i)">..More({{doc[i].length - limits[i]}})</span>
+                                    <span class="label label-primary pointer" ng-hide="isHideLess(i)" ng-click="less(i)">..Less</span>
                                 </div>
                             </div>
                         </div>
@@ -69,8 +72,8 @@
                             <div id="{{i}}" class="accordion-body collapse">
                                 <div class="accordion-inner accordion-scroll">
 
-                                            <span ng-repeat="out in filterArray(doc[i]) track by $index"
-                                                  class="label label-default badge-edge">
+                                            <span ng-repeat="out in filterArray(doc[i],i) | limitTo:limits[i] track by $index "
+                                                  class="label label-warning badge-edge">
                                                 <a href="javascript:void(0)" ng-click="follow(out)">{{out}}</a>
                                                 <a href="" data-placement="right" bs-tooltip="'Follow'"><i
                                                         class="fa fa-chevron-right"
@@ -80,6 +83,9 @@
                                                         class="fa fa-times"
                                                         ng-click="deleteLink(i,out)"></i></a>
                                             </span>
+                                    <span class="label label-primary pointer" ng-hide="isHideMore(i)"
+                                          ng-click="more(i)">..More({{doc[i].length - limits[i]}})</span>
+                                    <span class="label label-primary pointer" ng-hide="isHideLess(i)" ng-click="less(i)">..Less</span>
                                 </div>
                             </div>
                         </div>
