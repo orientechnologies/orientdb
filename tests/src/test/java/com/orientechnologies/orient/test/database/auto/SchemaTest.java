@@ -280,6 +280,22 @@ public class SchemaTest extends DocumentDBBaseTest {
         "polygon");
 
     database.close();
+    //TEST CUSTOM PROPERTY WITH =
+    database.open("admin", "admin");
+    
+    database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("equal", "this = that");
+
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"),
+        "this = that");
+
+    database.close();
+    //TEST CUSTOM PROPERTY WITH = AFTER REOPEN
+    database.open("admin", "admin");
+
+    Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"),
+        "this = that");
+
+    database.close();
   }
 
   @Test(dependsOnMethods = "createSchema")
