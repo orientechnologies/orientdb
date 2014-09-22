@@ -1,5 +1,5 @@
 var login = angular.module('login.controller', ['database.services']);
-login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$location', '$modal', '$q', 'Database', 'DatabaseApi', 'Notification', '$http', 'Spinner', function ($scope, $rootScope, $routeParams, $location, $modal, $q, Database, DatabaseApi, Notification, $http, Spinner) {
+login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$location', '$modal', '$q', 'Database', 'DatabaseApi', 'Notification', '$http', 'Spinner', 'localStorageService', function ($scope, $rootScope, $routeParams, $location, $modal, $q, Database, DatabaseApi, Notification, $http, Spinner, localStorageService) {
 
     $scope.server = "http://localhost:2480"
 
@@ -107,6 +107,11 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
                 $scope.databases.splice(idx, 1);
                 if ($scope.databases.length > 0) {
                     $scope.database = $scope.databases[0];
+                }
+                var timeline = localStorageService.get("Timeline");
+                if (timeline) {
+                    delete timeline[modalPromise.$scope.name];
+                    localStorageService.add("Timeline", timeline);
                 }
                 Notification.push({content: noti});
                 modalPromise.hide();

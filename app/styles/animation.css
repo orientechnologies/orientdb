@@ -85,5 +85,27 @@
 }
 
 
+@-webkit-keyframes bookmarksInFromLeft {
+    0% {
+        -webkit-transform: translateX(-25%);
+    }
+    40% {
+        -webkit-transform: translateX(-15%);
+    }
+    100% {
+        -webkit-transform: translateX(0px);
+    }
+}
+@-moz-keyframes bookmarksInFromLeft {
+    0% {
+        transform: translateX(-320px);
+    }
+    40% {
+        transform: translateX(-100px);
+    }
+    100% {
+        transform: translateX(0px);
+    }
+}
 
 

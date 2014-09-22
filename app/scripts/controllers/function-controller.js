@@ -4,6 +4,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.database = Database;
     $scope.listClass = 'fa-mail-reply';
     $scope.logLevel = ""
+    $scope.isCode = true;
     $scope.listClasses = $scope.database.listClasses();
     $scope.editorOptions = {
         lineWrapping: true,

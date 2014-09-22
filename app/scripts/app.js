@@ -31,7 +31,8 @@ var deps = ['header.controller',
     'ngAnimate',
     'angularSpectrumColorpicker',
     'pascalprecht.translate',
-    'ngTagsInput'];
+    'ngTagsInput',
+    'frapontillo.bootstrap-switch'];
 
 
 var App = angular.module('OrientDBStudioApp', deps);
