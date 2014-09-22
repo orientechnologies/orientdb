@@ -135,6 +135,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       if (indexes.containsKey(iName.toLowerCase()))
         throw new OIndexException("Index with name " + iName.toLowerCase() + " already exists.");
 
+      // manual indexes are always durable
+      if (clusterIdsToIndex == null || clusterIdsToIndex.length == 0) {
+        if (metadata == null)
+          metadata = new ODocument();
+
+        Object durable = metadata.field("durableInNonTxMode");
+        if (!(durable instanceof Boolean))
+          metadata.field("durableInNonTxMode", true);
+      }
+
       index = OIndexes.createIndex(getDatabase(), iType, algorithm, valueContainerAlgorithm, metadata);
 
       // decide which cluster to use ("index" - for automatic and "manindex" for manual)
@@ -532,7 +542,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       final String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
       String algorithm = idx.field(OIndexInternal.ALGORITHM);
       String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);
-
 
       ODocument metadata = idx.field(OIndexInternal.METADATA);
       if (indexType == null) {

@@ -58,10 +58,17 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   private volatile ORID                          identity;
 
-  public OHashTableIndexEngine() {
+  public OHashTableIndexEngine(Boolean durableInNonTxMode) {
     hashFunction = new OMurmurHash3HashFunction<Object>();
+
+    boolean durableInNonTx;
+    if (durableInNonTxMode == null)
+      durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
+    else
+      durableInNonTx = durableInNonTxMode;
+
     hashTable = new OLocalHashTable<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
-        NULL_BUCKET_FILE_EXTENSION, hashFunction, OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+        NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx);
   }
 
   @Override

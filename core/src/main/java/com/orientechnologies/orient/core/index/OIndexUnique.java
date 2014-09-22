@@ -68,6 +68,8 @@ public class OIndexUnique extends OIndexOneValue {
         if (!iSingleValue.getIdentity().isPersistent())
           ((ORecord) iSingleValue.getRecord()).save();
 
+				markStorageDirty();
+
         indexEngine.put(key, iSingleValue.getIdentity());
         return this;
 

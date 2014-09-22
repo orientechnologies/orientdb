@@ -172,14 +172,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   @Override
   protected void preOpenSteps() throws IOException {
     if (configuration.binaryFormatVersion >= 11) {
-      if (dirtyFlag.exits())
+      if (dirtyFlag.exists())
         dirtyFlag.open();
       else {
         dirtyFlag.create();
         dirtyFlag.makeDirty();
       }
     } else {
-      if (dirtyFlag.exits())
+      if (dirtyFlag.exists())
         dirtyFlag.open();
       else {
         dirtyFlag.create();

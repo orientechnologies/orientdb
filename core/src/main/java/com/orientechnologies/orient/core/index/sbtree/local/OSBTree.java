@@ -20,7 +20,6 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OAlwaysGreaterKey;
 import com.orientechnologies.orient.core.index.OAlwaysLessKey;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -100,328 +99,11 @@ public class OSBTree<K, V> extends ODurableComponent {
   private OBinarySerializer<V>                valueSerializer;
   private boolean                             nullPointerSupport;
 
-  /**
-   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest
-   * or highest partially matched key should be used.
-   */
-  private static enum PartialSearchMode {
-    /**
-     * Any partially matched key will be used as search result.
-     */
-    NONE,
-    /**
-     * The biggest partially matched key will be used as search result.
-     */
-    HIGHEST_BOUNDARY,
-
-    /**
-     * The smallest partially matched key will be used as search result.
-     */
-    LOWEST_BOUNDARY
-  }
-
-  public interface OSBTreeCursor<K, V> {
-    Map.Entry<K, V> next(int prefetchSize);
-  }
-
-  public interface OSBTreeKeyCursor<K> {
-    K next(int prefetchSize);
-  }
-
-  private static class BucketSearchResult {
-    private final int             itemIndex;
-    private final ArrayList<Long> path;
-
-    private BucketSearchResult(int itemIndex, ArrayList<Long> path) {
-      this.itemIndex = itemIndex;
-      this.path = path;
-    }
-
-    public long getLastPathItem() {
-      return path.get(path.size() - 1);
-    }
-  }
-
-  private static final class PagePathItemUnit {
-    private final long pageIndex;
-    private final int  itemIndex;
-
-    private PagePathItemUnit(long pageIndex, int itemIndex) {
-      this.pageIndex = pageIndex;
-      this.itemIndex = itemIndex;
-    }
-  }
-
-  public class OSBTreeFullKeyCursor implements OSBTreeKeyCursor<K> {
-    private long        pageIndex;
-    private int         itemIndex;
-
-    private List<K>     keysCache    = new ArrayList<K>();
-    private Iterator<K> keysIterator = new OEmptyIterator<K>();
-
-    public OSBTreeFullKeyCursor(long startPageIndex) {
-      pageIndex = startPageIndex;
-      itemIndex = 0;
-    }
-
-    @Override
-    public K next(int prefetchSize) {
-      if (keysIterator == null)
-        return null;
-
-      if (keysIterator.hasNext())
-        return keysIterator.next();
-
-      keysCache.clear();
-
-      if (prefetchSize < 0 || prefetchSize > OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger())
-        prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
-
-      if (prefetchSize == 0)
-        prefetchSize = 1;
-
-      acquireSharedLock();
-      try {
-        while (keysCache.size() < prefetchSize) {
-          if (pageIndex == -1)
-            break;
-
-          if (pageIndex >= diskCache.getFilledUpTo(fileId)) {
-            pageIndex = -1;
-            break;
-          }
-
-          final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
-          try {
-            final OSBTreeBucket<K, V> bucket = new OSBTreeBucket<K, V>(cacheEntry, keySerializer, keyTypes, valueSerializer,
-                ODurablePage.TrackMode.NONE);
-
-            if (itemIndex >= bucket.size()) {
-              pageIndex = bucket.getRightSibling();
-              itemIndex = 0;
-              continue;
-            }
-
-            final Map.Entry<K, V> entry = convertToMapEntry(bucket.getEntry(itemIndex));
-            itemIndex++;
-
-            keysCache.add(entry.getKey());
-          } finally {
-            diskCache.release(cacheEntry);
-          }
-        }
-      } catch (IOException e) {
-        throw new OSBTreeException("Error during element iteration", e);
-      } finally {
-        releaseSharedLock();
-      }
-
-      if (keysCache.isEmpty()) {
-        keysCache = null;
-        return null;
-      }
-
-      keysIterator = keysCache.iterator();
-      return keysIterator.next();
-    }
-  }
-
-  private final class OSBTreeCursorForward implements OSBTreeCursor<K, V> {
-    private final K                   fromKey;
-    private final K                   toKey;
-    private final boolean             fromKeyInclusive;
-    private final boolean             toKeyInclusive;
-
-    private long                      pageIndex;
-    private int                       itemIndex;
-
-    private List<Map.Entry<K, V>>     dataCache         = new ArrayList<Map.Entry<K, V>>();
-    private Iterator<Map.Entry<K, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
-
-    private OSBTreeCursorForward(long startPageIndex, int startItemIndex, K fromKey, K toKey, boolean fromKeyInclusive,
-        boolean toKeyInclusive) {
-      this.fromKey = fromKey;
-      this.toKey = toKey;
-      this.fromKeyInclusive = fromKeyInclusive;
-      this.toKeyInclusive = toKeyInclusive;
-
-      pageIndex = startPageIndex;
-      itemIndex = startItemIndex;
-    }
-
-    public Map.Entry<K, V> next(int prefetchSize) {
-      if (dataCacheIterator == null)
-        return null;
-
-      if (dataCacheIterator.hasNext())
-        return dataCacheIterator.next();
-
-      dataCache.clear();
-
-      if (prefetchSize < 0 || prefetchSize > OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger())
-        prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
-
-      if (prefetchSize == 0)
-        prefetchSize = 1;
-
-      acquireSharedLock();
-      try {
-        while (dataCache.size() < prefetchSize) {
-          if (pageIndex == -1)
-            break;
-
-          if (pageIndex >= diskCache.getFilledUpTo(fileId)) {
-            pageIndex = -1;
-            break;
-          }
-
-          final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
-          try {
-            final OSBTreeBucket<K, V> bucket = new OSBTreeBucket<K, V>(cacheEntry, keySerializer, keyTypes, valueSerializer,
-                ODurablePage.TrackMode.NONE);
-
-            if (itemIndex >= bucket.size()) {
-              pageIndex = bucket.getRightSibling();
-              itemIndex = 0;
-              continue;
-            }
-
-            final Map.Entry<K, V> entry = convertToMapEntry(bucket.getEntry(itemIndex));
-            itemIndex++;
-
-            if (fromKey != null
-                && (fromKeyInclusive ? comparator.compare(entry.getKey(), fromKey) < 0 : comparator
-                    .compare(entry.getKey(), fromKey) <= 0))
-              continue;
-
-            if (toKey != null
-                && (toKeyInclusive ? comparator.compare(entry.getKey(), toKey) > 0 : comparator.compare(entry.getKey(), toKey) >= 0)) {
-              pageIndex = -1;
-              break;
-            }
-
-            dataCache.add(entry);
-          } finally {
-            diskCache.release(cacheEntry);
-          }
-        }
-      } catch (IOException e) {
-        throw new OSBTreeException("Error during element iteration", e);
-      } finally {
-        releaseSharedLock();
-      }
-
-      if (dataCache.isEmpty()) {
-        dataCacheIterator = null;
-        return null;
-      }
-
-      dataCacheIterator = dataCache.iterator();
-
-      return dataCacheIterator.next();
-    }
-  }
-
-  private final class OSBTreeCursorBackward implements OSBTreeCursor<K, V> {
-    private final K                   fromKey;
-    private final K                   toKey;
-    private final boolean             fromKeyInclusive;
-    private final boolean             toKeyInclusive;
-
-    private long                      pageIndex;
-    private int                       itemIndex;
-
-    private List<Map.Entry<K, V>>     dataCache         = new ArrayList<Map.Entry<K, V>>();
-    private Iterator<Map.Entry<K, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
-
-    private OSBTreeCursorBackward(long endPageIndex, int endItemIndex, K fromKey, K toKey, boolean fromKeyInclusive,
-        boolean toKeyInclusive) {
-      this.fromKey = fromKey;
-      this.toKey = toKey;
-      this.fromKeyInclusive = fromKeyInclusive;
-      this.toKeyInclusive = toKeyInclusive;
-
-      pageIndex = endPageIndex;
-      itemIndex = endItemIndex;
-    }
-
-    public Map.Entry<K, V> next(int prefetchSize) {
-      if (dataCacheIterator == null)
-        return null;
-
-      if (dataCacheIterator.hasNext())
-        return dataCacheIterator.next();
-
-      dataCache.clear();
-
-      if (prefetchSize < 0 || prefetchSize > OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger())
-        prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
-
-      acquireSharedLock();
-      try {
-        while (dataCache.size() < prefetchSize) {
-          if (pageIndex >= diskCache.getFilledUpTo(fileId))
-            pageIndex = diskCache.getFilledUpTo(fileId) - 1;
-
-          if (pageIndex == -1)
-            break;
-
-          final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
-          try {
-            final OSBTreeBucket<K, V> bucket = new OSBTreeBucket<K, V>(cacheEntry, keySerializer, keyTypes, valueSerializer,
-                ODurablePage.TrackMode.NONE);
-
-            if (itemIndex >= bucket.size())
-              itemIndex = bucket.size() - 1;
-
-            if (itemIndex < 0) {
-              pageIndex = bucket.getLeftSibling();
-              itemIndex = Integer.MAX_VALUE;
-              continue;
-            }
-
-            final Map.Entry<K, V> entry = convertToMapEntry(bucket.getEntry(itemIndex));
-            itemIndex--;
-
-            if (toKey != null
-                && (toKeyInclusive ? comparator.compare(entry.getKey(), toKey) > 0 : comparator.compare(entry.getKey(), toKey) >= 0))
-              continue;
-
-            if (fromKey != null
-                && (fromKeyInclusive ? comparator.compare(entry.getKey(), fromKey) < 0 : comparator
-                    .compare(entry.getKey(), fromKey) <= 0)) {
-              pageIndex = -1;
-              break;
-            }
-
-            dataCache.add(entry);
-          } finally {
-            diskCache.release(cacheEntry);
-          }
-        }
-      } catch (IOException e) {
-        throw new OSBTreeException("Error during element iteration", e);
-      } finally {
-        releaseSharedLock();
-      }
-
-      if (dataCache.isEmpty()) {
-        dataCacheIterator = null;
-        return null;
-      }
-
-      dataCacheIterator = dataCache.iterator();
-
-      return dataCacheIterator.next();
-    }
-  }
-
-  public OSBTree(String dataFileExtension, int keySize, boolean durableInNonTxMode, String nullFileExtension) {
+  public OSBTree(String dataFileExtension, boolean durableInNonTxMode, String nullFileExtension) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
     acquireExclusiveLock();
     try {
       this.dataFileExtension = dataFileExtension;
-      this.keySize = keySize;
       this.nullFileExtension = nullFileExtension;
       this.durableInNonTxMode = durableInNonTxMode;
     } finally {
@@ -430,9 +112,10 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
-      OAbstractPaginatedStorage storageLocal, boolean nullPointerSupport) {
+      OAbstractPaginatedStorage storageLocal, int keySize, boolean nullPointerSupport) {
     acquireExclusiveLock();
     try {
+      this.keySize = keySize;
       this.storage = storageLocal;
       this.keyTypes = keyTypes;
 
@@ -776,9 +459,10 @@ public class OSBTree<K, V> extends ODurableComponent {
   }
 
   public void load(String name, OBinarySerializer<K> keySerializer, OStreamSerializer valueSerializer, OType[] keyTypes,
-      OAbstractPaginatedStorage storageLocal, boolean nullPointerSupport) {
+      OAbstractPaginatedStorage storageLocal, int keySize, boolean nullPointerSupport) {
     acquireExclusiveLock();
     try {
+      this.keySize = keySize;
       this.storage = storageLocal;
       this.keyTypes = keyTypes;
 
@@ -1928,4 +1612,319 @@ public class OSBTree<K, V> extends ODurableComponent {
     };
   }
 
+  /**
+   * Indicates search behavior in case of {@link OCompositeKey} keys that have less amount of internal keys are used, whether lowest
+   * or highest partially matched key should be used.
+   */
+  private static enum PartialSearchMode {
+    /**
+     * Any partially matched key will be used as search result.
+     */
+    NONE,
+    /**
+     * The biggest partially matched key will be used as search result.
+     */
+    HIGHEST_BOUNDARY,
+
+    /**
+     * The smallest partially matched key will be used as search result.
+     */
+    LOWEST_BOUNDARY
+  }
+
+  public interface OSBTreeCursor<K, V> {
+    Map.Entry<K, V> next(int prefetchSize);
+  }
+
+  public interface OSBTreeKeyCursor<K> {
+    K next(int prefetchSize);
+  }
+
+  private static class BucketSearchResult {
+    private final int             itemIndex;
+    private final ArrayList<Long> path;
+
+    private BucketSearchResult(int itemIndex, ArrayList<Long> path) {
+      this.itemIndex = itemIndex;
+      this.path = path;
+    }
+
+    public long getLastPathItem() {
+      return path.get(path.size() - 1);
+    }
+  }
+
+  private static final class PagePathItemUnit {
+    private final long pageIndex;
+    private final int  itemIndex;
+
+    private PagePathItemUnit(long pageIndex, int itemIndex) {
+      this.pageIndex = pageIndex;
+      this.itemIndex = itemIndex;
+    }
+  }
+
+  public class OSBTreeFullKeyCursor implements OSBTreeKeyCursor<K> {
+    private long        pageIndex;
+    private int         itemIndex;
+
+    private List<K>     keysCache    = new ArrayList<K>();
+    private Iterator<K> keysIterator = new OEmptyIterator<K>();
+
+    public OSBTreeFullKeyCursor(long startPageIndex) {
+      pageIndex = startPageIndex;
+      itemIndex = 0;
+    }
+
+    @Override
+    public K next(int prefetchSize) {
+      if (keysIterator == null)
+        return null;
+
+      if (keysIterator.hasNext())
+        return keysIterator.next();
+
+      keysCache.clear();
+
+      if (prefetchSize < 0 || prefetchSize > OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger())
+        prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+
+      if (prefetchSize == 0)
+        prefetchSize = 1;
+
+      acquireSharedLock();
+      try {
+        while (keysCache.size() < prefetchSize) {
+          if (pageIndex == -1)
+            break;
+
+          if (pageIndex >= diskCache.getFilledUpTo(fileId)) {
+            pageIndex = -1;
+            break;
+          }
+
+          final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
+          try {
+            final OSBTreeBucket<K, V> bucket = new OSBTreeBucket<K, V>(cacheEntry, keySerializer, keyTypes, valueSerializer,
+                ODurablePage.TrackMode.NONE);
+
+            if (itemIndex >= bucket.size()) {
+              pageIndex = bucket.getRightSibling();
+              itemIndex = 0;
+              continue;
+            }
+
+            final Map.Entry<K, V> entry = convertToMapEntry(bucket.getEntry(itemIndex));
+            itemIndex++;
+
+            keysCache.add(entry.getKey());
+          } finally {
+            diskCache.release(cacheEntry);
+          }
+        }
+      } catch (IOException e) {
+        throw new OSBTreeException("Error during element iteration", e);
+      } finally {
+        releaseSharedLock();
+      }
+
+      if (keysCache.isEmpty()) {
+        keysCache = null;
+        return null;
+      }
+
+      keysIterator = keysCache.iterator();
+      return keysIterator.next();
+    }
+  }
+
+  private final class OSBTreeCursorForward implements OSBTreeCursor<K, V> {
+    private final K                   fromKey;
+    private final K                   toKey;
+    private final boolean             fromKeyInclusive;
+    private final boolean             toKeyInclusive;
+
+    private long                      pageIndex;
+    private int                       itemIndex;
+
+    private List<Map.Entry<K, V>>     dataCache         = new ArrayList<Map.Entry<K, V>>();
+    private Iterator<Map.Entry<K, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
+
+    private OSBTreeCursorForward(long startPageIndex, int startItemIndex, K fromKey, K toKey, boolean fromKeyInclusive,
+        boolean toKeyInclusive) {
+      this.fromKey = fromKey;
+      this.toKey = toKey;
+      this.fromKeyInclusive = fromKeyInclusive;
+      this.toKeyInclusive = toKeyInclusive;
+
+      pageIndex = startPageIndex;
+      itemIndex = startItemIndex;
+    }
+
+    public Map.Entry<K, V> next(int prefetchSize) {
+      if (dataCacheIterator == null)
+        return null;
+
+      if (dataCacheIterator.hasNext())
+        return dataCacheIterator.next();
+
+      dataCache.clear();
+
+      if (prefetchSize < 0 || prefetchSize > OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger())
+        prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+
+      if (prefetchSize == 0)
+        prefetchSize = 1;
+
+      acquireSharedLock();
+      try {
+        while (dataCache.size() < prefetchSize) {
+          if (pageIndex == -1)
+            break;
+
+          if (pageIndex >= diskCache.getFilledUpTo(fileId)) {
+            pageIndex = -1;
+            break;
+          }
+
+          final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
+          try {
+            final OSBTreeBucket<K, V> bucket = new OSBTreeBucket<K, V>(cacheEntry, keySerializer, keyTypes, valueSerializer,
+                ODurablePage.TrackMode.NONE);
+
+            if (itemIndex >= bucket.size()) {
+              pageIndex = bucket.getRightSibling();
+              itemIndex = 0;
+              continue;
+            }
+
+            final Map.Entry<K, V> entry = convertToMapEntry(bucket.getEntry(itemIndex));
+            itemIndex++;
+
+            if (fromKey != null
+                && (fromKeyInclusive ? comparator.compare(entry.getKey(), fromKey) < 0 : comparator
+                    .compare(entry.getKey(), fromKey) <= 0))
+              continue;
+
+            if (toKey != null
+                && (toKeyInclusive ? comparator.compare(entry.getKey(), toKey) > 0 : comparator.compare(entry.getKey(), toKey) >= 0)) {
+              pageIndex = -1;
+              break;
+            }
+
+            dataCache.add(entry);
+          } finally {
+            diskCache.release(cacheEntry);
+          }
+        }
+      } catch (IOException e) {
+        throw new OSBTreeException("Error during element iteration", e);
+      } finally {
+        releaseSharedLock();
+      }
+
+      if (dataCache.isEmpty()) {
+        dataCacheIterator = null;
+        return null;
+      }
+
+      dataCacheIterator = dataCache.iterator();
+
+      return dataCacheIterator.next();
+    }
+  }
+
+  private final class OSBTreeCursorBackward implements OSBTreeCursor<K, V> {
+    private final K                   fromKey;
+    private final K                   toKey;
+    private final boolean             fromKeyInclusive;
+    private final boolean             toKeyInclusive;
+
+    private long                      pageIndex;
+    private int                       itemIndex;
+
+    private List<Map.Entry<K, V>>     dataCache         = new ArrayList<Map.Entry<K, V>>();
+    private Iterator<Map.Entry<K, V>> dataCacheIterator = OEmptyMapEntryIterator.INSTANCE;
+
+    private OSBTreeCursorBackward(long endPageIndex, int endItemIndex, K fromKey, K toKey, boolean fromKeyInclusive,
+        boolean toKeyInclusive) {
+      this.fromKey = fromKey;
+      this.toKey = toKey;
+      this.fromKeyInclusive = fromKeyInclusive;
+      this.toKeyInclusive = toKeyInclusive;
+
+      pageIndex = endPageIndex;
+      itemIndex = endItemIndex;
+    }
+
+    public Map.Entry<K, V> next(int prefetchSize) {
+      if (dataCacheIterator == null)
+        return null;
+
+      if (dataCacheIterator.hasNext())
+        return dataCacheIterator.next();
+
+      dataCache.clear();
+
+      if (prefetchSize < 0 || prefetchSize > OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger())
+        prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+
+      acquireSharedLock();
+      try {
+        while (dataCache.size() < prefetchSize) {
+          if (pageIndex >= diskCache.getFilledUpTo(fileId))
+            pageIndex = diskCache.getFilledUpTo(fileId) - 1;
+
+          if (pageIndex == -1)
+            break;
+
+          final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
+          try {
+            final OSBTreeBucket<K, V> bucket = new OSBTreeBucket<K, V>(cacheEntry, keySerializer, keyTypes, valueSerializer,
+                ODurablePage.TrackMode.NONE);
+
+            if (itemIndex >= bucket.size())
+              itemIndex = bucket.size() - 1;
+
+            if (itemIndex < 0) {
+              pageIndex = bucket.getLeftSibling();
+              itemIndex = Integer.MAX_VALUE;
+              continue;
+            }
+
+            final Map.Entry<K, V> entry = convertToMapEntry(bucket.getEntry(itemIndex));
+            itemIndex--;
+
+            if (toKey != null
+                && (toKeyInclusive ? comparator.compare(entry.getKey(), toKey) > 0 : comparator.compare(entry.getKey(), toKey) >= 0))
+              continue;
+
+            if (fromKey != null
+                && (fromKeyInclusive ? comparator.compare(entry.getKey(), fromKey) < 0 : comparator
+                    .compare(entry.getKey(), fromKey) <= 0)) {
+              pageIndex = -1;
+              break;
+            }
+
+            dataCache.add(entry);
+          } finally {
+            diskCache.release(cacheEntry);
+          }
+        }
+      } catch (IOException e) {
+        throw new OSBTreeException("Error during element iteration", e);
+      } finally {
+        releaseSharedLock();
+      }
+
+      if (dataCache.isEmpty()) {
+        dataCacheIterator = null;
+        return null;
+      }
+
+      dataCacheIterator = dataCache.iterator();
+
+      return dataCacheIterator.next();
+    }
+  }
 }

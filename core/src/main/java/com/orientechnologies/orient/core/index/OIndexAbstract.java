@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -220,6 +219,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       else
         this.clustersToIndex = new HashSet<String>();
 
+      markStorageDirty();
       indexEngine.create(this.name, indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
 
       if (rebuild)
@@ -360,6 +360,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     try {
       acquireExclusiveLock();
       try {
+        markStorageDirty();
+
         rebuildThread = Thread.currentThread();
         rebuilding = true;
 
@@ -419,17 +421,39 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   }
 
   public boolean remove(Object key, final OIdentifiable value) {
-    checkForRebuild();
+    return remove(key);
+  }
 
-    key = getCollatingValue(key);
-
-    modificationLock.requestModificationLock();
+  protected void startStorageAtomicOperation() {
     try {
-      return remove(key);
-    } finally {
-      modificationLock.releaseModificationLock();
+      ((OAbstractPaginatedStorage) getDatabase().getStorage()).startAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during start of atomic operation", e);
     }
+  }
 
+  protected void commitStorageAtomicOperation() {
+    try {
+      ((OAbstractPaginatedStorage) getDatabase().getStorage()).commitAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during commit of atomic operation", e);
+    }
+  }
+
+  protected void rollbackStorageAtomicOperation() {
+    try {
+      ((OAbstractPaginatedStorage) getDatabase().getStorage()).rollbackAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during rollback of atomic operation", e);
+    }
+  }
+
+  protected void markStorageDirty() {
+    try {
+      ((OAbstractPaginatedStorage) getDatabase().getStorage()).markDirty();
+    } catch (IOException e) {
+      throw new OIndexException("Can not mark storage as dirty", e);
+    }
   }
 
   public boolean remove(Object key) {
@@ -438,10 +462,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     key = getCollatingValue(key);
 
     modificationLock.requestModificationLock();
-
     try {
       acquireSharedLock();
       try {
+        markStorageDirty();
         return indexEngine.remove(key);
       } finally {
         releaseSharedLock();
@@ -459,6 +483,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     try {
       acquireSharedLock();
       try {
+        markStorageDirty();
         indexEngine.clear();
         return this;
       } finally {
@@ -476,6 +501,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       acquireExclusiveLock();
 
       try {
+        markStorageDirty();
         indexEngine.delete();
 
         // REMOVE THE INDEX ALSO FROM CLASS MAP
@@ -500,6 +526,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     try {
       acquireExclusiveLock();
       try {
+        markStorageDirty();
         indexEngine.deleteWithoutLoad(indexName);
       } finally {
         releaseExclusiveLock();
