@@ -10,7 +10,13 @@ import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -92,6 +98,11 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
    */
   public void drop() {
     getDatabase(false, true).drop();
+  }
+
+  @Override
+  public PRIORITY getPriority() {
+    return PRIORITY.FIRST;
   }
 
   /**
@@ -277,13 +288,12 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
    * 
    * @see #get()
    */
-  public OrientGraphFactory setTransactional(final boolean iTransactional) {
-    if (pool != null && transactional != iTransactional)
-      throw new IllegalArgumentException("Cannot change transactional state after creating the pool");
-    this.transactional = iTransactional;
-    return this;
-  }
-
+	public OrientGraphFactory setTransactional(final boolean iTransactional) {
+		if (pool != null && transactional != iTransactional)
+			throw new IllegalArgumentException("Cannot change transactional state after creating the pool");
+		this.transactional = iTransactional;
+		return this;
+	}
   /**
    * Returns the number of available instances in the pool.
    */
@@ -291,6 +301,29 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
     if (pool != null)
       return pool.getAvailableResources();
     return 0;
+  }
+
+  @Override
+  public void onCreate(final ODatabase iDatabase) {
+    if (iDatabase instanceof ODatabaseRecord) {
+      final ODatabaseComplex<?> db = ((ODatabaseRecord) iDatabase).getDatabaseOwner();
+      if (db instanceof ODatabaseDocumentTx)
+        OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
+    }
+  }
+
+  @Override
+  public void onOpen(final ODatabase iDatabase) {
+    if (iDatabase instanceof ODatabaseRecord) {
+      final ODatabaseComplex<?> db = ((ODatabaseRecord) iDatabase).getDatabaseOwner();
+      if (db instanceof ODatabaseDocumentTx)
+        OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
+    }
+  }
+
+  @Override
+  public void onClose(final ODatabase iDatabase) {
+
   }
 
   @Override

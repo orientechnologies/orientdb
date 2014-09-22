@@ -328,7 +328,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     setCurrentDatabaseinThreadLocal();
 
-    underlying.callOnCloseListeners();
+    callOnCloseListeners();
 
     if (metadata != null) {
       metadata.close();
@@ -345,7 +345,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   public void close() {
     setCurrentDatabaseinThreadLocal();
 
-    underlying.callOnCloseListeners();
+    callOnCloseListeners();
 
     for (ORecordHook h : hooks.keySet())
       h.onUnregister();
