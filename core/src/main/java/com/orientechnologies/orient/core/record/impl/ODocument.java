@@ -799,8 +799,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       final ORidBag ridBag = (ORidBag) oldValue;
       ridBag.setOwner(null);
     } else if (oldValue instanceof ODocument) {
-      final ODocument doc = (ODocument) oldValue;
-      doc.removeOwner(this);
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
     }
 
     if (iPropertyValue != null) {
@@ -809,7 +808,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         iPropertyValue = ODocumentHelper.convertField(this, iFieldName, fieldType.getDefaultJavaType(), iPropertyValue);
         if (fieldType.equals(OType.EMBEDDED) && iPropertyValue instanceof ODocument) {
           final ODocument embeddedDocument = (ODocument) iPropertyValue;
-          embeddedDocument.addOwner(this);
+          ODocumentInternal.addOwner(embeddedDocument, this);
         }
       } else if (iPropertyValue instanceof Enum)
         iPropertyValue = iPropertyValue.toString();
@@ -1067,7 +1066,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    *
    * @return this
    */
-  public ODocument addOwner(final ORecordElement iOwner) {
+  protected void addOwner(final ORecordElement iOwner) {
     if (_owners == null)
       _owners = new ArrayList<WeakReference<ORecordElement>>();
 
@@ -1083,7 +1082,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (!found)
       this._owners.add(new WeakReference<ORecordElement>(iOwner));
 
-    return this;
   }
 
   @Override
@@ -1111,7 +1109,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return result;
   }
 
-  public ODocument removeOwner(final ORecordElement iRecordElement) {
+  protected void removeOwner(final ORecordElement iRecordElement) {
     if (_owners != null) {
       // PROPAGATES TO THE OWNER
       ORecordElement e;
@@ -1123,7 +1121,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         }
       }
     }
-    return this;
   }
 
   /**

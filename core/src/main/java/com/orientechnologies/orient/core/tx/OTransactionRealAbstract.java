@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
@@ -222,7 +223,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     final ODocument result = new ODocument().setAllowChainedAccess(false);
 
     for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
-      final ODocument indexDoc = new ODocument().addOwner(result);
+      final ODocument indexDoc = new ODocument();
+      ODocumentInternal.addOwner(indexDoc, result);
 
       result.field(indexEntry.getKey(), indexDoc, OType.EMBEDDED);
 
@@ -374,7 +376,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     // SERIALIZE VALUES
     if (entry.entries != null && !entry.entries.isEmpty()) {
       for (OTransactionIndexEntry e : entry.entries) {
-        final ODocument changeDoc = new ODocument().addOwner(indexDoc).setAllowChainedAccess(false);
+        final ODocument changeDoc = new ODocument().setAllowChainedAccess(false);
+        ODocumentInternal.addOwner((ODocument) changeDoc, indexDoc);
 
         // SERIALIZE OPERATION
         changeDoc.field("o", e.operation.ordinal());
@@ -392,9 +395,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         operations.add(changeDoc);
       }
     }
-
-    return new ODocument().addOwner(indexDoc).setAllowChainedAccess(false).field("k", keyContainer, OType.EMBEDDED)
-        .field("ops", operations, OType.EMBEDDEDLIST);
+    ODocument res = new ODocument();
+    ODocumentInternal.addOwner(res, indexDoc);
+    return res.setAllowChainedAccess(false).field("k", keyContainer, OType.EMBEDDED).field("ops", operations, OType.EMBEDDEDLIST);
   }
 
   private void updateChangesIdentity(ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {

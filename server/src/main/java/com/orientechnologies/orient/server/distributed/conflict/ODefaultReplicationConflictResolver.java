@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
@@ -214,7 +215,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
     for (int i = 0; i < entries.size(); ++i) {
       final ODocument record = entries.get(i).getRecord();
       record.setClassName(null);
-      record.addOwner(result);
+      ODocumentInternal.addOwner(record, result);
       record.getIdentity().reset();
 
       final Byte operation = record.field("operation");

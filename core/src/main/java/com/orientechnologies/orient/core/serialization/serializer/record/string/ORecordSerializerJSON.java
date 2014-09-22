@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -572,9 +573,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     final String[] fields = OStringParser.getWords(iFieldValue.substring(1, iFieldValue.length() - 1), ":,", true);
 
     if (fields == null || fields.length == 0)
-      if (iNoMap)
-        return new ODocument().addOwner(iRecord);
-      else
+      if (iNoMap) {
+        ODocument res = new ODocument();
+        ODocumentInternal.addOwner(res, iRecord);
+        return res;
+      } else
         return new HashMap<String, Object>();
 
     if (iNoMap || hasTypeField(fields)) {
@@ -611,7 +614,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     final ODocument recordInternal = (ODocument) fromString(iFieldValue, new ODocument(), null, iOptions, shouldReload);
 
     if (shouldBeDeserializedAsEmbedded(recordInternal, iType))
-      recordInternal.addOwner(iRecord);
+      ODocumentInternal.addOwner(recordInternal, iRecord);
     else {
       ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
@@ -695,7 +698,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
         // TODO redundant in some cases, owner is already added by getValue in some cases
         if (shouldBeDeserializedAsEmbedded(collectionItem, iType))
-          ((ODocument) collectionItem).addOwner(iRecord);
+          ODocumentInternal.addOwner((ODocument) collectionItem, iRecord);
 
         if (collectionItem instanceof String && ((String) collectionItem).length() == 0)
           continue;

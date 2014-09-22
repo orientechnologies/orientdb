@@ -28,6 +28,7 @@ import java.util.WeakHashMap;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
@@ -101,7 +102,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   public boolean remove(final Object o) {
     if (super.remove(o)) {
       if (o instanceof ODocument)
-        ((ODocument) o).removeOwner(this);
+        ODocumentInternal.removeOwner((ODocument) o, this);
 
       fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, (T) o, null, (T) o));
       return true;
@@ -120,7 +121,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     if (origValues == null) {
       for (final T item : this) {
         if (item instanceof ODocument)
-          ((ODocument) item).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) item, this);
       }
     }
 
@@ -129,7 +130,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     if (origValues != null) {
       for (final T item : origValues) {
         if (item instanceof ODocument)
-          ((ODocument) item).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) item, this);
 
         fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, item, null, item));
       }
@@ -218,7 +219,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   private void addOwnerToEmbeddedDoc(T e) {
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
-      ((ODocument) e).addOwner(this);
+      ODocumentInternal.addOwner((ODocument) e, this);
   }
 
   private Object writeReplace() {

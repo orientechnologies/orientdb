@@ -37,6 +37,7 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -587,7 +588,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         if (indexDefinition != null) {
           final ODocument indexDefDocument = indexDefinition.toStream();
           if (!indexDefDocument.hasOwners())
-            indexDefDocument.addOwner(configuration);
+            ODocumentInternal.addOwner(indexDefDocument, configuration);
 
           configuration.field(OIndexInternal.INDEX_DEFINITION, indexDefDocument, OType.EMBEDDED);
           configuration.field(OIndexInternal.INDEX_DEFINITION_CLASS, indexDefinition.getClass().getName());

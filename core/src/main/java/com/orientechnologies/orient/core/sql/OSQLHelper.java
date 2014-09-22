@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
@@ -258,7 +259,7 @@ public class OSQLHelper {
 
     if (iFieldValue instanceof ODocument && !((ODocument) iFieldValue).getIdentity().isValid())
       // EMBEDDED DOCUMENT
-      ((ODocument) iFieldValue).addOwner(iDocument);
+      ODocumentInternal.addOwner((ODocument) iFieldValue, iDocument);
 
     // can't use existing getValue with iContext
     if (iFieldValue == null)
@@ -320,7 +321,8 @@ public class OSQLHelper {
                   } else {
                     // TRANSFORM IT IN EMBEDDED
                     doc.getIdentity().reset();
-                    doc.addOwner(iDocument);
+                    ODocumentInternal.addOwner(doc, iDocument);
+                    ODocumentInternal.addOwner(doc, iDocument);
                     tempColl.add(doc);
                   }
                 }

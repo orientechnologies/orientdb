@@ -25,6 +25,7 @@ import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
 /**
@@ -115,7 +116,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
     setDirty();
 
     if (e instanceof ODocument)
-      ((ODocument) e).addOwner(this);
+      ODocumentInternal.addOwner((ODocument) e, this);
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
         e));
 

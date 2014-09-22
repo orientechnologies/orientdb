@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
@@ -244,7 +245,7 @@ public class TestOTypeDetection {
     assertEquals(OType.LINKSET, OType.getTypeByValue(linkSet2));
 
     ODocument document = new ODocument();
-    document.addOwner(new ODocument());
+    ODocumentInternal.addOwner(document, new ODocument());
     assertEquals(OType.EMBEDDED, OType.getTypeByValue(document));
   }
 

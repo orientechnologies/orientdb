@@ -30,6 +30,7 @@ import java.util.WeakHashMap;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
@@ -70,7 +71,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
     setDirty();
 
     if (e instanceof ODocument)
-      ((ODocument) e).addOwner(this);
+      ODocumentInternal.addOwner((ODocument) e, this);
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
         e));
@@ -86,7 +87,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
     final Object old = map.remove(o);
     if (old != null) {
       if (o instanceof ODocument)
-        ((ODocument) o).removeOwner(this);
+        ODocumentInternal.removeOwner((ODocument) o, this);
 
       setDirty();
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(

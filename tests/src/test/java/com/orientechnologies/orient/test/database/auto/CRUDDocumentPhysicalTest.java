@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
@@ -483,12 +484,14 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void testDirtyChild() {
     ODocument parent = new ODocument();
 
-    ODocument child1 = new ODocument().addOwner(parent);
+    ODocument child1 = new ODocument();
+    ODocumentInternal.addOwner(child1, parent);
     parent.field("child1", child1);
 
     Assert.assertTrue(child1.hasOwners());
 
-    ODocument child2 = new ODocument().addOwner(child1);
+    ODocument child2 = new ODocument();
+    ODocumentInternal.addOwner(child2, child1);
     child1.field("child2", child2);
 
     Assert.assertTrue(child2.hasOwners());

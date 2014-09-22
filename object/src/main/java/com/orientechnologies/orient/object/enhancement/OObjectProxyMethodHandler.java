@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -726,14 +727,14 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       if (valueToSet instanceof Proxy) {
         ODocument docToSet = OObjectEntitySerializer.getDocument((Proxy) valueToSet);
         if (OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
-          docToSet.addOwner(doc);
+          ODocumentInternal.addOwner(docToSet, doc);
         Object oldValue = doc.field(fieldName);
         if (OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName) && oldValue instanceof OIdentifiable)
           orphans.add(((OIdentifiable) oldValue).getIdentity());
         setDocFieldValue(fieldName, docToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
       } else if (valueToSet instanceof OIdentifiable) {
         if (valueToSet instanceof ODocument && OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
-          ((ODocument) valueToSet).addOwner(doc);
+          ODocumentInternal.addOwner((ODocument) valueToSet, doc);
         Object oldValue = doc.field(fieldName);
         if (OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName) && oldValue instanceof OIdentifiable)
           orphans.add(((OIdentifiable) oldValue).getIdentity());
@@ -792,7 +793,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           valueToSet = OObjectEntitySerializer.serializeObject(valueToSet, getDatabase());
           final ODocument docToSet = OObjectEntitySerializer.getDocument((Proxy) valueToSet);
           if (OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
-            docToSet.addOwner(doc);
+            ODocumentInternal.addOwner((ODocument) docToSet, doc);
+
           setDocFieldValue(fieldName, docToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
         } else {
           setDocFieldValue(fieldName, valueToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));

@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
@@ -235,7 +236,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
         final Object embeddedObject = OStringSerializerEmbedded.INSTANCE.fromStream(value);
         if (embeddedObject instanceof ODocument)
-          ((ODocument) embeddedObject).addOwner(iSourceRecord);
+          ODocumentInternal.addOwner((ODocument) embeddedObject, iSourceRecord);
 
         // RECORD
         return embeddedObject;
@@ -307,7 +308,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
             mapValueObject = fieldTypeFromStream(iSourceDocument, linkedType, mapValue);
 
             if (mapValueObject != null && mapValueObject instanceof ODocument)
-              ((ODocument) mapValueObject).addOwner(iSourceDocument);
+              ODocumentInternal.addOwner((ODocument) mapValueObject, iSourceDocument);
           } else
             mapValueObject = null;
 
@@ -714,7 +715,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       }
 
       if (objectToAdd != null && objectToAdd instanceof ODocument && coll instanceof ORecordElement)
-        ((ODocument) objectToAdd).addOwner((ORecordElement) coll);
+        ODocumentInternal.addOwner((ODocument) objectToAdd, (ORecordElement) coll);
 
       ((Collection<Object>) coll).add(objectToAdd);
     }

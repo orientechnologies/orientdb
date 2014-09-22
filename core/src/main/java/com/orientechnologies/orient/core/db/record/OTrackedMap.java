@@ -28,6 +28,7 @@ import java.util.WeakHashMap;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Implementation of LinkedHashMap bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
@@ -72,7 +73,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
       return oldValue;
 
     if (oldValue instanceof ODocument)
-      ((ODocument) oldValue).removeOwner(this);
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
     addOwnerToEmbeddedDoc(value);
 
@@ -87,7 +88,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
   private void addOwnerToEmbeddedDoc(T e) {
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
-      ((ODocument) e).addOwner(this);
+      ODocumentInternal.addOwner((ODocument) e, this);
   }
 
   @Override
@@ -96,7 +97,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     final T oldValue = super.remove(iKey);
 
     if (oldValue instanceof ODocument)
-      ((ODocument) oldValue).removeOwner(this);
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
     if (containsKey)
       fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null,
@@ -116,7 +117,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     if (origValues == null) {
       for (T value : values())
         if (value instanceof ODocument) {
-          ((ODocument) value).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) value, this);
         }
     }
 
@@ -125,7 +126,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     if (origValues != null) {
       for (Map.Entry<Object, T> entry : origValues.entrySet()) {
         if (entry.getValue() instanceof ODocument) {
-          ((ODocument) entry.getValue()).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) entry.getValue(), this);
         }
         fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, entry.getKey(),
             null, entry.getValue()));

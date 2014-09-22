@@ -19,6 +19,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -474,7 +475,8 @@ public class ODistributedConfiguration {
       // ALREADY EXISTS
       return clusters;
 
-    cluster = new ODocument().addOwner(clusters);
+    cluster = new ODocument();
+    ODocumentInternal.addOwner(cluster, clusters);
     clusters.field(iClusterName, cluster, OType.EMBEDDED);
 
     initClusterServers(cluster);

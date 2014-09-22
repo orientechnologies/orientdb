@@ -27,6 +27,7 @@ import java.util.WeakHashMap;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Implementation of ArrayList bound to a source ORecord object to keep track of changes for literal types. This avoid to call the
@@ -98,7 +99,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
     if (oldValue != null && !oldValue.equals(element)) {
       if (oldValue instanceof ODocument)
-        ((ODocument) oldValue).removeOwner(this);
+        ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
       addOwnerToEmbeddedDoc(element);
 
@@ -111,14 +112,14 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   private void addOwnerToEmbeddedDoc(T e) {
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
-      ((ODocument) e).addOwner(this);
+      ODocumentInternal.addOwner((ODocument) e, this);
   }
 
   @Override
   public T remove(int index) {
     final T oldValue = super.remove(index);
     if (oldValue instanceof ODocument)
-      ((ODocument) oldValue).removeOwner(this);
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null,
         oldValue));
@@ -146,7 +147,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     if (origValues == null) {
       for (final T item : this) {
         if (item instanceof ODocument)
-          ((ODocument) item).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) item, this);
       }
     }
 
@@ -156,7 +157,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
         final T origValue = origValues.get(i);
 
         if (origValue instanceof ODocument)
-          ((ODocument) origValue).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) origValue, this);
 
         fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, i, null,
             origValue));

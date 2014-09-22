@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -75,7 +76,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       // EMBEDED RECORD
       final Object embeddedObject = OStringSerializerEmbedded.INSTANCE.fromStream((String) iValue);
       if (embeddedObject instanceof ODocument)
-        ((ODocument) embeddedObject).addOwner(iDocument);
+        ODocumentInternal.addOwner((ODocument) embeddedObject, iDocument);
 
       // EMBEDDED OBJECT
       return embeddedObject;
@@ -85,7 +86,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       // RECORD
       final Object result = OStringSerializerAnyStreamable.INSTANCE.fromStream((String) iValue);
       if (result instanceof ODocument)
-        ((ODocument) result).addOwner(iDocument);
+        ODocumentInternal.addOwner((ODocument) result, iDocument);
       return result;
 
     case EMBEDDEDSET:
