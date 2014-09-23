@@ -22,9 +22,8 @@
                 <property name="global.lib" value="../${community.release}/lib"/>
                 <property name="version" value="${version}"/>
 
-                <fileset dir="commons" includes="build.xml"/>
+                <fileset dir="test-commons" includes="build.xml"/>
                 <fileset dir="core" includes="build.xml"/>
-                <fileset dir="nativeos" includes="build.xml"/>
                 <fileset dir="object" includes="build.xml"/>
                 <fileset dir="enterprise" includes="build.xml"/>
                 <fileset dir="client" includes="build.xml"/>
@@ -32,7 +31,6 @@
                 <fileset dir="distributed" includes="build.xml"/>
                 <fileset dir="tools" includes="build.xml"/>
                 <fileset dir="graphdb" includes="build.xml"/>
-                <fileset dir="test-commons" includes="build.xml"/>
                 <fileset dir="tests" includes="build.xml"/>
             </subant>
 

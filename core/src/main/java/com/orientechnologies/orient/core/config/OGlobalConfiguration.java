@@ -584,9 +584,6 @@ public enum OGlobalConfiguration {
   }
 
   private static void autoConfig() {
-    System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
-    System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
-
     if (System.getProperty(DISK_CACHE_SIZE.key) == null) {
       autoConfigDiskCacheSize();
     }
