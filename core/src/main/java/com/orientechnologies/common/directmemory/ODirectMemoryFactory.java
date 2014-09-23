@@ -15,7 +15,8 @@
  */
 package com.orientechnologies.common.directmemory;
 
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.nio.OJNADirectMemory;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * @author Andrey Lomakin
@@ -28,30 +29,18 @@ class ODirectMemoryFactory {
   static {
     ODirectMemory localDirectMemory = null;
     try {
-      final Class<?> jnaClass = Class.forName("com.orientechnologies.nio.OJNADirectMemory");
-      if (jnaClass == null)
-        localDirectMemory = null;
-      else
-        localDirectMemory = (ODirectMemory) jnaClass.newInstance();
+      if (OGlobalConfiguration.MEMORY_USE_UNSAFE.getValueAsBoolean()) {
+        final Class<?> sunClass = Class.forName("sun.misc.Unsafe");
+
+        if (sunClass != null)
+          localDirectMemory = OUnsafeMemory.INSTANCE;
+      }
     } catch (Throwable e) {
       // ignore
     }
 
-    if (localDirectMemory == null) {
-      try {
-        final Class<?> sunClass = Class.forName("sun.misc.Unsafe");
-
-        if (sunClass != null) {
-          localDirectMemory = OUnsafeMemory.INSTANCE;
-          OLogManager.instance().warn(
-              ODirectMemoryFactory.class,
-              "Sun Unsafe direct  memory implementation is going to be used, "
-                  + "this implementation is not stable so please use JNA version instead.");
-        }
-      } catch (Throwable e) {
-        // ignore
-      }
-    }
+    if (localDirectMemory == null)
+      localDirectMemory = new OJNADirectMemory();
 
     directMemory = localDirectMemory;
   }
