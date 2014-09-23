@@ -87,13 +87,11 @@ public class CreateCityDb extends SpeedTestMonoThread {
       buildDirectory = ".";
 
     String uri = "plocal:" + buildDirectory + "/city";
-    // String uri = "remote:localhost:2425/city";
     databaseDocumentTx = new ODatabaseDocumentTx(uri);
     if (databaseDocumentTx.exists()) {
       databaseDocumentTx.open("admin", "admin");
       databaseDocumentTx.drop();
     }
-    // databaseDocumentTx.open("admin", "admin");
     databaseDocumentTx.create();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
     if (schema.getClass("City") == null) {
@@ -102,6 +100,7 @@ public class CreateCityDb extends SpeedTestMonoThread {
       oClass.createProperty("longitude", OType.DOUBLE);
       oClass.createProperty("name", OType.STRING);
       oClass.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
+      oClass.createIndex("City.lat_lng", "SPATIAL", null, null, "LUCENE", new String[] { "latitude", "longitude" });
     }
     ZipFile zipFile = new ZipFile("files/allCountries.zip");
     Enumeration<? extends ZipEntry> entries = zipFile.entries();
@@ -112,7 +111,6 @@ public class CreateCityDb extends SpeedTestMonoThread {
       if (entry.getName().equals("allCountries.txt")) {
 
         InputStream stream = zipFile.getInputStream(entry);
-        // reader = new CSVReader(new InputStreamReader(stream), '\t');
         lineReader = new LineNumberReader(new InputStreamReader(stream));
       }
     }
@@ -124,7 +122,6 @@ public class CreateCityDb extends SpeedTestMonoThread {
   @Test(enabled = false)
   public void cycle() throws Exception {
 
-    // String[] nextLine = reader.readNext();
     String readed = lineReader.readLine();
     String[] nextLine = readed.split("\\t");
     if (readed != null) {

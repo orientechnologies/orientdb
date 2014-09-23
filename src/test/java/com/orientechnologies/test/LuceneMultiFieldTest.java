@@ -102,4 +102,9 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
     }
     return script;
   }
+
+  @Override
+  protected String getDatabaseName() {
+    return "multiField";
+  }
 }

@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -127,7 +128,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
       if (mgrWriter.getIndexWriter() != null) {
         closeIndex();
       }
-      ODatabaseRecord database = getDatabase();
+      ODatabaseRecordInternal database = getDatabase();
       final OLocalPaginatedStorage storageLocalAbstract = (OLocalPaginatedStorage) database.getStorage().getUnderlying();
       File f = new File(getIndexPath(storageLocalAbstract));
 
@@ -295,7 +296,8 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   private void reOpen(ODocument metadata) throws IOException {
-    ODatabaseRecord database = getDatabase();
+    ODatabaseRecordInternal database = getDatabase();
+
     final OLocalPaginatedStorage storageLocalAbstract = (OLocalPaginatedStorage) database.getStorage().getUnderlying();
     String pathname = getIndexPath(storageLocalAbstract);
     Directory dir = NIOFSDirectory.open(new File(pathname));
@@ -318,7 +320,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     return storageLocalAbstract.getStoragePath() + File.separator + OLUCENE_BASE_DIR;
   }
 
-  private ODatabaseRecord getDatabase() {
+  private ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 

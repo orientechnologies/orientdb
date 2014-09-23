@@ -22,10 +22,7 @@ import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPD
 import java.util.*;
 
 import com.orientechnologies.lucene.OLuceneIndex;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
@@ -501,20 +498,35 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract implements O
   }
 
   @Override
-  public void onCreate(ODatabase iDatabase) {
-    ((ODatabaseComplex<?>) iDatabase).registerHook(this);
+  public void onCreate(ODatabaseInternal iDatabase) {
+
   }
 
   @Override
-  public void onOpen(ODatabase iDatabase) {
-    ((ODatabaseComplex<?>) iDatabase).registerHook(this);
+  public void onOpen(ODatabaseInternal iDatabase) {
+
   }
 
   @Override
-  public void onClose(ODatabase iDatabase) {
-    ((ODatabaseComplex<?>) iDatabase).unregisterHook(this);
+  public void onClose(ODatabaseInternal iDatabase) {
 
   }
+
+  // @Override
+  // public void onCreate(ODatabase iDatabase) {
+  // ((ODatabaseComplex<?>) iDatabase).registerHook(this);
+  // }
+  //
+  // @Override
+  // public void onOpen(ODatabase iDatabase) {
+  // ((ODatabaseComplex<?>) iDatabase).registerHook(this);
+  // }
+  //
+  // @Override
+  // public void onClose(ODatabase iDatabase) {
+  // ((ODatabaseComplex<?>) iDatabase).unregisterHook(this);
+  //
+  // }
 
   private ODatabaseRecord getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();

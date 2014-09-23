@@ -18,6 +18,11 @@
 
 package com.orientechnologies.test;
 
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.managed.OrientServer;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
@@ -31,30 +36,69 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 public abstract class BaseLuceneTest {
 
   protected ODatabaseDocument databaseDocumentTx;
-  private static String       url;
-  static {
-    String buildDirectory = System.getProperty("buildDirectory", ".");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+  private String              url;
+  protected OServer           server;
+  private boolean             remote;
 
-    url = "plocal:" + buildDirectory + "/test-db";
+  public BaseLuceneTest() {
+    this(false);
+  }
+
+  public BaseLuceneTest(boolean remote) {
+    this.remote = remote;
 
   }
 
   @Test(enabled = false)
   public void initDB() {
 
-    databaseDocumentTx = new ODatabaseDocumentTx(url);
-    if (!databaseDocumentTx.exists()) {
-      databaseDocumentTx = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
-      databaseDocumentTx.create();
+    String buildDirectory = System.getProperty("buildDirectory", ".");
+    if (buildDirectory == null)
+      buildDirectory = ".";
+
+    if (remote) {
+      try {
+        System.setProperty("ORIENTDB_HOME", buildDirectory);
+        server = OServerMain.create();
+        server.startup(ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml"));
+        server.activate();
+        Orient.instance().getDatabaseFactory().createDatabase("graph", getStoragePath(getDatabaseName(), "plocal")).create();
+        url = "remote:localhost/" + getDatabaseName();
+        databaseDocumentTx = new ODatabaseDocumentTx(url);
+
+        databaseDocumentTx.open("admin", "admin");
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     } else {
-      databaseDocumentTx.open("admin", "admin");
+      url = "plocal:" + buildDirectory + "/" + getDatabaseName();
+      databaseDocumentTx = new ODatabaseDocumentTx(url);
+      if (!databaseDocumentTx.exists()) {
+        databaseDocumentTx = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
+        databaseDocumentTx.create();
+      } else {
+        databaseDocumentTx.open("admin", "admin");
+      }
     }
+
+  }
+
+  protected String getStoragePath(final String databaseName, final String storageMode) {
+    final String path;
+    if (storageMode.equals(OEngineLocalPaginated.NAME)) {
+      path = storageMode + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + databaseName;
+    } else if (storageMode.equals(OEngineMemory.NAME)) {
+      path = storageMode + ":" + databaseName;
+    } else {
+      return null;
+    }
+    return path;
   }
 
   @Test(enabled = false)
   public void deInitDB() {
     databaseDocumentTx.drop();
   }
+
+  protected abstract String getDatabaseName();
 }

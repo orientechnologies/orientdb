@@ -42,6 +42,14 @@ import org.testng.annotations.Test;
 @Test
 public class LuceneSingleFieldTest extends BaseLuceneTest {
 
+  public LuceneSingleFieldTest() {
+
+  }
+
+  public LuceneSingleFieldTest(boolean remote) {
+    super(remote);
+  }
+
   @Test
   public void loadAndTest() {
 
@@ -101,5 +109,10 @@ public class LuceneSingleFieldTest extends BaseLuceneTest {
 
     }
     return script;
+  }
+
+  @Override
+  protected String getDatabaseName() {
+    return "singleField";
   }
 }

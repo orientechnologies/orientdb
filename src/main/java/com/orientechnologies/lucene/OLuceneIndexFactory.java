@@ -25,6 +25,7 @@ import com.orientechnologies.lucene.index.OLuceneSpatialIndex;
 import com.orientechnologies.lucene.manager.*;
 import com.orientechnologies.lucene.shape.OShapeFactoryImpl;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
@@ -65,7 +66,7 @@ public class OLuceneIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OIndexInternal<?> createIndex(ODatabaseRecord oDatabaseRecord, String indexType, String algorithm,
+  public OIndexInternal<?> createIndex(ODatabaseRecordInternal oDatabaseRecord, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
     return createLuceneIndex(oDatabaseRecord, indexType, valueContainerAlgorithm, metadata);
   }

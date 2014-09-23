@@ -17,30 +17,25 @@
 package com.orientechnologies.lucene.manager;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.codecs.TermStats;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.index.*;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.PriorityQueue;
 import org.apache.lucene.util.Version;
 
 import com.orientechnologies.lucene.OLuceneIndexType;
+import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -151,10 +146,15 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       // Map<String, Float> scores = new HashMap<String, Float>();
       TopDocs docs = searcher.search(query, (limit != null && limit > 0) ? limit : Integer.MAX_VALUE);
       ScoreDoc[] hits = docs.scoreDocs;
-      for (ScoreDoc score : hits) {
+      for (final ScoreDoc score : hits) {
         Document ret = searcher.doc(score.doc);
         String rId = ret.get(RID);
         results.add(new ORecordId(rId));
+        // results.add(new OContextualRecordId(rId).setContext(new HashMap<String, Object>() {
+        // {
+        // put("score", score.score);
+        // }
+        // }));
         // scores.put(rId, score.score);
       }
       // if (context != null) {

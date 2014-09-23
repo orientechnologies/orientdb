@@ -18,37 +18,47 @@
 
 package com.orientechnologies.test;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
  * Created by enricorisa on 03/09/14.
  */
 @Test
-public class TestEmbedded {
+public class GraphEmbeddedTest extends BaseLuceneTest {
 
-  private static String url;
-  static {
-    String buildDirectory = System.getProperty("buildDirectory", ".");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+  private OrientGraph graph;
 
-    url = "plocal:" + buildDirectory + "/embeddedTest";
-  }
-
-  @Test
-  public void embedded() {
-    OrientGraph graph = new OrientGraph(url, true);
-
+  @BeforeClass
+  public void init() {
+    initDB();
+    graph = new OrientGraph((ODatabaseDocumentTx) databaseDocumentTx, false);
     OrientVertexType type = graph.createVertexType("City");
     type.createProperty("latitude", OType.DOUBLE);
     type.createProperty("longitude", OType.DOUBLE);
     type.createProperty("name", OType.STRING);
     type.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
 
+  }
+
+  @AfterClass
+  public void deInit() {
+    deInitDB();
+  }
+
+  @Test
+  public void embedded() {
+
+    graph.getRawGraph().begin();
     graph.addVertex("class:City", new Object[] { "name", "London" });
     graph.addVertex("class:City", new Object[] { "name", "Rome" });
 
@@ -56,9 +66,15 @@ public class TestEmbedded {
 
     Iterable<Vertex> vertexes = graph.getVertices("City", new String[] { "name" }, new Object[] { "London" });
 
+    int size = 0;
     for (Vertex v : vertexes) {
-      System.out.println(v.getId());
+      size++;
     }
-    graph.drop();
+    Assert.assertEquals(size, 1);
+  }
+
+  @Override
+  protected String getDatabaseName() {
+    return "graphEmbedded";
   }
 }
