@@ -601,9 +601,13 @@ public enum OGlobalConfiguration {
 
       final long maxMemory = Runtime.getRuntime().maxMemory();
 
-      if (maxMemory > 1L * 1024 * 1024 * 1024) {
-        OLogManager.instance().warn(null,
-            "Your maximum JVM heap size is more than 1 GB we recommend you to keep heap size less or equal to this value.");
+      if (maxMemory > 512L * 1024 * 1024) {
+        OLogManager.instance().warn(
+            null,
+            "Your maximum heap size is : " + maxMemory
+                + " bytes but we do not use heap memory intensively to avoid GC pauses OrientDB uses direct memory. "
+                + "We recommend to use smaller amount of heap memory, 512 megabytes is recommended value of heap size. "
+                + "The rest of memory will be automatically used by direct memory.");
       }
 
       final long result = (totalMemory - maxMemory - 2L * 1024 * 1024 * 1024) / (1024 * 1024);
