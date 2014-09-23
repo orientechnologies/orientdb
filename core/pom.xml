@@ -140,13 +140,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-nativeos</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-
-        <dependency>
             <groupId>org.xerial.snappy</groupId>
             <artifactId>snappy-java</artifactId>
             <version>1.1.0.1</version>
