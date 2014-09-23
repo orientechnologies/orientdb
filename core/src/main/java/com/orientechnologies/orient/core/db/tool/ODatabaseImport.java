@@ -741,6 +741,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         .readNumber(OJSONReader.ANY_NUMBER, true);
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
     jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
+    //This can be removed after the M1 expires 
     if (jsonReader.getValue().equals("\"globalProperties\"")) {
       jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
       do {
@@ -751,7 +752,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         String id = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
         jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"");
         String type = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
-        getDatabase().getMetadata().getSchema().createGlobalProperty(name, OType.valueOf(type), Integer.valueOf(id));
+        // getDatabase().getMetadata().getSchema().createGlobalProperty(name, OType.valueOf(type), Integer.valueOf(id));
         jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
       } while (jsonReader.lastChar() == ',');
       jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
