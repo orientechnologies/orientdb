@@ -49,6 +49,7 @@ public abstract class OrientConfigurableGraph {
     protected int         edgeContainerEmbedded2TreeThreshold = -1;
     protected int         edgeContainerTree2EmbeddedThreshold = -1;
     protected THREAD_MODE threadMode                          = THREAD_MODE.AUTOSET_IFNULL;
+    protected boolean     requireTransaction                  = false;
 
     public Settings copy() {
       final Settings copy = new Settings();
@@ -64,6 +65,7 @@ public abstract class OrientConfigurableGraph {
       copy.edgeContainerEmbedded2TreeThreshold = edgeContainerEmbedded2TreeThreshold;
       copy.edgeContainerTree2EmbeddedThreshold = edgeContainerTree2EmbeddedThreshold;
       copy.threadMode = threadMode;
+      copy.requireTransaction = requireTransaction;
       return copy;
     }
   }
@@ -133,6 +135,14 @@ public abstract class OrientConfigurableGraph {
   public OrientConfigurableGraph setEdgeContainerTree2EmbeddedThreshold(final int edgeContainerTree2EmbeddedThreshold) {
     this.settings.edgeContainerTree2EmbeddedThreshold = edgeContainerTree2EmbeddedThreshold;
     return this;
+  }
+
+  public boolean isRequireTransaction() {
+    return settings.requireTransaction;
+  }
+
+  public void setRequireTransaction(final boolean requireTransaction) {
+    this.settings.requireTransaction = requireTransaction;
   }
 
   /**
@@ -386,5 +396,9 @@ public abstract class OrientConfigurableGraph {
     final Boolean autoScaleEdgeType = configuration.getBoolean("blueprints.orientdb.autoScaleEdgeType", null);
     if (autoScaleEdgeType != null)
       setAutoScaleEdgeType(autoScaleEdgeType);
+
+    final Boolean requireTransaction = configuration.getBoolean("blueprints.orientdb.requireTransaction", null);
+    if (requireTransaction != null)
+      setRequireTransaction(requireTransaction);
   }
 }
