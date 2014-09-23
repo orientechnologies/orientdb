@@ -30,7 +30,7 @@
         </copy>
 
         <javac destdir="${project.build}" debug="${project.is-debug}" debuglevel="${project.debug-level}"
-               target="${project.target-comp}" source="${project.source-comp}">
+               target="${project.target-comp}" source="${project.source-comp}"  encoding="UTF-8">
             <src path="src/test/java"/>
             <classpath refid="project.classpath"/>
         </javac>
