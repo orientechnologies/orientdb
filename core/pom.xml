@@ -32,11 +32,14 @@
             com.orientechnologies.orient.graph.handler;resolution:=optional,
             com.orientechnologies.orient.graph.sql.functions;resolution:=optional,
             javax.imageio.spi,sun.misc;resolution:=optional,
-            com.orientechnologies.nio;resolution:=optional,
             com.orientechnologies.orient.client.remote;resolution:=optional,
+            com.sun.jna;resolution:=optional,
             *
         </osgi.import>
-        <osgi.export>com.orientechnologies.orient.core.*</osgi.export>
+        <osgi.export>com.orientechnologies.orient.core.*,
+            com.orientechnologies.orient.common.*,com.orientechnologies.nio.*
+        </osgi.export>
+        <jna.version>4.0.0</jna.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -117,16 +120,25 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <dependencies>
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orient-commons</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-nativeos</artifactId>
@@ -139,11 +151,25 @@
             <artifactId>snappy-java</artifactId>
             <version>1.1.0.1</version>
         </dependency>
+
         <dependency>
             <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
             <artifactId>concurrentlinkedhashmap-lru</artifactId>
             <version>1.4</version>
         </dependency>
+
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>${jna.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
+            <version>${jna.version}</version>
+        </dependency>
+
 
         <dependency>
             <groupId>com.orientechnologies</groupId>

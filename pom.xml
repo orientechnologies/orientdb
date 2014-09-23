@@ -100,8 +100,6 @@
     <modules>
         <module>test-commons</module>
         <module>client</module>
-        <module>commons</module>
-        <module>nativeos</module>
         <module>core</module>
         <module>enterprise</module>
         <module>object</module>

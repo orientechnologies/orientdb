@@ -17,7 +17,6 @@ import com.tinkerpop.blueprints.TransactionalGraph;
 public abstract class OrientTransactionalGraph extends OrientBaseGraph implements TransactionalGraph {
   protected boolean autoStartTx        = true;
   protected boolean useLog             = true;
-  protected boolean requireTransaction = false;
 
   /**
    * Constructs a new object using an existent database instance.
@@ -152,20 +151,12 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     this.autoStartTx = autoStartTx;
   }
 
-  public boolean isRequireTransaction() {
-    return requireTransaction;
-  }
-
-  public void setRequireTransaction(final boolean requireTransaction) {
-    this.requireTransaction = requireTransaction;
-  }
-
   @Override
   protected void autoStartTransaction() {
     final boolean txBegun = database.getTransaction().isActive();
 
     if (!autoStartTx) {
-      if (requireTransaction && !txBegun)
+      if (settings.requireTransaction && !txBegun)
         throw new OTransactionException("Transaction required to change the Graph");
 
       return;
