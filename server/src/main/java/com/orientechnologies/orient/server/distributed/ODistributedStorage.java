@@ -15,22 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
@@ -86,6 +70,22 @@ import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -364,21 +364,36 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '"
             + dManager.getLocalNodeName() + "' is not the master of it, but it's '" + masterNode + "'");
 
-      // REPLICATE IT
-      final Object masterResult = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new OCreateRecordTask(
-          iRecordId, iContent, iRecordVersion, iRecordType), EXECUTION_MODE.RESPONSE);
+      if (iMode == 0) {
+        // SYNCHRONOUS CALL: REPLICATE IT
+        final Object masterResult = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
+            new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType), EXECUTION_MODE.RESPONSE);
 
-      if (masterResult instanceof ONeedRetryException)
-        throw (ONeedRetryException) masterResult;
-      else if (masterResult instanceof Throwable)
-        throw new ODistributedException("Error on execution distributed CREATE_RECORD", (Throwable) masterResult);
+        if (masterResult instanceof ONeedRetryException)
+          throw (ONeedRetryException) masterResult;
+        else if (masterResult instanceof Throwable)
+          throw new ODistributedException("Error on execution distributed CREATE_RECORD", (Throwable) masterResult);
 
-      // COPY THE CLUSTER POS -> RID
-      final OPlaceholder masterPlaceholder = (OPlaceholder) masterResult;
-      iRecordId.copyFrom(masterPlaceholder.getIdentity());
+        // COPY THE CLUSTER POS -> RID
+        final OPlaceholder masterPlaceholder = (OPlaceholder) masterResult;
+        iRecordId.copyFrom(masterPlaceholder.getIdentity());
 
-      return new OStorageOperationResult<OPhysicalPosition>(new OPhysicalPosition(masterPlaceholder.getIdentity()
-          .getClusterPosition(), masterPlaceholder.getRecordVersion()));
+        return new OStorageOperationResult<OPhysicalPosition>(new OPhysicalPosition(masterPlaceholder.getIdentity()
+            .getClusterPosition(), masterPlaceholder.getRecordVersion()));
+      }
+
+      final OStorageOperationResult<OPhysicalPosition> localResult = wrapped.createRecord(iRecordId, iContent, iRecordVersion,
+          iRecordType, iMode, iCallback);
+
+      // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
+      nodes.remove(0);
+
+      if (!nodes.isEmpty()) {
+        final Object replicasResult = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
+            new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType), EXECUTION_MODE.NO_RESPONSE);
+      }
+
+      return localResult;
 
     } catch (ONeedRetryException e) {
       // PASS THROUGH
@@ -460,6 +475,22 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         // DON'T REPLICATE OR DISTRIBUTE
         return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
 
+      if (iMode == 0) {
+        final OStorageOperationResult<ORecordVersion> localResult = wrapped.updateRecord(iRecordId, updateContent, iContent,
+            iVersion, iRecordType, iMode, iCallback);
+
+        // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
+        final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
+            LOCKING_STRATEGY.DEFAULT);
+
+        // REPLICATE IT
+        final Object replicasResult = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
+            new OUpdateRecordTask(iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version,
+                iContent, iVersion), EXECUTION_MODE.NO_RESPONSE);
+
+        return localResult;
+      }
+
       // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
       final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
           LOCKING_STRATEGY.DEFAULT);
@@ -503,6 +534,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       if (nodes.isEmpty())
         // DON'T REPLICATE OR DISTRIBUTE
         return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
+
+      if (iMode == 0) {
+        final OStorageOperationResult<Boolean> localResult = wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
+
+        // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
+        final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
+            LOCKING_STRATEGY.DEFAULT);
+
+        // REPLICATE IT
+        final Object result = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes, new ODeleteRecordTask(
+            iRecordId, iVersion), EXECUTION_MODE.NO_RESPONSE);
+
+        return localResult;
+      }
 
       // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
       final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
@@ -638,8 +683,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
             switch (op.type) {
             case ORecordOperation.CREATED:
-              task = new OCreateRecordTask(rid, record.toStream(), record.getRecordVersion(),
-                  ORecordInternal.getRecordType(record));
+              task = new OCreateRecordTask(rid, record.toStream(), record.getRecordVersion(), ORecordInternal.getRecordType(record));
               break;
 
             case ORecordOperation.UPDATED:
