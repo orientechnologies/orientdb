@@ -364,7 +364,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '"
             + dManager.getLocalNodeName() + "' is not the master of it, but it's '" + masterNode + "'");
 
-      if (iMode == 0) {
+      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
+      if (executionModeSynch == null)
+        executionModeSynch = iMode == 0;
+
+      if (executionModeSynch) {
         // SYNCHRONOUS CALL: REPLICATE IT
         final Object masterResult = dManager.sendRequest(getName(), Collections.singleton(clusterName), nodes,
             new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType), EXECUTION_MODE.RESPONSE);
@@ -475,7 +479,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         // DON'T REPLICATE OR DISTRIBUTE
         return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
 
-      if (iMode == 0) {
+      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
+      if (executionModeSynch == null)
+        executionModeSynch = iMode == 0;
+
+      if (executionModeSynch) {
         final OStorageOperationResult<ORecordVersion> localResult = wrapped.updateRecord(iRecordId, updateContent, iContent,
             iVersion, iRecordType, iMode, iCallback);
 
@@ -535,7 +543,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         // DON'T REPLICATE OR DISTRIBUTE
         return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
-      if (iMode == 0) {
+      Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
+      if (executionModeSynch == null)
+        executionModeSynch = iMode == 0;
+
+      if (executionModeSynch) {
         final OStorageOperationResult<Boolean> localResult = wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
 
         // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
