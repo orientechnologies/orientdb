@@ -22,7 +22,7 @@
                 <parameter name="enabled" value="false"/>
                 <parameter name="delay" value="4h"/>
                 <parameter name="target.directory" value="backup"/>
-                <parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.json"/>
+                <parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.zip"/>
                 <parameter name="compressionLevel" value="9"/>
                 <parameter name="bufferSize" value="1048576"/>
                 <!--${DBNAME} AND ${DATE:} VARIABLES ARE SUPPORTED -->
