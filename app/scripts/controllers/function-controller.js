@@ -42,9 +42,9 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.languages = ['SQL', 'Javascript'];
     $scope.functionToExecute = undefined;
 
-//    DatabaseApi.getAvailableLanguages($routeParams.database).then(function (data) {
-//        $scope.languages = data.languages;
-//    })
+    DatabaseApi.getAvailableLanguages($routeParams.database).then(function (data) {
+        $scope.languages = data.languages;
+    })
     $scope.resultExecute = undefined;
     $scope.limit = -1;
     $scope.parametersToExecute = new Array;
@@ -73,7 +73,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
                     }
                     var index = $scope.functionsrid.indexOf($scope.functionToExecute['name']);
                     if (index != -1)
-                        $scope.showInConsoleAfterSave($scope.functions[index]);
+                        $scope.showInConsole($scope.functions[index]);
                 } else {
                     $scope.createNewFunction();
                 }
@@ -92,13 +92,12 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     });
 
     $scope.removeParam = function (index) {
+
         if ($scope.functionToExecute != undefined) {
             var numPar = parseInt($scope.functionToExecute['parameters']);
-
             var result = numPar - 1;
-
             $scope.functionToExecute['parameters'].splice(index, 1);
-
+            $scope.parametersToExecute.splice(index, 1);
         }
         return result;
     }
@@ -132,28 +131,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         if ($scope.functionToExecute['parameters'] == undefined) {
             $scope.functionToExecute['parameters'] = new Array;
         }
-
-
-        var app = JSON.parse(JSON.stringify($scope.parametersToExecute));
-
         $scope.functionToExecute['parameters'].push('');
-        $scope.inParams = $scope.functionToExecute['parameters'];
-
-        $scope.$watch('inParams.length', function (data) {
-            if (data) {
-                $scope.parametersToExecute = new Array(data);
-            }
-            else {
-
-                $scope.parametersToExecute = null;
-            }
-            var i;
-            for (i in app) {
-                $scope.parametersToExecute[i] = app[i];
-            }
-
-
-        });
+        $scope.parametersToExecute.push('');
     }
     $scope.
         executeFunction = function () {
@@ -204,10 +183,8 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.showInConsoleAfterSave = function (selectedFunction) {
         $scope.consoleValue = selectedFunction['code'];
         $scope.nameFunction = selectedFunction['name'];
-        $scope.selectedLanguage = selectedFunction['language'];
+        $scope.selectedLanguage = selectedFunction['language'] ? selectedFunction['language'].toLowerCase() : selectedFunction['language'];
         $scope.functionToExecute = selectedFunction;
-        $scope.inParams = $scope.functionToExecute['parameters'];
-        //$scope.vcm.setValue($scope.consoleValue != null ? $scope.consoleValue : "");
 
     }
 
@@ -219,16 +196,11 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.showInConsole = function (selectedFunction) {
 
         $scope.showInConsoleAfterSave(selectedFunction);
-        $scope.parametersToExecute = new Array;
-
-        $scope.$watch('inParams.length', function (data) {
-            if (data) {
-                $scope.parametersToExecute = new Array(data);
-            }
-            else {
-                $scope.parametersToExecute = null;
-            }
-        });
+        var size = 0;
+        if ($scope.functionToExecute['parameters']) {
+            size = $scope.functionToExecute['parameters'].length;
+        }
+        $scope.parametersToExecute = new Array(size);
 
 
         $scope.isNewFunction = false;
@@ -259,7 +231,11 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
             }
             else {
                 DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute).then(function (data) {
-                    $scope.getListFunction();
+                    var oldParams = JSON.stringify($scope.parametersToExecute);
+                    $scope.getListFunction().then(function () {
+                        oldParams = JSON.parse(oldParams);
+                        $scope.parametersToExecute = oldParams;
+                    });
                     var message = 'Function {{name}} saved successfully.';
                     Notification.push({content: S(message).template({ name: $scope.functionToExecute['name']}).s, autoHide: true });
                 });
