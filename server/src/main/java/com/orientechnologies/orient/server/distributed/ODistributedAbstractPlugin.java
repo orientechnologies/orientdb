@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
@@ -38,6 +30,14 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -124,6 +124,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     // CLOSE AND FREE ALL THE STORAGES
     for (ODistributedStorage s : storages.values())
       try {
+        s.shutdownAsynchronousWorker();
         s.close();
       } catch (Exception e) {
       }
@@ -258,10 +259,17 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     synchronized (cachedDatabaseConfiguration) {
       ODocument cfg = cachedDatabaseConfiguration.get(iDatabaseName);
       if (cfg == null) {
-        // FIRST TIME RUNNING: GET DEFAULT CFG
-        cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
-        if (cfg == null)
-          throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
+
+        // LOAD FILE IN DATABASE DIRECTORY IF ANY
+        final File specificDatabaseConfiguration = getDistributedConfigFile(iDatabaseName);
+        cfg = loadDatabaseConfiguration(iDatabaseName, specificDatabaseConfiguration);
+
+        if (cfg == null) {
+          // FIRST TIME RUNNING: GET DEFAULT CFG
+          cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
+          if (cfg == null)
+            throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
+        }
 
         cachedDatabaseConfiguration.put(iDatabaseName, cfg);
       }

@@ -15,13 +15,10 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -31,6 +28,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Distributed create record task used for synchronization.
@@ -62,9 +63,14 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
     getRecord();
 
-    if (rid.getClusterId() != -1)
+    if (rid.getClusterPosition().isPersistent())
+      // OVERWRITE RID TO BE TEMPORARY
+      ORecordInternal.setIdentity(record, rid.getClusterId(), ORID.CLUSTER_POS_INVALID);
+
+    if (rid.getClusterId() != -1) {
       record.save(database.getClusterNameById(rid.getClusterId()), true);
-    else
+      record.getRecordVersion().decrement();
+    } else
       record.save();
 
     rid = (ORecordId) record.getIdentity();

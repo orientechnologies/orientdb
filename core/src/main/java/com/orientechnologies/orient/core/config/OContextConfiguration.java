@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  */
 public class OContextConfiguration implements Serializable {
-  private final ConcurrentHashMap<String, Object> config = new ConcurrentHashMap<String, Object>();
+  private final Map<String, Object> config = new ConcurrentHashMap<String, Object>();
 
   /**
    * Empty constructor to create just a proxy for the OGlobalConfiguration. No values are setted.

@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.conflict.OVersionRecordConflictStrategy;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -44,7 +43,7 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   protected final String                PROFILER_READ_RECORD;
   protected final String                PROFILER_UPDATE_RECORD;
   protected final String                PROFILER_DELETE_RECORD;
-  protected ORecordConflictStrategy recordConflictStrategy = new OVersionRecordConflictStrategy();
+  protected ORecordConflictStrategy recordConflictStrategy = Orient.instance().getRecordConflictStrategy().newInstanceOfDefaultClass();
 
   public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
     super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());

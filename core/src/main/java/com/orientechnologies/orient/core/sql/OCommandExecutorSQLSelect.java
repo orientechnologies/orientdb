@@ -15,23 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -82,6 +65,13 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -281,41 +271,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
 
-      if (parsedTarget.getTargetClasses() != null) {
-        for (String clazz : parsedTarget.getTargetClasses().values()) {
-          final OClass cls = db.getMetadata().getSchema().getClass(clazz);
-          if (cls != null)
-            for (int clId : cls.getClusterIds()) {
-              // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
-              if (clId > -1 && checkClusterAccess(db, db.getClusterNameById(clId)))
-                clusters.add(db.getClusterNameById(clId).toLowerCase());
-            }
-        }
-      }
+      if (parsedTarget.getTargetClasses() != null)
+        return getInvolvedClustersOfClasses(parsedTarget.getTargetClasses().values());
 
-      if (parsedTarget.getTargetClusters() != null) {
-        for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-          final String c = cluster.toLowerCase();
-          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
-          if (checkClusterAccess(db, c))
-            clusters.add(c);
-        }
-      }
-      if (parsedTarget.getTargetIndex() != null) {
+      if (parsedTarget.getTargetClusters() != null)
+        return getInvolvedClustersOfClusters(parsedTarget.getTargetClusters().values());
+
+      if (parsedTarget.getTargetIndex() != null)
         // EXTRACT THE CLASS NAME -> CLUSTERS FROM THE INDEX DEFINITION
-        final OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex());
-        if (idx != null) {
-          final String clazz = idx.getDefinition().getClassName();
+        return getInvolvedClustersOfIndex(parsedTarget.getTargetIndex());
 
-          if (clazz != null) {
-            final OClass cls = db.getMetadata().getSchema().getClass(clazz);
-            if (cls != null)
-              for (int clId : cls.getClusterIds()) {
-                clusters.add(db.getClusterNameById(clId).toLowerCase());
-              }
-          }
-        }
-      }
     }
     return clusters;
   }
@@ -395,11 +360,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   public String getFetchPlan() {
     return fetchPlan != null ? fetchPlan : request.getFetchPlan();
-  }
-
-  protected boolean checkClusterAccess(final ODatabaseRecord db, final String iClusterName) {
-    return db.getUser() != null
-        && db.getUser().checkIfAllowed(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, getSecurityOperationType()) != null;
   }
 
   protected void executeSearch(final Map<Object, Object> iArgs) {

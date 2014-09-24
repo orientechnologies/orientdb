@@ -31,9 +31,11 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -201,8 +203,20 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     return null;
   }
 
-  public boolean isReplicated() {
-    return indexName != null;
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return indexName != null ? DISTRIBUTED_EXECUTION_MODE.REPLICATE : DISTRIBUTED_EXECUTION_MODE.LOCAL;
+  }
+
+  @Override
+  public Set<String> getInvolvedClusters() {
+    if (className != null) {
+      final OClass clazz = getDatabase().getMetadata().getSchema().getClass(className);
+      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz)));
+    } else if (clusterName != null)
+      return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
+
+    return Collections.EMPTY_SET;
   }
 
   @Override
