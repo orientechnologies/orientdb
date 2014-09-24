@@ -69,6 +69,8 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
         modalScope.user.roles = [];
         modalScope.select2Options = $scope.select2Options;
         modalScope.loadRoles = $scope.loadRoles;
+        modalScope.title = "New User"
+        modalScope.saveButton = "Add User"
         var modalPromise = $modal({template: 'views/database/users/newUser.html', scope: modalScope, show: false});
         modalScope.save = function () {
             if (modalPromise.$scope.roles) {
@@ -112,6 +114,8 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
         var modalScope = $scope.$new(true);
         modalScope.user = user;
         modalScope.loadRoles = $scope.loadRoles;
+        modalScope.title = "Edit User"
+        modalScope.saveButton = "Save User"
         var modalPromise = $modal({template: 'views/database/users/newUser.html', scope: modalScope, show: false});
         modalScope.save = function () {
             if (modalPromise.$scope.roles) {

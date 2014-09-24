@@ -4,7 +4,7 @@
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" ng-click="$hide()" aria-hidden="true">×
                 </button>
-                <h4 class="modal-title">New User</h4>
+                <h4 class="modal-title">{{title}}</h4>
             </div>
             <form class="form-horizontal" name="classForm" novalidate>
                 <div class="modal-body edge">
@@ -58,7 +58,7 @@
                     <button type="submit" class="btn btn-sm btn-primary"
                             ng-disabled="classForm.$invalid"
                             ng-click="save();$hide();">
-                        Add user
+                        {{saveButton}}
                     </button>
                 </div>
             </form>
