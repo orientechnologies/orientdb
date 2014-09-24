@@ -15,16 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -55,6 +46,16 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
  * condition.
@@ -74,8 +75,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Luca Garulli
  */
 @SuppressWarnings("unchecked")
-public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements Iterable<OIdentifiable>,
-    OIterableRecordSource {
+public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements
+    OCommandDistributedReplicateRequest, Iterable<OIdentifiable>, OIterableRecordSource {
   protected static final String               KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
   protected static final String               KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
 
@@ -87,6 +88,53 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected Iterable<OIdentifiable>           tempResult;
   protected int                               resultCount;
   protected int                               skip               = 0;
+
+  private static final class IndexValuesIterator implements Iterator<OIdentifiable> {
+    private OIndexCursor  indexCursor;
+    private OIdentifiable nextValue;
+    private boolean       noItems;
+
+    private IndexValuesIterator(String indexName, boolean ascOrder) {
+      if (ascOrder)
+        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).cursor();
+      else
+        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).descCursor();
+    }
+
+    @Override
+    public boolean hasNext() {
+      if (noItems)
+        return false;
+
+      if (nextValue == null) {
+        final Map.Entry<Object, OIdentifiable> entry = indexCursor.nextEntry();
+        if (entry == null) {
+          noItems = true;
+          return false;
+        }
+
+        nextValue = entry.getValue();
+      }
+
+      return true;
+    }
+
+    @Override
+    public OIdentifiable next() {
+      if (!hasNext())
+        throw new NoSuchElementException();
+
+      final OIdentifiable value = nextValue;
+      nextValue = null;
+
+      return value;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+  }
 
   /**
    * Compile the filter conditions only the first time.
@@ -112,6 +160,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   @Override
   public boolean isIdempotent() {
     return true;
+  }
+
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.SHARDED;
   }
 
   /**
@@ -561,52 +614,5 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     }
 
     return new ORID[] { beginRange, endRange };
-  }
-
-  private static final class IndexValuesIterator implements Iterator<OIdentifiable> {
-    private OIndexCursor  indexCursor;
-    private OIdentifiable nextValue;
-    private boolean       noItems;
-
-    private IndexValuesIterator(String indexName, boolean ascOrder) {
-      if (ascOrder)
-        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).cursor();
-      else
-        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).descCursor();
-    }
-
-    @Override
-    public boolean hasNext() {
-      if (noItems)
-        return false;
-
-      if (nextValue == null) {
-        final Map.Entry<Object, OIdentifiable> entry = indexCursor.nextEntry();
-        if (entry == null) {
-          noItems = true;
-          return false;
-        }
-
-        nextValue = entry.getValue();
-      }
-
-      return true;
-    }
-
-    @Override
-    public OIdentifiable next() {
-      if (!hasNext())
-        throw new NoSuchElementException();
-
-      final OIdentifiable value = nextValue;
-      nextValue = null;
-
-      return value;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
   }
 }

@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.HashMap;
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -29,6 +26,9 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.HashMap;
+import java.util.List;
 
 public interface OTransaction {
   public enum TXTYPE {
@@ -130,4 +130,6 @@ public interface OTransaction {
   public HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords();
 
   public int getEntryCount();
+
+  public boolean hasRecordCreation();
 }

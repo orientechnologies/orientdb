@@ -21,5 +21,10 @@ package com.orientechnologies.orient.core.command;
  * @author Luca Garulli
  */
 public interface OCommandDistributedReplicateRequest {
-  public boolean isReplicated();
+
+  public enum DISTRIBUTED_EXECUTION_MODE {
+    LOCAL, REPLICATE, SHARDED
+  }
+
+  public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode();
 }

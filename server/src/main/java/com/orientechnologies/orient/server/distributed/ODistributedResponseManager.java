@@ -131,11 +131,32 @@ public class ODistributedResponseManager {
       if (groupResponsesByResult) {
         boolean foundBucket = false;
         for (int i = 0; i < responseGroups.size(); ++i) {
-          final List<ODistributedResponse> sameResponse = responseGroups.get(i);
-          if (sameResponse.isEmpty() || (sameResponse.get(0).getPayload() == null && response.getPayload() == null)
-              || sameResponse.get(0).getPayload().equals(response.getPayload())) {
-            sameResponse.add(response);
+          final List<ODistributedResponse> responseGroup = responseGroups.get(i);
+
+          if (responseGroup.isEmpty())
+            // ABSENT
             foundBucket = true;
+          else {
+            final Object rgPayload = responseGroup.get(0).getPayload();
+            final Object responsePayload = response.getPayload();
+
+            if (rgPayload == null && responsePayload == null)
+              // BOTH NULL
+              foundBucket = true;
+            else if (rgPayload != null) {
+              if (rgPayload.equals(responsePayload))
+                // SAME RESULT
+                foundBucket = true;
+              else if (rgPayload instanceof Collection && responsePayload instanceof Collection) {
+                if (OMultiValue.equals((Collection) rgPayload, (Collection) responsePayload))
+                  // COLLECTIONS WITH THE SAME VALUES
+                  foundBucket = true;
+              }
+            }
+          }
+
+          if (foundBucket = true) {
+            responseGroup.add(response);
             break;
           }
         }
