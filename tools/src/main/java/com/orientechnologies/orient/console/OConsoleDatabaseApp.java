@@ -1503,6 +1503,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         compare = new ODatabaseCompare(iDb1URL, iDb2URL, iUserName, iUserPassword, this);
 
       compare.setAutoDetectExportImportMap(autoDiscoveringMappingData != null ? Boolean.valueOf(autoDiscoveringMappingData) : true);
+			compare.setCompareIndexMetadata(true);
       compare.compare();
     } catch (ODatabaseExportException e) {
       printError(e);

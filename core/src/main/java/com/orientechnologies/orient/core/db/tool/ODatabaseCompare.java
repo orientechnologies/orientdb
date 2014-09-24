@@ -61,6 +61,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
   private OIndex<OIdentifiable> exportImportHashTable             = null;
   private int                   differences                       = 0;
+  private boolean               compareIndexMetadata              = false;
 
   public ODatabaseCompare(String iDb1URL, String iDb2URL, final OCommandOutputListener iListener) throws IOException {
     super(null, null, iListener);
@@ -94,6 +95,10 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     excludeClusters.add("orids");
     excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
     excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+  }
+
+  public void setCompareIndexMetadata(boolean compareIndexMetadata) {
+    this.compareIndexMetadata = compareIndexMetadata;
   }
 
   public boolean isCompareEntriesForAutomaticIndexes() {
@@ -445,39 +450,41 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         ++differences;
       }
 
-      final ODocument metadataOne = indexOne.getMetadata();
-      final ODocument metadataTwo = indexTwo.getMetadata();
+      if (compareIndexMetadata) {
+        final ODocument metadataOne = indexOne.getMetadata();
+        final ODocument metadataTwo = indexTwo.getMetadata();
 
-      if (metadataOne == null && metadataTwo != null) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is null but for DB2 is not.");
-        listener.onMessage("\n");
-        ++differences;
-      } else if (metadataOne != null && metadataTwo == null) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
-        listener.onMessage("\n");
-        ++differences;
-      } else if (metadataOne != null && metadataTwo != null
-          && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
-        makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
-          @Override
-          public Object call() {
-            listener.onMessage("\n--- M1: " + metadataOne);
-            return null;
-          }
-        });
-        makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Object>() {
-          @Override
-          public Object call() {
-            listener.onMessage("\n--- M2: " + metadataTwo);
-            return null;
-          }
-        });
-        listener.onMessage("\n");
-        ++differences;
+        if (metadataOne == null && metadataTwo != null) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is null but for DB2 is not.");
+          listener.onMessage("\n");
+          ++differences;
+        } else if (metadataOne != null && metadataTwo == null) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
+          listener.onMessage("\n");
+          ++differences;
+        } else if (metadataOne != null && metadataTwo != null
+            && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
+          makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call() {
+              listener.onMessage("\n--- M1: " + metadataOne);
+              return null;
+            }
+          });
+          makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call() {
+              listener.onMessage("\n--- M2: " + metadataTwo);
+              return null;
+            }
+          });
+          listener.onMessage("\n");
+          ++differences;
+        }
       }
 
       if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY")) || !indexOne.isAutomatic())) {
