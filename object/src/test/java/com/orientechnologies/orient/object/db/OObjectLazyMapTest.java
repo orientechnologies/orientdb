@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.object.db;
 
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +18,11 @@ import org.testng.annotations.Test;
 public class OObjectLazyMapTest
 {
   private OObjectDatabaseTx databaseTx;
+  
+  private final int idOfRootEntity = 0;
+  private final int idOfFirstMapEntry = 1;
+  private final int idOfSecondMapEntry = 2;
+  private final int invalidId = 3;
 
   @BeforeClass
   protected void setUp() throws Exception 
@@ -31,18 +38,88 @@ public class OObjectLazyMapTest
   {
     databaseTx.drop();
   }
+  
+  @Test
+  public void isEmptyTest()
+  {
+    Map<String,EntityWithMap> testMap = getMapWithPersistedEntries();
+    
+    assertTrue(testMap.size() > 0);    
+    testMap.clear();    
+    assertTrue(testMap.size() == 0);
+    
+    assertTrue(testMap.get(String.valueOf(idOfFirstMapEntry)) == null);
+  }
+  
+  @Test
+  public void getContainsValueTest()
+  {
+    Map<String,EntityWithMap> testMap = getMapWithPersistedEntries();
+    
+    assertFalse(testMap.containsValue(null));
+    assertFalse(testMap.containsValue(String.valueOf(invalidId)));
+    
+    assertTrue(testMap.containsValue(testMap.get(String.valueOf(idOfFirstMapEntry))));
+    assertTrue(testMap.containsValue(testMap.get(String.valueOf(idOfSecondMapEntry))));
+  }
+  
+  @Test
+  public void getContainsKeyTest()
+  {
+    Map<String,EntityWithMap> testMap = getMapWithPersistedEntries();
+    
+    assertFalse(testMap.containsKey(null));
+    assertFalse(testMap.containsKey(String.valueOf(invalidId)));
+    
+    //should fail because the keys will be automatically converted to string
+    assertFalse(testMap.containsKey(idOfFirstMapEntry)); 
+    
+    assertTrue(testMap.containsKey(String.valueOf(idOfFirstMapEntry)));
+    assertTrue(testMap.containsKey(String.valueOf(idOfSecondMapEntry)));
+  }
+  
+  @Test
+  public void getTest()
+  {
+    Map<String,EntityWithMap> testMap = getMapWithPersistedEntries();
+    
+    assertTrue(testMap.get(String.valueOf(invalidId)) == null);
+   
+    //should fail because the keys will be automatically converted to string
+    try
+    {      
+      testMap.get(idOfFirstMapEntry);
+      fail("Expected ClassCastException");
+    }
+    catch(ClassCastException e){}
+    
+    
+    assertTrue(testMap.get(String.valueOf(idOfFirstMapEntry)) != null);
+    assertTrue(testMap.get(String.valueOf(idOfSecondMapEntry)) != null);
+  }
 
   @Test
   public void getOrDefaultTest()
   {
+    Map<String,EntityWithMap> testMap = getMapWithPersistedEntries();
+    
+    assertTrue(testMap.getClass() == OObjectLazyMap.class);		
+    assertTrue(testMap.getOrDefault(String.valueOf(idOfFirstMapEntry),null) != null);
+    assertTrue(testMap.getOrDefault(String.valueOf(idOfSecondMapEntry),null) != null);
+    assertTrue(testMap.getOrDefault(String.valueOf(invalidId),null) == null);
+    assertTrue(testMap.getOrDefault(String.valueOf(invalidId),testMap.get(String.valueOf(idOfFirstMapEntry))) == testMap.get(String.valueOf(idOfFirstMapEntry)));
+  }
+  
+  private Map<String,EntityWithMap> getMapWithPersistedEntries()
+  {
     EntityWithMap toStore = new EntityWithMap();
-    toStore.setId(0);
+    toStore.setId(idOfRootEntity);
 
     EntityWithMap mapElement1 = new EntityWithMap();
-    mapElement1.setId(1);
+    mapElement1.setId(idOfFirstMapEntry);
 
     EntityWithMap mapElement2 = new EntityWithMap();
-    mapElement2.setId(2);
+    mapElement2.setId(idOfSecondMapEntry);
 
     Map<String,EntityWithMap> mapToStore = new HashMap<String, OObjectLazyMapTest.EntityWithMap>();
     mapToStore.put(String.valueOf(mapElement1.getId()),mapElement1);
@@ -58,11 +135,8 @@ public class OObjectLazyMapTest
     Map<String,EntityWithMap> testMap = fromDb.getMap();
 
     assertTrue(testMap != null);
-    assertTrue(testMap.getClass() == OObjectLazyMap.class);		
-    assertTrue(testMap.getOrDefault(String.valueOf(mapElement1.getId()),null) != null);
-    assertTrue(testMap.getOrDefault(String.valueOf(mapElement2.getId()),null) != null);
-    assertTrue(testMap.getOrDefault("3",null) == null);
-    assertTrue(testMap.getOrDefault("3",mapElement1) == mapElement1);
+    
+    return testMap;
   }
 
   public class EntityWithMap
