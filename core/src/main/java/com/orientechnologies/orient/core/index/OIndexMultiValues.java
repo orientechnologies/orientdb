@@ -261,7 +261,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   protected OStreamSerializer determineValueSerializer() {
     if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
-      return OStreamSerializerSBTreeIndexRIDContainer.INSTANCE;
+      return (OStreamSerializer) getDatabase().getSerializerFactory().getObjectSerializer(
+          OStreamSerializerSBTreeIndexRIDContainer.ID);
     else
       return OStreamSerializerListRID.INSTANCE;
   }

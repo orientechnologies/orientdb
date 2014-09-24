@@ -1,15 +1,10 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
@@ -93,7 +88,7 @@ public class UniqueIndexCrashRestoreSingleValue {
     public static void main(String[] args) throws Exception {
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class
-          .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/index-crash-config.xml"));
+          .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/index-crash-single-value-config.xml"));
       server.activate();
       while (true)
         ;
