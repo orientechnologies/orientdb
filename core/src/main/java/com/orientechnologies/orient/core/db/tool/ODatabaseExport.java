@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
@@ -454,19 +453,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     OSchemaProxy s = (OSchemaProxy) database.getMetadata().getSchema();
     writer.writeAttribute(2, true, "version", s.getVersion());
 
-    if (!s.getGlobalProperties().isEmpty()) {
-      writer.beginCollection(2, true, "globalProperties");
-      for (OGlobalProperty global : s.getGlobalProperties()) {
-        writer.beginObject(3, true, null);
-        writer.writeAttribute(0, false, "name", global.getName());
-        writer.writeAttribute(0, false, "global-id", global.getId());
-        writer.writeAttribute(0, false, "type", global.getType().toString());
-        writer.endObject(3, true);
-      }
-      writer.endCollection(2, true);
-    }
-
-    if (!s.getClasses().isEmpty()) {
+   if (!s.getClasses().isEmpty()) {
       writer.beginCollection(2, true, "classes");
 
       final List<OClass> classes = new ArrayList<OClass>(s.getClasses());

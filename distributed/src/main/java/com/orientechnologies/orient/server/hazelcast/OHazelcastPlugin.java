@@ -25,7 +25,6 @@ import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
@@ -350,18 +349,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public Object sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
       final Collection<String> iTargetNodes, final OAbstractRemoteTask iTask, final EXECUTION_MODE iExecutionMode) {
 
-    // if (iTask.isRequireNodeOnline())
-    // // WAIT THE DATABASE ON THE NODE IS ONLINE
-    // while (getDatabaseStatus(getLocalNodeName(), iDatabaseName) != DB_STATUS.ONLINE) {
-    // try {
-    // ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-    // "waiting to send task (%s) because database '%s' is not online yet...", iTask, iDatabaseName);
-    //
-    // Thread.sleep(100);
-    // } catch (InterruptedException e) {
-    // }
-    // }
-    //
     checkForClusterRebalance(iDatabaseName);
 
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, iTask,
@@ -381,7 +368,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           + req);
     }
 
-    final ODistributedResponse response = db.send2Nodes(req, iClusterNames, iTargetNodes);
+    final ODistributedResponse response = db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode);
     if (response != null)
       return response.getPayload();
 

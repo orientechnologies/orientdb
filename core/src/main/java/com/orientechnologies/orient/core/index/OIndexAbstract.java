@@ -261,7 +261,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         indexEngine.load(rid, name, indexDefinition, determineValueSerializer(), isAutomatic());
       } catch (Exception e) {
         if (onCorruptionRepairDatabase(null, "load", "Index will be rebuilt")) {
-          if (isAutomatic() && getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded)
+          if (isAutomatic() && getStorage() instanceof OStorageEmbedded)
             // AUTOMATIC REBUILD IT
             OLogManager.instance().warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(),
                 rid);
@@ -423,38 +423,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
   public boolean remove(Object key, final OIdentifiable value) {
     return remove(key);
-  }
-
-  protected void startStorageAtomicOperation() {
-    try {
-      ((OAbstractPaginatedStorage) getDatabase().getStorage()).startAtomicOperation();
-    } catch (IOException e) {
-      throw new OIndexException("Error during start of atomic operation", e);
-    }
-  }
-
-  protected void commitStorageAtomicOperation() {
-    try {
-      ((OAbstractPaginatedStorage) getDatabase().getStorage()).commitAtomicOperation();
-    } catch (IOException e) {
-      throw new OIndexException("Error during commit of atomic operation", e);
-    }
-  }
-
-  protected void rollbackStorageAtomicOperation() {
-    try {
-      ((OAbstractPaginatedStorage) getDatabase().getStorage()).rollbackAtomicOperation();
-    } catch (IOException e) {
-      throw new OIndexException("Error during rollback of atomic operation", e);
-    }
-  }
-
-  protected void markStorageDirty() {
-    try {
-      ((OAbstractPaginatedStorage) getDatabase().getStorage()).markDirty();
-    } catch (IOException e) {
-      throw new OIndexException("Can not mark storage as dirty", e);
-    }
   }
 
   public boolean remove(Object key) {
@@ -798,6 +766,38 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return rebuilding;
   }
 
+  protected void startStorageAtomicOperation() {
+    try {
+      getStorage().startAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during start of atomic operation", e);
+    }
+  }
+
+  protected void commitStorageAtomicOperation() {
+    try {
+      getStorage().commitAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during commit of atomic operation", e);
+    }
+  }
+
+  protected void rollbackStorageAtomicOperation() {
+    try {
+      getStorage().rollbackAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during rollback of atomic operation", e);
+    }
+  }
+
+  protected void markStorageDirty() {
+    try {
+      getStorage().markDirty();
+    } catch (IOException e) {
+      throw new OIndexException("Can not mark storage as dirty", e);
+    }
+  }
+
   protected abstract OStreamSerializer determineValueSerializer();
 
   protected void populateIndex(ODocument doc, Object fieldValue) {
@@ -890,9 +890,13 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return new long[] { documentNum, documentIndexed };
   }
 
+  private OAbstractPaginatedStorage getStorage() {
+    return ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying());
+  }
+
   private void removeValuesContainer() {
     if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
-      final OStorage storage = getDatabase().getStorage();
+      final OStorage storage = getStorage();
       if (storage instanceof OAbstractPaginatedStorage) {
         final ODiskCache diskCache = ((OAbstractPaginatedStorage) storage).getDiskCache();
         try {

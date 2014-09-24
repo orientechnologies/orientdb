@@ -1,6 +1,15 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import static org.testng.AssertJUnit.assertNotNull;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.OClusterPositionLong;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,20 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionLong;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-
 import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 
 public class ODocumentSchemalessSerializationTest {
 
@@ -38,13 +35,14 @@ public class ODocumentSchemalessSerializationTest {
     this(new ORecordSerializerSchemaAware2CSV());
   }
 
-  @BeforeClass
+  @BeforeMethod
   public void before() {
     defaultSerializer = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(serializer);
+    ODatabaseRecordThreadLocal.INSTANCE.set(null);
   }
 
-  @AfterClass
+  @AfterMethod
   public void after() {
     ODatabaseDocumentTx.setDefaultSerializer(defaultSerializer);
   }

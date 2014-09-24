@@ -85,7 +85,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   @Override
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
-      final Collection<String> iNodes) {
+      final Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode) {
     checkForServerOnline(iRequest);
 
     final String databaseName = iRequest.getDatabaseName();
@@ -127,7 +127,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           availableNodes++;
     }
 
-    final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes);
+    final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes, iExecutionMode);
 
     final int queueSize = iNodes.size();
     int expectedSynchronousResponses = availableNodes;
@@ -150,8 +150,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
 
-    try {
-      requestLock.lock();
+//    try {
+//      requestLock.lock();
       try {
         // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
         // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
@@ -170,9 +170,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
         }
 
-      } finally {
-        requestLock.unlock();
-      }
+//      } finally {
+//        requestLock.unlock();
+//      }
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sent request %s", iRequest);
@@ -214,13 +214,13 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, false);
     workers.add(listenerThread);
     listenerThread.start();
-//
-//    // CREATE WORKER THREADS FOR GENERIC REQUESTS
-//    for (int i = 1; i < numWorkers - 1; ++i) {
-//      listenerThread = new ODistributedWorker(this, requestQueue, databaseName, i, false);
-//      workers.add(listenerThread);
-//      listenerThread.start();
-//    }
+    //
+    // // CREATE WORKER THREADS FOR GENERIC REQUESTS
+    // for (int i = 1; i < numWorkers - 1; ++i) {
+    // listenerThread = new ODistributedWorker(this, requestQueue, databaseName, i, false);
+    // workers.add(listenerThread);
+    // listenerThread.start();
+    // }
 
     return this;
   }
@@ -304,9 +304,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   protected int calculateQuorum(final ODistributedRequest iRequest, final Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int iAvailableNodes) {
+      final ODistributedConfiguration cfg, final int iAvailableNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode) {
 
-    if (iAvailableNodes == 0)
+    if (iAvailableNodes == 0 && iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
       throw new ODistributedException("Quorum cannot be reached because there are no nodes available");
 
     final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();

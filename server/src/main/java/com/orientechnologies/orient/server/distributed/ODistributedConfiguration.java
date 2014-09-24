@@ -170,6 +170,25 @@ public class ODistributedConfiguration {
   }
 
   /**
+   * Returns the execution mode if synchronous.
+   *
+   * @param iClusterName
+   *          Cluster name, or null for *
+   * @return true = synchronous, false = asynchronous, null = undefined
+   */
+  public Boolean isExecutionModeSynchronous(final String iClusterName) {
+    synchronized (configuration) {
+      Object value = getClusterConfiguration(iClusterName).field("executionMode");
+      if (value == null) {
+        value = configuration.field("executionMode");
+        if (value == null)
+          return null;
+      }
+      return value.toString().equalsIgnoreCase("synchronous");
+    }
+  }
+
+  /**
    * Reads your writes.
    * 
    * @param iClusterName
@@ -445,7 +464,7 @@ public class ODistributedConfiguration {
 
       List<String> serverList = getOriginalServers(iClusterName);
       if (serverList == null)
-    	  serverList = initClusterServers(cluster);
+        serverList = initClusterServers(cluster);
 
       if (!serverList.isEmpty() && serverList.get(0).equals(iServerName))
         // ALREADY MASTER
