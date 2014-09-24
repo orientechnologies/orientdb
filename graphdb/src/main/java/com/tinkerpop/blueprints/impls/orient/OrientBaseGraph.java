@@ -401,13 +401,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return database.getStorage().getConflictStrategy();
   }
 
-  public OrientBaseGraph setConflictStrategy(final String iStrategyName) {
-    database.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+  public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    database.setConflictStrategy(iResolver);
     return this;
   }
 
-  public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    database.setConflictStrategy(iResolver);
+  public OrientBaseGraph setConflictStrategy(final String iStrategyName) {
+    database.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
   }
 
@@ -1437,21 +1437,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return getRawGraph().countClass(iClassName);
   }
 
-  protected void autoStartTransaction() {
-  }
-
-  protected void saveIndexConfiguration() {
-    getRawGraph().getMetadata().getIndexManager().getConfiguration().save();
-  }
-
-  protected <T> String getClassName(final Class<T> elementClass) {
-    if (elementClass.isAssignableFrom(Vertex.class))
-      return OrientVertexType.CLASS_NAME;
-    else if (elementClass.isAssignableFrom(Edge.class))
-      return OrientEdgeType.CLASS_NAME;
-    throw new IllegalArgumentException("Class '" + elementClass + "' is neither a Vertex, nor an Edge");
-  }
-
   public <RET> RET executeOutsideTx(final OCallable<RET, OrientBaseGraph> iCallable, final String... iOperationStrings)
       throws RuntimeException {
     final boolean committed;
@@ -1480,8 +1465,24 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       return iCallable.call(this);
     } finally {
       if (committed)
-        autoStartTransaction();
+        // RESTART TRANSACTION
+        ((OrientTransactionalGraph) this).begin();
     }
+  }
+
+  protected void autoStartTransaction() {
+  }
+
+  protected void saveIndexConfiguration() {
+    getRawGraph().getMetadata().getIndexManager().getConfiguration().save();
+  }
+
+  protected <T> String getClassName(final Class<T> elementClass) {
+    if (elementClass.isAssignableFrom(Vertex.class))
+      return OrientVertexType.CLASS_NAME;
+    else if (elementClass.isAssignableFrom(Edge.class))
+      return OrientEdgeType.CLASS_NAME;
+    throw new IllegalArgumentException("Class '" + elementClass + "' is neither a Vertex, nor an Edge");
   }
 
   protected Object convertKey(final OIndex<?> idx, Object iValue) {
