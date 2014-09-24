@@ -135,7 +135,7 @@ public class OHazelcastDistributedRequest implements ODistributedRequest, Extern
 
   @Override
   public String toString() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(256);
     buffer.append("id=");
     buffer.append(id);
     buffer.append(" from=");

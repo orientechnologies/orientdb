@@ -79,7 +79,6 @@ public class OTxTask extends OAbstractReplicatedTask {
           // SEND RID + VERSION
           final OCreateRecordTask t = (OCreateRecordTask) task;
           results.set(i, new OPlaceholder(task.getRid(), task.getVersion()));
-
         } else if (task instanceof OUpdateRecordTask) {
           // SEND VERSION ONLY
           final OUpdateRecordTask t = (OUpdateRecordTask) task;
@@ -181,4 +180,21 @@ public class OTxTask extends OAbstractReplicatedTask {
   public List<OAbstractRecordReplicatedTask> getTasks() {
     return tasks;
   }
+
+  /**
+   * Returns the ".insert" queue if there is at least 1 CREATE RECORD TASK INSIDE
+   * 
+   * @param iOriginalQueueName
+   * @return
+   */
+//  @Override
+//  public String getQueueName(final String iOriginalQueueName) {
+//    for (int i = 0; i < tasks.size(); ++i) {
+//      final OAbstractRecordReplicatedTask t = tasks.get(i);
+//      if (t instanceof OCreateRecordTask)
+//        return t.getQueueName(iOriginalQueueName);
+//    }
+//
+//    return iOriginalQueueName;
+//  }
 }

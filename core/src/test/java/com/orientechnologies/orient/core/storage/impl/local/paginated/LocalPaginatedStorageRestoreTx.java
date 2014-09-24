@@ -17,6 +17,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -27,16 +34,10 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -102,9 +103,9 @@ public class LocalPaginatedStorageRestoreTx {
 
     Thread.sleep(1500);
     copyDataFromTestWithoutClose();
-		OStorage storage = baseDocumentTx.getStorage();
+    OStorage storage = baseDocumentTx.getStorage();
     baseDocumentTx.close();
-		storage.close();
+    storage.close();
 
     testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/testLocalPaginatedStorageRestoreFromTx");
     testDocumentTx.open("admin", "admin");
@@ -263,7 +264,7 @@ public class LocalPaginatedStorageRestoreTx {
 
             if (!secondDocs.isEmpty() && (random.nextDouble() <= 0.2)) {
               ODocument conflictDocTwo = new ODocument();
-              conflictDocTwo.setIdentity(new ORecordId(secondDocs.get(0)));
+              ORecordInternal.setIdentity(conflictDocTwo, new ORecordId(secondDocs.get(0)));
               conflictDocTwo.setDirty();
               conflictDocTwo.save();
             }

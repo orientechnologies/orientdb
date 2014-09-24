@@ -40,7 +40,7 @@ public class OAsyncCommandResultListener extends OAbstractCommandResultListener 
     try {
       fetchRecord(iRecord, new ORemoteFetchListener() {
         @Override
-        protected void sendRecord(ORecord<?> iLinked) {
+        protected void sendRecord(ORecord iLinked) {
           try {
             if (protocol.connection.data.protocolVersion >= 17) {
               protocol.channel.writeByte((byte) 2); // CACHE IT ON THE CLIENT

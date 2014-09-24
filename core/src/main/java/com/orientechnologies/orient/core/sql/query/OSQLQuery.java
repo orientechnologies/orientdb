@@ -26,7 +26,7 @@ import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -61,7 +61,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
    */
   @SuppressWarnings("unchecked")
   public List<T> run(final Object... iArgs) {
-    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (database == null)
       throw new OQueryParsingException("No database configured");
 
@@ -124,26 +124,26 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     for (Entry<Object, Object> entry : params.entrySet()) {
       final Object value = entry.getValue();
 
-      if (value instanceof Set<?> && ((Set<?>) value).iterator().next() instanceof ORecord<?>) {
+      if (value instanceof Set<?> && ((Set<?>) value).iterator().next() instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final Set<ORID> newSet = new HashSet<ORID>();
-        for (ORecord<?> rec : (Set<ORecord<?>>) value) {
+        for (ORecord rec : (Set<ORecord>) value) {
           newSet.add(rec.getIdentity());
         }
         newParams.put(entry.getKey(), newSet);
 
-      } else if (value instanceof List<?> && ((List<?>) value).get(0) instanceof ORecord<?>) {
+      } else if (value instanceof List<?> && ((List<?>) value).get(0) instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final List<ORID> newList = new ArrayList<ORID>();
-        for (ORecord<?> rec : (List<ORecord<?>>) value) {
+        for (ORecord rec : (List<ORecord>) value) {
           newList.add(rec.getIdentity());
         }
         newParams.put(entry.getKey(), newList);
 
-      } else if (value instanceof Map<?, ?> && ((Map<?, ?>) value).values().iterator().next() instanceof ORecord<?>) {
+      } else if (value instanceof Map<?, ?> && ((Map<?, ?>) value).values().iterator().next() instanceof ORecord) {
         // CONVERT RECORDS AS RIDS
         final Map<Object, ORID> newMap = new HashMap<Object, ORID>();
-        for (Entry<?, ORecord<?>> mapEntry : ((Map<?, ORecord<?>>) value).entrySet()) {
+        for (Entry<?, ORecord> mapEntry : ((Map<?, ORecord>) value).entrySet()) {
           newMap.put(mapEntry.getKey(), mapEntry.getValue().getIdentity());
         }
         newParams.put(entry.getKey(), newMap);

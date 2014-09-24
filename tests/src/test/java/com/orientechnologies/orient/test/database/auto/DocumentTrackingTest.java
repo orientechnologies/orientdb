@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.testng.Assert;
 import org.testng.annotations.*;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
@@ -19,6 +20,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 @Test
@@ -935,7 +937,7 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     final List<String> trackedList = document.field("embeddedlist");
     trackedList.add("value2");
 
-    document.unsetDirty();
+    ORecordInternal.unsetDirty(document);
 
     Assert.assertFalse(document.isDirty());
   }

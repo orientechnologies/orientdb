@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 
@@ -33,7 +32,7 @@ public class OFileCreatedCreatedWALRecord extends OOperationUnitRecord {
   public int toStream(byte[] content, int offset) {
     offset = super.toStream(content, offset);
 
-    OStringSerializer.INSTANCE.serializeNative(fileName, content, offset);
+    OStringSerializer.INSTANCE.serializeNativeObject(fileName, content, offset);
     offset += OStringSerializer.INSTANCE.getObjectSize(fileName);
 
     OLongSerializer.INSTANCE.serializeNative(fileId, content, offset);
@@ -46,7 +45,7 @@ public class OFileCreatedCreatedWALRecord extends OOperationUnitRecord {
   public int fromStream(byte[] content, int offset) {
     offset = super.fromStream(content, offset);
 
-    fileName = OStringSerializer.INSTANCE.deserializeNative(content, offset);
+    fileName = OStringSerializer.INSTANCE.deserializeNativeObject(content, offset);
     offset += OStringSerializer.INSTANCE.getObjectSize(fileName);
 
     fileId = OLongSerializer.INSTANCE.deserializeNative(content, offset);

@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -31,6 +32,7 @@ import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
+
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -61,7 +63,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
 
     parserText = request.getText();
 
-    ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !(db instanceof ODatabaseRecordTx))
       db = db.getUnderlying();
 

@@ -300,7 +300,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     for (int i = 0; i < 100; i++) {
       if (!iteratorCluster.hasNext())
         break;
-      ORecord<?> doc = iteratorCluster.next();
+      ORecord doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());
     }
     return positions;

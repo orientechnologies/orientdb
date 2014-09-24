@@ -15,12 +15,13 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 public interface OSchema {
 
@@ -92,7 +93,7 @@ public interface OSchema {
   /**
    * Returns all the classes that rely on a cluster
    * 
-   * @param name
+   * @param iClusterName
    *          Cluster name
    */
   public Set<OClass> getClassesRelyOnCluster(String iClusterName);
@@ -104,5 +105,6 @@ public interface OSchema {
   public List<OGlobalProperty> getGlobalProperties();
   
   public OGlobalProperty createGlobalProperty(String name, OType type, Integer id);
-  
+
+  public OClusterSelectionFactory getClusterSelectionFactory();
 }

@@ -30,7 +30,6 @@ public class ODocumentSerializationPersistentTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.setValue(Boolean.TRUE);
 
     db = new ODatabaseDocumentTx("memory:testdocumentserialization");
     db.create();

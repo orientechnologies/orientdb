@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
@@ -121,8 +122,8 @@ public class ORuntimeResult {
             iValue.field(projection.getKey(), ((OIdentifiable) projectionValue).getRecord());
           else if (projectionValue instanceof Iterator) {
             // make temporary value typical case graph database elemenet's iterator edges
-						if(projectionValue instanceof OResettable)
-							((OResettable)projectionValue).reset();
+            if (projectionValue instanceof OResettable)
+              ((OResettable) projectionValue).reset();
 
             final List<Object> iteratorValues = new ArrayList<Object>();
             final Iterator projectionValueIterator = (Iterator) projectionValue;
@@ -170,7 +171,7 @@ public class ORuntimeResult {
         return null;
 
       // AVOID SAVING OF TEMP RECORD
-      iValue.unsetDirty();
+      ORecordInternal.unsetDirty(iValue);
     }
     return iValue;
   }

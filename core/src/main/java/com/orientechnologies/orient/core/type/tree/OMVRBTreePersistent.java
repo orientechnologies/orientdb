@@ -15,24 +15,6 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
-import com.orientechnologies.common.collection.OLimitedMap;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfilerMBean;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
-import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
-import com.orientechnologies.orient.core.memory.OLowMemoryException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -41,6 +23,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import com.orientechnologies.common.collection.OLimitedMap;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
+import com.orientechnologies.orient.core.memory.OLowMemoryException;
+import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
 /**
  * Persistent based MVRB-Tree implementation. The difference with the class OMVRBTreePersistent is the level. In facts this class
@@ -52,7 +51,7 @@ import java.util.TreeMap;
 public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
   protected OMVRBTreeProvider<K, V>                        dataProvider;
-  protected ORecord<?>                                     owner;
+  protected ORecord                                        owner;
   protected final Set<OMVRBTreeEntryPersistent<K, V>>      recordsToCommit    = new HashSet<OMVRBTreeEntryPersistent<K, V>>();
 
   // STORES IN MEMORY DIRECT REFERENCES TO PORTION OF THE TREE
@@ -256,7 +255,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       recordsToCommit.clear();
       root = null;
 
-      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (db != null && !db.isClosed() && db.getStorage().getUnderlying() instanceof OStorageEmbedded) {
         // RELOAD IT
         try {
@@ -672,7 +671,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   @Override
   public String toString() {
 
-    final StringBuilder buffer = new StringBuilder().append('[');
+    final StringBuilder buffer = new StringBuilder(128).append('[');
 
     if (size() < 10) {
       OMVRBTreeEntry<K, V> current = getFirstEntry();
@@ -706,18 +705,18 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   }
 
   protected V internalPut(final K key, final V value) throws OLowMemoryException {
-    ORecordInternal<?> rec;
+    ORecord rec;
 
-    if (key instanceof ORecordInternal<?>) {
+    if (key instanceof ORecord) {
       // RECORD KEY: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-      rec = (ORecordInternal<?>) key;
+      rec = (ORecord) key;
       if (!rec.getIdentity().isValid())
         rec.save();
     }
 
-    if (value instanceof ORecordInternal<?>) {
+    if (value instanceof ORecord) {
       // RECORD VALUE: ASSURE IT'S PERSISTENT TO AVOID STORING INVALID RIDs
-      rec = (ORecordInternal<?>) value;
+      rec = (ORecord) value;
       if (!rec.getIdentity().isValid())
         rec.save();
     }
@@ -981,11 +980,11 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   protected void markDirty() {
   }
 
-  public ORecord<?> getOwner() {
+  public ORecord getOwner() {
     return owner;
   }
 
-  public OMVRBTreePersistent<K, V> setOwner(ORecord<?> owner) {
+  public OMVRBTreePersistent<K, V> setOwner(ORecord owner) {
     this.owner = owner;
     return this;
   }

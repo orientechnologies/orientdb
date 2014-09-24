@@ -17,7 +17,6 @@ package com.orientechnologies.orient.core.sql.filter;
 
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -152,7 +151,7 @@ public class OSQLTarget extends OBaseParser {
 
     } else if (c == OStringSerializerHelper.EMBEDDED_BEGIN) {
       // SUB QUERY
-      final StringBuilder subText = new StringBuilder();
+      final StringBuilder subText = new StringBuilder(256);
       parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, subText) + 1);
       final OCommandSQL subCommand = new OCommandSQLResultset(subText.toString());
 

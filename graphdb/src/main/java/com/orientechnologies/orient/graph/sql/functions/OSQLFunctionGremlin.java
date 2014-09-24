@@ -63,6 +63,9 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
           @Override
           public boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph) {
+            if (iCurrentRecord == null || !(iCurrentRecord instanceof ODocument))
+              return false;
+
             final ODocument document = (ODocument) iCurrentRecord;
             if (document.getSchemaClass() != null && document.getSchemaClass().isSubClassOf("E")) {
               // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER

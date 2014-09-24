@@ -15,14 +15,14 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import java.util.List;
+import java.util.Set;
+
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.metadata.security.ORole.ALLOW_MODES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.List;
-import java.util.Set;
 
 /**
  * Proxy class for user management
@@ -31,7 +31,7 @@ import java.util.Set;
  * 
  */
 public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecurity {
-  public OSecurityProxy(final OSecurity iDelegate, final ODatabaseRecord iDatabase) {
+  public OSecurityProxy(final OSecurity iDelegate, final ODatabaseRecordInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 

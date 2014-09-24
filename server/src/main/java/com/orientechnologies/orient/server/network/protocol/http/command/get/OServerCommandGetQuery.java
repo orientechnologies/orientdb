@@ -20,7 +20,7 @@ import java.util.List;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -53,7 +53,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      final OQueryAbstract command = new OSQLSynchQuery<ORecordSchemaAware<?>>(text, limit).setFetchPlan(fetchPlan);
+      final OQueryAbstract command = new OSQLSynchQuery<ODocument>(text, limit).setFetchPlan(fetchPlan);
       response = (List<OIdentifiable>) db.query(command);
       fetchPlan = command.getFetchPlan();
 

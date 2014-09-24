@@ -71,22 +71,22 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
     return OLinkSerializer.INSTANCE.getObjectSizeNative(stream, startPosition);
   }
 
-  public void serializeNative(OIdentifiable object, byte[] stream, int startPosition, Object... hints) {
-    OLinkSerializer.INSTANCE.serializeNative(object.getIdentity(), stream, startPosition);
+  public void serializeNativeObject(OIdentifiable object, byte[] stream, int startPosition, Object... hints) {
+    OLinkSerializer.INSTANCE.serializeNativeObject(object.getIdentity(), stream, startPosition);
   }
 
-  public OIdentifiable deserializeNative(byte[] stream, int startPosition) {
-    return OLinkSerializer.INSTANCE.deserializeNative(stream, startPosition);
-  }
-
-  @Override
-  public void serializeInDirectMemory(OIdentifiable object, ODirectMemoryPointer pointer, long offset, Object... hints) {
-    OLinkSerializer.INSTANCE.serializeInDirectMemory(object, pointer, offset);
+  public OIdentifiable deserializeNativeObject(byte[] stream, int startPosition) {
+    return OLinkSerializer.INSTANCE.deserializeNativeObject(stream, startPosition);
   }
 
   @Override
-  public OIdentifiable deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    return OLinkSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
+  public void serializeInDirectMemoryObject(OIdentifiable object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    OLinkSerializer.INSTANCE.serializeInDirectMemoryObject(object, pointer, offset);
+  }
+
+  @Override
+  public OIdentifiable deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
+    return OLinkSerializer.INSTANCE.deserializeFromDirectMemoryObject(pointer, offset);
   }
 
   @Override

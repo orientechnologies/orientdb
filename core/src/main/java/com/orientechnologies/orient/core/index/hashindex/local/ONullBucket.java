@@ -45,7 +45,7 @@ public class ONullBucket<V> extends ODurablePage {
     final int valueSize = valueSerializer.getObjectSize(value);
 
     final byte[] serializedValue = new byte[valueSize];
-    valueSerializer.serializeNative(value, serializedValue, 0);
+    valueSerializer.serializeNativeObject(value, serializedValue, 0);
 
     setBinaryValue(NEXT_FREE_POSITION + 1, serializedValue);
   }

@@ -30,12 +30,12 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 
 public interface ORecordSerializer {
-  public ORecordInternal<?> fromStream(byte[] iSource, ORecordInternal<?> iRecord, String[] iFields);
+  public ORecord fromStream(byte[] iSource, ORecord iRecord, String[] iFields);
 
-  public byte[] toStream(ORecordInternal<?> iSource, boolean iOnlyDelta);
+  public byte[] toStream(ORecord iSource, boolean iOnlyDelta);
 
   public int getCurrentVersion();
 

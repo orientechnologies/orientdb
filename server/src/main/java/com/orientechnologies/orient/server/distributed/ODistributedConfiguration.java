@@ -19,11 +19,13 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -47,9 +49,6 @@ public class ODistributedConfiguration {
     for (String c : getClusterNames()) {
       if (getOriginalServers(c) == null) {
         final ODocument clusterConfig = getClusterConfiguration(c);
-
-        // if (clusterConfig.removeField("replication") != null)
-        // modified = true;
 
         final ODocument partitioning = (ODocument) clusterConfig.removeField("partitioning");
         if (partitioning != null) {
@@ -79,18 +78,16 @@ public class ODistributedConfiguration {
    */
   public boolean isReplicationActive(final String iClusterName, final String iLocalNode) {
     synchronized (configuration) {
-      final ODocument cluster = getClusterConfiguration(iClusterName);
-      final Collection<String> servers = cluster.field("servers");
-      if (servers != null) {
-        int otherServers = 0;
-
-        for (String s : servers)
-          if (!s.equals(NEW_NODE_TAG) && !s.equals(iLocalNode))
-            otherServers++;
-
-        return true;
+      final Collection<String> servers = getClusterConfiguration(iClusterName).field("servers");
+      if (servers != null && !servers.isEmpty()) {
+        // int otherServers = 0;
+        //
+        // for (String s : servers)
+        // if (!s.equals(NEW_NODE_TAG) && !s.equals(iLocalNode))
+        // otherServers++;
         // TEMPORARY PATCH TO FIX OPTIMIZATION OF RUNNING AS SINGLE SERVER
-        //return otherServers > 0;
+        // return otherServers > 0;
+        return true;
       }
       return false;
     }
@@ -173,6 +170,25 @@ public class ODistributedConfiguration {
   }
 
   /**
+   * Returns the execution mode if synchronous.
+   *
+   * @param iClusterName
+   *          Cluster name, or null for *
+   * @return true = synchronous, false = asynchronous, null = undefined
+   */
+  public Boolean isExecutionModeSynchronous(final String iClusterName) {
+    synchronized (configuration) {
+      Object value = getClusterConfiguration(iClusterName).field("executionMode");
+      if (value == null) {
+        value = configuration.field("executionMode");
+        if (value == null)
+          return null;
+      }
+      return value.toString().equalsIgnoreCase("synchronous");
+    }
+  }
+
+  /**
    * Reads your writes.
    * 
    * @param iClusterName
@@ -224,11 +240,7 @@ public class ODistributedConfiguration {
 
       final Set<String> partitions = new HashSet<String>(iClusterNames.size());
       for (String p : iClusterNames) {
-        final ODocument partition = getClusterConfiguration(p);
-        if (partition == null)
-          return null;
-
-        final List<String> serverList = partition.field("servers");
+        final List<String> serverList = getClusterConfiguration(p).field("servers");
         if (serverList != null) {
           boolean localNodeFound = false;
           // CHECK IF THE LOCAL NODE IS INVOLVED: IF YES PREFER LOCAL EXECUTION
@@ -254,23 +266,44 @@ public class ODistributedConfiguration {
   }
 
   /**
+   * Returns the local cluster. This is used when a cluster must be selected: local is always the best choice.
+   * 
+   * @param iClusterNames
+   *          Set of cluster names
+   * @param iLocalNode
+   *          Local node name
+   */
+  public String getLocalCluster(Collection<String> iClusterNames, final String iLocalNode) {
+    synchronized (configuration) {
+      if (iClusterNames == null || iClusterNames.isEmpty())
+        iClusterNames = Collections.singleton("*");
+
+      for (String p : iClusterNames) {
+        final String masterServer = getMasterServer(p);
+        if (iLocalNode.equals(masterServer))
+          // FOUND: JUST USE THIS
+          return p;
+      }
+
+      // NO MASTER FOUND: RETURN THE FIRST CLUSTER NAME
+      return null;
+    }
+  }
+
+  /**
    * Returns the set of server names involved on the passed cluster collection.
    * 
    * @param iClusterNames
    *          Set of cluster names to find
    */
-  public Collection<String> getServers(Collection<String> iClusterNames) {
+  public Set<String> getServers(Collection<String> iClusterNames) {
     synchronized (configuration) {
       if (iClusterNames == null || iClusterNames.isEmpty())
         iClusterNames = Collections.singleton("*");
 
       final Set<String> partitions = new HashSet<String>(iClusterNames.size());
       for (String p : iClusterNames) {
-        final ODocument partition = getClusterConfiguration(p);
-        if (partition == null)
-          return null;
-
-        final List<String> serverList = partition.field("servers");
+        final List<String> serverList = getClusterConfiguration(p).field("servers");
         if (serverList != null) {
           for (String s : serverList)
             if (!s.equals(NEW_NODE_TAG))
@@ -282,32 +315,49 @@ public class ODistributedConfiguration {
   }
 
   /**
-   * Returns the server list for the default (*) cluster excluding any tags like <NEW_NODES>.
-   */
-  public Collection<String> getServers() {
-    return getServers((String) null);
-  }
-
-  /**
-   * Returns the server list for the requested cluster cluster excluding any tags like <NEW_NODES>.
+   * Returns the server list for the requested cluster cluster excluding any tags like <NEW_NODES> and iExclude if any.
    * 
    * @param iClusterName
    *          Cluster name, or null for *
+   * @param iExclude
+   *          Node to exclude
    */
-  public Collection<String> getServers(final String iClusterName) {
+  public List<String> getServers(final String iClusterName, final String iExclude) {
     synchronized (configuration) {
-      final ODocument partition = getClusterConfiguration(iClusterName);
-      if (partition == null)
-        return null;
-
-      List<String> serverList = partition.field("servers");
+      final List<String> serverList = getClusterConfiguration(iClusterName).field("servers");
       if (serverList != null) {
         // COPY AND REMOVE ANY NEW_NODE_TAG
-        serverList = new ArrayList<String>(serverList);
-        serverList.remove(NEW_NODE_TAG);
+        List<String> filteredServerList = new ArrayList<String>(serverList.size());
+        for (String s : serverList) {
+          if (!s.equals(NEW_NODE_TAG) && (iExclude == null || !iExclude.equals(s)))
+            filteredServerList.add(s);
+        }
+        return filteredServerList;
+      }
+      return Collections.EMPTY_LIST;
+    }
+  }
+
+  /**
+   * Returns the master server for the given cluster excluding the passed node. Master server is the first in server list.
+   *
+   * @param iClusterName
+   *          Cluster name, or null for *
+   */
+  public String getMasterServer(final String iClusterName) {
+    synchronized (configuration) {
+      String master = null;
+
+      final List<String> serverList = getClusterConfiguration(iClusterName).field("servers");
+      if (serverList != null && !serverList.isEmpty()) {
+        // RETURN THE FIRST ONE
+        master = serverList.get(0);
+        if (NEW_NODE_TAG.equals(master) && serverList.size() > 1)
+          // DON'T RETURN <NEW_NODE>
+          master = serverList.get(1);
       }
 
-      return serverList;
+      return master;
     }
   }
 
@@ -317,13 +367,9 @@ public class ODistributedConfiguration {
    * @param iClusterName
    *          Cluster name, or null for *
    */
-  public Collection<String> getOriginalServers(final String iClusterName) {
+  public List<String> getOriginalServers(final String iClusterName) {
     synchronized (configuration) {
-      final ODocument partition = getClusterConfiguration(iClusterName);
-      if (partition == null)
-        return null;
-
-      return partition.field("servers");
+      return getClusterConfiguration(iClusterName).field("servers");
     }
   }
 
@@ -342,7 +388,9 @@ public class ODistributedConfiguration {
    * 
    * @param iClusterName
    *          Cluster name, or null for *
-   * @return
+   * @return Always a ODocument
+   * @throws OConfigurationException
+   *           in case "clusters" field is not found in configuration
    */
   public ODocument getClusterConfiguration(String iClusterName) {
     synchronized (configuration) {
@@ -378,14 +426,14 @@ public class ODistributedConfiguration {
       final List<String> changedPartitions = new ArrayList<String>();
       // NOT FOUND: ADD THE NODE IN CONFIGURATION. LOOK FOR $newNode TAG
       for (String clusterName : getClusterNames()) {
-        final Collection<String> partitions = getOriginalServers(clusterName);
-        if (partitions != null)
-          for (String node : partitions)
-            if (node.equalsIgnoreCase(ODistributedConfiguration.NEW_NODE_TAG) && !partitions.contains(iNode)) {
-              partitions.add(iNode);
-              changedPartitions.add(clusterName);
-              break;
-            }
+        final List<String> partitions = getOriginalServers(clusterName);
+        if (partitions != null) {
+          final int newNodePos = partitions.indexOf(ODistributedConfiguration.NEW_NODE_TAG);
+          if (newNodePos > -1 && !partitions.contains(iNode)) {
+            partitions.add(newNodePos, iNode);
+            changedPartitions.add(clusterName);
+          }
+        }
       }
 
       if (!changedPartitions.isEmpty()) {
@@ -394,6 +442,65 @@ public class ODistributedConfiguration {
       }
     }
     return null;
+  }
+
+  /**
+   * Sets the master server for the given cluster. Master server is the first in server list
+   * 
+   * @param iClusterName
+   *          Cluster name or *. Doesn't accept null.
+   */
+  public void setMasterServer(final String iClusterName, final String iServerName) {
+    if (iClusterName == null)
+      throw new IllegalArgumentException("cluster name cannot be null");
+
+    synchronized (configuration) {
+      final ODocument clusters = configuration.field("clusters");
+      ODocument cluster = clusters.field(iClusterName);
+
+      if (cluster == null)
+        // CREATE IT
+        cluster = createCluster(iClusterName);
+
+      List<String> serverList = getOriginalServers(iClusterName);
+      if (serverList == null)
+        serverList = initClusterServers(cluster);
+
+      if (!serverList.isEmpty() && serverList.get(0).equals(iServerName))
+        // ALREADY MASTER
+        return;
+
+      // REMOVE THE NODE IF ANY
+      for (Iterator<String> it = serverList.iterator(); it.hasNext();) {
+        if (it.next().equals(iServerName)) {
+          it.remove();
+          break;
+        }
+      }
+
+      // ADD THE NODE AS FIRST OF THE LIST = MASTER
+      serverList.add(0, iServerName);
+
+      incrementVersion();
+    }
+  }
+
+  public ODocument createCluster(final String iClusterName) {
+    // CREATE IT
+    final ODocument clusters = configuration.field("clusters");
+
+    ODocument cluster = clusters.field(iClusterName);
+    if (cluster != null)
+      // ALREADY EXISTS
+      return clusters;
+
+    cluster = new ODocument();
+    ODocumentInternal.addOwner(cluster, clusters);
+    clusters.field(iClusterName, cluster, OType.EMBEDDED);
+
+    initClusterServers(cluster);
+
+    return cluster;
   }
 
   public List<String> removeNodeInServerList(final String iNode, final boolean iForce) {
@@ -416,14 +523,58 @@ public class ODistributedConfiguration {
             }
           }
         }
+      }
 
-        if (!changedPartitions.isEmpty()) {
-          incrementVersion();
-          return changedPartitions;
-        }
+      if (!changedPartitions.isEmpty()) {
+        incrementVersion();
+        return changedPartitions;
       }
     }
     return null;
+  }
+
+  public List<String> removeMasterServer(final String iServerName) {
+    final List<String> changedPartitions = new ArrayList<String>();
+
+    synchronized (configuration) {
+      final ODocument clusters = configuration.field("clusters");
+      for (String c : clusters.fieldNames()) {
+        final List<String> serverList = getOriginalServers(c);
+        if (serverList == null)
+          continue;
+
+        if (serverList.size() < 2)
+          // CANNOT REMOVE IT BECAUSE IT'S THE ONLY AVAILABLE NODE
+          continue;
+
+        if (!serverList.get(0).equals(iServerName))
+          // WASN'T MASTER
+          continue;
+
+        // PUT THE FIRST NODE AS LAST
+        serverList.remove(0);
+        serverList.add(iServerName);
+        changedPartitions.add(c);
+      }
+    }
+
+    if (!changedPartitions.isEmpty()) {
+      incrementVersion();
+      return changedPartitions;
+    }
+
+    return null;
+  }
+
+  protected List<String> initClusterServers(final ODocument cluster) {
+    final ODocument any = getClusterConfiguration("*");
+
+    // COPY THE SERVER LIST FROM "*"
+    final List<String> anyServers = any.field("servers");
+    final List<String> servers = new ArrayList<String>(anyServers);
+    cluster.field("servers", servers);
+
+    return servers;
   }
 
   protected void incrementVersion() {

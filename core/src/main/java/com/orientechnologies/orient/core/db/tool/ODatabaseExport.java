@@ -33,7 +33,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
@@ -41,12 +41,11 @@ import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -65,7 +64,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   protected int           compressionLevel  = Deflater.BEST_SPEED;
   protected int           compressionBuffer = 16384;              // 16Kb
 
-  public ODatabaseExport(final ODatabaseRecord iDatabase, final String iFileName, final OCommandOutputListener iListener)
+  public ODatabaseExport(final ODatabaseRecordInternal iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
     super(iDatabase, iFileName, iListener);
 
@@ -92,8 +91,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     iDatabase.getLocalCache().setEnable(false);
   }
 
-  public ODatabaseExport(final ODatabaseRecord iDatabase, final OutputStream iOutputStream, final OCommandOutputListener iListener)
-      throws IOException {
+  public ODatabaseExport(final ODatabaseRecordInternal iDatabase, final OutputStream iOutputStream,
+      final OCommandOutputListener iListener) throws IOException {
     super(iDatabase, "streaming", iListener);
 
     writer = new OJSONWriter(new OutputStreamWriter(iOutputStream));
@@ -178,9 +177,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
       long clusterExportedRecordsCurrent = 0;
       if (clusterName != null) {
-        ORecordInternal<?> rec = null;
+        ORecord rec = null;
         try {
-          for (ORecordIteratorCluster<ORecordInternal<?>> it = database.browseCluster(clusterName); it.hasNext();) {
+          for (ORecordIteratorCluster<ORecord> it = database.browseCluster(clusterName); it.hasNext();) {
 
             rec = it.next();
             if (rec instanceof ODocument) {
@@ -454,19 +453,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     OSchemaProxy s = (OSchemaProxy) database.getMetadata().getSchema();
     writer.writeAttribute(2, true, "version", s.getVersion());
 
-    if (!s.getGlobalProperties().isEmpty()) {
-      writer.beginCollection(2, true, "globalProperties");
-      for (OGlobalProperty global : s.getGlobalProperties()) {
-        writer.beginObject(3, true, null);
-        writer.writeAttribute(0, false, "name", global.getName());
-        writer.writeAttribute(0, false, "global-id", global.getId());
-        writer.writeAttribute(0, false, "type", global.getType().toString());
-        writer.endObject(3, true);
-      }
-      writer.endCollection(2, true);
-    }
-
-    if (!s.getClasses().isEmpty()) {
+   if (!s.getClasses().isEmpty()) {
       writer.beginCollection(2, true, "classes");
 
       final List<OClass> classes = new ArrayList<OClass>(s.getClasses());
@@ -532,7 +519,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("OK (" + s.getClasses().size() + " classes)");
   }
 
-  private boolean exportRecord(long recordTot, long recordNum, ORecordInternal<?> rec) throws IOException {
+  private boolean exportRecord(long recordTot, long recordNum, ORecord rec) throws IOException {
     if (rec != null)
       try {
         if (rec.getIdentity().isValid())

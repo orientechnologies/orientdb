@@ -38,12 +38,6 @@ public class ORidBagDeleteHook extends ODocumentHookAbstract {
     return RESULT.RECORD_CHANGED;
   }
 
-  @Override
-  public RESULT onRecordBeforeReplicaDelete(ODocument document) {
-    deleteAllRidBags(document);
-    return RESULT.RECORD_CHANGED;
-  }
-
   private void deleteAllRidBags(ODocument document) {
     final ORecordVersion version = document.getRecordVersion();
     if (document.fields() == 0) {

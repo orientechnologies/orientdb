@@ -172,8 +172,12 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         else if (!getLockRead().tryAcquireLock(iTimeout, TimeUnit.MILLISECONDS))
           throw new OTimeoutException("Cannot acquire read lock against channel: " + this);
 
+        boolean readLock = true;
+
         if (!isConnected()) {
           releaseReadLock();
+          readLock = false;
+
           throw new IOException("Channel is closed");
         }
 
@@ -193,6 +197,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
             channelRead = false;
             readCondition.signalAll();
             releaseReadLock();
+            readLock = false;
+
             throw e;
           }
         }
@@ -209,6 +215,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout) {
             // CLOSE THE SOCKET TO CHANNEL TO AVOID FURTHER DIRTY DATA
             close();
+            readLock = false;
+
             throw new OTimeoutException("Timeout on reading response from the server "
                 + (socket != null ? socket.getRemoteSocketAddress() : "") + " for the request " + iRequesterId);
           }
@@ -219,6 +227,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
                   maxUnreadResponses);
 
             close();
+            readLock = false;
+
             throw new IOException("Timeout on reading response");
           }
 
@@ -244,7 +254,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           Thread.currentThread().interrupt();
 
         } finally {
-          releaseReadLock();
+          if (readLock)
+            releaseReadLock();
         }
       } while (true);
 

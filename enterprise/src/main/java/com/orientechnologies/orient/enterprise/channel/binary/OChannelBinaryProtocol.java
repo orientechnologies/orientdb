@@ -20,6 +20,7 @@ import java.io.IOException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
@@ -110,7 +111,8 @@ public class OChannelBinaryProtocol {
   // FOR MORE INFO: https://github.com/orientechnologies/orientdb/wiki/Network-Binary-Protocol#wiki-Compatibility
   public static final int   PROTOCOL_VERSION_21                     = 21;
 
-  public static final int   CURRENT_PROTOCOL_VERSION                = 24; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+  public static final int   PROTOCOL_VERSION_24                     = 24;
+  public static final int   CURRENT_PROTOCOL_VERSION                = 25; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {
     final int classId = network.readShort();
@@ -120,12 +122,12 @@ public class OChannelBinaryProtocol {
     if (classId == RECORD_RID) {
       return network.readRID();
     } else {
-      final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
+      final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(network.readByte());
 
       final ORecordId rid = network.readRID();
       final ORecordVersion version = network.readVersion();
       final byte[] content = network.readBytes();
-      record.fill(rid, version, content, false);
+      ORecordInternal.fill(record, rid, version, content, false);
 
       return record;
     }

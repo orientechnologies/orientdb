@@ -18,7 +18,6 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.Iterator;
 
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 
 /**
  * Implementation of ArrayList bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand
@@ -29,23 +28,23 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
  */
 @SuppressWarnings({ "serial" })
 public class ORecordTrackedList extends OTrackedList<OIdentifiable> {
-	public ORecordTrackedList(final ORecordInternal<?> iSourceRecord) {
-		super(iSourceRecord);
-	}
+  public ORecordTrackedList(final ORecord iSourceRecord) {
+    super(iSourceRecord);
+  }
 
-	public Iterator<OIdentifiable> rawIterator() {
-		return iterator();
-	}
+  public Iterator<OIdentifiable> rawIterator() {
+    return iterator();
+  }
 
-	/**
-	 * The item's identity does not affect nothing.
-	 */
-	public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
-	}
+  /**
+   * The item's identity does not affect nothing.
+   */
+  public void onBeforeIdentityChanged(final ORecord iRecord) {
+  }
 
-	/**
-	 * The item's identity does not affect nothing.
-	 */
-	public void onAfterIdentityChanged(final ORecord<?> iRecord) {
-	}
+  /**
+   * The item's identity does not affect nothing.
+   */
+  public void onAfterIdentityChanged(final ORecord iRecord) {
+  }
 }

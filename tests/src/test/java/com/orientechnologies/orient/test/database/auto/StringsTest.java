@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -65,5 +66,18 @@ public class StringsTest {
     List<String> pieces = OStringSerializerHelper.split(
         "1811000032;03/27/2014;HA297000960C;+0.0000;+0.0000;+0.0000;+0.0000;+0.0000;0;0;+0.0000;;5;+0.0000", ';');
     Assert.assertEquals(pieces.size(), 14);
+  }
+
+  public void testDocumentSelfReference() {
+    ODocument document = new ODocument();
+    document.field("selfref", document);
+
+    ODocument docTwo = new ODocument();
+    docTwo.field("ref", document);
+    document.field("ref", docTwo);
+
+    String value = document.toString();
+
+    Assert.assertEquals(value, "{selfref:<recursion:rid=#-1:-1>,ref:{ref:<recursion:rid=#-1:-1>}}");
   }
 }

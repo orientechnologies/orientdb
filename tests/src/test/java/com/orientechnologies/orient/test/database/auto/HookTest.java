@@ -117,7 +117,7 @@ public class HookTest extends ObjectDBBaseTest {
     }
 
     @Override
-    public RESULT onRecordBeforeCreate(ORecord<?> iRecord) {
+    public RESULT onRecordBeforeCreate(ORecord iRecord) {
       if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
           && ((ODocument) iRecord).getClassName().equals("Profile"))
         callbackCount += 1;
@@ -125,14 +125,14 @@ public class HookTest extends ObjectDBBaseTest {
     }
 
     @Override
-    public void onRecordAfterCreate(ORecord<?> iRecord) {
+    public void onRecordAfterCreate(ORecord iRecord) {
       if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
           && ((ODocument) iRecord).getClassName().equals("Profile"))
         callbackCount += 10;
     }
 
     @Override
-    public RESULT onRecordBeforeRead(ORecord<?> iRecord) {
+    public RESULT onRecordBeforeRead(ORecord iRecord) {
       if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
           && ((ODocument) iRecord).getClassName().equals("Profile"))
         callbackCount += 20;
@@ -140,14 +140,14 @@ public class HookTest extends ObjectDBBaseTest {
     }
 
     @Override
-    public void onRecordAfterRead(ORecord<?> iRecord) {
+    public void onRecordAfterRead(ORecord iRecord) {
       if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
           && ((ODocument) iRecord).getClassName().equals("Profile"))
         callbackCount += 15;
     }
 
     @Override
-    public RESULT onRecordBeforeUpdate(ORecord<?> iRecord) {
+    public RESULT onRecordBeforeUpdate(ORecord iRecord) {
       if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
           && ((ODocument) iRecord).getClassName().equals("Profile"))
         callbackCount += 40;
@@ -155,14 +155,14 @@ public class HookTest extends ObjectDBBaseTest {
     }
 
     @Override
-    public void onRecordAfterUpdate(ORecord<?> iRecord) {
+    public void onRecordAfterUpdate(ORecord iRecord) {
       if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
           && ((ODocument) iRecord).getClassName().equals("Profile"))
         callbackCount += 50;
     }
 
     @Override
-    public RESULT onRecordBeforeDelete(ORecord<?> iRecord) {
+    public RESULT onRecordBeforeDelete(ORecord iRecord) {
       if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
           && ((ODocument) iRecord).getClassName().equals("Profile"))
         callbackCount += 60;
@@ -170,7 +170,7 @@ public class HookTest extends ObjectDBBaseTest {
     }
 
     @Override
-    public void onRecordAfterDelete(ORecord<?> iRecord) {
+    public void onRecordAfterDelete(ORecord iRecord) {
       if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
           && ((ODocument) iRecord).getClassName().equals("Profile"))
         callbackCount += 70;

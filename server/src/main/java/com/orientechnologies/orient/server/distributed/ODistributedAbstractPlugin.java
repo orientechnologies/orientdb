@@ -15,21 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -37,6 +22,22 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
  * Abstract plugin to manage the distributed environment.
@@ -60,6 +61,11 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   protected Class<? extends OReplicationConflictResolver>  confictResolverClass;
   protected File                                           defaultDatabaseConfigFile;
   protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
+
+  @Override
+  public PRIORITY getPriority() {
+    return PRIORITY.LAST;
+  }
 
   @SuppressWarnings("unchecked")
   @Override
@@ -130,7 +136,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
    * Auto register myself as hook.
    */
   @Override
-  public void onOpen(final ODatabase iDatabase) {
+  public void onOpen(final ODatabaseInternal iDatabase) {
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
     if (dbUrl.startsWith("plocal:")) {
@@ -146,10 +152,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       if (cfg == null)
         return;
 
-      if (iDatabase instanceof ODatabaseComplex<?> && !(iDatabase.getStorage() instanceof ODistributedStorage)) {
+      final OStorage dbStorage = iDatabase.getStorage();
+
+      if (iDatabase instanceof ODatabaseComplex<?> && dbStorage instanceof OStorageEmbedded) {
         ODistributedStorage storage = storages.get(iDatabase.getURL());
         if (storage == null) {
-          storage = new ODistributedStorage(serverInstance, (OStorageEmbedded) iDatabase.getStorage());
+          storage = new ODistributedStorage(serverInstance, (OStorageEmbedded) dbStorage);
           final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
           if (oldStorage != null)
             storage = oldStorage;
@@ -161,7 +169,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   }
 
   @Override
-  public void onCreate(ODatabase iDatabase) {
+  public void onCreate(ODatabaseInternal iDatabase) {
     onOpen(iDatabase);
   }
 
@@ -169,7 +177,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
    * Remove myself as hook.
    */
   @Override
-  public void onClose(final ODatabase iDatabase) {
+  public void onClose(final ODatabaseInternal iDatabase) {
   }
 
   @Override
@@ -209,8 +217,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       cachedDatabaseConfiguration.put(iDatabaseName, cfg);
 
       // PRINT THE NEW CONFIGURATION
-      OLogManager.instance().info(this, "updated distributed configuration for database: %s:\n----------\n%s\n----------",
-          iDatabaseName, cfg.toJSON("prettyPrint"));
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "updated distributed configuration for database: %s:\n----------\n%s\n----------", iDatabaseName,
+          cfg.toJSON("prettyPrint"));
 
       if (iSaveToDisk) {
         // SAVE THE CONFIGURATION TO DISK
@@ -218,7 +227,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         try {
           File file = getDistributedConfigFile(iDatabaseName);
 
-          OLogManager.instance().info(this, "Saving distributed configuration file for database '%s' to: %s", iDatabaseName, file);
+          ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Saving distributed configuration file for database '%s' to: %s", iDatabaseName, file);
 
           if (!file.exists()) {
             file.getParentFile().mkdirs();
@@ -229,7 +239,8 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
           f.write(cfg.toJSON().getBytes());
           f.flush();
         } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on saving distributed configuration file", e);
+          ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Error on saving distributed configuration file", e);
 
         } finally {
           if (f != null)
@@ -247,15 +258,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     synchronized (cachedDatabaseConfiguration) {
       ODocument cfg = cachedDatabaseConfiguration.get(iDatabaseName);
       if (cfg == null) {
-        cfg = cachedDatabaseConfiguration.get("*");
-        if (cfg == null) {
-          // FIRST TIME RUNNING: GET DEFAULT CFG
-          cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
-          if (cfg == null)
-            throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
+        // FIRST TIME RUNNING: GET DEFAULT CFG
+        cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
+        if (cfg == null)
+          throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
 
-          cachedDatabaseConfiguration.put(iDatabaseName, cfg);
-        }
+        cachedDatabaseConfiguration.put(iDatabaseName, cfg);
       }
 
       final ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);

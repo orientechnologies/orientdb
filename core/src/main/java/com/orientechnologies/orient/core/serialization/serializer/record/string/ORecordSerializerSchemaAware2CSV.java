@@ -27,11 +27,11 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -42,8 +42,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
@@ -54,7 +52,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   private static final long                            serialVersionUID = 1L;
 
   @Override
-  public ORecordSchemaAware<?> newObject(String iClassName) {
+  public ODocument newObject(String iClassName) {
     return new ODocument(iClassName);
   }
 
@@ -89,7 +87,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  public ORecordInternal<?> fromString(String iContent, final ORecordInternal<?> iRecord, final String[] iFields) {
+  public ORecord fromString(String iContent, final ORecord iRecord, final String[] iFields) {
     iContent = iContent.trim();
 
     if (iContent.length() == 0)
@@ -99,7 +97,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     final ODocument record = (ODocument) iRecord;
 
     int pos;
-    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
     pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
     if (pos > -1 && (pos < posFirstValue || posFirstValue == -1)) {
@@ -264,14 +262,14 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  public byte[] toStream(ORecordInternal<?> iRecord, boolean iOnlyDelta) {
+  public byte[] toStream(ORecord iRecord, boolean iOnlyDelta) {
     final byte[] result = super.toStream(iRecord, iOnlyDelta);
     if (result == null || result.length > 0)
       return result;
 
     // Fix of nasty IBM JDK bug. In case of very depth recursive graph serialization
-    // ORecordSchemaAware#_source property may be initialized incorrectly.
-    final ORecordSchemaAware<?> recordSchemaAware = (ORecordSchemaAware<?>) iRecord;
+    // ODocument#_source property may be initialized incorrectly.
+    final ODocument recordSchemaAware = (ODocument) iRecord;
     if (recordSchemaAware.fields() > 0)
       return null;
 
@@ -279,7 +277,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   @Override
-  protected StringBuilder toString(ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
+  protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat,
       OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, final boolean iOnlyDelta,
       final boolean autoDetectCollectionType) {
     if (iRecord == null)
@@ -342,7 +340,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
         if (type == null) {
           if (fieldValue.getClass() == byte[].class)
             type = OType.BINARY;
-          else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && fieldValue instanceof ORecord<?>) {
+          else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && fieldValue instanceof ORecord) {
             if (type == null)
               // DETERMINE THE FIELD TYPE
               if (fieldValue instanceof ODocument && ((ODocument) fieldValue).hasOwners())
@@ -382,114 +380,114 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             type = OType.DECIMAL;
           else if (fieldValue instanceof ORidBag)
             type = OType.LINKBAG;
-        }
 
-        if (fieldValue instanceof OMultiCollectionIterator<?>) {
-          type = ((OMultiCollectionIterator<?>) fieldValue).isEmbedded() ? OType.EMBEDDEDLIST : OType.LINKLIST;
-          linkedType = ((OMultiCollectionIterator<?>) fieldValue).isEmbedded() ? OType.EMBEDDED : OType.LINK;
-        } else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
-          final int size = OMultiValue.getSize(fieldValue);
+          if (fieldValue instanceof OMultiCollectionIterator<?>) {
+            type = ((OMultiCollectionIterator<?>) fieldValue).isEmbedded() ? OType.EMBEDDEDLIST : OType.LINKLIST;
+            linkedType = ((OMultiCollectionIterator<?>) fieldValue).isEmbedded() ? OType.EMBEDDED : OType.LINK;
+          } else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray()) {
+            final int size = OMultiValue.getSize(fieldValue);
 
-          Boolean autoConvertLinks = null;
-          if (fieldValue instanceof ORecordLazyMultiValue) {
-            autoConvertLinks = ((ORecordLazyMultiValue) fieldValue).isAutoConvertToRecord();
-            if (autoConvertLinks)
-              // DISABLE AUTO CONVERT
-              ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
-          }
+            Boolean autoConvertLinks = null;
+            if (fieldValue instanceof ORecordLazyMultiValue) {
+              autoConvertLinks = ((ORecordLazyMultiValue) fieldValue).isAutoConvertToRecord();
+              if (autoConvertLinks)
+                // DISABLE AUTO CONVERT
+                ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(false);
+            }
 
-          if (autoDetectCollectionType)
-            if (size > 0) {
-              final Object firstValue = OMultiValue.getFirstValue(fieldValue);
+            if (autoDetectCollectionType)
+              if (size > 0) {
+                final Object firstValue = OMultiValue.getFirstValue(fieldValue);
 
-              if (firstValue != null) {
-                if (firstValue instanceof ORID) {
-                  linkedClass = null;
-                  linkedType = OType.LINK;
-                  if (fieldValue instanceof Set<?>)
-                    type = OType.LINKSET;
-                  else
-                    type = OType.LINKLIST;
-                } else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
-                    && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
-                    && (firstValue instanceof ORecord<?> || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
-                        .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
-                  linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
-                  if (type == null) {
-                    // LINK: GET THE CLASS
+                if (firstValue != null) {
+                  if (firstValue instanceof ORID) {
+                    linkedClass = null;
                     linkedType = OType.LINK;
-
                     if (fieldValue instanceof Set<?>)
                       type = OType.LINKSET;
                     else
                       type = OType.LINKLIST;
-                  } else
-                    linkedType = OType.EMBEDDED;
-                } else {
-                  // EMBEDDED COLLECTION
-                  if (firstValue instanceof ODocument
-                      && ((((ODocument) firstValue).hasOwners()) || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP))
-                    linkedType = OType.EMBEDDED;
-                  else if (firstValue instanceof Enum<?>)
-                    linkedType = OType.STRING;
-                  else {
-                    linkedType = OType.getTypeByClass(firstValue.getClass());
+                  } else if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
+                      && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
+                      && (firstValue instanceof ORecord || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
+                          .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
+                    linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
+                    if (type == null) {
+                      // LINK: GET THE CLASS
+                      linkedType = OType.LINK;
 
-                    if (linkedType != OType.LINK)
-                      // EMBEDDED FOR SURE DON'T USE THE LINKED TYPE
-                      linkedType = null;
+                      if (fieldValue instanceof Set<?>)
+                        type = OType.LINKSET;
+                      else
+                        type = OType.LINKLIST;
+                    } else
+                      linkedType = OType.EMBEDDED;
+                  } else {
+                    // EMBEDDED COLLECTION
+                    if (firstValue instanceof ODocument
+                        && ((((ODocument) firstValue).hasOwners()) || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDMAP))
+                      linkedType = OType.EMBEDDED;
+                    else if (firstValue instanceof Enum<?>)
+                      linkedType = OType.STRING;
+                    else {
+                      linkedType = OType.getTypeByClass(firstValue.getClass());
+
+                      if (linkedType != OType.LINK)
+                        // EMBEDDED FOR SURE DON'T USE THE LINKED TYPE
+                        linkedType = null;
+                    }
+
+                    if (type == null)
+                      if (fieldValue instanceof OMVRBTreeRIDSet || fieldValue instanceof ORecordLazySet)
+                        type = OType.LINKSET;
+                      else if (fieldValue instanceof Set<?>)
+                        type = OType.EMBEDDEDSET;
+                      else
+                        type = OType.EMBEDDEDLIST;
                   }
+                }
+              } else if (type == null)
+                type = OType.EMBEDDEDLIST;
 
-                  if (type == null)
-                    if (fieldValue instanceof OMVRBTreeRIDSet || fieldValue instanceof ORecordLazySet)
-                      type = OType.LINKSET;
-                    else if (fieldValue instanceof Set<?>)
-                      type = OType.EMBEDDEDSET;
-                    else
-                      type = OType.EMBEDDEDLIST;
+            if (fieldValue instanceof ORecordLazyMultiValue && autoConvertLinks) {
+              // REPLACE PREVIOUS SETTINGS
+              ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(true);
+            }
+
+          } else if (fieldValue instanceof Map<?, ?> && type == null) {
+            final int size = OMultiValue.getSize(fieldValue);
+
+            Boolean autoConvertLinks = null;
+            if (fieldValue instanceof ORecordLazyMap) {
+              autoConvertLinks = ((ORecordLazyMap) fieldValue).isAutoConvertToRecord();
+              if (autoConvertLinks)
+                // DISABLE AUTO CONVERT
+                ((ORecordLazyMap) fieldValue).setAutoConvertToRecord(false);
+            }
+
+            if (size > 0) {
+              final Object firstValue = OMultiValue.getFirstValue(fieldValue);
+
+              if (firstValue != null) {
+                if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
+                    && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
+                    && (firstValue instanceof ORecord || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
+                        .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
+                  linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
+                  // LINK: GET THE CLASS
+                  linkedType = OType.LINK;
+                  type = OType.LINKMAP;
                 }
               }
-            } else if (type == null)
-              type = OType.EMBEDDEDLIST;
-
-          if (fieldValue instanceof ORecordLazyMultiValue && autoConvertLinks) {
-            // REPLACE PREVIOUS SETTINGS
-            ((ORecordLazyMultiValue) fieldValue).setAutoConvertToRecord(true);
-          }
-
-        } else if (fieldValue instanceof Map<?, ?> && type == null) {
-          final int size = OMultiValue.getSize(fieldValue);
-
-          Boolean autoConvertLinks = null;
-          if (fieldValue instanceof ORecordLazyMap) {
-            autoConvertLinks = ((ORecordLazyMap) fieldValue).isAutoConvertToRecord();
-            if (autoConvertLinks)
-              // DISABLE AUTO CONVERT
-              ((ORecordLazyMap) fieldValue).setAutoConvertToRecord(false);
-          }
-
-          if (size > 0) {
-            final Object firstValue = OMultiValue.getFirstValue(fieldValue);
-
-            if (firstValue != null) {
-              if (ODatabaseRecordThreadLocal.INSTANCE.isDefined()
-                  && (firstValue instanceof ODocument && !((ODocument) firstValue).isEmbedded())
-                  && (firstValue instanceof ORecord<?> || (ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner() instanceof ODatabaseObject && ((ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE
-                      .get().getDatabaseOwner()).getEntityManager().getEntityClass(getClassName(firstValue)) != null))) {
-                linkedClass = getLinkInfo(ODatabaseRecordThreadLocal.INSTANCE.get(), getClassName(firstValue));
-                // LINK: GET THE CLASS
-                linkedType = OType.LINK;
-                type = OType.LINKMAP;
-              }
             }
+
+            if (type == null)
+              type = OType.EMBEDDEDMAP;
+
+            if (fieldValue instanceof ORecordLazyMap && autoConvertLinks)
+              // REPLACE PREVIOUS SETTINGS
+              ((ORecordLazyMap) fieldValue).setAutoConvertToRecord(true);
           }
-
-          if (type == null)
-            type = OType.EMBEDDEDMAP;
-
-          if (fieldValue instanceof ORecordLazyMap && autoConvertLinks)
-            // REPLACE PREVIOUS SETTINGS
-            ((ORecordLazyMap) fieldValue).setAutoConvertToRecord(true);
         }
       }
 
@@ -547,13 +545,13 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
   }
 
   private String getClassName(final Object iValue) {
-    if (iValue instanceof ORecordSchemaAware<?>)
-      return ((ORecordSchemaAware<?>) iValue).getClassName();
+    if (iValue instanceof ODocument)
+      return ((ODocument) iValue).getClassName();
 
     return iValue != null ? iValue.getClass().getSimpleName() : null;
   }
 
-  private OClass getLinkInfo(final ODatabaseComplex<?> iDatabase, final String iFieldClassName) {
+  private OClass getLinkInfo(final ODatabaseComplexInternal<?> iDatabase, final String iFieldClassName) {
     if (iDatabase == null || iDatabase.isClosed() || iFieldClassName == null)
       return null;
 

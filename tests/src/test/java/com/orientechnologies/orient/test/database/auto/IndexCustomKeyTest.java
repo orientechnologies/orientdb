@@ -15,15 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Arrays;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
@@ -31,6 +25,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.Arrays;
 
 @Test(groups = { "index" })
 public class IndexCustomKeyTest extends DocumentDBBaseTest {
@@ -122,23 +124,23 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
     }
 
     @Override
-    public void serializeNative(ComparableBinary object, byte[] stream, int startPosition, Object... hints) {
+    public void serializeNativeObject(ComparableBinary object, byte[] stream, int startPosition, Object... hints) {
       serialize(object, stream, startPosition);
     }
 
     @Override
-    public ComparableBinary deserializeNative(byte[] stream, int startPosition) {
+    public ComparableBinary deserializeNativeObject(byte[] stream, int startPosition) {
       return deserialize(stream, startPosition);
     }
 
     @Override
-    public void serializeInDirectMemory(ComparableBinary object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+    public void serializeInDirectMemoryObject(ComparableBinary object, ODirectMemoryPointer pointer, long offset, Object... hints) {
       final byte[] buffer = object.toByteArray();
       pointer.set(offset, buffer, 0, buffer.length);
     }
 
     @Override
-    public ComparableBinary deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+    public ComparableBinary deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
       return new ComparableBinary(pointer.get(offset, LENGTH));
     }
 

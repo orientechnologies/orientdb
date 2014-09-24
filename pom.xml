@@ -22,7 +22,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>2.0-SNAPSHOT</version>
+    <version>2.0-M2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>OrientDB</name>
@@ -100,8 +100,6 @@
     <modules>
         <module>test-commons</module>
         <module>client</module>
-        <module>commons</module>
-        <module>nativeos</module>
         <module>core</module>
         <module>enterprise</module>
         <module>object</module>
@@ -154,7 +152,7 @@
         <osgi.dynamicImport/>
         <osgi.private/>
         <!-- | shared build/report plugins version -->
-        <surefire.version>2.16</surefire.version>
+        <surefire.version>2.17</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
     </properties>

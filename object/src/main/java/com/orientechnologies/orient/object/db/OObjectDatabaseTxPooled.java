@@ -18,10 +18,11 @@ package com.orientechnologies.orient.object.db;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
@@ -56,9 +57,9 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
 
     try {
       ODatabase current = underlying;
-      while (!(current instanceof ODatabaseRaw) && ((ODatabaseComplex<?>) current).getUnderlying() != null)
-        current = ((ODatabaseComplex<?>) current).getUnderlying();
-      ((ODatabaseRaw) current).callOnOpenListeners();
+      while (!(current instanceof ODatabaseRecordAbstract) && ((ODatabaseComplexInternal<?>) current).getUnderlying() != null)
+        current = ((ODatabaseComplexInternal<?>) current).getUnderlying();
+      ((ODatabaseRecordAbstract) current).callOnOpenListeners();
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on reusing database '%s' in pool", e, getName());
@@ -108,9 +109,9 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
 
     try {
       ODatabase current = underlying;
-      while (!(current instanceof ODatabaseRaw) && ((ODatabaseComplex<?>) current).getUnderlying() != null)
-        current = ((ODatabaseComplex<?>) current).getUnderlying();
-      ((ODatabaseRaw) current).callOnCloseListeners();
+      while (!(current instanceof ODatabaseRecordAbstract) && ((ODatabaseComplexInternal<?>) current).getUnderlying() != null)
+        current = ((ODatabaseComplexInternal<?>) current).getUnderlying();
+      ((ODatabaseRecordAbstract) current).callOnCloseListeners();
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }

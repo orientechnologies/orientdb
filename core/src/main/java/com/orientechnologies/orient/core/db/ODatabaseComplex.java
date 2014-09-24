@@ -15,10 +15,8 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -38,6 +36,9 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Database interface that represents a complex database. It extends the base ODatabase interface adding all the higher-level APIs
@@ -217,8 +218,6 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    */
   public <RET extends T> RET save(T iObject, String iClusterName);
 
-  public boolean updatedReplica(T iObject);
-
   /**
    * Saves an entity in the specified cluster specifying the mode. If the entity is not dirty, then the operation will be ignored.
    * For custom entity implementations assure to set the entity as dirty. If the cluster does not exist, an error will be thrown.
@@ -371,30 +370,6 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   public OMetadata getMetadata();
 
   /**
-   * Returns the database owner. Used in wrapped instances to know the up level ODatabase instance.
-   * 
-   * @return Returns the database owner.
-   */
-  public ODatabaseComplex<?> getDatabaseOwner();
-
-  /**
-   * Internal. Sets the database owner.
-   */
-  public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplex<?> iOwner);
-
-  /**
-   * Return the underlying database. Used in wrapper instances to know the down level ODatabase instance.
-   * 
-   * @return The underlying ODatabase implementation.
-   */
-  public <DB extends ODatabase> DB getUnderlying();
-
-  /**
-   * Internal method. Don't call it directly unless you're building an internal component.
-   */
-  public void setInternal(ATTRIBUTES attribute, Object iValue);
-
-  /**
    * Registers a hook to listen all events for Records.
    * 
    * @param iHookImpl
@@ -451,4 +426,28 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
   public <DB extends ODatabaseComplex<?>> DB setMVCC(boolean iValue);
 
   public String getType();
+
+  /**
+   * Returns the current record conflict strategy.
+   */
+  public ORecordConflictStrategy getConflictStrategy();
+
+  /**
+   * Overrides record conflict strategy selecting the strategy by name.
+   *
+   * @param iStrategyName
+   *          ORecordConflictStrategy strategy name
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabaseComplex<?>> DB setConflictStrategy(String iStrategyName);
+
+  /**
+   * Overrides record conflict strategy.
+   * 
+   * @param iResolver
+   *          ORecordConflictStrategy implementation
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabaseComplex<?>> DB setConflictStrategy(ORecordConflictStrategy iResolver);
+
 }

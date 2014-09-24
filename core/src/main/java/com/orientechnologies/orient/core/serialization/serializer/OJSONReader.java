@@ -233,7 +233,7 @@ public class OJSONReader {
         char c2 = (char) in.read();
         if (c2 == 'u') {
           // DECODE UNICODE CHAR
-          final StringBuilder buff = new StringBuilder();
+          final StringBuilder buff = new StringBuilder(8);
           for (int i = 0; i < 4; ++i)
             buff.append((char) in.read());
 

@@ -37,7 +37,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
     final OIdentifiable rec = (OIdentifiable) iObject;
 
-    final ORecord<?> record = rec.getRecord();
+    final ORecord record = rec.getRecord();
     if (record == null) {
       // SKIP IT
       OLogManager.instance().warn(this, "Record (%s) is null", rec);
@@ -66,7 +66,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
       // EDGE
       edge = new OrientEdge(this.sourceVertex.graph, rec.getIdentity());
     } else
-      throw new IllegalStateException("Invalid content found between connections:" + value);
+      throw new IllegalStateException("Invalid content found while iterating edges, value '" + value + "' is not an edge");
 
     if (this.sourceVertex.settings.useVertexFieldsForEdgeLabels || edge.isLabeled(labels))
       return edge;

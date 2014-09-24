@@ -49,21 +49,6 @@ public class OFunctionTrigger extends ODocumentHookAbstract {
     reloadLibrary();
   }
 
-	@Override
-	public void onRecordAfterReplicaAdd(ODocument iDocument) {
-		reloadLibrary();
-	}
-
-	@Override
-	public void onRecordAfterReplicaUpdate(ODocument iDocument) {
-		reloadLibrary();
-	}
-
-	@Override
-	public void onRecordAfterReplicaDelete(ODocument iDocument) {
-		reloadLibrary();
-	}
-
 	protected void reloadLibrary() {
     final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
     db.getMetadata().getFunctionLibrary().load();

@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -419,7 +420,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
   }
 
-  protected ODatabaseComplex<?> openDatabase(final ODatabaseComplex<?> database, final String iUser, final String iPassword) {
+  protected ODatabaseComplex<?> openDatabase(final ODatabaseComplexInternal<?> database, final String iUser, final String iPassword) {
 
     if (database.isClosed())
       if (database.getStorage() instanceof ODirectMemoryStorage && !database.exists())
@@ -591,7 +592,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String passwd = channel.readString();
 
     connection.database = (ODatabaseDocumentTx) server.openDatabase(dbType, dbURL, user, passwd);
-    connection.rawDatabase = ((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying();
+    connection.rawDatabase = ((ODatabaseComplexInternal<?>) connection.database.getUnderlying()).getUnderlying();
 
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
       sendError(clientTxId, new OSecurityAccessException(connection.database.getName(),
@@ -697,7 +698,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       } finally {
         endResponse();
       }
-      channel.close();
       runShutdownInNonDaemonThread();
     }
 
@@ -705,6 +705,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.socket.getInetAddress(), channel.socket.getPort());
 
     sendError(clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+    }
+    channel.close();
   }
 
   protected void copyDatabase() throws IOException {
@@ -896,7 +901,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     checkStorageExistence(dbName);
     connection.database = getDatabaseInstance(dbName, dbType, storageType);
     createDatabase(connection.database, null, null);
-    connection.rawDatabase = (((ODatabaseComplex<?>) connection.database.getUnderlying()).getUnderlying());
+    connection.rawDatabase = (((ODatabaseComplexInternal<?>) connection.database.getUnderlying()).getUnderlying());
 
     beginResponse();
     try {
@@ -1010,7 +1015,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
           // SEND BACK ALL THE RECORD IDS FOR THE CREATED RECORDS
           channel.writeInt(tx.getCreatedRecords().size());
-          for (Entry<ORecordId, ORecordInternal<?>> entry : tx.getCreatedRecords().entrySet()) {
+          for (Entry<ORecordId, ORecord> entry : tx.getCreatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
             channel.writeRID(entry.getValue().getIdentity());
 
@@ -1021,7 +1026,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
           // SEND BACK ALL THE NEW VERSIONS FOR THE UPDATED RECORDS
           channel.writeInt(tx.getUpdatedRecords().size());
-          for (Entry<ORecordId, ORecordInternal<?>> entry : tx.getUpdatedRecords().entrySet()) {
+          for (Entry<ORecordId, ORecord> entry : tx.getUpdatedRecords().entrySet()) {
             channel.writeRID(entry.getKey());
             channel.writeVersion(entry.getValue().getRecordVersion());
           }
@@ -1143,7 +1148,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         } else {
           // ANY OTHER (INCLUDING LITERALS)
           channel.writeByte((byte) 'a');
-          final StringBuilder value = new StringBuilder();
+          final StringBuilder value = new StringBuilder(64);
           listener.result(result);
           ORecordSerializerStringAbstract.fieldTypeToString(value, OType.getTypeByClass(result.getClass()), result);
           channel.writeString(value.toString());
@@ -1151,7 +1156,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         if (connection.data.protocolVersion >= 17) {
           // SEND FETCHED RECORDS TO LOAD IN CLIENT CACHE
-          for (ORecord<?> rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
+          for (ORecord rec : ((OSyncCommandResultListener) listener).getFetchedRecordsToSend()) {
             channel.writeByte((byte) 2); // CLIENT CACHE RECORD. IT
             // ISN'T PART OF THE
             // RESULT SET
@@ -1289,7 +1294,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final byte recordType = channel.readByte();
     final byte mode = channel.readByte();
 
-    final ORecord<?> record = createRecord(connection.database, rid, buffer, recordType);
+    final ORecord record = createRecord(connection.database, rid, buffer, recordType);
 
     if (mode < 2) {
       beginResponse();
@@ -1357,7 +1362,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } else {
-      final ORecordInternal<?> record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
+      final ORecord record = connection.database.load(rid, fetchPlanString, ignoreCache, loadTombstones,
           OStorage.LOCKING_STRATEGY.DEFAULT);
 
       beginResponse();
@@ -1368,7 +1373,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           channel.writeByte((byte) 1); // HAS RECORD
           channel.writeBytes(getRecordBytes(record));
           channel.writeVersion(record.getRecordVersion());
-          channel.writeByte(record.getRecordType());
+          channel.writeByte(ORecordInternal.getRecordType(record));
 
           if (fetchPlanString.length() > 0) {
             // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
@@ -1376,11 +1381,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             if (record instanceof ODocument) {
               final Map<String, Integer> fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
 
-              final Set<ORecord<?>> recordsToSend = new HashSet<ORecord<?>>();
+              final Set<ORecord> recordsToSend = new HashSet<ORecord>();
               final ODocument doc = (ODocument) record;
               final OFetchListener listener = new ORemoteFetchListener() {
                 @Override
-                protected void sendRecord(ORecord<?> iLinked) {
+                protected void sendRecord(ORecord iLinked) {
                   recordsToSend.add(iLinked);
                 }
               };
@@ -1388,7 +1393,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
               OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
 
               // SEND RECORDS TO LOAD IN CLIENT CACHE
-              for (ORecord<?> d : recordsToSend) {
+              for (ORecord d : recordsToSend) {
                 if (d.getIdentity().isValid()) {
                   channel.writeByte((byte) 2); // CLIENT CACHE
                   // RECORD. IT ISN'T PART OF THE RESULT SET
@@ -1595,6 +1600,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
   }
 
+  @Override
+  protected String getRecordSerializerName() {
+    return connection.data.serializationImpl;
+  }
+
   private void sendErrorDetails(Throwable current) throws IOException {
     while (current != null) {
       // MORE DETAILS ARE COMING AS EXCEPTION
@@ -1654,18 +1664,23 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     final byte[] changeStream = channel.readBytes();
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
-    final Map<OIdentifiable, OSBTreeRidBag.Change> changes = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE.deserializeChanges(
-        changeStream, 0);
-
-    int realSize = tree.getRealBagSize(changes);
-
-    beginResponse();
+    final OSBTreeCollectionManager sbTreeCollectionManager = connection.database.getSbTreeCollectionManager();
+    final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
     try {
-      sendOk(clientTxId);
-      channel.writeInt(realSize);
+      final Map<OIdentifiable, OSBTreeRidBag.Change> changes = OSBTreeRidBag.ChangeSerializationHelper.INSTANCE.deserializeChanges(
+          changeStream, 0);
+
+      int realSize = tree.getRealBagSize(changes);
+
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeInt(realSize);
+      } finally {
+        endResponse();
+      }
     } finally {
-      endResponse();
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
   }
 
@@ -1680,25 +1695,29 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection.data.protocolVersion >= 21)
       pageSize = channel.readInt();
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
-
-    final OBinarySerializer<OIdentifiable> keySerializer = tree.getKeySerializer();
-    OIdentifiable key = keySerializer.deserialize(keyStream, 0);
-
-    final OBinarySerializer<Integer> valueSerializer = tree.getValueSerializer();
-
-    OTreeInternal.AccumulativeListener<OIdentifiable, Integer> listener = new OTreeInternal.AccumulativeListener<OIdentifiable, Integer>(
-        pageSize);
-    tree.loadEntriesMajor(key, inclusive, true, listener);
-    List<Entry<OIdentifiable, Integer>> result = listener.getResult();
-    byte[] stream = serializeSBTreeEntryCollection(result, keySerializer, valueSerializer);
-
-    beginResponse();
+    final OSBTreeCollectionManager sbTreeCollectionManager = connection.database.getSbTreeCollectionManager();
+    final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
     try {
-      sendOk(clientTxId);
-      channel.writeBytes(stream);
+      final OBinarySerializer<OIdentifiable> keySerializer = tree.getKeySerializer();
+      OIdentifiable key = keySerializer.deserialize(keyStream, 0);
+
+      final OBinarySerializer<Integer> valueSerializer = tree.getValueSerializer();
+
+      OTreeInternal.AccumulativeListener<OIdentifiable, Integer> listener = new OTreeInternal.AccumulativeListener<OIdentifiable, Integer>(
+          pageSize);
+      tree.loadEntriesMajor(key, inclusive, true, listener);
+      List<Entry<OIdentifiable, Integer>> result = listener.getResult();
+      byte[] stream = serializeSBTreeEntryCollection(result, keySerializer, valueSerializer);
+
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeBytes(stream);
+      } finally {
+        endResponse();
+      }
     } finally {
-      endResponse();
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
   }
 
@@ -1708,7 +1727,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         * (keySerializer.getFixedLength() + valueSerializer.getFixedLength())];
     int offset = 0;
 
-    OIntegerSerializer.INSTANCE.serialize(collection.size(), stream, offset);
+    OIntegerSerializer.INSTANCE.serializeLiteral(collection.size(), stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     for (Entry<OIdentifiable, Integer> entry : collection) {
@@ -1725,26 +1744,31 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("SB-Tree bonsai get first key");
 
     OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
-    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
 
-    OIdentifiable result = tree.firstKey();
-    final OBinarySerializer<? super OIdentifiable> keySerializer;
-    if (result == null) {
-      keySerializer = ONullSerializer.INSTANCE;
-    } else {
-      keySerializer = tree.getKeySerializer();
-    }
-
-    byte[] stream = new byte[OByteSerializer.BYTE_SIZE + keySerializer.getObjectSize(result)];
-    OByteSerializer.INSTANCE.serialize(keySerializer.getId(), stream, 0);
-    keySerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
-
-    beginResponse();
+    final OSBTreeCollectionManager sbTreeCollectionManager = connection.database.getSbTreeCollectionManager();
+    final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
     try {
-      sendOk(clientTxId);
-      channel.writeBytes(stream);
+      OIdentifiable result = tree.firstKey();
+      final OBinarySerializer<? super OIdentifiable> keySerializer;
+      if (result == null) {
+        keySerializer = ONullSerializer.INSTANCE;
+      } else {
+        keySerializer = tree.getKeySerializer();
+      }
+
+      byte[] stream = new byte[OByteSerializer.BYTE_SIZE + keySerializer.getObjectSize(result)];
+      OByteSerializer.INSTANCE.serialize(keySerializer.getId(), stream, 0);
+      keySerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
+
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeBytes(stream);
+      } finally {
+        endResponse();
+      }
     } finally {
-      endResponse();
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
   }
 
@@ -1754,28 +1778,32 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OBonsaiCollectionPointer collectionPointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(channel);
     final byte[] keyStream = channel.readBytes();
 
-    OSBTreeBonsai<OIdentifiable, Integer> tree = connection.database.getSbTreeCollectionManager().loadSBTree(collectionPointer);
-
-    final OIdentifiable key = tree.getKeySerializer().deserialize(keyStream, 0);
-
-    Integer result = tree.get(key);
-    final OBinarySerializer<? super Integer> valueSerializer;
-    if (result == null) {
-      valueSerializer = ONullSerializer.INSTANCE;
-    } else {
-      valueSerializer = tree.getValueSerializer();
-    }
-
-    byte[] stream = new byte[OByteSerializer.BYTE_SIZE + valueSerializer.getObjectSize(result)];
-    OByteSerializer.INSTANCE.serialize(valueSerializer.getId(), stream, 0);
-    valueSerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
-
-    beginResponse();
+    final OSBTreeCollectionManager sbTreeCollectionManager = connection.database.getSbTreeCollectionManager();
+    final OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.loadSBTree(collectionPointer);
     try {
-      sendOk(clientTxId);
-      channel.writeBytes(stream);
+      final OIdentifiable key = tree.getKeySerializer().deserialize(keyStream, 0);
+
+      Integer result = tree.get(key);
+      final OBinarySerializer<? super Integer> valueSerializer;
+      if (result == null) {
+        valueSerializer = ONullSerializer.INSTANCE;
+      } else {
+        valueSerializer = tree.getValueSerializer();
+      }
+
+      byte[] stream = new byte[OByteSerializer.BYTE_SIZE + valueSerializer.getObjectSize(result)];
+      OByteSerializer.INSTANCE.serialize(valueSerializer.getId(), stream, 0);
+      valueSerializer.serialize(result, stream, OByteSerializer.BYTE_SIZE);
+
+      beginResponse();
+      try {
+        sendOk(clientTxId);
+        channel.writeBytes(stream);
+      } finally {
+        endResponse();
+      }
     } finally {
-      endResponse();
+      sbTreeCollectionManager.releaseSBTree(collectionPointer);
     }
   }
 
@@ -1980,7 +2008,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     beginResponse();
     try {
       sendOk(clientTxId);
-      byte [] stream = getRecordBytes(result);
+      byte[] stream = getRecordBytes(result);
       channel.writeBytes(stream);
     } finally {
       endResponse();
@@ -1990,11 +2018,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   private boolean loadUserFromSchema(final String iUserName, final String iUserPassword) {
     account = connection.database.getMetadata().getSecurity().authenticate(iUserName, iUserPassword);
     return true;
-  }
-
-  @Override
-  protected String getRecordSerializerName() {
-    return connection.data.serializationImpl;
   }
 
 }

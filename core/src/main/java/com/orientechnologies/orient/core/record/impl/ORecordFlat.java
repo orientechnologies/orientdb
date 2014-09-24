@@ -20,8 +20,8 @@ import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * using the reset() at every re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ORecordFlat extends ORecordAbstract<String> implements ORecordStringable {
+public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
   private static final long serialVersionUID = 1L;
   public static final byte  RECORD_TYPE      = 'f';
   protected String          value;
@@ -57,11 +57,6 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
     value = iValue;
     setDirty();
     return this;
-  }
-
-  @Override
-  public void unsetDirty() {
-    super.unsetDirty();
   }
 
   @Override
@@ -115,13 +110,13 @@ public class ORecordFlat extends ORecordAbstract<String> implements ORecordStrin
   }
 
   @Override
-  public ORecordInternal<String> reload() {
+  public ORecord reload() {
     value = null;
     return super.reload();
   }
 
   @Override
-  public ORecordAbstract<String> fromStream(final byte[] iRecordBuffer) {
+  public ORecordAbstract fromStream(final byte[] iRecordBuffer) {
     super.fromStream(iRecordBuffer);
     value = null;
     return this;

@@ -27,9 +27,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.server.OServer;
@@ -40,11 +37,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 public class OServerCommandGetDatabase extends OServerCommandGetConnect {
@@ -147,7 +142,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
     ODatabaseDocumentTx db = null;
     try {
       if (urlParts.length > 2) {
-        server.getDatabasePool().acquire(urlParts[1], urlParts[2], urlParts[3]);
+        db = server.getDatabasePool().acquire(urlParts[1], urlParts[2], urlParts[3]);
       } else
         db = getProfiledDatabaseInstance(iRequest);
 
@@ -198,10 +193,13 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
           }
 
           try {
+            final String conflictStrategy = cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy().getName() : null;
+
             json.beginObject();
             json.writeAttribute("id", cluster.getId());
             json.writeAttribute("name", clusterName);
             json.writeAttribute("records", cluster.getEntries() - cluster.getTombstonesCount());
+            json.writeAttribute("conflictStrategy", conflictStrategy);
             json.writeAttribute("size", "-");
             json.writeAttribute("filled", "-");
             json.writeAttribute("maxSize", "-");
@@ -218,39 +216,39 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.writeAttribute("currentUser", db.getUser().getName());
 
         json.beginCollection("users");
-        for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {
-          OUser user = new OUser(doc);
-          json.beginObject();
-          json.writeAttribute("name", user.getName());
-          json.writeAttribute("roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
-          json.endObject();
-        }
+//        for (ODocument doc : db.getMetadata().getSecurity().getAllUsers()) {
+//          OUser user = new OUser(doc);
+//          json.beginObject();
+//          json.writeAttribute("name", user.getName());
+//          json.writeAttribute("roles", user.getRoles() != null ? Arrays.toString(user.getRoles().toArray()) : "null");
+//          json.endObject();
+//        }
         json.endCollection();
 
         json.beginCollection("roles");
-        ORole role;
-        for (ODocument doc : db.getMetadata().getSecurity().getAllRoles()) {
-          role = new ORole(doc);
-          json.beginObject();
-          json.writeAttribute("name", role.getName());
-          json.writeAttribute("mode", role.getMode().toString());
-
-          json.beginCollection("rules");
-          if (role.getRules() != null) {
-            for (Entry<String, Byte> rule : role.getRules().entrySet()) {
-              json.beginObject();
-              json.writeAttribute("name", rule.getKey());
-              json.writeAttribute("create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
-              json.writeAttribute("read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
-              json.writeAttribute("update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
-              json.writeAttribute("delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
-              json.endObject();
-            }
-          }
-          json.endCollection();
-
-          json.endObject();
-        }
+//        ORole role;
+//        for (ODocument doc : db.getMetadata().getSecurity().getAllRoles()) {
+//          role = new ORole(doc);
+//          json.beginObject();
+//          json.writeAttribute("name", role.getName());
+//          json.writeAttribute("mode", role.getMode().toString());
+//
+//          json.beginCollection("rules");
+//          if (role.getRules() != null) {
+//            for (Entry<String, Byte> rule : role.getRules().entrySet()) {
+//              json.beginObject();
+//              json.writeAttribute("name", rule.getKey());
+//              json.writeAttribute("create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
+//              json.writeAttribute("read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
+//              json.writeAttribute("update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
+//              json.writeAttribute("delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
+//              json.endObject();
+//            }
+//          }
+//          json.endCollection();
+//
+//          json.endObject();
+//        }
         json.endCollection();
       }
 
@@ -281,7 +279,8 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
               db.getStorage().getConfiguration().getTimeZone().getID() }, new Object[] { "name", "definitionVersion", "value",
               db.getStorage().getConfiguration().version }, new Object[] { "name", "clusterSelection", "value",
               db.getStorage().getConfiguration().getClusterSelection() }, new Object[] { "name", "minimumClusters", "value",
-              db.getStorage().getConfiguration().getMinimumClusters() });
+              db.getStorage().getConfiguration().getMinimumClusters() }, new Object[] { "name", "conflictStrategy", "value",
+                                                                                       db.getStorage().getConfiguration().getConflictStrategy() });
       json.endCollection();
 
       json.beginCollection("properties");

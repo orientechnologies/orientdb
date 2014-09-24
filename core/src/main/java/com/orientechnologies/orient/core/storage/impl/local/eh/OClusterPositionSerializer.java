@@ -65,13 +65,13 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   }
 
   @Override
-  public void serializeNative(OClusterPosition object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(OClusterPosition object, byte[] stream, int startPosition, Object... hints) {
     final byte[] serializedPosition = object.toStream();
     System.arraycopy(serializedPosition, 0, stream, startPosition, serializedPosition.length);
   }
 
   @Override
-  public OClusterPosition deserializeNative(byte[] stream, int startPosition) {
+  public OClusterPosition deserializeNativeObject(byte[] stream, int startPosition) {
     return OClusterPositionFactory.INSTANCE.fromStream(stream, startPosition);
   }
 
@@ -81,13 +81,13 @@ public class OClusterPositionSerializer implements OBinarySerializer<OClusterPos
   }
 
   @Override
-  public void serializeInDirectMemory(OClusterPosition object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeInDirectMemoryObject(OClusterPosition object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     final byte[] serializedPosition = object.toStream();
     pointer.set(offset, serializedPosition, 0, serializedPosition.length);
   }
 
   @Override
-  public OClusterPosition deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public OClusterPosition deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
     final byte[] serializedPosition = pointer.get(offset, OClusterPositionFactory.INSTANCE.getSerializedSize());
     return OClusterPositionFactory.INSTANCE.fromStream(serializedPosition);
   }

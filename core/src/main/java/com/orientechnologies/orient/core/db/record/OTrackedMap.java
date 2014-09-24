@@ -28,6 +28,7 @@ import java.util.WeakHashMap;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Implementation of LinkedHashMap bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by
@@ -38,21 +39,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings("serial")
 public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordElement, OTrackedMultiValue<Object, T>, Serializable {
-  final protected ORecord<?>                        sourceRecord;
+  final protected ORecord                           sourceRecord;
   private STATUS                                    status          = STATUS.NOT_LOADED;
   private Set<OMultiValueChangeListener<Object, T>> changeListeners = Collections
                                                                         .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Object, T>, Boolean>());
   protected Class<?>                                genericClass;
   private final boolean                             embeddedCollection;
 
-  public OTrackedMap(final ORecord<?> iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
+  public OTrackedMap(final ORecord iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
     this(iRecord);
     genericClass = cls;
     if (iOrigin != null && !iOrigin.isEmpty())
       putAll(iOrigin);
   }
 
-  public OTrackedMap(final ORecord<?> iSourceRecord) {
+  public OTrackedMap(final ORecord iSourceRecord) {
     this.sourceRecord = iSourceRecord;
     embeddedCollection = this.getClass().equals(OTrackedMap.class);
   }
@@ -72,7 +73,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
       return oldValue;
 
     if (oldValue instanceof ODocument)
-      ((ODocument) oldValue).removeOwner(this);
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
     addOwnerToEmbeddedDoc(value);
 
@@ -87,7 +88,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
   private void addOwnerToEmbeddedDoc(T e) {
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
-      ((ODocument) e).addOwner(this);
+      ODocumentInternal.addOwner((ODocument) e, this);
   }
 
   @Override
@@ -96,7 +97,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     final T oldValue = super.remove(iKey);
 
     if (oldValue instanceof ODocument)
-      ((ODocument) oldValue).removeOwner(this);
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
     if (containsKey)
       fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null,
@@ -116,7 +117,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     if (origValues == null) {
       for (T value : values())
         if (value instanceof ODocument) {
-          ((ODocument) value).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) value, this);
         }
     }
 
@@ -125,7 +126,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     if (origValues != null) {
       for (Map.Entry<Object, T> entry : origValues.entrySet()) {
         if (entry.getValue() instanceof ODocument) {
-          ((ODocument) entry.getValue()).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) entry.getValue(), this);
         }
         fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, entry.getKey(),
             null, entry.getValue()));
@@ -144,7 +145,7 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   @SuppressWarnings({ "unchecked" })
   public OTrackedMap<T> setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
+        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
       sourceRecord.setDirty();
     return this;
   }
@@ -155,12 +156,12 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
       sourceRecord.setDirtyNoChanged();
   }
 
-  public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
+  public void onBeforeIdentityChanged(final ORecord iRecord) {
     remove(iRecord.getIdentity());
   }
 
   @SuppressWarnings("unchecked")
-  public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+  public void onAfterIdentityChanged(final ORecord iRecord) {
     super.put(iRecord.getIdentity(), (T) iRecord);
   }
 

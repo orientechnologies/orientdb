@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -120,7 +121,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
       channel.writeRID((ORID) o);
     } else {
-      writeRecord((ORecordInternal<?>) o.getRecord());
+      writeRecord(o.getRecord());
     }
   }
 
@@ -258,7 +259,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
     try {
       // TRY TO SEE IF THE RECORD EXISTS
-      final ORecord<?> record = rid.getRecord();
+      final ORecord record = rid.getRecord();
       if (record == null)
         return 0;
 
@@ -283,22 +284,22 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return 1;
   }
 
-  protected ORecordInternal<?> createRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
+  protected ORecord createRecord(final ODatabaseRecordInternal iDatabase, final ORecordId rid, final byte[] buffer,
       final byte recordType) {
-    final ORecordInternal<?> record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+    final ORecord record = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     fillRecord(rid, buffer, OVersionFactory.instance().createVersion(), record, iDatabase);
     iDatabase.save(record);
     return record;
   }
 
-  protected ORecordVersion updateRecord(final ODatabaseRecord iDatabase, final ORecordId rid, final byte[] buffer,
+  protected ORecordVersion updateRecord(final ODatabaseRecordInternal iDatabase, final ORecordId rid, final byte[] buffer,
       final ORecordVersion version, final byte recordType, boolean updateContent) {
-    final ORecordInternal<?> newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
+    final ORecord newRecord = Orient.instance().getRecordFactoryManager().newInstance(recordType);
     fillRecord(rid, buffer, version, newRecord, null);
 
-    newRecord.setContentChanged(updateContent);
+    ORecordInternal.setContentChanged(newRecord, updateContent);
 
-    final ORecordInternal<?> currentRecord;
+    final ORecord currentRecord;
     if (newRecord instanceof ODocument) {
       currentRecord = iDatabase.load(rid);
 
@@ -329,9 +330,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
   }
 
-  private void writeRecord(final ORecordInternal<?> iRecord) throws IOException {
+  private void writeRecord(final ORecord iRecord) throws IOException {
     channel.writeShort((short) 0);
-    channel.writeByte(iRecord.getRecordType());
+    channel.writeByte(ORecordInternal.getRecordType(iRecord));
     channel.writeRID(iRecord.getIdentity());
     channel.writeVersion(iRecord.getRecordVersion());
     try {
@@ -339,7 +340,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
       int realLength = stream.length;
       // TODO: This Logic should not be here provide an api in the Serializer for ask for trimmed content.
-      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (db != null && db instanceof ODatabaseDocument) {
         if (db.getSerializer() instanceof ORecordSerializerSchemaAware2CSV) {
           // TRIM TAILING SPACES (DUE TO OVERSIZE)
@@ -363,15 +364,15 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
   }
 
-  public void fillRecord(final ORecordId rid, final byte[] buffer, final ORecordVersion version, final ORecordInternal<?> record,
-      ODatabaseRecord iDatabase) {
+  public void fillRecord(final ORecordId rid, final byte[] buffer, final ORecordVersion version, final ORecord record,
+      ODatabaseRecordInternal iDatabase) {
     String dbSerializerName = "";
     if (iDatabase != null)
       dbSerializerName = iDatabase.getSerializer().toString();
 
     String name = getRecordSerializerName();
-    if (record.getRecordType() == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
-      record.fill(rid, version, null, true);
+    if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
+      ORecordInternal.fill(record, rid, version, null, true);
       try {
         ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
         ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
@@ -381,18 +382,19 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       }
       record.setDirty();
     } else
-      record.fill(rid, version, buffer, true);
+      ORecordInternal.fill(record, rid, version, buffer, true);
   }
 
-  protected byte[] getRecordBytes(final ORecordInternal<?> iRecord) {
+  protected byte[] getRecordBytes(final ORecord iRecord) {
 
     final byte[] stream;
     try {
       String dbSerializerName = null;
       if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
-        dbSerializerName = iRecord.getDatabase().getSerializer().toString();
+        dbSerializerName = ((ODatabaseRecordInternal) iRecord.getDatabase()).getSerializer().toString();
       String name = getRecordSerializerName();
-      if (iRecord.getRecordType() == ODocument.RECORD_TYPE && (dbSerializerName == null || !dbSerializerName.equals(name))) {
+      if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
+          && (dbSerializerName == null || !dbSerializerName.equals(name))) {
         ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(dbSerializerName);
         ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
         ((ODocument) iRecord).deserializeFields();

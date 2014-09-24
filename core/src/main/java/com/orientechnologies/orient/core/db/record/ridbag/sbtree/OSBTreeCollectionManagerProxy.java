@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -26,7 +27,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollectionManager> implements OSBTreeCollectionManager {
-  public OSBTreeCollectionManagerProxy(ODatabaseRecord database, OSBTreeCollectionManager delegate) {
+  public OSBTreeCollectionManagerProxy(ODatabaseRecordInternal database, OSBTreeCollectionManager delegate) {
     super(delegate, database);
   }
 

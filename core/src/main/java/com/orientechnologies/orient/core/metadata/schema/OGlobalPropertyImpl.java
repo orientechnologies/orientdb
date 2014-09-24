@@ -12,7 +12,7 @@ public class OGlobalPropertyImpl implements OGlobalProperty, ODocumentSerializab
   public OGlobalPropertyImpl() {
   }
 
-  public OGlobalPropertyImpl(String name, OType type, Integer id) {
+  public OGlobalPropertyImpl(final String name, final OType type, final Integer id) {
     this.name = name;
     this.type = type;
     this.id = id;
@@ -31,7 +31,7 @@ public class OGlobalPropertyImpl implements OGlobalProperty, ODocumentSerializab
   }
 
   @Override
-  public void fromDocument(ODocument document) {
+  public void fromDocument(final ODocument document) {
     this.name = document.field("name");
     this.type = OType.valueOf((String) document.field("type"));
     this.id = document.field("id");
@@ -39,7 +39,7 @@ public class OGlobalPropertyImpl implements OGlobalProperty, ODocumentSerializab
 
   @Override
   public ODocument toDocument() {
-    ODocument doc = new ODocument();
+    final ODocument doc = new ODocument();
     doc.field("name", name);
     doc.field("type", type.name());
     doc.field("id", id);

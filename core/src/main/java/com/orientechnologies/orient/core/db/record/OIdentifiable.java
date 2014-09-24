@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Comparator;
+
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
-
-import java.util.Comparator;
 
 /**
  * Base interface for identifiable objects. This abstraction is required to use ORID and ORecord in many points.
@@ -39,7 +39,7 @@ public interface OIdentifiable extends Comparable<OIdentifiable>, Comparator<OId
    * 
    * @return ORecord instance
    */
-  public <T extends ORecord<?>> T getRecord();
+  public <T extends ORecord> T getRecord();
 
   public void lock(boolean iExclusive);
 

@@ -20,10 +20,12 @@ import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLCreateIndex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -57,7 +59,8 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
-      document.setIdentity(new ORecordId(document.getDatabase().getStorage().getConfiguration().indexMgrRecordId));
+      ORecordInternal.setIdentity(document, new ORecordId(ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+          .getConfiguration().indexMgrRecordId));
 
       if (progressListener != null)
         progressListener.onCompletition(this, true);

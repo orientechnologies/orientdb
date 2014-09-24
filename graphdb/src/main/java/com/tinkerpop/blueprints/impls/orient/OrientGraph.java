@@ -15,33 +15,33 @@ public class OrientGraph extends OrientTransactionalGraph {
   protected final Features FEATURES = new Features();
 
   /**
-   * Creates a new Transactional Graph using an existent database instance.
-   * 
+   * Creates a new Transactional Graph using an existent database instance. User and password are passed in case of re-open.
+   *
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientGraph(final ODatabaseDocumentTx iDatabase) {
-    super(iDatabase);
+  public OrientGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPasswd) {
+    super(iDatabase, true, iUserName, iUserPasswd);
     config();
   }
 
   /**
    * Creates a new Transactional Graph using an existent database instance and the auto-start setting to determine if auto start a
    * transaction.
-   * 
+   *
    * @param iDatabase
    *          Underlying database object to attach
    * @param iAutoStartTx
    *          True to auto start a transaction at the beginning and after each commit/rollback
    */
   public OrientGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
-    super(iDatabase, iAutoStartTx);
+    super(iDatabase, iAutoStartTx, null, null);
     config();
   }
 
   /**
    * Creates a new Transactional Graph from an URL using default user (admin) and password (admin).
-   * 
+   *
    * @param url
    *          OrientDB URL
    */
@@ -53,7 +53,7 @@ public class OrientGraph extends OrientTransactionalGraph {
   /**
    * Creates a new Transactional Graph from an URL using default user (admin) and password (admin). It receives also the auto-start
    * setting to determine if auto start a transaction.
-   * 
+   *
    * @param url
    *          OrientDB URL
    * @param iAutoStartTx
@@ -66,7 +66,7 @@ public class OrientGraph extends OrientTransactionalGraph {
 
   /**
    * Creates a new Transactional Graph from an URL using a username and a password.
-   * 
+   *
    * @param url
    *          OrientDB URL
    * @param username
@@ -80,10 +80,10 @@ public class OrientGraph extends OrientTransactionalGraph {
   }
 
   /**
-   * 
+   *
    * Creates a new Transactional Graph from an URL using a username and a password. It receives also the auto-start setting to
    * determine if auto start a transaction.
-   * 
+   *
    * @param url
    *          OrientDB URL
    * @param username
@@ -100,7 +100,7 @@ public class OrientGraph extends OrientTransactionalGraph {
 
   /**
    * Creates a new Transactional Graph from a pool.
-   * 
+   *
    * @param pool
    *          Database pool where to acquire a database instance
    */
@@ -170,7 +170,7 @@ public class OrientGraph extends OrientTransactionalGraph {
    * <td>true</td>
    * </tr>
    * </table>
-   * 
+   *
    * @param configuration
    *          graph settings see the details above.
    */
@@ -181,7 +181,7 @@ public class OrientGraph extends OrientTransactionalGraph {
 
   /**
    * Returns the current Graph settings.
-   * 
+   *
    * @return Features object
    */
   public Features getFeatures() {
@@ -222,5 +222,17 @@ public class OrientGraph extends OrientTransactionalGraph {
     FEATURES.supportsMapProperty = true;
     FEATURES.supportsStringProperty = true;
     FEATURES.supportsThreadedTransactions = false;
+    FEATURES.supportsThreadIsolatedTransactions = false;
+  }
+
+  /**
+   * Creates a new Transactional Graph using an existent database instance.
+   *
+   * @param iDatabase
+   *          Underlying database object to attach
+   */
+  public OrientGraph(final ODatabaseDocumentTx iDatabase) {
+    super(iDatabase);
+    config();
   }
 }

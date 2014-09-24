@@ -19,9 +19,6 @@ import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEG
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
-import java.util.Collections;
-import java.util.Set;
-
 /**
  * SQL abstract Command Executor implementation.
  * 
@@ -68,11 +65,6 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   public boolean isIdempotent() {
     return false;
-  }
-
-  @Override
-  public Set<String> getInvolvedClusters() {
-    return Collections.EMPTY_SET;
   }
 
   protected void throwSyntaxErrorException(final String iText) {

@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Collects the changes to an index for a certain key
@@ -52,7 +52,7 @@ public class OTransactionIndexChangesPerKey {
 
   @Override
   public String toString() {
-    final StringBuilder builder = new StringBuilder();
+    final StringBuilder builder = new StringBuilder(64);
     builder.append(key).append(" [");
     boolean first = true;
     for (OTransactionIndexEntry entry : entries) {

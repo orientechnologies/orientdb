@@ -93,7 +93,7 @@ public class ORole extends ODocumentWrapper {
    */
   public static String permissionToString(final int iPermission) {
     int permission = iPermission;
-    final StringBuilder returnValue = new StringBuilder();
+    final StringBuilder returnValue = new StringBuilder(128);
     for (Entry<Integer, String> p : PERMISSION_BIT_NAMES.entrySet()) {
       if ((permission & p.getKey()) == p.getKey()) {
         if (returnValue.length() > 0)

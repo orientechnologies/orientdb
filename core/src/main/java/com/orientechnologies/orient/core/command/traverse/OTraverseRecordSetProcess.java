@@ -39,7 +39,7 @@ public class OTraverseRecordSetProcess extends OTraverseAbstractProcess<Iterator
       record = target.next();
       index++;
 
-      final ORecord<?> rec = record.getRecord();
+      final ORecord rec = record.getRecord();
       if (rec instanceof ODocument) {
         ODocument doc = (ODocument) rec;
         if (!doc.getIdentity().isPersistent() && doc.fields() == 1) {

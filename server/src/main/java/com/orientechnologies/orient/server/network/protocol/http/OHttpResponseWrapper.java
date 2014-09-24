@@ -195,7 +195,7 @@ public class OHttpResponseWrapper {
    *          Record to serialize
    * @return The object itself for fluent chained calls
    */
-  public OHttpResponseWrapper writeRecord(final ORecord<?> iRecord) throws IOException {
+  public OHttpResponseWrapper writeRecord(final ORecord iRecord) throws IOException {
     response.writeRecord(iRecord);
     return this;
   }
@@ -209,7 +209,7 @@ public class OHttpResponseWrapper {
    *          Fetch plan to specify nested records
    * @return The object itself for fluent chained calls
    */
-  public OHttpResponseWrapper writeRecord(final ORecord<?> iRecord, final String iFetchPlan) throws IOException {
+  public OHttpResponseWrapper writeRecord(final ORecord iRecord, final String iFetchPlan) throws IOException {
     response.writeRecord(iRecord, iFetchPlan, null);
     return this;
   }

@@ -15,15 +15,19 @@
  */
 package com.orientechnologies.orient.core.index.engine;
 
-import java.util.*;
-
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
@@ -34,6 +38,10 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -50,10 +58,17 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   private volatile ORID                          identity;
 
-  public OHashTableIndexEngine() {
+  public OHashTableIndexEngine(Boolean durableInNonTxMode) {
     hashFunction = new OMurmurHash3HashFunction<Object>();
+
+    boolean durableInNonTx;
+    if (durableInNonTxMode == null)
+      durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
+    else
+      durableInNonTx = durableInNonTxMode;
+
     hashTable = new OLocalHashTable<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
-        NULL_BUCKET_FILE_EXTENSION, hashFunction, OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+        NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx);
   }
 
   @Override
@@ -78,7 +93,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
     } else
       keySerializer = new OSimpleKeySerializer();
 
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
     final ORecordBytes identityRecord = new ORecordBytes();
     final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage();
 
@@ -405,7 +420,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
     };
   }
 
-  private ODatabaseRecord getDatabase() {
+  private ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

@@ -15,17 +15,16 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import java.util.Arrays;
+import java.util.NoSuchElementException;
+
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.Arrays;
-import java.util.NoSuchElementException;
 
 /**
  * Iterator to browse multiple clusters forward and backward. Once browsed in a direction, the iterator cannot change it. This
@@ -35,22 +34,26 @@ import java.util.NoSuchElementException;
  * 
  * @author Luca Garulli
  */
-public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OIdentifiableIterator<REC> {
-  protected int[]      clusterIds;
-  protected int        currentClusterIdx;
-  protected ORecord<?> currentRecord;
+public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableIterator<REC> {
+  protected int[]   clusterIds;
+  protected int     currentClusterIdx;
+  protected ORecord currentRecord;
 
-  protected ORID       beginRange;
-  protected ORID       endRange;
+  protected ORID    beginRange;
+  protected ORID    endRange;
 
-  public ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final int[] iClusterIds,
-      final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public ORecordIteratorClusters(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+      final int[] iClusterIds, final boolean iUseCache, final boolean iterateThroughTombstones,
+      final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
     clusterIds = iClusterIds;
+
+    Arrays.sort(clusterIds);
+
     config();
   }
 
-  protected ORecordIteratorClusters(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase,
+  protected ORecordIteratorClusters(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
       final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
   }
@@ -61,6 +64,9 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     if (currentRecord != null && outsideOfTheRange(currentRecord.getIdentity())) {
       currentRecord = null;
     }
+
+    updateClusterRange();
+    begin();
     return this;
   }
 
@@ -81,7 +87,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     if (liveUpdated)
       updateClusterRange();
 
-    ORecordInternal<?> record = getRecord();
+    ORecord record = getRecord();
 
     // ITERATE UNTIL THE PREVIOUS GOOD RECORD
     while (currentClusterIdx > -1) {
@@ -128,7 +134,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     if (liveUpdated)
       updateClusterRange();
 
-    ORecordInternal<?> record = getRecord();
+    ORecord record = getRecord();
 
     // ITERATE UNTIL THE NEXT GOOD RECORD
     while (currentClusterIdx < clusterIds.length) {
@@ -187,7 +193,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
         currentRecord = null;
       }
 
-    ORecordInternal<?> record;
+    ORecord record;
 
     // MOVE FORWARD IN THE CURRENT CLUSTER
     while (hasNext()) {
@@ -235,7 +241,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
         currentRecord = null;
       }
 
-    ORecordInternal<?> record = getRecord();
+    ORecord record = getRecord();
 
     // MOVE BACKWARD IN THE CURRENT CLUSTER
     while (hasPrevious()) {
@@ -263,7 +269,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     return null;
   }
 
-  protected boolean include(final ORecord<?> iRecord) {
+  protected boolean include(final ORecord iRecord) {
     return true;
   }
 
@@ -274,6 +280,10 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
    */
   @Override
   public ORecordIteratorClusters<REC> begin() {
+    if (clusterIds.length == 0)
+      return this;
+
+    browsedRecords = 0;
     currentClusterIdx = 0;
     current.clusterId = clusterIds[currentClusterIdx];
 
@@ -283,7 +293,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     resetCurrentPosition();
     nextPosition();
 
-    final ORecordInternal<?> record = getRecord();
+    final ORecord record = getRecord();
     currentRecord = readCurrentRecord(record, 0);
 
     if (currentRecord != null && !include(currentRecord)) {
@@ -301,6 +311,10 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
    */
   @Override
   public ORecordIteratorClusters<REC> last() {
+    if (clusterIds.length == 0)
+      return this;
+
+    browsedRecords = 0;
     currentClusterIdx = clusterIds.length - 1;
     if (liveUpdated)
       updateClusterRange();
@@ -310,7 +324,7 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
     resetCurrentPosition();
     prevPosition();
 
-    final ORecordInternal<?> record = getRecord();
+    final ORecord record = getRecord();
     currentRecord = readCurrentRecord(record, 0);
 
     if (currentRecord != null && !include(currentRecord)) {
@@ -344,11 +358,23 @@ public class ORecordIteratorClusters<REC extends ORecordInternal<?>> extends OId
   }
 
   protected void updateClusterRange() {
+    if (clusterIds.length == 0)
+      return;
+
     current.clusterId = clusterIds[currentClusterIdx];
     final OClusterPosition[] range = database.getStorage().getClusterDataRange(current.clusterId);
 
-    firstClusterEntry = range[0];
-    lastClusterEntry = range[1];
+    if (beginRange != null && beginRange.getClusterId() == current.clusterId
+        && beginRange.getClusterPosition().compareTo(range[0]) > 0)
+      firstClusterEntry = beginRange.getClusterPosition();
+    else
+      firstClusterEntry = range[0];
+
+    if (endRange != null && endRange.getClusterId() == current.clusterId && endRange.getClusterPosition().compareTo(range[1]) < 0)
+      lastClusterEntry = endRange.getClusterPosition();
+    else
+      lastClusterEntry = range[1];
+
     resetCurrentPosition();
   }
 

@@ -77,4 +77,11 @@ public interface OCommandExecutor {
    * Returns the involved clusters.
    */
   public Set<String> getInvolvedClusters();
+
+  /**
+   * Returns the security operation type use to check about security.
+   * 
+   * @return
+   */
+  public int getSecurityOperationType();
 }

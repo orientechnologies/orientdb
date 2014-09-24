@@ -1686,7 +1686,7 @@ public class IndexTest extends ObjectDBBaseTest {
       if (!iteratorCluster.hasNext())
         break;
 
-      ORecord<?> doc = iteratorCluster.next();
+      ORecord doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());
     }
     return positions;

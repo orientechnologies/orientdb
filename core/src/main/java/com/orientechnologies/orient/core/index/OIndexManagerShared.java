@@ -21,9 +21,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -121,7 +123,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (c != null)
       throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
 
-    ODatabase database = getDatabase();
+    ODatabaseInternal database = getDatabase();
     OStorage storage = database.getStorage();
 
     algorithm = chooseTreeAlgorithm(algorithm);
@@ -132,6 +134,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     try {
       if (indexes.containsKey(iName.toLowerCase()))
         throw new OIndexException("Index with name " + iName.toLowerCase() + " already exists.");
+
+      // manual indexes are always durable
+      if (clusterIdsToIndex == null || clusterIdsToIndex.length == 0) {
+        if (metadata == null)
+          metadata = new ODocument();
+
+        Object durable = metadata.field("durableInNonTxMode");
+        if (!(durable instanceof Boolean))
+          metadata.field("durableInNonTxMode", true);
+      }
 
       index = OIndexes.createIndex(getDatabase(), iType, algorithm, valueContainerAlgorithm, metadata);
 
@@ -306,7 +318,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (rebuildCompleted)
       return false;
 
-    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (!OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean())
       return false;
 
@@ -530,7 +542,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       final String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
       String algorithm = idx.field(OIndexInternal.ALGORITHM);
       String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);
-
 
       ODocument metadata = idx.field(OIndexInternal.METADATA);
       if (indexType == null) {

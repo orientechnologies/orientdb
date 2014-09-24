@@ -31,5 +31,5 @@ public interface OIdentityChangeListener {
    * @param record
    *          Instance of record identity of which is changed.
    */
-  public void onIdentityChanged(ORID prevRid, ORecord<?> record);
+  public void onIdentityChanged(ORID prevRid, ORecord record);
 }

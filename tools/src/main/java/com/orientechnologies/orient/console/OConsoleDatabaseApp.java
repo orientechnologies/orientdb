@@ -15,6 +15,27 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Scanner;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -34,6 +55,7 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
@@ -56,7 +78,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
@@ -72,28 +93,16 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-  protected ODatabaseDocument   currentDatabase;
-  protected String              currentDatabaseName;
-  protected ORecordInternal<?>  currentRecord;
-  protected int                 currentRecordIdx;
-  protected List<OIdentifiable> currentResultSet;
-  protected OServerAdmin        serverAdmin;
-  private int                   lastPercentStep;
-  private String                currentDatabaseUserName;
-  private String                currentDatabaseUserPassword;
+  protected ODatabaseDocumentInternal currentDatabase;
+  protected String                    currentDatabaseName;
+  protected ORecord                   currentRecord;
+  protected int                       currentRecordIdx;
+  protected List<OIdentifiable>       currentResultSet;
+  protected OServerAdmin              serverAdmin;
+  private int                         lastPercentStep;
+  private String                      currentDatabaseUserName;
+  private String                      currentDatabaseUserPassword;
 
   public OConsoleDatabaseApp(final String[] args) {
     super(args);
@@ -134,6 +143,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
     }
 
+    Orient.instance().shutdown();
     System.exit(result);
   }
 
@@ -1056,6 +1066,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       message("\n--------------------------------+----------------------------------------------------+");
       message("\n %-30s | %-50s |", "Name", format(dbCfg.name, 50));
       message("\n %-30s | %-50s |", "Version", format("" + dbCfg.version, 50));
+      message("\n %-30s | %-50s |", "Conflict Strategy", format(dbCfg.getConflictStrategy(), 50));
       message("\n %-30s | %-50s |", "Date format", format(dbCfg.dateFormat, 50));
       message("\n %-30s | %-50s |", "Datetime format", format(dbCfg.dateTimeFormat, 50));
       message("\n %-30s | %-50s |", "Timezone", format(dbCfg.getTimeZone().getID(), 50));
@@ -1214,9 +1225,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void listClusters() {
     if (currentDatabaseName != null) {
       message("\n\nCLUSTERS");
-      message("\n----------------------------------------------+-------+-----------------+");
-      message("\n NAME                                         |   ID  | RECORDS         |");
-      message("\n----------------------------------------------+-------+-----------------+");
+      message("\n----------------------------------------------+-------+-------------------+----------------+");
+      message("\n NAME                                         | ID    | CONFLICT STRATEGY | RECORDS        |");
+      message("\n----------------------------------------------+-------+-------------------+----------------+");
 
       int clusterId;
       String clusterType;
@@ -1231,18 +1242,22 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           clusterId = currentDatabase.getClusterIdByName(clusterName);
           final OCluster cluster = currentDatabase.getStorage().getClusterById(clusterId);
 
+          final String conflictStrategy = cluster.getRecordConflictStrategy() != null ? cluster.getRecordConflictStrategy()
+              .getName() : "";
+
           count = currentDatabase.countClusterElements(clusterName);
           totalElements += count;
 
-          message("\n %-45s| %5d | %15d |", format(clusterName, 45), clusterId, count);
+          message("\n %-45s| %5d | %-17s |%15d |", format(clusterName, 45), clusterId, format(conflictStrategy, 15), count);
         } catch (Exception e) {
           if (e instanceof OIOException)
             break;
         }
       }
-      message("\n----------------------------------------------+-------+-----------------+");
-      message("\n TOTAL = %-3d                                         | %15s |", clusters.size(), totalElements);
-      message("\n------------------------------------------------------+-----------------+");
+      message("\n----------------------------------------------+-------+-------------------+----------------+");
+      message("\n TOTAL = %-3d                                                              |%15d |", clusters.size(),
+          totalElements);
+      message("\n------------------------------------------------------+-------------------+----------------+");
     } else
       message("\nNo database selected yet.");
   }
@@ -1267,7 +1282,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
       for (OClass cls : classes) {
         try {
-          final StringBuilder clusters = new StringBuilder();
+          final StringBuilder clusters = new StringBuilder(1024);
           if (cls.isAbstract())
             clusters.append("-");
           else
@@ -1303,7 +1318,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (currentRecord == null)
       message("\nEntry not found in dictionary.");
     else {
-      currentRecord = (ORecordInternal<?>) currentRecord.load();
+      currentRecord = (ORecord) currentRecord.load();
       displayRecord(null);
     }
   }
@@ -1409,7 +1424,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\n- Fixing dirty links...");
     try {
       for (String clusterName : currentDatabase.getClusterNames()) {
-        for (ORecord<?> rec : currentDatabase.browseCluster(clusterName)) {
+        for (ORecord rec : currentDatabase.browseCluster(clusterName)) {
           try {
             if (rec instanceof ODocument) {
               boolean changed = false;
@@ -1841,7 +1856,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   /** Should be used only by console commands */
-  public ORecordInternal<?> getCurrentRecord() {
+  public ORecord getCurrentRecord() {
     return currentRecord;
   }
 
@@ -1923,7 +1938,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     if (((int) (iPercent * 10)) == lastPercentStep)
       return true;
 
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(64);
 
     if (interactiveMode) {
       buffer.append("\r[");
@@ -1961,7 +1976,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected boolean fixLink(final Object fieldValue) {
     if (fieldValue instanceof OIdentifiable) {
       if (((OIdentifiable) fieldValue).getIdentity().isValid()) {
-        final ORecord<?> connected = ((OIdentifiable) fieldValue).getRecord();
+        final ORecord connected = ((OIdentifiable) fieldValue).getRecord();
         if (connected == null)
           return true;
       }
@@ -2012,16 +2027,10 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     properties.put("backupBufferSize", "1048576"); // 1MB
   }
 
-  @Override
-  protected void onAfter() {
-    super.onAfter();
-    Orient.instance().shutdown();
-  }
-
   protected OIdentifiable setCurrentRecord(final int iIndex) {
     currentRecordIdx = iIndex;
     if (iIndex < currentResultSet.size())
-      currentRecord = (ORecordInternal<?>) currentResultSet.get(iIndex);
+      currentRecord = (ORecord) currentResultSet.get(iIndex);
     else
       currentRecord = null;
     return currentRecord;
@@ -2066,10 +2075,20 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   @Override
   protected String getContext() {
-    if (currentDatabase != null && currentDatabaseName != null)
-      return " {" + currentDatabaseName + "}";
-    else if (serverAdmin != null)
-      return " {" + serverAdmin.getURL() + "}";
+    if (currentDatabase != null && currentDatabaseName != null) {
+      final StringBuilder buffer = new StringBuilder(64);
+      buffer.append(" {db=");
+      buffer.append(currentDatabaseName);
+      if (currentDatabase.getTransaction().isActive()) {
+        buffer.append(" tx=[");
+        buffer.append(currentDatabase.getTransaction().getEntryCount());
+        buffer.append(" entries]");
+      }
+
+      buffer.append("}");
+      return buffer.toString();
+    } else if (serverAdmin != null)
+      return " {server=" + serverAdmin.getURL() + "}";
     return "";
   }
 
@@ -2081,7 +2100,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   protected void setResultset(final List<OIdentifiable> iResultset) {
     currentResultSet = iResultset;
     currentRecordIdx = 0;
-    currentRecord = currentResultSet.isEmpty() ? null : (ORecordInternal<?>) currentResultSet.get(0).getRecord();
+    currentRecord = currentResultSet.isEmpty() ? null : (ORecord) currentResultSet.get(0).getRecord();
   }
 
   protected void resetResultSet() {

@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.type.tree.provider;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -32,6 +29,9 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+
+import java.io.IOException;
+import java.util.Arrays;
 
 @SuppressWarnings("unchecked")
 public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderAbstract<K, V> {
@@ -268,7 +268,7 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     final long timer = PROFILER.startChrono();
     try {
       // @COMPATIBILITY BEFORE 1.0
-      if (OIntegerSerializer.INSTANCE.deserialize(iStream, 0) >= 0) {
+      if (OIntegerSerializer.INSTANCE.deserializeLiteral(iStream, 0) >= 0) {
         OLogManager.instance().warn(
             this,
             "Previous version of serialization format was found for node with id " + record.getIdentity()
@@ -344,10 +344,10 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
       boolean iColor) {
     int offset = 0;
 
-    OIntegerSerializer.INSTANCE.serialize(CURRENT_VERSION, newBuffer, offset);
+    OIntegerSerializer.INSTANCE.serializeLiteral(CURRENT_VERSION, newBuffer, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
-    OIntegerSerializer.INSTANCE.serialize(iPageSize, newBuffer, offset);
+    OIntegerSerializer.INSTANCE.serializeLiteral(iPageSize, newBuffer, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     OLinkSerializer.INSTANCE.serialize(iParentId, newBuffer, offset);
@@ -359,10 +359,10 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     OLinkSerializer.INSTANCE.serialize(iRightRid, newBuffer, offset);
     offset += OLinkSerializer.INSTANCE.getObjectSize(iRightRid);
 
-    OBooleanSerializer.INSTANCE.serialize(iColor, newBuffer, offset);
+    OBooleanSerializer.INSTANCE.serializeLiteral(iColor, newBuffer, offset);
     offset += OBooleanSerializer.BOOLEAN_SIZE;
 
-    OIntegerSerializer.INSTANCE.serialize(iSize, newBuffer, offset);
+    OIntegerSerializer.INSTANCE.serializeLiteral(iSize, newBuffer, offset);
     offset += OIntegerSerializer.INT_SIZE;
     return offset;
   }
@@ -370,14 +370,14 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
   private int deserializeMetadata(byte[] inBuffer) {
     int offset = 0;
 
-    int currentVersion = OIntegerSerializer.INSTANCE.deserialize(inBuffer, offset);
+    int currentVersion = OIntegerSerializer.INSTANCE.deserializeLiteral(inBuffer, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     if (currentVersion != CURRENT_VERSION)
       throw new OSerializationException("MVRBTree node is stored using " + currentVersion
           + " version of serialization format but current version is " + CURRENT_VERSION + ".");
 
-    pageSize = OIntegerSerializer.INSTANCE.deserialize(inBuffer, offset);
+    pageSize = OIntegerSerializer.INSTANCE.deserializeLiteral(inBuffer, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     parentRid = OLinkSerializer.INSTANCE.deserialize(inBuffer, offset);
@@ -389,10 +389,10 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     rightRid = OLinkSerializer.INSTANCE.deserialize(inBuffer, offset);
     offset += OLinkSerializer.INSTANCE.getObjectSize(rightRid);
 
-    color = OBooleanSerializer.INSTANCE.deserialize(inBuffer, offset);
+    color = OBooleanSerializer.INSTANCE.deserializeLiteral(inBuffer, offset);
     offset += OBooleanSerializer.BOOLEAN_SIZE;
 
-    size = OIntegerSerializer.INSTANCE.deserialize(inBuffer, offset);
+    size = OIntegerSerializer.INSTANCE.deserializeLiteral(inBuffer, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     if (size > pageSize)

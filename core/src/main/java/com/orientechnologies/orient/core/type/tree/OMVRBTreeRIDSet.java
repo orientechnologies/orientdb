@@ -63,11 +63,11 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
     this(new OMVRBTreeRID(iClusterName));
   }
 
-  public OMVRBTreeRIDSet(final ORecord<?> iOwner) {
+  public OMVRBTreeRIDSet(final ORecord iOwner) {
     this((OMVRBTreeRID) new OMVRBTreeRID().setOwner(iOwner));
   }
 
-  public OMVRBTreeRIDSet(final ORecord<?> iOwner, final Collection<OIdentifiable> iInitValues) {
+  public OMVRBTreeRIDSet(final ORecord iOwner, final Collection<OIdentifiable> iInitValues) {
     this((OMVRBTreeRID) new OMVRBTreeRID(iInitValues).setOwner(iOwner));
   }
 
@@ -184,7 +184,7 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
   }
 
   public byte[] toStream() throws OSerializationException {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     toStream(buffer);
     return buffer.toString().getBytes();
   }

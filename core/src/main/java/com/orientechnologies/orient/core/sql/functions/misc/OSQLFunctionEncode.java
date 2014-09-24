@@ -52,7 +52,7 @@ public class OSQLFunctionEncode extends OSQLFunctionAbstract {
     if (candidate instanceof byte[]) {
       data = (byte[]) candidate;
     } else if (candidate instanceof ORecordId) {
-      final ORecord<?> rec = ((ORecordId) candidate).getRecord();
+      final ORecord rec = ((ORecordId) candidate).getRecord();
       if (rec instanceof ORecordBytes) {
         data = ((ORecordBytes) rec).toStream();
       }

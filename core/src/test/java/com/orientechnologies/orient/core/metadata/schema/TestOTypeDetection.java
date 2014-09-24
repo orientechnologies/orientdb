@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -25,6 +26,7 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
@@ -108,11 +110,13 @@ public class TestOTypeDetection {
 
     assertEquals(OType.INTEGER, OType.getTypeByClass(BigInteger.class));
 
-    assertEquals(OType.LINK, OType.getTypeByClass(ODocument.class));
+    assertEquals(OType.LINK, OType.getTypeByClass(OIdentifiable.class));
+
+    assertEquals(OType.LINK, OType.getTypeByClass(ORecordId.class));
 
     assertEquals(OType.LINK, OType.getTypeByClass(ORecord.class));
 
-    assertEquals(OType.LINK, OType.getTypeByClass(ORecordId.class));
+    assertEquals(OType.LINK, OType.getTypeByClass(ODocument.class));
 
     assertEquals(OType.EMBEDDEDLIST, OType.getTypeByClass(ArrayList.class));
 
@@ -220,7 +224,7 @@ public class TestOTypeDetection {
     linkmap.put("some", new ORecordId());
     assertEquals(OType.LINKMAP, OType.getTypeByValue(linkmap));
 
-    Map<String, ORecord<?>> linkmap2 = new HashMap<String, ORecord<?>>();
+    Map<String, ORecord> linkmap2 = new HashMap<String, ORecord>();
     linkmap2.put("some", new ODocument());
     assertEquals(OType.LINKMAP, OType.getTypeByValue(linkmap2));
 
@@ -228,7 +232,7 @@ public class TestOTypeDetection {
     linkList.add(new ORecordId());
     assertEquals(OType.LINKLIST, OType.getTypeByValue(linkList));
 
-    List<ORecord<?>> linkList2 = new ArrayList<ORecord<?>>();
+    List<ORecord> linkList2 = new ArrayList<ORecord>();
     linkList2.add(new ODocument());
     assertEquals(OType.LINKLIST, OType.getTypeByValue(linkList2));
 
@@ -236,12 +240,12 @@ public class TestOTypeDetection {
     linkSet.add(new ORecordId());
     assertEquals(OType.LINKSET, OType.getTypeByValue(linkSet));
 
-    Set<ORecord<?>> linkSet2 = new HashSet<ORecord<?>>();
+    Set<ORecord> linkSet2 = new HashSet<ORecord>();
     linkSet2.add(new ODocument());
     assertEquals(OType.LINKSET, OType.getTypeByValue(linkSet2));
 
     ODocument document = new ODocument();
-    document.addOwner(new ODocument());
+    ODocumentInternal.addOwner(document, new ODocument());
     assertEquals(OType.EMBEDDED, OType.getTypeByValue(document));
   }
 

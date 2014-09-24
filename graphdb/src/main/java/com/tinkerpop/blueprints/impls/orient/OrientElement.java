@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -49,6 +50,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (graph != null)
       settings = graph.settings;
   }
+
+  public abstract String getLabel();
 
   public abstract String getBaseClassName();
 
@@ -127,7 +130,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   }
 
   /**
-   * Set a Property value.
+   * Sets a Property value.
    * 
    * @param key
    *          Property name
@@ -145,7 +148,27 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   }
 
   /**
-   * Removed a Property.
+   * Sets a Property value specifying a type. This is useful when you don't have a schema on this property but you want to force the
+   * type.
+   *
+   * @param key
+   *          Property name
+   * @param value
+   *          Property value
+   * @param iType
+   *          Type to set
+   */
+  public void setProperty(final String key, final Object value, final OType iType) {
+    validateProperty(this, key, value);
+    if (!isDetached())
+      graph.autoStartTransaction();
+    getRecord().field(key, value, iType);
+    if (!isDetached())
+      save();
+  }
+
+  /**
+   * Removes a Property.
    * 
    * @param key
    *          Property name
@@ -229,9 +252,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
 
     if (rawElement instanceof ODocument)
       if (iClusterName != null)
-        ((ODocument) rawElement).save(iClusterName);
+        rawElement = ((ODocument) rawElement).save(iClusterName);
       else
-        ((ODocument) rawElement).save();
+        rawElement = ((ODocument) rawElement).save();
   }
 
   public int hashCode() {
@@ -393,8 +416,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     final ORID myRID = getIdentity();
     final ORID otherRID = iOther.getIdentity();
 
-    if (myRID == null && otherRID == null)
-      return 0;
+    if (myRID == null && otherRID == null) return 0;
+    if (myRID == null) return -1;
+    if (otherRID == null) return 1;
 
     return myRID.compareTo(otherRID);
   }
@@ -429,6 +453,23 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       throw ExceptionFactory.propertyKeyLabelIsReservedForEdges();
     if (key.isEmpty())
       throw ExceptionFactory.propertyKeyCanNotBeEmpty();
+  }
+
+  public void reload() {
+    final ODocument rec = getRecord();
+    if (rec != null)
+      rec.reload(null, true);
+  }
+
+  protected void copyTo(final OrientElement iCopy) {
+    iCopy.graph = graph;
+    iCopy.settings = settings;
+    if (rawElement instanceof ODocument) {
+      iCopy.rawElement = new ODocument().fromStream(((ODocument) rawElement).toStream());
+    } else if (rawElement instanceof ORID)
+      iCopy.rawElement = ((ORID) rawElement).copy();
+    else
+      throw new IllegalArgumentException("Cannot clone element " + rawElement);
   }
 
   protected void checkClass() {

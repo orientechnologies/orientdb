@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -49,6 +50,7 @@ import java.util.TimeZone;
  * <li>7 = ??</li>
  * <li>8 = introduced cluster selection strategy as string</li>
  * <li>9 = introduced minimumclusters as string</li>
+ * <li>12 = introduced record conflict strategy as string in both storage and paginated clusters</li>
  * </ul>
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -60,7 +62,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public static final String                           DEFAULT_CHARSET               = "UTF-8";
   private             String                           charset                       = DEFAULT_CHARSET;
-  public static final int                              CURRENT_VERSION               = 11;
+  public static final int                              CURRENT_VERSION               = 12;
   public static final int                              CURRENT_BINARY_FORMAT_VERSION = 11;
   public final        List<OStorageDataConfiguration>  dataSegments                  = Collections.synchronizedList(new ArrayList<OStorageDataConfiguration>());
   public final        List<OStorageEntryConfiguration> properties                    = Collections.synchronizedList(new ArrayList<OStorageEntryConfiguration>());
@@ -83,6 +85,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private transient volatile Locale               localeInstance;
   private transient volatile DecimalFormatSymbols unusualSymbols;
   private volatile           String               clusterSelection;
+  private volatile           String               conflictStrategy;
   private volatile int minimumClusters = 1;
   private volatile String recordSerializer;
   private volatile int    recordSerializerVersion;
@@ -92,6 +95,14 @@ public class OStorageConfiguration implements OSerializableStream {
     fileTemplate = new OStorageSegmentConfiguration();
 
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
+  }
+
+  public String getConflictStrategy() {
+    return conflictStrategy;
+  }
+
+  public void setConflictStrategy(String conflictStrategy) {
+    this.conflictStrategy = conflictStrategy;
   }
 
   public OContextConfiguration getContextConfiguration() {
@@ -187,6 +198,12 @@ public class OStorageConfiguration implements OSerializableStream {
       charset = read(values[index++]);
     }
 
+    final ORecordConflictStrategyFactory conflictStrategyFactory = Orient.instance().getRecordConflictStrategy();
+    if (version >= 12)
+      conflictStrategy = conflictStrategyFactory.getStrategy(read(values[index++])).getName();
+    else
+      conflictStrategy = conflictStrategyFactory.getDefaultStrategy();
+
     // @COMPATIBILTY
     if (version > 1)
       index = phySegmentFromStream(values, index, fileTemplate);
@@ -239,8 +256,15 @@ public class OStorageConfiguration implements OSerializableStream {
           // CLUSTER
           determineStorageCompression = clusterCompression;
 
+        final String clusterConflictStrategy;
+        if (version >= 12)
+          clusterConflictStrategy = read(values[index++]);
+        else
+          // INHERIT THE STRATEGY IN STORAGE
+          clusterConflictStrategy = null;
+
         currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
-            clusterCompression);
+            clusterCompression, clusterConflictStrategy);
       } else
         throw new IllegalArgumentException("Unsupported cluster type: " + clusterType);
 
@@ -326,7 +350,7 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public byte[] toStream() throws OSerializationException {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(8192);
 
     write(buffer, CURRENT_VERSION);
     write(buffer, name);
@@ -342,6 +366,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
     write(buffer, timeZone.getID());
     write(buffer, charset);
+    write(buffer, conflictStrategy);
 
     phySegmentToStream(buffer, fileTemplate);
 
@@ -379,6 +404,7 @@ public class OStorageConfiguration implements OSerializableStream {
         write(buffer, paginatedClusterConfiguration.recordOverflowGrowFactor);
         write(buffer, paginatedClusterConfiguration.recordGrowFactor);
         write(buffer, paginatedClusterConfiguration.compression);
+        write(buffer, paginatedClusterConfiguration.conflictStrategy);
       }
     }
 

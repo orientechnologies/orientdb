@@ -38,7 +38,7 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    *          The iRecord to create
    * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
    */
-  public RESULT onRecordBeforeCreate(final ORecord<?> iiRecord) {
+  public RESULT onRecordBeforeCreate(final ORecord iiRecord) {
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -48,13 +48,13 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    * @param iiRecord
    *          The iRecord just created
    */
-  public void onRecordAfterCreate(final ORecord<?> iiRecord) {
+  public void onRecordAfterCreate(final ORecord iiRecord) {
   }
 
-  public void onRecordCreateFailed(final ORecord<?> iiRecord) {
+  public void onRecordCreateFailed(final ORecord iiRecord) {
   }
 
-  public void onRecordCreateReplicated(final ORecord<?> iiRecord) {
+  public void onRecordCreateReplicated(final ORecord iiRecord) {
   }
 
   /**
@@ -64,7 +64,7 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    *          The iRecord to read
    * @return
    */
-  public RESULT onRecordBeforeRead(final ORecord<?> iRecord) {
+  public RESULT onRecordBeforeRead(final ORecord iRecord) {
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -74,13 +74,13 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    * @param iiRecord
    *          The iRecord just read
    */
-  public void onRecordAfterRead(final ORecord<?> iiRecord) {
+  public void onRecordAfterRead(final ORecord iiRecord) {
   }
 
-  public void onRecordReadFailed(final ORecord<?> iiRecord) {
+  public void onRecordReadFailed(final ORecord iiRecord) {
   }
 
-  public void onRecordReadReplicated(final ORecord<?> iiRecord) {
+  public void onRecordReadReplicated(final ORecord iiRecord) {
   }
 
   /**
@@ -90,7 +90,7 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    *          The iRecord to update
    * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
    */
-  public RESULT onRecordBeforeUpdate(final ORecord<?> iiRecord) {
+  public RESULT onRecordBeforeUpdate(final ORecord iiRecord) {
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -100,13 +100,13 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    * @param iiRecord
    *          The iRecord just updated
    */
-  public void onRecordAfterUpdate(final ORecord<?> iiRecord) {
+  public void onRecordAfterUpdate(final ORecord iiRecord) {
   }
 
-  public void onRecordUpdateFailed(final ORecord<?> iiRecord) {
+  public void onRecordUpdateFailed(final ORecord iiRecord) {
   }
 
-  public void onRecordUpdateReplicated(final ORecord<?> iiRecord) {
+  public void onRecordUpdateReplicated(final ORecord iiRecord) {
   }
 
   /**
@@ -116,7 +116,7 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    *          The iRecord to delete
    * @return True if the iRecord has been modified and a new marshalling is required, otherwise false
    */
-  public RESULT onRecordBeforeDelete(final ORecord<?> iiRecord) {
+  public RESULT onRecordBeforeDelete(final ORecord iiRecord) {
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -126,46 +126,46 @@ public abstract class ORecordHookAbstract implements ORecordHook {
    * @param iiRecord
    *          The iRecord just deleted
    */
-  public void onRecordAfterDelete(final ORecord<?> iiRecord) {
+  public void onRecordAfterDelete(final ORecord iiRecord) {
   }
 
-  public void onRecordDeleteFailed(final ORecord<?> iiRecord) {
+  public void onRecordDeleteFailed(final ORecord iiRecord) {
   }
 
-  public void onRecordDeleteReplicated(final ORecord<?> iiRecord) {
+  public void onRecordDeleteReplicated(final ORecord iiRecord) {
   }
 
-  public RESULT onRecordBeforeReplicaAdd(final ORecord<?> record) {
+  public RESULT onRecordBeforeReplicaAdd(final ORecord record) {
     return RESULT.RECORD_NOT_CHANGED;
   }
 
-  public void onRecordAfterReplicaAdd(final ORecord<?> record) {
+  public void onRecordAfterReplicaAdd(final ORecord record) {
   }
 
-  public void onRecordReplicaAddFailed(final ORecord<?> record) {
+  public void onRecordReplicaAddFailed(final ORecord record) {
   }
 
-  public RESULT onRecordBeforeReplicaUpdate(final ORecord<?> record) {
+  public RESULT onRecordBeforeReplicaUpdate(final ORecord record) {
     return RESULT.RECORD_NOT_CHANGED;
   }
 
-  public void onRecordAfterReplicaUpdate(final ORecord<?> record) {
+  public void onRecordAfterReplicaUpdate(final ORecord record) {
   }
 
-  public void onRecordReplicaUpdateFailed(final ORecord<?> record) {
+  public void onRecordReplicaUpdateFailed(final ORecord record) {
   }
 
-  public RESULT onRecordBeforeReplicaDelete(final ORecord<?> record) {
+  public RESULT onRecordBeforeReplicaDelete(final ORecord record) {
     return RESULT.RECORD_NOT_CHANGED;
   }
 
-  public void onRecordAfterReplicaDelete(final ORecord<?> record) {
+  public void onRecordAfterReplicaDelete(final ORecord record) {
   }
 
-  public void onRecordReplicaDeleteFailed(final ORecord<?> record) {
+  public void onRecordReplicaDeleteFailed(final ORecord record) {
   }
 
-  public RESULT onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+  public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
     switch (iType) {
     case BEFORE_CREATE:
       return onRecordBeforeCreate(iRecord);
@@ -225,39 +225,6 @@ public abstract class ORecordHookAbstract implements ORecordHook {
 
     case DELETE_REPLICATED:
       onRecordDeleteReplicated(iRecord);
-      break;
-
-    case BEFORE_REPLICA_ADD:
-      return onRecordBeforeReplicaAdd(iRecord);
-
-    case AFTER_REPLICA_ADD:
-      onRecordAfterReplicaAdd(iRecord);
-      break;
-
-    case REPLICA_ADD_FAILED:
-      onRecordAfterReplicaAdd(iRecord);
-      break;
-
-    case BEFORE_REPLICA_UPDATE:
-      return onRecordBeforeReplicaUpdate(iRecord);
-
-    case AFTER_REPLICA_UPDATE:
-      onRecordAfterReplicaUpdate(iRecord);
-      break;
-
-    case REPLICA_UPDATE_FAILED:
-      onRecordReplicaUpdateFailed(iRecord);
-      break;
-
-    case BEFORE_REPLICA_DELETE:
-      return onRecordBeforeReplicaDelete(iRecord);
-
-    case AFTER_REPLICA_DELETE:
-      onRecordAfterReplicaDelete(iRecord);
-      break;
-
-    case REPLICA_DELETE_FAILED:
-      onRecordReplicaDeleteFailed(iRecord);
       break;
 
     }

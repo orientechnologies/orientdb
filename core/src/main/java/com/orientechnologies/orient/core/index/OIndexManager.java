@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.Collection;
+import java.util.Set;
+
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
-
-import java.util.Collection;
-import java.util.Set;
 
 /**
  * Manager of indexes.
@@ -165,7 +165,7 @@ public interface OIndexManager {
    * 
    * @return a dictionary
    */
-  public ODictionary<ORecordInternal<?>> getDictionary();
+  public ODictionary<ORecord> getDictionary();
 
   /**
    * Flushes all indexes that is registered in this manager. There might be some changes stored in memory, this method ensures that

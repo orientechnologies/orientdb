@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdaptiveLock implements
+public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extends OAdaptiveLock implements
     OResourcePoolListener<String, DB>, OOrientListener {
 
   private final HashMap<String, OReentrantResourcePool<String, DB>> pools = new HashMap<String, OReentrantResourcePool<String, DB>>();
@@ -274,7 +274,8 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabase> extends OAdapt
 
       if (pool != null) {
         for (DB db : pool.getResources()) {
-          if (db.getStorage().getStatus() == OStorage.STATUS.OPEN)
+          final OStorage stg = db.getStorage();
+          if (stg != null && stg.getStatus() == OStorage.STATUS.OPEN)
             try {
               OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
               ((ODatabasePooled) db).forceClose();

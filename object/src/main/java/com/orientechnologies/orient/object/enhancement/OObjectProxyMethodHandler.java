@@ -37,7 +37,7 @@ import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -81,7 +82,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
 
   public OObjectProxyMethodHandler(ODocument iDocument) {
     doc = iDocument;
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (db.getDatabaseOwner() instanceof ODatabaseObject && !((ODatabaseObject) db.getDatabaseOwner()).isLazyLoading())
       doc.detach();
     loadedFields = new HashMap<String, ORecordVersion>();
@@ -225,57 +226,39 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       ((OObjectProxyMethodHandler) parentObject.getHandler()).setDirty();
   }
 
-  public void updateLoadedFieldMap(final Object proxiedObject, final boolean iReload) 
-  {
-	  final Set<String> fields = new HashSet<String>(loadedFields.keySet());
-	  for (String fieldName : fields)
-	  {
-		  try 
-		  {
-			  if(iReload) 
-			  {
-				  // FORCE POJO FIELD VALUE TO DEFAULT VALUE, WHICH CAN BE null, 0 or false
-				  final Field fieldToReset = OObjectEntitySerializer.getField(fieldName, proxiedObject.getClass());
-				  OObjectEntitySerializer.setFieldValue(fieldToReset, proxiedObject, getDefaultValueForField(fieldToReset));
-			  } 
-			  else 
-			  {
-				  final Object value = getValue(proxiedObject, fieldName, false, null);
+  public void updateLoadedFieldMap(final Object proxiedObject, final boolean iReload) {
+    final Set<String> fields = new HashSet<String>(loadedFields.keySet());
+    for (String fieldName : fields) {
+      try {
+        if (iReload) {
+          // FORCE POJO FIELD VALUE TO DEFAULT VALUE, WHICH CAN BE null, 0 or false
+          final Field fieldToReset = OObjectEntitySerializer.getField(fieldName, proxiedObject.getClass());
+          OObjectEntitySerializer.setFieldValue(fieldToReset, proxiedObject, getDefaultValueForField(fieldToReset));
+        } else {
+          final Object value = getValue(proxiedObject, fieldName, false, null);
 
-				  if (value instanceof OObjectLazyMultivalueElement) 
-				  {
-					  if (((OObjectLazyMultivalueElement<?>) value).getUnderlying() != doc.field(fieldName))
-						  loadedFields.remove(fieldName);
-				  } 
-				  else 
-				  {
-					  loadedFields.put(fieldName, doc.getRecordVersion().copy());
-				  }
-			  }
-		  } 
-		  catch (IllegalArgumentException e)
-		  {
-			  throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
-		  }
-		  catch (IllegalAccessException e) 
-		  {
-			  throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
-		  } 
-		  catch (NoSuchMethodException e) 
-		  {
-			  throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
-		  } 
-		  catch (InvocationTargetException e) 
-		  {
-			  throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
-		  }
-	  }
+          if (value instanceof OObjectLazyMultivalueElement) {
+            if (((OObjectLazyMultivalueElement<?>) value).getUnderlying() != doc.field(fieldName))
+              loadedFields.remove(fieldName);
+          } else {
+            loadedFields.put(fieldName, doc.getRecordVersion().copy());
+          }
+        }
+      } catch (IllegalArgumentException e) {
+        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+      } catch (IllegalAccessException e) {
+        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+      } catch (NoSuchMethodException e) {
+        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+      } catch (InvocationTargetException e) {
+        throw new OSerializationException("Error updating object after save of class " + proxiedObject.getClass(), e);
+      }
+    }
 
-	  if (iReload)
-	  {
-		  // RESET LOADED FIELDS, SO THE MUST BE RELOADED FROM DATABASE
-		  loadedFields.clear();
-	  }		 
+    if (iReload) {
+      // RESET LOADED FIELDS, SO THE MUST BE RELOADED FROM DATABASE
+      loadedFields.clear();
+    }
   }
 
   protected Object manageGetMethod(final Object self, final Method m, final Method proceed, final Object[] args)
@@ -745,14 +728,14 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       if (valueToSet instanceof Proxy) {
         ODocument docToSet = OObjectEntitySerializer.getDocument((Proxy) valueToSet);
         if (OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
-          docToSet.addOwner(doc);
+          ODocumentInternal.addOwner(docToSet, doc);
         Object oldValue = doc.field(fieldName);
         if (OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName) && oldValue instanceof OIdentifiable)
           orphans.add(((OIdentifiable) oldValue).getIdentity());
         setDocFieldValue(fieldName, docToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
       } else if (valueToSet instanceof OIdentifiable) {
         if (valueToSet instanceof ODocument && OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
-          ((ODocument) valueToSet).addOwner(doc);
+          ODocumentInternal.addOwner((ODocument) valueToSet, doc);
         Object oldValue = doc.field(fieldName);
         if (OObjectEntitySerializer.isCascadeDeleteField(self.getClass(), fieldName) && oldValue instanceof OIdentifiable)
           orphans.add(((OIdentifiable) oldValue).getIdentity());
@@ -811,7 +794,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           valueToSet = OObjectEntitySerializer.serializeObject(valueToSet, getDatabase());
           final ODocument docToSet = OObjectEntitySerializer.getDocument((Proxy) valueToSet);
           if (OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
-            docToSet.addOwner(doc);
+            ODocumentInternal.addOwner((ODocument) docToSet, doc);
+
           setDocFieldValue(fieldName, docToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
         } else {
           setDocFieldValue(fieldName, valueToSet, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
@@ -852,30 +836,29 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   private ODatabaseObject getDatabase() {
     return (ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
   }
-  
-  private Object getDefaultValueForField(Field field)
-  {
-	  if(field.getType() == Byte.TYPE)
-		  return Byte.valueOf("0");
 
-	  if(field.getType() == Short.TYPE)
-		  return Short.valueOf("0");
+  private Object getDefaultValueForField(Field field) {
+    if (field.getType() == Byte.TYPE)
+      return Byte.valueOf("0");
 
-	  if(field.getType() == Integer.TYPE)
-		  return 0;	 
+    if (field.getType() == Short.TYPE)
+      return Short.valueOf("0");
 
-	  if(field.getType() == Long.TYPE)
-		  return 0L;
+    if (field.getType() == Integer.TYPE)
+      return 0;
 
-	  if(field.getType() == Float.TYPE)
-		  return 0.0f;	 
+    if (field.getType() == Long.TYPE)
+      return 0L;
 
-	  if(field.getType() == Double.TYPE)
-		  return 0.0d;
+    if (field.getType() == Float.TYPE)
+      return 0.0f;
 
-	  if(field.getType() == Boolean.TYPE)
-		  return false;
+    if (field.getType() == Double.TYPE)
+      return 0.0d;
 
-	  return null;
+    if (field.getType() == Boolean.TYPE)
+      return false;
+
+    return null;
   }
 }

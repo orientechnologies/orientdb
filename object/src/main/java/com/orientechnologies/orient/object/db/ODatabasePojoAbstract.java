@@ -26,12 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ThreadPoolExecutor;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -59,7 +60,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements
-    ODatabaseSchemaAware<T> {
+    ODatabaseSchemaAware<T>, ODatabaseComplexInternal<T> {
   protected IdentityHashMap<Object, ODocument> objects2Records = new IdentityHashMap<Object, ODocument>();
   protected IdentityHashMap<ODocument, T>      records2Objects = new IdentityHashMap<ODocument, T>();
   protected HashMap<ORID, ODocument>           rid2Records     = new HashMap<ORID, ODocument>();
@@ -125,7 +126,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
       final Set<ORID> rids = new HashSet<ORID>(rid2Records.keySet());
 
-      ORecord<?> record;
+      ORecord record;
       Object object;
       for (ORID rid : rids) {
         if (rid.isTemporary()) {
@@ -175,7 +176,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     if (record == null)
       return;
 
-    record.unsetDirty();
+    ORecordInternal.unsetDirty(record);
   }
 
   public void setInternal(final ATTRIBUTES attribute, final Object iValue) {
@@ -260,7 +261,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return (RET) resultPojo;
   }
 
-  public ODatabaseComplex<T> delete(final ORecordInternal<?> iRecord) {
+  public ODatabaseComplex<T> delete(final ORecord iRecord) {
     underlying.delete(iRecord);
     return this;
   }
@@ -437,7 +438,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   /**
    * Register a new POJO
    */
-  public void registerUserObject(final Object iObject, final ORecordInternal<?> iRecord) {
+  public void registerUserObject(final Object iObject, final ORecord iRecord) {
     if (!(iRecord instanceof ODocument))
       return;
 

@@ -48,7 +48,7 @@ public class OPlaceholder implements OIdentifiable, Externalizable {
     this.recordVersion = version;
   }
 
-  public OPlaceholder(final ORecord<?> iRecord) {
+  public OPlaceholder(final ORecord iRecord) {
     rid = (ORecordId) iRecord.getIdentity().copy();
     recordVersion = iRecord.getRecordVersion().copy();
   }
@@ -59,7 +59,7 @@ public class OPlaceholder implements OIdentifiable, Externalizable {
   }
 
   @Override
-  public <T extends ORecord<?>> T getRecord() {
+  public <T extends ORecord> T getRecord() {
     return rid.getRecord();
   }
 

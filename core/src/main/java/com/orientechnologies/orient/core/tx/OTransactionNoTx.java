@@ -15,6 +15,9 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -23,15 +26,12 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * No operation transaction.
@@ -51,14 +51,19 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
+  public int getEntryCount() {
+    return 0;
+  }
+
+  @Override
   public void commit(boolean force) {
   }
 
   public void rollback() {
   }
 
-  public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,
-      final boolean ignonreCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignonreCache,
+      final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     if (iRid.isNew())
       return null;
 
@@ -67,16 +72,16 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
   /**
    * Update the record.
-   * 
+   *
+   * @param iRecord
    * @param iForceCreate
    * @param iRecordCreatedCallback
    * @param iRecordUpdatedCallback
    */
-  public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public ORecord saveRecord(final ORecord iRecord, final String iClusterName, final OPERATION_MODE iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     try {
-      database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
+      return database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
           iRecordCreatedCallback, null);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
@@ -90,25 +95,10 @@ public class OTransactionNoTx extends OTransactionAbstract {
     }
   }
 
-  @Override
-  public boolean updateReplica(ORecordInternal<?> iRecord) {
-    try {
-      return database.executeUpdateReplica(iRecord);
-    } catch (Exception e) {
-      // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
-      final ORecordId rid = (ORecordId) iRecord.getIdentity();
-      database.getLocalCache().freeRecord(rid);
-
-      if (e instanceof RuntimeException)
-        throw (RuntimeException) e;
-      throw new OException(e);
-    }
-  }
-
   /**
    * Deletes the record.
    */
-  public void deleteRecord(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
+  public void deleteRecord(final ORecord iRecord, final OPERATION_MODE iMode) {
     if (!iRecord.getIdentity().isPersistent())
       return;
 
@@ -149,7 +139,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return 0;
   }
 
-  public ORecordInternal<?> getRecord(final ORID rid) {
+  public ORecord getRecord(final ORID rid) {
     return null;
   }
 

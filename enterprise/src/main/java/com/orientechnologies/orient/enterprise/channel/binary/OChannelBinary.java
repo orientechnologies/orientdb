@@ -367,7 +367,7 @@ public abstract class OChannelBinary extends OChannel {
   public OChannelBinary writeCollectionString(final Collection<String> iCollection) throws IOException {
     if (debug)
       OLogManager.instance().info(this, "%s - Writing strings (4+%d=%d items): %s", socket.getRemoteSocketAddress(),
-          iCollection != null ? iCollection.size() : 0, iCollection != null ? iCollection.size() + 4 : 4, iCollection.toString());
+          iCollection != null ? iCollection.size() : 0, iCollection != null ? iCollection.size() + 4 : 4, iCollection!=null? iCollection.toString():"null");
 
     updateMetricTransmittedBytes(OBinaryProtocol.SIZE_INT);
     if (iCollection == null)

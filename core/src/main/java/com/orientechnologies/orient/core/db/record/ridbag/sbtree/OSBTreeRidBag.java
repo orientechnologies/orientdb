@@ -16,24 +16,6 @@
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.NavigableMap;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.UUID;
-import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -59,67 +41,473 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSer
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDeleteSerializationOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagUpdateSerializationOperation;
 
+import java.util.*;
+import java.util.concurrent.ConcurrentSkipListMap;
+
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeRidBag implements ORidBagDelegate {
-  private OBonsaiCollectionPointer                                     collectionPointer;
   private final OSBTreeCollectionManager                               collectionManager   = ODatabaseRecordThreadLocal.INSTANCE
                                                                                                .get().getSbTreeCollectionManager();
-
   private final NavigableMap<OIdentifiable, Change>                    changes             = new ConcurrentSkipListMap<OIdentifiable, Change>();
-
   /**
    * Entries with not valid id.
    */
   private final IdentityHashMap<OIdentifiable, OModifiableInteger>     newEntries          = new IdentityHashMap<OIdentifiable, OModifiableInteger>();
-
+  private OBonsaiCollectionPointer                                     collectionPointer;
   private int                                                          size;
 
   private boolean                                                      autoConvertToRecord = true;
 
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners     = Collections
                                                                                                .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
-  private transient ORecord<?>                                         owner;
+  private transient ORecord                                            owner;
   private boolean                                                      updateOwner         = true;
+
+  public static interface Change {
+    public static final int SIZE = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
+
+    void increment();
+
+    void decrement();
+
+    int applyTo(Integer value);
+
+    /**
+     * Checks if put increment operation can be safely performed.
+     * 
+     * @return true if increment operation can be safely performed.
+     */
+    boolean isUndefined();
+
+    void applyDiff(int delta);
+
+    int serialize(byte[] stream, int offset);
+  }
+
+  private static class DiffChange implements Change {
+    private static final byte TYPE = 0;
+    private int               delta;
+
+    private DiffChange(int delta) {
+      this.delta = delta;
+    }
+
+    @Override
+    public void increment() {
+      delta++;
+    }
+
+    @Override
+    public void decrement() {
+      delta--;
+    }
+
+    @Override
+    public int applyTo(Integer value) {
+      int result;
+      if (value == null)
+        result = delta;
+      else
+        result = value + delta;
+
+      if (result < 0)
+        result = 0;
+
+      return result;
+    }
+
+    @Override
+    public boolean isUndefined() {
+      return delta < 0;
+    }
+
+    @Override
+    public void applyDiff(int delta) {
+      this.delta += delta;
+    }
+
+    @Override
+    public int serialize(byte[] stream, int offset) {
+      OByteSerializer.INSTANCE.serializeLiteral(TYPE, stream, offset);
+      OIntegerSerializer.INSTANCE.serializeLiteral(delta, stream, offset + OByteSerializer.BYTE_SIZE);
+      return OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
+    }
+  }
+
+  private static class AbsoluteChange implements Change {
+    private static final byte TYPE = 1;
+    private int               value;
+
+    private AbsoluteChange(int value) {
+      this.value = value;
+
+      checkPositive();
+    }
+
+    @Override
+    public void increment() {
+      value++;
+    }
+
+    @Override
+    public void decrement() {
+      value--;
+
+      checkPositive();
+    }
+
+    @Override
+    public int applyTo(Integer value) {
+      return this.value;
+    }
+
+    @Override
+    public boolean isUndefined() {
+      return true;
+    }
+
+    @Override
+    public void applyDiff(int delta) {
+      value += delta;
+
+      checkPositive();
+    }
+
+    @Override
+    public int serialize(byte[] stream, int offset) {
+      OByteSerializer.INSTANCE.serializeLiteral(TYPE, stream, offset);
+      OIntegerSerializer.INSTANCE.serializeLiteral(value, stream, offset + OByteSerializer.BYTE_SIZE);
+      return OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
+    }
+
+    private void checkPositive() {
+      if (value < 0)
+        value = 0;
+    }
+  }
+
+  public static class ChangeSerializationHelper {
+    public static final ChangeSerializationHelper INSTANCE = new ChangeSerializationHelper();
+
+    public Change deserializeChange(final byte[] stream, final int offset) {
+      int value = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset + OByteSerializer.BYTE_SIZE);
+      switch (OByteSerializer.INSTANCE.deserializeLiteral(stream, offset)) {
+      case AbsoluteChange.TYPE:
+        return new AbsoluteChange(value);
+      case DiffChange.TYPE:
+        return new DiffChange(value);
+      default:
+        throw new IllegalArgumentException("Change type is incorrect");
+      }
+    }
+
+    public Map<OIdentifiable, Change> deserializeChanges(final byte[] stream, int offset) {
+      final int count = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      final HashMap<OIdentifiable, Change> res = new HashMap<OIdentifiable, Change>();
+      for (int i = 0; i < count; i++) {
+        ORecordId rid = OLinkSerializer.INSTANCE.deserialize(stream, offset);
+        offset += OLinkSerializer.RID_SIZE;
+        Change change = ChangeSerializationHelper.INSTANCE.deserializeChange(stream, offset);
+        offset += Change.SIZE;
+
+        final OIdentifiable identifiable;
+        if (rid.isTemporary() && rid.getRecord() != null)
+          identifiable = rid.getRecord();
+        else
+          identifiable = rid;
+
+        res.put(identifiable, change);
+      }
+
+      return res;
+    }
+
+    public <K> void serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, byte[] stream, int offset) {
+      OIntegerSerializer.INSTANCE.serializeLiteral(changes.size(), stream, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      for (Map.Entry<K, Change> entry : changes.entrySet()) {
+        keySerializer.serialize(entry.getKey(), stream, offset);
+        offset += keySerializer.getObjectSize(entry.getKey());
+
+        offset += entry.getValue().serialize(stream, offset);
+      }
+    }
+
+    public int getChangesSerializedSize(int changesCount) {
+      return changesCount * (OLinkSerializer.RID_SIZE + Change.SIZE);
+    }
+  }
+
+  private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {
+    private final NavigableMap<OIdentifiable, Change>              changedValues;
+    private final SBTreeMapEntryIterator                           sbTreeIterator;
+    private final boolean                                          convertToRecord;
+    private Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> newEntryIterator;
+    private Iterator<Map.Entry<OIdentifiable, Change>>             changedValuesIterator;
+    private Map.Entry<OIdentifiable, Change>                       nextChange;
+    private Map.Entry<OIdentifiable, Integer>                      nextSBTreeEntry;
+    private OIdentifiable                                          currentValue;
+    private int                                                    currentFinalCounter;
+    private int                                                    currentCounter;
+    private boolean                                                currentRemoved;
+
+    private RIDBagIterator(IdentityHashMap<OIdentifiable, OModifiableInteger> newEntries,
+        NavigableMap<OIdentifiable, Change> changedValues, SBTreeMapEntryIterator sbTreeIterator, boolean convertToRecord) {
+      newEntryIterator = newEntries.entrySet().iterator();
+      this.changedValues = changedValues;
+      this.convertToRecord = convertToRecord;
+      this.changedValuesIterator = changedValues.entrySet().iterator();
+      this.sbTreeIterator = sbTreeIterator;
+
+      nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
+
+      if (sbTreeIterator != null)
+        nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
+    }
+
+    @Override
+    public boolean hasNext() {
+      return newEntryIterator.hasNext() || nextChange != null || nextSBTreeEntry != null
+          || (currentValue != null && currentCounter < currentFinalCounter);
+    }
+
+    @Override
+    public OIdentifiable next() {
+      currentRemoved = false;
+      if (currentCounter < currentFinalCounter) {
+        currentCounter++;
+        return currentValue;
+      }
+
+      if (newEntryIterator.hasNext()) {
+        Map.Entry<OIdentifiable, OModifiableInteger> entry = newEntryIterator.next();
+        currentValue = entry.getKey();
+        currentFinalCounter = entry.getValue().intValue();
+        currentCounter = 1;
+        return currentValue;
+      }
+
+      if (nextChange != null && nextSBTreeEntry != null) {
+        if (nextChange.getKey().compareTo(nextSBTreeEntry.getKey()) < 0) {
+          currentValue = nextChange.getKey();
+          currentFinalCounter = nextChange.getValue().applyTo(0);
+          currentCounter = 1;
+
+          nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
+        } else {
+          currentValue = nextSBTreeEntry.getKey();
+          currentFinalCounter = nextSBTreeEntry.getValue();
+          currentCounter = 1;
+
+          nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
+          if (nextChange != null && nextChange.getKey().equals(currentValue))
+            nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
+        }
+      } else if (nextChange != null) {
+        currentValue = nextChange.getKey();
+        currentFinalCounter = nextChange.getValue().applyTo(0);
+        currentCounter = 1;
+
+        nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
+      } else if (nextSBTreeEntry != null) {
+        currentValue = nextSBTreeEntry.getKey();
+        currentFinalCounter = nextSBTreeEntry.getValue();
+        currentCounter = 1;
+
+        nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
+      } else
+        throw new NoSuchElementException();
+
+      if (convertToRecord)
+        return currentValue.getRecord();
+
+      return currentValue;
+    }
+
+    @Override
+    public void remove() {
+      if (currentRemoved)
+        throw new IllegalStateException("Current element has already been removed");
+
+      if (currentValue == null)
+        throw new IllegalStateException("Next method was not called for given iterator");
+
+      if (removeFromNewEntries(currentValue)) {
+        if (size >= 0)
+          size--;
+      } else {
+        Change counter = changedValues.get(currentValue);
+        if (counter != null) {
+          counter.decrement();
+          if (size >= 0)
+            if (counter.isUndefined())
+              size = -1;
+            else
+              size--;
+        } else {
+          if (nextChange != null) {
+            changedValues.put(currentValue, new DiffChange(-1));
+            changedValuesIterator = changedValues.tailMap(nextChange.getKey(), false).entrySet().iterator();
+          } else {
+            changedValues.put(currentValue, new DiffChange(-1));
+          }
+
+          size = -1;
+        }
+      }
+
+      if (updateOwner)
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue, false));
+      currentRemoved = true;
+    }
+
+    @Override
+    public void reset() {
+      newEntryIterator = newEntries.entrySet().iterator();
+
+      this.changedValuesIterator = changedValues.entrySet().iterator();
+      if (sbTreeIterator != null)
+        this.sbTreeIterator.reset();
+
+      nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
+
+      if (sbTreeIterator != null)
+        nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
+    }
+
+    @Override
+    public int size() {
+      return OSBTreeRidBag.this.size();
+    }
+
+    private Map.Entry<OIdentifiable, Change> nextChangedNotRemovedEntry(Iterator<Map.Entry<OIdentifiable, Change>> iterator) {
+      Map.Entry<OIdentifiable, Change> entry;
+
+      while (iterator.hasNext()) {
+        entry = iterator.next();
+        // TODO workaround
+        if (entry.getValue().applyTo(0) > 0)
+          return entry;
+      }
+
+      return null;
+    }
+  }
+
+  private final class SBTreeMapEntryIterator implements Iterator<Map.Entry<OIdentifiable, Integer>>, OResettable {
+    private final int                                     prefetchSize;
+    private LinkedList<Map.Entry<OIdentifiable, Integer>> preFetchedValues;
+    private OIdentifiable                                 firstKey;
+
+    public SBTreeMapEntryIterator(int prefetchSize) {
+      this.prefetchSize = prefetchSize;
+
+      init();
+    }
+
+    @Override
+    public boolean hasNext() {
+      return preFetchedValues != null;
+    }
+
+    @Override
+    public Map.Entry<OIdentifiable, Integer> next() {
+      final Map.Entry<OIdentifiable, Integer> entry = preFetchedValues.removeFirst();
+      if (preFetchedValues.isEmpty())
+        prefetchData(false);
+
+      return entry;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void reset() {
+      init();
+    }
+
+    private void prefetchData(boolean firstTime) {
+      final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
+      try {
+        tree.loadEntriesMajor(firstKey, firstTime, true, new OTreeInternal.RangeResultListener<OIdentifiable, Integer>() {
+          @Override
+          public boolean addResult(final Map.Entry<OIdentifiable, Integer> entry) {
+            preFetchedValues.add(new Map.Entry<OIdentifiable, Integer>() {
+              @Override
+              public OIdentifiable getKey() {
+                return entry.getKey();
+              }
+
+              @Override
+              public Integer getValue() {
+                return entry.getValue();
+              }
+
+              @Override
+              public Integer setValue(Integer v) {
+                throw new UnsupportedOperationException("setValue");
+              }
+            });
+
+            return preFetchedValues.size() <= prefetchSize;
+          }
+        });
+      } finally {
+        releaseTree();
+      }
+
+      if (preFetchedValues.isEmpty())
+        preFetchedValues = null;
+      else
+        firstKey = preFetchedValues.getLast().getKey();
+    }
+
+    private void init() {
+      OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
+      try {
+        firstKey = tree.firstKey();
+      } finally {
+        releaseTree();
+      }
+
+      if (firstKey == null) {
+        this.preFetchedValues = null;
+        return;
+      }
+
+      this.preFetchedValues = new LinkedList<Map.Entry<OIdentifiable, Integer>>();
+      prefetchData(true);
+    }
+  }
 
   public OSBTreeRidBag() {
     collectionPointer = null;
   }
 
-  public void setCollectionPointer(OBonsaiCollectionPointer collectionPointer) {
-    this.collectionPointer = collectionPointer;
+  @Override
+  public ORecord getOwner() {
+    return owner;
   }
 
   @Override
-  public void setOwner(ORecord<?> owner) {
+  public void setOwner(ORecord owner) {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");
     }
 
     this.owner = owner;
-  }
-
-  @Override
-  public ORecord<?> getOwner() {
-    return owner;
-  }
-
-  private OSBTreeBonsai<OIdentifiable, Integer> loadTree() {
-    if (collectionPointer == null)
-      return null;
-
-    return collectionManager.loadSBTree(collectionPointer);
-  }
-
-  private void releaseTree() {
-    if (collectionPointer == null)
-      return;
-
-    collectionManager.releaseSBTree(collectionPointer);
   }
 
   public Iterator<OIdentifiable> iterator() {
@@ -201,18 +589,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
-  private void mergeDiffEntry(OIdentifiable key, int diff) {
-    if (diff > 0) {
-      for (int i = 0; i < diff; i++) {
-        add(key);
-      }
-    } else {
-      for (int i = diff; i < 0; i++) {
-        remove(key);
-      }
-    }
-  }
-
   @Override
   public boolean isAutoConvertToRecord() {
     return autoConvertToRecord;
@@ -262,23 +638,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
           identifiable, identifiable, null, false));
   }
 
-  private AbsoluteChange getAbsoluteValue(OIdentifiable identifiable) {
-    final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
-    try {
-      final Integer oldValue;
-      if (tree == null)
-        oldValue = 0;
-      else
-        oldValue = tree.get(identifiable);
-
-      final Change change = changes.get(identifiable);
-
-      return new AbsoluteChange(change == null ? oldValue : change.applyTo(oldValue));
-    } finally {
-      releaseTree();
-    }
-  }
-
   public void remove(OIdentifiable identifiable) {
     if (removeFromNewEntries(identifiable)) {
       if (size >= 0)
@@ -315,34 +674,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     else {
       return updateSize();
     }
-  }
-
-  /**
-   * Recalculates real bag size.
-   * 
-   * @return real size
-   */
-  private int updateSize() {
-    int size = 0;
-    if (collectionPointer != null) {
-      final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
-      try {
-        size = tree.getRealBagSize(changes);
-      } finally {
-        releaseTree();
-      }
-    } else {
-      for (Change change : changes.values()) {
-        size += change.applyTo(0);
-      }
-    }
-
-    for (OModifiableInteger diff : newEntries.values()) {
-      size += diff.getValue();
-    }
-
-    this.size = size;
-    return size;
   }
 
   @Override
@@ -457,18 +788,18 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       collectionPointer = OBonsaiCollectionPointer.INVALID;
     }
 
-    OLongSerializer.INSTANCE.serialize(collectionPointer.getFileId(), stream, offset);
+    OLongSerializer.INSTANCE.serializeLiteral(collectionPointer.getFileId(), stream, offset);
     offset += OLongSerializer.LONG_SIZE;
 
     OBonsaiBucketPointer rootPointer = collectionPointer.getRootPointer();
-    OLongSerializer.INSTANCE.serialize(rootPointer.getPageIndex(), stream, offset);
+    OLongSerializer.INSTANCE.serializeLiteral(rootPointer.getPageIndex(), stream, offset);
     offset += OLongSerializer.LONG_SIZE;
 
-    OIntegerSerializer.INSTANCE.serialize(rootPointer.getPageOffset(), stream, offset);
+    OIntegerSerializer.INSTANCE.serializeLiteral(rootPointer.getPageOffset(), stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     // Keep this section for binary compatibility with versions older then 1.7.5
-    OIntegerSerializer.INSTANCE.serialize(size, stream, offset);
+    OIntegerSerializer.INSTANCE.serializeLiteral(size, stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     if (context == null) {
@@ -477,7 +808,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       context.push(new ORidBagUpdateSerializationOperation(changes, collectionPointer));
 
       // 0-length serialized list of changes
-      OIntegerSerializer.INSTANCE.serialize(0, stream, offset);
+      OIntegerSerializer.INSTANCE.serializeLiteral(0, stream, offset);
       offset += OIntegerSerializer.INT_SIZE;
     }
 
@@ -486,6 +817,133 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   public void clearChanges() {
     changes.clear();
+  }
+
+  @Override
+  public void requestDelete() {
+    final ORecordSerializationContext context = ORecordSerializationContext.getContext();
+    if (context != null && collectionPointer != null)
+      context.push(new ORidBagDeleteSerializationOperation(collectionPointer, this));
+  }
+
+  public void confirmDelete() {
+    collectionPointer = null;
+    changes.clear();
+    newEntries.clear();
+    size = 0;
+    changeListeners.clear();
+  }
+
+  @Override
+  public int deserialize(byte[] stream, int offset) {
+    final long fileId = OLongSerializer.INSTANCE.deserializeLiteral(stream, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    final long pageIndex = OLongSerializer.INSTANCE.deserializeLiteral(stream, offset);
+    offset += OLongSerializer.LONG_SIZE;
+
+    final int pageOffset = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    // Cached bag size. Not used after 1.7.5
+    offset += OIntegerSerializer.INT_SIZE;
+
+    if (fileId == -1)
+      collectionPointer = null;
+    else
+      collectionPointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
+
+    this.size = -1;
+
+    changes.putAll(ChangeSerializationHelper.INSTANCE.deserializeChanges(stream, offset));
+
+    return offset;
+  }
+
+  public OBonsaiCollectionPointer getCollectionPointer() {
+    return collectionPointer;
+  }
+
+  public void setCollectionPointer(OBonsaiCollectionPointer collectionPointer) {
+    this.collectionPointer = collectionPointer;
+  }
+
+  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
+    for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
+      if (changeListener != null)
+        changeListener.onAfterRecordChanged(event);
+    }
+  }
+
+  private OSBTreeBonsai<OIdentifiable, Integer> loadTree() {
+    if (collectionPointer == null)
+      return null;
+
+    return collectionManager.loadSBTree(collectionPointer);
+  }
+
+  private void releaseTree() {
+    if (collectionPointer == null)
+      return;
+
+    collectionManager.releaseSBTree(collectionPointer);
+  }
+
+  private void mergeDiffEntry(OIdentifiable key, int diff) {
+    if (diff > 0) {
+      for (int i = 0; i < diff; i++) {
+        add(key);
+      }
+    } else {
+      for (int i = diff; i < 0; i++) {
+        remove(key);
+      }
+    }
+  }
+
+  private AbsoluteChange getAbsoluteValue(OIdentifiable identifiable) {
+    final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
+    try {
+      final Integer oldValue;
+      if (tree == null)
+        oldValue = 0;
+      else
+        oldValue = tree.get(identifiable);
+
+      final Change change = changes.get(identifiable);
+
+      return new AbsoluteChange(change == null ? oldValue : change.applyTo(oldValue));
+    } finally {
+      releaseTree();
+    }
+  }
+
+  /**
+   * Recalculates real bag size.
+   * 
+   * @return real size
+   */
+  private int updateSize() {
+    int size = 0;
+    if (collectionPointer != null) {
+      final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
+      try {
+        size = tree.getRealBagSize(changes);
+      } finally {
+        releaseTree();
+      }
+    } else {
+      for (Change change : changes.values()) {
+        size += change.applyTo(0);
+      }
+    }
+
+    for (OModifiableInteger diff : newEntries.values()) {
+      size += diff.getValue();
+    }
+
+    this.size = size;
+    return size;
   }
 
   private int getChangesSerializedSize() {
@@ -506,47 +964,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return -1;
   }
 
-  @Override
-  public void requestDelete() {
-    final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-    if (context != null && collectionPointer != null)
-      context.push(new ORidBagDeleteSerializationOperation(collectionPointer, this));
-  }
-
-  public void confirmDelete() {
-    collectionPointer = null;
-    changes.clear();
-    newEntries.clear();
-    size = 0;
-    changeListeners.clear();
-  }
-
-  @Override
-  public int deserialize(byte[] stream, int offset) {
-    final long fileId = OLongSerializer.INSTANCE.deserialize(stream, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    final long pageIndex = OLongSerializer.INSTANCE.deserialize(stream, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    final int pageOffset = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
-    offset += OIntegerSerializer.INT_SIZE;
-
-    // Cached bag size. Not used after 1.7.5
-    offset += OIntegerSerializer.INT_SIZE;
-
-    if (fileId == -1)
-      collectionPointer = null;
-    else
-      collectionPointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
-
-    this.size = -1;
-
-    changes.putAll(ChangeSerializationHelper.INSTANCE.deserializeChanges(stream, offset));
-
-    return offset;
-  }
-
   /**
    * Removes entry with given key from {@link #newEntries}.
    * 
@@ -554,7 +971,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
    *          key to remove
    * @return true if entry have been removed
    */
-  private boolean removeFromNewEntries(OIdentifiable identifiable) {
+  private boolean removeFromNewEntries(final OIdentifiable identifiable) {
     OModifiableInteger counter = newEntries.get(identifiable);
     if (counter == null)
       return false;
@@ -564,172 +981,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       else
         counter.decrement();
       return true;
-    }
-  }
-
-  public OBonsaiCollectionPointer getCollectionPointer() {
-    return collectionPointer;
-  }
-
-  private final class RIDBagIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {
-    private final NavigableMap<OIdentifiable, Change>              changedValues;
-    private Iterator<Map.Entry<OIdentifiable, OModifiableInteger>> newEntryIterator;
-    private Iterator<Map.Entry<OIdentifiable, Change>>             changedValuesIterator;
-    private final SBTreeMapEntryIterator                           sbTreeIterator;
-
-    private Map.Entry<OIdentifiable, Change>                       nextChange;
-    private Map.Entry<OIdentifiable, Integer>                      nextSBTreeEntry;
-
-    private OIdentifiable                                          currentValue;
-    private int                                                    currentFinalCounter;
-
-    private int                                                    currentCounter;
-
-    private final boolean                                          convertToRecord;
-
-    private boolean                                                currentRemoved;
-
-    private RIDBagIterator(IdentityHashMap<OIdentifiable, OModifiableInteger> newEntries,
-        NavigableMap<OIdentifiable, Change> changedValues, SBTreeMapEntryIterator sbTreeIterator, boolean convertToRecord) {
-      newEntryIterator = newEntries.entrySet().iterator();
-      this.changedValues = changedValues;
-      this.convertToRecord = convertToRecord;
-      this.changedValuesIterator = changedValues.entrySet().iterator();
-      this.sbTreeIterator = sbTreeIterator;
-
-      nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
-
-      if (sbTreeIterator != null)
-        nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
-    }
-
-    @Override
-    public boolean hasNext() {
-      return newEntryIterator.hasNext() || nextChange != null || nextSBTreeEntry != null
-          || (currentValue != null && currentCounter < currentFinalCounter);
-    }
-
-    @Override
-    public OIdentifiable next() {
-      currentRemoved = false;
-      if (currentCounter < currentFinalCounter) {
-        currentCounter++;
-        return currentValue;
-      }
-
-      if (newEntryIterator.hasNext()) {
-        Map.Entry<OIdentifiable, OModifiableInteger> entry = newEntryIterator.next();
-        currentValue = entry.getKey();
-        currentFinalCounter = entry.getValue().intValue();
-        currentCounter = 1;
-        return currentValue;
-      }
-
-      if (nextChange != null && nextSBTreeEntry != null) {
-        if (nextChange.getKey().compareTo(nextSBTreeEntry.getKey()) < 0) {
-          currentValue = nextChange.getKey();
-          currentFinalCounter = nextChange.getValue().applyTo(0);
-          currentCounter = 1;
-
-          nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
-        } else {
-          currentValue = nextSBTreeEntry.getKey();
-          currentFinalCounter = nextSBTreeEntry.getValue();
-          currentCounter = 1;
-
-          nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
-          if (nextChange != null && nextChange.getKey().equals(currentValue))
-            nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
-        }
-      } else if (nextChange != null) {
-        currentValue = nextChange.getKey();
-        currentFinalCounter = nextChange.getValue().applyTo(0);
-        currentCounter = 1;
-
-        nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
-      } else if (nextSBTreeEntry != null) {
-        currentValue = nextSBTreeEntry.getKey();
-        currentFinalCounter = nextSBTreeEntry.getValue();
-        currentCounter = 1;
-
-        nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
-      } else
-        throw new NoSuchElementException();
-
-      if (convertToRecord)
-        return currentValue.getRecord();
-
-      return currentValue;
-    }
-
-    @Override
-    public void remove() {
-      if (currentRemoved)
-        throw new IllegalStateException("Current element has already been removed");
-
-      if (currentValue == null)
-        throw new IllegalStateException("Next method was not called for given iterator");
-
-      if (removeFromNewEntries(currentValue)) {
-        if (size >= 0)
-          size--;
-      } else {
-        Change counter = changedValues.get(currentValue);
-        if (counter != null) {
-          counter.decrement();
-          if (size >= 0)
-            if (counter.isUndefined())
-              size = -1;
-            else
-              size--;
-        } else {
-          if (nextChange != null) {
-            changedValues.put(currentValue, new DiffChange(-1));
-            changedValuesIterator = changedValues.tailMap(nextChange.getKey(), false).entrySet().iterator();
-          } else {
-            changedValues.put(currentValue, new DiffChange(-1));
-          }
-
-          size = -1;
-        }
-      }
-
-      if (updateOwner)
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-            OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue, false));
-      currentRemoved = true;
-    }
-
-    private Map.Entry<OIdentifiable, Change> nextChangedNotRemovedEntry(Iterator<Map.Entry<OIdentifiable, Change>> iterator) {
-      Map.Entry<OIdentifiable, Change> entry;
-
-      while (iterator.hasNext()) {
-        entry = iterator.next();
-        // TODO workaround
-        if (entry.getValue().applyTo(0) > 0)
-          return entry;
-      }
-
-      return null;
-    }
-
-    @Override
-    public void reset() {
-      newEntryIterator = newEntries.entrySet().iterator();
-
-      this.changedValuesIterator = changedValues.entrySet().iterator();
-      if (sbTreeIterator != null)
-        this.sbTreeIterator.reset();
-
-      nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
-
-      if (sbTreeIterator != null)
-        nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
-    }
-
-    @Override
-    public int size() {
-      return OSBTreeRidBag.this.size();
     }
   }
 
@@ -762,281 +1013,6 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
 
     return null;
-  }
-
-  private final class SBTreeMapEntryIterator implements Iterator<Map.Entry<OIdentifiable, Integer>>, OResettable {
-    private LinkedList<Map.Entry<OIdentifiable, Integer>> preFetchedValues;
-    private OIdentifiable                                 firstKey;
-
-    private final int                                     prefetchSize;
-
-    public SBTreeMapEntryIterator(int prefetchSize) {
-      this.prefetchSize = prefetchSize;
-
-      init();
-    }
-
-    private void prefetchData(boolean firstTime) {
-      final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
-      try {
-        tree.loadEntriesMajor(firstKey, firstTime, true, new OTreeInternal.RangeResultListener<OIdentifiable, Integer>() {
-          @Override
-          public boolean addResult(final Map.Entry<OIdentifiable, Integer> entry) {
-            preFetchedValues.add(new Map.Entry<OIdentifiable, Integer>() {
-              @Override
-              public OIdentifiable getKey() {
-                return entry.getKey();
-              }
-
-              @Override
-              public Integer getValue() {
-                return entry.getValue();
-              }
-
-              @Override
-              public Integer setValue(Integer v) {
-                throw new UnsupportedOperationException("setValue");
-              }
-            });
-
-            return preFetchedValues.size() <= prefetchSize;
-          }
-        });
-      } finally {
-        releaseTree();
-      }
-
-      if (preFetchedValues.isEmpty())
-        preFetchedValues = null;
-      else
-        firstKey = preFetchedValues.getLast().getKey();
-    }
-
-    @Override
-    public boolean hasNext() {
-      return preFetchedValues != null;
-    }
-
-    @Override
-    public Map.Entry<OIdentifiable, Integer> next() {
-      final Map.Entry<OIdentifiable, Integer> entry = preFetchedValues.removeFirst();
-      if (preFetchedValues.isEmpty())
-        prefetchData(false);
-
-      return entry;
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void reset() {
-      init();
-    }
-
-    private void init() {
-      OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
-      try {
-        firstKey = tree.firstKey();
-      } finally {
-        releaseTree();
-      }
-
-      if (firstKey == null) {
-        this.preFetchedValues = null;
-        return;
-      }
-
-      this.preFetchedValues = new LinkedList<Map.Entry<OIdentifiable, Integer>>();
-      prefetchData(true);
-    }
-  }
-
-  public static interface Change {
-    public static final int SIZE = OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
-
-    void increment();
-
-    void decrement();
-
-    int applyTo(Integer value);
-
-    /**
-     * Checks if put increment operation can be safely performed.
-     * 
-     * @return true if increment operation can be safely performed.
-     */
-    boolean isUndefined();
-
-    void applyDiff(int delta);
-
-    int serialize(byte[] stream, int offset);
-  }
-
-  private static class DiffChange implements Change {
-    private static final byte TYPE = 0;
-    private int               delta;
-
-    private DiffChange(int delta) {
-      this.delta = delta;
-    }
-
-    @Override
-    public void increment() {
-      delta++;
-    }
-
-    @Override
-    public void decrement() {
-      delta--;
-    }
-
-    @Override
-    public int applyTo(Integer value) {
-      int result;
-      if (value == null)
-        result = delta;
-      else
-        result = value + delta;
-
-      if (result < 0)
-        result = 0;
-
-      return result;
-    }
-
-    @Override
-    public boolean isUndefined() {
-      return delta < 0;
-    }
-
-    @Override
-    public void applyDiff(int delta) {
-      this.delta += delta;
-    }
-
-    @Override
-    public int serialize(byte[] stream, int offset) {
-      OByteSerializer.INSTANCE.serialize(TYPE, stream, offset);
-      OIntegerSerializer.INSTANCE.serialize(delta, stream, offset + OByteSerializer.BYTE_SIZE);
-      return OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
-    }
-  }
-
-  private static class AbsoluteChange implements Change {
-    private static final byte TYPE = 1;
-    private int               value;
-
-    private AbsoluteChange(int value) {
-      this.value = value;
-
-      checkPositive();
-    }
-
-    @Override
-    public void increment() {
-      value++;
-    }
-
-    @Override
-    public void decrement() {
-      value--;
-
-      checkPositive();
-    }
-
-    @Override
-    public int applyTo(Integer value) {
-      return this.value;
-    }
-
-    @Override
-    public boolean isUndefined() {
-      return true;
-    }
-
-    @Override
-    public void applyDiff(int delta) {
-      value += delta;
-
-      checkPositive();
-    }
-
-    @Override
-    public int serialize(byte[] stream, int offset) {
-      OByteSerializer.INSTANCE.serialize(TYPE, stream, offset);
-      OIntegerSerializer.INSTANCE.serialize(value, stream, offset + OByteSerializer.BYTE_SIZE);
-      return OByteSerializer.BYTE_SIZE + OIntegerSerializer.INT_SIZE;
-    }
-
-    private void checkPositive() {
-      if (value < 0)
-        value = 0;
-    }
-  }
-
-  public static class ChangeSerializationHelper {
-    public static final ChangeSerializationHelper INSTANCE = new ChangeSerializationHelper();
-
-    public Change deserializeChange(byte[] stream, int offset) {
-      Integer value = OIntegerSerializer.INSTANCE.deserialize(stream, offset + OByteSerializer.BYTE_SIZE);
-      switch (OByteSerializer.INSTANCE.deserialize(stream, offset)) {
-      case AbsoluteChange.TYPE:
-        return new AbsoluteChange(value);
-      case DiffChange.TYPE:
-        return new DiffChange(value);
-      default:
-        throw new IllegalArgumentException("Change type is incorrect");
-      }
-    }
-
-    public Map<OIdentifiable, Change> deserializeChanges(byte[] stream, int offset) {
-      Integer count = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
-      offset += OIntegerSerializer.INT_SIZE;
-
-      final HashMap<OIdentifiable, Change> res = new HashMap<OIdentifiable, Change>();
-      for (int i = 0; i < count; i++) {
-        ORecordId rid = OLinkSerializer.INSTANCE.deserialize(stream, offset);
-        offset += OLinkSerializer.RID_SIZE;
-        Change change = ChangeSerializationHelper.INSTANCE.deserializeChange(stream, offset);
-        offset += Change.SIZE;
-
-        final OIdentifiable identifiable;
-        if (rid.isTemporary() && rid.getRecord() != null)
-          identifiable = rid.getRecord();
-        else
-          identifiable = rid;
-
-        res.put(identifiable, change);
-      }
-
-      return res;
-    }
-
-    public <K> void serializeChanges(Map<K, Change> changes, OBinarySerializer<K> keySerializer, byte[] stream, int offset) {
-      OIntegerSerializer.INSTANCE.serialize(changes.size(), stream, offset);
-      offset += OIntegerSerializer.INT_SIZE;
-
-      for (Map.Entry<K, Change> entry : changes.entrySet()) {
-        keySerializer.serialize(entry.getKey(), stream, offset);
-        offset += keySerializer.getObjectSize(entry.getKey());
-
-        offset += entry.getValue().serialize(stream, offset);
-      }
-    }
-
-    public int getChangesSerializedSize(int changesCount) {
-      return changesCount * (OLinkSerializer.RID_SIZE + Change.SIZE);
-    }
-  }
-
-  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
-    for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
-    }
   }
 
 }

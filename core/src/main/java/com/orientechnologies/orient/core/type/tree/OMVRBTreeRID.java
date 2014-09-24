@@ -53,7 +53,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  */
 public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiable> implements
     OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordLazyMultiValue {
-  private IdentityHashMap<ORecord<?>, Object>                          newEntries;
+  private IdentityHashMap<ORecord, Object>                             newEntries;
   private boolean                                                      autoConvertToRecord = true;
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners     = Collections
                                                                                                .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
@@ -61,7 +61,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   private static final Object                                          NEWMAP_VALUE        = new Object();
   private static final long                                            serialVersionUID    = 1L;
 
-	private boolean marshalling;
+  private boolean                                                      marshalling;
 
   public OMVRBTreeRID(Collection<OIdentifiable> iInitValues) {
     this();
@@ -109,7 +109,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   }
 
   @Override
-  public OMVRBTreePersistent<OIdentifiable, OIdentifiable> setOwner(final ORecord<?> owner) {
+  public OMVRBTreePersistent<OIdentifiable, OIdentifiable> setOwner(final ORecord owner) {
     super.setOwner(owner);
     return this;
   }
@@ -134,14 +134,14 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 
     if (e.getIdentity().isNew()) {
-      final ORecord<?> record = e.getRecord();
+      final ORecord record = e.getRecord();
 
       if (record == null)
         throw new OTransactionException("Cannot insert item in mvrb-tree because the transactional item was not found.");
 
       // ADD IN TEMP LIST
       if (newEntries == null)
-        newEntries = new IdentityHashMap<ORecord<?>, Object>();
+        newEntries = new IdentityHashMap<ORecord, Object>();
       else if (newEntries.containsKey(record))
         return record;
       newEntries.put(record, NEWMAP_VALUE);
@@ -151,25 +151,25 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
 
     final OIdentifiable oldValue = super.internalPut(e, null);
 
-		if(!isMarshalling()) {
-			if (oldValue != null)
-				fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-								OMultiValueChangeEvent.OChangeType.UPDATE, e, e, oldValue));
-			else
-				fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
-								e, e));
-		}
+    if (!isMarshalling()) {
+      if (oldValue != null)
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.UPDATE, e, e, oldValue));
+      else
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
+            e, e));
+    }
 
     return oldValue;
   }
 
-	public boolean isMarshalling() {
-		return marshalling;
-	}
+  public boolean isMarshalling() {
+    return marshalling;
+  }
 
-	public void setMarshalling(boolean marshalling) {
-		this.marshalling = marshalling;
-	}
+  public void setMarshalling(boolean marshalling) {
+    this.marshalling = marshalling;
+  }
 
   public void putAll(final Collection<OIdentifiable> coll) {
     final long timer = PROFILER.startChrono();
@@ -215,7 +215,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
 
     if (hasNewItems()) {
-      final Collection<ORecord<?>> v = newEntries.keySet();
+      final Collection<ORecord> v = newEntries.keySet();
       v.removeAll(c);
       if (newEntries.size() == 0)
         newEntries = null;
@@ -231,7 +231,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   public boolean retainAll(final Collection<?> c) {
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
     if (hasNewItems()) {
-      final Collection<ORecord<?>> v = newEntries.keySet();
+      final Collection<ORecord> v = newEntries.keySet();
       v.retainAll(c);
       if (newEntries.size() == 0)
         newEntries = null;
@@ -348,7 +348,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
       int start = result.length;
       result = Arrays.copyOf(result, start + newEntries.size());
 
-      for (ORecord<?> r : newEntries.keySet()) {
+      for (ORecord r : newEntries.keySet()) {
         result[start++] = r;
       }
     }
@@ -364,7 +364,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
       int start = result.length;
       result = Arrays.copyOf(result, start + newEntries.size());
 
-      for (ORecord<?> r : newEntries.keySet()) {
+      for (ORecord r : newEntries.keySet()) {
         result[start++] = (T) r;
       }
     }
@@ -432,9 +432,9 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   public boolean saveAllNewEntries() {
     if (hasNewItems()) {
       // TRIES TO SAVE THE NEW ENTRIES
-      final Set<ORecord<?>> temp = new HashSet<ORecord<?>>(newEntries.keySet());
+      final Set<ORecord> temp = new HashSet<ORecord>(newEntries.keySet());
 
-      for (ORecord<?> record : temp) {
+      for (ORecord record : temp) {
         if (record.getIdentity().isNew())
           record.save();
 
@@ -475,7 +475,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
       buffer.append(newEntries.size());
       buffer.append("): ");
       boolean first = true;
-      for (ORecord<?> item : newEntries.keySet()) {
+      for (ORecord item : newEntries.keySet()) {
         if (!first) {
           buffer.append(", ");
           first = false;
@@ -517,7 +517,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     return (RET) this;
   }
 
-  public IdentityHashMap<ORecord<?>, Object> getTemporaryEntries() {
+  public IdentityHashMap<ORecord, Object> getTemporaryEntries() {
     return newEntries;
   }
 

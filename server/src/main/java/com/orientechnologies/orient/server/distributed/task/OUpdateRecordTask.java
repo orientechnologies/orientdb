@@ -15,9 +15,14 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -26,10 +31,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Distributed updated record task used for synchronization.
@@ -63,7 +64,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "updating record %s/%s v.%s",
         database.getName(), rid.toString(), version.toString());
 
-    ORecordInternal<?> loadedRecord = rid.getRecord();
+    ORecord loadedRecord = rid.getRecord();
     if (loadedRecord == null)
       throw new ORecordNotFoundException("Record " + rid + " was not found on update");
 
@@ -72,7 +73,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
       final ODocument newDocument = new ODocument().fromStream(content);
       ((ODocument) loadedRecord).merge(newDocument, false, false);
     } else
-      loadedRecord.fill(rid, version, content, true);
+      ORecordInternal.fill(loadedRecord, rid, version, content, true);
 
     loadedRecord = database.save(loadedRecord);
 
@@ -88,7 +89,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OUpdateRecordTask getFixTask(ODistributedRequest iRequest, Object iBadResponse, final Object iGoodResponse) {
+  public OUpdateRecordTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
     final ORecordVersion versionCopy = version.copy();
     versionCopy.setRollbackMode();
 
@@ -96,7 +97,10 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OAbstractRemoteTask getUndoTask(ODistributedRequest iRequest, Object iBadResponse) {
+  public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
+    if (iBadResponse instanceof Throwable)
+      return null;
+
     return new OUpdateRecordTask(rid, null, null, previousContent, previousVersion);
   }
 

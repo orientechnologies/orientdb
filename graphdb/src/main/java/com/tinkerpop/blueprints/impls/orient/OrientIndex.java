@@ -1,12 +1,7 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexTxAwareMultiValue;
 import com.orientechnologies.orient.core.index.OIndexTxAwareOneValue;
@@ -23,16 +18,20 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.WrappingCloseableIterable;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 @SuppressWarnings("unchecked")
 public class OrientIndex<T extends OrientElement> implements Index<T> {
-  protected static final String      VERTEX                 = "Vertex";
-  protected static final String      EDGE                   = "Edge";
   public static final String         CONFIG_CLASSNAME       = "blueprintsIndexClass";
   public static final String         CONFIG_RECORD_MAP_NAME = "record_map_name";
-
+  protected static final String      VERTEX                 = "Vertex";
+  protected static final String      EDGE                   = "Edge";
   protected static final String      SEPARATOR              = "!=!";
 
   protected OrientBaseGraph          graph;
@@ -99,6 +98,8 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   public long count(final String key, final Object value) {
     final String keyTemp = key + SEPARATOR + value;
     final Collection<OIdentifiable> records = (Collection<OIdentifiable>) underlying.get(keyTemp);
+    if (records == null)
+      return 0;
     return records.size();
   }
 
@@ -118,6 +119,18 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     return StringFactory.indexString(this);
   }
 
+  public OIndex<?> getUnderlying() {
+    return underlying;
+  }
+
+  public void close() {
+    if (underlying != null) {
+      underlying.flush();
+      underlying = null;
+    }
+    graph = null;
+  }
+
   protected void removeElement(final T element) {
     graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
@@ -133,10 +146,6 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
       underlying.remove(keys.get(1).toString(), element.getIdentity());
       recordKeyValueIndex.remove(key, element.getIdentity());
     }
-  }
-
-  public OIndex<?> getUnderlying() {
-    return underlying;
   }
 
   private void create(final String indexName, final Class<? extends Element> indexClass, OType iKeyType) {
@@ -217,14 +226,6 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
 
     metadata.field(CONFIG_RECORD_MAP_NAME, recordKeyValueIndex.getName());
     return recordKeyValueIndex;
-  }
-
-  public void close() {
-    if (underlying != null) {
-      underlying.flush();
-      underlying = null;
-    }
-    graph = null;
   }
 
 }

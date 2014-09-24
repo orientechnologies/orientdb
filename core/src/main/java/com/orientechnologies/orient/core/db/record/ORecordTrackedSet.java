@@ -30,6 +30,7 @@ import java.util.WeakHashMap;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
@@ -40,14 +41,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> implements Set<OIdentifiable>,
     OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordElement {
-  protected final ORecord<?>                                           sourceRecord;
+  protected final ORecord                                              sourceRecord;
   protected Map<OIdentifiable, Object>                                 map             = new HashMap<OIdentifiable, Object>();
   private STATUS                                                       status          = STATUS.NOT_LOADED;
   protected final static Object                                        ENTRY_REMOVAL   = new Object();
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners = Collections
                                                                                            .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
 
-  public ORecordTrackedSet(final ORecord<?> iSourceRecord) {
+  public ORecordTrackedSet(final ORecord iSourceRecord) {
     this.sourceRecord = iSourceRecord;
     if (iSourceRecord != null)
       iSourceRecord.setDirty();
@@ -70,7 +71,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
     setDirty();
 
     if (e instanceof ODocument)
-      ((ODocument) e).addOwner(this);
+      ODocumentInternal.addOwner((ODocument) e, this);
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
         e));
@@ -86,7 +87,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
     final Object old = map.remove(o);
     if (old != null) {
       if (o instanceof ODocument)
-        ((ODocument) o).removeOwner(this);
+        ODocumentInternal.removeOwner((ODocument) o, this);
 
       setDirty();
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
@@ -144,7 +145,7 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   @SuppressWarnings("unchecked")
   public ORecordTrackedSet setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
+        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
       sourceRecord.setDirty();
     return this;
   }
@@ -155,12 +156,12 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
       sourceRecord.setDirtyNoChanged();
   }
 
-  public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
+  public void onBeforeIdentityChanged(final ORecord iRecord) {
     map.remove(iRecord);
     setDirty();
   }
 
-  public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+  public void onAfterIdentityChanged(final ORecord iRecord) {
     map.put(iRecord, ENTRY_REMOVAL);
   }
 

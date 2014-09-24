@@ -15,16 +15,6 @@
  */
 package com.orientechnologies.orient.core.processor.block;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -37,6 +27,16 @@ import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 public abstract class OAbstractBlock implements OProcessorBlock {
   protected OProcessorBlock parentBlock;
@@ -126,7 +126,7 @@ public abstract class OAbstractBlock implements OProcessorBlock {
   protected void debug(final OCommandContext iContext, final String iText, Object... iArgs) {
     if (isDebug(iContext)) {
       final Integer depthLevel = (Integer) iContext.getVariable("depthLevel");
-      final StringBuilder text = new StringBuilder();
+      final StringBuilder text = new StringBuilder(256);
       for (int i = 0; i < depthLevel; ++i)
         text.append('-');
       text.append('>');

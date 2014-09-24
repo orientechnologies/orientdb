@@ -36,27 +36,21 @@ import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
  * @since 8/7/13
  */
 public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
+  public static final int             MAX_BUCKET_SIZE_BYTES    = OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getValueAsInteger() * 1024;
   /**
    * Maximum size of key-value pair which can be put in SBTreeBonsai in bytes (24576000 by default)
    */
   private static final int            MAX_ENTREE_SIZE          = 24576000;
-
   private static final int            FREE_POINTER_OFFSET      = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int            SIZE_OFFSET              = FREE_POINTER_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int            IS_LEAF_OFFSET           = SIZE_OFFSET + OIntegerSerializer.INT_SIZE;
   private static final int            FREE_LIST_POINTER_OFFSET = IS_LEAF_OFFSET + OByteSerializer.BYTE_SIZE;
   private static final int            LEFT_SIBLING_OFFSET      = FREE_LIST_POINTER_OFFSET + OBonsaiBucketPointer.SIZE;
   private static final int            RIGHT_SIBLING_OFFSET     = LEFT_SIBLING_OFFSET + OBonsaiBucketPointer.SIZE;
-
   private static final int            TREE_SIZE_OFFSET         = RIGHT_SIBLING_OFFSET + OBonsaiBucketPointer.SIZE;
-
   private static final int            KEY_SERIALIZER_OFFSET    = TREE_SIZE_OFFSET + OLongSerializer.LONG_SIZE;
   private static final int            VALUE_SERIALIZER_OFFSET  = KEY_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
-
   private static final int            POSITIONS_ARRAY_OFFSET   = VALUE_SERIALIZER_OFFSET + OByteSerializer.BYTE_SIZE;
-
-  public static final int             MAX_BUCKET_SIZE_BYTES    = OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getValueAsInteger() * 1024;
-
   private final boolean               isLeaf;
   private final int                   offset;
 
@@ -64,6 +58,76 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   private final OBinarySerializer<V>  valueSerializer;
 
   private final Comparator<? super K> comparator               = ODefaultComparator.INSTANCE;
+
+  public static final class SBTreeEntry<K, V> implements Map.Entry<K, V>, Comparable<SBTreeEntry<K, V>> {
+    public final OBonsaiBucketPointer   leftChild;
+    public final OBonsaiBucketPointer   rightChild;
+    public final K                      key;
+    public final V                      value;
+    private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
+
+    public SBTreeEntry(OBonsaiBucketPointer leftChild, OBonsaiBucketPointer rightChild, K key, V value) {
+      this.leftChild = leftChild;
+      this.rightChild = rightChild;
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    public K getKey() {
+      return key;
+    }
+
+    @Override
+    public V getValue() {
+      return value;
+    }
+
+    @Override
+    public V setValue(V value) {
+      throw new UnsupportedOperationException("SBTreeEntry.setValue");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      SBTreeEntry that = (SBTreeEntry) o;
+
+      if (!leftChild.equals(that.leftChild))
+        return false;
+      if (!rightChild.equals(that.rightChild))
+        return false;
+      if (!key.equals(that.key))
+        return false;
+      if (value != null ? !value.equals(that.value) : that.value != null)
+        return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = leftChild.hashCode();
+      result = 31 * result + rightChild.hashCode();
+      result = 31 * result + key.hashCode();
+      result = 31 * result + (value != null ? value.hashCode() : 0);
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "SBTreeEntry{" + "leftChild=" + leftChild + ", rightChild=" + rightChild + ", key=" + key + ", value=" + value + '}';
+    }
+
+    @Override
+    public int compareTo(SBTreeEntry<K, V> other) {
+      return comparator.compare(key, other.key);
+    }
+  }
 
   public OSBTreeBonsaiBucket(OCacheEntry cacheEntry, int pageOffset, boolean isLeaf, OBinarySerializer<K> keySerializer,
       OBinarySerializer<V> valueSerializer, TrackMode trackMode) throws IOException {
@@ -113,12 +177,12 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     setByteValue(offset + VALUE_SERIALIZER_OFFSET, valueSerializerId);
   }
 
-  public void setTreeSize(long size) throws IOException {
-    setLongValue(offset + TREE_SIZE_OFFSET, size);
-  }
-
   public long getTreeSize() {
     return getLongValue(offset + TREE_SIZE_OFFSET);
+  }
+
+  public void setTreeSize(long size) throws IOException {
+    setLongValue(offset + TREE_SIZE_OFFSET, size);
   }
 
   public boolean isEmpty() {
@@ -282,13 +346,13 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     if (isLeaf) {
       byte[] serializedKey = new byte[keySize];
-      keySerializer.serializeNative(treeEntry.key, serializedKey, 0);
+      keySerializer.serializeNativeObject(treeEntry.key, serializedKey, 0);
 
       setBinaryValue(offset + freePointer, serializedKey);
       freePointer += keySize;
 
       byte[] serializedValue = new byte[valueSize];
-      valueSerializer.serializeNative(treeEntry.value, serializedValue, 0);
+      valueSerializer.serializeNativeObject(treeEntry.value, serializedValue, 0);
       setBinaryValue(offset + freePointer, serializedValue);
 
     } else {
@@ -299,7 +363,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
       freePointer += OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE;
 
       byte[] serializedKey = new byte[keySize];
-      keySerializer.serializeNative(treeEntry.key, serializedKey, 0);
+      keySerializer.serializeNativeObject(treeEntry.key, serializedKey, 0);
       setBinaryValue(offset + freePointer, serializedKey);
 
       size++;
@@ -330,7 +394,7 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     final int size = valueSerializer.getFixedLength();
 
     byte[] serializedValue = new byte[size];
-    valueSerializer.serializeNative(value, serializedValue, 0);
+    valueSerializer.serializeNativeObject(value, serializedValue, 0);
 
     byte[] oldSerializedValue = getBinaryValue(offset + entryPosition, size);
 
@@ -342,104 +406,33 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
     return 1;
   }
 
-  private void checkEntreeSize(int entreeSize) {
-    if (entreeSize > MAX_ENTREE_SIZE)
-      throw new OSBTreeException("Serialized key-value pair size bigger than allowed " + entreeSize + " vs " + MAX_ENTREE_SIZE
-          + ".");
+  public OBonsaiBucketPointer getFreeListPointer() {
+    return getBucketPointer(offset + FREE_LIST_POINTER_OFFSET);
   }
 
   public void setFreeListPointer(OBonsaiBucketPointer pointer) throws IOException {
     setBucketPointer(offset + FREE_LIST_POINTER_OFFSET, pointer);
   }
 
-  public OBonsaiBucketPointer getFreeListPointer() {
-    return getBucketPointer(offset + FREE_LIST_POINTER_OFFSET);
+  public OBonsaiBucketPointer getLeftSibling() {
+    return getBucketPointer(offset + LEFT_SIBLING_OFFSET);
   }
 
   public void setLeftSibling(OBonsaiBucketPointer pointer) throws IOException {
     setBucketPointer(offset + LEFT_SIBLING_OFFSET, pointer);
   }
 
-  public OBonsaiBucketPointer getLeftSibling() {
-    return getBucketPointer(offset + LEFT_SIBLING_OFFSET);
+  public OBonsaiBucketPointer getRightSibling() {
+    return getBucketPointer(offset + RIGHT_SIBLING_OFFSET);
   }
 
   public void setRightSibling(OBonsaiBucketPointer pointer) throws IOException {
     setBucketPointer(offset + RIGHT_SIBLING_OFFSET, pointer);
   }
 
-  public OBonsaiBucketPointer getRightSibling() {
-    return getBucketPointer(offset + RIGHT_SIBLING_OFFSET);
-  }
-
-  public static final class SBTreeEntry<K, V> implements Map.Entry<K, V>, Comparable<SBTreeEntry<K, V>> {
-    private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;
-
-    public final OBonsaiBucketPointer   leftChild;
-    public final OBonsaiBucketPointer   rightChild;
-    public final K                      key;
-    public final V                      value;
-
-    public SBTreeEntry(OBonsaiBucketPointer leftChild, OBonsaiBucketPointer rightChild, K key, V value) {
-      this.leftChild = leftChild;
-      this.rightChild = rightChild;
-      this.key = key;
-      this.value = value;
-    }
-
-    @Override
-    public K getKey() {
-      return key;
-    }
-
-    @Override
-    public V getValue() {
-      return value;
-    }
-
-    @Override
-    public V setValue(V value) {
-      throw new UnsupportedOperationException("SBTreeEntry.setValue");
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-      SBTreeEntry that = (SBTreeEntry) o;
-
-      if (!leftChild.equals(that.leftChild))
-        return false;
-      if (!rightChild.equals(that.rightChild))
-        return false;
-      if (!key.equals(that.key))
-        return false;
-      if (value != null ? !value.equals(that.value) : that.value != null)
-        return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = leftChild.hashCode();
-      result = 31 * result + rightChild.hashCode();
-      result = 31 * result + key.hashCode();
-      result = 31 * result + (value != null ? value.hashCode() : 0);
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return "SBTreeEntry{" + "leftChild=" + leftChild + ", rightChild=" + rightChild + ", key=" + key + ", value=" + value + '}';
-    }
-
-    @Override
-    public int compareTo(SBTreeEntry<K, V> other) {
-      return comparator.compare(key, other.key);
-    }
+  private void checkEntreeSize(int entreeSize) {
+    if (entreeSize > MAX_ENTREE_SIZE)
+      throw new OSBTreeException("Serialized key-value pair size bigger than allowed " + entreeSize + " vs " + MAX_ENTREE_SIZE
+          + ".");
   }
 }

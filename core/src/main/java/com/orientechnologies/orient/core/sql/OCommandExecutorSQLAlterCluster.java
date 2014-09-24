@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -136,7 +137,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
   }
 
   protected OCluster getCluster() {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
     if (clusterId > -1) {
       return database.getStorage().getClusterById(clusterId);
     } else {

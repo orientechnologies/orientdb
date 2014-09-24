@@ -27,12 +27,12 @@ public class OObjectEnumLazyMap<TYPE extends Enum> extends HashMap<Object, Objec
     OObjectLazyEnumSerializer<Map<Object, Object>> {
   private static final long         serialVersionUID = -8606432090996808181L;
 
-  private final ORecord<?>          sourceRecord;
+  private final ORecord          sourceRecord;
   private final Map<Object, Object> underlying;
   private boolean                   converted        = false;
   private final Class<Enum>         enumClass;
 
-  public OObjectEnumLazyMap(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final Map<Object, Object> iRecordMap) {
+  public OObjectEnumLazyMap(final Class<Enum> iEnumClass, final ORecord iSourceRecord, final Map<Object, Object> iRecordMap) {
     super();
     this.sourceRecord = iSourceRecord;
     this.underlying = iRecordMap;
@@ -40,7 +40,7 @@ public class OObjectEnumLazyMap<TYPE extends Enum> extends HashMap<Object, Objec
     this.enumClass = iEnumClass;
   }
 
-  public OObjectEnumLazyMap(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final Map<Object, Object> iRecordMap,
+  public OObjectEnumLazyMap(final Class<Enum> iEnumClass, final ORecord iSourceRecord, final Map<Object, Object> iRecordMap,
       final Map<Object, Object> iSourceMap) {
     this(iEnumClass, iSourceRecord, iRecordMap);
     putAll(iSourceMap);

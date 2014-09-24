@@ -28,12 +28,12 @@ public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> im
     OObjectLazyCustomSerializer<Map<Object, TYPE>> {
   private static final long         serialVersionUID = -8606432090996808181L;
 
-  private final ORecord<?>          sourceRecord;
+  private final ORecord          sourceRecord;
   private final Map<Object, Object> underlying;
   private boolean                   converted        = false;
   private final Class<?>            deserializeClass;
 
-  public OObjectCustomSerializerMap(final Class<?> iDeserializeClass, final ORecord<?> iSourceRecord,
+  public OObjectCustomSerializerMap(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
       final Map<Object, Object> iRecordMap) {
     super();
     this.sourceRecord = iSourceRecord;
@@ -42,7 +42,7 @@ public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> im
     this.deserializeClass = iDeserializeClass;
   }
 
-  public OObjectCustomSerializerMap(final Class<?> iDeserializeClass, final ORecord<?> iSourceRecord,
+  public OObjectCustomSerializerMap(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
       final Map<Object, Object> iRecordMap, final Map<Object, Object> iSourceMap) {
     this(iDeserializeClass, iSourceRecord, iRecordMap);
     putAll(iSourceMap);

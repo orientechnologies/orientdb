@@ -68,9 +68,17 @@ public class OBuffer implements Externalizable {
 
   @Override
   public boolean equals(final Object o) {
-    if (!(o instanceof OBuffer))
+    if (o==null || !(o instanceof OBuffer))
       return false;
 
     return OIOUtils.equals(buffer, ((OBuffer) o).buffer);
   }
+
+  @Override
+  public int hashCode() {
+	// Use of reference hashCode. Usage of deep hashCode should be considered
+	return buffer!=null?buffer.hashCode():0;
+  }
+  
+  
 }

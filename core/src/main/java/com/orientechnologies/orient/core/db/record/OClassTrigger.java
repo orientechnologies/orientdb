@@ -16,14 +16,6 @@
 
 package com.orientechnologies.orient.core.db.record;
 
-import java.lang.reflect.Method;
-
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -45,6 +37,13 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
+import javax.script.Bindings;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.lang.reflect.Method;
+
 /**
  * Author : henryzhao81@gmail.com Feb 19, 2013
  * 
@@ -57,22 +56,21 @@ public class OClassTrigger extends ODocumentHookAbstract {
 
   // Class Level Trigger (class custom attribute)
   public static final String ONBEFORE_CREATED   = "onBeforeCreate";
-  public static final String ONAFTER_CREATED    = "onAfterCreate";
-  public static final String ONBEFORE_READ      = "onBeforeRead";
-  public static final String ONAFTER_READ       = "onAfterRead";
-  public static final String ONBEFORE_UPDATED   = "onBeforeUpdate";
-  public static final String ONAFTER_UPDATED    = "onAfterUpdate";
-  public static final String ONBEFORE_DELETE    = "onBeforeDelete";
-  public static final String ONAFTER_DELETE     = "onAfterDelete";
-
   // Record Level Trigger (property name)
   public static final String PROP_BEFORE_CREATE = ONBEFORE_CREATED;
+  public static final String ONAFTER_CREATED    = "onAfterCreate";
   public static final String PROP_AFTER_CREATE  = ONAFTER_CREATED;
+  public static final String ONBEFORE_READ      = "onBeforeRead";
   public static final String PROP_BEFORE_READ   = ONBEFORE_READ;
+  public static final String ONAFTER_READ       = "onAfterRead";
   public static final String PROP_AFTER_READ    = ONAFTER_READ;
+  public static final String ONBEFORE_UPDATED   = "onBeforeUpdate";
   public static final String PROP_BEFORE_UPDATE = ONBEFORE_UPDATED;
+  public static final String ONAFTER_UPDATED    = "onAfterUpdate";
   public static final String PROP_AFTER_UPDATE  = ONAFTER_UPDATED;
+  public static final String ONBEFORE_DELETE    = "onBeforeDelete";
   public static final String PROP_BEFORE_DELETE = ONBEFORE_DELETE;
+  public static final String ONAFTER_DELETE     = "onAfterDelete";
   public static final String PROP_AFTER_DELETE  = ONAFTER_DELETE;
 
   public OClassTrigger() {
@@ -174,8 +172,21 @@ public class OClassTrigger extends ODocumentHookAbstract {
     }
   }
 
+  public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
+    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
+      return RESULT.RECORD_NOT_CHANGED;
+
+    if (!(iRecord instanceof ODocument))
+      return RESULT.RECORD_NOT_CHANGED;
+
+    final ODocument document = (ODocument) iRecord;
+    if (document.getSchemaClass() != null && document.getSchemaClass().isSubClassOf(CLASSNAME))
+      return super.onTrigger(iType, iRecord);
+    return RESULT.RECORD_NOT_CHANGED;
+  }
+
   private Object checkClzAttribute(final ODocument iDocument, String attr) {
-    OClass clz = iDocument.getSchemaClass();
+    final OClass clz = iDocument.getSchemaClass();
     if (clz != null && clz.isSubClassOf(CLASSNAME)) {
       OFunction func = null;
       String fieldName = ((OClassImpl) clz).getCustom(attr);
@@ -188,7 +199,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
       }
       if (fieldName != null && fieldName.length() > 0) {
         // check if it is reflection or not
-        Object[] clzMethod = this.checkMethod(fieldName);
+        final Object[] clzMethod = this.checkMethod(fieldName);
         if (clzMethod != null)
           return clzMethod;
         func = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction(fieldName);
@@ -206,10 +217,11 @@ public class OClassTrigger extends ODocumentHookAbstract {
           }
         }
       } else {
-        ODocument funcDoc = iDocument.field(attr);
-        if (funcDoc != null) {
-          func = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary()
-              .getFunction((String) funcDoc.field("name"));
+        final Object funcProp = iDocument.field(attr);
+        if (funcProp != null) {
+          final String funcName = funcProp instanceof ODocument ? (String) ((ODocument) funcProp).field("name") : funcProp
+              .toString();
+          func = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction(funcName);
         }
       }
       return func;
@@ -236,19 +248,6 @@ public class OClassTrigger extends ODocumentHookAbstract {
     }
   }
 
-  public RESULT onTrigger(final TYPE iType, final ORecord<?> iRecord) {
-    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
-      return RESULT.RECORD_NOT_CHANGED;
-
-    if (!(iRecord instanceof ODocument))
-      return RESULT.RECORD_NOT_CHANGED;
-
-    final ODocument document = (ODocument) iRecord;
-    if (document.getSchemaClass() != null && document.getSchemaClass().isSubClassOf(CLASSNAME))
-      return super.onTrigger(iType, iRecord);
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
   private RESULT executeMethod(final ODocument iDocument, final Object[] clzMethod) {
     if (clzMethod[0] instanceof Class && clzMethod[1] instanceof Method) {
       Method method = (Method) clzMethod[1];
@@ -271,7 +270,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
     if (func == null)
       return RESULT.RECORD_NOT_CHANGED;
 
-    ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !(db instanceof ODatabaseRecordTx))
       db = db.getUnderlying();
     // final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(funcName);

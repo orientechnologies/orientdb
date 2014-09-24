@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -24,6 +25,7 @@ import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
 /**
@@ -47,6 +49,12 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
 
   public ORecordLazySet(final ODocument iSourceRecord) {
     super(iSourceRecord);
+  }
+
+  public ORecordLazySet(ODocument iSourceRecord, Collection<OIdentifiable> iOrigin) {
+    this(iSourceRecord);
+    if (iOrigin != null && !iOrigin.isEmpty())
+      addAll(iOrigin);
   }
 
   @Override
@@ -108,7 +116,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
     setDirty();
 
     if (e instanceof ODocument)
-      ((ODocument) e).addOwner(this);
+      ODocumentInternal.addOwner((ODocument) e, this);
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
         e));
 
@@ -131,7 +139,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   }
 
   @Override
-  public void onAfterIdentityChanged(ORecord<?> iRecord) {
+  public void onAfterIdentityChanged(ORecord iRecord) {
     if (iRecord instanceof ORecord)
       map.put(iRecord, iRecord);
     else

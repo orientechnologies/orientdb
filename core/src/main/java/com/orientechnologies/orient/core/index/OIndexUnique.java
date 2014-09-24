@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 
 import java.util.Iterator;
@@ -31,8 +32,9 @@ import java.util.Set;
  * 
  */
 public class OIndexUnique extends OIndexOneValue {
-  public OIndexUnique(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm) {
-    super(typeId, algorithm, engine, valueContainerAlgorithm);
+  public OIndexUnique(String typeId, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm,
+      ODocument metadata) {
+    super(typeId, algorithm, engine, valueContainerAlgorithm, metadata);
   }
 
   @Override
@@ -50,16 +52,23 @@ public class OIndexUnique extends OIndexOneValue {
 
         if (value != null) {
           // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
-          if (!value.equals(iSingleValue))
-            throw new ORecordDuplicatedException(String.format(
-                "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
-          else
+          if (!value.equals(iSingleValue)) {
+            final boolean mergeSameKey = metadata != null && (Boolean) metadata.field(OIndex.MERGE_KEYS);
+            if (mergeSameKey)
+              // IGNORE IT, THE EXISTENT KEY HAS BEEN MERGED
+              ;
+            else
+              throw new ORecordDuplicatedException(String.format(
+                  "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                  iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
+          } else
             return this;
         }
 
         if (!iSingleValue.getIdentity().isPersistent())
-          ((ORecord<?>) iSingleValue.getRecord()).save();
+          ((ORecord) iSingleValue.getRecord()).save();
+
+				markStorageDirty();
 
         indexEngine.put(key, iSingleValue.getIdentity());
         return this;
@@ -70,6 +79,16 @@ public class OIndexUnique extends OIndexOneValue {
     } finally {
       modificationLock.releaseModificationLock();
     }
+  }
+
+  @Override
+  public boolean canBeUsedInEqualityOperators() {
+    return true;
+  }
+
+  @Override
+  public boolean supportsOrderedIterations() {
+    return indexEngine.hasRangeQuerySupport();
   }
 
   @Override
@@ -144,15 +163,5 @@ public class OIndexUnique extends OIndexOneValue {
       else
         assert false : "Provided value can not be committed";
     }
-  }
-
-  @Override
-  public boolean canBeUsedInEqualityOperators() {
-    return true;
-  }
-
-  @Override
-  public boolean supportsOrderedIterations() {
-    return indexEngine.hasRangeQuerySupport();
   }
 }

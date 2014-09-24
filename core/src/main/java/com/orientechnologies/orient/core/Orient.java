@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core;
 
-import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -24,6 +23,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
@@ -34,42 +34,45 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
-  public static final String                      ORIENTDB_HOME          = "ORIENTDB_HOME";
-  public static final String                      URL_SYNTAX             = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+  public static final String                                                           ORIENTDB_HOME          = "ORIENTDB_HOME";
+  public static final String                                                           URL_SYNTAX             = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  protected static final Orient                   instance               = new Orient();
-  protected static boolean                        registerDatabaseByPath = false;
+  protected static final Orient                                                        instance               = new Orient();
+  protected static boolean                                                             registerDatabaseByPath = false;
 
-  protected final ConcurrentMap<String, OEngine>  engines                = new ConcurrentHashMap<String, OEngine>();
-  protected final ConcurrentMap<String, OStorage> storages               = new ConcurrentHashMap<String, OStorage>();
+  protected final ConcurrentMap<String, OEngine>                                       engines                = new ConcurrentHashMap<String, OEngine>();
+  protected final ConcurrentMap<String, OStorage>                                      storages               = new ConcurrentHashMap<String, OStorage>();
 
-  protected final Set<ODatabaseLifecycleListener> dbLifecycleListeners   = new HashSet<ODatabaseLifecycleListener>();
-  protected final ODatabaseFactory                databaseFactory        = new ODatabaseFactory();
-  protected final OScriptManager                  scriptManager          = new OScriptManager();
-  protected final Timer                           timer                  = new Timer(true);
-  protected final ThreadGroup                     threadGroup            = new ThreadGroup("OrientDB");
-  protected final AtomicInteger                   serialId               = new AtomicInteger();
-  protected ORecordFactoryManager                 recordFactoryManager   = new ORecordFactoryManager();
-  protected OrientShutdownHook                    shutdownHook;
-  protected OMemoryWatchDog                       memoryWatchDog;
-  protected OProfilerMBean                        profiler               = new OProfiler();
-  protected ODatabaseThreadLocalFactory           databaseThreadFactory;
-
-  protected volatile boolean                      active                 = false;
-  protected ThreadPoolExecutor                    workers;
-
-  private final ReadWriteLock                     engineLock             = new ReentrantReadWriteLock();
+  protected final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners   = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
+  protected final ODatabaseFactory                                                     databaseFactory        = new ODatabaseFactory();
+  protected final OScriptManager                                                       scriptManager          = new OScriptManager();
+  protected final Timer                                                                timer                  = new Timer(true);
+  protected final ThreadGroup                                                          threadGroup            = new ThreadGroup(
+                                                                                                                  "OrientDB");
+  protected final AtomicInteger                                                        serialId               = new AtomicInteger();
+  private final ReadWriteLock                                                          engineLock             = new ReentrantReadWriteLock();
+  protected ORecordFactoryManager                                                      recordFactoryManager   = new ORecordFactoryManager();
+  protected ORecordConflictStrategyFactory                                             recordConflictStrategy = new ORecordConflictStrategyFactory();
+  protected OrientShutdownHook                                                         shutdownHook;
+  protected OMemoryWatchDog                                                            memoryWatchDog;
+  protected OProfilerMBean                                                             profiler               = new OProfiler();
+  protected ODatabaseThreadLocalFactory                                                databaseThreadFactory;
+  protected volatile boolean                                                           active                 = false;
+  protected ThreadPoolExecutor                                                         workers;
 
   protected Orient() {
     super(true);
@@ -98,7 +101,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Tells if to register database by path. Default is false. Setting to true allows to have multiple databases in different path
    * with the same name.
-   * 
+   *
    * @see #setRegisterDatabaseByPath(boolean)
    * @return
    */
@@ -109,11 +112,15 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Register database by path. Default is false. Setting to true allows to have multiple databases in different path with the same
    * name.
-   * 
+   *
    * @param iValue
    */
   public static void setRegisterDatabaseByPath(final boolean iValue) {
     registerDatabaseByPath = iValue;
+  }
+
+  public ORecordConflictStrategyFactory getRecordConflictStrategy() {
+    return recordConflictStrategy;
   }
 
   public Orient startup() {
@@ -443,11 +450,20 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {
-    return dbLifecycleListeners.iterator();
+    return dbLifecycleListeners.keySet().iterator();
   }
 
   public void addDbLifecycleListener(final ODatabaseLifecycleListener iListener) {
-    dbLifecycleListeners.add(iListener);
+    final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> tmp = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>(
+        dbLifecycleListeners);
+    tmp.put(iListener, iListener.getPriority());
+    dbLifecycleListeners.clear();
+    for (ODatabaseLifecycleListener.PRIORITY p : ODatabaseLifecycleListener.PRIORITY.values()) {
+      for (Map.Entry<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> e : tmp.entrySet()) {
+        if (e.getValue() == p)
+          dbLifecycleListeners.put(e.getKey(), e.getValue());
+      }
+    }
   }
 
   public void removeDbLifecycleListener(final ODatabaseLifecycleListener iListener) {

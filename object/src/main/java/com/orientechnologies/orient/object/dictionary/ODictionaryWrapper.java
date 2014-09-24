@@ -16,11 +16,11 @@
 package com.orientechnologies.orient.object.dictionary;
 
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Wrapper of dictionary instance that convert values in records.
@@ -35,7 +35,7 @@ public class ODictionaryWrapper extends ODictionary<Object> {
 
 	@SuppressWarnings("unchecked")
 	public <RET extends Object> RET get(final String iKey, final String iFetchPlan) {
-		final ORecordInternal<?> record = super.get(iKey);
+		final ORecord record = super.get(iKey);
 		return (RET) database.getUserObjectByRecord(record, iFetchPlan);
 	}
 

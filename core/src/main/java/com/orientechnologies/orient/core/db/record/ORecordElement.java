@@ -63,10 +63,10 @@ public interface ORecordElement {
   /**
    * Internal only.
    */
-  public void onBeforeIdentityChanged(ORecord<?> iRecord);
+  public void onBeforeIdentityChanged(ORecord iRecord);
 
   /**
    * Internal only.
    */
-  public void onAfterIdentityChanged(ORecord<?> iRecord);
+  public void onAfterIdentityChanged(ORecord iRecord);
 }

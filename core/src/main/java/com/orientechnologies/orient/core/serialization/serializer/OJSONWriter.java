@@ -60,7 +60,10 @@ public class OJSONWriter {
   }
 
   public static String writeValue(Object iValue, final String iFormat) throws IOException {
-    final StringBuilder buffer = new StringBuilder();
+    if (iValue == null)
+      return "null";
+
+    final StringBuilder buffer = new StringBuilder(64);
 
     final boolean oldAutoConvertSettings;
 
@@ -70,10 +73,7 @@ public class OJSONWriter {
     } else
       oldAutoConvertSettings = false;
 
-    if (iValue == null)
-      buffer.append("null");
-
-    else if (iValue instanceof Boolean || iValue instanceof Number)
+    if (iValue instanceof Boolean || iValue instanceof Number)
       buffer.append(iValue.toString());
 
     else if (iValue instanceof OIdentifiable) {
@@ -86,7 +86,7 @@ public class OJSONWriter {
         if (iFormat != null && iFormat.contains("shallow"))
           buffer.append("{}");
         else {
-          final ORecord<?> rec = linked.getRecord();
+          final ORecord rec = linked.getRecord();
           if (rec != null)
             buffer.append(rec.toJSON(iFormat));
           else
@@ -229,7 +229,7 @@ public class OJSONWriter {
   }
 
   public static String mapToJSON(Map<?, ?> iMap) {
-    return mapToJSON(iMap, null, new StringBuilder());
+    return mapToJSON(iMap, null, new StringBuilder(128));
   }
 
   public static String mapToJSON(final Map<?, ?> iMap, final String iFormat, final StringBuilder buffer) {
@@ -284,7 +284,7 @@ public class OJSONWriter {
     return this;
   }
 
-  public OJSONWriter writeRecord(final int iIdentLevel, final boolean iNewLine, final Object iName, final ORecord<?> iRecord)
+  public OJSONWriter writeRecord(final int iIdentLevel, final boolean iNewLine, final Object iName, final ORecord iRecord)
       throws IOException {
     if (!firstAttribute)
       out.append(",");
@@ -384,7 +384,7 @@ public class OJSONWriter {
       out.append(":");
     }
 
-    if (iFormat.contains("graph") && (iName.startsWith("in_") || iName.startsWith("out_"))
+    if (iFormat.contains("graph") && iName!=null && (iName.startsWith("in_") || iName.startsWith("out_"))
         && (iValue == null || iValue instanceof OIdentifiable)) {
       // FORCE THE OUTPUT AS COLLECTION
       out.append('[');

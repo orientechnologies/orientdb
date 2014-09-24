@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.metadata.schema.OType;
+
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -21,9 +22,8 @@ public class ODocumentTest {
 
         .setFieldType("integer", OType.INTEGER)
         .setFieldType("string", OType.STRING)
-        .setFieldType("binary", OType.BINARY)
-
-        .addOwner(new ODocument());
+        .setFieldType("binary", OType.BINARY);
+    ODocumentInternal.addOwner(doc2, new ODocument());
 
     assertEquals(doc2.field("integer2"), 123);
     assertEquals(doc2.field("string"), "OrientDB");

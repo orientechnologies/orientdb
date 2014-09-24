@@ -16,6 +16,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer;
@@ -35,7 +36,7 @@ public class OSBTreeCollectionManagerRemoteTest {
   @Mock
   private OCollectionNetworkSerializer      networkSerializerMock;
   @Mock
-  private ODatabaseRecord                   dbMock;
+  private ODatabaseRecordInternal           dbMock;
   @Mock
   private OStorageRemote                    storageMock;
   @Mock

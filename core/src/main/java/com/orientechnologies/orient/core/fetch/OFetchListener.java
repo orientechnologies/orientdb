@@ -17,7 +17,7 @@ package com.orientechnologies.orient.core.fetch;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OFetchException;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Listener interface used while fetching records.
@@ -34,22 +34,22 @@ public interface OFetchListener {
    * @param iLinked
    * @return null if the fetching must stop, otherwise the current field value
    */
-  public Object fetchLinked(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
-      final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException;
+  public Object fetchLinked(final ODocument iRoot, final Object iUserObject, final String iFieldName,
+      final ODocument iLinked, final OFetchContext iContext) throws OFetchException;
 
-  public void parseLinked(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
+  public void parseLinked(final ODocument iRootRecord, final OIdentifiable iLinked, final Object iUserObject,
       final String iFieldName, final OFetchContext iContext) throws OFetchException;
 
-  public void parseLinkedCollectionValue(final ORecordSchemaAware<?> iRootRecord, final OIdentifiable iLinked,
+  public void parseLinkedCollectionValue(final ODocument iRootRecord, final OIdentifiable iLinked,
       final Object iUserObject, final String iFieldName, final OFetchContext iContext) throws OFetchException;
 
-  public Object fetchLinkedMapEntry(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
-      final String iKey, final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException;
+  public Object fetchLinkedMapEntry(final ODocument iRoot, final Object iUserObject, final String iFieldName,
+      final String iKey, final ODocument iLinked, final OFetchContext iContext) throws OFetchException;
 
-  public Object fetchLinkedCollectionValue(final ORecordSchemaAware<?> iRoot, final Object iUserObject, final String iFieldName,
-      final ORecordSchemaAware<?> iLinked, final OFetchContext iContext) throws OFetchException;
+  public Object fetchLinkedCollectionValue(final ODocument iRoot, final Object iUserObject, final String iFieldName,
+      final ODocument iLinked, final OFetchContext iContext) throws OFetchException;
 
-  public void processStandardField(final ORecordSchemaAware<?> iRecord, final Object iFieldValue, final String iFieldName,
+  public void processStandardField(final ODocument iRecord, final Object iFieldValue, final String iFieldName,
       final OFetchContext iContext, final Object iUserObject, String iFormat) throws OFetchException;
 
 }

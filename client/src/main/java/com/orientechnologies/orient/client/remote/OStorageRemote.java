@@ -18,7 +18,6 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,6 +54,7 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -403,11 +403,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @Override
-  public boolean updateReplica(ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
-    throw new UnsupportedOperationException("updateReplica()");
-  }
-
-  @Override
   public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
     throw new UnsupportedOperationException("callInRecordLock()");
   }
@@ -473,9 +468,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readVersion(), network.readByte());
 
           final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-          ORecordInternal<?> record;
+          ORecord record;
           while (network.readByte() == 2) {
-            record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+            record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
 
             if (database != null)
               // PUT IN THE CLIENT LOCAL CACHE
@@ -960,7 +955,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
               // ASYNCH: READ ONE RECORD AT TIME
               while ((status = network.readByte()) > 0) {
-                final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+                final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
                 if (record == null)
                   continue;
 
@@ -987,8 +982,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
               case 'r':
                 result = OChannelBinaryProtocol.readIdentifiable(network);
-                if (result instanceof ORecord<?>)
-                  database.getLocalCache().updateRecord((ORecordInternal<?>) result);
+                if (result instanceof ORecord)
+                  database.getLocalCache().updateRecord((ORecord) result);
                 break;
 
               case 'l':
@@ -996,8 +991,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>(tot);
                 for (int i = 0; i < tot; ++i) {
                   final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
-                  if (resultItem instanceof ORecord<?>)
-                    database.getLocalCache().updateRecord((ORecordInternal<?>) resultItem);
+                  if (resultItem instanceof ORecord)
+                    database.getLocalCache().updateRecord((ORecord) resultItem);
                   list.add(resultItem);
                 }
                 result = list;
@@ -1017,7 +1012,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 // LOAD THE FETCHED RECORDS IN CACHE
                 byte status;
                 while ((status = network.readByte()) > 0) {
-                  final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+                  final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
                   if (record != null && status == 2)
                     // PUT IN THE CLIENT LOCAL CACHE
                     database.getLocalCache().updateRecord(record);
@@ -1123,7 +1118,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         // SET ALL THE RECORDS AS UNDIRTY
         for (ORecordOperation txEntry : iTx.getAllRecordEntries())
-          txEntry.getRecord().unsetDirty();
+          ORecordInternal.unsetDirty(txEntry.getRecord());
 
         // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. USE THE STRATEGY TO ALWAYS REMOVE ALL THE RECORDS SINCE THEY COULD BE
         // CHANGED AS CONTENT IN CASE OF TREE AND GRAPH DUE TO CROSS REFERENCES
@@ -1388,6 +1383,16 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   @Override
   public OCluster getClusterByName(final String iClusterName) {
     throw new UnsupportedOperationException("getClusterByName()");
+  }
+
+  @Override
+  public ORecordConflictStrategy getConflictStrategy() {
+    throw new UnsupportedOperationException("getConflictStrategy");
+  }
+
+  @Override
+  public void setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    throw new UnsupportedOperationException("setConflictStrategy");
   }
 
   @Override
@@ -1873,7 +1878,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     iNetwork.writeByte((byte) 1);
     iNetwork.writeByte(txEntry.type);
     iNetwork.writeRID(txEntry.getRecord().getIdentity());
-    iNetwork.writeByte(txEntry.getRecord().getRecordType());
+    iNetwork.writeByte(ORecordInternal.getRecordType(txEntry.getRecord()));
 
     switch (txEntry.type) {
     case ORecordOperation.CREATED:
@@ -1884,7 +1889,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       iNetwork.writeVersion(txEntry.getRecord().getRecordVersion());
       iNetwork.writeBytes(stream);
       if (iNetwork.getSrvProtocolVersion() >= 23)
-        iNetwork.writeBoolean(txEntry.getRecord().isContentChanged());
+        iNetwork.writeBoolean(ORecordInternal.isContentChanged(txEntry.getRecord()));
       break;
 
     case ORecordOperation.DELETED:

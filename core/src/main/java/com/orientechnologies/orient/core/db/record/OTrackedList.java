@@ -27,6 +27,7 @@ import java.util.WeakHashMap;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Implementation of ArrayList bound to a source ORecord object to keep track of changes for literal types. This avoid to call the
@@ -37,21 +38,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings({ "serial" })
 public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTrackedMultiValue<Integer, T>, Serializable {
-  protected final ORecord<?>                           sourceRecord;
+  protected final ORecord                              sourceRecord;
   private STATUS                                       status          = STATUS.NOT_LOADED;
   protected Set<OMultiValueChangeListener<Integer, T>> changeListeners = Collections
                                                                            .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<Integer, T>, Boolean>());
   protected Class<?>                                   genericClass;
   private final boolean                                embeddedCollection;
 
-  public OTrackedList(final ORecord<?> iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
+  public OTrackedList(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
     this(iRecord);
     genericClass = iGenericClass;
     if (iOrigin != null && !iOrigin.isEmpty())
       addAll(iOrigin);
   }
 
-  public OTrackedList(final ORecord<?> iSourceRecord) {
+  public OTrackedList(final ORecord iSourceRecord) {
     this.sourceRecord = iSourceRecord;
     embeddedCollection = this.getClass().equals(OTrackedList.class);
   }
@@ -98,7 +99,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
     if (oldValue != null && !oldValue.equals(element)) {
       if (oldValue instanceof ODocument)
-        ((ODocument) oldValue).removeOwner(this);
+        ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
       addOwnerToEmbeddedDoc(element);
 
@@ -111,14 +112,14 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 
   private void addOwnerToEmbeddedDoc(T e) {
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
-      ((ODocument) e).addOwner(this);
+      ODocumentInternal.addOwner((ODocument) e, this);
   }
 
   @Override
   public T remove(int index) {
     final T oldValue = super.remove(index);
     if (oldValue instanceof ODocument)
-      ((ODocument) oldValue).removeOwner(this);
+      ODocumentInternal.removeOwner((ODocument) oldValue, this);
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null,
         oldValue));
@@ -146,7 +147,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     if (origValues == null) {
       for (final T item : this) {
         if (item instanceof ODocument)
-          ((ODocument) item).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) item, this);
       }
     }
 
@@ -156,7 +157,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
         final T origValue = origValues.get(i);
 
         if (origValue instanceof ODocument)
-          ((ODocument) origValue).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) origValue, this);
 
         fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, i, null,
             origValue));
@@ -172,7 +173,7 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   @SuppressWarnings("unchecked")
   public <RET> RET setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
+        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
       sourceRecord.setDirty();
     return (RET) this;
   }
@@ -183,10 +184,10 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
       sourceRecord.setDirtyNoChanged();
   }
 
-  public void onBeforeIdentityChanged(ORecord<?> iRecord) {
+  public void onBeforeIdentityChanged(ORecord iRecord) {
   }
 
-  public void onAfterIdentityChanged(ORecord<?> iRecord) {
+  public void onAfterIdentityChanged(ORecord iRecord) {
   }
 
   public void addChangeListener(final OMultiValueChangeListener<Integer, T> changeListener) {

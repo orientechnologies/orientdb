@@ -15,6 +15,14 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -23,8 +31,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -33,14 +41,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
@@ -76,7 +76,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       // EMBEDED RECORD
       final Object embeddedObject = OStringSerializerEmbedded.INSTANCE.fromStream((String) iValue);
       if (embeddedObject instanceof ODocument)
-        ((ODocument) embeddedObject).addOwner(iDocument);
+        ODocumentInternal.addOwner((ODocument) embeddedObject, iDocument);
 
       // EMBEDDED OBJECT
       return embeddedObject;
@@ -86,7 +86,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       // RECORD
       final Object result = OStringSerializerAnyStreamable.INSTANCE.fromStream((String) iValue);
       if (result instanceof ODocument)
-        ((ODocument) result).addOwner(iDocument);
+        ODocumentInternal.addOwner((ODocument) result, iDocument);
       return result;
 
     case EMBEDDEDSET:
@@ -189,7 +189,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       if (iValue instanceof ORecordId)
         ((ORecordId) iValue).toString(iBuffer);
       else
-        ((ORecord<?>) iValue).getIdentity().toString(iBuffer);
+        ((ORecord) iValue).getIdentity().toString(iBuffer);
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.link2string"), "Serialize link to string", timer);
       break;
 
@@ -537,7 +537,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       else if (iValue instanceof String)
         return new ORecordId((String) iValue);
       else
-        return ((ORecord<?>) iValue).getIdentity().toString();
+        return ((ORecord) iValue).getIdentity().toString();
     }
 
     throw new IllegalArgumentException("Type " + iType + " is not simple type.");
@@ -634,27 +634,27 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     }
   }
 
-  public abstract ORecordInternal<?> fromString(String iContent, ORecordInternal<?> iRecord, String[] iFields);
+  public abstract ORecord fromString(String iContent, ORecord iRecord, String[] iFields);
 
-  public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat) {
-    return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
+  public StringBuilder toString(final ORecord iRecord, final String iFormat) {
+    return toString(iRecord, new StringBuilder(1024), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
         OSerializationSetThreadLocal.INSTANCE.get(), false, true);
   }
 
-  public StringBuilder toString(final ORecordInternal<?> iRecord, final String iFormat, final boolean autoDetectCollectionType) {
-    return toString(iRecord, new StringBuilder(), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
+  public StringBuilder toString(final ORecord iRecord, final String iFormat, final boolean autoDetectCollectionType) {
+    return toString(iRecord, new StringBuilder(1024), iFormat, ODatabaseRecordThreadLocal.INSTANCE.get(),
         OSerializationSetThreadLocal.INSTANCE.get(), false, autoDetectCollectionType);
   }
 
-  public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat) {
+  public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat) {
     return toString(iRecord, iOutput, iFormat, null, OSerializationSetThreadLocal.INSTANCE.get(), false, true);
   }
 
-  public ORecordInternal<?> fromString(final String iSource) {
-    return fromString(iSource, (ORecordInternal<?>) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance(), null);
+  public ORecord fromString(final String iSource) {
+    return fromString(iSource, (ORecord) ODatabaseRecordThreadLocal.INSTANCE.get().newInstance(), null);
   }
 
-  public ORecordInternal<?> fromStream(final byte[] iSource, final ORecordInternal<?> iRecord, final String[] iFields) {
+  public ORecord fromStream(final byte[] iSource, final ORecord iRecord, final String[] iFields) {
     final long timer = PROFILER.startChrono();
 
     try {
@@ -666,7 +666,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     }
   }
 
-  public byte[] toStream(final ORecordInternal<?> iRecord, boolean iOnlyDelta) {
+  public byte[] toStream(final ORecord iRecord, boolean iOnlyDelta) {
     final long timer = PROFILER.startChrono();
 
     try {
@@ -678,7 +678,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     }
   }
 
-  protected abstract StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
+  protected abstract StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
       final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType);
 }

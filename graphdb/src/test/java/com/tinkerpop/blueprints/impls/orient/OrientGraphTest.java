@@ -1,10 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.File;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
@@ -13,6 +9,11 @@ import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Test suite for OrientDB graph implementation.
@@ -141,8 +142,10 @@ public abstract class OrientGraphTest extends GraphTest {
     if (graph != null) {
       if (graph.isClosed())
         currentGraphs.remove(url);
-      else
+      else {
+        ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());
         return graph;
+      }
     }
 
     graph = new OrientGraph(url);
@@ -154,13 +157,12 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   public void doTestSuite(final TestSuite testSuite) throws Exception {
-    String directory = getWorkingDirectory();
-    deleteDirectory(new File(directory));
+    dropGraph("graph");
     for (Method method : testSuite.getClass().getDeclaredMethods()) {
       if (method.getName().startsWith("test")) {
         System.out.println("Testing " + method.getName() + "...");
         method.invoke(testSuite);
-        dropGraph(directory + "/graph");
+        dropGraph("graph");
       }
     }
   }

@@ -15,24 +15,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.concur.resource.OCloseable;
-import com.orientechnologies.common.util.OMultiKey;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
-import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,6 +27,25 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import com.orientechnologies.common.concur.resource.OCloseable;
+import com.orientechnologies.common.util.OMultiKey;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
+import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
  * Abstract class to manage indexes.
@@ -159,7 +160,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   @Override
-  public void addClusterToIndex(String clusterName, String indexName) {
+  public void addClusterToIndex(final String clusterName, final String indexName) {
     final OIndex<?> index = indexes.get(indexName.toLowerCase());
     if (index == null)
       throw new OIndexException("Index with name " + indexName + " does not exist.");
@@ -172,7 +173,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   @Override
-  public void removeClusterFromIndex(String clusterName, String indexName) {
+  public void removeClusterFromIndex(final String clusterName, final String indexName) {
     final OIndex<?> index = indexes.get(indexName.toLowerCase());
     if (index == null)
       throw new OIndexException("Index with name " + indexName + " does not exist.");
@@ -202,7 +203,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  public ODictionary<ORecordInternal<?>> getDictionary() {
+  public ODictionary<ORecord> getDictionary() {
     OIndex<?> idx;
     acquireSharedLock();
     try {
@@ -214,7 +215,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     if (idx == null) {
       idx = createDictionaryIfNeeded();
     }
-    return new ODictionary<ORecordInternal<?>>((OIndex<OIdentifiable>) idx);
+    return new ODictionary<ORecord>((OIndex<OIdentifiable>) idx);
   }
 
   public ODocument getConfiguration() {
@@ -381,7 +382,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  protected ODatabaseRecord getDatabase() {
+  protected ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 

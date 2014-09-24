@@ -15,21 +15,21 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OProxedResource;
-import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
-
 import java.util.Collection;
 import java.util.Set;
 
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.record.OProxedResource;
+import com.orientechnologies.orient.core.dictionary.ODictionary;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
+
 public class OIndexManagerProxy extends OProxedResource<OIndexManager> implements OIndexManager {
 
-  public OIndexManagerProxy(final OIndexManager iDelegate, final ODatabaseRecord iDatabase) {
+  public OIndexManagerProxy(final OIndexManager iDelegate, final ODatabaseRecordInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 
@@ -95,7 +95,7 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
     delegate.setDefaultClusterName(defaultClusterName);
   }
 
-  public ODictionary<ORecordInternal<?>> getDictionary() {
+  public ODictionary<ORecord> getDictionary() {
     return delegate.getDictionary();
   }
 

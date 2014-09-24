@@ -33,7 +33,7 @@ public class OScriptBlock extends OAbstractBlock {
 
     if (OMultiValue.isMultiValue(code)) {
       // CONCATS THE SNIPPET IN A BIG ONE
-      final StringBuilder buffer = new StringBuilder();
+      final StringBuilder buffer = new StringBuilder(1024);
       for (Object o : OMultiValue.getMultiValueIterable(code)) {
         if (buffer.length() > 0)
           buffer.append(";");

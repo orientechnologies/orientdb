@@ -22,10 +22,15 @@ package com.orientechnologies.orient.core.db;
  * 
  */
 public interface ODatabaseLifecycleListener {
+  public enum PRIORITY {
+    FIRST, EARLY, REGULAR, LATE, LAST
+  }
 
-  public void onCreate(ODatabase iDatabase);
+  public PRIORITY getPriority();
 
-	public void onOpen(ODatabase iDatabase);
+  public void onCreate(ODatabaseInternal iDatabase);
 
-	public void onClose(ODatabase iDatabase);
+	public void onOpen(ODatabaseInternal iDatabase);
+
+	public void onClose(ODatabaseInternal iDatabase);
 }

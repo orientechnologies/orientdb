@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.iterator.OEmptyIterator;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,18 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
-import com.orientechnologies.orient.core.iterator.OEmptyIterator;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerListRID;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerSBTreeIndexRIDContainer;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
 /**
  * Abstract index implementation that supports multi-values for the same key.
  * 
@@ -45,8 +46,8 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
  */
 public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable>> {
   public OIndexMultiValues(final String type, String algorithm, OIndexEngine<Set<OIdentifiable>> indexEngine,
-      String valueContainerAlgorithm) {
-    super(type, algorithm, indexEngine, valueContainerAlgorithm);
+      String valueContainerAlgorithm, final ODocument metadata) {
+    super(type, algorithm, indexEngine, valueContainerAlgorithm, metadata);
   }
 
   public Set<OIdentifiable> get(Object key) {
@@ -98,6 +99,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     try {
       checkForKeyType(key);
       acquireExclusiveLock();
+      startStorageAtomicOperation();
       try {
         Set<OIdentifiable> values = indexEngine.get(key);
 
@@ -111,13 +113,17 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         }
 
         if (!iSingleValue.getIdentity().isValid())
-          ((ORecord<?>) iSingleValue).save();
+          ((ORecord) iSingleValue).save();
 
         values.add(iSingleValue.getIdentity());
         indexEngine.put(key, values);
 
+        commitStorageAtomicOperation();
         return this;
 
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during insertion of key in index", e);
       } finally {
         releaseExclusiveLock();
       }
@@ -165,23 +171,32 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     try {
       acquireExclusiveLock();
+      startStorageAtomicOperation();
       try {
 
         Set<OIdentifiable> values = indexEngine.get(key);
 
-        if (values == null)
+        if (values == null) {
+          commitStorageAtomicOperation();
           return false;
+        }
 
         if (values.remove(value)) {
           if (values.isEmpty())
             indexEngine.remove(key);
           else
             indexEngine.put(key, values);
+
+          commitStorageAtomicOperation();
           return true;
         }
 
+        commitStorageAtomicOperation();
         return false;
 
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during removal of entry by key", e);
       } finally {
         releaseExclusiveLock();
       }
@@ -392,19 +407,19 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-	@Override
-	public OIndexCursor descCursor() {
-		checkForRebuild();
+  @Override
+  public OIndexCursor descCursor() {
+    checkForRebuild();
 
-		acquireSharedLock();
-		try {
-			return indexEngine.descCursor(MultiValuesTransformer.INSTANCE);
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    acquireSharedLock();
+    try {
+      return indexEngine.descCursor(MultiValuesTransformer.INSTANCE);
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	private static final class MultiValuesTransformer implements OIndexEngine.ValuesTransformer<Set<OIdentifiable>> {
+  private static final class MultiValuesTransformer implements OIndexEngine.ValuesTransformer<Set<OIdentifiable>> {
     private static final MultiValuesTransformer INSTANCE = new MultiValuesTransformer();
 
     @Override

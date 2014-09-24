@@ -27,15 +27,15 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
  */
 public class OReplicationConflictException extends ODistributedException {
 
-  private static final String MESSAGE_REMOTE_VERSION = "remote=v";
-  private static final String MESSAGE_LOCAL_VERSION  = "local=v";
+  private static final String MESSAGE_LOCAL_VERSION    = "local=v";
+  private static final String MESSAGE_ORIGINAL_VERSION = "original=v";
 
-  private static final long   serialVersionUID       = 1L;
+  private static final long   serialVersionUID         = 1L;
 
+  private final ORID          originalRID;
+  private final int           originalVersion;
   private final ORID          localRID;
   private final int           localVersion;
-  private final ORID          remoteRID;
-  private final int           remoteVersion;
 
   /**
    * Rebuilds the original exception from the message.
@@ -44,49 +44,50 @@ public class OReplicationConflictException extends ODistributedException {
     super(message);
     int beginPos = message.indexOf(ORID.PREFIX);
     int endPos = message.indexOf(' ', beginPos);
-    localRID = new ORecordId(message.substring(beginPos, endPos));
+    originalRID = new ORecordId(message.substring(beginPos, endPos));
+
+    beginPos = message.indexOf(MESSAGE_ORIGINAL_VERSION, endPos) + MESSAGE_ORIGINAL_VERSION.length();
+    endPos = message.indexOf(' ', beginPos);
+    originalVersion = Integer.parseInt(message.substring(beginPos, endPos));
 
     beginPos = message.indexOf(MESSAGE_LOCAL_VERSION, endPos) + MESSAGE_LOCAL_VERSION.length();
-    endPos = message.indexOf(' ', beginPos);
-    localVersion = Integer.parseInt(message.substring(beginPos, endPos));
-
-    beginPos = message.indexOf(MESSAGE_REMOTE_VERSION, endPos) + MESSAGE_REMOTE_VERSION.length();
     endPos = message.indexOf(')', beginPos);
-    remoteVersion = Integer.parseInt(message.substring(beginPos, endPos));
-    remoteRID = null;
+    localVersion = Integer.parseInt(message.substring(beginPos, endPos));
+    localRID = null;
   }
 
   public OReplicationConflictException(final String message, final ORID iRID, final int iDatabaseVersion, final int iRecordVersion) {
     super(message);
-    localRID = iRID;
-    remoteRID = null;
-    localVersion = iDatabaseVersion;
-    remoteVersion = iRecordVersion;
+    originalRID = iRID;
+    localRID = null;
+    originalVersion = iDatabaseVersion;
+    localVersion = iRecordVersion;
   }
 
-  public OReplicationConflictException(final String message, final ORID iOriginalRID, final ORID iRemoteRID) {
+  public OReplicationConflictException(final String message, final ORID iOriginalRID, final ORID iLocalRID) {
     super(message);
-    localRID = iOriginalRID;
-    remoteRID = iRemoteRID;
-    localVersion = remoteVersion = 0;
+    originalRID = iOriginalRID;
+    localRID = iLocalRID;
+    originalVersion = localVersion = 0;
   }
 
   @Override
   public String getMessage() {
     final StringBuilder buffer = new StringBuilder(super.getMessage());
 
-    if (remoteRID != null) {
+    if (localRID != null) {
       // RID CONFLICT
-      buffer.append("local RID=");
+      buffer.append("original RID=");
+      buffer.append(originalRID);
+      buffer.append(" local RID=");
       buffer.append(localRID);
-      buffer.append(" remote RID=");
-      buffer.append(remoteRID);
     } else {
       // VERSION CONFLICT
-      buffer.append("local=v");
+      buffer.append(MESSAGE_ORIGINAL_VERSION);
+      buffer.append(originalVersion);
+      buffer.append(' ');
+      buffer.append(MESSAGE_LOCAL_VERSION);
       buffer.append(localVersion);
-      buffer.append(" remote=v");
-      buffer.append(remoteVersion);
     }
 
     return buffer.toString();
@@ -97,19 +98,19 @@ public class OReplicationConflictException extends ODistributedException {
     return getMessage();
   }
 
+  public int getOriginalVersion() {
+    return originalVersion;
+  }
+
   public int getLocalVersion() {
     return localVersion;
   }
 
-  public int getRemoteVersion() {
-    return remoteVersion;
+  public ORID getOriginalRID() {
+    return originalRID;
   }
 
   public ORID getLocalRID() {
     return localRID;
-  }
-
-  public ORID getRemoteRID() {
-    return remoteRID;
   }
 }

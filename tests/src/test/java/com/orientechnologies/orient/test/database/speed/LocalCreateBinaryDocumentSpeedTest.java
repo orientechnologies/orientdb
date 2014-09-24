@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.speed;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -27,10 +28,10 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
-  private static final int  PAYLOAD_SIZE = 2000;
-  private ODatabaseDocument database;
-  private ORecordBytes      record;
-  private byte[]            payload;
+  private static final int          PAYLOAD_SIZE = 2000;
+  private ODatabaseDocumentInternal database;
+  private ORecordBytes              record;
+  private byte[]                    payload;
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
     LocalCreateBinaryDocumentSpeedTest test = new LocalCreateBinaryDocumentSpeedTest();

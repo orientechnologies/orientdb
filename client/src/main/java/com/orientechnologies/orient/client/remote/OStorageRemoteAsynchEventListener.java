@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 

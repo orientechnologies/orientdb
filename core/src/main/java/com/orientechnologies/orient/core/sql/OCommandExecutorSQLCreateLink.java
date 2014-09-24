@@ -25,7 +25,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -158,7 +158,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
     if (destField == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
     if (!(database.getDatabaseOwner() instanceof ODatabaseDocumentTx))
       throw new OCommandSQLParsingException("This command supports only the database type ODatabaseDocumentTx and type '"
           + database.getClass() + "' was found");

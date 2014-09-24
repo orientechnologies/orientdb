@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.core.db.record.ridbag.embedded;
 
-import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
@@ -49,24 +48,107 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   private boolean                                                      convertToRecord   = true;
   private int                                                          size              = 0;
 
-  private transient ORecord<?>                                         owner;
+  private transient ORecord                                            owner;
 
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners   = Collections
                                                                                              .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
 
+  private static enum Tombstone {
+    TOMBSTONE
+  }
+
+  private final class EntriesIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {
+    private final boolean convertToRecord;
+    private int           currentIndex = -1;
+    private int           nextIndex    = -1;
+    private boolean       currentRemoved;
+
+    private EntriesIterator(boolean convertToRecord) {
+      reset();
+      this.convertToRecord = convertToRecord;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return nextIndex > -1;
+    }
+
+    @Override
+    public OIdentifiable next() {
+      currentRemoved = false;
+
+      currentIndex = nextIndex;
+      if (currentIndex == -1)
+        throw new NoSuchElementException();
+
+      final OIdentifiable nextValue = (OIdentifiable) entries[currentIndex];
+      nextIndex = nextIndex();
+
+      if (convertToRecord)
+        return nextValue.getRecord();
+
+      return nextValue;
+    }
+
+    @Override
+    public void remove() {
+      if (currentRemoved)
+        throw new IllegalStateException("Current element has already been removed");
+
+      if (currentIndex == -1)
+        throw new IllegalStateException("Next method was not called for given iterator");
+
+      currentRemoved = true;
+
+      final OIdentifiable nextValue = (OIdentifiable) entries[currentIndex];
+      entries[currentIndex] = Tombstone.TOMBSTONE;
+
+      size--;
+      contentWasChanged = true;
+
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+          OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
+
+    }
+
+    @Override
+    public void reset() {
+      currentIndex = -1;
+      nextIndex = -1;
+      currentRemoved = false;
+
+      nextIndex = nextIndex();
+    }
+
+    @Override
+    public int size() {
+      return size;
+    }
+
+    private int nextIndex() {
+      for (int i = currentIndex + 1; i < entriesLength; i++) {
+        Object entry = entries[i];
+        if (entry instanceof OIdentifiable)
+          return i;
+      }
+
+      return -1;
+    }
+  }
+
   @Override
-  public void setOwner(ORecord<?> owner) {
+  public ORecord getOwner() {
+    return owner;
+  }
+
+  @Override
+  public void setOwner(ORecord owner) {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");
     }
 
     this.owner = owner;
-  }
-
-  @Override
-  public ORecord<?> getOwner() {
-    return owner;
   }
 
   @Override
@@ -86,19 +168,18 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         identifiable, identifiable));
   }
 
-  private void addEntry(OIdentifiable identifiable) {
-    if (entries.length == entriesLength) {
-      if (entriesLength == 0)
-        entries = new Object[4];
-      else {
-        final Object[] oldEntries = entries;
-        entries = new Object[entries.length << 1];
-        System.arraycopy(oldEntries, 0, entries, 0, oldEntries.length);
-      }
-    }
-
-    entries[entriesLength] = identifiable;
-    entriesLength++;
+  public OEmbeddedRidBag copy() {
+    final OEmbeddedRidBag copy = new OEmbeddedRidBag();
+    copy.serializedContent = serializedContent;
+    copy.contentWasChanged = contentWasChanged;
+    copy.deserialized = deserialized;
+    copy.entries = entries;
+    copy.entriesLength = entriesLength;
+    copy.convertToRecord = convertToRecord;
+    copy.size = size;
+    copy.owner = owner;
+    copy.changeListeners.addAll(changeListeners);
+    return copy;
   }
 
   @Override
@@ -112,19 +193,6 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
           OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
     }
-  }
-
-  private boolean removeEntry(OIdentifiable identifiable) {
-    int i = 0;
-    for (; i < entriesLength; i++) {
-      final Object entry = entries[i];
-      if (entry.equals(identifiable)) {
-        entries[i] = Tombstone.TOMBSTONE;
-        break;
-      }
-    }
-
-    return i < entriesLength;
   }
 
   @Override
@@ -169,7 +237,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         final OIdentifiable identifiable = (OIdentifiable) entry;
         if (identifiable instanceof ORecord) {
           final ORecord record = (ORecord) identifiable;
-          if (record.isDirty() || record.getIdentity().isNew()) {
+          if (record.getIdentity().isNew()) {
             record.save();
           }
 
@@ -207,7 +275,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       return "[size=" + size + "]";
 
     if (size < 10) {
-      final StringBuilder sb = new StringBuilder();
+      final StringBuilder sb = new StringBuilder(256);
       sb.append('[');
       for (final Iterator<OIdentifiable> it = this.iterator(); it.hasNext();) {
         try {
@@ -275,7 +343,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public int getSerializedSize(byte[] stream, int offset) {
-    return OIntegerSerializer.INSTANCE.deserialize(stream, offset) * OLinkSerializer.RID_SIZE + OIntegerSerializer.INT_SIZE;
+    return OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset) * OLinkSerializer.RID_SIZE + OIntegerSerializer.INT_SIZE;
   }
 
   @Override
@@ -298,7 +366,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       System.arraycopy(serializedContent, 0, stream, offset, serializedContent.length);
 
       if (contentWasChanged) {
-        OIntegerSerializer.INSTANCE.serialize(size, stream, offset);
+        OIntegerSerializer.INSTANCE.serializeLiteral(size, stream, offset);
         offset += serializedContent.length;
       } else {
         offset += serializedContent.length;
@@ -306,7 +374,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       }
 
     } else {
-      OIntegerSerializer.INSTANCE.serialize(size, stream, offset);
+      OIntegerSerializer.INSTANCE.serializeLiteral(size, stream, offset);
       offset += OIntegerSerializer.INT_SIZE;
     }
 
@@ -321,10 +389,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public int deserialize(byte[] stream, int offset) {
+  public int deserialize(final byte[] stream, final int offset) {
     final int contentSize = getSerializedSize(stream, offset);
 
-    this.size = OIntegerSerializer.INSTANCE.deserialize(stream, offset);
+    this.size = OIntegerSerializer.INSTANCE.deserializeLiteral(stream, offset);
 
     this.serializedContent = new byte[contentSize];
     System.arraycopy(stream, offset, this.serializedContent, 0, contentSize);
@@ -333,12 +401,56 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     return offset + contentSize;
   }
 
+  @Override
+  public void requestDelete() {
+  }
+
+  @Override
+  public Class<?> getGenericClass() {
+    return OIdentifiable.class;
+  }
+
+  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
+    for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
+      if (changeListener != null)
+        changeListener.onAfterRecordChanged(event);
+    }
+  }
+
+  private void addEntry(OIdentifiable identifiable) {
+    if (entries.length == entriesLength) {
+      if (entriesLength == 0)
+        entries = new Object[4];
+      else {
+        final Object[] oldEntries = entries;
+        entries = new Object[entries.length << 1];
+        System.arraycopy(oldEntries, 0, entries, 0, oldEntries.length);
+      }
+    }
+
+    entries[entriesLength] = identifiable;
+    entriesLength++;
+  }
+
+  private boolean removeEntry(OIdentifiable identifiable) {
+    int i = 0;
+    for (; i < entriesLength; i++) {
+      final Object entry = entries[i];
+      if (entry.equals(identifiable)) {
+        entries[i] = Tombstone.TOMBSTONE;
+        break;
+      }
+    }
+
+    return i < entriesLength;
+  }
+
   private void doDeserialization() {
     if (deserialized)
       return;
 
     int offset = 0;
-    int entriesSize = OIntegerSerializer.INSTANCE.deserialize(serializedContent, offset);
+    int entriesSize = OIntegerSerializer.INSTANCE.deserializeLiteral(serializedContent, offset);
     offset += OIntegerSerializer.INT_SIZE;
 
     for (int i = 0; i < entriesSize; i++) {
@@ -355,105 +467,5 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     }
 
     deserialized = true;
-  }
-
-  @Override
-  public void requestDelete() {
-  }
-
-  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
-    for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
-    }
-  }
-
-  @Override
-  public Class<?> getGenericClass() {
-    return OIdentifiable.class;
-  }
-
-  private final class EntriesIterator implements Iterator<OIdentifiable>, OResettable, OSizeable {
-    private int           currentIndex = -1;
-    private int           nextIndex    = -1;
-
-    private boolean       currentRemoved;
-    private final boolean convertToRecord;
-
-    private EntriesIterator(boolean convertToRecord) {
-      reset();
-      this.convertToRecord = convertToRecord;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return nextIndex > -1;
-    }
-
-    @Override
-    public OIdentifiable next() {
-      currentRemoved = false;
-
-      currentIndex = nextIndex;
-      if (currentIndex == -1)
-        throw new NoSuchElementException();
-
-      final OIdentifiable nextValue = (OIdentifiable) entries[currentIndex];
-      nextIndex = nextIndex();
-
-      if (convertToRecord)
-        return nextValue.getRecord();
-
-      return nextValue;
-    }
-
-    @Override
-    public void remove() {
-      if (currentRemoved)
-        throw new IllegalStateException("Current element has already been removed");
-
-      if (currentIndex == -1)
-        throw new IllegalStateException("Next method was not called for given iterator");
-
-      currentRemoved = true;
-
-      final OIdentifiable nextValue = (OIdentifiable) entries[currentIndex];
-      entries[currentIndex] = Tombstone.TOMBSTONE;
-
-      size--;
-      contentWasChanged = true;
-
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
-
-    }
-
-    @Override
-    public void reset() {
-      currentIndex = -1;
-      nextIndex = -1;
-      currentRemoved = false;
-
-      nextIndex = nextIndex();
-    }
-
-    private int nextIndex() {
-      for (int i = currentIndex + 1; i < entriesLength; i++) {
-        Object entry = entries[i];
-        if (entry instanceof OIdentifiable)
-          return i;
-      }
-
-      return -1;
-    }
-
-    @Override
-    public int size() {
-      return size;
-    }
-  }
-
-  private static enum Tombstone {
-    TOMBSTONE
   }
 }

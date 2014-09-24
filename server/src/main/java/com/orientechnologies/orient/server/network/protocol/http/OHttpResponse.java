@@ -226,7 +226,7 @@ public class OHttpResponse {
           while (it.hasNext()) {
             final Object r = it.next();
             if (r != null && r instanceof OIdentifiable) {
-              final ORecord<?> rec = ((OIdentifiable) r).getRecord();
+              final ORecord rec = ((OIdentifiable) r).getRecord();
               if (rec != null) {
                 if (rec instanceof ODocument) {
                   final ODocument doc = (ODocument) rec;
@@ -309,7 +309,7 @@ public class OHttpResponse {
             buffer.append(", ");
 
           if (entry instanceof OIdentifiable) {
-            ORecord<?> rec = ((OIdentifiable) entry).getRecord();
+            ORecord rec = ((OIdentifiable) entry).getRecord();
             if (rec != null)
               try {
                 objectJson = rec.toJSON(format);
@@ -327,11 +327,11 @@ public class OHttpResponse {
     }
   }
 
-  public void writeRecord(final ORecord<?> iRecord) throws IOException {
+  public void writeRecord(final ORecord iRecord) throws IOException {
     writeRecord(iRecord, null, null);
   }
 
-  public void writeRecord(final ORecord<?> iRecord, final String iFetchPlan, String iFormat) throws IOException {
+  public void writeRecord(final ORecord iRecord, final String iFetchPlan, String iFormat) throws IOException {
     if (iFormat == null)
       iFormat = JSON_FORMAT;
 

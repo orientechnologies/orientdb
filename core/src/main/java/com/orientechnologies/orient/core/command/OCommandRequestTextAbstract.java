@@ -16,13 +16,13 @@
 package com.orientechnologies.orient.core.command;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -94,27 +94,19 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
       buffer.set(false);
     } else {
       final Map<Object, Object> params = new HashMap<Object, Object>();
-      final Map<Object, byte[]> compositeKeyParams = new HashMap<Object, byte[]>();
+      final Map<Object, List<Object>> compositeKeyParams = new HashMap<Object, List<Object>>();
 
       for (final Entry<Object, Object> paramEntry : parameters.entrySet())
         if (paramEntry.getValue() instanceof OCompositeKey) {
           final OCompositeKey compositeKey = (OCompositeKey) paramEntry.getValue();
-          final int bufferSize = OCompositeKeySerializer.INSTANCE.getObjectSize(compositeKey);
-          final byte[] stream = new byte[bufferSize];
-          OCompositeKeySerializer.INSTANCE.serialize(compositeKey, stream, 0);
-
-          compositeKeyParams.put(paramEntry.getKey(), stream);
-        } else if (paramEntry.getValue() instanceof String) {
-          final StringBuilder builder = new StringBuilder();
-          ORecordSerializerStringAbstract.simpleValueToStream(builder, OType.STRING, paramEntry.getValue());
-          params.put(paramEntry.getKey(), builder.toString());
+          compositeKeyParams.put(paramEntry.getKey(), compositeKey.getKeys());
         } else
           params.put(paramEntry.getKey(), paramEntry.getValue());
 
       buffer.set(!params.isEmpty());
       if (!params.isEmpty()) {
         final ODocument param = new ODocument();
-        param.field("params", params);
+        param.field("parameters", params);
         buffer.set(param.toStream());
       }
 
@@ -140,20 +132,29 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
       final ODocument param = new ODocument();
       param.fromStream(paramBuffer);
 
-      Map<String, Object> params = param.field("params");
-
+      Map<Object, Object> params = param.field("params");
       parameters = new HashMap<Object, Object>();
-      for (Entry<String, Object> p : params.entrySet()) {
-        final Object value;
-        if (p.getValue() instanceof String)
-          value = ORecordSerializerStringAbstract.getTypeValue((String) p.getValue());
-        else
-          value = p.getValue();
+      if (params != null) {
+        for (Entry<Object, Object> p : params.entrySet()) {
+          final Object value;
+          if (p.getValue() instanceof String)
+            value = ORecordSerializerStringAbstract.getTypeValue((String) p.getValue());
+          else
+            value = p.getValue();
 
-        if (Character.isDigit(p.getKey().charAt(0)))
-          parameters.put(Integer.parseInt(p.getKey()), value);
-        else
-          parameters.put(p.getKey(), value);
+          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0)))
+            parameters.put(Integer.parseInt((String) p.getKey()), value);
+          else
+            parameters.put(p.getKey(), value);
+        }
+      } else {
+        params = param.field("parameters");
+        for (Entry<Object, Object> p : params.entrySet()) {
+          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0)))
+            parameters.put(Integer.parseInt((String) p.getKey()), p.getValue());
+          else
+            parameters.put(p.getKey(), p.getValue());
+        }
       }
     }
 
@@ -163,21 +164,29 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
       final ODocument param = new ODocument();
       param.fromStream(paramBuffer);
 
-      final Map<String, Object> compositeKeyParams = param.field("compositeKeyParams");
+      final Map<Object, Object> compositeKeyParams = param.field("compositeKeyParams");
 
       if (parameters == null)
         parameters = new HashMap<Object, Object>();
 
-      for (final Entry<String, Object> p : compositeKeyParams.entrySet()) {
-        final Object value = OCompositeKeySerializer.INSTANCE
-            .deserialize(OStringSerializerHelper.getBinaryContent(p.getValue()), 0);
+      for (final Entry<Object, Object> p : compositeKeyParams.entrySet()) {
+        if (p.getValue() instanceof List) {
+          final OCompositeKey compositeKey = new OCompositeKey((List<?>) p.getValue());
+          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0)))
+            parameters.put(Integer.parseInt((String) p.getKey()), compositeKey);
+          else
+            parameters.put(p.getKey(), compositeKey);
 
-        if (Character.isDigit(p.getKey().charAt(0)))
-          parameters.put(Integer.parseInt(p.getKey()), value);
-        else
-          parameters.put(p.getKey(), value);
+        } else {
+          final Object value = OCompositeKeySerializer.INSTANCE.deserialize(OStringSerializerHelper.getBinaryContent(p.getValue()),
+              0);
+
+          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0)))
+            parameters.put(Integer.parseInt((String) p.getKey()), value);
+          else
+            parameters.put(p.getKey(), value);
+        }
       }
     }
   }
-
 }

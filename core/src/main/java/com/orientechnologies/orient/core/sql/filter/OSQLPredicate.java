@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
@@ -38,6 +30,14 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * Parses text in SQL format and build a tree of conditions.
@@ -101,7 +101,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     return evaluate(null, null, iContext);
   }
 
-  public Object evaluate(final ORecord<?> iRecord, ODocument iCurrentResult, final OCommandContext iContext) {
+  public Object evaluate(final ORecord iRecord, ODocument iCurrentResult, final OCommandContext iContext) {
     if (rootCondition == null)
       return true;
 
@@ -115,7 +115,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
     if (word.length() > 0 && (word.equalsIgnoreCase("SELECT") || word.equalsIgnoreCase("TRAVERSE"))) {
       // SUB QUERY
-      final StringBuilder embedded = new StringBuilder();
+      final StringBuilder embedded = new StringBuilder(256);
       OStringSerializerHelper.getEmbedded(parserText, oldPosition - 1, -1, embedded);
       parserSetCurrentPosition(oldPosition + embedded.length() + 1);
       return new OSQLSynchQuery<Object>(embedded.toString());

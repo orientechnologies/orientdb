@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
-import java.util.Iterator;
-import java.util.NavigableSet;
-import java.util.TreeSet;
-
+import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.util.MersenneTwisterFast;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -11,10 +11,9 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.common.serialization.types.OBinaryTypeSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.util.MersenneTwisterFast;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.util.Iterator;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
@@ -43,9 +42,9 @@ public class SBTreeTestBigValues {
 
     databaseDocumentTx.create();
 
-    sbTree = new OSBTree<Integer, byte[]>(".sbt", 1, false, ".nbt");
+    sbTree = new OSBTree<Integer, byte[]>(".sbt", false, ".nbt");
     sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null,
-        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage().getUnderlying(), false);
+        (OAbstractPaginatedStorage) databaseDocumentTx.getStorage().getUnderlying(), 1, false);
   }
 
   @AfterMethod
@@ -285,7 +284,7 @@ public class SBTreeTestBigValues {
   private byte[] createValue(int value, int byteArraySize) {
     byte[] binaryValue = new byte[byteArraySize];
     byte[] intValue = new byte[4];
-    OIntegerSerializer.INSTANCE.serialize(value, intValue, 0);
+    OIntegerSerializer.INSTANCE.serializeLiteral(value, intValue, 0);
 
     int offset = 0;
     while (offset < byteArraySize) {

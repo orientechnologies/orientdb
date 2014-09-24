@@ -36,7 +36,6 @@ public class TestOrientBulkInsert {
     OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.setValue(0); // Turn off cache
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(0);
 
-    OGlobalConfiguration.FILE_MMAP_STRATEGY.setValue(4);
     OGlobalConfiguration.TX_USE_LOG.setValue(false);
 
     Map defaultsMap = new HashMap<String, Object>();

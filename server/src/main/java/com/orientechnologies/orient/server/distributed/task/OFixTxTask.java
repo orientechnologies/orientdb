@@ -15,18 +15,18 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Distributed create record task used for synchronization.
@@ -92,4 +92,9 @@ public class OFixTxTask extends OAbstractRemoteTask {
   public String getName() {
     return "fix_tx";
   }
+//
+//  @Override
+//  public String getQueueName(final String iOriginalQueueName) {
+//    return iOriginalQueueName + OCreateRecordTask.SUFFIX_QUEUE_NAME;
+//  }
 }

@@ -38,7 +38,7 @@ public class OMurmurHash3HashFunction<V> implements OHashFunction<V> {
   @Override
   public long hashCode(V value) {
     final byte[] serializedValue = new byte[valueSerializer.getObjectSize(value)];
-    valueSerializer.serializeNative(value, serializedValue, 0);
+    valueSerializer.serializeNativeObject(value, serializedValue, 0);
     return OMurmurHash3.murmurHash3_x64_64(serializedValue, SEED);
   }
 }

@@ -71,7 +71,7 @@ public class OServerNetworkListener extends Thread {
       protocolVersion = iProtocol.newInstance().getVersion();
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on reading protocol version for %s", e, ONetworkProtocolException.class,
-          protocolType);
+          iProtocol);
     }
 
     listen(iHostName, iHostPortRange, iProtocolName);
@@ -255,7 +255,7 @@ public class OServerNetworkListener extends Thread {
 
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder();
+    StringBuilder builder = new StringBuilder(64);
     builder.append(protocolType.getSimpleName()).append(" ").append(serverSocket.getLocalSocketAddress()).append(":");
     return builder.toString();
   }

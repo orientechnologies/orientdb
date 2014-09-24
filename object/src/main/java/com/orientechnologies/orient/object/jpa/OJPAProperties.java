@@ -86,7 +86,7 @@ final class OJPAProperties extends Properties {
 	
 	@Override
 	public String toString() {
-		StringBuilder builder = new StringBuilder();
+		StringBuilder builder = new StringBuilder(128);
 		for (Entry<Object, Object> property : entrySet()) {
 			builder.append(',').append(property.getKey()).append('=').append(property.getValue());
 		}

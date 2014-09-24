@@ -138,7 +138,7 @@ public abstract class OStringSerializerHelper {
       else if (iValue instanceof String)
         return new ORecordId((String) iValue);
       else
-        return ((ORecord<?>) iValue).getIdentity().toString();
+        return ((ORecord) iValue).getIdentity().toString();
 
     case EMBEDDED:
       // EMBEDDED
@@ -154,7 +154,7 @@ public abstract class OStringSerializerHelper {
   }
 
   public static String smartTrim(final String iSource, final boolean iRemoveLeadingSpaces, final boolean iRemoveTailingSpaces) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     boolean spaced = iRemoveLeadingSpaces;
     for (int i = 0; i < iSource.length(); ++i) {
       final char c = iSource.charAt(i);
@@ -188,7 +188,7 @@ public abstract class OStringSerializerHelper {
   public static List<String> smartSplit(final String iSource, final char[] iRecordSeparator, int beginIndex, final int endIndex,
       final boolean iStringSeparatorExtended, boolean iConsiderBraces, boolean iConsiderSets, boolean considerBags,
       final char... iJumpChars) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     final ArrayList<String> parts = new ArrayList<String>();
 
     if (iSource != null && !iSource.isEmpty()) {
@@ -211,7 +211,7 @@ public abstract class OStringSerializerHelper {
       final boolean[] iRecordSeparatorIncludeAsPrefix, final boolean[] iRecordSeparatorIncludeAsPostfix, int beginIndex,
       final int endIndex, final boolean iStringSeparatorExtended, boolean iConsiderBraces, boolean iConsiderSets,
       boolean considerBags, final char... iJumpChars) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     final ArrayList<String> parts = new ArrayList<String>();
 
     int startSeparatorAt = -1;
@@ -463,7 +463,7 @@ public abstract class OStringSerializerHelper {
     if (iEndPosition == -1)
       iEndPosition = iSource.length();
 
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
 
     for (int i = iStartPosition; i < iEndPosition; ++i) {
       char c = iSource.charAt(i);
@@ -510,7 +510,7 @@ public abstract class OStringSerializerHelper {
   }
 
   public static String joinIntArray(int[] iArray) {
-    final StringBuilder ids = new StringBuilder();
+    final StringBuilder ids = new StringBuilder(iArray.length * 3);
     for (int id : iArray) {
       if (ids.length() > 0)
         ids.append(RECORD_SEPARATOR);
@@ -547,11 +547,11 @@ public abstract class OStringSerializerHelper {
 
   public static int getCollection(final String iText, final int iStartPosition, final Collection<String> iCollection,
       final char iCollectionBegin, final char iCollectionEnd, final char iCollectionSeparator) {
-    final StringBuilder buffer = new StringBuilder();
-
     int openPos = iText.indexOf(iCollectionBegin, iStartPosition);
     if (openPos == -1)
       return -1;
+
+    final StringBuilder buffer = new StringBuilder(128);
 
     boolean escape = false;
     int currentPos, deep;
@@ -625,7 +625,7 @@ public abstract class OStringSerializerHelper {
     if (openPos == -1 || (iEndPosition > -1 && openPos > iEndPosition))
       return iBeginPosition;
 
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true, true, false, -1, false);
     if (buffer.length() == 0)
       return iBeginPosition;
@@ -644,7 +644,7 @@ public abstract class OStringSerializerHelper {
     if (openPos == -1 || (iEndPosition > -1 && openPos > iEndPosition))
       return iBeginPosition;
 
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(128);
     parse(iText, buffer, openPos, iEndPosition, PARAMETER_EXT_SEPARATOR, true, true, false, -1, false);
     if (buffer.length() == 0)
       return iBeginPosition;
@@ -714,10 +714,10 @@ public abstract class OStringSerializerHelper {
 
     if (pos > -1) {
       // CHANGE THE INPUT STRING
-      final StringBuilder iOutput = new StringBuilder();
+      final StringBuilder iOutput = new StringBuilder((int) ((float) newSize * 1.5f));
 
       char c;
-      for (int i = 0; i < iText.length(); ++i) {
+      for (int i = 0; i < newSize; ++i) {
         c = iText.charAt(i);
 
         if (c == '"' || c == '\\')

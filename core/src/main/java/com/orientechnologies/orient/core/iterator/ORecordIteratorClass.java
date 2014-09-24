@@ -15,13 +15,14 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import java.util.Arrays;
+
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -33,31 +34,31 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  * @author Luca Garulli
  */
-public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecordIteratorClusters<REC> {
+public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorClusters<REC> {
   protected final OClass targetClass;
   protected boolean      polymorphic;
 
   /**
    * This method is only to maintain the retro compatibility with TinkerPop BP 2.2
    */
-  public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+  public ORecordIteratorClass(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
       final String iClassName, final boolean iPolymorphic) {
     this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, true, false);
   }
 
-  public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final String iClassName,
-      final boolean iPolymorphic) {
+  public ORecordIteratorClass(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+      final String iClassName, final boolean iPolymorphic) {
     this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, true, false);
   }
 
-  public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final String iClassName,
-      final boolean iPolymorphic, final boolean iUseCache, final boolean iterateThroughTombstones) {
+  public ORecordIteratorClass(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+      final String iClassName, final boolean iPolymorphic, final boolean iUseCache, final boolean iterateThroughTombstones) {
     this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iUseCache, iterateThroughTombstones,
         OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
-  public ORecordIteratorClass(final ODatabaseRecord iDatabase, final ODatabaseRecord iLowLevelDatabase, final String iClassName,
-      final boolean iPolymorphic, final boolean iUseCache, final boolean iterateThroughTombstones,
+  public ORecordIteratorClass(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+      final String iClassName, final boolean iPolymorphic, final boolean iUseCache, final boolean iterateThroughTombstones,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
 
@@ -68,6 +69,8 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
     polymorphic = iPolymorphic;
     clusterIds = polymorphic ? targetClass.getPolymorphicClusterIds() : targetClass.getClusterIds();
     clusterIds = OClassImpl.readableClusters(iDatabase, clusterIds);
+
+    Arrays.sort(clusterIds);
 
     config();
   }
@@ -92,7 +95,7 @@ public class ORecordIteratorClass<REC extends ORecordInternal<?>> extends ORecor
   }
 
   @Override
-  protected boolean include(final ORecord<?> record) {
+  protected boolean include(final ORecord record) {
     return record instanceof ODocument && targetClass.isSuperClassOf(((ODocument) record).getSchemaClass());
   }
 

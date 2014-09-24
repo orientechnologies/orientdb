@@ -163,7 +163,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
           if (script == null)
             throw new IllegalArgumentException("script parameter is null");
 
-          StringBuilder text = new StringBuilder();
+          StringBuilder text = new StringBuilder(1024);
           if (OMultiValue.isMultiValue(script)) {
             // ENSEMBLE ALL THE SCRIPT LINES IN JUST ONE SEPARATED BY LINEFEED
             int i = 0;

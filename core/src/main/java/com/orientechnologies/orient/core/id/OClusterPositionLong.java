@@ -69,7 +69,7 @@ public final class OClusterPositionLong extends OClusterPosition {
   public byte[] toStream() {
     final byte[] content = new byte[OLongSerializer.LONG_SIZE];
 
-    OLongSerializer.INSTANCE.serialize(value, content, 0);
+    OLongSerializer.INSTANCE.serializeLiteral(value, content, 0);
 
     return content;
   }
@@ -123,6 +123,7 @@ public final class OClusterPositionLong extends OClusterPosition {
 
   /**
    * This method return same value as longValue because high long and low long are the same.
+   * 
    * @return same value as longValue().
    */
   @Override

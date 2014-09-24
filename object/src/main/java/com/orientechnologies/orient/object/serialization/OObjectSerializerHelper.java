@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
@@ -48,6 +49,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializerHelperManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
@@ -571,7 +573,7 @@ public class OObjectSerializerHelper {
       if (id != null) {
         // FOUND
         if (id instanceof ORecordId) {
-          iRecord.setIdentity((ORecordId) id);
+          ORecordInternal.setIdentity(iRecord, (ORecordId) id);
         } else if (id instanceof Number) {
           // TREATS AS CLUSTER POSITION
           ((ORecordId) iRecord.getIdentity()).clusterId = schemaClass.getDefaultClusterId();
@@ -579,7 +581,7 @@ public class OObjectSerializerHelper {
         } else if (id instanceof String)
           ((ORecordId) iRecord.getIdentity()).fromString((String) id);
         else if (id.getClass().equals(Object.class))
-          iRecord.setIdentity((ORecordId) id);
+          ORecordInternal.setIdentity(iRecord,(ORecordId) id);
         else
           OLogManager.instance().warn(OObjectSerializerHelper.class,
               "@Id field has been declared as %s while the supported are: ORID, Number, String, Object", id.getClass());
@@ -784,7 +786,7 @@ public class OObjectSerializerHelper {
       if (iRecord != null && iType.equals(OType.EMBEDDEDSET))
         result = new OTrackedSet<Object>(iRecord);
       else
-        result = new HashSet<Object>();
+        result = new ORecordLazySet(iRecord);
     } else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
       if (iRecord != null && iType.equals(OType.EMBEDDEDLIST))
         result = new OTrackedList<Object>(iRecord);

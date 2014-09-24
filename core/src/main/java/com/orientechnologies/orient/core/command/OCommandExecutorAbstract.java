@@ -15,17 +15,18 @@
  */
 package com.orientechnologies.orient.core.command;
 
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+
+import java.util.Collections;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Abstract implementation of Executor Command interface.
@@ -40,7 +41,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   protected Map<Object, Object> parameters;
   protected OCommandContext     context;
 
-  public static ODatabaseRecord getDatabase() {
+  public static ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
@@ -96,5 +97,10 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   @Override
   public Set<String> getInvolvedClusters() {
     return Collections.EMPTY_SET;
+  }
+
+  @Override
+  public int getSecurityOperationType() {
+    return ORole.PERMISSION_READ;
   }
 }

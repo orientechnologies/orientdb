@@ -21,6 +21,10 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -40,17 +44,44 @@ import java.util.concurrent.locks.Lock;
 
 /**
  * Ask for deployment of database from a remote node.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
+ *
  */
 public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
-  public final static int    CHUNK_MAX_SIZE = 1048576;    // 1MB
-  public static final String DEPLOYDB       = "deploydb.";
+  public final static int    CHUNK_MAX_SIZE        = 1048576;        // 1MB
+  public static final String DEPLOYDB              = "deploydb.";
+  protected final ODocument  databaseConfiguration = new ODocument();
   protected long             random;
 
   public ODeployDatabaseTask() {
+  }
+
+  public ODeployDatabaseTask(final ODatabaseRecordTx db) {
     random = UUID.randomUUID().getLeastSignificantBits();
+
+    if (db != null) {
+      // TO USE IN CASE OF CHECK CLUSTERS (SPLIT-NETWORK)
+      final OStorageAbstract stg = (OStorageAbstract) db.getStorage().getUnderlying();
+
+      final ODocument clusters = new ODocument();
+      databaseConfiguration.field("clusters", clusters);
+
+      for (String clName : stg.getClusterNames()) {
+        final OCluster c = stg.getClusterByName(clName);
+
+        final ODocument cluster = new ODocument();
+        clusters.field(clName, cluster);
+
+        try {
+          cluster.field("records", c.getEntries());
+          cluster.field("first", c.getFirstPosition().longValue());
+          cluster.field("last", c.getFirstPosition().longValue());
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Error on deploying cluster " + clName, e);
+        }
+      }
+    }
   }
 
   @Override
@@ -70,13 +101,14 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
           if (lastDeployment != null && lastDeployment.longValue() == random) {
             // SKIP IT
             ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-                "skip deploying database because already executed");
+                "skip deploying database '%s' because already executed", databaseName);
             return Boolean.FALSE;
           }
 
           iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
-          iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+          iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+          iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
           ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
               databaseName);
@@ -116,7 +148,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
             if (chunk.last)
               // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-              iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+              iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
 
             return chunk;
 
@@ -174,11 +206,18 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeLong(random);
+    final byte[] buffer = databaseConfiguration.toStream();
+    out.writeInt(buffer.length);
+    out.write(buffer);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     random = in.readLong();
+    final int bufferLength = in.readInt();
+    final byte[] buffer = new byte[bufferLength];
+    in.read(buffer);
+    databaseConfiguration.fromStream(buffer);
   }
 
   @Override

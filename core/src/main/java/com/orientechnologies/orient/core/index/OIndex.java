@@ -15,16 +15,14 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Collection;
+import java.util.Set;
 
 /**
  * Basic interface to handle index.
@@ -33,6 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public interface OIndex<T> {
+  public static final String MERGE_KEYS = "mergeKeys";
   /**
    * Creates the index.
    * 
@@ -126,7 +125,7 @@ public interface OIndex<T> {
    * @param iRecord
    * @param iKey
    */
-  void checkEntry(OIdentifiable iRecord, Object iKey);
+  ODocument checkEntry(OIdentifiable iRecord, Object iKey);
 
   /**
    * Flushes in-memory changes to disk.

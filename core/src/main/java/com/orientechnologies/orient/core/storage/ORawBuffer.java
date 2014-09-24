@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.type.OBuffer;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -46,10 +47,10 @@ public class ORawBuffer extends OBuffer {
    * 
    * @param iRecord
    */
-  public ORawBuffer(final ORecordInternal<?> iRecord) {
+  public ORawBuffer(final ORecord iRecord) {
     this.buffer = iRecord.toStream();
     this.version = iRecord.getRecordVersion().copy();
-    this.recordType = iRecord.getRecordType();
+    this.recordType = ORecordInternal.getRecordType(iRecord);
   }
 
   public void readExternal(final ObjectInput iInput) throws IOException, ClassNotFoundException {

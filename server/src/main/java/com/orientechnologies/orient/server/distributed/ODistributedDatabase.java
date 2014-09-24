@@ -24,7 +24,8 @@ import java.util.Collection;
  * 
  */
 public interface ODistributedDatabase {
-  public ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, Collection<String> iNodes);
+  ODistributedResponse send2Nodes(ODistributedRequest iRequest, Collection<String> iClusterNames, Collection<String> iNodes,
+      ODistributedRequest.EXECUTION_MODE iExecutionMode);
 
-  public void setOnline();
+  void setOnline();
 }

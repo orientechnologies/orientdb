@@ -28,6 +28,7 @@ import org.testng.annotations.*;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
@@ -248,7 +249,7 @@ public class MultipleDBTest extends DocumentDBBaseTest {
     System.out.flush();
   }
 
-  private String getDbId(ODatabase tx) {
+  private String getDbId(ODatabaseInternal tx) {
     if (tx.getStorage() instanceof OStorageRemote)
       return tx.getURL() + " - sessionId: " + ((OStorageRemote) tx.getStorage()).getSessionId();
     else

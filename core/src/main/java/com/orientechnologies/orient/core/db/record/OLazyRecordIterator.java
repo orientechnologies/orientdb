@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  */
 public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OResettable {
-  final private ORecord<?>                        sourceRecord;
+  final private ORecord                           sourceRecord;
   final private Iterable<? extends OIdentifiable> source;
   private Iterator<? extends OIdentifiable>       underlying;
   final private boolean                           autoConvert2Record;
@@ -44,7 +44,7 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
     this.source = null;
   }
 
-  public OLazyRecordIterator(final ORecord<?> iSourceRecord, final Iterator<? extends OIdentifiable> iIterator,
+  public OLazyRecordIterator(final ORecord iSourceRecord, final Iterator<? extends OIdentifiable> iIterator,
       final boolean iConvertToRecord) {
     this.sourceRecord = iSourceRecord;
     this.underlying = iIterator;
@@ -68,7 +68,7 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
 
     if (value instanceof ORecordId && autoConvert2Record && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       try {
-        final ORecord<?> rec = ((ORecordId) value).getRecord();
+        final ORecord rec = ((ORecordId) value).getRecord();
         if (underlying instanceof OLazyIterator<?>)
           ((OLazyIterator<OIdentifiable>) underlying).update(rec);
         value = rec;

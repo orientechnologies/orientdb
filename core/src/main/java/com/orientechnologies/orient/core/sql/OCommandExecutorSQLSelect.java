@@ -15,6 +15,23 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -26,6 +43,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
@@ -39,11 +57,14 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
@@ -51,6 +72,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
@@ -60,13 +82,6 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -157,7 +172,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final ODocument doc = new ODocument().setOrdered(true);
     doc.field("key", iKey);
     doc.field("rid", iValue);
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     return doc;
   }
 
@@ -250,11 +265,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       if (parsedTarget.getTargetQuery() != null) {
         // SUB QUERY, PROPAGATE THE CALL
-        clusters.addAll(parsedTarget.getTargetQuery().getInvolvedClusters());
+        final Set<String> clIds = parsedTarget.getTargetQuery().getInvolvedClusters();
+        for (String c : clIds)
+          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+          if (checkClusterAccess(db, c))
+            clusters.add(c);
+
       } else if (parsedTarget.getTargetRecords() != null) {
         // SINGLE RECORDS: BROWSE ALL (COULD BE EXPENSIVE).
         for (OIdentifiable identifiable : parsedTarget.getTargetRecords()) {
-          clusters.add(db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase());
+          final String c = db.getClusterNameById(identifiable.getIdentity().getClusterId()).toLowerCase();
+          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+          if (checkClusterAccess(db, c))
+            clusters.add(c);
         }
       }
 
@@ -263,13 +286,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           final OClass cls = db.getMetadata().getSchema().getClass(clazz);
           if (cls != null)
             for (int clId : cls.getClusterIds()) {
-              clusters.add(db.getClusterNameById(clId).toLowerCase());
+              // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+              if (clId > -1 && checkClusterAccess(db, db.getClusterNameById(clId)))
+                clusters.add(db.getClusterNameById(clId).toLowerCase());
             }
         }
       }
+
       if (parsedTarget.getTargetClusters() != null) {
         for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-          clusters.add(cluster.toLowerCase());
+          final String c = cluster.toLowerCase();
+          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+          if (checkClusterAccess(db, c))
+            clusters.add(c);
         }
       }
       if (parsedTarget.getTargetIndex() != null) {
@@ -368,6 +397,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return fetchPlan != null ? fetchPlan : request.getFetchPlan();
   }
 
+  protected boolean checkClusterAccess(final ODatabaseRecord db, final String iClusterName) {
+    return db.getUser() != null
+        && db.getUser().checkIfAllowed(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, getSecurityOperationType()) != null;
+  }
+
   protected void executeSearch(final Map<Object, Object> iArgs) {
     assignTarget(iArgs);
 
@@ -408,10 +442,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OStorage.LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy
         : lockingStrategy;
 
-    ORecordInternal<?> record = null;
+    ORecord record = null;
     try {
-      if (id instanceof ORecordInternal<?>) {
-        record = (ORecordInternal<?>) id;
+      if (id instanceof ORecord) {
+        record = (ORecord) id;
 
         // LOCK THE RECORD IF NEEDED
         if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
@@ -424,7 +458,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       context.updateMetric("recordReads", +1);
 
-      if (record == null || record.getRecordType() != ODocument.RECORD_TYPE)
+      if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
         // SKIP IT
         return true;
 
@@ -854,6 +888,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean optimizeExecution() {
+    if (compiledFilter != null)
+      mergeRangeConditionsToBetweenOperators(compiledFilter);
+
     if ((compiledFilter == null || (compiledFilter.getRootCondition() == null)) && groupByFields == null && projections != null
         && projections.size() == 1) {
 
@@ -905,6 +942,172 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
+  private void mergeRangeConditionsToBetweenOperators(OSQLFilter filter) {
+    OSQLFilterCondition condition = filter.getRootCondition();
+
+    OSQLFilterCondition newCondition = convertToBetweenClause(condition);
+    if (newCondition != null) {
+      filter.setRootCondition(newCondition);
+      metricRecorder.recordRangeQueryConvertedInBetween();
+      return;
+    }
+
+    mergeRangeConditionsToBetweenOperators(condition);
+  }
+
+  private void mergeRangeConditionsToBetweenOperators(OSQLFilterCondition condition) {
+    if (condition == null)
+      return;
+
+    OSQLFilterCondition newCondition;
+
+    if (condition.getLeft() instanceof OSQLFilterCondition) {
+      OSQLFilterCondition leftCondition = (OSQLFilterCondition) condition.getLeft();
+      newCondition = convertToBetweenClause(leftCondition);
+
+      if (newCondition != null) {
+        condition.setLeft(newCondition);
+        metricRecorder.recordRangeQueryConvertedInBetween();
+      } else
+        mergeRangeConditionsToBetweenOperators(leftCondition);
+    }
+
+    if (condition.getRight() instanceof OSQLFilterCondition) {
+      OSQLFilterCondition rightCondition = (OSQLFilterCondition) condition.getRight();
+
+      newCondition = convertToBetweenClause(rightCondition);
+      if (newCondition != null) {
+        condition.setRight(newCondition);
+        metricRecorder.recordRangeQueryConvertedInBetween();
+      } else
+        mergeRangeConditionsToBetweenOperators(rightCondition);
+    }
+  }
+
+  private OSQLFilterCondition convertToBetweenClause(OSQLFilterCondition condition) {
+    if (condition == null)
+      return null;
+
+    final Object right = condition.getRight();
+    final Object left = condition.getLeft();
+
+    final OQueryOperator operator = condition.getOperator();
+    if (!(operator instanceof OQueryOperatorAnd))
+      return null;
+
+    if (!(right instanceof OSQLFilterCondition))
+      return null;
+
+    if (!(left instanceof OSQLFilterCondition))
+      return null;
+
+    String rightField;
+
+    final OSQLFilterCondition rightCondition = (OSQLFilterCondition) right;
+    final OSQLFilterCondition leftCondition = (OSQLFilterCondition) left;
+
+    if (rightCondition.getLeft() instanceof OSQLFilterItemField && rightCondition.getRight() instanceof OSQLFilterItemField)
+      return null;
+
+    if (!(rightCondition.getLeft() instanceof OSQLFilterItemField) && !(rightCondition.getRight() instanceof OSQLFilterItemField))
+      return null;
+
+    if (leftCondition.getLeft() instanceof OSQLFilterItemField && leftCondition.getRight() instanceof OSQLFilterItemField)
+      return null;
+
+    if (!(leftCondition.getLeft() instanceof OSQLFilterItemField) && !(leftCondition.getRight() instanceof OSQLFilterItemField))
+      return null;
+
+    final List<Object> betweenBoundaries = new ArrayList<Object>();
+
+    if (rightCondition.getLeft() instanceof OSQLFilterItemField) {
+      OSQLFilterItemField itemField = (OSQLFilterItemField) rightCondition.getLeft();
+      if (!itemField.isFieldChain())
+        return null;
+
+      if (itemField.getFieldChain().getItemCount() > 1)
+        return null;
+
+      rightField = itemField.getRoot();
+      betweenBoundaries.add(rightCondition.getRight());
+    } else if (rightCondition.getRight() instanceof OSQLFilterItemField) {
+      OSQLFilterItemField itemField = (OSQLFilterItemField) rightCondition.getRight();
+      if (!itemField.isFieldChain())
+        return null;
+
+      if (itemField.getFieldChain().getItemCount() > 1)
+        return null;
+
+      rightField = itemField.getRoot();
+      betweenBoundaries.add(rightCondition.getLeft());
+    } else
+      return null;
+
+    betweenBoundaries.add("and");
+
+    String leftField;
+    if (leftCondition.getLeft() instanceof OSQLFilterItemField) {
+      OSQLFilterItemField itemField = (OSQLFilterItemField) leftCondition.getLeft();
+      if (!itemField.isFieldChain())
+        return null;
+
+      if (itemField.getFieldChain().getItemCount() > 1)
+        return null;
+
+      leftField = itemField.getRoot();
+      betweenBoundaries.add(leftCondition.getRight());
+    } else if (leftCondition.getRight() instanceof OSQLFilterItemField) {
+      OSQLFilterItemField itemField = (OSQLFilterItemField) leftCondition.getRight();
+      if (!itemField.isFieldChain())
+        return null;
+
+      if (itemField.getFieldChain().getItemCount() > 1)
+        return null;
+
+      leftField = itemField.getRoot();
+      betweenBoundaries.add(leftCondition.getLeft());
+    } else
+      return null;
+
+    if (!leftField.equalsIgnoreCase(rightField))
+      return null;
+
+    final OQueryOperator rightOperator = ((OSQLFilterCondition) right).getOperator();
+    final OQueryOperator leftOperator = ((OSQLFilterCondition) left).getOperator();
+
+    if ((rightOperator instanceof OQueryOperatorMajor || rightOperator instanceof OQueryOperatorMajorEquals)
+        && (leftOperator instanceof OQueryOperatorMinor || leftOperator instanceof OQueryOperatorMinorEquals)) {
+
+      final OQueryOperatorBetween between = new OQueryOperatorBetween();
+
+      if (rightOperator instanceof OQueryOperatorMajor)
+        between.setLeftInclusive(false);
+
+      if (leftOperator instanceof OQueryOperatorMinor)
+        between.setRightInclusive(false);
+
+      return new OSQLFilterCondition(new OSQLFilterItemField(this, leftField), between, betweenBoundaries.toArray());
+    }
+
+    if ((leftOperator instanceof OQueryOperatorMajor || leftOperator instanceof OQueryOperatorMajorEquals)
+        && (rightOperator instanceof OQueryOperatorMinor || rightOperator instanceof OQueryOperatorMinorEquals)) {
+      final OQueryOperatorBetween between = new OQueryOperatorBetween();
+
+      if (leftOperator instanceof OQueryOperatorMajor)
+        between.setLeftInclusive(false);
+
+      if (rightOperator instanceof OQueryOperatorMinor)
+        between.setRightInclusive(false);
+
+      Collections.reverse(betweenBoundaries);
+
+      return new OSQLFilterCondition(new OSQLFilterItemField(this, leftField), between, betweenBoundaries.toArray());
+
+    }
+
+    return null;
+  }
+
   private void initContext() {
     if (context == null)
       context = new OBasicCommandContext();
@@ -942,7 +1145,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OResultSet result = (OResultSet) getResult();
 
     // BROWSE ALL THE RECORDS ON CURRENT THREAD BUT DELEGATE UNMARSHALLING AND FILTER TO A THREAD POOL
-    final ODatabaseRecord db = getDatabase();
+    final ODatabaseRecordInternal db = getDatabase();
 
     if (limit > -1) {
       if (result != null)
@@ -1094,6 +1297,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           if (indexIsUsedInOrderBy)
             fullySortedByIndex = indexDefinition.getFields().size() >= orderedFields.size();
 
+          context.setVariable("$limit", limit);
           cursor = operator.executeIndexQuery(context, index, keyParams, ascSortOrder);
         } catch (Exception e) {
           OLogManager
@@ -1210,7 +1414,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final ODocument doc = new ODocument().setOrdered(true);
       doc.field("key", entryRecord.getKey());
       doc.field("rid", entryRecord.getValue().getIdentity());
-      doc.unsetDirty();
+      ORecordInternal.unsetDirty(doc);
 
       if (!handleResult(doc))
         // LIMIT REACHED

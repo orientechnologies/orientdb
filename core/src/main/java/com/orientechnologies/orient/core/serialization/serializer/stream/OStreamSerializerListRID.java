@@ -96,15 +96,15 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   }
 
   @Override
-  public void serializeNative(OMVRBTreeRIDSet object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(OMVRBTreeRIDSet object, byte[] stream, int startPosition, Object... hints) {
     final byte[] serializedSet = object.toStream();
-    OBinaryTypeSerializer.INSTANCE.serializeNative(serializedSet, stream, startPosition);
+    OBinaryTypeSerializer.INSTANCE.serializeNativeObject(serializedSet, stream, startPosition);
 
   }
 
   @Override
-  public OMVRBTreeRIDSet deserializeNative(byte[] stream, int startPosition) {
-    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeNative(stream, startPosition);
+  public OMVRBTreeRIDSet deserializeNativeObject(byte[] stream, int startPosition) {
+    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeNativeObject(stream, startPosition);
 
     final String s = OBinaryProtocol.bytes2string(serializedSet);
 
@@ -117,14 +117,14 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   }
 
   @Override
-  public void serializeInDirectMemory(OMVRBTreeRIDSet object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeInDirectMemoryObject(OMVRBTreeRIDSet object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     final byte[] serializedSet = object.toStream();
-    OBinaryTypeSerializer.INSTANCE.serializeInDirectMemory(serializedSet, pointer, offset);
+    OBinaryTypeSerializer.INSTANCE.serializeInDirectMemoryObject(serializedSet, pointer, offset);
   }
 
   @Override
-  public OMVRBTreeRIDSet deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
+  public OMVRBTreeRIDSet deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
+    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemoryObject(pointer, offset);
 
     final String s = OBinaryProtocol.bytes2string(serializedSet);
 

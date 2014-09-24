@@ -235,7 +235,7 @@ public class OMVRBTreeEntryMemory<K, V> extends OMVRBTreeEntry<K, V> {
 		if (keys == null)
 			return "?";
 
-		final StringBuilder buffer = new StringBuilder();
+		final StringBuilder buffer = new StringBuilder(256);
 
 		final Object k = tree.pageIndex >= size ? '?' : getKey();
 

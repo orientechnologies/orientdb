@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.StringTokenizer;
 
-import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -28,8 +27,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -55,7 +56,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
   private int                           binaryThreshold       = OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD
                                                                   .getValueAsInteger();
 
-  private final StringBuilder           buffer                = new StringBuilder();
+  private final StringBuilder           buffer                = new StringBuilder(128);
   private boolean                       marshalling           = true;
 
   protected static final OProfilerMBean PROFILER              = Orient.instance().getProfiler();
@@ -86,13 +87,13 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
   public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId) {
     this(iStorage, getDatabase().getClusterNameById(iClusterId));
     marshalling = false;
-    record.unsetDirty();
+    ORecordInternal.unsetDirty(record);
   }
 
   public OMVRBTreeRIDProvider(final OStorage iStorage, final int iClusterId, int binaryThreshold) {
     this(iStorage, getDatabase().getClusterNameById(iClusterId));
     marshalling = false;
-    record.unsetDirty();
+    ORecordInternal.unsetDirty(record);
     this.binaryThreshold = binaryThreshold;
   }
 
@@ -145,8 +146,8 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
           // PERSISTENT RIDS
           boolean first = true;
           for (OIdentifiable rid : tree.keySet()) {
-            if (rid instanceof ORecord<?>) {
-              final ORecord<?> record = (ORecord<?>) rid;
+            if (rid instanceof ORecord) {
+              final ORecord record = (ORecord) rid;
               if (record.isDirty())
                 record.save();
             }
@@ -160,9 +161,9 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
           }
 
           // TEMPORARY RIDS
-          final IdentityHashMap<ORecord<?>, Object> tempRIDs = tree.getTemporaryEntries();
+          final IdentityHashMap<ORecord, Object> tempRIDs = tree.getTemporaryEntries();
           if (tempRIDs != null && !tempRIDs.isEmpty())
-            for (ORecord<?> rec : tempRIDs.keySet()) {
+            for (ORecord rec : tempRIDs.keySet()) {
               if (!first)
                 buffer.append(OStringSerializerHelper.COLLECTION_SEPARATOR);
               else
@@ -211,7 +212,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
       return;
 
     marshalling = true;
-		tree.setMarshalling(true);
+    tree.setMarshalling(true);
 
     try {
       final char firstChar = buffer.charAt(0);
@@ -234,7 +235,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
       }
     } finally {
       marshalling = false;
-			tree.setMarshalling(false);
+      tree.setMarshalling(false);
     }
   }
 
@@ -302,7 +303,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
     doc.field("keySize", keySize);
 
     if (tree.getTemporaryEntries() != null && tree.getTemporaryEntries().size() > 0)
-      doc.field("tempEntries", new ArrayList<ORecord<?>>(tree.getTemporaryEntries().keySet()));
+      doc.field("tempEntries", new ArrayList<ORecord>(tree.getTemporaryEntries().keySet()));
 
     return doc;
   }

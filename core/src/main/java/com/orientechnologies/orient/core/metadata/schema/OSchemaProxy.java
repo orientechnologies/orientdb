@@ -16,8 +16,10 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
@@ -33,7 +35,7 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSchema {
-  public OSchemaProxy(final OSchemaShared iDelegate, final ODatabaseRecord iDatabase) {
+  public OSchemaProxy(final OSchemaShared iDelegate, final ODatabaseRecordInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 
@@ -189,6 +191,11 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   public OGlobalProperty createGlobalProperty(String name, OType type, Integer id) {
     return delegate.createGlobalProperty(name, type, id);
+  }
+
+  @Override
+  public OClusterSelectionFactory getClusterSelectionFactory() {
+    return delegate.getClusterSelectionFactory();
   }
 
 }

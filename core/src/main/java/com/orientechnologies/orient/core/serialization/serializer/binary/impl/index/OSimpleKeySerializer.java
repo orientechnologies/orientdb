@@ -107,34 +107,34 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
         + binarySerializer.getObjectSizeNative(stream, startPosition + OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE);
   }
 
-  public void serializeNative(T key, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(T key, byte[] stream, int startPosition, Object... hints) {
     init(key, hints);
     stream[startPosition] = binarySerializer.getId();
     startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
-    binarySerializer.serializeNative(key, stream, startPosition);
+    binarySerializer.serializeNativeObject(key, stream, startPosition);
   }
 
-  public T deserializeNative(byte[] stream, int startPosition) {
+  public T deserializeNativeObject(byte[] stream, int startPosition) {
     final byte typeId = stream[startPosition];
     startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
 
     init(typeId);
-    return (T) binarySerializer.deserializeNative(stream, startPosition);
+    return (T) binarySerializer.deserializeNativeObject(stream, startPosition);
   }
 
   @Override
-  public void serializeInDirectMemory(T object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeInDirectMemoryObject(T object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     init(object, hints);
     pointer.setByte(offset++, binarySerializer.getId());
-    binarySerializer.serializeInDirectMemory(object, pointer, offset);
+    binarySerializer.serializeInDirectMemoryObject(object, pointer, offset);
   }
 
   @Override
-  public T deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
+  public T deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
     final byte typeId = pointer.getByte(offset++);
 
     init(typeId);
-    return (T) binarySerializer.deserializeFromDirectMemory(pointer, offset);
+    return (T) binarySerializer.deserializeFromDirectMemoryObject(pointer, offset);
   }
 
   @Override

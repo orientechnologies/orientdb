@@ -15,16 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.filter;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -43,6 +33,16 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Run-time query condition evaluator.
@@ -152,7 +152,7 @@ public class OSQLFilterCondition {
 
   @Override
   public String toString() {
-    StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder(128);
 
     buffer.append('(');
     buffer.append(left);

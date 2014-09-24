@@ -24,7 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler;
@@ -69,7 +69,7 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
 
     if (value instanceof ORID && autoConvert2Object) {
       currentElement = (OIdentifiable) value;
-      ORecordInternal<?> record = (ORecordInternal<?>) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan);
+      ORecord record = (ORecord) ((ODatabaseRecord) database.getUnderlying()).load((ORID) value, iFetchPlan);
       if (record == null) {
         OLogManager.instance().warn(
             this,

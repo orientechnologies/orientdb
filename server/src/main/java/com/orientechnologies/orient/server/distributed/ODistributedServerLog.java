@@ -15,9 +15,9 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.logging.Level;
-
 import com.orientechnologies.common.log.OLogManager;
+
+import java.util.logging.Level;
 
 /**
  * Distributed logger.
@@ -84,7 +84,7 @@ public class ODistributedServerLog {
 
   protected static String formatMessage(final Object iRequester, final String iLocalNode, final String iRemoteNode,
       final DIRECTION iDirection, final String iMessage) {
-    final StringBuilder message = new StringBuilder();
+    final StringBuilder message = new StringBuilder(256);
 
     if (iLocalNode != null) {
       message.append('[');

@@ -212,7 +212,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
   @Override
   public boolean result(final Object iRecord) {
-    final ORecord<?> rec = ((OIdentifiable) iRecord).getRecord().copy();
+    final ORecord rec = ((OIdentifiable) iRecord).getRecord().copy();
 
     // RESET THE IDENTITY TO AVOID UPDATE
     rec.getIdentity().reset();
@@ -260,7 +260,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     }
   }
 
-  protected void saveRecord(final ORecord<?> rec) {
+  protected void saveRecord(final ORecord rec) {
     if (clusterName != null)
       rec.save(clusterName);
     else

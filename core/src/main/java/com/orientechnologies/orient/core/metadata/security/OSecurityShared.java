@@ -24,9 +24,11 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -457,6 +459,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   protected OUser getUser(final String iUserName, final boolean iAllowRepair) {
+    if (iUserName == null)
+      return null;
+
     List<ODocument> result;
     try {
       result = getDatabase().<OCommandRequest> command(
@@ -470,6 +475,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
             new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
             .execute();
       }
+    } catch (OSecurityException e) {
+      throw e;
     } catch (Exception e) {
       if (iAllowRepair)
         repair();
@@ -484,7 +491,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return null;
   }
 
-  private ODatabaseRecord getDatabase() {
+  private ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

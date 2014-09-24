@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 
 import java.util.Collection;
 
@@ -80,7 +80,7 @@ public interface OCache {
    *          unique identifier of record
    * @return record stored in cache if any, otherwise - {@code null}
    */
-  ORecordInternal<?> get(ORID id);
+  ORecord get(ORID id);
 
   /**
    * Push record to cache. Identifier of record used as access key
@@ -89,7 +89,7 @@ public interface OCache {
    *          record that should be cached
    * @return previous version of record
    */
-  ORecordInternal<?> put(ORecordInternal<?> record);
+  ORecord put(ORecord record);
 
   /**
    * Remove record with specified identifier
@@ -98,7 +98,7 @@ public interface OCache {
    *          unique identifier of record
    * @return record stored in cache if any, otherwise - {@code null}
    */
-  ORecordInternal<?> remove(ORID id);
+  ORecord remove(ORID id);
 
   /**
    * Remove all records from cache

@@ -15,11 +15,14 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
+import java.io.IOException;
+import java.util.List;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -32,9 +35,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Database based authenticated command. Authenticats against the database taken as second parameter of the URL. The URL must be in
@@ -143,9 +143,13 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     } catch (OLockException e) {
       OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
     } finally {
-      if (db == null)
-        // WRONG USER/PASSWD
-        sendAuthorizationRequest(iRequest, iResponse, iDatabaseName);
+      if (db == null) {
+          // WRONG USER/PASSWD
+          sendAuthorizationRequest(iRequest, iResponse, iDatabaseName);
+      }
+      else {
+          db.close();
+      }
     }
     return false;
   }
@@ -169,7 +173,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       throw new OSecurityAccessException(iRequest.databaseName, "No session active");
 
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
-    ODatabaseRecord localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseRecordInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
     if (localDatabase == null) {
       localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, session.getUserName(),

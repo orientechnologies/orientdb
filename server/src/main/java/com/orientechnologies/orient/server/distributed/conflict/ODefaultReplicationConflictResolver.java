@@ -20,7 +20,7 @@ import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -30,8 +30,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
@@ -80,7 +82,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
       final OServerUserConfiguration replicatorUser = serverInstance.getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
 
-      final ODatabaseRecord threadDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseRecordInternal threadDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (threadDb != null && !threadDb.isClosed() && threadDb.getStorage().getName().equals(iDatabaseName))
         database = threadDb;
       else
@@ -128,8 +130,8 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
                 "Resolved conflict automatically between versions on CREATE record %s/%s v.%d (other RID=%s v.%d). Current record version will be overwritten",
                 database.getName(), iCurrentRID, iCurrentVersion, iOtherRID, iOtherVersion);
 
-        final ORecordInternal<?> record = iCurrentRID.getRecord();
-        record.setVersion(iOtherVersion - 1);
+        final ORecord record = iCurrentRID.getRecord();
+        ORecordInternal.setVersion(record, iOtherVersion - 1);
         record.setDirty();
 
         try {
@@ -204,7 +206,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
   @Override
   public ODocument getAllConflicts() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecord) database);
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) database);
     final List<OIdentifiable> entries = database.query(new OSQLSynchQuery<OIdentifiable>("select from "
         + DISTRIBUTED_CONFLICT_CLASS));
 
@@ -213,7 +215,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
     for (int i = 0; i < entries.size(); ++i) {
       final ODocument record = entries.get(i).getRecord();
       record.setClassName(null);
-      record.addOwner(result);
+      ODocumentInternal.addOwner(record, result);
       record.getIdentity().reset();
 
       final Byte operation = record.field("operation");
@@ -226,7 +228,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
   @Override
   public ODocument reset() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecord) database);
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) database);
     final int deleted = (Integer) database.command(new OSQLSynchQuery<OIdentifiable>("delete from " + DISTRIBUTED_CONFLICT_CLASS))
         .execute();
     return new ODocument().field("result", deleted);
@@ -239,7 +241,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
    *          RID to search
    */
   public boolean existConflictsForRecord(final ORecordId iRID) {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecord) database);
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) database);
     if (index == null) {
       ODistributedServerLog.warn(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
           "Index against %s is not available right now, searches will be slower", DISTRIBUTED_CONFLICT_CLASS);
@@ -258,7 +260,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   }
 
   protected ODocument createConflictDocument(final byte iOperation, final ORecordId iRid, final String iServerNode) {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecord) database);
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) database);
 
     final ODocument doc = new ODocument(DISTRIBUTED_CONFLICT_CLASS);
     doc.field(FIELD_OPERATION, iOperation);
@@ -271,19 +273,6 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   protected void errorOnWriteConflict(final String iRemoteNode, final ODocument doc) {
     ODistributedServerLog.error(this, cluster.getLocalNodeName(), iRemoteNode, DIRECTION.IN,
         "Error on saving CONFLICT for record %s/%s...", database.getName(), doc);
-  }
-
-  protected boolean areRecordContentIdentical(final ORecordInternal<?> rec1, final ORecordInternal<?> rec2) {
-    final byte[] rec1Stream = rec1.toStream();
-    final byte[] rec2Stream = rec2.toStream();
-
-    if (rec1Stream.length != rec2Stream.length)
-      return false;
-
-    for (int i = 0; i < rec1Stream.length; ++i)
-      if (rec1Stream[i] != rec2Stream[i])
-        return false;
-    return true;
   }
 
 }

@@ -107,6 +107,21 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return new ORidBag(stream);
   }
 
+  public ORidBag copy() {
+    final ORidBag copy = new ORidBag();
+    copy.topThreshold = topThreshold;
+    copy.bottomThreshold = bottomThreshold;
+    copy.uuid = uuid;
+
+    if (delegate instanceof OSBTreeRidBag)
+      // ALREADY MULTI-THREAD
+      copy.delegate = delegate;
+    else
+      copy.delegate = ((OEmbeddedRidBag) delegate).copy();
+
+    return copy;
+  }
+
   public void addAll(Collection<OIdentifiable> values) {
     delegate.addAll(values);
   }
@@ -181,7 +196,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         for (OIdentifiable identifiable : oldDelegate)
           delegate.add(identifiable);
 
-        final ORecord<?> owner = oldDelegate.getOwner();
+        final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
         owner.setDirty();
 
@@ -197,7 +212,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         for (OIdentifiable identifiable : oldDelegate)
           delegate.add(identifiable);
 
-        final ORecord<?> owner = oldDelegate.getOwner();
+        final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
         owner.setDirty();
 
@@ -302,7 +317,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     return delegate.getGenericClass();
   }
 
-  public void setOwner(ORecord<?> owner) {
+  public void setOwner(ORecord owner) {
     delegate.setOwner(owner);
   }
 
@@ -347,7 +362,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   /**
    * IMPORTANT! Only for internal usage.
    */
-  public boolean tryMerge(ORidBag otherValue) {
+  public boolean tryMerge(final ORidBag otherValue, boolean iMergeSingleItemsOfMultiValueFields) {
     if (!isEmbedded() && !otherValue.isEmbedded()) {
       final OSBTreeRidBag thisTree = (OSBTreeRidBag) delegate;
       final OSBTreeRidBag otherTree = (OSBTreeRidBag) otherValue.delegate;
@@ -359,6 +374,25 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
         return true;
       }
+    } else if (iMergeSingleItemsOfMultiValueFields) {
+      final Iterator<OIdentifiable> iter = otherValue.rawIterator();
+      while (iter.hasNext()) {
+        final OIdentifiable value = iter.next();
+        if (value != null) {
+          final Iterator<OIdentifiable> localIter = rawIterator();
+          boolean found = false;
+          while (localIter.hasNext()) {
+            final OIdentifiable v = localIter.next();
+            if (value.equals(v)) {
+              found = true;
+              break;
+            }
+          }
+          if (!found)
+            add(value);
+        }
+      }
+      return true;
     }
     return false;
   }

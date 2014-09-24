@@ -50,10 +50,10 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
 import com.orientechnologies.orient.core.record.ORecordStringable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -76,16 +76,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   private interface CollectionItemVisitor {
     void visitItem(Object item);
-  }
-
-  @Override
-  public int getCurrentVersion() {
-    return 0;
-  }
-
-  @Override
-  public int getMinSupportedVersion() {
-    return 0;
   }
 
   public class FormatSettings {
@@ -146,28 +136,48 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             dateAsLong = true;
           else if (f.startsWith("prettyPrint"))
             prettyPrint = true;
+          else if (f.startsWith("graph") || f.startsWith("shallow"))
+            // SUPPORTED IN OTHER PARTS
+            ;
+          else
+            throw new IllegalArgumentException("Unrecognized JSON formatting option: " + f);
       }
     }
   }
 
-  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, boolean needReload) {
+  @Override
+  public int getCurrentVersion() {
+    return 0;
+  }
+
+  @Override
+  public int getMinSupportedVersion() {
+    return 0;
+  }
+
+  public ORecord fromString(String iSource, ORecord iRecord, final String[] iFields, boolean needReload) {
     return fromString(iSource, iRecord, iFields, null, needReload);
   }
 
   @Override
-  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields) {
+  public ORecord fromString(String iSource, ORecord iRecord, final String[] iFields) {
     return fromString(iSource, iRecord, iFields, null, false);
   }
 
-  public ORecordInternal<?> fromString(String iSource, ORecordInternal<?> iRecord, final String[] iFields, final String iOptions,
-      boolean needReload) {
+  public ORecord fromString(String iSource, ORecord iRecord, final String[] iFields, final String iOptions, boolean needReload) {
     iSource = unwrapSource(iSource);
+
+    boolean noMap = false;
+    if (iOptions != null) {
+      final String[] format = iOptions.split(",");
+      for (String f : format)
+        if (f.equalsIgnoreCase("noMap"))
+          noMap = true;
+    }
 
     if (iRecord != null)
       // RESET ALL THE FIELDS
       iRecord.clear();
-
-    boolean noMap = isNoMap(iOptions);
 
     final List<String> fields = OStringSerializerHelper.smartSplit(iSource, PARAMETER_SEPARATOR, 0, -1, true, true, false, false,
         ' ', '\n', '\r', '\t');
@@ -188,13 +198,13 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
           fieldTypes = loadFieldTypes(fieldTypes, fieldValueAsString);
         } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
-          if (iRecord == null || iRecord.getRecordType() != fieldValueAsString.charAt(0)) {
+          if (iRecord == null || ORecordInternal.getRecordType(iRecord) != fieldValueAsString.charAt(0)) {
             // CREATE THE RIGHT RECORD INSTANCE
             iRecord = Orient.instance().getRecordFactoryManager().newInstance((byte) fieldValueAsString.charAt(0));
           }
         } else if (needReload && fieldName.equals(ODocumentHelper.ATTRIBUTE_RID) && iRecord instanceof ODocument) {
           if (fieldValue != null && fieldValue.length() > 0) {
-            ORecordInternal<?> localRecord = ODatabaseRecordThreadLocal.INSTANCE.get().load(new ORecordId(fieldValueAsString));
+            ORecord localRecord = ODatabaseRecordThreadLocal.INSTANCE.get().load(new ORecordId(fieldValueAsString));
             if (localRecord != null)
               iRecord = localRecord;
           }
@@ -217,7 +227,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
           // RECORD ATTRIBUTES
           if (fieldName.equals(ODocumentHelper.ATTRIBUTE_RID))
-            iRecord.setIdentity(new ORecordId(fieldValueAsString));
+            ORecordInternal.setIdentity(iRecord, new ORecordId(fieldValueAsString));
           else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION))
             if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
               recordVersion = Integer.parseInt(fieldValue);
@@ -262,7 +272,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
                 if (type == null) {
                   // TRY TO UNDERSTAND BY FIRST ITEM
                   Object first = ((Collection<?>) v).iterator().next();
-                  if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid())
+                  if (first != null && first instanceof ORecord && !((ORecord) first).getIdentity().isValid())
                     type = v instanceof Set<?> ? OType.EMBEDDEDSET : OType.EMBEDDEDLIST;
                 }
 
@@ -274,7 +284,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
               } else if (v instanceof Map<?, ?> && !((Map<?, ?>) v).isEmpty()) {
                 // CHECK IF THE MAP IS EMBEDDED
                 Object first = ((Map<?, ?>) v).values().iterator().next();
-                if (first != null && first instanceof ORecord<?> && !((ORecord<?>) first).getIdentity().isValid()) {
+                if (first != null && first instanceof ORecord && !((ORecord) first).getIdentity().isValid()) {
                   doc.field(fieldName, v, OType.EMBEDDEDMAP);
                   continue;
                 }
@@ -313,11 +323,12 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           throw new OSerializationException("Error on unmarshalling JSON content for record: " + iSource, e);
       }
     }
+
     return iRecord;
   }
 
   @Override
-  public StringBuilder toString(final ORecordInternal<?> iRecord, final StringBuilder iOutput, final String iFormat,
+  public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
       final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType) {
     try {
@@ -329,7 +340,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       OJSONFetchContext context = new OJSONFetchContext(json, settings);
       context.writeSignature(json, iRecord);
 
-      if (iRecord instanceof ORecordSchemaAware<?>) {
+      if (iRecord instanceof ODocument) {
 
         OFetchHelper.fetch(iRecord, null, OFetchHelper.buildFetchPlan(settings.fetchPlan), new OJSONFetchListener(), context,
             iFormat);
@@ -398,17 +409,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
     iSource = iSource.substring(1, iSource.length() - 1).trim();
     return iSource;
-  }
-
-  private boolean isNoMap(String iOptions) {
-    boolean noMap = false;
-    if (iOptions != null) {
-      final String[] format = iOptions.split(",");
-      for (String f : format)
-        if (f.equals("noMap"))
-          noMap = true;
-    }
-    return noMap;
   }
 
   @SuppressWarnings("unchecked")
@@ -573,9 +573,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     final String[] fields = OStringParser.getWords(iFieldValue.substring(1, iFieldValue.length() - 1), ":,", true);
 
     if (fields == null || fields.length == 0)
-      if (iNoMap)
-        return new ODocument().addOwner(iRecord);
-      else
+      if (iNoMap) {
+        ODocument res = new ODocument();
+        ODocumentInternal.addOwner(res, iRecord);
+        return res;
+      } else
         return new HashMap<String, Object>();
 
     if (iNoMap || hasTypeField(fields)) {
@@ -612,7 +614,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     final ODocument recordInternal = (ODocument) fromString(iFieldValue, new ODocument(), null, iOptions, shouldReload);
 
     if (shouldBeDeserializedAsEmbedded(recordInternal, iType))
-      recordInternal.addOwner(iRecord);
+      ODocumentInternal.addOwner(recordInternal, iRecord);
     else {
       ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
@@ -696,7 +698,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
         // TODO redundant in some cases, owner is already added by getValue in some cases
         if (shouldBeDeserializedAsEmbedded(collectionItem, iType))
-          ((ODocument) collectionItem).addOwner(iRecord);
+          ODocumentInternal.addOwner((ODocument) collectionItem, iRecord);
 
         if (collectionItem instanceof String && ((String) collectionItem).length() == 0)
           continue;

@@ -32,18 +32,18 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
 public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvider<K, V>, OSerializableStream {
-  private static final long          serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-  protected final String             clusterName;
-  protected final int                clusterId;
-  protected final ORecordInternal<?> record;
-  protected final OStorage           storage;
-  protected int                      size;
-  protected int                      pageSize;
-  protected ORecordId                root;
-  protected int                      keySize          = 1;
+  protected final String    clusterName;
+  protected final int       clusterId;
+  protected final ORecord   record;
+  protected final OStorage  storage;
+  protected int             size;
+  protected int             pageSize;
+  protected ORecordId       root;
+  protected int             keySize          = 1;
 
-  public OMVRBTreeProviderAbstract(final ORecordInternal<?> iRecord, final OStorage iStorage, final String iClusterName) {
+  public OMVRBTreeProviderAbstract(final ORecord iRecord, final OStorage iStorage, final String iClusterName) {
     storage = iStorage;
     clusterName = iClusterName;
     if (storage != null) {
@@ -57,7 +57,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
     }
 
     record = iRecord;
-    record.setIdentity(new ORecordId());
+    ORecordInternal.setIdentity(record, new ORecordId());
     updateConfig();
   }
 
@@ -183,18 +183,19 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
       // UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
       record.getRecordVersion().copyFrom(
           iSt.updateRecord((ORecordId) record.getIdentity(), true, record.toStream(),
-              OVersionFactory.instance().createUntrackedVersion(), record.getRecordType(), (byte) 0, null).getResult());
+              OVersionFactory.instance().createUntrackedVersion(), ORecordInternal.getRecordType(record), (byte) 0, null)
+              .getResult());
     else {
       // CREATE IT
       if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
         ((ORecordId) record.getIdentity()).clusterId = clusterId;
 
       final OPhysicalPosition ppos = iSt.createRecord((ORecordId) record.getIdentity(), record.toStream(),
-          OVersionFactory.instance().createVersion(), record.getRecordType(), (byte) 0, null).getResult();
+          OVersionFactory.instance().createVersion(), ORecordInternal.getRecordType(record), (byte) 0, null).getResult();
       record.getRecordVersion().copyFrom(ppos.recordVersion);
 
     }
-    record.unsetDirty();
+    ORecordInternal.unsetDirty(record);
   }
 
   public void delete() {
@@ -229,7 +230,7 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
     return rid == null ? 0 : rid.hashCode();
   }
 
-  public ORecord<?> getRecord() {
+  public ORecord getRecord() {
     return record;
   }
 

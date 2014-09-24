@@ -11,6 +11,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.types.ORef;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
@@ -19,7 +20,7 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 public class TrackedListTest {
   public void testAddNotificationOne() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -43,7 +44,7 @@ public class TrackedListTest {
 
   public void testAddNotificationTwo() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -69,7 +70,7 @@ public class TrackedListTest {
 
   public void testAddNotificationThree() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -79,14 +80,14 @@ public class TrackedListTest {
 
   public void testAddNotificationFour() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
     trackedList.add("value1");
     trackedList.add("value2");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
     trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
 
@@ -105,7 +106,7 @@ public class TrackedListTest {
 
   public void testAddAllNotificationOne() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -113,7 +114,7 @@ public class TrackedListTest {
     valuesToAdd.add("value1");
     valuesToAdd.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final List<OMultiValueChangeEvent<Integer, String>> firedEvents = new ArrayList<OMultiValueChangeEvent<Integer, String>>();
@@ -137,7 +138,7 @@ public class TrackedListTest {
 
   public void testAddAllNotificationTwo() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -152,7 +153,7 @@ public class TrackedListTest {
 
   public void testAddAllNotificationThree() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -160,7 +161,7 @@ public class TrackedListTest {
     valuesToAdd.add("value1");
     valuesToAdd.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
@@ -180,14 +181,14 @@ public class TrackedListTest {
 
   public void testAddIndexNotificationOne() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
     trackedList.add("value1");
     trackedList.add("value2");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -210,14 +211,14 @@ public class TrackedListTest {
 
   public void testAddIndexNotificationTwo() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
     trackedList.add("value1");
     trackedList.add("value2");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
     trackedList.add(1, "value3");
     Assert.assertTrue(doc.isDirty());
@@ -225,14 +226,14 @@ public class TrackedListTest {
 
   public void testAddIndexNotificationThree() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
     trackedList.add("value1");
     trackedList.add("value2");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
@@ -252,7 +253,7 @@ public class TrackedListTest {
 
   public void testSetNotificationOne() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -260,7 +261,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -283,7 +284,7 @@ public class TrackedListTest {
 
   public void testSetNotificationTwo() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -291,7 +292,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     trackedList.set(1, "value4");
@@ -300,7 +301,7 @@ public class TrackedListTest {
 
   public void testSetNotificationThree() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -308,7 +309,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
@@ -327,7 +328,7 @@ public class TrackedListTest {
 
   public void testRemoveNotificationOne() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -335,7 +336,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -358,7 +359,7 @@ public class TrackedListTest {
 
   public void testRemoveNotificationTwo() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -366,7 +367,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     trackedList.remove("value2");
@@ -375,7 +376,7 @@ public class TrackedListTest {
 
   public void testRemoveNotificationThree() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -383,7 +384,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
@@ -403,7 +404,7 @@ public class TrackedListTest {
 
   public void testRemoveNotificationFour() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -411,7 +412,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -429,7 +430,7 @@ public class TrackedListTest {
 
   public void testRemoveIndexOne() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -437,7 +438,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -460,7 +461,7 @@ public class TrackedListTest {
 
   public void testRemoveIndexTwo() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -468,7 +469,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     trackedList.remove(1);
@@ -477,7 +478,7 @@ public class TrackedListTest {
 
   public void testRemoveIndexThree() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -485,7 +486,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     trackedList.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
@@ -505,7 +506,7 @@ public class TrackedListTest {
 
   public void testClearOne() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -513,7 +514,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final List<OMultiValueChangeEvent<Integer, String>> firedEvents = new ArrayList<OMultiValueChangeEvent<Integer, String>>();
@@ -537,7 +538,7 @@ public class TrackedListTest {
 
   public void testClearTwo() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -545,7 +546,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     trackedList.clear();
@@ -554,7 +555,7 @@ public class TrackedListTest {
 
   public void testClearThree() {
     final ODocument doc = new ODocument();
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final OTrackedList<String> trackedList = new OTrackedList<String>(doc);
@@ -562,7 +563,7 @@ public class TrackedListTest {
     trackedList.add("value2");
     trackedList.add("value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);

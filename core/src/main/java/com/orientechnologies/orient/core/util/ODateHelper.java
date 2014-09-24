@@ -8,6 +8,7 @@ import java.util.TimeZone;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 
 public class ODateHelper {
   public static final String DEF_DATE_FORMAT     = "yyyy-MM-dd";
@@ -25,7 +26,7 @@ public class ODateHelper {
   }
 
   public static DateFormat getDateFormatInstance() {
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateFormatInstance();
     else
@@ -33,7 +34,7 @@ public class ODateHelper {
   }
 
   public static String getDateFormat() {
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateFormat();
     else
@@ -41,7 +42,7 @@ public class ODateHelper {
   }
 
   public static DateFormat getDateTimeFormatInstance() {
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateTimeFormatInstance();
     else
@@ -49,7 +50,7 @@ public class ODateHelper {
   }
 
   public static String getDateTimeFormat() {
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateTimeFormat();
     else
