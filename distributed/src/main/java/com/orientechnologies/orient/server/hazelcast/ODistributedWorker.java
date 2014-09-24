@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
@@ -71,6 +72,7 @@ public class ODistributedWorker extends Thread {
   protected volatile ODatabaseDocumentTx              database;
   protected volatile OUser                            lastUser;
   protected boolean                                   restoringMessages;
+  protected volatile boolean                          running             = true;
 
   public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue<ODistributedRequest> iRequestQueue,
       final String iDatabaseName, final int i, final boolean iRestoringMessages) {
@@ -87,7 +89,7 @@ public class ODistributedWorker extends Thread {
   public void run() {
     final int queuedMsg = requestQueue.size();
 
-    for (long processedMessages = 0; !Thread.interrupted(); processedMessages++) {
+    for (long processedMessages = 0; running; processedMessages++) {
       if (restoringMessages && processedMessages >= queuedMsg) {
         // END OF RESTORING MESSAGES, SET IT ONLINE
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
@@ -128,7 +130,13 @@ public class ODistributedWorker extends Thread {
       } catch (HazelcastInstanceNotActiveException e) {
         Thread.interrupted();
         break;
-
+      } catch (HazelcastException e) {
+        if (e.getCause() instanceof InterruptedException)
+          Thread.interrupted();
+        else
+          ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
+              "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
+              message != null ? message.getTask() : "-");
       } catch (Throwable e) {
         ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
             "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
@@ -168,12 +176,31 @@ public class ODistributedWorker extends Thread {
   }
 
   public void shutdown() {
+    final int pendingMsgs = localQueue.size();
+
+    if (pendingMsgs > 0)
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Received shutdown signal, waiting for distributed worker queue is empty (pending msgs=%d)...", pendingMsgs);
+
     try {
+      running = false;
+      interrupt();
+
+      if (pendingMsgs > 0)
+        join();
+
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Shutdown distributed worker completed");
+
       localQueue.clear();
 
       if (database != null)
         database.close();
+
     } catch (Exception e) {
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Error on shutting down distributed worker", e);
+
     }
   }
 

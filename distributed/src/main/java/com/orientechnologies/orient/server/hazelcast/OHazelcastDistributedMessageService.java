@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.config.QueueConfig;
+import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
@@ -61,6 +62,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   protected Thread                                                     responseThread;
   protected long[]                                                     responseTimeMetrics         = new long[10];
   protected int                                                        responseTimeMetricIndex     = 0;
+  protected volatile boolean                                           running                     = true;
 
   public OHazelcastDistributedMessageService(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -95,7 +97,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       @Override
       public void run() {
         Thread.currentThread().setName("OrientDB Node Response " + queueName);
-        while (!Thread.interrupted()) {
+        while (running) {
           String senderNode = null;
           ODistributedResponse message = null;
           try {
@@ -119,6 +121,12 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
           } catch (HazelcastInstanceNotActiveException e) {
             Thread.interrupted();
             break;
+          } catch (HazelcastException e) {
+            if (e.getCause() instanceof InterruptedException)
+              Thread.interrupted();
+            else
+              ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
+                  "error on reading distributed response", e, message != null ? message.getPayload() : "-");
           } catch (Throwable e) {
             ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
                 "error on reading distributed response", e, message != null ? message.getPayload() : "-");
@@ -169,8 +177,15 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   }
 
   public void shutdown() {
+    running = false;
+
     if (responseThread != null) {
       responseThread.interrupt();
+      if (!nodeResponseQueue.isEmpty())
+        try {
+          responseThread.join();
+        } catch (InterruptedException e) {
+        }
       responseThread = null;
     }
 

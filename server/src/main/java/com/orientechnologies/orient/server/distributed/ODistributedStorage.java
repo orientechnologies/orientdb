@@ -150,7 +150,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     asynchWorker = new Thread() {
       @Override
       public void run() {
-        while (running) {
+        while (running || !asynchronousOperationsQueue.isEmpty()) {
           try {
             final OAsynchDistributedOperation operation = asynchronousOperationsQueue.take();
 
@@ -158,13 +158,23 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
                 operation.getTask(), EXECUTION_MODE.NO_RESPONSE);
 
           } catch (InterruptedException e) {
+
+            final int pendingMessages = asynchronousOperationsQueue.size();
+            if (pendingMessages > 0)
+              ODistributedServerLog.warn(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+                  ODistributedServerLog.DIRECTION.NONE,
+                  "Received shutdown signal, waiting for asynchronous queue is empty (pending msgs=%d)...", pendingMessages);
+
             Thread.interrupted();
+
           } catch (Throwable e) {
             // ASYNCH: IGNORE IT
             ODistributedServerLog.error(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
                 ODistributedServerLog.DIRECTION.OUT, "Error on executing asynch operation", e);
           }
         }
+        ODistributedServerLog.warn(this, dManager != null ? dManager.getLocalNodeName() : "?", null,
+            ODistributedServerLog.DIRECTION.NONE, "Shutdown asynchronous queue worker completed");
       }
     };
     asynchWorker.start();
@@ -432,7 +442,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
       nodes.remove(getName());
       if (!nodes.isEmpty()) {
-        asynchronousOperationsQueue.offer(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
+        asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType)));
       }
 
@@ -550,7 +560,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
             LOCKING_STRATEGY.DEFAULT);
 
-        asynchronousOperationsQueue.offer(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
+        asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new OUpdateRecordTask(iRecordId, previousContent.getResult().getBuffer(), previousContent.getResult().version,
                 iContent, iVersion)));
       }
@@ -605,7 +615,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       nodes.remove(0);
       if (!nodes.isEmpty())
-        asynchronousOperationsQueue.offer(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
+        asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new ODeleteRecordTask(iRecordId, iVersion)));
 
       return localResult;
@@ -699,15 +709,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   public void close(final boolean iForce, boolean onDelete) {
     wrapped.close(iForce, onDelete);
 
-    if (isClosed()) {
-      running = false;
-      asynchWorker.interrupt();
-      try {
-        asynchWorker.join();
-      } catch (InterruptedException e) {
-      }
-      asynchronousOperationsQueue.clear();
-    }
+    if (isClosed())
+      shutdownAsynchronousWorker();
   }
 
   @Override
@@ -827,8 +830,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       nodes.remove(dManager.getLocalNodeName());
       if (!nodes.isEmpty()) {
-        // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
-        asynchronousOperationsQueue.offer(new OAsynchDistributedOperation(getName(), involvedClusters, nodes, txTask));
+        if (executionModeSynch)
+          dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE);
+        else
+          // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
+          asynchronousExecution(new OAsynchDistributedOperation(getName(), involvedClusters, nodes, txTask));
       }
 
     } catch (Exception e) {
@@ -1089,6 +1095,20 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   @Override
   public String getNodeId() {
     return dManager.getLocalNodeName();
+  }
+
+  public void shutdownAsynchronousWorker() {
+    running = false;
+    asynchWorker.interrupt();
+    try {
+      asynchWorker.join();
+    } catch (InterruptedException e) {
+    }
+    asynchronousOperationsQueue.clear();
+  }
+
+  protected void asynchronousExecution(final OAsynchDistributedOperation iOperation) {
+    asynchronousOperationsQueue.offer(iOperation);
   }
 
   protected void handleDistributedException(final String iMessage, final Exception e, final Object... iParams) {
