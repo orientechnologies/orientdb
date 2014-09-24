@@ -15,15 +15,6 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -44,6 +35,15 @@ import com.orientechnologies.orient.core.serialization.serializer.stream.OStream
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   /**
@@ -78,6 +78,15 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     super(database);
     this.id = id;
     this.operationUnitId = OOperationUnitId.generateId();
+  }
+
+  @Override
+  public boolean hasRecordCreation() {
+    for (ORecordOperation op : recordEntries.values()) {
+      if (op.type == ORecordOperation.CREATED)
+        return true;
+    }
+    return false;
   }
 
   public void close() {

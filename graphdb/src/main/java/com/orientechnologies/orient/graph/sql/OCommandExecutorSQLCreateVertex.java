@@ -30,9 +30,11 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * SQL CREATE VERTEX command.
@@ -121,6 +123,21 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
         return vertex.getRecord();
       }
     });
+  }
+
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
+  }
+
+  @Override
+  public Set<String> getInvolvedClusters() {
+    if (clazz != null)
+      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz)));
+    else if (clusterName != null)
+      return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
+
+    return Collections.EMPTY_SET;
   }
 
   @Override

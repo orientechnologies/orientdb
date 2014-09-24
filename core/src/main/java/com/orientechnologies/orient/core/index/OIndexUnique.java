@@ -53,8 +53,8 @@ public class OIndexUnique extends OIndexOneValue {
         if (value != null) {
           // CHECK IF THE ID IS THE SAME OF CURRENT: THIS IS THE UPDATE CASE
           if (!value.equals(iSingleValue)) {
-            final boolean mergeSameKey = metadata != null && (Boolean) metadata.field(OIndex.MERGE_KEYS);
-            if (mergeSameKey)
+            final Boolean mergeSameKey = metadata != null ? (Boolean) metadata.field(OIndex.MERGE_KEYS) : Boolean.FALSE;
+            if (mergeSameKey != null && mergeSameKey)
               // IGNORE IT, THE EXISTENT KEY HAS BEEN MERGED
               ;
             else
@@ -68,7 +68,7 @@ public class OIndexUnique extends OIndexOneValue {
         if (!iSingleValue.getIdentity().isPersistent())
           ((ORecord) iSingleValue.getRecord()).save();
 
-				markStorageDirty();
+        markStorageDirty();
 
         indexEngine.put(key, iSingleValue.getIdentity());
         return this;

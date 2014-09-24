@@ -16,8 +16,18 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * SQL abstract Command Executor implementation.
@@ -59,8 +69,8 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
    * 
    * @return
    */
-  public boolean isReplicated() {
-    return true;
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.REPLICATE;
   }
 
   public boolean isIdempotent() {
@@ -121,6 +131,65 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
           + "' but it should be NONE (default) or RECORD. Example: " + KEYWORD_LOCK + " RECORD");
 
     return lockStrategy;
+  }
+
+  protected Set<String> getInvolvedClustersOfClasses(final Collection<String> iClassNames) {
+    final ODatabaseRecordInternal db = getDatabase();
+
+    final Set<String> clusters = new HashSet<String>();
+
+    for (String clazz : iClassNames) {
+      final OClass cls = db.getMetadata().getSchema().getClass(clazz);
+      if (cls != null)
+        for (int clId : cls.getClusterIds()) {
+          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+          if (clId > -1 && checkClusterAccess(db, db.getClusterNameById(clId)))
+            clusters.add(db.getClusterNameById(clId).toLowerCase());
+        }
+    }
+
+    return clusters;
+  }
+
+  protected Set<String> getInvolvedClustersOfClusters(final Collection<String> iClusterNames) {
+    final ODatabaseRecordInternal db = getDatabase();
+
+    final Set<String> clusters = new HashSet<String>();
+
+    for (String cluster : iClusterNames) {
+      final String c = cluster.toLowerCase();
+      // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
+      if (checkClusterAccess(db, c))
+        clusters.add(c);
+    }
+
+    return clusters;
+  }
+
+  protected Set<String> getInvolvedClustersOfIndex(final String iIndexName) {
+    final ODatabaseRecordInternal db = getDatabase();
+
+    final Set<String> clusters = new HashSet<String>();
+
+    final OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(iIndexName);
+    if (idx != null) {
+      final String clazz = idx.getDefinition().getClassName();
+
+      if (clazz != null) {
+        final OClass cls = db.getMetadata().getSchema().getClass(clazz);
+        if (cls != null)
+          for (int clId : cls.getClusterIds()) {
+            clusters.add(db.getClusterNameById(clId).toLowerCase());
+          }
+      }
+    }
+
+    return clusters;
+  }
+
+  protected boolean checkClusterAccess(final ODatabaseRecord db, final String iClusterName) {
+    return db.getUser() != null
+        && db.getUser().checkIfAllowed(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, getSecurityOperationType()) != null;
   }
 
 }
