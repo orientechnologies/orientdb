@@ -15,79 +15,79 @@ import org.testng.annotations.Test;
  */
 public class OObjectLazyMapTest
 {
-	private OObjectDatabaseTx databaseTx;
-	
-	@BeforeClass
-	protected void setUp() throws Exception 
-	{
-		databaseTx = new OObjectDatabaseTx("memory:OObjectLazyMapTest");
-		databaseTx.create();
+  private OObjectDatabaseTx databaseTx;
 
-		databaseTx.getEntityManager().registerEntityClass(EntityWithMap.class);
-	}
+  @BeforeClass
+  protected void setUp() throws Exception 
+  {
+    databaseTx = new OObjectDatabaseTx("memory:OObjectLazyMapTest");
+    databaseTx.create();
 
-	@AfterClass
-	protected void tearDown() 
-	{
-		databaseTx.drop();
-	}
-	
-	@Test
-	public void getOrDefaultTest()
-	{
-		EntityWithMap toStore = new EntityWithMap();
-		toStore.setId(0);
-		
-		EntityWithMap mapElement1 = new EntityWithMap();
-		mapElement1.setId(1);
-		
-		EntityWithMap mapElement2 = new EntityWithMap();
-		mapElement2.setId(2);
-		
-		Map<String,EntityWithMap> mapToStore = new HashMap<String, OObjectLazyMapTest.EntityWithMap>();
-		mapToStore.put(String.valueOf(mapElement1.getId()),mapElement1);
-		mapToStore.put(String.valueOf(mapElement2.getId()),mapElement2);
-		
-		toStore.setMap(mapToStore);
-		
-		EntityWithMap fromDb = this.databaseTx.save(toStore);
-		
-		assertTrue(fromDb != null);
-		assertTrue(fromDb.getMap() != null);
-		
-		Map<String,EntityWithMap> testMap = fromDb.getMap();
-		
-		assertTrue(testMap != null);
-		assertTrue(testMap.getClass() == OObjectLazyMap.class);		
-		assertTrue(testMap.getOrDefault(String.valueOf(mapElement1.getId()),null) != null);
-		assertTrue(testMap.getOrDefault(String.valueOf(mapElement2.getId()),null) != null);
-		assertTrue(testMap.getOrDefault("3",null) == null);
-		assertTrue(testMap.getOrDefault("3",mapElement1) == mapElement1);
-	}
-	
-	public class EntityWithMap
-	{
-		private int id;
-		private Map<String,EntityWithMap> map;
+    databaseTx.getEntityManager().registerEntityClass(EntityWithMap.class);
+  }
 
-		public Map<String,EntityWithMap> getMap()
-		{
-			return map;
-		}
+  @AfterClass
+  protected void tearDown() 
+  {
+    databaseTx.drop();
+  }
 
-		public void setMap(Map<String,EntityWithMap> map)
-		{
-			this.map = map;
-		}
+  @Test
+  public void getOrDefaultTest()
+  {
+    EntityWithMap toStore = new EntityWithMap();
+    toStore.setId(0);
 
-		public int getId()
-		{
-			return id;
-		}
+    EntityWithMap mapElement1 = new EntityWithMap();
+    mapElement1.setId(1);
 
-		public void setId(int id)
-		{
-			this.id = id;
-		}		
-	}
+    EntityWithMap mapElement2 = new EntityWithMap();
+    mapElement2.setId(2);
+
+    Map<String,EntityWithMap> mapToStore = new HashMap<String, OObjectLazyMapTest.EntityWithMap>();
+    mapToStore.put(String.valueOf(mapElement1.getId()),mapElement1);
+    mapToStore.put(String.valueOf(mapElement2.getId()),mapElement2);
+
+    toStore.setMap(mapToStore);
+
+    EntityWithMap fromDb = this.databaseTx.save(toStore);
+
+    assertTrue(fromDb != null);
+    assertTrue(fromDb.getMap() != null);
+
+    Map<String,EntityWithMap> testMap = fromDb.getMap();
+
+    assertTrue(testMap != null);
+    assertTrue(testMap.getClass() == OObjectLazyMap.class);		
+    assertTrue(testMap.getOrDefault(String.valueOf(mapElement1.getId()),null) != null);
+    assertTrue(testMap.getOrDefault(String.valueOf(mapElement2.getId()),null) != null);
+    assertTrue(testMap.getOrDefault("3",null) == null);
+    assertTrue(testMap.getOrDefault("3",mapElement1) == mapElement1);
+  }
+
+  public class EntityWithMap
+  {
+    private int id;
+    private Map<String,EntityWithMap> map;
+
+    public Map<String,EntityWithMap> getMap()
+    {
+      return map;
+    }
+
+    public void setMap(Map<String,EntityWithMap> map)
+    {
+      this.map = map;
+    }
+
+    public int getId()
+    {
+      return id;
+    }
+
+    public void setId(int id)
+    {
+      this.id = id;
+    }		
+  }
 }
