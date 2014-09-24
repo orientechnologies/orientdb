@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 public class OObjectLazyMapTest
 {
   private OObjectDatabaseTx databaseTx;
-  
+
   private final int idOfRootEntity = 0;
   private final int idOfFirstMapEntry = 1;
   private final int idOfSecondMapEntry = 2;
@@ -38,53 +38,53 @@ public class OObjectLazyMapTest
   {
     databaseTx.drop();
   }
-  
+
   @Test
   public void isEmptyTest()
   {
     Map<String,EntityWithMap> testMap = getMapWithPersistedEntries();
-    
+
     assertTrue(testMap.size() > 0);    
     testMap.clear();    
     assertTrue(testMap.size() == 0);
-    
+
     assertTrue(testMap.get(String.valueOf(idOfFirstMapEntry)) == null);
   }
-  
+
   @Test
   public void getContainsValueTest()
   {
     Map<String,EntityWithMap> testMap = getMapWithPersistedEntries();
-    
+
     assertFalse(testMap.containsValue(null));
     assertFalse(testMap.containsValue(String.valueOf(invalidId)));
-    
+
     assertTrue(testMap.containsValue(testMap.get(String.valueOf(idOfFirstMapEntry))));
     assertTrue(testMap.containsValue(testMap.get(String.valueOf(idOfSecondMapEntry))));
   }
-  
+
   @Test
   public void getContainsKeyTest()
   {
     Map<String,EntityWithMap> testMap = getMapWithPersistedEntries();
-    
+
     assertFalse(testMap.containsKey(null));
     assertFalse(testMap.containsKey(String.valueOf(invalidId)));
-    
+
     //should fail because the keys will be automatically converted to string
     assertFalse(testMap.containsKey(idOfFirstMapEntry)); 
-    
+
     assertTrue(testMap.containsKey(String.valueOf(idOfFirstMapEntry)));
     assertTrue(testMap.containsKey(String.valueOf(idOfSecondMapEntry)));
   }
-  
+
   @Test
   public void getTest()
   {
     Map<String,EntityWithMap> testMap = getMapWithPersistedEntries();
-    
+
     assertTrue(testMap.get(String.valueOf(invalidId)) == null);
-   
+
     //should fail because the keys will be automatically converted to string
     try
     {      
@@ -92,8 +92,8 @@ public class OObjectLazyMapTest
       fail("Expected ClassCastException");
     }
     catch(ClassCastException e){}
-    
-    
+
+
     assertTrue(testMap.get(String.valueOf(idOfFirstMapEntry)) != null);
     assertTrue(testMap.get(String.valueOf(idOfSecondMapEntry)) != null);
   }
@@ -102,14 +102,14 @@ public class OObjectLazyMapTest
   public void getOrDefaultTest()
   {
     Map<String,EntityWithMap> testMap = getMapWithPersistedEntries();
-    
+
     assertTrue(testMap.getClass() == OObjectLazyMap.class);		
     assertTrue(testMap.getOrDefault(String.valueOf(idOfFirstMapEntry),null) != null);
     assertTrue(testMap.getOrDefault(String.valueOf(idOfSecondMapEntry),null) != null);
     assertTrue(testMap.getOrDefault(String.valueOf(invalidId),null) == null);
     assertTrue(testMap.getOrDefault(String.valueOf(invalidId),testMap.get(String.valueOf(idOfFirstMapEntry))) == testMap.get(String.valueOf(idOfFirstMapEntry)));
   }
-  
+
   private Map<String,EntityWithMap> getMapWithPersistedEntries()
   {
     EntityWithMap toStore = new EntityWithMap();
@@ -135,7 +135,7 @@ public class OObjectLazyMapTest
     Map<String,EntityWithMap> testMap = fromDb.getMap();
 
     assertTrue(testMap != null);
-    
+
     return testMap;
   }
 
