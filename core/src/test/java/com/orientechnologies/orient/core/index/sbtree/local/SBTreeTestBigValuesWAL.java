@@ -128,7 +128,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt");
+    sbTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt", null);
     sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, actualStorage, 1, false);
   }
 
@@ -162,7 +162,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt");
+    expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt", null);
     expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, expectedStorage, 1,
         false);
   }

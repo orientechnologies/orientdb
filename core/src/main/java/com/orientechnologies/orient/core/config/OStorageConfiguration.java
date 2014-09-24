@@ -58,37 +58,41 @@ import java.util.TimeZone;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId CONFIG_RID = new OImmutableRecordId(0, OClusterPositionFactory.INSTANCE.valueOf(0));
+  public static final ORecordId                      CONFIG_RID                    = new OImmutableRecordId(0,
+                                                                                       OClusterPositionFactory.INSTANCE.valueOf(0));
 
-  public static final String                           DEFAULT_CHARSET               = "UTF-8";
-  private             String                           charset                       = DEFAULT_CHARSET;
-  public static final int                              CURRENT_VERSION               = 12;
-  public static final int                              CURRENT_BINARY_FORMAT_VERSION = 11;
-  public final        List<OStorageDataConfiguration>  dataSegments                  = Collections.synchronizedList(new ArrayList<OStorageDataConfiguration>());
-  public final        List<OStorageEntryConfiguration> properties                    = Collections.synchronizedList(new ArrayList<OStorageEntryConfiguration>());
-  protected final transient OStorage storage;
-  private final   OContextConfiguration configuration = new OContextConfiguration();
-  public volatile int                   version       = -1;
-  public volatile String name;
-  public volatile String schemaRecordId;
-  public volatile String dictionaryRecordId;
-  public volatile String indexMgrRecordId;
-  public volatile String dateFormat     = "yyyy-MM-dd";
-  public volatile String dateTimeFormat = "yyyy-MM-dd HH:mm:ss";
-  public volatile int                          binaryFormatVersion;
-  public volatile OStorageSegmentConfiguration fileTemplate;
-  public volatile  List<OStorageClusterConfiguration> clusters       = Collections.synchronizedList(new ArrayList<OStorageClusterConfiguration>());
-  public volatile  OStorageTxConfiguration            txSegment      = new OStorageTxConfiguration();
-  private volatile String                             localeLanguage = Locale.getDefault().getLanguage();
-  private volatile String                             localeCountry  = Locale.getDefault().getCountry();
-  private volatile TimeZone                           timeZone       = TimeZone.getDefault();
-  private transient volatile Locale               localeInstance;
-  private transient volatile DecimalFormatSymbols unusualSymbols;
-  private volatile           String               clusterSelection;
-  private volatile           String               conflictStrategy;
-  private volatile int minimumClusters = 1;
-  private volatile String recordSerializer;
-  private volatile int    recordSerializerVersion;
+  public static final String                         DEFAULT_CHARSET               = "UTF-8";
+  private String                                     charset                       = DEFAULT_CHARSET;
+  public static final int                            CURRENT_VERSION               = 12;
+  public static final int                            CURRENT_BINARY_FORMAT_VERSION = 12;
+  public final List<OStorageDataConfiguration>       dataSegments                  = Collections
+                                                                                       .synchronizedList(new ArrayList<OStorageDataConfiguration>());
+  public final List<OStorageEntryConfiguration>      properties                    = Collections
+                                                                                       .synchronizedList(new ArrayList<OStorageEntryConfiguration>());
+  protected final transient OStorage                 storage;
+  private final OContextConfiguration                configuration                 = new OContextConfiguration();
+  public volatile int                                version                       = -1;
+  public volatile String                             name;
+  public volatile String                             schemaRecordId;
+  public volatile String                             dictionaryRecordId;
+  public volatile String                             indexMgrRecordId;
+  public volatile String                             dateFormat                    = "yyyy-MM-dd";
+  public volatile String                             dateTimeFormat                = "yyyy-MM-dd HH:mm:ss";
+  public volatile int                                binaryFormatVersion;
+  public volatile OStorageSegmentConfiguration       fileTemplate;
+  public volatile List<OStorageClusterConfiguration> clusters                      = Collections
+                                                                                       .synchronizedList(new ArrayList<OStorageClusterConfiguration>());
+  public volatile OStorageTxConfiguration            txSegment                     = new OStorageTxConfiguration();
+  private volatile String                            localeLanguage                = Locale.getDefault().getLanguage();
+  private volatile String                            localeCountry                 = Locale.getDefault().getCountry();
+  private volatile TimeZone                          timeZone                      = TimeZone.getDefault();
+  private transient volatile Locale                  localeInstance;
+  private transient volatile DecimalFormatSymbols    unusualSymbols;
+  private volatile String                            clusterSelection;
+  private volatile String                            conflictStrategy;
+  private volatile int                               minimumClusters               = 1;
+  private volatile String                            recordSerializer;
+  private volatile int                               recordSerializerVersion;
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;
@@ -129,7 +133,8 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public void update() throws OSerializationException {
     final byte[] record = toStream();
-    storage.updateRecord(CONFIG_RID, true, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE, 0, null);
+    storage.updateRecord(CONFIG_RID, true, record, OVersionFactory.instance().createUntrackedVersion(), ORecordBytes.RECORD_TYPE,
+        0, null);
   }
 
   public boolean isEmpty() {

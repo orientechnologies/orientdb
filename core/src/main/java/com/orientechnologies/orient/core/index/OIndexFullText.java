@@ -96,7 +96,11 @@ public class OIndexFullText extends OIndexMultiValues {
           if (refs == null) {
             // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
             if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-              refs = new OIndexRIDContainer(getName());
+              boolean durable = false;
+              if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+                durable = true;
+
+              refs = new OIndexRIDContainer(getName(), durable);
             } else {
               refs = new OMVRBTreeRIDSet();
               ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
@@ -147,7 +151,7 @@ public class OIndexFullText extends OIndexMultiValues {
 
       for (final String word : words) {
         acquireExclusiveLock();
-				startStorageAtomicOperation();
+        startStorageAtomicOperation();
         try {
 
           final Set<OIdentifiable> recs = indexEngine.get(word);
@@ -160,11 +164,11 @@ public class OIndexFullText extends OIndexMultiValues {
               removed = true;
             }
           }
-					commitStorageAtomicOperation();
+          commitStorageAtomicOperation();
         } catch (RuntimeException e) {
-					rollbackStorageAtomicOperation();
-					throw new OIndexException("Error during removal of entry by key and value", e);
-				} finally {
+          rollbackStorageAtomicOperation();
+          throw new OIndexException("Error during removal of entry by key and value", e);
+        } finally {
           releaseExclusiveLock();
         }
       }
@@ -273,7 +277,11 @@ public class OIndexFullText extends OIndexMultiValues {
       if (refs == null) {
         // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
         if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-          refs = new OIndexRIDContainer(getName());
+          boolean durable = false;
+          if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+            durable = true;
+
+          refs = new OIndexRIDContainer(getName(), durable);
         } else {
           refs = new OMVRBTreeRIDSet();
           ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);

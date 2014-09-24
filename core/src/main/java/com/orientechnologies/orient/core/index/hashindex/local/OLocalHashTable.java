@@ -108,7 +108,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
   public static final int                LEVEL_MASK          = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private OAbstractPaginatedStorage storage;
+  private OAbstractPaginatedStorage      storage;
 
   private String                         name;
 
@@ -132,11 +132,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   private OHashTableDirectory            directory;
 
   private final boolean                  durableInNonTxMode;
-  private final ODurablePage.TrackMode   txTrackMode         = ODurablePage.TrackMode.valueOf(OGlobalConfiguration.INDEX_TX_MODE
-                                                                 .getValueAsString().toUpperCase());
+  private final ODurablePage.TrackMode   trackMode;
 
   public OLocalHashTable(String metadataConfigurationFileExtension, String treeStateFileExtension, String bucketFileExtension,
-      String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode) {
+      String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode, ODurablePage.TrackMode trackMode) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
@@ -146,6 +145,11 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     this.durableInNonTxMode = durableInNonTxMode;
 
     this.comparator = new KeyHashCodeComparator<K>(this.keyHashFunction);
+
+    if (trackMode == null)
+      this.trackMode = ODurablePage.TrackMode.valueOf(OGlobalConfiguration.INDEX_TX_MODE.getValueAsString().toUpperCase());
+    else
+      this.trackMode = trackMode;
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
@@ -223,7 +227,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
     final ODurablePage.TrackMode trackMode = super.getTrackMode();
     if (!trackMode.equals(ODurablePage.TrackMode.NONE))
-      return txTrackMode;
+      return this.trackMode;
 
     return trackMode;
   }

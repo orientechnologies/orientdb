@@ -186,6 +186,6 @@ public class OStreamSerializerOldRIDContainer implements OStreamSerializer, OBin
         (Integer) doc.field("rootOffset"));
     final String fileName = doc.field("file");
 
-    return new OIndexRIDContainer(fileName, new OIndexRIDContainerSBTree(fileName, rootPointer), false);
+    return new OIndexRIDContainer(fileName, new OIndexRIDContainerSBTree(fileName, rootPointer, false), false, false);
   }
 }
