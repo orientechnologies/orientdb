@@ -105,7 +105,11 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
         if (values == null) {
           if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-            values = new OIndexRIDContainer(getName());
+            boolean durable = false;
+            if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+              durable = true;
+
+            values = new OIndexRIDContainer(getName(), durable);
           } else {
             values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
             ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
@@ -148,7 +152,11 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     if (values == null) {
       if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-        values = new OIndexRIDContainer(getName());
+        boolean durable = false;
+        if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+          durable = true;
+
+        values = new OIndexRIDContainer(getName(), durable);
       } else {
         values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
         ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);

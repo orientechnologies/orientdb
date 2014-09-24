@@ -9,6 +9,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OStorageVariableParser;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 import org.testng.Assert;
@@ -98,10 +99,12 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+		storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
 
     actualStorageDir = buildDirectory + "/sbtreeWithWALTestActual";
     when(actualStorage.getStoragePath()).thenReturn(actualStorageDir);
     when(actualStorage.getName()).thenReturn("sbtreeWithWALTesActual");
+    when(actualStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
 
     File buildDir = new File(buildDirectory);
     if (!buildDir.exists())
@@ -135,10 +138,12 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
     OStorageConfiguration storageConfiguration = mock(OStorageConfiguration.class);
     storageConfiguration.clusters = new ArrayList<OStorageClusterConfiguration>();
     storageConfiguration.fileTemplate = new OStorageSegmentConfiguration();
+		storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
 
     expectedStorageDir = buildDirectory + "/sbtreeWithWALTestExpected";
     when(expectedStorage.getStoragePath()).thenReturn(expectedStorageDir);
     when(expectedStorage.getName()).thenReturn("sbtreeWithWALTesExpected");
+    when(expectedStorage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
 
     File buildDir = new File(buildDirectory);
     if (!buildDir.exists())

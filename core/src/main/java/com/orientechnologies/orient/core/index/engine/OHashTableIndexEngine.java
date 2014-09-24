@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -58,7 +59,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   private volatile ORID                          identity;
 
-  public OHashTableIndexEngine(Boolean durableInNonTxMode) {
+  public OHashTableIndexEngine(Boolean durableInNonTxMode, ODurablePage.TrackMode trackMode) {
     hashFunction = new OMurmurHash3HashFunction<Object>();
 
     boolean durableInNonTx;
@@ -68,7 +69,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
       durableInNonTx = durableInNonTxMode;
 
     hashTable = new OLocalHashTable<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
-        NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx);
+        NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, trackMode);
   }
 
   @Override

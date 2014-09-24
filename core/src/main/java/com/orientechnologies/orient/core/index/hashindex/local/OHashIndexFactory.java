@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.index.hashindex.local;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
@@ -31,6 +32,7 @@ import com.orientechnologies.orient.core.index.engine.ORemoteIndexEngine;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -89,8 +91,19 @@ public class OHashIndexFactory implements OIndexFactory {
 
     Boolean durableInNonTxMode;
     Object durable = null;
-    if (metadata != null)
+    ODurablePage.TrackMode trackMode = null;
+
+    if (metadata != null) {
       durable = metadata.field("durableInNonTxMode");
+
+      if (metadata.field("trackMode") instanceof String) {
+        try {
+          trackMode = ODurablePage.TrackMode.valueOf(metadata.<String> field("trackMode"));
+        } catch (IllegalArgumentException e) {
+          OLogManager.instance().error(this, "Invalid track mode", e);
+        }
+      }
+    }
 
     if (durable instanceof Boolean)
       durableInNonTxMode = (Boolean) durable;
@@ -99,10 +112,10 @@ public class OHashIndexFactory implements OIndexFactory {
 
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode);
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, trackMode);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode);
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, trackMode);
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
     else

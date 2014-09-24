@@ -46,19 +46,20 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   protected static final OProfilerMBean              PROFILER             = Orient.instance().getProfiler();
 
-  public OIndexRIDContainerSBTree(long fileId) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
+  public OIndexRIDContainerSBTree(long fileId, boolean durableMode) {
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode);
 
     tree.create(fileId, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
   }
 
-  public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
-    tree.load(fileId, rootPointer, (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+  public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer, boolean durableMode) {
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode);
+    tree.load(fileId, rootPointer, (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+        .getUnderlying());
   }
 
-  public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
+  public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer, boolean durableMode) {
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode);
 
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();

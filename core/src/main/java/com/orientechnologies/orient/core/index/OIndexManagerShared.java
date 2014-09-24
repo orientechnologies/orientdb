@@ -143,6 +143,8 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         Object durable = metadata.field("durableInNonTxMode");
         if (!(durable instanceof Boolean))
           metadata.field("durableInNonTxMode", true);
+        if (metadata.field("trackMode") == null)
+          metadata.field("trackMode", "FULL");
       }
 
       index = OIndexes.createIndex(getDatabase(), iType, algorithm, valueContainerAlgorithm, metadata);
