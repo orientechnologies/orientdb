@@ -1,6 +1,12 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.OClusterPositionLong;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -15,14 +21,9 @@ public class ODocumentTest {
   public void testCopyToCopiesEmptyFieldsTypesAndOwners() throws Exception {
     ODocument doc1 = new ODocument();
 
-    ODocument doc2 = new ODocument()
-        .field("integer2", 123)
-        .field("string", "OrientDB")
-        .field("a", 123.3)
+    ODocument doc2 = new ODocument().field("integer2", 123).field("string", "OrientDB").field("a", 123.3)
 
-        .setFieldType("integer", OType.INTEGER)
-        .setFieldType("string", OType.STRING)
-        .setFieldType("binary", OType.BINARY);
+    .setFieldType("integer", OType.INTEGER).setFieldType("string", OType.STRING).setFieldType("binary", OType.BINARY);
     ODocumentInternal.addOwner(doc2, new ODocument());
 
     assertEquals(doc2.field("integer2"), 123);
@@ -82,5 +83,39 @@ public class ODocumentTest {
     assertEquals(doc.fieldType("integer"), null);
     assertEquals(doc.fieldType("string"), null);
     assertEquals(doc.fieldType("binary"), null);
+  }
+
+  @Test
+  public void testKeepFieldType() throws Exception {
+    ODocument doc = new ODocument();
+    doc.field("integer", 10, OType.INTEGER);
+    doc.field("string", 20, OType.STRING);
+    doc.field("binary", new byte[] { 30 }, OType.BINARY);
+
+    assertEquals(doc.fieldType("integer"), OType.INTEGER);
+    assertEquals(doc.fieldType("string"), OType.STRING);
+    assertEquals(doc.fieldType("binary"), OType.BINARY);
+  }
+
+  @Test
+  public void testKeepFieldTypeSerialization() throws Exception {
+    ODocument doc = new ODocument();
+    doc.field("integer", 10, OType.INTEGER);
+    doc.field("link", new ORecordId(1, new OClusterPositionLong(2)), OType.LINK);
+    doc.field("string", 20, OType.STRING);
+    doc.field("binary", new byte[] { 30 }, OType.BINARY);
+
+    assertEquals(doc.fieldType("integer"), OType.INTEGER);
+    assertEquals(doc.fieldType("link"), OType.LINK);
+    assertEquals(doc.fieldType("string"), OType.STRING);
+    assertEquals(doc.fieldType("binary"), OType.BINARY);
+    ORecordSerializer ser = ODatabaseDocumentTx.getDefaultSerializer();
+    byte[] bytes = ser.toStream(doc, false);
+    doc = new ODocument();
+    ser.fromStream(bytes, doc, null);
+    assertEquals(doc.fieldType("integer"), OType.INTEGER);
+    assertEquals(doc.fieldType("string"), OType.STRING);
+    assertEquals(doc.fieldType("binary"), OType.BINARY);
+    assertEquals(doc.fieldType("link"), OType.LINK);
   }
 }

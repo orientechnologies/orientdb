@@ -589,15 +589,17 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     final OType t = fieldType(iFieldName);
 
     if (!iFieldName.startsWith("@") && _lazyLoad && value instanceof ORID
-        && (((ORID) value).isPersistent() || ((ORID) value).isNew()) && t != OType.LINK
-        && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
+        && (((ORID) value).isPersistent() || ((ORID) value).isNew()) && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
-      value = (RET) getDatabase().load((ORID) value);
-      if (!iFieldName.contains(".")) {
-        removeCollectionChangeListener(iFieldName, _fieldValues.get(iFieldName));
-        removeCollectionTimeLine(iFieldName);
-        _fieldValues.put(iFieldName, value);
-        addCollectionChangeListener(iFieldName, value);
+      RET newValue = (RET) getDatabase().load((ORID) value);
+      if (newValue != null) {
+        value = newValue;
+        if (!iFieldName.contains(".")) {
+          removeCollectionChangeListener(iFieldName, _fieldValues.get(iFieldName));
+          removeCollectionTimeLine(iFieldName);
+          _fieldValues.put(iFieldName, value);
+          addCollectionChangeListener(iFieldName, value);
+        }
       }
     }
 
@@ -1998,7 +2000,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           Object orgVal = ((ODocument) iRecord).getOriginalValue(f);
           boolean simple = fieldValue != null ? OType.isSimpleType(fieldValue) : OType.isSimpleType(orgVal);
           if ((simple) || (fieldValue != null && orgVal == null) || (fieldValue == null && orgVal != null)
-              || (fieldValue!=null && !fieldValue.equals(orgVal)))
+              || (fieldValue != null && !fieldValue.equals(orgVal)))
             throw new OValidationException("The field '" + p.getFullName()
                 + "' is immutable and cannot be altered. Field value is: " + ((ODocument) iRecord).field(f));
         }

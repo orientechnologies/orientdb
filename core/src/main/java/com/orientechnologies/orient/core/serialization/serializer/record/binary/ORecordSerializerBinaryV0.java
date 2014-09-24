@@ -99,7 +99,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           last = bytes.offset;
         bytes.offset = headerCursor;
         // TODO:This is wrong should not stay here
-        if (document.fieldType(field) != null || OType.LINK == type)
+        if (document.fieldType(field) != null)
           document.field(field, value);
         else
           document.field(field, value, type);

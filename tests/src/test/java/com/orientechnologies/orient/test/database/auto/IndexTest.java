@@ -515,10 +515,10 @@ public class IndexTest extends ObjectDBBaseTest {
 
     final List<Profile> result = database
         .command(
-								new OSQLSynchQuery<Profile>(
-												"select * from Profile where "
-																+ "((name = 'Giuseppe' OR name <> 'Napoleone')"
-																+ " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))"))
+            new OSQLSynchQuery<Profile>(
+                "select * from Profile where "
+                    + "((name = 'Giuseppe' OR name <> 'Napoleone')"
+                    + " AND (nick is not null AND (name = 'Giuseppe' OR name <> 'Napoleone') AND (nick >= 'ZZZJayLongNickIndex3' OR nick >= 'ZZZJayLongNickIndex4')))"))
         .execute();
     if (!oldRecording) {
       Orient.instance().getProfiler().stopRecording();
@@ -1293,7 +1293,7 @@ public class IndexTest extends ObjectDBBaseTest {
     indexWithLimitAndOffset.createProperty("index", OType.INTEGER);
 
     databaseDocumentTx.command(new OCommandSQL(
-						"create index IndexWithLimitAndOffset on IndexWithLimitAndOffsetClass (val) notunique"));
+        "create index IndexWithLimitAndOffset on IndexWithLimitAndOffsetClass (val) notunique"));
 
     for (int i = 0; i < 30; i++) {
       final ODocument document = new ODocument("IndexWithLimitAndOffsetClass");
@@ -1339,13 +1339,14 @@ public class IndexTest extends ObjectDBBaseTest {
     int lastKey = -1;
     ORID lastRid = null;
     for (ODocument document : result) {
+      document.setLazyLoad(false);
       if (lastKey > -1)
         Assert.assertTrue(lastKey <= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
 
       lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
       lastRid = document.field("rid", OType.LINK);
 
-      Assert.assertTrue(rids.remove(document.<ORID> field("rid")));
+      Assert.assertTrue(rids.remove(document.<OIdentifiable> field("rid").getIdentity()));
     }
 
     while (true) {
@@ -1357,6 +1358,7 @@ public class IndexTest extends ObjectDBBaseTest {
       Assert.assertEquals(result.size(), 5);
 
       for (ODocument document : result) {
+        document.setLazyLoad(false);
         if (lastKey > -1)
           Assert.assertTrue(lastKey <= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
 
@@ -1396,6 +1398,7 @@ public class IndexTest extends ObjectDBBaseTest {
     int lastKey = -1;
     ORID lastRid = null;
     for (ODocument document : result) {
+      document.setLazyLoad(false);
       if (lastKey > -1)
         Assert.assertTrue(lastKey >= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
 
@@ -1415,6 +1418,7 @@ public class IndexTest extends ObjectDBBaseTest {
       Assert.assertEquals(result.size(), 5);
 
       for (ODocument document : result) {
+        document.setLazyLoad(false);
         if (lastKey > -1)
           Assert.assertTrue(lastKey >= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
 
@@ -1521,7 +1525,7 @@ public class IndexTest extends ObjectDBBaseTest {
     metadata.field("ignoreNullValues", false);
 
     clazz.createIndex("NullIndexKeysSupportInTxIndex", INDEX_TYPE.NOTUNIQUE.toString(), null, metadata,
-						new String[]{"nullField"});
+        new String[] { "nullField" });
 
     database.begin();
 
@@ -1641,7 +1645,7 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertEquals(resultTwo.get(0), docTwo);
 
     explain = databaseDocumentTx.command(new OCommandSQL("explain " + queryTwo)).execute();
-    Assert.assertTrue(explain.<Collection<String>>field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
+    Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
   }
 
   public void testValuesContainerIsRemovedIfIndexIsRemoved() {

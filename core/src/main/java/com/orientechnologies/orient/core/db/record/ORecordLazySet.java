@@ -18,6 +18,7 @@ package com.orientechnologies.orient.core.db.record;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -46,6 +47,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  */
 public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement {
   protected boolean autoConvertToRecord = true;
+  protected Map<OIdentifiable, ORecord>                     recordCache;
 
   public ORecordLazySet(final ODocument iSourceRecord) {
     super(iSourceRecord);

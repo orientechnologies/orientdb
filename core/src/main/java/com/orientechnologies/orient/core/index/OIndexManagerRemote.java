@@ -59,8 +59,8 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
-      ORecordInternal.setIdentity(document, new ORecordId(ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-          .getConfiguration().indexMgrRecordId));
+      ORecordInternal.setIdentity(document, new ORecordId(
+          ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().indexMgrRecordId));
 
       if (progressListener != null)
         progressListener.onCompletition(this, true);
@@ -134,6 +134,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       final Collection<ODocument> idxs = document.field(CONFIG_INDEXES);
       if (idxs != null) {
         for (ODocument d : idxs) {
+          d.setLazyLoad(false);
           try {
             final boolean isMultiValue = ODefaultIndexFactory.isMultiValueIndex((String) d.field(OIndexInternal.CONFIG_TYPE));
 
@@ -143,7 +144,7 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
             addIndexInternal(getRemoteIndexInstance(isMultiValue, newIndexMetadata.getType(), newIndexMetadata.getName(),
                 newIndexMetadata.getClustersToIndex(), newIndexMetadata.getIndexDefinition(),
-                (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID, OType.LINK), d));
+                (ORID) d.field(OIndexAbstract.CONFIG_MAP_RID), d));
           } catch (Exception e) {
             OLogManager.instance().error(this, "Error on loading of index by configuration: %s", e, d);
           }

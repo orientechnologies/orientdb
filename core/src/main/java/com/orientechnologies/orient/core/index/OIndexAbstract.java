@@ -944,8 +944,9 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     final List<ODocument> operations = entry.field("ops");
     if (operations != null) {
       for (final ODocument op : operations) {
+        op.setLazyLoad(false);
         final int operation = (Integer) op.rawField("o");
-        final OIdentifiable value = op.field("v", OType.LINK);
+        final OIdentifiable value = op.field("v");
 
         if (operation == OPERATION.PUT.ordinal())
           putInSnapshot(key, value, snapshot);

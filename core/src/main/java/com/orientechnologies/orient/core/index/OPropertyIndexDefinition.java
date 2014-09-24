@@ -62,7 +62,7 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
 
   public Object getDocumentValueToIndex(final ODocument iDocument) {
     if (OType.LINK.equals(keyType)) {
-      final OIdentifiable identifiable = iDocument.field(field, OType.LINK);
+      final OIdentifiable identifiable = iDocument.field(field);
       if (identifiable != null)
         return createValue(identifiable.getIdentity());
       else
