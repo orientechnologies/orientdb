@@ -36,7 +36,7 @@
         <javac.target.version>1.6</javac.target.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
         <osgi.import>com.hazelcast.*;resolution:=optional,*</osgi.import>
-        <osgi.export>com.orientechnologies.orient.server.cluster.hazelcast.*</osgi.export>
+        <osgi.export>com.orientechnologies.orient.server.hazelcast.*</osgi.export>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
