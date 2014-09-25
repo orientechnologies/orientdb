@@ -1722,6 +1722,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       // LOOK FOR LOAD BALANCING DNS TXT RECORD
       final String primaryServer = serverURLs.get(0);
 
+      OLogManager.instance().debug(this, "Retrieving URLs from DNS '%s' (timeout=%d)...", primaryServer,
+                                    OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsInteger());
+
       try {
         final Hashtable<String, String> env = new Hashtable<String, String>();
         env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
@@ -1737,6 +1740,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (configuration.startsWith(""))
             configuration = configuration.substring(1, configuration.length() - 1);
           if (configuration != null) {
+            serverURLs.clear();
             final String[] parts = configuration.split(" ");
             for (String part : parts) {
               if (part.startsWith("s=")) {
