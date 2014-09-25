@@ -40,6 +40,7 @@ public class OResourcePool<K, V> {
   protected final Queue<V>              resources = new ConcurrentLinkedQueue<V>();
   protected final Collection<V>         unmodifiableresources;
   protected OResourcePoolListener<K, V> listener;
+  protected volatile int                created     = 0;
 
   public OResourcePool(final int maxResources, final OResourcePoolListener<K, V> listener) {
     if (maxResources < 1)
@@ -78,8 +79,10 @@ public class OResourcePool<K, V> {
 
     // NO AVAILABLE RESOURCES: CREATE A NEW ONE
     try {
-      if (res == null)
+      if (res == null) {
         res = listener.createNewResource(key, additionalArgs);
+        created++;
+      }
 
       return res;
     } catch (RuntimeException e) {
@@ -118,5 +121,9 @@ public class OResourcePool<K, V> {
   public void remove(final V res) {
     this.resources.remove(res);
     sem.release();
+  }
+
+  public int getCreatedInstancesInPool() {
+    return created;
   }
 }
