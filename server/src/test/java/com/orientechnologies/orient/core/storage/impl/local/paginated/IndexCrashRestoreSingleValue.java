@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 9/22/14
  */
 @Test
-public class UniqueIndexCrashRestoreSingleValue {
+public class IndexCrashRestoreSingleValue {
   private ODatabaseDocumentTx baseDocumentTx;
   private ODatabaseDocumentTx testDocumentTx;
 
