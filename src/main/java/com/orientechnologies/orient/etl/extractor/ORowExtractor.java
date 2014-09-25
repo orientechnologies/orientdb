@@ -18,12 +18,12 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
+import com.orientechnologies.orient.etl.OExtractedItem;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.NoSuchElementException;
-
-import com.orientechnologies.orient.etl.OExtractedItem;
 
 public class ORowExtractor extends OAbstractSourceExtractor {
   protected BufferedReader bReader;
@@ -31,6 +31,18 @@ public class ORowExtractor extends OAbstractSourceExtractor {
   @Override
   public String getName() {
     return "row";
+  }
+
+  @Override
+  public boolean hasNext() {
+    if (bReader == null)
+      return false;
+
+    try {
+      return bReader.ready();
+    } catch (IOException e) {
+      throw new OExtractorException(e);
+    }
   }
 
   @Override
