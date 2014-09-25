@@ -466,11 +466,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // DELETED
       throw new ORecordNotFoundException("Record " + iRecordId + " was not found");
 
-    // COMMENTED BECAUSE WHILE RUNNING DISTRIBUTED IT COULD NEED A REMORE ACCESS TO ANOTHER SHARD
-    // if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.RUNNING_DISTRIBUTED)
-    // // ALREADY DISTRIBUTED
-    // return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
-
     try {
       final String clusterName = getClusterNameByRID(iRecordId);
 
