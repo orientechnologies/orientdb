@@ -14,14 +14,12 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
 
     $scope.connect = function () {
         $scope.$broadcast("autofill:update");
-
-
         Database.connect($scope.database, $scope.username, $scope.password, function () {
             $location.path("/database/" + $scope.database + "/browse");
             Spinner.stopSpinner();
         }, function () {
             var noti = "Invalid username or password";
-            Notification.push({content: noti});
+            Notification.push({content: noti, error: true});
             Spinner.stopSpinner();
         });
     }

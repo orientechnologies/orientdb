@@ -140,6 +140,9 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
     } else {
         $scope.selectClass = true;
         $scope.listClasses = Database.getClazzVertex();
+        if ($scope.listClasses.length == 1) {
+            $scope.selectedClass = $scope.listClasses[0];
+        }
 
     }
 
@@ -149,6 +152,9 @@ DocController.controller("DocumentModalEdgeController", ['$scope', '$routeParams
     $controller('DocumentModalController', { $scope: $scope });
     $scope.listClasses = Database.getClazzEdge();
 
+    if ($scope.listClasses.length == 1) {
+        $scope.selectedClass = $scope.listClasses[0];
+    }
     $scope.lightweight = false;
     $scope.save = function (cls) {
 
