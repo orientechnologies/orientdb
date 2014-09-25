@@ -308,9 +308,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     Assert.assertNotSame(coreDocCopy, coreDoc);
 
     coreDocCopy.setLazyLoad(false);
-    Assert.assertTrue(coreDocCopy.field("link", OType.LINK) instanceof ORecordId);
+    Assert.assertTrue(coreDocCopy.field("link") instanceof ORecordId);
     coreDocCopy.setLazyLoad(true);
-    Assert.assertTrue(coreDocCopy.field("link", (OType) null) instanceof ODocument);
+    Assert.assertTrue(coreDocCopy.field("link") instanceof ODocument);
   }
 
   @SuppressWarnings("unchecked")

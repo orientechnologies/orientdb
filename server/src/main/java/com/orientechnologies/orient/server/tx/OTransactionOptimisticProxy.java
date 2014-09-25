@@ -235,7 +235,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         for (final ODocument op : operations) {
           final int operation = (Integer) op.rawField("o");
           final OTransactionIndexChanges.OPERATION indexOperation = OTransactionIndexChanges.OPERATION.values()[operation];
-          final OIdentifiable value = op.field("v", OType.LINK);
+          final OIdentifiable value = op.field("v");
 
           transactionIndexChanges.getChangesPerKey(key).add(value, indexOperation);
 

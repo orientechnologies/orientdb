@@ -311,7 +311,7 @@ public class OMVRBTreeRIDProvider extends OMVRBTreeProviderAbstract<OIdentifiabl
   public void fromDocument(final ODocument iDocument) {
     pageSize = (Integer) iDocument.field("pageSize");
     iDocument.setLazyLoad(false);
-    root = iDocument.field("root", OType.LINK);
+    root = iDocument.field("root");
     if (iDocument.field("keySize") != null)
       keySize = iDocument.<Integer> field("keySize");
 

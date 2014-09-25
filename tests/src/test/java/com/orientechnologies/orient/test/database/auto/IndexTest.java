@@ -997,7 +997,7 @@ public class IndexTest extends ObjectDBBaseTest {
         firstProfile.field("nick"));
 
     Assert.assertNotNull(result);
-    Assert.assertEquals(result.get(0).field("rid", OType.LINK), firstProfile.getIdentity());
+    Assert.assertEquals(result.get(0).field("rid"), firstProfile.getIdentity());
 
     firstProfile.delete();
 
@@ -1344,7 +1344,7 @@ public class IndexTest extends ObjectDBBaseTest {
         Assert.assertTrue(lastKey <= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
 
       lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
-      lastRid = document.field("rid", OType.LINK);
+      lastRid = document.field("rid");
 
       Assert.assertTrue(rids.remove(document.<OIdentifiable> field("rid").getIdentity()));
     }
@@ -1403,7 +1403,7 @@ public class IndexTest extends ObjectDBBaseTest {
         Assert.assertTrue(lastKey >= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
 
       lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
-      lastRid = document.field("rid", OType.LINK);
+      lastRid = document.field("rid");
 
       Assert.assertTrue(rids.remove(document.<ORID> field("rid")));
     }

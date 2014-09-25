@@ -48,7 +48,7 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
     final OCommandRequest cmd = formatCommand(QUERY_GET, name);
     final List<OIdentifiable> result = getDatabase().command(cmd).execute(iKey);
     if (result != null && !result.isEmpty())
-      return ((OIdentifiable) ((ODocument) result.get(0).getRecord()).field("rid", OType.LINK)).getIdentity();
+      return ((OIdentifiable) ((ODocument) result.get(0).getRecord()).field("rid")).getIdentity();
     return null;
   }
 
@@ -58,7 +58,8 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
 
     final Map<Object, OIdentifiable> map = new LinkedHashMap<Object, OIdentifiable>();
     for (final ODocument d : result) {
-      map.put(d.field("key"), (OIdentifiable) d.field("rid", OType.LINK));
+      d.setLazyLoad(false);
+      map.put(d.field("key"), (OIdentifiable) d.field("rid"));
     }
 
     return map.entrySet().iterator();
@@ -72,7 +73,8 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
 
     for (ListIterator<ODocument> it = result.listIterator(); it.hasPrevious();) {
       ODocument d = it.previous();
-      map.put(d.field("key"), (OIdentifiable) d.field("rid", OType.LINK));
+      d.setLazyLoad(false);
+      map.put(d.field("key"), (OIdentifiable) d.field("rid"));
     }
 
     return map.entrySet().iterator();

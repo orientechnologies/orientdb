@@ -586,8 +586,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public <RET> RET field(final String iFieldName) {
     RET value = this.rawField(iFieldName);
 
-    final OType t = fieldType(iFieldName);
-
     if (!iFieldName.startsWith("@") && _lazyLoad && value instanceof ORID
         && (((ORID) value).isPersistent() || ((ORID) value).isNew()) && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       // CREATE THE DOCUMENT OBJECT IN LAZY WAY
@@ -600,32 +598,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           _fieldValues.put(iFieldName, value);
           addCollectionChangeListener(iFieldName, value);
         }
-      }
-    }
-
-    // CHECK FOR CONVERSION
-    if (t != null) {
-      Object newValue = null;
-
-      if (t == OType.BINARY && value instanceof String)
-        newValue = OStringSerializerHelper.getBinaryContent(value);
-      else if (t == OType.DATE && value instanceof Long)
-        newValue = new Date((Long) value);
-      else if ((t == OType.EMBEDDEDSET || t == OType.LINKSET) && value instanceof List)
-        // CONVERT LIST TO SET
-        newValue = ODocumentHelper.convertField(this, iFieldName, Set.class, value);
-      else if ((t == OType.EMBEDDEDLIST || t == OType.LINKLIST) && value instanceof Set)
-        // CONVERT SET TO LIST
-        newValue = ODocumentHelper.convertField(this, iFieldName, List.class, value);
-
-      if (newValue != null) {
-        // VALUE CHANGED: SET THE NEW ONE
-        removeCollectionChangeListener(iFieldName, null);
-        removeCollectionTimeLine(iFieldName);
-        _fieldValues.put(iFieldName, newValue);
-        addCollectionChangeListener(iFieldName, newValue);
-
-        value = (RET) newValue;
       }
     }
 
@@ -661,8 +633,29 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    * @return field value if defined, otherwise null
    */
   public <RET> RET field(final String iFieldName, final OType iFieldType) {
-    setFieldType(iFieldName, iFieldType);
-    return (RET) field(iFieldName);
+    RET value = (RET) field(iFieldName);
+    if (iFieldType != null && iFieldType != fieldType(iFieldName)) {
+      Object newValue = null;
+
+      if (iFieldType == OType.BINARY && value instanceof String)
+        newValue = OStringSerializerHelper.getBinaryContent(value);
+      else if (iFieldType == OType.DATE && value instanceof Long)
+        newValue = new Date((Long) value);
+      else if ((iFieldType == OType.EMBEDDEDSET || iFieldType == OType.LINKSET) && value instanceof List)
+        // CONVERT LIST TO SET
+        newValue = Collections.unmodifiableSet((Set<?>) ODocumentHelper.convertField(this, iFieldName, Set.class, value));
+      else if ((iFieldType == OType.EMBEDDEDLIST || iFieldType == OType.LINKLIST) && value instanceof Set)
+        // CONVERT SET TO LIST
+        newValue = Collections.unmodifiableList((List<?>) ODocumentHelper.convertField(this, iFieldName, List.class, value));
+      else if ((iFieldType == OType.EMBEDDEDMAP || iFieldType == OType.LINKMAP) && value instanceof Map)
+        // CONVERT SET TO LIST
+        newValue = Collections.unmodifiableMap((Map<?, ?>) ODocumentHelper.convertField(this, iFieldName, Map.class, value));
+
+      if (newValue != null)
+        value = (RET) newValue;
+
+    }
+    return value;
   }
 
   /**

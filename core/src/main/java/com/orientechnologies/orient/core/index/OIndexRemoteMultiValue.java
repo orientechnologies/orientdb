@@ -57,13 +57,14 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
 
     final Map<Object, Collection<OIdentifiable>> map = new LinkedHashMap<Object, Collection<OIdentifiable>>();
     for (final ODocument d : result) {
+      d.setLazyLoad(false);
       Collection<OIdentifiable> rids = map.get(d.field("key"));
       if (rids == null) {
         rids = new HashSet<OIdentifiable>();
         map.put(d.field("key"), rids);
       }
 
-      rids.add((OIdentifiable) d.field("rid", OType.LINK));
+      rids.add((OIdentifiable) d.field("rid"));
     }
 
     return map.entrySet().iterator();
@@ -76,13 +77,14 @@ public class OIndexRemoteMultiValue extends OIndexRemote<Collection<OIdentifiabl
     final Map<Object, Collection<OIdentifiable>> map = new LinkedHashMap<Object, Collection<OIdentifiable>>();
     for (ListIterator<ODocument> it = result.listIterator(); it.hasPrevious();) {
       ODocument d = it.previous();
+      d.setLazyLoad(false);
       Collection<OIdentifiable> rids = map.get(d.field("key"));
       if (rids == null) {
         rids = new HashSet<OIdentifiable>();
         map.put(d.field("key"), rids);
       }
 
-      rids.add((OIdentifiable) d.field("rid", OType.LINK));
+      rids.add((OIdentifiable) d.field("rid"));
     }
 
     return map.entrySet().iterator();
