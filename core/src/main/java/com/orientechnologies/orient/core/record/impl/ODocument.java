@@ -1693,8 +1693,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (fieldType == null && _clazz != null) {
       // SCHEMAFULL?
       final OProperty prop = _clazz.getProperty(iFieldName);
-      if (prop != null)
+      if (prop != null) {
         fieldType = prop.getType();
+        if (fieldType != OType.ANY)
+          setFieldType(iFieldName, fieldType);
+      }
     }
     return fieldType;
   }
