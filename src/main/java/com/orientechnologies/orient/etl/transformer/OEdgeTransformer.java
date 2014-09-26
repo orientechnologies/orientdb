@@ -125,20 +125,21 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
       case HALT:
         throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinValue + "'");
       }
-
-      if (result != null) {
-        final OrientVertex targetVertex = graph.getVertex(result);
-
-        // CREATE THE EDGE
-        final OrientEdge edge;
-        if (directionOut)
-          edge = (OrientEdge) vertex.addEdge(edgeClass, targetVertex);
-        else
-          edge = (OrientEdge) targetVertex.addEdge(edgeClass, vertex);
-
-        log(OETLProcessor.LOG_LEVELS.DEBUG, "created new edge=%s", edge);
-      }
     }
+
+    if (result != null) {
+      final OrientVertex targetVertex = graph.getVertex(result);
+
+      // CREATE THE EDGE
+      final OrientEdge edge;
+      if (directionOut)
+        edge = (OrientEdge) vertex.addEdge(edgeClass, targetVertex);
+      else
+        edge = (OrientEdge) targetVertex.addEdge(edgeClass, vertex);
+
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "created new edge=%s", edge);
+    }
+
     return input;
   }
 }
