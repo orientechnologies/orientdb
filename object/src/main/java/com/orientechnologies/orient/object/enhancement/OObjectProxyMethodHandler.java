@@ -368,8 +368,13 @@ public class OObjectProxyMethodHandler implements MethodHandler {
   protected Object getDocFieldValue(final Object self, final String fieldName) {
     if (doc.getSchemaClass().existsProperty(fieldName))
       return doc.field(fieldName);
-    else
-      return doc.field(fieldName, OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName));
+    else {
+      OType expected = OObjectEntitySerializer.getTypeByClass(self.getClass(), fieldName);
+      if (doc.fieldType(fieldName) != expected)
+        doc.field(fieldName, doc.field(fieldName), expected);
+
+      return doc.field(fieldName);
+    }
   }
 
   protected Object setDocFieldValue(final String fieldName, final Object value, final OType type) {
@@ -503,6 +508,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       value = new OObjectEnumLazyMap(genericType, doc, map, (Map<Object, Object>) value);
     } else if (!(value instanceof OObjectLazyMultivalueElement)) {
       OType type = OObjectEntitySerializer.isEmbeddedField(self.getClass(), f.getName()) ? OType.EMBEDDEDMAP : OType.LINKMAP;
+      if (doc.fieldType(f.getName()) != type)
+        doc.field(f.getName(), doc.field(f.getName()), type);
       Map<Object, OIdentifiable> docMap = doc.field(f.getName(), type);
       if (docMap == null) {
         docMap = new ORecordLazyMap(doc);

@@ -634,7 +634,14 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    */
   public <RET> RET field(final String iFieldName, final OType iFieldType) {
     RET value = (RET) field(iFieldName);
-    if (iFieldType != null && iFieldType != fieldType(iFieldName)) {
+    OType original;
+    if (iFieldType != null && iFieldType != (original = fieldType(iFieldName))) {
+      // this is needed for the csv serializer that don't give back values
+      if (original == null) {
+        original = OType.getTypeByValue(value);
+        if (iFieldType == original)
+          return value;
+      }
       Object newValue = null;
 
       if (iFieldType == OType.BINARY && value instanceof String)
@@ -774,12 +781,15 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       } else {
         try {
           if (iPropertyValue.equals(oldValue)) {
-            if (!(iPropertyValue instanceof ORecordElement))
-              // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
-              setDirty();
+            final OType oldType = fieldType(iFieldName);
+            if (iFieldType == null || iFieldType.length == 0 || iFieldType[0] == oldType) {
+              if (!(iPropertyValue instanceof ORecordElement))
+                // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
+                setDirty();
 
-            // SAVE VALUE: UNCHANGED
-            return this;
+              // SAVE VALUE: UNCHANGED
+              return this;
+            }
           }
 
         } catch (Exception e) {

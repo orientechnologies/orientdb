@@ -242,12 +242,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
             }
           }
 
-          if (setFieldType || type == OType.EMBEDDEDLIST || type == OType.EMBEDDEDSET || type == OType.EMBEDDEDMAP
-              || type == OType.EMBEDDED)
-            // SAVE THE TYPE AS EMBEDDED
-            record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue), type);
-          else
-            record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue));
+          record.field(fieldName, fieldFromStream(iRecord, type, linkedClass, linkedType, fieldName, fieldValue), type);
 
           if (uncertainType)
             record.setFieldType(fieldName, null);
