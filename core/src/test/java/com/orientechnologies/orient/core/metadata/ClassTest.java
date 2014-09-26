@@ -2,6 +2,11 @@ package com.orientechnologies.orient.core.metadata;
 
 import java.util.List;
 
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
@@ -43,6 +48,15 @@ public class ClassTest {
     Assert.assertNull(oClass.getShortName());
     Assert.assertNull(queryShortName());
 
+    final OStorage storage = db.getStorage();
+
+    if (storage instanceof OAbstractPaginatedStorage) {
+      final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
+      final ODiskCache diskCache = paginatedStorage.getDiskCache();
+
+      Assert.assertTrue(diskCache.exists(SHORTNAME_CLASS_NAME.toLowerCase() + OPaginatedCluster.DEF_EXTENSION));
+    }
+
     String shortName = "shortname";
     oClass.setShortName(shortName);
     Assert.assertEquals(shortName, oClass.getShortName());
@@ -61,6 +75,68 @@ public class ClassTest {
     oClass.setShortName("");
     Assert.assertNull(oClass.getShortName());
     Assert.assertNull(queryShortName());
+
+  }
+
+  @Test
+  public void testRename() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass oClass = schema.createClass("ClassName");
+
+    final OStorage storage = db.getStorage();
+    final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
+    final ODiskCache diskCache = paginatedStorage.getDiskCache();
+
+    Assert.assertTrue(diskCache.exists("classname" + OPaginatedCluster.DEF_EXTENSION));
+
+    oClass.setName("ClassNameNew");
+
+    Assert.assertTrue(!diskCache.exists("classname" + OPaginatedCluster.DEF_EXTENSION));
+    Assert.assertTrue(diskCache.exists("classnamenew" + OPaginatedCluster.DEF_EXTENSION));
+
+    oClass.setName("ClassName");
+
+    Assert.assertTrue(!diskCache.exists("classnamenew" + OPaginatedCluster.DEF_EXTENSION));
+    Assert.assertTrue(diskCache.exists("classname" + OPaginatedCluster.DEF_EXTENSION));
+  }
+
+  @Test
+  public void testRenameClusterAlreadyExists() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass classOne = schema.createClass("ClassOne");
+    OClass classTwo = schema.createClass("ClassTwo");
+
+    final int clusterId = db.addCluster("classthree");
+    classTwo.addClusterId(clusterId);
+
+    ODocument document = new ODocument("ClassTwo");
+    document.save("classthree");
+
+    document = new ODocument("ClassTwo");
+    document.save();
+
+    document = new ODocument("ClassOne");
+    document.save();
+
+    Assert.assertEquals(db.countClass("ClassTwo"), 2);
+    Assert.assertEquals(db.countClass("ClassOne"), 1);
+
+    classOne.setName("ClassThree");
+
+    final OStorage storage = db.getStorage();
+    final OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
+    final ODiskCache diskCache = paginatedStorage.getDiskCache();
+
+    Assert.assertTrue(diskCache.exists("classone" + OPaginatedCluster.DEF_EXTENSION));
+
+    Assert.assertEquals(db.countClass("ClassTwo"), 2);
+    Assert.assertEquals(db.countClass("ClassThree"), 1);
+
+    classOne.setName("ClassOne");
+    Assert.assertTrue(diskCache.exists("classone" + OPaginatedCluster.DEF_EXTENSION));
+
+    Assert.assertEquals(db.countClass("ClassTwo"), 2);
+    Assert.assertEquals(db.countClass("ClassOne"), 1);
   }
 
   private String queryShortName() {

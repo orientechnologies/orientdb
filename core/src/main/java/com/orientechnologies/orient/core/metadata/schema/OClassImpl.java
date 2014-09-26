@@ -1317,17 +1317,19 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       setClusterSelection(stringValue);
       break;
     case CUSTOM:
-      int indx = stringValue!=null?stringValue.indexOf('='):-1;
-      if (indx<0) {
+      int indx = stringValue != null ? stringValue.indexOf('=') : -1;
+      if (indx < 0) {
         if (isNull || "clear".equalsIgnoreCase(stringValue)) {
           clearCustom();
         } else
           throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
       } else {
         String customName = stringValue.substring(0, indx).trim();
-        String customValue = stringValue.substring(indx+1).trim();
-        if(customValue.isEmpty()) removeCustom(customName);
-        else setCustom(customName, customValue);
+        String customValue = stringValue.substring(indx + 1).trim();
+        if (customValue.isEmpty())
+          removeCustom(customName);
+        else
+          setCustom(customName, customValue);
       }
       break;
     }
@@ -1703,19 +1705,23 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void renameCluster(String oldName, String newName) {
-    final ODatabaseRecordInternal database = getDatabase();
-    if (checkClusterRenameOk(database.getStorage().getClusterIdByName(newName), newName)) {
-      database.command(new OCommandSQL("alter cluster " + oldName + " name " + newName)).execute();
-    }
-  }
+    oldName = oldName.toLowerCase();
+    newName = newName.toLowerCase();
 
-  private boolean checkClusterRenameOk(int clusterId, String newName) {
-    for (OClass clazz : owner.getClasses()) {
-      if (!clazz.getName().equals(newName) && (clazz.getDefaultClusterId() == clusterId || clazz.hasClusterId(clusterId))) {
-        return false;
-      }
-    }
-    return true;
+    final ODatabaseRecordInternal database = getDatabase();
+    final OStorage storage = database.getStorage();
+
+    if (storage.getClusterIdByName(newName) != -1)
+      return;
+
+    final int clusterId = storage.getClusterIdByName(oldName);
+    if (clusterId == -1)
+      return;
+
+    if (!hasClusterId(clusterId))
+      return;
+
+    database.command(new OCommandSQL("alter cluster " + oldName + " name " + newName)).execute();
   }
 
   private void setShortNameInternal(final String iShortName) {
