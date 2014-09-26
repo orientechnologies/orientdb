@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -68,7 +67,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected ORecordFactoryManager                                                      recordFactoryManager   = new ORecordFactoryManager();
   protected ORecordConflictStrategyFactory                                             recordConflictStrategy = new ORecordConflictStrategyFactory();
   protected OrientShutdownHook                                                         shutdownHook;
-  protected OMemoryWatchDog                                                            memoryWatchDog;
   protected OProfilerMBean                                                             profiler               = new OProfiler();
   protected ODatabaseThreadLocalFactory                                                databaseThreadFactory;
   protected volatile boolean                                                           active                 = false;
@@ -160,8 +158,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
         OGlobalConfiguration.dumpConfiguration(System.out);
 
-      memoryWatchDog = new OMemoryWatchDog();
-
       active = true;
       return this;
 
@@ -213,17 +209,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       timer.purge();
 
       profiler.shutdown();
-
-      if (memoryWatchDog != null) {
-        // SHUTDOWN IT AND WAIT FOR COMPETITION
-        memoryWatchDog.sendShutdown();
-        try {
-          memoryWatchDog.join();
-        } catch (InterruptedException e) {
-        } finally {
-          memoryWatchDog = null;
-        }
-      }
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
@@ -478,9 +463,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     return databaseThreadFactory;
   }
 
-  public OMemoryWatchDog getMemoryWatchDog() {
-    return memoryWatchDog;
-  }
 
   public ORecordFactoryManager getRecordFactoryManager() {
     return recordFactoryManager;

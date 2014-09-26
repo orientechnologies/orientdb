@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
@@ -261,9 +260,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
               this,
               "Cannot delete database files because they are still locked by the OrientDB process: waiting %d ms and retrying %d/%d...",
               DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
-
-      // FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
-      OMemoryWatchDog.freeMemoryForResourceCleanup(DELETE_WAIT_TIME);
     }
 
     throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ". Database files seem locked");

@@ -22,7 +22,6 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.fs.OFileFactory;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
@@ -119,7 +118,6 @@ public class OSingleFileSegment {
           + osFileName.substring(osFileName.lastIndexOf(iOldName) + iOldName.length()));
       boolean renamed = file.renameTo(newFile);
       while (!renamed) {
-        OMemoryWatchDog.freeMemoryForResourceCleanup(100);
         renamed = file.renameTo(newFile);
       }
     }

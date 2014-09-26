@@ -30,7 +30,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -60,7 +59,6 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePoint
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -2027,17 +2025,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
     long recordsProcessed = 0;
     int reportInterval = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
-
-    final AtomicBoolean lowMemoryFlag = new AtomicBoolean(false);
-
-    OMemoryWatchDog.Listener listener = new OMemoryWatchDog.Listener() {
-      @Override
-      public void lowMemory(long iFreeMemory, long iFreeMemoryPercentage) {
-        lowMemoryFlag.set(true);
-      }
-    };
-
-    listener = Orient.instance().getMemoryWatchDog().addListener(listener);
+		final int batchSize = OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger();
 
     Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits = new HashMap<OOperationUnitId, List<OLogSequenceNumber>>();
     List<OWALRecord> batch = new ArrayList<OWALRecord>();
@@ -2047,11 +2035,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
         OWALRecord walRecord = writeAheadLog.read(lsn);
         batch.add(walRecord);
 
-        if (lowMemoryFlag.get()) {
+        if (batch.size() >= batchSize) {
           OLogManager.instance().info(this, "Heap memory is low apply batch of operations are read from WAL.");
           recordsProcessed = restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval);
           batch = new ArrayList<OWALRecord>();
-          lowMemoryFlag.set(false);
         }
 
         lsn = writeAheadLog.next(lsn);
@@ -2068,8 +2055,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
     rollbackAllUnfinishedWALOperations(operationUnits);
     operationUnits.clear();
-
-    Orient.instance().getMemoryWatchDog().removeListener(listener);
   }
 
   private long restoreWALBatch(List<OWALRecord> batch, Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits,

@@ -21,7 +21,6 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -309,7 +308,6 @@ public abstract class OAbstractFile implements OFile {
         int retryCount = 0;
 
         while (!deleted) {
-          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
           deleted = OFileUtils.delete(osFile);
           retryCount++;
 
@@ -372,9 +370,6 @@ public abstract class OAbstractFile implements OFile {
           OLogManager.instance().debug(this,
               "Cannot open file '" + osFile.getAbsolutePath() + "' because it is locked. Waiting %d ms and retrying %d/%d...",
               LOCK_WAIT_TIME, i, LOCK_MAX_RETRIES);
-
-          // FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
-          OMemoryWatchDog.freeMemoryForResourceCleanup(LOCK_WAIT_TIME);
         }
 
         if (fileLock == null)

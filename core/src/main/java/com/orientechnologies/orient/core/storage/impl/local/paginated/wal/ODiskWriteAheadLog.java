@@ -24,7 +24,6 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.EOFException;
@@ -286,7 +285,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       int retryCount = 0;
 
       while (!deleted) {
-        OMemoryWatchDog.freeMemoryForResourceCleanup(100);
         deleted = OFileUtils.delete(file);
         retryCount++;
 
@@ -851,8 +849,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       int retryCount = 0;
 
       while (!deleted) {
-        OMemoryWatchDog.freeMemoryForResourceCleanup(100);
-
         deleted = OFileUtils.delete(masterRecordFile);
         retryCount++;
 

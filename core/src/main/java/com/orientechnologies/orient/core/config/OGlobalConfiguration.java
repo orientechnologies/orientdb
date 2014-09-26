@@ -120,6 +120,9 @@ public enum OGlobalConfiguration {
       "Amount of processed log operations, after which status of data restore procedure will be printed 0 or negative value, means that status will not be printed",
       Integer.class, 10000),
 
+  WAL_RESTORE_BATCH_SIZE("storage.wal.restore.batchSize",
+      "Amount of wal records are read at once in single batch during restore procedure", Integer.class, 1000),
+
   WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages", Integer.class, 1000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",

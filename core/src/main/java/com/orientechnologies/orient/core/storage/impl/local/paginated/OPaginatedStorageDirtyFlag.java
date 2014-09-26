@@ -1,14 +1,10 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
@@ -105,7 +101,6 @@ public class OPaginatedStorageDirtyFlag {
 
         boolean deleted = dirtyFile.delete();
         while (!deleted) {
-          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
           deleted = !dirtyFile.exists() || dirtyFile.delete();
         }
       }
