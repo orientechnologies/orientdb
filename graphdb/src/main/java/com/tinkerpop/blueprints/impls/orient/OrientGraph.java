@@ -171,11 +171,33 @@ public class OrientGraph extends OrientTransactionalGraph {
    * </tr>
    * </table>
    *
-   * @param configuration
+   * @param iConfiguration
    *          graph settings see the details above.
    */
-  public OrientGraph(final Configuration configuration) {
-    super(configuration);
+  public OrientGraph(final Configuration iConfiguration) {
+    super(iConfiguration);
+    config();
+  }
+
+  /**
+   * Creates a new Transactional Graph using an existent database instance.
+   *
+   * @param iDatabase
+   *          Underlying database object to attach
+   */
+  public OrientGraph(final ODatabaseDocumentTx iDatabase) {
+    super(iDatabase);
+    config();
+  }
+
+  /**
+   * Creates a new Transactional Graph using an existent database instance.
+   *
+   * @param iDatabase
+   *          Underlying database object to attach
+   */
+  public OrientGraph(final ODatabaseDocumentTx iDatabase, final String iUser, final String iPassword, final Settings iConfiguration) {
+    super(iDatabase, iUser, iPassword, iConfiguration);
     config();
   }
 
@@ -223,16 +245,5 @@ public class OrientGraph extends OrientTransactionalGraph {
     FEATURES.supportsStringProperty = true;
     FEATURES.supportsThreadedTransactions = false;
     FEATURES.supportsThreadIsolatedTransactions = false;
-  }
-
-  /**
-   * Creates a new Transactional Graph using an existent database instance.
-   *
-   * @param iDatabase
-   *          Underlying database object to attach
-   */
-  public OrientGraph(final ODatabaseDocumentTx iDatabase) {
-    super(iDatabase);
-    config();
   }
 }

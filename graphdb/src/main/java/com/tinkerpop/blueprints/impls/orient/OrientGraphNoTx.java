@@ -21,7 +21,7 @@ public class OrientGraphNoTx extends OrientBaseGraph {
    *          Underlying database object to attach
    */
   public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase) {
-    super(iDatabase, null, null);
+    super(iDatabase, null, null, null);
     config();
   }
 
@@ -45,8 +45,14 @@ public class OrientGraphNoTx extends OrientBaseGraph {
     config();
   }
 
-  public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase, final String user,final  String password) {
-    super(iDatabase, user, password);
+  public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase, final String user, final String password) {
+    super(iDatabase, user, password, null);
+    config();
+  }
+
+  public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase, final String user, final String password,
+      final Settings iConfiguration) {
+    super(iDatabase, user, password, iConfiguration);
     config();
   }
 

@@ -74,13 +74,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientBaseGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPassword) {
+  public OrientBaseGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPassword,
+      final Settings iConfiguration) {
     this.pool = null;
     this.username = iUserName;
     this.password = iUserPassword;
 
     database = iDatabase;
     readDatabaseConfiguration();
+    configure(iConfiguration);
   }
 
   public OrientBaseGraph(final ODatabaseDocumentPool pool) {
@@ -286,7 +288,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *          Settings object containing all the settings
    */
   public OrientBaseGraph configure(final Settings iSetting) {
-    settings = iSetting;
+    if (iSetting != null)
+      settings = iSetting;
     return this;
   }
 
@@ -401,13 +404,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return database.getStorage().getConflictStrategy();
   }
 
-  public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    database.setConflictStrategy(iResolver);
+  public OrientBaseGraph setConflictStrategy(final String iStrategyName) {
+    database.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
   }
 
-  public OrientBaseGraph setConflictStrategy(final String iStrategyName) {
-    database.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+  public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    database.setConflictStrategy(iResolver);
     return this;
   }
 

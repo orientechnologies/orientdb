@@ -114,7 +114,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
   public OrientGraph getTx() {
     final OrientGraph g;
     if (pool == null) {
-      g = (OrientGraph) new OrientGraph(getDatabase()).configure(settings);
+      g = (OrientGraph) new OrientGraph(getDatabase(), user, password, settings);
       initGraph(g);
     } else {
       if (!transactional)
@@ -137,7 +137,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
   public OrientGraphNoTx getNoTx() {
     final OrientGraphNoTx g;
     if (pool == null) {
-      g = (OrientGraphNoTx) new OrientGraphNoTx(getDatabase(), user, password).configure(settings);
+      g = (OrientGraphNoTx) new OrientGraphNoTx(getDatabase(), user, password, settings);
       initGraph(g);
     } else {
       if (transactional)
