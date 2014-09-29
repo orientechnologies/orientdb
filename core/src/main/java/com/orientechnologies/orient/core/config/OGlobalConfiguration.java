@@ -63,12 +63,7 @@ public enum OGlobalConfiguration {
   DIRECT_MEMORY_ONLY_ALIGNED_ACCESS(
       "memory.directMemory.onlyAlignedMemoryAccess",
       "Some architectures does not allow unaligned memory access or suffer from speed degradation, on this platforms flag should be set to true",
-      Boolean.class, false),
-
-  DIRECT_MEMORY_ALIGNED_ACCESS_ORDER(
-      "memory.directMemory.alignedAccessOrder",
-      "Byte order which will be used in case of direct memory will work in aligned access, possible values 'BIG_ENDIAN', 'LITTLE_ENDIAN', 'SYSTEM'. Last one means that order will be defined by OS",
-      String.class, "SYSTEM"),
+      Boolean.class, true),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),
