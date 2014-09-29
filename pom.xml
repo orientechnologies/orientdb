@@ -284,6 +284,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
+                <configuration>
+                  <systemPropertyVariables>
+                    <!-- SET THIS TO AVOID ASKING FOR PASSWORD DURING TESTS -->
+                    <propertyName>ORIENTDB_ROOT_PASSWORD</propertyName>
+                  </systemPropertyVariables>
+                </configuration>
             </plugin>
 
             <plugin>

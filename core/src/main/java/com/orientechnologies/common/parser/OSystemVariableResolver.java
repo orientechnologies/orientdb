@@ -38,7 +38,7 @@ public class OSystemVariableResolver implements OVariableParserListener {
     return (String) OVariableParser.resolveVariables(iPath, VAR_BEGIN, VAR_END, instance, iDefault);
   }
 
-  public String resolve(final String variable) {
+  public static String resolveVariable(final String variable) {
     String resolved = System.getProperty(variable);
 
     if (resolved == null)
@@ -46,5 +46,9 @@ public class OSystemVariableResolver implements OVariableParserListener {
       resolved = System.getenv(variable);
 
     return resolved;
+  }
+
+  public String resolve(final String variable) {
+    return resolveVariable(variable);
   }
 }

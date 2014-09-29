@@ -19,6 +19,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -84,10 +85,9 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public static String getHomePath() {
     String v = System.getProperty("orient.home");
+
     if (v == null)
-      v = System.getProperty(ORIENTDB_HOME);
-    if (v == null)
-      v = System.getenv(ORIENTDB_HOME);
+      v = OSystemVariableResolver.resolveVariable(ORIENTDB_HOME);
 
     return OFileUtils.getPath(v);
   }
@@ -462,7 +462,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   public ODatabaseThreadLocalFactory getDatabaseThreadFactory() {
     return databaseThreadFactory;
   }
-
 
   public ORecordFactoryManager getRecordFactoryManager() {
     return recordFactoryManager;
