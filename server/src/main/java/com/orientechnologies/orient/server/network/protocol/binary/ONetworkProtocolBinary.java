@@ -595,7 +595,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     connection.rawDatabase = ((ODatabaseComplexInternal<?>) connection.database.getUnderlying()).getUnderlying();
 
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
-      sendError(clientTxId, new OSecurityAccessException(connection.database.getName(),
+      sendErrorOrDropConnection(clientTxId, new OSecurityAccessException(connection.database.getName(),
           "User or password not valid for database: '" + connection.database.getName() + "'"));
     } else {
 
@@ -704,12 +704,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OLogManager.instance().error(this, "Authentication error of remote client %s:%d: shutdown is aborted.",
         channel.socket.getInetAddress(), channel.socket.getPort());
 
-    sendError(clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
-    try {
-      Thread.sleep(1000);
-    } catch (InterruptedException e) {
-    }
-    channel.close();
+    sendErrorOrDropConnection(clientTxId, new OSecurityAccessException("Invalid user/password to shutdown the server"));
   }
 
   protected void copyDatabase() throws IOException {
@@ -1046,7 +1041,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             collectionManager.clearChangedIds();
         }
 
-        sendError(clientTxId, e);
+        sendErrorOrDropConnection(clientTxId, e);
       }
     } catch (OTransactionAbortedException e) {
       // TX ABORTED BY THE CLIENT
@@ -1055,7 +1050,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       if (tx.isActive())
         tx.rollback(true, -1);
 
-      sendError(clientTxId, e);
+      sendErrorOrDropConnection(clientTxId, e);
     }
   }
 
