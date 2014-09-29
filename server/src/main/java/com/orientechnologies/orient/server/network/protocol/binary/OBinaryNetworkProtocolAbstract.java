@@ -67,6 +67,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected OChannelBinaryServer channel;
   protected int                  requestType;
   protected int                  clientTxId;
+  protected boolean              okSent;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
     super(Orient.instance().getThreadGroup(), iThreadName);
@@ -154,7 +155,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     requestType = -1;
 
     clientTxId = 0;
-
+    okSent = false;
     long timer = 0;
 
     try {
@@ -169,7 +170,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
         if (!executeRequest()) {
           OLogManager.instance().error(this, "Request not supported. Code: " + requestType);
           channel.clearInput();
-          sendError(clientTxId, new ONetworkProtocolException("Request not supported. Code: " + requestType));
+          sendErrorOrDropConnection(clientTxId, new ONetworkProtocolException("Request not supported. Code: " + requestType));
         }
       } finally {
         onAfterRequest();
@@ -179,11 +180,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       handleConnectionError(channel, e);
       sendShutdown();
     } catch (OException e) {
-      sendError(clientTxId, e);
+      sendErrorOrDropConnection(clientTxId, e);
     } catch (RuntimeException e) {
-      sendError(clientTxId, e);
+      sendErrorOrDropConnection(clientTxId, e);
     } catch (Throwable t) {
-      sendError(clientTxId, t);
+      sendErrorOrDropConnection(clientTxId, t);
     } finally {
       Orient.instance().getProfiler()
           .stopChrono("server.network.requests", "Total received requests", timer, "server.network.requests");
@@ -195,6 +196,16 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected void sendOk(final int iClientTxId) throws IOException {
     channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
     channel.writeInt(iClientTxId);
+    okSent = true;
+  }
+
+  protected void sendErrorOrDropConnection(final int iClientTxId, final Throwable t) throws IOException {
+    if (okSent) {
+      handleConnectionError(channel, t);
+      sendShutdown();
+    } else {
+      sendError(iClientTxId, t);
+    }
   }
 
   protected void checkStorageExistence(final String iDatabaseName) {
