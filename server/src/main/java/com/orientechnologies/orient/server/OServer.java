@@ -73,26 +73,26 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
-  private static final String                              ORIENTDB_ROOT_PASSWORD_ENV = "ORIENTDB_ROOT_PASSWORD";
+  private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
   private static ThreadGroup                               threadGroup;
-  private static Map<String, OServer>                      distributedServers         = new ConcurrentHashMap<String, OServer>();
-  private final CountDownLatch                             startupLatch               = new CountDownLatch(1);
-  protected ReentrantLock                                  lock                       = new ReentrantLock();
-  protected volatile boolean                               running                    = true;
+  private static Map<String, OServer>                      distributedServers     = new ConcurrentHashMap<String, OServer>();
+  private final CountDownLatch                             startupLatch           = new CountDownLatch(1);
+  protected ReentrantLock                                  lock                   = new ReentrantLock();
+  protected volatile boolean                               running                = true;
   protected OServerConfigurationLoaderXml                  configurationLoader;
   protected OServerConfiguration                           configuration;
   protected OContextConfiguration                          contextConfiguration;
   protected OServerShutdownHook                            shutdownHook;
-  protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols           = new HashMap<String, Class<? extends ONetworkProtocol>>();
-  protected Map<String, OServerSocketFactory>              networkSocketFactories     = new HashMap<String, OServerSocketFactory>();
-  protected List<OServerNetworkListener>                   networkListeners           = new ArrayList<OServerNetworkListener>();
-  protected List<OServerLifecycleListener>                 lifecycleListeners         = new ArrayList<OServerLifecycleListener>();
+  protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols       = new HashMap<String, Class<? extends ONetworkProtocol>>();
+  protected Map<String, OServerSocketFactory>              networkSocketFactories = new HashMap<String, OServerSocketFactory>();
+  protected List<OServerNetworkListener>                   networkListeners       = new ArrayList<OServerNetworkListener>();
+  protected List<OServerLifecycleListener>                 lifecycleListeners     = new ArrayList<OServerLifecycleListener>();
   protected OServerPluginManager                           pluginManager;
   protected OConfigurableHooksManager                      hookManager;
   protected ODistributedServerManager                      distributedManager;
   private ODatabaseDocumentPool                            dbPool;
-  private Random                                           random                     = new Random();
-  private Map<String, Object>                              variables                  = new HashMap<String, Object>();
+  private Random                                           random                 = new Random();
+  private Map<String, Object>                              variables              = new HashMap<String, Object>();
   private String                                           serverRootDirectory;
   private String                                           databaseDirectory;
 
@@ -672,7 +672,7 @@ public class OServer {
   }
 
   protected void createDefaultServerUsers() throws IOException {
-    String rootPassword = OSystemVariableResolver.resolveVariable(ORIENTDB_ROOT_PASSWORD_ENV);
+    String rootPassword = OSystemVariableResolver.resolveVariable(ROOT_PASSWORD_VAR);
 
     if (rootPassword != null) {
       rootPassword = rootPassword.trim();
@@ -683,13 +683,13 @@ public class OServer {
     if (rootPassword == null) {
       System.out.println();
       System.out.println();
-      System.out.println("+------------------------------------------------+");
-      System.out.println("|        WARNING: FIRST RUN CONFIGURATION        |");
-      System.out.println("+------------------------------------------------+");
-      System.out.println("| This is the first time the server is running   |");
-      System.out.println("| please type the password for 'root' user or    |");
-      System.out.println("| leave it blank to auto generate it.            |");
-      System.out.println("+------------------------------------------------+");
+      System.out.println("+----------------------------------------------------+");
+      System.out.println("|          WARNING: FIRST RUN CONFIGURATION          |");
+      System.out.println("+----------------------------------------------------+");
+      System.out.println("| This is the first time the server is running.      |");
+      System.out.println("| Please type a password of your choice for the      |");
+      System.out.println("| 'root' user or leave it blank to auto-generate it. |");
+      System.out.println("+----------------------------------------------------+");
       System.out.print("\nRoot password [BLANK=auto generate it]: ");
 
       OConsoleReader reader = new DefaultConsoleReader();

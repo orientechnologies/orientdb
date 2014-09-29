@@ -18,6 +18,8 @@ package com.orientechnologies.orient.server.hazelcast;
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
+import com.orientechnologies.common.console.DefaultConsoleReader;
+import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -89,6 +91,7 @@ import java.util.concurrent.locks.Lock;
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object>,
     OCommandOutputListener {
 
+  protected static final String                 NODE_NAME_ENV          = "ORIENTDB_NODE_NAME";
   protected static final String                 CONFIG_NODE_PREFIX     = "node.";
   protected static final String                 CONFIG_DBSTATUS_PREFIX = "dbstatus.";
   protected static final String                 CONFIG_DATABASE_PREFIX = "database.";
@@ -115,38 +118,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
     super.config(iServer, iParams);
 
-    if (nodeName == null) {
-      // GENERATE NODE NAME
-      nodeName = "node" + System.currentTimeMillis();
-      OLogManager.instance().warn(this, "Generating new node name for current node: %s", nodeName);
-
-      // SALVE THE NODE NAME IN CONFIGURATION
-      boolean found = false;
-      final OServerConfiguration cfg = iServer.getConfiguration();
-      for (OServerHandlerConfiguration h : cfg.handlers) {
-        if (h.clazz.equals(getClass().getName())) {
-          for (OServerParameterConfiguration p : h.parameters) {
-            if (p.name.equals("nodeName")) {
-              found = true;
-              p.value = nodeName;
-              break;
-            }
-          }
-
-          if (!found) {
-            h.parameters = OArrays.copyOf(h.parameters, h.parameters.length + 1);
-            h.parameters[h.parameters.length - 1] = new OServerParameterConfiguration("nodeName", nodeName);
-          }
-
-          try {
-            iServer.saveConfiguration();
-          } catch (IOException e) {
-            throw new OConfigurationException("Cannot save server configuration", e);
-          }
-          break;
-        }
-      }
-    }
+    if (nodeName == null)
+      assignNodeName();
 
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("configuration.hazelcast"))
@@ -951,6 +924,73 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
 
+  }
+
+  protected void assignNodeName() {
+    nodeName = OSystemVariableResolver.resolveVariable(NODE_NAME_ENV);
+
+    if (nodeName != null) {
+      nodeName = nodeName.trim();
+      if (nodeName.isEmpty())
+        nodeName = null;
+    }
+
+    if (nodeName == null) {
+      System.out.println();
+      System.out.println();
+      System.out.println("+----------------------------------------------------+");
+      System.out.println("|    WARNING: FIRST DISTRIBUTED RUN CONFIGURATION    |");
+      System.out.println("+----------------------------------------------------+");
+      System.out.println("| This is the first time that the server is running  |");
+      System.out.println("| as distributed. Please type the name you want      |");
+      System.out.println("| to assign to the current server node.              |");
+      System.out.println("+----------------------------------------------------+");
+      System.out.print("\nNode name [BLANK=auto generate it]: ");
+
+      OConsoleReader reader = new DefaultConsoleReader();
+      try {
+        nodeName = reader.readLine();
+      } catch (IOException e) {
+      }
+      if (nodeName != null) {
+        nodeName = nodeName.trim();
+        if (nodeName.isEmpty())
+          nodeName = null;
+      }
+    }
+
+    if (nodeName == null)
+      // GENERATE NODE NAME
+      this.nodeName = "node" + System.currentTimeMillis();
+
+    OLogManager.instance().warn(this, "Assigning distributed node name: %s", this.nodeName);
+
+    // SALVE THE NODE NAME IN CONFIGURATION
+    boolean found = false;
+    final OServerConfiguration cfg = serverInstance.getConfiguration();
+    for (OServerHandlerConfiguration h : cfg.handlers) {
+      if (h.clazz.equals(getClass().getName())) {
+        for (OServerParameterConfiguration p : h.parameters) {
+          if (p.name.equals("nodeName")) {
+            found = true;
+            p.value = this.nodeName;
+            break;
+          }
+        }
+
+        if (!found) {
+          h.parameters = OArrays.copyOf(h.parameters, h.parameters.length + 1);
+          h.parameters[h.parameters.length - 1] = new OServerParameterConfiguration("nodeName", this.nodeName);
+        }
+
+        try {
+          serverInstance.saveConfiguration();
+        } catch (IOException e) {
+          throw new OConfigurationException("Cannot save server configuration", e);
+        }
+        break;
+      }
+    }
   }
 
   protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
