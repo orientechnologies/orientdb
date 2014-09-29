@@ -30,12 +30,8 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -413,8 +409,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         else if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
           record.lock(false);
 
-      } else
+      } else {
         record = getDatabase().load(id.getIdentity(), null, false, false, localLockingStrategy);
+        if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
+          Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
+          for (String key : ridContext.keySet()) {
+            context.setVariable(key, ridContext.get(key));
+          }
+        }
+      }
 
       context.updateMetric("recordReads", +1);
 
@@ -1259,6 +1262,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           context.setVariable("$limit", limit);
           cursor = operator.executeIndexQuery(context, index, keyParams, ascSortOrder);
+        } catch (OIndexEngineException e) {
+          throw e;
         } catch (Exception e) {
           OLogManager
               .instance()
