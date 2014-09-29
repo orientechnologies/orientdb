@@ -33,10 +33,7 @@ import javax.script.ScriptException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.OSQLScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.*;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -93,6 +90,7 @@ public class OScriptManager {
     registerFormatter(OSQLScriptEngine.NAME, new OSQLScriptFormatter());
     registerFormatter(DEF_LANGUAGE, new OJSScriptFormatter());
     registerFormatter("ruby", new ORubyScriptFormatter());
+      registerFormatter("groovy", new OGroovyScriptFormatter());
   }
 
   public String getFunctionDefinition(final OFunction iFunction) {
@@ -238,7 +236,8 @@ public class OScriptManager {
           currentLine = scanner.next();
           int pos = currentLine.indexOf("function");
           if (pos > -1) {
-            final String[] words = OStringParser.getWords(currentLine.substring(Math.min(pos + "function".length() + 1, currentLine.length())), " \r\n\t");
+            final String[] words = OStringParser.getWords(
+                currentLine.substring(Math.min(pos + "function".length() + 1, currentLine.length())), " \r\n\t");
             if (words.length > 0 && words[0] != "(")
               lastFunctionName = words[0];
           }
@@ -305,5 +304,14 @@ public class OScriptManager {
   public OScriptManager registerFormatter(final String iLanguage, final OScriptFormatter iFormatterImpl) {
     formatters.put(iLanguage.toLowerCase(), iFormatterImpl);
     return this;
+  }
+
+  /**
+   * Ask to the Script engine all the formatters
+   *
+   * @return Map containing all the formatters
+   */
+  public Map<String, OScriptFormatter> getFormatters() {
+    return formatters;
   }
 }

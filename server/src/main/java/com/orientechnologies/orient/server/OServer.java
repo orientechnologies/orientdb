@@ -15,27 +15,8 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-
+import com.orientechnologies.common.console.DefaultConsoleReader;
+import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -61,16 +42,7 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
-import com.orientechnologies.orient.server.config.OServerConfiguration;
-import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
-import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
-import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
-import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
-import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.config.*;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -80,26 +52,47 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
+
 public class OServer {
+  private static final String                              ORIENTDB_ROOT_PASSWORD_ENV = "ORIENTDB_ROOT_PASSWORD";
   private static ThreadGroup                               threadGroup;
-  private static Map<String, OServer>                      distributedServers     = new ConcurrentHashMap<String, OServer>();
-  private final CountDownLatch                             startupLatch           = new CountDownLatch(1);
-  protected ReentrantLock                                  lock                   = new ReentrantLock();
-  protected volatile boolean                               running                = true;
+  private static Map<String, OServer>                      distributedServers         = new ConcurrentHashMap<String, OServer>();
+  private final CountDownLatch                             startupLatch               = new CountDownLatch(1);
+  protected ReentrantLock                                  lock                       = new ReentrantLock();
+  protected volatile boolean                               running                    = true;
   protected OServerConfigurationLoaderXml                  configurationLoader;
   protected OServerConfiguration                           configuration;
   protected OContextConfiguration                          contextConfiguration;
   protected OServerShutdownHook                            shutdownHook;
-  protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols       = new HashMap<String, Class<? extends ONetworkProtocol>>();
-  protected Map<String, OServerSocketFactory>              networkSocketFactories = new HashMap<String, OServerSocketFactory>();
-  protected List<OServerNetworkListener>                   networkListeners       = new ArrayList<OServerNetworkListener>();
-  protected List<OServerLifecycleListener>                 lifecycleListeners     = new ArrayList<OServerLifecycleListener>();
+  protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols           = new HashMap<String, Class<? extends ONetworkProtocol>>();
+  protected Map<String, OServerSocketFactory>              networkSocketFactories     = new HashMap<String, OServerSocketFactory>();
+  protected List<OServerNetworkListener>                   networkListeners           = new ArrayList<OServerNetworkListener>();
+  protected List<OServerLifecycleListener>                 lifecycleListeners         = new ArrayList<OServerLifecycleListener>();
   protected OServerPluginManager                           pluginManager;
   protected OConfigurableHooksManager                      hookManager;
   protected ODistributedServerManager                      distributedManager;
   private ODatabaseDocumentPool                            dbPool;
-  private Random                                           random                 = new Random();
-  private Map<String, Object>                              variables              = new HashMap<String, Object>();
+  private Random                                           random                     = new Random();
+  private Map<String, Object>                              variables                  = new HashMap<String, Object>();
   private String                                           serverRootDirectory;
   private String                                           databaseDirectory;
 
@@ -620,7 +613,7 @@ public class OServer {
       }
     }
 
-    createAdminAndDbListerUsers();
+    createDefaultServerUsers();
   }
 
   /**
@@ -678,8 +671,37 @@ public class OServer {
       }
   }
 
-  protected void createAdminAndDbListerUsers() throws IOException {
-    addUser(OServerConfiguration.SRV_ROOT_ADMIN, null, "*");
+  protected void createDefaultServerUsers() throws IOException {
+    String rootPassword = OSystemVariableResolver.resolveVariable(ORIENTDB_ROOT_PASSWORD_ENV);
+
+    if (rootPassword != null) {
+      rootPassword = rootPassword.trim();
+      if (rootPassword.isEmpty())
+        rootPassword = null;
+    }
+
+    if (rootPassword == null) {
+      System.out.println();
+      System.out.println();
+      System.out.println("+------------------------------------------------+");
+      System.out.println("|        WARNING: FIRST RUN CONFIGURATION        |");
+      System.out.println("+------------------------------------------------+");
+      System.out.println("| This is the first time the server is running   |");
+      System.out.println("| please type the password for 'root' user or    |");
+      System.out.println("| leave it blank to auto generate it.            |");
+      System.out.println("+------------------------------------------------+");
+      System.out.print("\nRoot password [BLANK=auto generate it]: ");
+
+      OConsoleReader reader = new DefaultConsoleReader();
+      rootPassword = reader.readLine();
+      if (rootPassword != null) {
+        rootPassword = rootPassword.trim();
+        if (rootPassword.isEmpty())
+          rootPassword = null;
+      }
+    }
+
+    addUser(OServerConfiguration.SRV_ROOT_ADMIN, rootPassword, "*");
     addUser(OServerConfiguration.SRV_ROOT_GUEST, OServerConfiguration.SRV_ROOT_GUEST, "connect,server.listDatabases,server.dblist");
     saveConfiguration();
   }

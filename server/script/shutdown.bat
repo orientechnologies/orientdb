@@ -1,6 +1,10 @@
 @echo off
 rem
-rem Copyright (c) 1999-2011 Luca Garulli @www.orientechnologies.com
+rem Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
+rem
+rem HISTORY:
+rem 2012-07-31: Added -w option
+rem
 rem
 
 rem Guess ORIENTDB_HOME if not defined

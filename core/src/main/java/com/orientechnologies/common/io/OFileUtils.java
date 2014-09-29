@@ -103,13 +103,13 @@ public class OFileUtils {
 
   public static String getSizeAsString(final long iSize) {
     if (iSize > TERABYTE)
-      return String.format("%2.2fTb", (float) iSize / TERABYTE);
+      return String.format("%2.2fTB", (float) iSize / TERABYTE);
     if (iSize > GIGABYTE)
-      return String.format("%2.2fGb", (float) iSize / GIGABYTE);
+      return String.format("%2.2fGB", (float) iSize / GIGABYTE);
     if (iSize > MEGABYTE)
-      return String.format("%2.2fMb", (float) iSize / MEGABYTE);
+      return String.format("%2.2fMB", (float) iSize / MEGABYTE);
     if (iSize > KILOBYTE)
-      return String.format("%2.2fKb", (float) iSize / KILOBYTE);
+      return String.format("%2.2fKB", (float) iSize / KILOBYTE);
 
     return String.valueOf(iSize) + "b";
   }

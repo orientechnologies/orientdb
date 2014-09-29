@@ -1,9 +1,11 @@
 #!/bin/bash
 #
-# Copyright (c) 1999-2010 Luca Garulli
+# Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
 #
-# 2012-07-31 - Added -w option 
+# HISTORY:
+# 2012-07-31: Added -w option
 #
+
 # resolve links - $0 may be a softlink
 PRG="$0"
 
