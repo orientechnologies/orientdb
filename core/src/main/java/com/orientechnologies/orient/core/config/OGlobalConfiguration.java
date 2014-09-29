@@ -54,18 +54,21 @@ public enum OGlobalConfiguration {
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
 
-  MEMORY_AUTOFREE_CHECK_EVERY("memory.autoFreeCheckEvery", "Time to check if memory resources are low", Long.class, 10000),
-
-  MEMORY_AUTOFREE_HEAP_THRESHOLD(
-      "memory.autoFreeHeapThreshold",
-      "Maximum size of used heap to let caches to keep records in RAM. Can be expressed in terms of absolute bytes or percentage in comparison to the maximum heap. For example 80% means that caches stop collecting records in RAM when free heap is lower than 20%",
-      String.class, "70%"),
-
   DIRECT_MEMORY_SAFE_MODE(
       "memory.directMemory.safeMode",
       "Indicates whether to do perform range check before each direct memory update, it is true by default, "
           + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
       Boolean.class, true),
+
+  DIRECT_MEMORY_ONLY_ALIGNED_ACCESS(
+      "memory.directMemory.onlyAlignedMemoryAccess",
+      "Some architectures does not allow unaligned memory access or suffer from speed degradation, on this platforms flag should be set to true",
+      Boolean.class, false),
+
+  DIRECT_MEMORY_ALIGNED_ACCESS_ORDER(
+      "memory.directMemory.alignedAccessOrder",
+      "Byte order which will be used in case of direct memory will work in aligned access, possible values 'BIG_ENDIAN', 'LITTLE_ENDIAN', 'SYSTEM'. Last one means that order will be defined by OS",
+      String.class, "SYSTEM"),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
       "Minimal amount of time (seconds) since last System.gc() when called after tree optimization", Long.class, 600),

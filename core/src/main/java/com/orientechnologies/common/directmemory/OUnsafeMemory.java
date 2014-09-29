@@ -16,9 +16,11 @@
 package com.orientechnologies.common.directmemory;
 
 import java.lang.reflect.Field;
+import java.nio.ByteOrder;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import sun.misc.Unsafe;
 
 /**
@@ -33,6 +35,10 @@ public class OUnsafeMemory implements ODirectMemory {
   private static final boolean      unaligned;
 
   private static final long         UNSAFE_COPY_THRESHOLD = 1024L * 1024L;
+
+  private static final ByteOrder    alignedOrder;
+  private static final boolean      onlyAlignedOrder      = OGlobalConfiguration.DIRECT_MEMORY_ONLY_ALIGNED_ACCESS
+                                                              .getValueAsBoolean();
 
   static {
     OUnsafeMemory futureInstance;
@@ -60,10 +66,24 @@ public class OUnsafeMemory implements ODirectMemory {
     }
 
     INSTANCE = futureInstance;
-    String arch = System.getProperty("os.arch");
-    unaligned = arch.equals("i386") || arch.equals("x86") || arch.equals("amd64") || arch.equals("x86_64");
-  }
 
+    if (OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValueAsString().equalsIgnoreCase("system"))
+      alignedOrder = ByteOrder.nativeOrder();
+    else if (OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValueAsString().equalsIgnoreCase("big_endian"))
+      alignedOrder = ByteOrder.BIG_ENDIAN;
+    else if (OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValueAsString().equalsIgnoreCase("little_endian"))
+      alignedOrder = ByteOrder.LITTLE_ENDIAN;
+    else
+      throw new IllegalArgumentException("Invalid value of " + OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getKey()
+          + " configuration parameter :" + OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValue());
+
+    if (onlyAlignedOrder)
+      unaligned = false;
+    else {
+      final String arch = System.getProperty("os.arch");
+      unaligned = arch.equals("i386") || arch.equals("x86") || arch.equals("amd64") || arch.equals("x86_64");
+    }
+  }
 
   @Override
   public long allocate(long size) {
@@ -104,8 +124,13 @@ public class OUnsafeMemory implements ODirectMemory {
     if (unaligned)
       return unsafe.getInt(pointer);
 
-    return (0xFF & unsafe.getByte(pointer++)) << 24 | (0xFF & unsafe.getByte(pointer++)) << 16
-        | (0xFF & unsafe.getByte(pointer++)) << 8 | (0xFF & unsafe.getByte(pointer));
+    if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
+      return (0xFF & unsafe.getByte(pointer++)) << 24 | (0xFF & unsafe.getByte(pointer++)) << 16
+          | (0xFF & unsafe.getByte(pointer++)) << 8 | (0xFF & unsafe.getByte(pointer));
+    }
+
+    return (0xFF & unsafe.getByte(pointer++)) | (0xFF & unsafe.getByte(pointer)) << 8 | (0xFF & unsafe.getByte(pointer++)) << 16
+        | (0xFF & unsafe.getByte(pointer)) << 24;
   }
 
   @Override
@@ -113,10 +138,17 @@ public class OUnsafeMemory implements ODirectMemory {
     if (unaligned)
       unsafe.putInt(pointer, value);
     else {
-      unsafe.putByte(pointer++, (byte) (value >>> 24));
-      unsafe.putByte(pointer++, (byte) (value >>> 16));
-      unsafe.putByte(pointer++, (byte) (value >>> 8));
-      unsafe.putByte(pointer, (byte) (value));
+      if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        unsafe.putByte(pointer++, (byte) (value >>> 24));
+        unsafe.putByte(pointer++, (byte) (value >>> 16));
+        unsafe.putByte(pointer++, (byte) (value >>> 8));
+        unsafe.putByte(pointer, (byte) (value));
+      } else {
+        unsafe.putByte(pointer++, (byte) (value));
+        unsafe.putByte(pointer++, (byte) (value >>> 8));
+        unsafe.putByte(pointer++, (byte) (value >>> 16));
+        unsafe.putByte(pointer, (byte) (value >>> 24));
+      }
     }
   }
 
@@ -125,8 +157,13 @@ public class OUnsafeMemory implements ODirectMemory {
     if (unaligned)
       unsafe.putShort(pointer, value);
     else {
-      unsafe.putByte(pointer++, (byte) (value >>> 8));
-      unsafe.putByte(pointer, (byte) value);
+      if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        unsafe.putByte(pointer++, (byte) (value >>> 8));
+        unsafe.putByte(pointer, (byte) value);
+      } else {
+        unsafe.putByte(pointer++, (byte) value);
+        unsafe.putByte(pointer, (byte) (value >>> 8));
+      }
     }
   }
 
@@ -135,7 +172,10 @@ public class OUnsafeMemory implements ODirectMemory {
     if (unaligned)
       return unsafe.getShort(pointer);
 
-    return (short) (unsafe.getByte(pointer++) << 8 | (unsafe.getByte(pointer) & 0xff));
+    if (alignedOrder.equals(ByteOrder.BIG_ENDIAN))
+      return (short) (unsafe.getByte(pointer++) << 8 | (unsafe.getByte(pointer) & 0xff));
+
+    return (short) ((unsafe.getByte(pointer++) & 0xff) | (unsafe.getByte(pointer) << 8));
   }
 
   @Override
@@ -143,8 +183,13 @@ public class OUnsafeMemory implements ODirectMemory {
     if (unaligned)
       unsafe.putChar(pointer, value);
     else {
-      unsafe.putByte(pointer++, (byte) (value >>> 8));
-      unsafe.putByte(pointer, (byte) (value));
+      if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        unsafe.putByte(pointer++, (byte) (value >>> 8));
+        unsafe.putByte(pointer, (byte) (value));
+      } else {
+        unsafe.putByte(pointer++, (byte) (value));
+        unsafe.putByte(pointer, (byte) (value >>> 8));
+      }
     }
   }
 
@@ -153,7 +198,10 @@ public class OUnsafeMemory implements ODirectMemory {
     if (unaligned)
       return unsafe.getChar(pointer);
 
-    return (char) ((unsafe.getByte(pointer++) << 8) | (unsafe.getByte(pointer) & 0xff));
+    if (alignedOrder.equals(ByteOrder.BIG_ENDIAN))
+      return (char) ((unsafe.getByte(pointer++) << 8) | (unsafe.getByte(pointer) & 0xff));
+
+    return (char) ((unsafe.getByte(pointer++) & 0xff) | (unsafe.getByte(pointer) << 8));
   }
 
   @Override
@@ -161,11 +209,16 @@ public class OUnsafeMemory implements ODirectMemory {
     if (unaligned)
       return unsafe.getLong(pointer);
 
-    return (0xFFL & unsafe.getByte(pointer++)) << 56 | (0xFFL & unsafe.getByte(pointer++)) << 48
-        | (0xFFL & unsafe.getByte(pointer++)) << 40 | (0xFFL & unsafe.getByte(pointer++)) << 32
-        | (0xFFL & unsafe.getByte(pointer++)) << 24 | (0xFFL & unsafe.getByte(pointer++)) << 16
-        | (0xFFL & unsafe.getByte(pointer++)) << 8 | (0xFFL & unsafe.getByte(pointer));
+    if (alignedOrder.equals(ByteOrder.BIG_ENDIAN))
+      return (0xFFL & unsafe.getByte(pointer++)) << 56 | (0xFFL & unsafe.getByte(pointer++)) << 48
+          | (0xFFL & unsafe.getByte(pointer++)) << 40 | (0xFFL & unsafe.getByte(pointer++)) << 32
+          | (0xFFL & unsafe.getByte(pointer++)) << 24 | (0xFFL & unsafe.getByte(pointer++)) << 16
+          | (0xFFL & unsafe.getByte(pointer++)) << 8 | (0xFFL & unsafe.getByte(pointer));
 
+    return (0xFFL & unsafe.getByte(pointer++)) | (0xFFL & unsafe.getByte(pointer++)) << 8
+        | (0xFFL & unsafe.getByte(pointer++)) << 16 | (0xFFL & unsafe.getByte(pointer++)) << 24
+        | (0xFFL & unsafe.getByte(pointer++)) << 32 | (0xFFL & unsafe.getByte(pointer++)) << 40
+        | (0xFFL & unsafe.getByte(pointer++)) << 48 | (0xFFL & unsafe.getByte(pointer)) << 56;
   }
 
   @Override
@@ -173,14 +226,25 @@ public class OUnsafeMemory implements ODirectMemory {
     if (unaligned)
       unsafe.putLong(pointer, value);
     else {
-      unsafe.putByte(pointer++, (byte) (value >>> 56));
-      unsafe.putByte(pointer++, (byte) (value >>> 48));
-      unsafe.putByte(pointer++, (byte) (value >>> 40));
-      unsafe.putByte(pointer++, (byte) (value >>> 32));
-      unsafe.putByte(pointer++, (byte) (value >>> 24));
-      unsafe.putByte(pointer++, (byte) (value >>> 16));
-      unsafe.putByte(pointer++, (byte) (value >>> 8));
-      unsafe.putByte(pointer, (byte) (value));
+      if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        unsafe.putByte(pointer++, (byte) (value >>> 56));
+        unsafe.putByte(pointer++, (byte) (value >>> 48));
+        unsafe.putByte(pointer++, (byte) (value >>> 40));
+        unsafe.putByte(pointer++, (byte) (value >>> 32));
+        unsafe.putByte(pointer++, (byte) (value >>> 24));
+        unsafe.putByte(pointer++, (byte) (value >>> 16));
+        unsafe.putByte(pointer++, (byte) (value >>> 8));
+        unsafe.putByte(pointer, (byte) (value));
+      } else {
+        unsafe.putByte(pointer++, (byte) (value));
+        unsafe.putByte(pointer++, (byte) (value >>> 8));
+        unsafe.putByte(pointer++, (byte) (value >>> 16));
+        unsafe.putByte(pointer++, (byte) (value >>> 24));
+        unsafe.putByte(pointer++, (byte) (value >>> 32));
+        unsafe.putByte(pointer++, (byte) (value >>> 40));
+        unsafe.putByte(pointer++, (byte) (value >>> 48));
+        unsafe.putByte(pointer, (byte) (value >>> 56));
+      }
     }
   }
 
