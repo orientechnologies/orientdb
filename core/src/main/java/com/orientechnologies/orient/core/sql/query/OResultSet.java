@@ -36,10 +36,10 @@ import java.util.NoSuchElementException;
  * @see OSQLAsynchQuery
  */
 public class OResultSet<T> implements List<T>, Externalizable {
+  protected final transient Object     waitForNextItem   = new Object();
+  protected final transient Object     waitForCompletion = new Object();
   protected List<T>                    underlying;
   protected transient volatile boolean completed         = false;
-  protected transient Object           waitForNextItem   = new Object();
-  protected transient Object           waitForCompletion = new Object();
   protected transient int              limit             = -1;
 
   public OResultSet() {
