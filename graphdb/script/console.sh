@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 1999-2010 Luca Garulli
+# Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
 #
 
 #set current working directory

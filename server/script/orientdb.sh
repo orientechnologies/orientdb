@@ -1,6 +1,7 @@
 #!/bin/sh
-
-# OrientDB init script
+# OrientDB service script
+#
+# Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
 
 # You have to SET the OrientDB installation directory here
 ORIENTDB_DIR="YOUR_ORIENTDB_INSTALLATION_PATH"
