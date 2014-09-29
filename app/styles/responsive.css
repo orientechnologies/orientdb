@@ -1,0 +1,27 @@
+@media (min-width: 960px) {
+    .hide-user {
+        display: none;
+    }
+}
+
+@media (max-width: 767px) {
+    .query-hint {
+        display: none;
+    }
+
+    .hide-settings {
+        display: none;
+    }
+}
+
+@media (min-width: 768px) {
+    .query-hint-mobile {
+        display: none;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 959px) {
+    .navbar-user .username {
+        display: none;
+    }
+}

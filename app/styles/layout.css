@@ -199,8 +199,6 @@ body div.container-studio {
     height: 100%;
 }
 
-
-
 .bookmarks-container > div {
     height: 100%;
 }
@@ -224,6 +222,7 @@ body div.container-studio {
 .bookmarks-container .row:last-child {
     height: 90%;
 }
+
 .oaside-body {
     height: 100%;
 
@@ -432,8 +431,18 @@ table.result-table > thead > tr > th {
     padding-left: 5px;
 }
 
-.query-hint {
-    /*width: 90%;*/
+.query-hint-mobile b.clear-hint {
+    border-left: none;
+}
+
+.query-hint-mobile b:first-child {
+    border-left: none;
+}
+
+.query-hint-mobile b {
+    border-left: 1px solid rgba(0, 0, 0, 0.34);
+    margin-left: 5px;
+    padding-left: 5px;
 }
 
 .query-info input.form-control {

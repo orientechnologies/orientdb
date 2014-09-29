@@ -20,6 +20,7 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
         }, function () {
             var noti = "Invalid username or password";
             Notification.push({content: noti, error: true});
+            $scope.errorMsg = "Invalid username or password";
             Spinner.stopSpinner();
         });
     }

@@ -62,15 +62,15 @@
                         </div>
                         <div class="col-md-2 col-xs-2">
                             <a class="btn btn-trasparent" tabindex="1"
-                                    data-trigger="focus" data-placement="bottom"
-                                    data-animation="am-flip-x"
-                                    data-container="body"
-                                    data-content="{{ 'login.help' | translate:link }}" bs-popover>
+                               data-trigger="focus" data-placement="bottom"
+                               data-animation="am-flip-x"
+                               data-container="body"
+                               data-content="{{ 'login.help' | translate:link }}" bs-popover>
                                 <i class="fa fa-question-circle"></i>
                             </a>
                         </div>
                         <div class="col-md-offset-6 col-md-2 col-xs-2 col-xs-offset-6">
-                            <button  type="submit" ng-disabled="loginForm.$invalid"
+                            <button type="submit" ng-disabled="loginForm.$invalid"
                                     class="btn btn-sm btn-warning"
                                     rel="tooltip" data-placement="right"
                                     data-title="{{ 'login.connectDb' | translate }}"
@@ -82,6 +82,11 @@
                     </div>
                 </fieldset>
             </form>
+            <div class="alert alert-danger " ng-show="errorMsg">
+                <button type="button" class="close" ng-click="errorMsg = null"><span
+                        aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                {{ errorMsg}}
+            </div>
         </div>
     </div>
     <div class="col-md-7"></div>
