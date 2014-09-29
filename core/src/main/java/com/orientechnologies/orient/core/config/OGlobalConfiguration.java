@@ -359,6 +359,8 @@ public enum OGlobalConfiguration {
 
   NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 15000),
 
+  NETWORK_REQUEST_TIMEOUT("network.requestTimeout", "Request completion timeout in ms ", Integer.class, 3600000 /* one hour */),
+
   NETWORK_SOCKET_RETRY("network.retry", "Number of times the client retries its connection to the server on failure",
       Integer.class, 5),
 

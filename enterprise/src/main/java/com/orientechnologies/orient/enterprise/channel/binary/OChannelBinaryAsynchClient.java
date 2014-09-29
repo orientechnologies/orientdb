@@ -36,6 +36,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +76,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     socket.setReceiveBufferSize(socketBufferSize);
     try {
       socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
+      setReadResponseTimeout();
       connected();
     } catch (java.net.SocketTimeoutException e) {
       throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
@@ -185,6 +187,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           channelRead = true;
 
           try {
+            setWaitResponseTimeout();
             currentStatus = readByte();
             currentSessionId = readInt();
 
@@ -200,6 +203,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
             readLock = false;
 
             throw e;
+          } finally {
+            setReadResponseTimeout();
           }
         }
 
@@ -268,6 +273,16 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       // NEVER HAPPENS?
       OLogManager.instance().error(this, "Unexpected error on reading response from channel", e);
     }
+  }
+
+  private void setReadResponseTimeout() throws SocketException {
+    if (socket != null)
+      socket.setSoTimeout(socketTimeout);
+  }
+
+  private void setWaitResponseTimeout() throws SocketException {
+    if (socket != null)
+      socket.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
   }
 
   public void endResponse() {
