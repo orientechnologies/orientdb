@@ -101,10 +101,11 @@ public class OObjectLazyMapTest
   @Test
   public void getOrDefaultTest()
   {
-    assertTrue(getMapWithPersistedEntries() instanceof OObjectLazyMap);   
+    Object toCast = getMapWithPersistedEntries();
+    assertTrue(toCast instanceof OObjectLazyMap);   
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    OObjectLazyMap<EntityWithMap> testMap = (OObjectLazyMap) getMapWithPersistedEntries();
+    OObjectLazyMap<EntityWithMap> testMap = (OObjectLazyMap) toCast;
 
     assertTrue(testMap.getClass() == OObjectLazyMap.class);   
     assertTrue(testMap.getOrDefault(String.valueOf(idOfFirstMapEntry),null) != null);
