@@ -67,16 +67,7 @@ public class OUnsafeMemory implements ODirectMemory {
 
     INSTANCE = futureInstance;
 
-    if (OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValueAsString().equalsIgnoreCase("system"))
-      alignedOrder = ByteOrder.nativeOrder();
-    else if (OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValueAsString().equalsIgnoreCase("big_endian"))
-      alignedOrder = ByteOrder.BIG_ENDIAN;
-    else if (OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValueAsString().equalsIgnoreCase("little_endian"))
-      alignedOrder = ByteOrder.LITTLE_ENDIAN;
-    else
-      throw new IllegalArgumentException("Invalid value of " + OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getKey()
-          + " configuration parameter :" + OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValue());
-
+    alignedOrder = ByteOrder.nativeOrder();
     if (onlyAlignedOrder)
       unaligned = false;
     else {
@@ -125,12 +116,12 @@ public class OUnsafeMemory implements ODirectMemory {
       return unsafe.getInt(pointer);
 
     if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
-      return (0xFF & unsafe.getByte(pointer++)) << 24 | (0xFF & unsafe.getByte(pointer++)) << 16
-          | (0xFF & unsafe.getByte(pointer++)) << 8 | (0xFF & unsafe.getByte(pointer));
+      return ((0xFF & unsafe.getByte(pointer++)) << 24) | ((0xFF & unsafe.getByte(pointer++)) << 16)
+          | ((0xFF & unsafe.getByte(pointer++)) << 8) | (0xFF & unsafe.getByte(pointer));
     }
 
-    return (0xFF & unsafe.getByte(pointer++)) | (0xFF & unsafe.getByte(pointer)) << 8 | (0xFF & unsafe.getByte(pointer++)) << 16
-        | (0xFF & unsafe.getByte(pointer)) << 24;
+    return (0xFF & unsafe.getByte(pointer++)) | ((0xFF & unsafe.getByte(pointer++)) << 8)
+        | ((0xFF & unsafe.getByte(pointer++)) << 16) | ((0xFF & unsafe.getByte(pointer)) << 24);
   }
 
   @Override
@@ -210,15 +201,15 @@ public class OUnsafeMemory implements ODirectMemory {
       return unsafe.getLong(pointer);
 
     if (alignedOrder.equals(ByteOrder.BIG_ENDIAN))
-      return (0xFFL & unsafe.getByte(pointer++)) << 56 | (0xFFL & unsafe.getByte(pointer++)) << 48
-          | (0xFFL & unsafe.getByte(pointer++)) << 40 | (0xFFL & unsafe.getByte(pointer++)) << 32
-          | (0xFFL & unsafe.getByte(pointer++)) << 24 | (0xFFL & unsafe.getByte(pointer++)) << 16
-          | (0xFFL & unsafe.getByte(pointer++)) << 8 | (0xFFL & unsafe.getByte(pointer));
+      return ((0xFFL & unsafe.getByte(pointer++)) << 56) | ((0xFFL & unsafe.getByte(pointer++)) << 48)
+          | ((0xFFL & unsafe.getByte(pointer++)) << 40) | ((0xFFL & unsafe.getByte(pointer++)) << 32)
+          | ((0xFFL & unsafe.getByte(pointer++)) << 24) | ((0xFFL & unsafe.getByte(pointer++)) << 16)
+          | ((0xFFL & unsafe.getByte(pointer++)) << 8) | (0xFFL & unsafe.getByte(pointer));
 
-    return (0xFFL & unsafe.getByte(pointer++)) | (0xFFL & unsafe.getByte(pointer++)) << 8
-        | (0xFFL & unsafe.getByte(pointer++)) << 16 | (0xFFL & unsafe.getByte(pointer++)) << 24
-        | (0xFFL & unsafe.getByte(pointer++)) << 32 | (0xFFL & unsafe.getByte(pointer++)) << 40
-        | (0xFFL & unsafe.getByte(pointer++)) << 48 | (0xFFL & unsafe.getByte(pointer)) << 56;
+    return (0xFFL & unsafe.getByte(pointer++)) | ((0xFFL & unsafe.getByte(pointer++)) << 8)
+        | ((0xFFL & unsafe.getByte(pointer++)) << 16) | ((0xFFL & unsafe.getByte(pointer++)) << 24)
+        | ((0xFFL & unsafe.getByte(pointer++)) << 32) | ((0xFFL & unsafe.getByte(pointer++)) << 40)
+        | ((0xFFL & unsafe.getByte(pointer++)) << 48) | ((0xFFL & unsafe.getByte(pointer)) << 56);
   }
 
   @Override

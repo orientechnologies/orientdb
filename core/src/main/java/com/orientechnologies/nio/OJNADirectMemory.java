@@ -38,16 +38,7 @@ public class OJNADirectMemory implements ODirectMemory {
                                                             .getValueAsBoolean();
 
   static {
-    if (OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValueAsString().equalsIgnoreCase("system"))
-      alignedOrder = ByteOrder.nativeOrder();
-    else if (OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValueAsString().equalsIgnoreCase("big_endian"))
-      alignedOrder = ByteOrder.BIG_ENDIAN;
-    else if (OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValueAsString().equalsIgnoreCase("little_endian"))
-      alignedOrder = ByteOrder.LITTLE_ENDIAN;
-    else
-      throw new IllegalArgumentException("Invalid value of " + OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getKey()
-          + " configuration parameter :" + OGlobalConfiguration.DIRECT_MEMORY_ALIGNED_ACCESS_ORDER.getValue());
-
+    alignedOrder = ByteOrder.nativeOrder();
     unaligned = !onlyAlignedOrder;
   }
 
