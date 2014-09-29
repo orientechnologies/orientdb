@@ -30,6 +30,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEvent
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -139,6 +140,10 @@ public class ORemoteConnectionManager implements OChannelListener {
   @Override
   public void onChannelClose(final OChannel channel) {
     remove((OChannelBinaryAsynchClient) channel);
+  }
+
+  public Set<String> getURLs() {
+    return connections.keySet();
   }
 
   public int getMaxResources(final String url) {
