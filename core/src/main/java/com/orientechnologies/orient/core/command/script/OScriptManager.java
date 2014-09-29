@@ -33,10 +33,7 @@ import javax.script.ScriptException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.OSQLScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.*;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -93,6 +90,7 @@ public class OScriptManager {
     registerFormatter(OSQLScriptEngine.NAME, new OSQLScriptFormatter());
     registerFormatter(DEF_LANGUAGE, new OJSScriptFormatter());
     registerFormatter("ruby", new ORubyScriptFormatter());
+      registerFormatter("groovy", new OGroovyScriptFormatter());
   }
 
   public String getFunctionDefinition(final OFunction iFunction) {
