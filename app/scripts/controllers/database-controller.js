@@ -11,7 +11,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
     ];
 
 
-    Aside.show({scope: $scope, title: "Bookmarks", template: 'views/database/context/bookmarksAside.html', show: false,absolute: false});
+    Aside.show({scope: $scope, title: "Bookmarks", template: 'views/database/context/bookmarksAside.html', show: false, absolute: true});
     $scope.item = {};
     $scope.queries = [];
     $scope.$watch("queryText", function (val) {
@@ -150,7 +150,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
         if (queryBuffer.startsWith('g.')) {
             $scope.language = 'gremlin';
-        }else {
+        } else {
             $scope.language = 'sql';
         }
         if (queryBuffer.startsWith('#')) {
@@ -356,7 +356,8 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
         total: data.length, // length of data
         getData: function ($defer, params) {
 //            use build-in angular filter
-            var orderedData = params.sorting() ?
+            var emtpy = !params.orderBy() || params.orderBy().length == 0;
+            var orderedData = (params.sorting() && !emtpy) ?
                 $filter('orderBy')(data, params.orderBy()) :
                 data;
             $defer.resolve(orderedData.slice((params.page() - 1) * params.count(), params.page() * params.count()));
