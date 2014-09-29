@@ -15,14 +15,11 @@
  */
 package com.orientechnologies.agent.http.command;
 
-import java.net.SocketException;
-import java.util.Date;
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -31,6 +28,10 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
+
+import java.net.SocketException;
+import java.util.Date;
+import java.util.List;
 
 public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticatedServerAbstract implements OCommandOutputListener {
   public OServerCommandPostBackupDatabase() {
@@ -93,7 +94,7 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
 
     iRequest.data.lastDatabase = localDatabase.getName();
     iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
-    return (ODatabaseDocumentTx) localDatabase.getDatabaseOwner();
+    return (ODatabaseDocumentTx) ((ODatabaseRecordInternal)localDatabase).getDatabaseOwner();
   }
 
   @Override

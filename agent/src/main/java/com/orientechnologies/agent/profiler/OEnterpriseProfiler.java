@@ -18,6 +18,11 @@
 
 package com.orientechnologies.agent.profiler;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OAbstractProfiler;
+import com.orientechnologies.common.profiler.OProfilerEntry;
+import com.orientechnologies.common.profiler.OProfilerMBean;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,13 +34,6 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OAbstractProfiler;
-import com.orientechnologies.common.profiler.OProfilerEntry;
-import com.orientechnologies.common.profiler.OProfilerMBean;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
  * any instances you want for separate profiling contexts.
@@ -45,7 +43,7 @@ import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
  * @author Luca Garulli
  * @copyrights Orient Technologies.com
  */
-public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerMBean, OMemoryWatchDog.Listener {
+public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerMBean {
   protected final static Timer        timer                   = new Timer(true);
   protected final static int          BUFFER_SIZE             = 2048;
   protected final List<OProfilerData> snapshots               = new ArrayList<OProfilerData>();
@@ -83,7 +81,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
   }
 
   public void shutdown() {
-    Orient.instance().getMemoryWatchDog().removeListener(this);
     super.shutdown();
     hooks.clear();
 
@@ -535,20 +532,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
     }
   }
 
-  @Override
-  public void lowMemory(final long l, final long l2) {
-    acquireExclusiveLock();
-    try {
-      synchronized (snapshots) {
-        snapshots.clear();
-      }
-      realTime.clear();
-      lastSnapshot = null;
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
   /**
    * Must be not called inside a lock.
    */
@@ -654,6 +637,5 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
         }
       });
     }
-    Orient.instance().getMemoryWatchDog().addListener(this);
   }
 }
