@@ -39,12 +39,12 @@ import java.util.List;
 
 @Test(groups = "schema")
 public class SchemaTest extends DocumentDBBaseTest {
-	@Parameters(value = "url")
-	public SchemaTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public SchemaTest(@Optional String url) {
+    super(url);
+  }
 
-	public void createSchema() throws IOException {
+  public void createSchema() throws IOException {
     database = new ODatabaseDocumentTx(url);
     if (ODatabaseHelper.existsDatabase(database, "plocal"))
       database.open("admin", "admin");
@@ -56,13 +56,12 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(database.getMetadata().getSchema().getClass("ORIDs"));
 
-		createBasicTestSchema();
+    createBasicTestSchema();
 
     database.close();
   }
 
-
-	@Test(dependsOnMethods = "createSchema")
+  @Test(dependsOnMethods = "createSchema")
   public void checkSchema() {
     database = new ODatabaseDocumentTx(url);
     database.open("admin", "admin");
@@ -280,16 +279,16 @@ public class SchemaTest extends DocumentDBBaseTest {
         "polygon");
 
     database.close();
-    //TEST CUSTOM PROPERTY WITH =
+    // TEST CUSTOM PROPERTY WITH =
     database.open("admin", "admin");
-    
+
     database.getMetadata().getSchema().getClass("Profile").getProperty("nick").setCustom("equal", "this = that");
 
     Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"),
         "this = that");
 
     database.close();
-    //TEST CUSTOM PROPERTY WITH = AFTER REOPEN
+    // TEST CUSTOM PROPERTY WITH = AFTER REOPEN
     database.open("admin", "admin");
 
     Assert.assertEquals(database.getMetadata().getSchema().getClass("Profile").getProperty("nick").getCustom("equal"),

@@ -137,7 +137,7 @@ public abstract class OAbstractFile implements OFile {
       if (!osFile.exists())
         throw new FileNotFoundException("File: " + osFile.getAbsolutePath());
 
-      openChannel(osFile.length());
+      openChannel(-1);
 
       OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getName() + "...");
 
@@ -244,6 +244,9 @@ public abstract class OAbstractFile implements OFile {
     acquireWriteLock();
     try {
       try {
+        if (accessFile != null && (accessFile.length() - HEADER_SIZE) < getFileSize())
+          accessFile.setLength(getFileSize() + HEADER_SIZE);
+
         setSoftlyClosed(true);
 
         if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
@@ -630,7 +633,7 @@ public abstract class OAbstractFile implements OFile {
       if (accessFile == null)
         throw new FileNotFoundException(osFile.getAbsolutePath());
 
-      if (accessFile.length() != newSize)
+      if (newSize > -1 && accessFile.length() != newSize)
         accessFile.setLength(newSize);
 
       accessFile.seek(VERSION_OFFSET);
@@ -818,7 +821,7 @@ public abstract class OAbstractFile implements OFile {
 
       final boolean renamed = OFileUtils.renameFile(osFile, newFile);
       if (renamed)
-        osFile = newFile;
+        osFile = new File(newFile.getAbsolutePath());
 
       open();
 

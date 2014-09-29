@@ -254,7 +254,7 @@ public class OFileClassic extends OAbstractFile {
   protected void init() throws IOException {
     acquireWriteLock();
     try {
-      size = osFile.length() - HEADER_SIZE;
+      size = accessFile.length() - HEADER_SIZE;
     } finally {
       releaseWriteLock();
     }
