@@ -18,7 +18,7 @@
   *
   */
 
-ackage com.orientechnologies.nio;
+package com.orientechnologies.nio;
 
  import com.orientechnologies.common.log.OLogManager;
  import com.sun.jna.Native;
