@@ -24,9 +24,9 @@ import com.orientechnologies.orient.core.entity.OClassDictionary;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 
 /**
- * Abstract class. Allows short and long form. Examples: <br/>
- * Short form: @[type][RID] where type = 1 byte<br/>
- * Long form: org.myapp.Myrecord|[RID]<br/>
+ * Abstract class. Allows short and long form. Examples: <br>
+ * Short form: @[type][RID] where type = 1 byte<br>
+ * Long form: org.myapp.Myrecord|[RID]<br>
  * 
  * @author Luca Garulli
  * 

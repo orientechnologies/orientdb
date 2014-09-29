@@ -42,7 +42,7 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
  * +-----------+-----------+--------+------------+----------+-----------+---------------------+<br>
  * | 4 bytes . | 4 bytes . | 1 byte | 10 bytes ..| 10 bytes | 10 bytes .| 10 * MAX_SIZE bytes |<br>
  * +-----------+-----------+--------+------------+----------+-----------+---------------------+<br>
- * = 39 bytes + 10 * PAGE-SIZE bytes<br/>
+ * = 39 bytes + 10 * PAGE-SIZE bytes<br>
  * Where:
  * <ul>
  * <li><b>TREE SIZE</b> as signed integer (4 bytes) containing the size of the tree. Only the root node has this value updated, so to know the size of the collection you need to load the root node and get this field. other nodes can contain not updated values because upon rotation of pieces of the tree (made during tree rebalancing) the root can change and the old root will have the "old" size as dirty.</li>

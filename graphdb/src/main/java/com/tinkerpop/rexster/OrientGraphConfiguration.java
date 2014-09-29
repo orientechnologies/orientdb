@@ -30,7 +30,7 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 
 /**
- * Configuration class for Rexster (http://rexster.tinkerpop.com). Example usage within rexster.xml: <br/>
+ * Configuration class for Rexster (http://rexster.tinkerpop.com). Example usage within rexster.xml: <br>
  * 
  * <pre>
  * {@code

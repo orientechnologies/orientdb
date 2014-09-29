@@ -186,12 +186,12 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   }
 
   /**
-   * Return the iterator to be used in Java5+ constructs<br/>
-   * <br/>
+   * Return the iterator to be used in Java5+ constructs<br>
+   * <br>
    * <code>
-   * for( ORecordDocument rec : database.browseCluster( "Animal" ) ){<br/>
-   * ...<br/>
-   * }<br/>
+   * for( ORecordDocument rec : database.browseCluster( "Animal" ) ){<br>
+   * ...<br>
+   * }<br>
    * </code>
    */
   public Iterator<REC> iterator() {

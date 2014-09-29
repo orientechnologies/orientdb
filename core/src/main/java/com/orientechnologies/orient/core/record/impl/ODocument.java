@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -655,8 +655,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   /**
-   * Returns the document as Map<String,Object>. If the document has identity, then the @rid entry is valued. If the document has a
-   * class, then the @class entry is valued.
+   * Returns the document as Map String,Object . If the document has identity, then the @rid entry is valued. If the
+   * document has a class, then the @class entry is valued.
    * 
    * @since 2.0
    */
@@ -748,11 +748,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    * attention to respect the OrientDB record format.
    * <p>
    * <code>
-   * record.reset();<br/>
-   * record.setClassName("Account");<br/>
-   * record.fromString(new String("Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:" + date.getTime()<br/>
-   * + ",salary:" + 3000f + i));<br/>
-   * record.save();<br/>
+   * record.reset();<br>
+   * record.setClassName("Account");<br>
+   * record.fromString(new String("Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:" + date.getTime()<br>
+   * + ",salary:" + 3000f + i));<br>
+   * record.save();<br>
    * </code>
    * </p>
    * 
@@ -931,8 +931,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   /**
    * Deprecated. Use fromMap(Map) instead.<br>
-   * Fills a document passing the field names/values as a Map<String,Object> where the keys are the field names and the values are
-   * the field values.
+   * Fills a document passing the field names/values as a Map String,Object  where the keys are the field names and the
+   * values are the field values.
    *
    * @see #fromMap(Map)
    *
@@ -943,8 +943,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   /**
-   * Fills a document passing the field names/values as a Map<String,Object> where the keys are the field names and the values are
-   * the field values. It accepts also @rid for record id and @class for class name.
+   * Fills a document passing the field names/values as a Map String,Object  where the keys are the field names and the
+   * values are the field values. It accepts also @rid for record id and @class for class name.
    * 
    * @since 2.0
    */
@@ -1897,8 +1897,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   /**
    * Internal.
-   *
-   * @return this
    */
   protected void addOwner(final ORecordElement iOwner) {
     if (_owners == null)

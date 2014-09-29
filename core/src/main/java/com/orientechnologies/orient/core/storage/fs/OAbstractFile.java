@@ -39,14 +39,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 
- * Header structure:<br/>
- * <br/>
- * +-----------+--------------+---------------+---------------+---------------+<br/>
- * | FILE SIZE | FILLED UP TO | SOFTLY CLOSED | SECURITY CODE | VERSION |<br/>
- * | 8 bytes . | 8 bytes .... | 1 byte ...... | 32 bytes .... | 1 byte....... |<br/>
- * +-----------+--------------+---------------+---------------+---------------+<br/>
- * = 1024 bytes<br/>
- * <br/>
+ * Header structure:<br>
+ * <br>
+ * +-----------+--------------+---------------+---------------+---------------+<br>
+ * | FILE SIZE | FILLED UP TO | SOFTLY CLOSED | SECURITY CODE | VERSION |<br>
+ * | 8 bytes . | 8 bytes .... | 1 byte ...... | 32 bytes .... | 1 byte....... |<br>
+ * +-----------+--------------+---------------+---------------+---------------+<br>
+ * = 1024 bytes<br>
+ * <br>
  */
 public abstract class OAbstractFile implements OFile {
   private FileLock            fileLock;

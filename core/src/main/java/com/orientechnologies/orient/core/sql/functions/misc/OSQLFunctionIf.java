@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
  * 
  * <pre>
  * SELECT <b>if(rich, 'rich', 'poor')</b> FROM ...
- * <br/>
+ * <br>
  * SELECT <b>if( eval( 'salary > 1000000' ), 'rich', 'poor')</b> FROM ...
  * </pre>
  * 

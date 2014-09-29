@@ -29,9 +29,9 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 
 /**
- * Allow short and long form. Examples: <br/>
- * Short form: @[type][RID] where type = 1 byte<br/>
- * Long form: org.myapp.Myrecord|[RID]<br/>
+ * Allow short and long form. Examples: <br>
+ * Short form: @[type][RID] where type = 1 byte<br>
+ * Long form: org.myapp.Myrecord|[RID]<br>
  * 
  * @author Luca Garulli
  * 

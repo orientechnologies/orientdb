@@ -90,8 +90,6 @@ public class ORecordInternal {
 
   /**
    * Internal only. Executes a flat copy of the record.
-   * 
-   * @see #copy()
    */
   public <RET extends ORecord> RET flatCopy(ORecord record) {
     ORecordAbstract rec = (ORecordAbstract) record;
