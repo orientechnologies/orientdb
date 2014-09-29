@@ -101,13 +101,16 @@ public class OObjectLazyMapTest
   @Test
   public void getOrDefaultTest()
   {
-    Map<String,EntityWithMap> testMap = getMapWithPersistedEntries();
+    assertTrue(getMapWithPersistedEntries() instanceof OObjectLazyMap);   
 
-    assertTrue(testMap.getClass() == OObjectLazyMap.class);		
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    OObjectLazyMap<EntityWithMap> testMap = (OObjectLazyMap) getMapWithPersistedEntries();
+
+    assertTrue(testMap.getClass() == OObjectLazyMap.class);   
     assertTrue(testMap.getOrDefault(String.valueOf(idOfFirstMapEntry),null) != null);
     assertTrue(testMap.getOrDefault(String.valueOf(idOfSecondMapEntry),null) != null);
     assertTrue(testMap.getOrDefault(String.valueOf(invalidId),null) == null);
-    assertTrue(testMap.getOrDefault(String.valueOf(invalidId),testMap.get(String.valueOf(idOfFirstMapEntry))) == testMap.get(String.valueOf(idOfFirstMapEntry)));
+    assertTrue(testMap.getOrDefault(String.valueOf(invalidId),testMap.get(String.valueOf(idOfFirstMapEntry))) == testMap.get(String.valueOf(idOfFirstMapEntry))); 
   }
 
   private Map<String,EntityWithMap> getMapWithPersistedEntries()
