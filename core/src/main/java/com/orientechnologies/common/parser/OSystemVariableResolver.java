@@ -43,6 +43,9 @@ public class OSystemVariableResolver implements OVariableParserListener {
   }
 
   public static String resolveVariable(final String variable) {
+    if( variable == null )
+      return null;
+
     String resolved = System.getProperty(variable);
 
     if (resolved == null)
