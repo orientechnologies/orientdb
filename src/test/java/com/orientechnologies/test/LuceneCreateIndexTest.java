@@ -26,36 +26,43 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.List;
 
 /**
- * Created by enricorisa on 19/09/14.
+ * Created by enricorisa on 26/09/14.
  */
-@Test
-public class LuceneSingleFieldTest extends BaseLuceneTest {
+public class LuceneCreateIndexTest extends LuceneSingleFieldTest {
 
-  public LuceneSingleFieldTest() {
-
+  public LuceneCreateIndexTest() {
+    this(false);
   }
 
-  public LuceneSingleFieldTest(boolean remote) {
+  public LuceneCreateIndexTest(boolean remote) {
     super(remote);
   }
 
-  @Test
+  @Override
   public void loadAndTest() {
-
     InputStream stream = ClassLoader.getSystemResourceAsStream("testLuceneIndex.sql");
 
     databaseDocumentTx.command(new OCommandScript("sql", getScriptFromStream(stream))).execute();
 
+    databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
+    databaseDocumentTx.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
+
+    assertQuery();
+
+    databaseDocumentTx.close();
+
+    databaseDocumentTx.open("admin", "admin");
+
+    assertQuery();
+  }
+
+  protected void assertQuery() {
     List<ODocument> docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
         "select * from Song where [title] LUCENE \"(title:mountain)\""));
 
@@ -74,6 +81,7 @@ public class LuceneSingleFieldTest extends BaseLuceneTest {
   }
 
   @BeforeClass
+  @Override
   public void init() {
     initDB();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
@@ -82,36 +90,10 @@ public class LuceneSingleFieldTest extends BaseLuceneTest {
     song.setSuperClass(v);
     song.createProperty("title", OType.STRING);
     song.createProperty("author", OType.STRING);
-
-    databaseDocumentTx.command(new OCommandSQL("create index Song.title on Song (title) FULLTEXT ENGINE LUCENE")).execute();
-    databaseDocumentTx.command(new OCommandSQL("create index Song.author on Song (author) FULLTEXT ENGINE LUCENE")).execute();
-
-  }
-
-  @AfterClass
-  public void deInit() {
-    deInitDB();
-  }
-
-  protected String getScriptFromStream(InputStream in) {
-    String script = "";
-    try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-      StringBuilder out = new StringBuilder();
-      String line;
-      while ((line = reader.readLine()) != null) {
-        out.append(line + "\n");
-      }
-      script = out.toString();
-      reader.close();
-    } catch (Exception e) {
-
-    }
-    return script;
   }
 
   @Override
   protected String getDatabaseName() {
-    return "singleField";
+    return "createIndex";
   }
 }

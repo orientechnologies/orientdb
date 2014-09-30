@@ -60,7 +60,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
     if (values == null) {
       if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-        values = new OIndexRIDContainer(getName());
+        values = new OIndexRIDContainer(getName(),true);
       } else {
         values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
         ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);

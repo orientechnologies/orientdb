@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
 
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -40,6 +41,14 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  */
 @Test
 public class LuceneMultiFieldTest extends BaseLuceneTest {
+
+  public LuceneMultiFieldTest() {
+    this(false);
+  }
+
+  public LuceneMultiFieldTest(boolean remote) {
+    super(remote);
+  }
 
   @Test
   public void loadAndTest() {
@@ -77,7 +86,8 @@ public class LuceneMultiFieldTest extends BaseLuceneTest {
     song.createProperty("title", OType.STRING);
     song.createProperty("author", OType.STRING);
 
-    song.createIndex("Song.title_author", "FULLTEXT", null, null, "LUCENE", new String[] { "title", "author" });
+    databaseDocumentTx.command(new OCommandSQL("create index Song.title_author on Song (title,author) FULLTEXT ENGINE LUCENE"))
+        .execute();
 
   }
 

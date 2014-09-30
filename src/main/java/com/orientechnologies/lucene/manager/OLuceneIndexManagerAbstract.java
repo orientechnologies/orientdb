@@ -22,8 +22,9 @@ import java.lang.reflect.Constructor;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.Orient;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -45,7 +46,7 @@ import com.orientechnologies.lucene.OLuceneMapEntryIterator;
 import com.orientechnologies.lucene.utils.OLuceneIndexUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
@@ -162,19 +163,26 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
 
   @Override
   public void flush() {
+
     try {
       mgrWriter.getIndexWriter().commit();
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on flushing Lucene index", e);
+    } catch (Throwable e) {
+      e.printStackTrace();
     }
+
   }
 
   @Override
   public void close() {
+
     try {
       closeIndex();
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on closing Lucene index", e);
+    } catch (Throwable e) {
+      e.printStackTrace();
     }
   }
 
@@ -307,9 +315,11 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     if (nrt != null) {
       nrt.close();
     }
+
     nrt = new ControlledRealTimeReopenThread(mgrWriter, searcherManager, 60.00, 0.1);
     nrt.setDaemon(true);
     nrt.start();
+    flush();
   }
 
   private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {

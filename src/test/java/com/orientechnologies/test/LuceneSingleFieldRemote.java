@@ -38,10 +38,17 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 /**
  * Created by enricorisa on 19/09/14.
  */
-@Test
-public class LuceneSingleFieldRemoteTest extends LuceneSingleFieldTest {
+@Test(enabled = false)
+public class LuceneSingleFieldRemote extends LuceneSingleFieldTest {
 
-  public LuceneSingleFieldRemoteTest() {
+  public LuceneSingleFieldRemote() {
     super(true);
   }
+
+
+    @BeforeClass
+    @Override
+    public void init() {
+    super.init();
+    }
 }

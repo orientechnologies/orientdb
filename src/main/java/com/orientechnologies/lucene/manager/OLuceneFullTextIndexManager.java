@@ -17,9 +17,13 @@
 package com.orientechnologies.lucene.manager;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.id.OContextualRecordId;
+import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -39,10 +43,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexException;
-import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
@@ -106,7 +106,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       }
       return getResults(q, context);
     } catch (ParseException e) {
-      throw new OIndexException("Error parsing lucene query ", e);
+      throw new OIndexEngineException("Error parsing lucene query ", e);
     }
   }
 
@@ -143,23 +143,20 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       if (context != null) {
         limit = (Integer) context.getVariable("$limit");
       }
-      // Map<String, Float> scores = new HashMap<String, Float>();
       TopDocs docs = searcher.search(query, (limit != null && limit > 0) ? limit : Integer.MAX_VALUE);
       ScoreDoc[] hits = docs.scoreDocs;
       for (final ScoreDoc score : hits) {
         Document ret = searcher.doc(score.doc);
         String rId = ret.get(RID);
-        results.add(new ORecordId(rId));
-        // results.add(new OContextualRecordId(rId).setContext(new HashMap<String, Object>() {
-        // {
-        // put("score", score.score);
-        // }
-        // }));
-        // scores.put(rId, score.score);
+        // results.add(new ORecordId(rId));
+        results.add(new OContextualRecordId(rId).setContext(new HashMap<String, Object>() {
+          {
+            put("score", score.score);
+          }
+        }));
+
       }
-      // if (context != null) {
-      // context.setVariable("$luceneScore", scores);
-      // }
+
     } catch (IOException e) {
       throw new OIndexException("Error reading from Lucene index", e);
     }

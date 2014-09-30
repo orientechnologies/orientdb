@@ -29,6 +29,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import org.apache.lucene.LucenePackage;
+import org.apache.lucene.util.StringHelper;
 
 import javax.imageio.spi.ServiceRegistry;
 import java.util.Iterator;
@@ -59,5 +60,10 @@ public class OLuceneIndexPlugin extends OServerPluginAbstract {
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
 
+  }
+
+  @Override
+  public void shutdown() {
+    super.shutdown();
   }
 }
