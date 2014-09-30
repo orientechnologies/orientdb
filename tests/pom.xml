@@ -1,116 +1,125 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- ~ Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com) 
-	~ ~ Licensed under the Apache License, Version 2.0 (the "License"); ~ you 
-	may not use this file except in compliance with the License. ~ You may obtain 
-	a copy of the License at ~ ~ http://www.apache.org/licenses/LICENSE-2.0 ~ 
-	~ Unless required by applicable law or agreed to in writing, software ~ distributed 
-	under the License is distributed on an "AS IS" BASIS, ~ WITHOUT WARRANTIES 
-	OR CONDITIONS OF ANY KIND, either express or implied. ~ See the License for 
-	the specific language governing permissions and ~ limitations under the License. -->
+<!--
+  ~ Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	<modelVersion>4.0.0</modelVersion>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-	<parent>
-		<groupId>com.orientechnologies</groupId>
-		<artifactId>orientdb-parent</artifactId>
-		<version>2.1-SNAPSHOT</version>
-		<relativePath>../</relativePath>
-	</parent>
+    <modelVersion>4.0.0</modelVersion>
 
-	<artifactId>orientdb-tests</artifactId>
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>2.1-SNAPSHOT</version>
+        <relativePath>../</relativePath>
+    </parent>
 
-	<name>OrientDB Tests</name>
+    <artifactId>orientdb-tests</artifactId>
 
-	<properties>
-		<maven.test.skip>true</maven.test.skip>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
+    <name>OrientDB Tests</name>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-client</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-graphdb</artifactId>
-			<version>${project.version}</version>
-		</dependency>
+    <dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-client</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-object</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-graphdb</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-tools</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-object</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-server</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-tools</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-test-commons</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-server</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>org.testng</groupId>
-			<artifactId>testng</artifactId>
-			<version>6.8.8</version>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-test-commons</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-core</artifactId>
-			<version>${project.version}</version>
-			<type>jar</type>
-			<scope>compile</scope>
-		</dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>6.8.8</version>
+        </dependency>
 
-		<dependency>
-			<groupId>com.orientechnologies</groupId>
-			<artifactId>orientdb-core</artifactId>
-			<version>${project.version}</version>
-			<type>test-jar</type>
-			<scope>test</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <version>${project.version}</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
 
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-all</artifactId>
-			<version>1.9.5</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-core</artifactId>
+            <version>${project.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-deploy-plugin</artifactId>
-				<configuration>
-					<skip>true</skip>
-				</configuration>
-				<inherited>false</inherited>
-			</plugin>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.5</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+                <inherited>false</inherited>
+            </plugin>
+ 
+>>>>>>> fixed test order for allow the tests not conflict to each other
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
@@ -118,23 +127,18 @@
 				<configuration>
 					<systemPropertyVariables>
 						<storage.lockTimeout>60000</storage.lockTimeout>
-						<storage.makeFullCheckpointAfterCreate>false
-						</storage.makeFullCheckpointAfterCreate>
-						<storage.makeFullCheckpointAfterClusterCreate>false
-						</storage.makeFullCheckpointAfterClusterCreate>
+						<storage.makeFullCheckpointAfterCreate>false</storage.makeFullCheckpointAfterCreate>
+						<storage.makeFullCheckpointAfterClusterCreate>false</storage.makeFullCheckpointAfterClusterCreate>
 						<storage.wal.syncOnPageFlush>false</storage.wal.syncOnPageFlush>
-						<storage.configuration.syncOnUpdate>false
-						</storage.configuration.syncOnUpdate>
+						<storage.configuration.syncOnUpdate>false</storage.configuration.syncOnUpdate>
 						<index.flushAfterCreate>false</index.flushAfterCreate>
 						<buildDirectory>.</buildDirectory>
-						<url>memory:/home/tglman/projects/orient/releases/orientdb-community-2.0-SNAPSHOT/databases/demo
-						</url>
+						<url>memory:/home/tglman/projects/orient/releases/orientdb-community-2.0-SNAPSHOT/databases/demo</url>
 						<storageType>memory</storageType>
 						<testPath>.</testPath>
 					</systemPropertyVariables>
 					<suiteXmlFiles>
-						<suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml
-						</suiteXmlFile>
+						<suiteXmlFile>src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml</suiteXmlFile>
 						<!-- <suiteXmlFile>/orientdb-tests/src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml</suiteXmlFile> -->
 					</suiteXmlFiles>
 
@@ -156,10 +160,8 @@
 						<version>2.13</version>
 						<configuration>
 							<suiteXmlFiles>
-								<suiteXmlFile>/orientdb-tests/src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml
-								</suiteXmlFile>
-								<suiteXmlFile>/orientdb-tests/src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml
-								</suiteXmlFile>
+								<suiteXmlFile>/orientdb-tests/src/test/java/com/orientechnologies/orient/test/database/auto/embedded-test-db-from-scratch.xml</suiteXmlFile>
+								<suiteXmlFile>/orientdb-tests/src/test/java/com/orientechnologies/orient/test/database/auto/remote-test-db-from-scratch.xml</suiteXmlFile>
 							</suiteXmlFiles>
 						</configuration>
 					</plugin>
@@ -167,6 +169,9 @@
 			</build>
 		</profile>
 	</profiles>
+<<<<<<< HEAD
 
 >>>>>>> integration of testng test in maven
+=======
+>>>>>>> fixed test order for allow the tests not conflict to each other
 </project>

@@ -217,7 +217,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
   }
 
-  @Test
+  @Test(dependsOnMethods = "updateAllOperator")
   public void updateWithWildcards() {
 
     int updated = database.command(new OCommandSQL("update Profile set sex = ? where sex = 'male' limit 1")).execute("male");
