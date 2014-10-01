@@ -1,15 +1,35 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
+
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
 
@@ -114,7 +134,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
   public OrientGraph getTx() {
     final OrientGraph g;
     if (pool == null) {
-      g = (OrientGraph) new OrientGraph(getDatabase()).configure(settings);
+      g = (OrientGraph) new OrientGraph(getDatabase(), user, password, settings);
       initGraph(g);
     } else {
       if (!transactional)
@@ -137,7 +157,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
   public OrientGraphNoTx getNoTx() {
     final OrientGraphNoTx g;
     if (pool == null) {
-      g = (OrientGraphNoTx) new OrientGraphNoTx(getDatabase(), user, password).configure(settings);
+      g = (OrientGraphNoTx) new OrientGraphNoTx(getDatabase(), user, password, settings);
       initGraph(g);
     } else {
       if (transactional)
@@ -293,15 +313,24 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
     return 0;
   }
 
+  /**
+   * Returns the total number of instances created in the pool.
+   */
+  public int getCreatedInstancesInPool() {
+    if (pool != null)
+      return pool.getCreatedInstancesInPool();
+    return 0;
+  }
+
   @Override
   public void declareIntent(final OIntent iIntent) {
     intent = iIntent;
   }
 
   @Override
-  public void onCreate(final ODatabase iDatabase) {
-    if (iDatabase instanceof ODatabaseRecord) {
-      final ODatabaseComplex<?> db = ((ODatabaseRecord) iDatabase).getDatabaseOwner();
+  public void onCreate(final ODatabaseInternal iDatabase) {
+    if (iDatabase instanceof ODatabaseRecordInternal) {
+      final ODatabaseComplex<?> db = ((ODatabaseRecordInternal) iDatabase).getDatabaseOwner();
 
       if (db instanceof ODatabaseDocumentTx)
         OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
@@ -309,16 +338,16 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
   }
 
   @Override
-  public void onOpen(final ODatabase iDatabase) {
-    if (iDatabase instanceof ODatabaseRecord) {
-      final ODatabaseComplex<?> db = ((ODatabaseRecord) iDatabase).getDatabaseOwner();
+  public void onOpen(final ODatabaseInternal iDatabase) {
+    if (iDatabase instanceof ODatabaseRecordInternal) {
+      final ODatabaseComplex<?> db = ((ODatabaseRecordInternal) iDatabase).getDatabaseOwner();
       if (db instanceof ODatabaseDocumentTx)
         OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
     }
   }
 
   @Override
-  public void onClose(final ODatabase iDatabase) {
+  public void onClose(final ODatabaseInternal iDatabase) {
 
   }
 

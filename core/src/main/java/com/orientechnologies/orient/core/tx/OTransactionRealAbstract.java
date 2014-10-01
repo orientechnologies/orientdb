@@ -1,28 +1,23 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.tx;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -37,14 +32,22 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   /**
@@ -52,7 +55,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
    */
   public static final ORecordFlat                             DELETED_RECORD        = new ORecordFlat();
   private final OOperationUnitId                              operationUnitId;
-  protected Map<ORID, ORecord<?>>                             temp2persistent       = new HashMap<ORID, ORecord<?>>();
+  protected Map<ORID, ORecord>                                temp2persistent       = new HashMap<ORID, ORecord>();
   protected Map<ORID, ORecordOperation>                       allEntries            = new HashMap<ORID, ORecordOperation>();
   protected Map<ORID, ORecordOperation>                       recordEntries         = new LinkedHashMap<ORID, ORecordOperation>();
   protected Map<String, OTransactionIndexChanges>             indexEntries          = new LinkedHashMap<String, OTransactionIndexChanges>();
@@ -79,6 +82,15 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     super(database);
     this.id = id;
     this.operationUnitId = OOperationUnitId.generateId();
+  }
+
+  @Override
+  public boolean hasRecordCreation() {
+    for (ORecordOperation op : recordEntries.values()) {
+      if (op.type == ORecordOperation.CREATED)
+        return true;
+    }
+    return false;
   }
 
   public void close() {
@@ -129,7 +141,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       return e;
 
     if (rid.isTemporary()) {
-      final ORecord<?> record = temp2persistent.get(rid);
+      final ORecord record = temp2persistent.get(rid);
       if (record != null && !record.getIdentity().equals(rid))
         rid = record.getIdentity();
     }
@@ -145,7 +157,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     return null;
   }
 
-  public ORecordInternal<?> getRecord(final ORID rid) {
+  public ORecord getRecord(final ORID rid) {
     final ORecordOperation e = getRecordEntry(rid);
     if (e != null)
       if (e.type == ORecordOperation.DELETED)
@@ -224,7 +236,8 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     final ODocument result = new ODocument().setAllowChainedAccess(false);
 
     for (Entry<String, OTransactionIndexChanges> indexEntry : indexEntries.entrySet()) {
-      final ODocument indexDoc = new ODocument().addOwner(result);
+      final ODocument indexDoc = new ODocument();
+      ODocumentInternal.addOwner(indexDoc, result);
 
       result.field(indexEntry.getKey(), indexDoc, OType.EMBEDDED);
 
@@ -316,7 +329,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
 
         final ORecordId recordId = (ORecordId) rec.getRecord().getIdentity();
         if (recordId == null) {
-          rec.getRecord().setIdentity(new ORecordId(newRid));
+          ORecordInternal.setIdentity(rec.getRecord(), new ORecordId(newRid));
         } else {
           recordId.clusterPosition = newRid.getClusterPosition();
           recordId.clusterId = newRid.getClusterId();
@@ -376,17 +389,18 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     // SERIALIZE VALUES
     if (entry.entries != null && !entry.entries.isEmpty()) {
       for (OTransactionIndexEntry e : entry.entries) {
-        final ODocument changeDoc = new ODocument().addOwner(indexDoc).setAllowChainedAccess(false);
+        final ODocument changeDoc = new ODocument().setAllowChainedAccess(false);
+        ODocumentInternal.addOwner((ODocument) changeDoc, indexDoc);
 
         // SERIALIZE OPERATION
         changeDoc.field("o", e.operation.ordinal());
 
-        if (e.value instanceof ORecord<?> && e.value.getIdentity().isNew()) {
-          final ORecord<?> saved = temp2persistent.get(e.value.getIdentity());
+        if (e.value instanceof ORecord && e.value.getIdentity().isNew()) {
+          final ORecord saved = temp2persistent.get(e.value.getIdentity());
           if (saved != null)
             e.value = saved;
           else
-            ((ORecord<?>) e.value).save();
+            ((ORecord) e.value).save();
         }
 
         changeDoc.field("v", e.value != null ? e.value.getIdentity() : null);
@@ -394,9 +408,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         operations.add(changeDoc);
       }
     }
-
-    return new ODocument().addOwner(indexDoc).setAllowChainedAccess(false).field("k", keyContainer, OType.EMBEDDED)
-        .field("ops", operations, OType.EMBEDDEDLIST);
+    ODocument res = new ODocument();
+    ODocumentInternal.addOwner(res, indexDoc);
+    return res.setAllowChainedAccess(false).field("k", keyContainer, OType.EMBEDDED).field("ops", operations, OType.EMBEDDEDLIST);
   }
 
   private void updateChangesIdentity(ORID oldRid, ORID newRid, OTransactionIndexChangesPerKey changesPerKey) {

@@ -697,7 +697,7 @@ public class ODocumentSchemalessBinarySerializationTest {
 
     @Override
     public boolean equals(Object obj) {
-      return Arrays.equals(bytes, ((Custom) obj).bytes);
+      return obj!= null && Arrays.equals(bytes, ((Custom) obj).bytes);
     }
   }
 
@@ -732,7 +732,7 @@ public class ODocumentSchemalessBinarySerializationTest {
 
     @Override
     public boolean equals(Object obj) {
-      return document.field("test").equals(((CustomDocument) obj).document.field("test"));
+      return obj!=null && document.field("test").equals(((CustomDocument) obj).document.field("test"));
     }
   }
 

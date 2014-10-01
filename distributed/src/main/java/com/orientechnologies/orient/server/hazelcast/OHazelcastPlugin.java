@@ -1,23 +1,48 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.server.hazelcast;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
+import com.orientechnologies.common.console.DefaultConsoleReader;
+import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -25,8 +50,9 @@ import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -60,25 +86,6 @@ import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
 /**
  * Hazelcast implementation for clustering.
  * 
@@ -88,6 +95,7 @@ import java.util.concurrent.locks.Lock;
 public class OHazelcastPlugin extends ODistributedAbstractPlugin implements MembershipListener, EntryListener<String, Object>,
     OCommandOutputListener {
 
+  protected static final String                 NODE_NAME_ENV          = "ORIENTDB_NODE_NAME";
   protected static final String                 CONFIG_NODE_PREFIX     = "node.";
   protected static final String                 CONFIG_DBSTATUS_PREFIX = "dbstatus.";
   protected static final String                 CONFIG_DATABASE_PREFIX = "database.";
@@ -114,38 +122,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
     super.config(iServer, iParams);
 
-    if (nodeName == null) {
-      // GENERATE NODE NAME
-      nodeName = "node" + System.currentTimeMillis();
-      OLogManager.instance().warn(this, "Generating new node name for current node: %s", nodeName);
-
-      // SALVE THE NODE NAME IN CONFIGURATION
-      boolean found = false;
-      final OServerConfiguration cfg = iServer.getConfiguration();
-      for (OServerHandlerConfiguration h : cfg.handlers) {
-        if (h.clazz.equals(getClass().getName())) {
-          for (OServerParameterConfiguration p : h.parameters) {
-            if (p.name.equals("nodeName")) {
-              found = true;
-              p.value = nodeName;
-              break;
-            }
-          }
-
-          if (!found) {
-            h.parameters = OArrays.copyOf(h.parameters, h.parameters.length + 1);
-            h.parameters[h.parameters.length - 1] = new OServerParameterConfiguration("nodeName", nodeName);
-          }
-
-          try {
-            iServer.saveConfiguration();
-          } catch (IOException e) {
-            throw new OConfigurationException("Cannot save server configuration", e);
-          }
-          break;
-        }
-      }
-    }
+    if (nodeName == null)
+      assignNodeName();
 
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("configuration.hazelcast"))
@@ -228,13 +206,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (!enabled)
       return;
 
+    super.shutdown();
+
     OLogManager.instance().warn(this, "Shutting down node %s...", getLocalNodeName());
     setNodeStatus(NODE_STATUS.SHUTDOWNING);
 
     if (messageService != null)
       messageService.shutdown();
-
-    super.shutdown();
 
     activeNodes.clear();
     if (membershipListenerRegistration != null) {
@@ -348,18 +326,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   public Object sendRequest(final String iDatabaseName, final Collection<String> iClusterNames,
       final Collection<String> iTargetNodes, final OAbstractRemoteTask iTask, final EXECUTION_MODE iExecutionMode) {
 
-    // if (iTask.isRequireNodeOnline())
-    // // WAIT THE DATABASE ON THE NODE IS ONLINE
-    // while (getDatabaseStatus(getLocalNodeName(), iDatabaseName) != DB_STATUS.ONLINE) {
-    // try {
-    // ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
-    // "waiting to send task (%s) because database '%s' is not online yet...", iTask, iDatabaseName);
-    //
-    // Thread.sleep(100);
-    // } catch (InterruptedException e) {
-    // }
-    // }
-    //
     checkForClusterRebalance(iDatabaseName);
 
     final OHazelcastDistributedRequest req = new OHazelcastDistributedRequest(getLocalNodeName(), iDatabaseName, iTask,
@@ -379,7 +345,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           + req);
     }
 
-    final ODistributedResponse response = db.send2Nodes(req, iClusterNames, iTargetNodes);
+    final ODistributedResponse response = db.send2Nodes(req, iClusterNames, iTargetNodes, iExecutionMode);
     if (response != null)
       return response.getPayload();
 
@@ -400,7 +366,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void onCreate(final ODatabase iDatabase) {
+  public void onCreate(final ODatabaseInternal iDatabase) {
     final OHazelcastDistributedDatabase distribDatabase = messageService.registerDatabase(iDatabase.getName());
     distribDatabase.configureDatabase(false, false).setOnline();
     onOpen(iDatabase);
@@ -410,7 +376,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
    * Auto register myself as hook.
    */
   @Override
-  public void onOpen(final ODatabase iDatabase) {
+  public void onOpen(final ODatabaseInternal iDatabase) {
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
     if (dbUrl.startsWith("plocal:")) {
@@ -442,7 +408,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final String nodeName = getLocalNodeName();
         final ODistributedConfiguration dbCfg = getDatabaseConfiguration(iDatabase.getName());
 
-        final OSchema schema = ((ODatabaseComplex) iDatabase).getDatabaseOwner().getMetadata().getSchema();
+        final OSchema schema = ((ODatabaseComplexInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
 
         final Set<String> cfgClusterNames = new HashSet<String>();
         for (String c : cfg.getClusterNames())
@@ -962,6 +928,79 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     throw new ODistributedException("No response received from remote nodes for auto-deploy of database");
 
+  }
+
+  protected void assignNodeName() {
+    nodeName = OSystemVariableResolver.resolveVariable(NODE_NAME_ENV);
+
+    if (nodeName != null) {
+      nodeName = nodeName.trim();
+      if (nodeName.isEmpty())
+        nodeName = null;
+    }
+
+    if (nodeName == null) {
+      try {
+        // WAIT ANY LOG IS PRINTED
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+      }
+
+      System.out.println();
+      System.out.println();
+      System.out.println("+----------------------------------------------------+");
+      System.out.println("|    WARNING: FIRST DISTRIBUTED RUN CONFIGURATION    |");
+      System.out.println("+----------------------------------------------------+");
+      System.out.println("| This is the first time that the server is running  |");
+      System.out.println("| as distributed. Please type the name you want      |");
+      System.out.println("| to assign to the current server node.              |");
+      System.out.println("+----------------------------------------------------+");
+      System.out.print("\nNode name [BLANK=auto generate it]: ");
+
+      OConsoleReader reader = new DefaultConsoleReader();
+      try {
+        nodeName = reader.readLine();
+      } catch (IOException e) {
+      }
+      if (nodeName != null) {
+        nodeName = nodeName.trim();
+        if (nodeName.isEmpty())
+          nodeName = null;
+      }
+    }
+
+    if (nodeName == null)
+      // GENERATE NODE NAME
+      this.nodeName = "node" + System.currentTimeMillis();
+
+    OLogManager.instance().warn(this, "Assigning distributed node name: %s", this.nodeName);
+
+    // SALVE THE NODE NAME IN CONFIGURATION
+    boolean found = false;
+    final OServerConfiguration cfg = serverInstance.getConfiguration();
+    for (OServerHandlerConfiguration h : cfg.handlers) {
+      if (h.clazz.equals(getClass().getName())) {
+        for (OServerParameterConfiguration p : h.parameters) {
+          if (p.name.equals("nodeName")) {
+            found = true;
+            p.value = this.nodeName;
+            break;
+          }
+        }
+
+        if (!found) {
+          h.parameters = OArrays.copyOf(h.parameters, h.parameters.length + 1);
+          h.parameters[h.parameters.length - 1] = new OServerParameterConfiguration("nodeName", this.nodeName);
+        }
+
+        try {
+          serverInstance.saveConfiguration();
+        } catch (IOException e) {
+          throw new OConfigurationException("Cannot save server configuration", e);
+        }
+        break;
+      }
+    }
   }
 
   protected HazelcastInstance configureHazelcast() throws FileNotFoundException {

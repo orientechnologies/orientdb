@@ -1,3 +1,23 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
+
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.exception.OException;
@@ -74,13 +94,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientBaseGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPassword) {
+  public OrientBaseGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPassword,
+      final Settings iConfiguration) {
     this.pool = null;
     this.username = iUserName;
     this.password = iUserPassword;
 
     database = iDatabase;
     readDatabaseConfiguration();
+    configure(iConfiguration);
   }
 
   public OrientBaseGraph(final ODatabaseDocumentPool pool) {
@@ -286,7 +308,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *          Settings object containing all the settings
    */
   public OrientBaseGraph configure(final Settings iSetting) {
-    settings = iSetting;
+    if (iSetting != null)
+      settings = iSetting;
     return this;
   }
 
@@ -590,7 +613,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (!rid.isValid())
       return null;
 
-    ORecord<?> rec = rid.getRecord();
+    ORecord rec = rid.getRecord();
     if (rec == null || !(rec instanceof ODocument))
       return null;
 
@@ -1437,21 +1460,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return getRawGraph().countClass(iClassName);
   }
 
-  protected void autoStartTransaction() {
-  }
-
-  protected void saveIndexConfiguration() {
-    getRawGraph().getMetadata().getIndexManager().getConfiguration().save();
-  }
-
-  protected <T> String getClassName(final Class<T> elementClass) {
-    if (elementClass.isAssignableFrom(Vertex.class))
-      return OrientVertexType.CLASS_NAME;
-    else if (elementClass.isAssignableFrom(Edge.class))
-      return OrientEdgeType.CLASS_NAME;
-    throw new IllegalArgumentException("Class '" + elementClass + "' is neither a Vertex, nor an Edge");
-  }
-
   public <RET> RET executeOutsideTx(final OCallable<RET, OrientBaseGraph> iCallable, final String... iOperationStrings)
       throws RuntimeException {
     final boolean committed;
@@ -1480,8 +1488,24 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       return iCallable.call(this);
     } finally {
       if (committed)
-        autoStartTransaction();
+        // RESTART TRANSACTION
+        ((OrientTransactionalGraph) this).begin();
     }
+  }
+
+  protected void autoStartTransaction() {
+  }
+
+  protected void saveIndexConfiguration() {
+    getRawGraph().getMetadata().getIndexManager().getConfiguration().save();
+  }
+
+  protected <T> String getClassName(final Class<T> elementClass) {
+    if (elementClass.isAssignableFrom(Vertex.class))
+      return OrientVertexType.CLASS_NAME;
+    else if (elementClass.isAssignableFrom(Edge.class))
+      return OrientEdgeType.CLASS_NAME;
+    throw new IllegalArgumentException("Class '" + elementClass + "' is neither a Vertex, nor an Edge");
   }
 
   protected Object convertKey(final OIndex<?> idx, Object iValue) {

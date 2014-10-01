@@ -18,7 +18,6 @@
 
 package com.orientechnologies.orient.graph.blueprints;
 
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -53,6 +52,7 @@ public class GraphTests {
   @Test
   public void indexes() {
     OrientGraph g = new OrientGraph(URL, "admin", "admin");
+
     try {
       if (g.getVertexType("VC1") == null) {
         g.createVertexType("VC1");

@@ -1,8 +1,12 @@
 package com.orientechnologies.orient.test.database.speed;
 
+import java.util.Date;
+
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
@@ -13,16 +17,13 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
-import org.testng.annotations.Test;
-
-import java.util.Date;
 
 public class LocalPaginateStorageSpeedTest extends OrientMonoThreadTest {
-  private ODatabaseDocument database;
-  private ODocument         record;
-  private Date              date = new Date();
-  private byte[]            content;
-  private OStorage          storage;
+  private ODatabaseDocumentInternal database;
+  private ODocument                 record;
+  private Date                      date = new Date();
+  private byte[]                    content;
+  private OStorage                  storage;
 
   public LocalPaginateStorageSpeedTest() throws InstantiationException, IllegalAccessException {
     super(1000000);

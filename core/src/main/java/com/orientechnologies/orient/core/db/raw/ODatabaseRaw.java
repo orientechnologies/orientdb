@@ -1,20 +1,37 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 
 package com.orientechnologies.orient.core.db.raw;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TimeZone;
+import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
@@ -26,10 +43,12 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -50,19 +69,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TimeZone;
-import java.util.concurrent.Callable;
-
 /**
  * Lower level ODatabase implementation. It's extended or wrapped by all the others.
  * 
@@ -70,16 +76,16 @@ import java.util.concurrent.Callable;
  * 
  */
 @SuppressWarnings("unchecked")
-public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements ODatabase {
+public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements ODatabaseInternal {
   private final Map<String, Object> properties = new HashMap<String, Object>();
   protected String                  url;
   protected OStorage                storage;
   protected STATUS                  status;
   protected OIntent                 currentIntent;
-  private ODatabaseRecord           databaseOwner;
+  private ODatabaseRecordInternal   databaseOwner;
 
   public ODatabaseRaw(final String iURL) {
-		super(false);
+    super(false);
     if (iURL == null)
       throw new IllegalArgumentException("URL parameter is null");
 
@@ -290,9 +296,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
   }
 
-  public OStorageOperationResult<ORecordVersion> save(final ORecordId iRid, boolean updateContent,
-																											final byte[] iContent, final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
-																											final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public OStorageOperationResult<ORecordVersion> save(final ORecordId iRid, boolean updateContent, final byte[] iContent,
+      final ORecordVersion iVersion, final byte iRecordType, final int iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, final ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
 
     // CHECK IF RECORD TYPE IS SUPPORTED
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
@@ -461,11 +467,11 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return true;
   }
 
-  public ODatabaseRecord getDatabaseOwner() {
+  public ODatabaseRecordInternal getDatabaseOwner() {
     return databaseOwner;
   }
 
-  public ODatabaseRaw setOwner(final ODatabaseRecord iOwner) {
+  public ODatabaseRaw setOwner(final ODatabaseRecordInternal iOwner) {
     databaseOwner = iOwner;
     return this;
   }
@@ -641,17 +647,17 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case CUSTOM:
-      if (iValue == null)
-        throw new IllegalArgumentException("CUSTOM attribute value can't be null. expected <name> = <value> or clear");
-
-      if (!iValue.toString().contains("=")) {
-        if (iValue.toString().equalsIgnoreCase("clear")) {
+      int indx = stringValue!=null?stringValue.indexOf('='):-1;
+      if (indx<0) {
+        if ("clear".equalsIgnoreCase(stringValue)) {
           clearCustomInternal();
         } else
           throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
       } else {
-        final List<String> words = OStringSerializerHelper.smartSplit(iValue.toString(), '=');
-        setCustomInternal(words.get(0).trim(), words.get(1).trim());
+        String customName = stringValue.substring(0, indx).trim();
+        String customValue = stringValue.substring(indx+1).trim();
+        if(customValue.isEmpty()) removeCustomInternal(customName);
+        else setCustomInternal(customName, customValue);
       }
       break;
 
@@ -692,6 +698,10 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
         return e.value;
     }
     return null;
+  }
+  
+  public void removeCustomInternal(final String iName) {
+	  setCustomInternal(iName, null);
   }
 
   public void setCustomInternal(final String iName, final String iValue) {

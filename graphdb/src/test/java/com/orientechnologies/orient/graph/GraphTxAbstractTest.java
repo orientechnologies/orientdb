@@ -21,7 +21,10 @@
 package com.orientechnologies.orient.graph;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -65,10 +68,10 @@ public abstract class GraphTxAbstractTest {
     final String dbName = GraphTxAbstractTest.class.getSimpleName();
     final String storageType = getStorageType();
     final String buildDirectory = System.getProperty("buildDirectory", ".");
-
-    OFileUtils.deleteRecursively(new File(buildDirectory + "/" + dbName));
-
     graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+    graph.drop();
+    graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+
   }
 
   @AfterClass

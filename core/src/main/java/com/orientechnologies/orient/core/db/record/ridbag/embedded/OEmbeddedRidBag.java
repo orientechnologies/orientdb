@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db.record.ridbag.embedded;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -48,7 +52,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   private boolean                                                      convertToRecord   = true;
   private int                                                          size              = 0;
 
-  private transient ORecord<?>                                         owner;
+  private transient ORecord                                            owner;
 
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners   = Collections
                                                                                              .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
@@ -137,12 +141,12 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public ORecord<?> getOwner() {
+  public ORecord getOwner() {
     return owner;
   }
 
   @Override
-  public void setOwner(ORecord<?> owner) {
+  public void setOwner(ORecord owner) {
     if (owner != null && this.owner != null && !this.owner.equals(owner)) {
       throw new IllegalStateException("This data structure is owned by document " + owner
           + " if you want to use it in other document create new rid bag instance and copy content of current one.");

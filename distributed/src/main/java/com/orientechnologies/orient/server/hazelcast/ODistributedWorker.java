@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.IQueue;
@@ -47,6 +48,8 @@ import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 
 import java.io.Serializable;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -58,6 +61,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class ODistributedWorker extends Thread {
 
+  private final static int                            LOCAL_QUEUE_MAXSIZE = 1000;
+  protected Queue<ODistributedRequest>                localQueue          = new ArrayBlockingQueue<ODistributedRequest>(
+                                                                              LOCAL_QUEUE_MAXSIZE);
   protected final OHazelcastDistributedDatabase       distributed;
   protected final OHazelcastPlugin                    manager;
   protected final OHazelcastDistributedMessageService msgService;
@@ -66,6 +72,7 @@ public class ODistributedWorker extends Thread {
   protected volatile ODatabaseDocumentTx              database;
   protected volatile OUser                            lastUser;
   protected boolean                                   restoringMessages;
+  protected volatile boolean                          running             = true;
 
   public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue<ODistributedRequest> iRequestQueue,
       final String iDatabaseName, final int i, final boolean iRestoringMessages) {
@@ -82,7 +89,7 @@ public class ODistributedWorker extends Thread {
   public void run() {
     final int queuedMsg = requestQueue.size();
 
-    for (long processedMessages = 0; !Thread.interrupted(); processedMessages++) {
+    for (long processedMessages = 0; running; processedMessages++) {
       if (restoringMessages && processedMessages >= queuedMsg) {
         // END OF RESTORING MESSAGES, SET IT ONLINE
         ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
@@ -123,10 +130,17 @@ public class ODistributedWorker extends Thread {
       } catch (HazelcastInstanceNotActiveException e) {
         Thread.interrupted();
         break;
-
+      } catch (HazelcastException e) {
+        if (e.getCause() instanceof InterruptedException)
+          Thread.interrupted();
+        else
+          ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
+              "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
+              message != null ? message.getTask() : "-");
       } catch (Throwable e) {
         ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
-            "error on executing distributed request %d: %s", e, message.getId(), message != null ? message.getTask() : "-");
+            "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
+            message != null ? message.getTask() : "-");
       }
     }
 
@@ -150,22 +164,43 @@ public class ODistributedWorker extends Thread {
 
     } else {
       // After initialize database, create replicator user in DB and reset database with OSecurityShared instead of OSecurityNull
-//      OSecurity security = database.getMetadata().getSecurity();
-//      if (security == null || security instanceof OSecurityNull) {
-//        final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
-//            ODistributedAbstractPlugin.REPLICATOR_USER);
-//        createReplicatorUser(database, replicatorUser);
-//        database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
-//            replicatorUser.password);
-//      }
+      // OSecurity security = database.getMetadata().getSecurity();
+      // if (security == null || security instanceof OSecurityNull) {
+      // final OServerUserConfiguration replicatorUser = manager.getServerInstance().getUser(
+      // ODistributedAbstractPlugin.REPLICATOR_USER);
+      // createReplicatorUser(database, replicatorUser);
+      // database = (ODatabaseDocumentTx) manager.getServerInstance().openDatabase("document", databaseName, replicatorUser.name,
+      // replicatorUser.password);
+      // }
     }
   }
 
   public void shutdown() {
+    final int pendingMsgs = localQueue.size();
+
+    if (pendingMsgs > 0)
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Received shutdown signal, waiting for distributed worker queue is empty (pending msgs=%d)...", pendingMsgs);
+
     try {
+      running = false;
+      interrupt();
+
+      if (pendingMsgs > 0)
+        join();
+
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Shutdown distributed worker completed");
+
+      localQueue.clear();
+
       if (database != null)
         database.close();
+
     } catch (Exception e) {
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+          "Error on shutting down distributed worker", e);
+
     }
   }
 
@@ -175,7 +210,7 @@ public class ODistributedWorker extends Thread {
 
   protected ODistributedRequest readRequest() throws InterruptedException {
     // GET FROM DISTRIBUTED QUEUE. IF EMPTY WAIT FOR A MESSAGE
-    ODistributedRequest req = requestQueue.take();
+    ODistributedRequest req = nextMessage();
 
     while (distributed.waitForMessageId.get() > -1) {
       if (req != null) {
@@ -194,26 +229,28 @@ public class ODistributedWorker extends Thread {
               distributed.waitForMessageId.get(), req, req.getSenderNodeName());
 
           // READ THE NEXT ONE
-          req = requestQueue.take();
+          req = nextMessage();
         }
       }
     }
 
-    // while (!restoringMessages && !distributed.status.get() && req.getTask().isRequireNodeOnline()) {
-    // // WAIT UNTIL THE NODE IS ONLINE
-    // synchronized (distributed.waitForOnline) {
-    // ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.OUT,
-    // "node is not online, request=%s sourceNode=%s must wait to be processed", req, req.getSenderNodeName());
-    //
-    // distributed.waitForOnline.wait(5000);
-    // }
-    // }
-    //
     if (ODistributedServerLog.isDebugEnabled())
       ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
           "processing request=%s sourceNode=%s", req, req.getSenderNodeName());
 
     return req;
+  }
+
+  protected ODistributedRequest nextMessage() throws InterruptedException {
+    while (localQueue.isEmpty()) {
+      // WAIT FOR THE FIRST MESSAGE
+      localQueue.offer(requestQueue.take());
+
+      // READ MULTIPLE MSGS IN ONE SHOT BY USING LOCAL QUEUE TO IMPROVE PERFORMANCE
+      requestQueue.drainTo(localQueue, LOCAL_QUEUE_MAXSIZE - 1);
+    }
+
+    return localQueue.poll();
   }
 
   /**
@@ -335,7 +372,7 @@ public class ODistributedWorker extends Thread {
       // EXECUTE ONLY IF THE RECORD HASN'T BEEN DELETED YET
       executeLastPendingRequest = ((ODeleteRecordTask) task).getRid().getRecord() != null;
     } else if (task instanceof OUpdateRecordTask) {
-      final ORecord<?> rec = ((OUpdateRecordTask) task).getRid().getRecord();
+      final ORecord rec = ((OUpdateRecordTask) task).getRid().getRecord();
       if (rec == null)
         ODistributedServerLog.warn(this, getLocalNodeName(), lastPendingRequest.getSenderNodeName(), DIRECTION.IN,
             "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());

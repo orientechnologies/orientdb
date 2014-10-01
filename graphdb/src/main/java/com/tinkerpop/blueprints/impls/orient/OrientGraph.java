@@ -1,3 +1,23 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
+
 package com.tinkerpop.blueprints.impls.orient;
 
 import org.apache.commons.configuration.Configuration;
@@ -171,11 +191,33 @@ public class OrientGraph extends OrientTransactionalGraph {
    * </tr>
    * </table>
    *
-   * @param configuration
+   * @param iConfiguration
    *          graph settings see the details above.
    */
-  public OrientGraph(final Configuration configuration) {
-    super(configuration);
+  public OrientGraph(final Configuration iConfiguration) {
+    super(iConfiguration);
+    config();
+  }
+
+  /**
+   * Creates a new Transactional Graph using an existent database instance.
+   *
+   * @param iDatabase
+   *          Underlying database object to attach
+   */
+  public OrientGraph(final ODatabaseDocumentTx iDatabase) {
+    super(iDatabase);
+    config();
+  }
+
+  /**
+   * Creates a new Transactional Graph using an existent database instance.
+   *
+   * @param iDatabase
+   *          Underlying database object to attach
+   */
+  public OrientGraph(final ODatabaseDocumentTx iDatabase, final String iUser, final String iPassword, final Settings iConfiguration) {
+    super(iDatabase, iUser, iPassword, iConfiguration);
     config();
   }
 
@@ -223,16 +265,5 @@ public class OrientGraph extends OrientTransactionalGraph {
     FEATURES.supportsStringProperty = true;
     FEATURES.supportsThreadedTransactions = false;
     FEATURES.supportsThreadIsolatedTransactions = false;
-  }
-
-  /**
-   * Creates a new Transactional Graph using an existent database instance.
-   *
-   * @param iDatabase
-   *          Underlying database object to attach
-   */
-  public OrientGraph(final ODatabaseDocumentTx iDatabase) {
-    super(iDatabase);
-    config();
   }
 }

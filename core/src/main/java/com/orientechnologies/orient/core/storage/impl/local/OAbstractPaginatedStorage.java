@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
@@ -30,7 +34,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -60,8 +63,8 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePoint
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -77,7 +80,26 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTr
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAbstractCheckPointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPagesRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODiskWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFileCreatedCreatedWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFullCheckpointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointEndRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OFuzzyCheckpointStartRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPaginatedClusterFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OUpdatePageRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageBrokenException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALRecord;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTxListener;
@@ -282,6 +304,39 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     } finally {
       modificationLock.allowModifications();
     }
+  }
+
+  public void startAtomicOperation() throws IOException {
+    lock.acquireSharedLock();
+    try {
+      makeStorageDirty();
+
+      atomicOperationsManager.startAtomicOperation();
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  public void commitAtomicOperation() throws IOException {
+    lock.acquireSharedLock();
+    try {
+      atomicOperationsManager.endAtomicOperation(false);
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  public void rollbackAtomicOperation() throws IOException {
+    lock.acquireSharedLock();
+    try {
+      atomicOperationsManager.endAtomicOperation(true);
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  public void markDirty() throws IOException {
+    makeStorageDirty();
   }
 
   @Override
@@ -1422,6 +1477,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     if (storageTx != null && storageTx.getClientTx().getId() != clientTx.getId())
       rollback(clientTx);
 
+		assert atomicOperationsManager.getCurrentOperation() == null;
+
     atomicOperationsManager.startAtomicOperation();
     transaction.set(new OStorageTransaction(clientTx));
   }
@@ -1660,7 +1717,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
   private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {
 
-    final ORecordInternal<?> rec = txEntry.getRecord();
+    final ORecord rec = txEntry.getRecord();
     if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
       return;
 
@@ -1701,7 +1758,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
         if (rid.isNew()) {
           rid.clusterId = cluster.getId();
           final OPhysicalPosition ppos;
-          ppos = createRecord(rid, stream, rec.getRecordVersion(), rec.getRecordType(), -1, null).getResult();
+          ppos = createRecord(rid, stream, rec.getRecordVersion(), ORecordInternal.getRecordType(rec), -1, null).getResult();
 
           rid.clusterPosition = ppos.clusterPosition;
           rec.getRecordVersion().copyFrom(ppos.recordVersion);
@@ -1709,7 +1766,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
           clientTx.updateIdentityAfterCommit(oldRID, rid);
         } else {
           rec.getRecordVersion().copyFrom(
-              updateRecord(rid, rec.isContentChanged(), stream, rec.getRecordVersion(), rec.getRecordType(), -1, null).getResult());
+              updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
+                  ORecordInternal.getRecordType(rec), -1, null).getResult());
         }
 
         break;
@@ -1723,7 +1781,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
         }
 
         rec.getRecordVersion().copyFrom(
-            updateRecord(rid, rec.isContentChanged(), stream, rec.getRecordVersion(), rec.getRecordType(), -1, null).getResult());
+            updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
+                ORecordInternal.getRecordType(rec), -1, null).getResult());
 
         break;
       }
@@ -1737,7 +1796,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
       ORecordSerializationContext.pullContext();
     }
 
-    rec.unsetDirty();
+    ORecordInternal.unsetDirty(rec);
 
     if (rec instanceof OTxListener)
       ((OTxListener) rec).onEvent(txEntry, OTxListener.EVENT.AFTER_COMMIT);
@@ -1970,17 +2029,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
     long recordsProcessed = 0;
     int reportInterval = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
-
-    final AtomicBoolean lowMemoryFlag = new AtomicBoolean(false);
-
-    OMemoryWatchDog.Listener listener = new OMemoryWatchDog.Listener() {
-      @Override
-      public void lowMemory(long iFreeMemory, long iFreeMemoryPercentage) {
-        lowMemoryFlag.set(true);
-      }
-    };
-
-    listener = Orient.instance().getMemoryWatchDog().addListener(listener);
+		final int batchSize = OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger();
 
     Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits = new HashMap<OOperationUnitId, List<OLogSequenceNumber>>();
     List<OWALRecord> batch = new ArrayList<OWALRecord>();
@@ -1990,11 +2039,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
         OWALRecord walRecord = writeAheadLog.read(lsn);
         batch.add(walRecord);
 
-        if (lowMemoryFlag.get()) {
+        if (batch.size() >= batchSize) {
           OLogManager.instance().info(this, "Heap memory is low apply batch of operations are read from WAL.");
           recordsProcessed = restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval);
           batch = new ArrayList<OWALRecord>();
-          lowMemoryFlag.set(false);
         }
 
         lsn = writeAheadLog.next(lsn);
@@ -2011,8 +2059,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
     rollbackAllUnfinishedWALOperations(operationUnits);
     operationUnits.clear();
-
-    Orient.instance().getMemoryWatchDog().removeListener(listener);
   }
 
   private long restoreWALBatch(List<OWALRecord> batch, Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits,

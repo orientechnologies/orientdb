@@ -1,3 +1,23 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
+
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -165,12 +185,12 @@ public class OrientGraphQuery extends DefaultGraphQuery {
       text.append(orderBy);
       text.append(" " + orderByDir + " ");
     }
-    if (skip > 0 && skip < Long.MAX_VALUE) {
+    if (skip > 0 && skip < Integer.MAX_VALUE) {
       text.append(SKIP);
       text.append(skip);
     }
 
-    if (limit > 0 && limit < Long.MAX_VALUE) {
+    if (limit > 0 && limit < Integer.MAX_VALUE) {
       text.append(LIMIT);
       text.append(limit);
     }
@@ -226,7 +246,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (fetchPlan != null)
       query.setFetchPlan(fetchPlan);
 
-    if (limit > 0 && limit < Long.MAX_VALUE)
+    if (limit > 0 && limit < Integer.MAX_VALUE)
       query.setLimit((int) limit);
 
     return new OrientElementIterable<Edge>(((OrientBaseGraph) graph), ((OrientBaseGraph) graph).getRawGraph().query(query));

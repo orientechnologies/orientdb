@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.exception.OException;
@@ -21,9 +25,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -121,7 +127,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (c != null)
       throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
 
-    ODatabase database = getDatabase();
+    ODatabaseInternal database = getDatabase();
     OStorage storage = database.getStorage();
 
     algorithm = chooseTreeAlgorithm(algorithm);
@@ -132,6 +138,18 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     try {
       if (indexes.containsKey(iName.toLowerCase()))
         throw new OIndexException("Index with name " + iName.toLowerCase() + " already exists.");
+
+      // manual indexes are always durable
+      if (clusterIdsToIndex == null || clusterIdsToIndex.length == 0) {
+        if (metadata == null)
+          metadata = new ODocument();
+
+        Object durable = metadata.field("durableInNonTxMode");
+        if (!(durable instanceof Boolean))
+          metadata.field("durableInNonTxMode", true);
+        if (metadata.field("trackMode") == null)
+          metadata.field("trackMode", "FULL");
+      }
 
       index = OIndexes.createIndex(getDatabase(), iType, algorithm, valueContainerAlgorithm, metadata);
 
@@ -306,7 +324,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (rebuildCompleted)
       return false;
 
-    final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (!OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean())
       return false;
 
@@ -530,7 +548,6 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       final String indexType = idx.field(OIndexInternal.CONFIG_TYPE);
       String algorithm = idx.field(OIndexInternal.ALGORITHM);
       String valueContainerAlgorithm = idx.field(OIndexInternal.VALUE_CONTAINER_ALGORITHM);
-
 
       ODocument metadata = idx.field(OIndexInternal.METADATA);
       if (indexType == null) {

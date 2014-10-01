@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db.tool;
 
 import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
@@ -61,6 +65,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
   private OIndex<OIdentifiable> exportImportHashTable             = null;
   private int                   differences                       = 0;
+  private boolean               compareIndexMetadata              = false;
 
   public ODatabaseCompare(String iDb1URL, String iDb2URL, final OCommandOutputListener iListener) throws IOException {
     super(null, null, iListener);
@@ -94,6 +99,10 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     excludeClusters.add("orids");
     excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
     excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+  }
+
+  public void setCompareIndexMetadata(boolean compareIndexMetadata) {
+    this.compareIndexMetadata = compareIndexMetadata;
   }
 
   public boolean isCompareEntriesForAutomaticIndexes() {
@@ -445,39 +454,41 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         ++differences;
       }
 
-      final ODocument metadataOne = indexOne.getMetadata();
-      final ODocument metadataTwo = indexTwo.getMetadata();
+      if (compareIndexMetadata) {
+        final ODocument metadataOne = indexOne.getMetadata();
+        final ODocument metadataTwo = indexTwo.getMetadata();
 
-      if (metadataOne == null && metadataTwo != null) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is null but for DB2 is not.");
-        listener.onMessage("\n");
-        ++differences;
-      } else if (metadataOne != null && metadataTwo == null) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
-        listener.onMessage("\n");
-        ++differences;
-      } else if (metadataOne != null && metadataTwo != null
-          && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
-        makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
-          @Override
-          public Object call() {
-            listener.onMessage("\n--- M1: " + metadataOne);
-            return null;
-          }
-        });
-        makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Object>() {
-          @Override
-          public Object call() {
-            listener.onMessage("\n--- M2: " + metadataTwo);
-            return null;
-          }
-        });
-        listener.onMessage("\n");
-        ++differences;
+        if (metadataOne == null && metadataTwo != null) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is null but for DB2 is not.");
+          listener.onMessage("\n");
+          ++differences;
+        } else if (metadataOne != null && metadataTwo == null) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
+          listener.onMessage("\n");
+          ++differences;
+        } else if (metadataOne != null && metadataTwo != null
+            && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
+          makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call() {
+              listener.onMessage("\n--- M1: " + metadataOne);
+              return null;
+            }
+          });
+          makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call() {
+              listener.onMessage("\n--- M2: " + metadataTwo);
+              return null;
+            }
+          });
+          listener.onMessage("\n");
+          ++differences;
+        }
       }
 
       if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY")) || !indexOne.isAutomatic())) {

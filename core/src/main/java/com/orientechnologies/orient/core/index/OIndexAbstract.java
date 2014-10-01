@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -23,7 +27,7 @@ import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
@@ -36,6 +40,7 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
@@ -217,8 +222,9 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       if (clustersToIndex != null)
         this.clustersToIndex = new HashSet<String>(clustersToIndex);
       else
-        this.clustersToIndex = new HashSet<String>(clustersToIndex);
+        this.clustersToIndex = new HashSet<String>();
 
+      markStorageDirty();
       indexEngine.create(this.name, indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
 
       if (rebuild)
@@ -259,7 +265,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         indexEngine.load(rid, name, indexDefinition, determineValueSerializer(), isAutomatic());
       } catch (Exception e) {
         if (onCorruptionRepairDatabase(null, "load", "Index will be rebuilt")) {
-          if (isAutomatic() && getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded)
+          if (isAutomatic() && getStorage() instanceof OStorageEmbedded)
             // AUTOMATIC REBUILD IT
             OLogManager.instance().warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(),
                 rid);
@@ -359,6 +365,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     try {
       acquireExclusiveLock();
       try {
+        markStorageDirty();
+
         rebuildThread = Thread.currentThread();
         rebuilding = true;
 
@@ -418,17 +426,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   }
 
   public boolean remove(Object key, final OIdentifiable value) {
-    checkForRebuild();
-
-    key = getCollatingValue(key);
-
-    modificationLock.requestModificationLock();
-    try {
-      return remove(key);
-    } finally {
-      modificationLock.releaseModificationLock();
-    }
-
+    return remove(key);
   }
 
   public boolean remove(Object key) {
@@ -437,10 +435,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     key = getCollatingValue(key);
 
     modificationLock.requestModificationLock();
-
     try {
       acquireSharedLock();
       try {
+        markStorageDirty();
         return indexEngine.remove(key);
       } finally {
         releaseSharedLock();
@@ -458,6 +456,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     try {
       acquireSharedLock();
       try {
+        markStorageDirty();
         indexEngine.clear();
         return this;
       } finally {
@@ -475,6 +474,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       acquireExclusiveLock();
 
       try {
+        markStorageDirty();
         indexEngine.delete();
 
         // REMOVE THE INDEX ALSO FROM CLASS MAP
@@ -499,6 +499,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     try {
       acquireExclusiveLock();
       try {
+        markStorageDirty();
         indexEngine.deleteWithoutLoad(indexName);
       } finally {
         releaseExclusiveLock();
@@ -586,7 +587,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         if (indexDefinition != null) {
           final ODocument indexDefDocument = indexDefinition.toStream();
           if (!indexDefDocument.hasOwners())
-            indexDefDocument.addOwner(configuration);
+            ODocumentInternal.addOwner(indexDefDocument, configuration);
 
           configuration.field(OIndexInternal.INDEX_DEFINITION, indexDefDocument, OType.EMBEDDED);
           configuration.field(OIndexInternal.INDEX_DEFINITION_CLASS, indexDefinition.getClass().getName());
@@ -769,6 +770,38 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return rebuilding;
   }
 
+  protected void startStorageAtomicOperation() {
+    try {
+      getStorage().startAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during start of atomic operation", e);
+    }
+  }
+
+  protected void commitStorageAtomicOperation() {
+    try {
+      getStorage().commitAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during commit of atomic operation", e);
+    }
+  }
+
+  protected void rollbackStorageAtomicOperation() {
+    try {
+      getStorage().rollbackAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during rollback of atomic operation", e);
+    }
+  }
+
+  protected void markStorageDirty() {
+    try {
+      getStorage().markDirty();
+    } catch (IOException e) {
+      throw new OIndexException("Can not mark storage as dirty", e);
+    }
+  }
+
   protected abstract OStreamSerializer determineValueSerializer();
 
   protected void populateIndex(ODocument doc, Object fieldValue) {
@@ -810,7 +843,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  protected ODatabaseRecord getDatabase() {
+  protected ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
@@ -823,7 +856,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected long[] indexCluster(final String clusterName, final OProgressListener iProgressListener, long documentNum,
       long documentIndexed, long documentTotal) {
     try {
-      for (final ORecord<?> record : getDatabase().browseCluster(clusterName)) {
+      for (final ORecord record : getDatabase().browseCluster(clusterName)) {
         if (Thread.interrupted())
           throw new OCommandExecutionException("The index rebuild has been interrupted");
 
@@ -861,9 +894,13 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return new long[] { documentNum, documentIndexed };
   }
 
+  private OAbstractPaginatedStorage getStorage() {
+    return ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying());
+  }
+
   private void removeValuesContainer() {
     if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
-      final OStorage storage = getDatabase().getStorage();
+      final OStorage storage = getStorage();
       if (storage instanceof OAbstractPaginatedStorage) {
         final ODiskCache diskCache = ((OAbstractPaginatedStorage) storage).getDiskCache();
         try {
@@ -911,8 +948,9 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     final List<ODocument> operations = entry.field("ops");
     if (operations != null) {
       for (final ODocument op : operations) {
+        op.setLazyLoad(false);
         final int operation = (Integer) op.rawField("o");
-        final OIdentifiable value = op.field("v", OType.LINK);
+        final OIdentifiable value = op.field("v");
 
         if (operation == OPERATION.PUT.ordinal())
           putInSnapshot(key, value, snapshot);

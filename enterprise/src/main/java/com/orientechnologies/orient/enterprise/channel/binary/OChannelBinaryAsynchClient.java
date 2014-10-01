@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -36,6 +40,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +80,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     socket.setReceiveBufferSize(socketBufferSize);
     try {
       socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
+      setReadResponseTimeout();
       connected();
     } catch (java.net.SocketTimeoutException e) {
       throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
@@ -172,8 +178,12 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         else if (!getLockRead().tryAcquireLock(iTimeout, TimeUnit.MILLISECONDS))
           throw new OTimeoutException("Cannot acquire read lock against channel: " + this);
 
+        boolean readLock = true;
+
         if (!isConnected()) {
           releaseReadLock();
+          readLock = false;
+
           throw new IOException("Channel is closed");
         }
 
@@ -181,6 +191,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           channelRead = true;
 
           try {
+            setWaitResponseTimeout();
             currentStatus = readByte();
             currentSessionId = readInt();
 
@@ -193,7 +204,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
             channelRead = false;
             readCondition.signalAll();
             releaseReadLock();
+            readLock = false;
+
             throw e;
+          } finally {
+            setReadResponseTimeout();
           }
         }
 
@@ -209,6 +224,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           if (iTimeout > 0 && (System.currentTimeMillis() - startClock) > iTimeout) {
             // CLOSE THE SOCKET TO CHANNEL TO AVOID FURTHER DIRTY DATA
             close();
+            readLock = false;
+
             throw new OTimeoutException("Timeout on reading response from the server "
                 + (socket != null ? socket.getRemoteSocketAddress() : "") + " for the request " + iRequesterId);
           }
@@ -219,6 +236,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
                   maxUnreadResponses);
 
             close();
+            readLock = false;
+
             throw new IOException("Timeout on reading response");
           }
 
@@ -244,7 +263,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           Thread.currentThread().interrupt();
 
         } finally {
-          releaseReadLock();
+          if (readLock)
+            releaseReadLock();
         }
       } while (true);
 
@@ -257,6 +277,16 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       // NEVER HAPPENS?
       OLogManager.instance().error(this, "Unexpected error on reading response from channel", e);
     }
+  }
+
+  private void setReadResponseTimeout() throws SocketException {
+    if (socket != null)
+      socket.setSoTimeout(socketTimeout);
+  }
+
+  private void setWaitResponseTimeout() throws SocketException {
+    if (socket != null)
+      socket.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
   }
 
   public void endResponse() {

@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.cache;
 
 import static com.orientechnologies.orient.core.metadata.OMetadataDefault.CLUSTER_INDEX_NAME;
@@ -22,7 +26,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 
 /**
  * Local cache. it's one to one with record database instances. It is needed to avoid cases when several instances of the same
@@ -60,7 +64,7 @@ public class OLocalRecordCache extends OAbstractRecordCache {
    * @param record
    *          record that should be cached
    */
-  public void updateRecord(final ORecordInternal<?> record) {
+  public void updateRecord(final ORecord record) {
     if (isEnabled() && record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid()
         && !record.getRecordVersion().isTombstone()) {
       if (underlying.get(record.getIdentity()) != record)
@@ -75,13 +79,13 @@ public class OLocalRecordCache extends OAbstractRecordCache {
    *          unique identifier of record
    * @return record stored in cache if any, otherwise - {@code null}
    */
-  public ORecordInternal<?> findRecord(final ORID rid) {
+  public ORecord findRecord(final ORID rid) {
     if (!isEnabled()) {
       return null;
     }
     // DELEGATE TO THE 2nd LEVEL CACHE
 
-    ORecordInternal<?> record;
+    ORecord record;
     record = underlying.get(rid);
 
     if (record != null)

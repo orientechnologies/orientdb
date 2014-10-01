@@ -39,7 +39,7 @@ public class OSQLMethodSize extends OAbstractSQLMethod {
     
     final Number size;
     if (ioResult != null) {
-      if (ioResult instanceof ORecord<?>) {
+      if (ioResult instanceof ORecord) {
         size = 1;
       } else {
         size = OMultiValue.getSize(ioResult);

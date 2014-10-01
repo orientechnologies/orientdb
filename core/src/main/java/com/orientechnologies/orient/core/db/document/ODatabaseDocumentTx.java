@@ -1,26 +1,39 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 
 package com.orientechnologies.orient.core.db.document;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordWrapperAbstract;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -37,8 +50,10 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -46,15 +61,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-
 @SuppressWarnings("unchecked")
-public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocument {
+public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocumentInternal {
   protected static ORecordSerializer defaultSerializer;
   static {
     defaultSerializer = ORecordSerializerFactory.instance().getFormat(
@@ -262,7 +270,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   @Override
-  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord) {
+  public <RET extends ORecord> RET save(final ORecord iRecord) {
     return (RET) save(iRecord, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
@@ -296,16 +304,15 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
   @Override
-  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public <RET extends ORecord> RET save(final ORecord iRecord, final OPERATION_MODE iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
     if (!(iRecord instanceof ODocument))
       return (RET) super.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     ODocument doc = (ODocument) iRecord;
     doc.validate();
-    doc.convertAllMultiValuesToTrackedVersions();
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     try {
       if (iForceCreate || doc.getIdentity().isNew()) {
@@ -360,10 +367,10 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
    *           if the document breaks some validation constraints defined in the schema
-   * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
+   * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
    */
   @Override
-  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, final String iClusterName) {
+  public <RET extends ORecord> RET save(final ORecord iRecord, final String iClusterName) {
     return (RET) save(iRecord, iClusterName, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
@@ -397,11 +404,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    *           if the version of the document is different by the version contained in the database.
    * @throws OValidationException
    *           if the document breaks some validation constraints defined in the schema
-   * @see #setMVCC(boolean), {@link #isMVCC()}, ORecordSchemaAware#validate()
+   * @see #setMVCC(boolean), {@link #isMVCC()}, ODocument#validate()
    */
   @Override
-  public <RET extends ORecordInternal<?>> RET save(final ORecordInternal<?> iRecord, String iClusterName,
-      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+  public <RET extends ORecord> RET save(final ORecord iRecord, String iClusterName, final OPERATION_MODE iMode,
+      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
     if (!(iRecord instanceof ODocument))
@@ -445,7 +452,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
     }
 
     doc.validate();
-    doc.convertAllMultiValuesToTrackedVersions();
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     doc = super.save(doc, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
     return (RET) doc;
@@ -466,7 +473,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    * @see #setMVCC(boolean), {@link #isMVCC()}
    */
-  public ODatabaseDocumentTx delete(final ORecordInternal<?> record) {
+  public ODatabaseDocumentTx delete(final ORecord record) {
     checkOpeness();
     if (record == null)
       throw new ODatabaseException("Cannot delete null document");
@@ -511,7 +518,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<ORecordInternal<?>> commit() {
+  public ODatabaseComplex<ORecord> commit() {
     return commit(false);
   }
 
@@ -519,7 +526,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<ORecordInternal<?>> commit(boolean force) throws OTransactionException {
+  public ODatabaseComplex<ORecord> commit(boolean force) throws OTransactionException {
     return underlying.commit(force);
   }
 
@@ -527,7 +534,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<ORecordInternal<?>> rollback() {
+  public ODatabaseComplex<ORecord> rollback() {
     return rollback(false);
   }
 
@@ -535,7 +542,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<ORecordInternal<?>> rollback(final boolean force) throws OTransactionException {
+  public ODatabaseComplex<ORecord> rollback(final boolean force) throws OTransactionException {
     return underlying.rollback(force);
   }
 

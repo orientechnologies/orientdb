@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -46,6 +47,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
@@ -305,8 +307,10 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     ODocument coreDocCopy = database.load(coreDoc.getIdentity(), "*:-1", true);
     Assert.assertNotSame(coreDocCopy, coreDoc);
 
-    Assert.assertTrue(coreDocCopy.field("link", OType.LINK) instanceof ORecordId);
-    Assert.assertTrue(coreDocCopy.field("link", (OType) null) instanceof ODocument);
+    coreDocCopy.setLazyLoad(false);
+    Assert.assertTrue(coreDocCopy.field("link") instanceof ORecordId);
+    coreDocCopy.setLazyLoad(true);
+    Assert.assertTrue(coreDocCopy.field("link") instanceof ODocument);
   }
 
   @SuppressWarnings("unchecked")
@@ -482,12 +486,14 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void testDirtyChild() {
     ODocument parent = new ODocument();
 
-    ODocument child1 = new ODocument().addOwner(parent);
+    ODocument child1 = new ODocument();
+    ODocumentInternal.addOwner(child1, parent);
     parent.field("child1", child1);
 
     Assert.assertTrue(child1.hasOwners());
 
-    ODocument child2 = new ODocument().addOwner(child1);
+    ODocument child2 = new ODocument();
+    ODocumentInternal.addOwner(child2, child1);
     child1.field("child2", child2);
 
     Assert.assertTrue(child2.hasOwners());
@@ -622,7 +628,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test
   public void polymorphicQuery() {
-    final ORecordAbstract<Object> newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
+    final ORecordAbstract newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
 
     List<ODocument> superClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
     List<ODocument> subClassResult = database.query(new OSQLSynchQuery<ODocument>("select from Company"));
@@ -666,7 +672,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testCreate")
   public void nonPolymorphicQuery() {
-    final ORecordAbstract<Object> newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
+    final ORecordAbstract newAccount = new ODocument("Account").field("name", "testInheritanceName").save();
 
     List<ODocument> allResult = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
     List<ODocument> superClassResult = database
@@ -830,7 +836,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void testSerialization() {
     ORecordSerializer current = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
-    ODatabaseRecord oldDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseRecordInternal oldDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     ORecordSerializer dbser = oldDb.getSerializer();
     if (oldDb instanceof ODatabaseDocumentTx)
       ((ODatabaseDocumentTx) oldDb).setSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);

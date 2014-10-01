@@ -1,3 +1,23 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
+
 package com.orientechnologies.orient.core.serialization;
 
 import com.orientechnologies.common.io.OIOException;
@@ -15,7 +35,7 @@ import com.orientechnologies.common.log.OLogManager;
  * Example:
  * </p>
  * 
- * <code>String encoded = Base64.encode( myByteArray );</code> <br />
+ * <code>String encoded = Base64.encode( myByteArray );</code> <br>
  * <code>byte[] myByteArray = Base64.decode( encoded );</code>
  * 
  * <p>
@@ -383,7 +403,7 @@ public class OBase64Utils {
      * <pre>
      *   ENCODE or DECODE: Encode or Decode as data is read.
      *   DO_BREAK_LINES: break lines at 76 characters
-     *     (only meaningful when encoding)</i>
+     *     (only meaningful when encoding)
      * </pre>
      * <p>
      * Example: <code>new Base64.InputStream( in, Base64.DECODE )</code>
@@ -586,7 +606,7 @@ public class OBase64Utils {
      * <pre>
      *   ENCODE or DECODE: Encode or Decode as data is read.
      *   DO_BREAK_LINES: don't break lines at 76 characters
-     *     (only meaningful when encoding)</i>
+     *     (only meaningful when encoding)
      * </pre>
      * <p>
      * Example: <code>new Base64.OutputStream( out, Base64.ENCODE )</code>
@@ -1507,8 +1527,6 @@ public class OBase64Utils {
    * @param options
    *          Can specify options such as alphabet type to use
    * @return decoded data
-   * @throws java.io.IOException
-   *           If bogus characters exist in source data
    * @since 1.3
    */
   public static byte[] decode(byte[] source, int off, int len, int options) {
@@ -1578,8 +1596,6 @@ public class OBase64Utils {
    * @param s
    *          the string to decode
    * @return the decoded data
-   * @throws java.io.IOException
-   *           If there is a problem
    * @since 1.4
    */
   public static byte[] decode(String s) {
@@ -1594,8 +1610,6 @@ public class OBase64Utils {
    * @param options
    *          encode options such as URL_SAFE
    * @return the decoded data
-   * @throws java.io.IOException
-   *           if there is an error
    * @throws NullPointerException
    *           if <tt>s</tt> is null
    * @since 1.4

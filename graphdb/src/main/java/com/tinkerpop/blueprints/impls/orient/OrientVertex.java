@@ -1,3 +1,23 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
+
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
@@ -15,6 +35,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -698,7 +719,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     doc.setDirty();
 
     // RESET IDENTITY
-    doc.setIdentity(new ORecordId());
+    ORecordInternal.setIdentity(doc, new ORecordId());
 
     if (iClusterName != null)
       doc.save(iClusterName);
@@ -744,7 +765,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     doc.save();
 
     // DELETE OLD RECORD
-    final ORecord<?> oldRecord = oldIdentity.getRecord();
+    final ORecord oldRecord = oldIdentity.getRecord();
     if (oldRecord != null)
       oldRecord.delete();
 

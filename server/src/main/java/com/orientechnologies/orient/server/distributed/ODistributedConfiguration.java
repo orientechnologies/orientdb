@@ -1,24 +1,23 @@
 /*
- * Copyright 2010-2013 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.server.distributed;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,6 +26,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Distributed configuration. It uses an ODocument object to store the configuration. Every changes increment the field "version".
@@ -165,6 +170,29 @@ public class ODistributedConfiguration {
         }
       }
       return (Boolean) value;
+    }
+  }
+
+  /**
+   * Returns the execution mode if synchronous.
+   *
+   * @param iClusterName
+   *          Cluster name, or null for *
+   * @return true = synchronous, false = asynchronous, null = undefined
+   */
+  public Boolean isExecutionModeSynchronous(final String iClusterName) {
+    synchronized (configuration) {
+      Object value = getClusterConfiguration(iClusterName).field("executionMode");
+      if (value == null) {
+        value = configuration.field("executionMode");
+        if (value == null)
+          return null;
+      }
+
+      if (value.toString().equalsIgnoreCase("undefined"))
+        return null;
+
+      return value.toString().equalsIgnoreCase("synchronous");
     }
   }
 
@@ -442,9 +470,9 @@ public class ODistributedConfiguration {
         // CREATE IT
         cluster = createCluster(iClusterName);
 
-      final List<String> serverList = getOriginalServers(iClusterName);
+      List<String> serverList = getOriginalServers(iClusterName);
       if (serverList == null)
-        initClusterServers(cluster);
+        serverList = initClusterServers(cluster);
 
       if (!serverList.isEmpty() && serverList.get(0).equals(iServerName))
         // ALREADY MASTER
@@ -474,7 +502,8 @@ public class ODistributedConfiguration {
       // ALREADY EXISTS
       return clusters;
 
-    cluster = new ODocument().addOwner(clusters);
+    cluster = new ODocument();
+    ODocumentInternal.addOwner(cluster, clusters);
     clusters.field(iClusterName, cluster, OType.EMBEDDED);
 
     initClusterServers(cluster);

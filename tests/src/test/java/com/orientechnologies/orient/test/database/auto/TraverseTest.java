@@ -206,7 +206,7 @@ public class TraverseTest extends DocumentDBBaseTest {
     int cycles = 0;
     for (OIdentifiable id : new OTraverse().target(database.browseClass("Movie").iterator()).predicate(new OCommandPredicate() {
       @Override
-      public Object evaluate(ORecord<?> iRecord, ODocument iCurrentResult, OCommandContext iContext) {
+      public Object evaluate(ORecord iRecord, ODocument iCurrentResult, OCommandContext iContext) {
         return ((Integer) iContext.getVariable("depth")) <= 2;
       }
     })) {

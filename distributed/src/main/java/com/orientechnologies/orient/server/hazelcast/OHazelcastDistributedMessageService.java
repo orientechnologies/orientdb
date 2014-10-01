@@ -1,21 +1,26 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.config.QueueConfig;
+import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IAtomicLong;
 import com.hazelcast.core.IQueue;
@@ -61,6 +66,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   protected Thread                                                     responseThread;
   protected long[]                                                     responseTimeMetrics         = new long[10];
   protected int                                                        responseTimeMetricIndex     = 0;
+  protected volatile boolean                                           running                     = true;
 
   public OHazelcastDistributedMessageService(final OHazelcastPlugin manager) {
     this.manager = manager;
@@ -95,7 +101,7 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       @Override
       public void run() {
         Thread.currentThread().setName("OrientDB Node Response " + queueName);
-        while (!Thread.interrupted()) {
+        while (running) {
           String senderNode = null;
           ODistributedResponse message = null;
           try {
@@ -119,6 +125,12 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
           } catch (HazelcastInstanceNotActiveException e) {
             Thread.interrupted();
             break;
+          } catch (HazelcastException e) {
+            if (e.getCause() instanceof InterruptedException)
+              Thread.interrupted();
+            else
+              ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
+                  "error on reading distributed response", e, message != null ? message.getPayload() : "-");
           } catch (Throwable e) {
             ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
                 "error on reading distributed response", e, message != null ? message.getPayload() : "-");
@@ -169,8 +181,15 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   }
 
   public void shutdown() {
+    running = false;
+
     if (responseThread != null) {
       responseThread.interrupt();
+      if (!nodeResponseQueue.isEmpty())
+        try {
+          responseThread.join();
+        } catch (InterruptedException e) {
+        }
       responseThread = null;
     }
 

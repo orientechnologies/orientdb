@@ -89,7 +89,7 @@ public class OCommandExecutorSQLCreateEdgeTest {
     Assert.assertEquals(list.size(), 1);
     final ODocument edge = list.get(0);
     Assert.assertEquals(edge.field("foo"), "bar");
-    Assert.assertEquals(edge.field("out", OType.LINK), owner1.getIdentity());
-    Assert.assertEquals(edge.field("in", OType.LINK), owner2.getIdentity());
+    Assert.assertEquals(edge.field("out"), owner1.getIdentity());
+    Assert.assertEquals(edge.field("in"), owner2.getIdentity());
   }
 }

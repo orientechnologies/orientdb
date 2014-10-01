@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
@@ -26,28 +30,38 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.*;
+import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -148,7 +162,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final ODocument doc = new ODocument().setOrdered(true);
     doc.field("key", iKey);
     doc.field("rid", iValue);
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     return doc;
   }
 
@@ -257,41 +271,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       }
 
-      if (parsedTarget.getTargetClasses() != null) {
-        for (String clazz : parsedTarget.getTargetClasses().values()) {
-          final OClass cls = db.getMetadata().getSchema().getClass(clazz);
-          if (cls != null)
-            for (int clId : cls.getClusterIds()) {
-              // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
-              if (clId > -1 && checkClusterAccess(db, db.getClusterNameById(clId)))
-                clusters.add(db.getClusterNameById(clId).toLowerCase());
-            }
-        }
-      }
+      if (parsedTarget.getTargetClasses() != null)
+        return getInvolvedClustersOfClasses(parsedTarget.getTargetClasses().values());
 
-      if (parsedTarget.getTargetClusters() != null) {
-        for (String cluster : parsedTarget.getTargetClusters().keySet()) {
-          final String c = cluster.toLowerCase();
-          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
-          if (checkClusterAccess(db, c))
-            clusters.add(c);
-        }
-      }
-      if (parsedTarget.getTargetIndex() != null) {
+      if (parsedTarget.getTargetClusters() != null)
+        return getInvolvedClustersOfClusters(parsedTarget.getTargetClusters().values());
+
+      if (parsedTarget.getTargetIndex() != null)
         // EXTRACT THE CLASS NAME -> CLUSTERS FROM THE INDEX DEFINITION
-        final OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(parsedTarget.getTargetIndex());
-        if (idx != null) {
-          final String clazz = idx.getDefinition().getClassName();
+        return getInvolvedClustersOfIndex(parsedTarget.getTargetIndex());
 
-          if (clazz != null) {
-            final OClass cls = db.getMetadata().getSchema().getClass(clazz);
-            if (cls != null)
-              for (int clId : cls.getClusterIds()) {
-                clusters.add(db.getClusterNameById(clId).toLowerCase());
-              }
-          }
-        }
-      }
     }
     return clusters;
   }
@@ -373,11 +362,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return fetchPlan != null ? fetchPlan : request.getFetchPlan();
   }
 
-  protected boolean checkClusterAccess(final ODatabaseRecord db, final String iClusterName) {
-    return db.getUser() != null
-        && db.getUser().checkIfAllowed(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, getSecurityOperationType()) != null;
-  }
-
   protected void executeSearch(final Map<Object, Object> iArgs) {
     assignTarget(iArgs);
 
@@ -418,10 +402,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OStorage.LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy
         : lockingStrategy;
 
-    ORecordInternal<?> record = null;
+    ORecord record = null;
     try {
-      if (id instanceof ORecordInternal<?>) {
-        record = (ORecordInternal<?>) id;
+      if (id instanceof ORecord) {
+        record = (ORecord) id;
 
         // LOCK THE RECORD IF NEEDED
         if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
@@ -429,12 +413,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         else if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK)
           record.lock(false);
 
-      } else
+      } else {
         record = getDatabase().load(id.getIdentity(), null, false, false, localLockingStrategy);
+        if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
+          Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
+          for (String key : ridContext.keySet()) {
+            context.setVariable(key, ridContext.get(key));
+          }
+        }
+      }
 
       context.updateMetric("recordReads", +1);
 
-      if (record == null || record.getRecordType() != ODocument.RECORD_TYPE)
+      if (record == null || ORecordInternal.getRecordType(record) != ODocument.RECORD_TYPE)
         // SKIP IT
         return true;
 
@@ -1121,7 +1112,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OResultSet result = (OResultSet) getResult();
 
     // BROWSE ALL THE RECORDS ON CURRENT THREAD BUT DELEGATE UNMARSHALLING AND FILTER TO A THREAD POOL
-    final ODatabaseRecord db = getDatabase();
+    final ODatabaseRecordInternal db = getDatabase();
 
     if (limit > -1) {
       if (result != null)
@@ -1275,6 +1266,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           context.setVariable("$limit", limit);
           cursor = operator.executeIndexQuery(context, index, keyParams, ascSortOrder);
+        } catch (OIndexEngineException e) {
+          throw e;
         } catch (Exception e) {
           OLogManager
               .instance()
@@ -1390,7 +1383,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final ODocument doc = new ODocument().setOrdered(true);
       doc.field("key", entryRecord.getKey());
       doc.field("rid", entryRecord.getValue().getIdentity());
-      doc.unsetDirty();
+      ORecordInternal.unsetDirty(doc);
 
       if (!handleResult(doc))
         // LIMIT REACHED

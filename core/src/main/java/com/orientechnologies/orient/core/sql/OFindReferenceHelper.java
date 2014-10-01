@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
@@ -38,7 +42,6 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -88,7 +91,7 @@ public class OFindReferenceHelper {
 
   private static void browseCluster(final ODatabaseRecord iDatabase, final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map,
       final String iClusterName) {
-    for (ORecordInternal<?> record : iDatabase.browseCluster(iClusterName)) {
+    for (ORecord record : iDatabase.browseCluster(iClusterName)) {
       if (record instanceof ODocument) {
         try {
           for (String fieldName : ((ODocument) record).fieldNames()) {
@@ -115,7 +118,7 @@ public class OFindReferenceHelper {
   }
 
   private static void checkObject(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Object value,
-      final ORecord<?> iRootObject) {
+      final ORecord iRootObject) {
     if (value instanceof OIdentifiable) {
       checkRecord(iSourceRIDs, map, (OIdentifiable) value, iRootObject);
     } else if (value instanceof Collection<?>) {
@@ -126,7 +129,7 @@ public class OFindReferenceHelper {
   }
 
   private static void checkCollection(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Collection<?> values,
-      final ORecord<?> iRootObject) {
+      final ORecord iRootObject) {
     final Iterator<?> it;
     if (values instanceof OLazyObjectListInterface<?>) {
       ((OLazyObjectListInterface<?>) values).setConvertToRecord(false);
@@ -145,7 +148,7 @@ public class OFindReferenceHelper {
   }
 
   private static void checkMap(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final Map<?, ?> values,
-      final ORecord<?> iRootObject) {
+      final ORecord iRootObject) {
     final Iterator<?> it;
     if (values instanceof OLazyObjectMapInterface<?>) {
       ((OLazyObjectMapInterface<?>) values).setConvertToRecord(false);
@@ -161,7 +164,7 @@ public class OFindReferenceHelper {
   }
 
   private static void checkRecord(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final OIdentifiable value,
-      final ORecord<?> iRootObject) {
+      final ORecord iRootObject) {
     if (iSourceRIDs.contains(value.getIdentity()))
       map.get(value.getIdentity()).add(iRootObject.getIdentity());
   }

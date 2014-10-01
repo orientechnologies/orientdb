@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
@@ -99,12 +103,17 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     try {
       checkForKeyType(key);
       acquireExclusiveLock();
+      startStorageAtomicOperation();
       try {
         Set<OIdentifiable> values = indexEngine.get(key);
 
         if (values == null) {
           if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-            values = new OIndexRIDContainer(getName());
+            boolean durable = false;
+            if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+              durable = true;
+
+            values = new OIndexRIDContainer(getName(), durable);
           } else {
             values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
             ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
@@ -112,13 +121,17 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         }
 
         if (!iSingleValue.getIdentity().isValid())
-          ((ORecord<?>) iSingleValue).save();
+          ((ORecord) iSingleValue).save();
 
         values.add(iSingleValue.getIdentity());
         indexEngine.put(key, values);
 
+        commitStorageAtomicOperation();
         return this;
 
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during insertion of key in index", e);
       } finally {
         releaseExclusiveLock();
       }
@@ -143,7 +156,11 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     if (values == null) {
       if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-        values = new OIndexRIDContainer(getName());
+        boolean durable = false;
+        if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+          durable = true;
+
+        values = new OIndexRIDContainer(getName(), durable);
       } else {
         values = new OMVRBTreeRIDSet(OGlobalConfiguration.MVRBTREE_RID_BINARY_THRESHOLD.getValueAsInteger());
         ((OMVRBTreeRIDSet) values).setAutoConvertToRecord(false);
@@ -166,23 +183,32 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     try {
       acquireExclusiveLock();
+      startStorageAtomicOperation();
       try {
 
         Set<OIdentifiable> values = indexEngine.get(key);
 
-        if (values == null)
+        if (values == null) {
+          commitStorageAtomicOperation();
           return false;
+        }
 
         if (values.remove(value)) {
           if (values.isEmpty())
             indexEngine.remove(key);
           else
             indexEngine.put(key, values);
+
+          commitStorageAtomicOperation();
           return true;
         }
 
+        commitStorageAtomicOperation();
         return false;
 
+      } catch (RuntimeException e) {
+        rollbackStorageAtomicOperation();
+        throw new OIndexException("Error during removal of entry by key", e);
       } finally {
         releaseExclusiveLock();
       }
@@ -239,7 +265,8 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
   protected OStreamSerializer determineValueSerializer() {
     if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
-      return OStreamSerializerSBTreeIndexRIDContainer.INSTANCE;
+      return (OStreamSerializer) getDatabase().getSerializerFactory().getObjectSerializer(
+          OStreamSerializerSBTreeIndexRIDContainer.ID);
     else
       return OStreamSerializerListRID.INSTANCE;
   }
@@ -393,19 +420,19 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     }
   }
 
-	@Override
-	public OIndexCursor descCursor() {
-		checkForRebuild();
+  @Override
+  public OIndexCursor descCursor() {
+    checkForRebuild();
 
-		acquireSharedLock();
-		try {
-			return indexEngine.descCursor(MultiValuesTransformer.INSTANCE);
-		} finally {
-			releaseSharedLock();
-		}
-	}
+    acquireSharedLock();
+    try {
+      return indexEngine.descCursor(MultiValuesTransformer.INSTANCE);
+    } finally {
+      releaseSharedLock();
+    }
+  }
 
-	private static final class MultiValuesTransformer implements OIndexEngine.ValuesTransformer<Set<OIdentifiable>> {
+  private static final class MultiValuesTransformer implements OIndexEngine.ValuesTransformer<Set<OIdentifiable>> {
     private static final MultiValuesTransformer INSTANCE = new MultiValuesTransformer();
 
     @Override

@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.parser.OStringParser;
@@ -60,7 +64,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   private int                  recordCount     = 0;
   private String               lockStrategy    = "NONE";
   private String               returning       = "COUNT";
-  private List<ORecord<?>>     allDeletedRecords;
+  private List<ORecord>     allDeletedRecords;
 
   private OSQLFilter           compiledFilter;
 
@@ -139,7 +143,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     if (!returning.equalsIgnoreCase("COUNT"))
-      allDeletedRecords = new ArrayList<ORecord<?>>();
+      allDeletedRecords = new ArrayList<ORecord>();
 
     if (query != null) {
       // AGAINST CLUSTERS AND CLASSES
@@ -176,13 +180,13 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
         } else {
           // RETURNS ALL THE DELETED RECORDS
           OIndexCursor cursor = index.cursor();
-          Map.Entry<Object, OIdentifiable> entry = cursor.nextEntry();
+          Map.Entry<Object, OIdentifiable> entry;
 
-          while (entry != null) {
+          while ((entry=cursor.nextEntry()) != null) {
             OIdentifiable rec = entry.getValue();
             rec = rec.getRecord();
             if (rec != null)
-              allDeletedRecords.add((ORecord<?>) rec);
+              allDeletedRecords.add((ORecord) rec);
           }
 
           index.clear();
@@ -231,7 +235,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
    * Delete the current record.
    */
   public boolean result(final Object iRecord) {
-    final ORecordAbstract<?> record = (ORecordAbstract<?>) iRecord;
+    final ORecordAbstract record = (ORecordAbstract) iRecord;
 
     try {
       if (record.getIdentity().isValid()) {
@@ -251,8 +255,9 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     }
   }
 
-  public boolean isReplicated() {
-    return indexName != null;
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return indexName != null ? DISTRIBUTED_EXECUTION_MODE.REPLICATE : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   public String getSyntax() {

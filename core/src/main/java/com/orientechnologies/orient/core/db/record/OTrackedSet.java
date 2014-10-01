@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db.record;
 
 import java.io.Serializable;
@@ -28,6 +32,7 @@ import java.util.WeakHashMap;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Implementation of Set bound to a source ORecord object to keep track of changes. This avoid to call the makeDirty() by hand when
@@ -38,21 +43,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  */
 @SuppressWarnings("serial")
 public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrackedMultiValue<T, T>, Serializable {
-  protected final ORecord<?>                   sourceRecord;
+  protected final ORecord                      sourceRecord;
   private final boolean                        embeddedCollection;
   protected Class<?>                           genericClass;
   private STATUS                               status          = STATUS.NOT_LOADED;
   private Set<OMultiValueChangeListener<T, T>> changeListeners = Collections
                                                                    .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<T, T>, Boolean>());
 
-  public OTrackedSet(final ORecord<?> iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
+  public OTrackedSet(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
     this(iRecord);
     genericClass = cls;
     if (iOrigin != null && !iOrigin.isEmpty())
       addAll(iOrigin);
   }
 
-  public OTrackedSet(final ORecord<?> iSourceRecord) {
+  public OTrackedSet(final ORecord iSourceRecord) {
     this.sourceRecord = iSourceRecord;
     embeddedCollection = this.getClass().equals(OTrackedSet.class);
   }
@@ -101,7 +106,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   public boolean remove(final Object o) {
     if (super.remove(o)) {
       if (o instanceof ODocument)
-        ((ODocument) o).removeOwner(this);
+        ODocumentInternal.removeOwner((ODocument) o, this);
 
       fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, (T) o, null, (T) o));
       return true;
@@ -120,7 +125,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     if (origValues == null) {
       for (final T item : this) {
         if (item instanceof ODocument)
-          ((ODocument) item).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) item, this);
       }
     }
 
@@ -129,7 +134,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
     if (origValues != null) {
       for (final T item : origValues) {
         if (item instanceof ODocument)
-          ((ODocument) item).removeOwner(this);
+          ODocumentInternal.removeOwner((ODocument) item, this);
 
         fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, item, null, item));
       }
@@ -141,7 +146,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   @SuppressWarnings("unchecked")
   public OTrackedSet<T> setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ((ORecordInternal<?>) sourceRecord).isContentChanged()))
+        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
       sourceRecord.setDirty();
     return this;
   }
@@ -152,10 +157,10 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       sourceRecord.setDirtyNoChanged();
   }
 
-  public void onBeforeIdentityChanged(ORecord<?> iRecord) {
+  public void onBeforeIdentityChanged(ORecord iRecord) {
   }
 
-  public void onAfterIdentityChanged(ORecord<?> iRecord) {
+  public void onAfterIdentityChanged(ORecord iRecord) {
   }
 
   public STATUS getInternalStatus() {
@@ -218,7 +223,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
   private void addOwnerToEmbeddedDoc(T e) {
     if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
-      ((ODocument) e).addOwner(this);
+      ODocumentInternal.addOwner((ODocument) e, this);
   }
 
   private Object writeReplace() {

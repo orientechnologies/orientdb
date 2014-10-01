@@ -1,24 +1,29 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -31,7 +36,6 @@ import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -68,7 +72,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected ORecordFactoryManager                                                      recordFactoryManager   = new ORecordFactoryManager();
   protected ORecordConflictStrategyFactory                                             recordConflictStrategy = new ORecordConflictStrategyFactory();
   protected OrientShutdownHook                                                         shutdownHook;
-  protected OMemoryWatchDog                                                            memoryWatchDog;
   protected OProfilerMBean                                                             profiler               = new OProfiler();
   protected ODatabaseThreadLocalFactory                                                databaseThreadFactory;
   protected volatile boolean                                                           active                 = false;
@@ -86,10 +89,9 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public static String getHomePath() {
     String v = System.getProperty("orient.home");
+
     if (v == null)
-      v = System.getProperty(ORIENTDB_HOME);
-    if (v == null)
-      v = System.getenv(ORIENTDB_HOME);
+      v = OSystemVariableResolver.resolveVariable(ORIENTDB_HOME);
 
     return OFileUtils.getPath(v);
   }
@@ -160,8 +162,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
         OGlobalConfiguration.dumpConfiguration(System.out);
 
-      memoryWatchDog = new OMemoryWatchDog();
-
       active = true;
       return this;
 
@@ -213,17 +213,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       timer.purge();
 
       profiler.shutdown();
-
-      if (memoryWatchDog != null) {
-        // SHUTDOWN IT AND WAIT FOR COMPETITION
-        memoryWatchDog.sendShutdown();
-        try {
-          memoryWatchDog.join();
-        } catch (InterruptedException e) {
-        } finally {
-          memoryWatchDog = null;
-        }
-      }
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
@@ -476,10 +465,6 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public ODatabaseThreadLocalFactory getDatabaseThreadFactory() {
     return databaseThreadFactory;
-  }
-
-  public OMemoryWatchDog getMemoryWatchDog() {
-    return memoryWatchDog;
   }
 
   public ORecordFactoryManager getRecordFactoryManager() {

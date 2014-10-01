@@ -33,13 +33,13 @@ import com.orientechnologies.orient.core.record.ORecord;
 public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OObjectLazyEnumSerializer<List<TYPE>>, Serializable {
   private static final long     serialVersionUID = -8541477416577361792L;
 
-  private ORecord<?>            sourceRecord;
+  private ORecord            sourceRecord;
   private final List<Object>    serializedList;
   private final ArrayList<TYPE> list             = new ArrayList<TYPE>();
   private boolean               converted        = false;
   private final Class<Enum>     enumClass;
 
-  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final List<Object> iRecordList) {
+  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord iSourceRecord, final List<Object> iRecordList) {
     this.sourceRecord = iSourceRecord;
     this.serializedList = iRecordList;
     this.enumClass = iEnumClass;
@@ -48,7 +48,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
     }
   }
 
-  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final List<Object> iRecordList,
+  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord iSourceRecord, final List<Object> iRecordList,
       final Collection<? extends TYPE> iSourceList) {
     this.sourceRecord = iSourceRecord;
     this.serializedList = iRecordList;

@@ -71,7 +71,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc.field("name"), "Luca");
     Assert.assertEquals(doc.field("surname"), "Smith");
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
-    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
+    Assert.assertEquals(doc.field("location"), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
 
     doc = (ODocument) database.command(
@@ -102,7 +102,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc.field("name"), "Marc");
     Assert.assertEquals(doc.field("surname"), "Smith");
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
-    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
+    Assert.assertEquals(doc.field("location"), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
 
     database.delete(doc);
@@ -273,7 +273,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Map<String, String> map = record.field("map");
     Assert.assertTrue(map.get("key").equals("value"));
     Assert.assertEquals(record.field("dir"), "");
-    Assert.assertEquals(record.field("user", OType.LINK), new ORecordId(3, positions.get(0)));
+    Assert.assertEquals(record.field("user"), new ORecordId(3, positions.get(0)));
   }
 
   public void insertSelect() {
@@ -300,7 +300,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     for (int i = 0; i < 100; i++) {
       if (!iteratorCluster.hasNext())
         break;
-      ORecord<?> doc = iteratorCluster.next();
+      ORecord doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());
     }
     return positions;

@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.object.db;
 
 import java.lang.reflect.Field;
@@ -26,12 +30,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ThreadPoolExecutor;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -59,7 +64,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements
-    ODatabaseSchemaAware<T> {
+    ODatabaseSchemaAware<T>, ODatabaseComplexInternal<T> {
   protected IdentityHashMap<Object, ODocument> objects2Records = new IdentityHashMap<Object, ODocument>();
   protected IdentityHashMap<ODocument, T>      records2Objects = new IdentityHashMap<ODocument, T>();
   protected HashMap<ORID, ODocument>           rid2Records     = new HashMap<ORID, ODocument>();
@@ -125,7 +130,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
       final Set<ORID> rids = new HashSet<ORID>(rid2Records.keySet());
 
-      ORecord<?> record;
+      ORecord record;
       Object object;
       for (ORID rid : rids) {
         if (rid.isTemporary()) {
@@ -175,7 +180,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     if (record == null)
       return;
 
-    record.unsetDirty();
+    ORecordInternal.unsetDirty(record);
   }
 
   public void setInternal(final ATTRIBUTES attribute, final Object iValue) {
@@ -260,7 +265,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return (RET) resultPojo;
   }
 
-  public ODatabaseComplex<T> delete(final ORecordInternal<?> iRecord) {
+  public ODatabaseComplex<T> delete(final ORecord iRecord) {
     underlying.delete(iRecord);
     return this;
   }
@@ -437,7 +442,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   /**
    * Register a new POJO
    */
-  public void registerUserObject(final Object iObject, final ORecordInternal<?> iRecord) {
+  public void registerUserObject(final Object iObject, final ORecord iRecord) {
     if (!(iRecord instanceof ODocument))
       return;
 

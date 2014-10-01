@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.record;
 
 import java.io.Serializable;
@@ -22,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
@@ -29,7 +34,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * Generic record representation. The object can be reused across multiple calls to the database by using the {@link #reset()}
  * method.
  */
-public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable {
+public interface ORecord extends ORecordElement, OIdentifiable, Serializable ,OSerializableStream {
   /**
    * Removes all the dependencies with other records. All the relationships remain in form of RecordID. If some links contain dirty
    * records, the detach cannot be complete and this method returns false.
@@ -44,7 +49,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    * 
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <RET extends ORecord<T>> RET reset();
+  public <RET extends ORecord> RET reset();
 
   /**
    * Unloads current record. All information are lost but the record identity. At the next access the record will be auto-reloaded.
@@ -52,21 +57,21 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    * 
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <RET extends ORecord<T>> RET unload();
+  public <RET extends ORecord> RET unload();
 
   /**
    * All the fields are deleted but the record identity is maintained. Use this to remove all the document's fields.
    * 
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <RET extends ORecord<T>> RET clear();
+  public <RET extends ORecord> RET clear();
 
   /**
    * Creates a copy of the record. All the record contents are copied.
    * 
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <RET extends ORecord<T>> RET copy();
+  public <RET extends ORecord> RET copy();
 
   /**
    * Returns the record identity as &lt;cluster-id&gt;:&lt;cluster-position&gt;
@@ -113,7 +118,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    * 
    * @return The record loaded or itself if the record has been reloaded from the storage. Useful to call methods in chain.
    */
-  public <RET extends ORecord<T>> RET load() throws ORecordNotFoundException;
+  public <RET extends ORecord> RET load() throws ORecordNotFoundException;
 
   /**
    * Loads the record content in memory. No cache is used. If the record is dirty, then it returns to the original content. If the
@@ -121,7 +126,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    * 
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <RET extends ORecord<T>> RET reload() throws ORecordNotFoundException;
+  public <RET extends ORecord> RET reload() throws ORecordNotFoundException;
 
   /**
    * Saves in-memory changes to the database. Behavior depends by the current running transaction if any. If no transaction is
@@ -132,7 +137,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    * 
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <RET extends ORecord<T>> RET save();
+  public <RET extends ORecord> RET save();
 
   /**
    * Saves in-memory changes to the database defining a specific cluster where to save it. Behavior depends by the current running
@@ -143,11 +148,11 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    * 
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <RET extends ORecord<T>> RET save(String iCluster);
+  public <RET extends ORecord> RET save(String iCluster);
 
-  public <RET extends ORecord<T>> RET save(boolean forceCreate);
+  public <RET extends ORecord> RET save(boolean forceCreate);
 
-  public <RET extends ORecord<T>> RET save(String iCluster, boolean forceCreate);
+  public <RET extends ORecord> RET save(String iCluster, boolean forceCreate);
 
   /**
    * Deletes the record from the database. Behavior depends by the current running transaction if any. If no transaction is running
@@ -158,7 +163,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    * 
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <RET extends ORecord<T>> RET delete();
+  public <RET extends ORecord> RET delete();
 
   /**
    * Fills the record parsing the content in JSON format.
@@ -167,7 +172,7 @@ public interface ORecord<T> extends ORecordElement, OIdentifiable, Serializable 
    *          Object content in JSON format
    * @return The Object instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <RET extends ORecord<T>> RET fromJSON(String iJson);
+  public <RET extends ORecord> RET fromJSON(String iJson);
 
   /**
    * Exports the record in JSON format.

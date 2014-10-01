@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.record.impl;
 
 import java.io.IOException;
@@ -22,6 +26,7 @@ import java.util.Arrays;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -36,7 +41,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
  * using the reset() at every re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ORecordBytes extends ORecordAbstract<byte[]> {
+public class ORecordBytes extends ORecordAbstract {
   private static final long   serialVersionUID = 1L;
 
   public static final byte    RECORD_TYPE      = 'b';
@@ -46,12 +51,12 @@ public class ORecordBytes extends ORecordAbstract<byte[]> {
     setup();
   }
 
-  public ORecordBytes(final ODatabaseRecord iDatabase) {
+  public ORecordBytes(final ODatabaseRecordInternal iDatabase) {
     setup();
     ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
   }
 
-  public ORecordBytes(final ODatabaseRecord iDatabase, final byte[] iSource) {
+  public ORecordBytes(final ODatabaseRecordInternal iDatabase, final byte[] iSource) {
     this(iSource);
     ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
   }

@@ -21,10 +21,7 @@ import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-
-import java.util.Collection;
-import java.util.Map;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Fetch listener for {@class ONetworkBinaryProtocol} class
@@ -39,22 +36,22 @@ public abstract class ORemoteFetchListener implements OFetchListener {
   public ORemoteFetchListener() {
   }
 
-  protected abstract void sendRecord(ORecord<?> iLinked);
+  protected abstract void sendRecord(ORecord iLinked);
 
-  public void processStandardField(ORecordSchemaAware<?> iRecord, Object iFieldValue, String iFieldName, OFetchContext iContext,
+  public void processStandardField(ODocument iRecord, Object iFieldValue, String iFieldName, OFetchContext iContext,
       final Object iusObject, final String iFormat) throws OFetchException {
   }
 
-  public void parseLinked(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
+  public void parseLinked(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
       OFetchContext iContext) throws OFetchException {
   }
 
-  public void parseLinkedCollectionValue(ORecordSchemaAware<?> iRootRecord, OIdentifiable iLinked, Object iUserObject,
-      String iFieldName, OFetchContext iContext) throws OFetchException {
+  public void parseLinkedCollectionValue(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
+      OFetchContext iContext) throws OFetchException {
   }
 
-  public Object fetchLinkedMapEntry(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, String iKey,
-      ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
+  public Object fetchLinkedMapEntry(ODocument iRoot, Object iUserObject, String iFieldName, String iKey, ODocument iLinked,
+      OFetchContext iContext) throws OFetchException {
     if (iLinked.getIdentity().isValid()) {
       sendRecord(iLinked);
       return true;
@@ -62,8 +59,8 @@ public abstract class ORemoteFetchListener implements OFetchListener {
     return null;
   }
 
-  public Object fetchLinkedCollectionValue(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName,
-      ORecordSchemaAware<?> iLinked, OFetchContext iContext) throws OFetchException {
+  public Object fetchLinkedCollectionValue(ODocument iRoot, Object iUserObject, String iFieldName, ODocument iLinked,
+      OFetchContext iContext) throws OFetchException {
     if (iLinked.getIdentity().isValid()) {
       sendRecord(iLinked);
       return true;
@@ -71,25 +68,9 @@ public abstract class ORemoteFetchListener implements OFetchListener {
     return null;
   }
 
-  @SuppressWarnings("unchecked")
-  public Object fetchLinked(ORecordSchemaAware<?> iRoot, Object iUserObject, String iFieldName, ORecordSchemaAware<?> iLinked,
-      OFetchContext iContext) throws OFetchException {
-    if (iLinked instanceof ORecord<?>) {
-      sendRecord(iLinked);
-      return true;
-    }
-    // HOW THIS CODE CAN HAVE SENSE?
-    else if (iLinked instanceof Collection<?>) {
-      for (ORecord<?> rec : (Collection<ORecord<?>>) iLinked)
-        sendRecord(rec);
-      return true;
-    }
-    // HOW THIS CODE CAN HAVE SENSE?
-    else if (iLinked instanceof Map<?, ?>) {
-      for (ORecord<?> rec : ((Map<String, ? extends ORecord<?>>) iLinked).values())
-        sendRecord(rec);
-      return true;
-    } else
-      throw new OFetchException("Unrecognized type while fetching records: " + iLinked);
+  public Object fetchLinked(ODocument iRoot, Object iUserObject, String iFieldName, ODocument iLinked, OFetchContext iContext)
+      throws OFetchException {
+    sendRecord(iLinked);
+    return true;
   }
 }

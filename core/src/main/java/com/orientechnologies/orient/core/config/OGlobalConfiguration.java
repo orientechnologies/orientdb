@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.io.OFileUtils;
@@ -23,6 +27,10 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
@@ -50,17 +58,15 @@ public enum OGlobalConfiguration {
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
 
-  MEMORY_AUTOFREE_CHECK_EVERY("memory.autoFreeCheckEvery", "Time to check if memory resources are low", Long.class, 10000),
-
-  MEMORY_AUTOFREE_HEAP_THRESHOLD(
-      "memory.autoFreeHeapThreshold",
-      "Maximum size of used heap to let caches to keep records in RAM. Can be expressed in terms of absolute bytes or percentage in comparison to the maximum heap. For example 80% means that caches stop collecting records in RAM when free heap is lower than 20%",
-      String.class, "70%"),
-
   DIRECT_MEMORY_SAFE_MODE(
       "memory.directMemory.safeMode",
       "Indicates whether to do perform range check before each direct memory update, it is true by default, "
           + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
+      Boolean.class, true),
+
+  DIRECT_MEMORY_ONLY_ALIGNED_ACCESS(
+      "memory.directMemory.onlyAlignedMemoryAccess",
+      "Some architectures does not allow unaligned memory access or suffer from speed degradation, on this platforms flag should be set to true",
       Boolean.class, true),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
@@ -115,6 +121,9 @@ public enum OGlobalConfiguration {
       "storage.wal.reportAfterOperationsDuringRestore",
       "Amount of processed log operations, after which status of data restore procedure will be printed 0 or negative value, means that status will not be printed",
       Integer.class, 10000),
+
+  WAL_RESTORE_BATCH_SIZE("storage.wal.restore.batchSize",
+      "Amount of wal records are read at once in single batch during restore procedure", Integer.class, 1000),
 
   WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages", Integer.class, 1000),
 
@@ -349,6 +358,8 @@ public enum OGlobalConfiguration {
 
   NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 15000),
 
+  NETWORK_REQUEST_TIMEOUT("network.requestTimeout", "Request completion timeout in ms ", Integer.class, 3600000 /* one hour */),
+
   NETWORK_SOCKET_RETRY("network.retry", "Number of times the client retries its connection to the server on failure",
       Integer.class, 5),
 
@@ -422,7 +433,7 @@ public enum OGlobalConfiguration {
   // CLIENT
   CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
 
-  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 20),
+  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 100),
 
   CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
       "Maximum time which client should wait connection from the pool", Integer.class, 5000),
@@ -580,8 +591,39 @@ public enum OGlobalConfiguration {
   }
 
   private static void autoConfig() {
-    System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
-    System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
+    if (System.getProperty(DISK_CACHE_SIZE.key) == null) {
+      autoConfigDiskCacheSize();
+    }
+  }
+
+  private static void autoConfigDiskCacheSize() {
+    final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
+    try {
+      final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
+      memorySize.setAccessible(true);
+      final long totalMemory = (Long) memorySize.invoke(mxBean);
+
+      final long maxMemory = Runtime.getRuntime().maxMemory();
+
+      if (maxMemory > 512L * 1024 * 1024) {
+        OLogManager
+            .instance()
+            .warn(
+                null,
+                "Your maximum heap size is "
+                    + OFileUtils.getSizeAsString(maxMemory)
+                    + ", but OrientDB uses off-heap memory to avoid GC pauses. "
+                    + "In the case OrientDB is running as standalone, we recommend to use smaller amount of heap memory to let OrientDB using the rest as off-heap. "
+                    + "512 megabytes is recommended value of heap size.");
+      }
+
+      final long result = (totalMemory - maxMemory - 2L * 1024 * 1024 * 1024) / (1024 * 1024);
+      if (result > DISK_CACHE_SIZE.getValueAsLong())
+        DISK_CACHE_SIZE.setValue(result);
+    } catch (NoSuchMethodException e) {
+    } catch (InvocationTargetException e) {
+    } catch (IllegalAccessException e) {
+    }
   }
 
   public Object getValue() {

@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -458,9 +462,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readVersion(), network.readByte());
 
           final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-          ORecordInternal<?> record;
+          ORecord record;
           while (network.readByte() == 2) {
-            record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+            record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
 
             if (database != null)
               // PUT IN THE CLIENT LOCAL CACHE
@@ -945,7 +949,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
               // ASYNCH: READ ONE RECORD AT TIME
               while ((status = network.readByte()) > 0) {
-                final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+                final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
                 if (record == null)
                   continue;
 
@@ -972,8 +976,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
               case 'r':
                 result = OChannelBinaryProtocol.readIdentifiable(network);
-                if (result instanceof ORecord<?>)
-                  database.getLocalCache().updateRecord((ORecordInternal<?>) result);
+                if (result instanceof ORecord)
+                  database.getLocalCache().updateRecord((ORecord) result);
                 break;
 
               case 'l':
@@ -981,8 +985,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>(tot);
                 for (int i = 0; i < tot; ++i) {
                   final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
-                  if (resultItem instanceof ORecord<?>)
-                    database.getLocalCache().updateRecord((ORecordInternal<?>) resultItem);
+                  if (resultItem instanceof ORecord)
+                    database.getLocalCache().updateRecord((ORecord) resultItem);
                   list.add(resultItem);
                 }
                 result = list;
@@ -1002,7 +1006,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 // LOAD THE FETCHED RECORDS IN CACHE
                 byte status;
                 while ((status = network.readByte()) > 0) {
-                  final ORecordInternal<?> record = (ORecordInternal<?>) OChannelBinaryProtocol.readIdentifiable(network);
+                  final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
                   if (record != null && status == 2)
                     // PUT IN THE CLIENT LOCAL CACHE
                     database.getLocalCache().updateRecord(record);
@@ -1108,7 +1112,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         // SET ALL THE RECORDS AS UNDIRTY
         for (ORecordOperation txEntry : iTx.getAllRecordEntries())
-          txEntry.getRecord().unsetDirty();
+          ORecordInternal.unsetDirty(txEntry.getRecord());
 
         // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. USE THE STRATEGY TO ALWAYS REMOVE ALL THE RECORDS SINCE THEY COULD BE
         // CHANGED AS CONTENT IN CASE OF TREE AND GRAPH DUE TO CROSS REFERENCES
@@ -1634,6 +1638,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       // LOOK FOR LOAD BALANCING DNS TXT RECORD
       final String primaryServer = serverURLs.get(0);
 
+      OLogManager.instance().debug(this, "Retrieving URLs from DNS '%s' (timeout=%d)...", primaryServer,
+          OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsInteger());
+
       try {
         final Hashtable<String, String> env = new Hashtable<String, String>();
         env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
@@ -1649,6 +1656,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (configuration.startsWith(""))
             configuration = configuration.substring(1, configuration.length() - 1);
           if (configuration != null) {
+            serverURLs.clear();
             final String[] parts = configuration.split(" ");
             for (String part : parts) {
               if (part.startsWith("s=")) {
@@ -1868,7 +1876,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     iNetwork.writeByte((byte) 1);
     iNetwork.writeByte(txEntry.type);
     iNetwork.writeRID(txEntry.getRecord().getIdentity());
-    iNetwork.writeByte(txEntry.getRecord().getRecordType());
+    iNetwork.writeByte(ORecordInternal.getRecordType(txEntry.getRecord()));
 
     switch (txEntry.type) {
     case ORecordOperation.CREATED:
@@ -1879,7 +1887,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       iNetwork.writeVersion(txEntry.getRecord().getRecordVersion());
       iNetwork.writeBytes(stream);
       if (iNetwork.getSrvProtocolVersion() >= 23)
-        iNetwork.writeBoolean(txEntry.getRecord().isContentChanged());
+        iNetwork.writeBoolean(ORecordInternal.isContentChanged(txEntry.getRecord()));
       break;
 
     case ORecordOperation.DELETED:

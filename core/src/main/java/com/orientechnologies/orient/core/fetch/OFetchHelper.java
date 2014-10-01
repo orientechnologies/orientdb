@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.fetch;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
@@ -22,8 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
@@ -44,8 +47,7 @@ import java.util.Map;
  * @author Claudio Tesoriero (giastfader @ github)
  */
 public class OFetchHelper {
-  public static final String   ROOT_FETCH = "*";
-  private static final boolean debug      = false;
+  public static final String ROOT_FETCH = "*";
 
   public static Map<String, Integer> buildFetchPlan(final String iFetchPlan) {
     final Map<String, Integer> fetchPlan = new HashMap<String, Integer>();
@@ -68,7 +70,7 @@ public class OFetchHelper {
     return fetchPlan;
   }
 
-  public static void fetch(final ORecordInternal<?> iRootRecord, final Object iUserObject, final Map<String, Integer> iFetchPlan,
+  public static void fetch(final ORecord iRootRecord, final Object iUserObject, final Map<String, Integer> iFetchPlan,
       final OFetchListener iListener, final OFetchContext iContext, final String iFormat) {
     try {
       if (iRootRecord instanceof ODocument) {
@@ -131,17 +133,8 @@ public class OFetchHelper {
   }
 
   private static int getDepthLevel(final Map<String, Integer> iFetchPlan, final String iFieldPath) {
-    if (debug) {
-      System.out.println("     ++++ getDepthLevel start");
-      System.out.println("     +++++ iFetchPlan: " + iFetchPlan);
-      System.out.println("     +++++ iFieldPath: " + iFieldPath);
-    }
     Integer depthLevel = iFetchPlan.get(OFetchHelper.ROOT_FETCH);
-    if (debug)
-      System.out.println("     +++++ depthLevel (root_fetch): " + depthLevel);
     for (String fieldFetchDefinition : iFetchPlan.keySet()) {
-      if (debug)
-        System.out.println("     .......... fieldFetchDefinition: " + fieldFetchDefinition);
       if (iFieldPath.equals(fieldFetchDefinition)) {
         // GET THE FETCH PLAN FOR THE GENERIC FIELD IF SPECIFIED
         depthLevel = iFetchPlan.get(fieldFetchDefinition);
@@ -152,13 +145,12 @@ public class OFetchHelper {
         break;
       }
     }
-    if (debug)
-      System.out.println("     ..... depthLevel: " + depthLevel);
+
     return depthLevel.intValue();
   }
 
-  public static void processRecordRidMap(final ORecordSchemaAware<?> record, Map<String, Integer> iFetchPlan,
-      final int iCurrentLevel, final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
+  public static void processRecordRidMap(final ODocument record, Map<String, Integer> iFetchPlan, final int iCurrentLevel,
+      final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
       final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
     if (iFetchPlan == null)
       return;
@@ -204,10 +196,9 @@ public class OFetchHelper {
     }
   }
 
-  private static void fetchRidMap(final ORecordSchemaAware<?> iRootRecord, final Map<String, Integer> iFetchPlan,
-      final Object fieldValue, final String fieldName, final int iCurrentLevel, final int iLevelFromRoot,
-      final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot,
-      final OFetchContext iContext) throws IOException {
+  private static void fetchRidMap(final ODocument iRootRecord, final Map<String, Integer> iFetchPlan, final Object fieldValue,
+      final String fieldName, final int iCurrentLevel, final int iLevelFromRoot, final int iFieldDepthLevel,
+      final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
     if (fieldValue == null) {
       return;
     } else if (fieldValue instanceof ODocument) {
@@ -302,33 +293,15 @@ public class OFetchHelper {
     Object fieldValue;
 
     iContext.onBeforeFetch(record);
-    if (debug) {
-      System.out.println("processRecord start");
-      System.out.println("iFieldDepthLevel: " + iFieldDepthLevel);
-      System.out.println("record: " + record.toString());
-      System.out.println("iFetchPlan: " + iFetchPlan);
-      System.out.println("iCurrentLevel: " + iCurrentLevel);
-      System.out.println("iLevelFromRoot: " + iLevelFromRoot);
-      System.out.println("iCurrentLevel: " + iCurrentLevel);
-      System.out.println("parsedRecords: " + parsedRecords);
-      System.out.println("iFieldPathFromRoot: " + iFieldPathFromRoot);
-    }
 
     for (String fieldName : record.fieldNames()) {
       String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
-      if (debug) {
-        System.out.println("     fieldName: " + fieldName);
-        System.out.println("     fieldPath: " + fieldPath);
-      }
       int depthLevel;
       depthLevel = getDepthLevel(iFetchPlan, fieldPath);
       if (depthLevel == -2)
         continue;
       if (iFieldDepthLevel > -1)
         depthLevel = iFieldDepthLevel;
-
-      if (debug)
-        System.out.println("     depthLevel: " + depthLevel);
 
       fieldValue = record.rawField(fieldName);
 
@@ -391,10 +364,10 @@ public class OFetchHelper {
     return isEmbedded;
   }
 
-  private static void fetch(final ORecordSchemaAware<?> iRootRecord, final Object iUserObject,
-      final Map<String, Integer> iFetchPlan, final Object fieldValue, final String fieldName, final int iCurrentLevel,
-      final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final int depthLevel,
-      final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext) throws IOException {
+  private static void fetch(final ODocument iRootRecord, final Object iUserObject, final Map<String, Integer> iFetchPlan,
+      final Object fieldValue, final String fieldName, final int iCurrentLevel, final int iLevelFromRoot,
+      final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final int depthLevel, final String iFieldPathFromRoot,
+      final OFetchListener iListener, final OFetchContext iContext) throws IOException {
 
     int currentLevel = iCurrentLevel + 1;
     int fieldDepthLevel = iFieldDepthLevel;
@@ -426,10 +399,10 @@ public class OFetchHelper {
   }
 
   @SuppressWarnings("unchecked")
-  private static void fetchMap(final ORecordSchemaAware<?> iRootRecord, final Object iUserObject,
-      final Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
-      final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
-      final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext) throws IOException {
+  private static void fetchMap(final ODocument iRootRecord, final Object iUserObject, final Map<String, Integer> iFetchPlan,
+      Object fieldValue, String fieldName, final int iCurrentLevel, final int iLevelFromRoot, final int iFieldDepthLevel,
+      final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot, final OFetchListener iListener,
+      final OFetchContext iContext) throws IOException {
     final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
     iContext.onBeforeMap(iRootRecord, fieldName, iUserObject);
 
@@ -437,7 +410,7 @@ public class OFetchHelper {
       final Object o = linked.get(key);
 
       if (o instanceof OIdentifiable) {
-        final ORecordInternal<?> r = ((OIdentifiable) o).getRecord();
+        final ORecord r = ((OIdentifiable) o).getRecord();
         if (r != null) {
           if (r instanceof ODocument) {
             // GO RECURSIVELY
@@ -470,10 +443,10 @@ public class OFetchHelper {
     iContext.onAfterMap(iRootRecord, fieldName, iUserObject);
   }
 
-  private static void fetchArray(final ORecordSchemaAware<?> iRootRecord, final Object iUserObject,
-      final Map<String, Integer> iFetchPlan, Object fieldValue, String fieldName, final int iCurrentLevel,
-      final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
-      final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext) throws IOException {
+  private static void fetchArray(final ODocument iRootRecord, final Object iUserObject, final Map<String, Integer> iFetchPlan,
+      Object fieldValue, String fieldName, final int iCurrentLevel, final int iLevelFromRoot, final int iFieldDepthLevel,
+      final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot, final OFetchListener iListener,
+      final OFetchContext iContext) throws IOException {
     if (fieldValue instanceof ODocument[]) {
       final ODocument[] linked = (ODocument[]) fieldValue;
       iContext.onBeforeArray(iRootRecord, fieldName, iUserObject, linked);
@@ -498,10 +471,10 @@ public class OFetchHelper {
   }
 
   @SuppressWarnings("unchecked")
-  private static void fetchCollection(final ORecordSchemaAware<?> iRootRecord, final Object iUserObject,
-      final Map<String, Integer> iFetchPlan, final Object fieldValue, final String fieldName, final int iCurrentLevel,
-      final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
-      final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext) throws IOException {
+  private static void fetchCollection(final ODocument iRootRecord, final Object iUserObject, final Map<String, Integer> iFetchPlan,
+      final Object fieldValue, final String fieldName, final int iCurrentLevel, final int iLevelFromRoot,
+      final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot,
+      final OFetchListener iListener, final OFetchContext iContext) throws IOException {
     final Iterable<?> linked;
     if (fieldValue instanceof ODocument)
       linked = new OMVRBTreeRIDSet().fromDocument((ODocument) fieldValue);
@@ -566,10 +539,10 @@ public class OFetchHelper {
     }
   }
 
-  private static void fetchDocument(final ORecordSchemaAware<?> iRootRecord, final Object iUserObject,
-      final Map<String, Integer> iFetchPlan, final OIdentifiable fieldValue, final String fieldName, final int iCurrentLevel,
-      final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
-      final String iFieldPathFromRoot, final OFetchListener iListener, final OFetchContext iContext) throws IOException {
+  private static void fetchDocument(final ODocument iRootRecord, final Object iUserObject, final Map<String, Integer> iFetchPlan,
+      final OIdentifiable fieldValue, final String fieldName, final int iCurrentLevel, final int iLevelFromRoot,
+      final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot,
+      final OFetchListener iListener, final OFetchContext iContext) throws IOException {
     final Integer fieldDepthLevel = parsedRecords.get(fieldValue.getIdentity());
     if (!fieldValue.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
       removeParsedFromMap(parsedRecords, fieldValue);

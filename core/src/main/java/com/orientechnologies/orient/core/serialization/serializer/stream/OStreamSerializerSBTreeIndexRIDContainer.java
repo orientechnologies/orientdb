@@ -1,25 +1,26 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.serialization.types.OBooleanSerializer;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.serialization.types.*;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainerSBTree;
@@ -40,12 +41,14 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   public static final int                                      FILE_ID_OFFSET           = 0;
   public static final int                                      EMBEDDED_OFFSET          = FILE_ID_OFFSET
                                                                                             + OLongSerializer.LONG_SIZE;
-  public static final int                                      SBTREE_ROOTINDEX_OFFSET  = EMBEDDED_OFFSET
+  public static final int                                      DURABLE_OFFSET           = EMBEDDED_OFFSET
+                                                                                            + OBooleanSerializer.BOOLEAN_SIZE;
+  public static final int                                      SBTREE_ROOTINDEX_OFFSET  = DURABLE_OFFSET
                                                                                             + OBooleanSerializer.BOOLEAN_SIZE;
   public static final int                                      SBTREE_ROOTOFFSET_OFFSET = SBTREE_ROOTINDEX_OFFSET
                                                                                             + OLongSerializer.LONG_SIZE;
 
-  public static final int                                      EMBEDDED_SIZE_OFFSET     = EMBEDDED_OFFSET
+  public static final int                                      EMBEDDED_SIZE_OFFSET     = DURABLE_OFFSET
                                                                                             + OBooleanSerializer.BOOLEAN_SIZE;
   public static final int                                      EMBEDDED_VALUES_OFFSET   = EMBEDDED_SIZE_OFFSET
                                                                                             + OIntegerSerializer.INT_SIZE;
@@ -53,7 +56,7 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   public static final OLongSerializer                          LONG_SERIALIZER          = OLongSerializer.INSTANCE;
   public static final OBooleanSerializer                       BOOLEAN_SERIALIZER       = OBooleanSerializer.INSTANCE;
   public static final OIntegerSerializer                       INT_SERIALIZER           = OIntegerSerializer.INSTANCE;
-  public static final int                                      SBTREE_CONTAINER_SIZE    = OBooleanSerializer.BOOLEAN_SIZE + 2
+  public static final int                                      SBTREE_CONTAINER_SIZE    = 2 * OBooleanSerializer.BOOLEAN_SIZE + 2
                                                                                             * OLongSerializer.LONG_SIZE
                                                                                             + OIntegerSerializer.INT_SIZE;
   public static final OLinkSerializer                          LINK_SERIALIZER          = OLinkSerializer.INSTANCE;
@@ -120,7 +123,10 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
     LONG_SERIALIZER.serializeNative(object.getFileId(), stream, offset + FILE_ID_OFFSET);
 
     final boolean embedded = object.isEmbedded();
+    final boolean durable = object.isDurableNonTxMode();
+
     BOOLEAN_SERIALIZER.serializeNative(embedded, stream, offset + EMBEDDED_OFFSET);
+    BOOLEAN_SERIALIZER.serializeNative(durable, stream, offset + DURABLE_OFFSET);
 
     if (embedded) {
       INT_SERIALIZER.serializeNative(object.size(), stream, offset + EMBEDDED_SIZE_OFFSET);
@@ -141,6 +147,8 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   @Override
   public OIndexRIDContainer deserializeNativeObject(byte[] stream, int offset) {
     final long fileId = LONG_SERIALIZER.deserializeNative(stream, offset + FILE_ID_OFFSET);
+    final boolean durable = BOOLEAN_SERIALIZER.deserializeNative(stream, offset + DURABLE_OFFSET);
+
     if (BOOLEAN_SERIALIZER.deserializeNative(stream, offset + EMBEDDED_OFFSET)) {
       final int size = INT_SERIALIZER.deserializeNative(stream, offset + EMBEDDED_SIZE_OFFSET);
       final Set<OIdentifiable> underlying = new HashSet<OIdentifiable>(Math.max((int) (size / .75f) + 1, 16));
@@ -151,13 +159,13 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
         p += RID_SIZE;
       }
 
-      return new OIndexRIDContainer(fileId, underlying);
+      return new OIndexRIDContainer(fileId, underlying, durable);
     } else {
       final long pageIndex = LONG_SERIALIZER.deserializeNative(stream, offset + SBTREE_ROOTINDEX_OFFSET);
       final int pageOffset = INT_SERIALIZER.deserializeNative(stream, offset + SBTREE_ROOTOFFSET_OFFSET);
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
-      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer);
-      return new OIndexRIDContainer(fileId, underlying);
+      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable);
+      return new OIndexRIDContainer(fileId, underlying, durable);
     }
   }
 
@@ -171,7 +179,10 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
     LONG_SERIALIZER.serializeInDirectMemory(object.getFileId(), pointer, offset + FILE_ID_OFFSET);
 
     final boolean embedded = object.isEmbedded();
+    final boolean durable = object.isDurableNonTxMode();
+
     BOOLEAN_SERIALIZER.serializeInDirectMemoryObject(embedded, pointer, offset + EMBEDDED_OFFSET);
+    BOOLEAN_SERIALIZER.serializeInDirectMemoryObject(durable, pointer, offset + DURABLE_OFFSET);
 
     if (embedded) {
       INT_SERIALIZER.serializeInDirectMemory(object.size(), pointer, offset + EMBEDDED_SIZE_OFFSET);
@@ -192,6 +203,8 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   @Override
   public OIndexRIDContainer deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
     final long fileId = LONG_SERIALIZER.deserializeFromDirectMemory(pointer, offset + FILE_ID_OFFSET);
+    final boolean durable = BOOLEAN_SERIALIZER.deserializeFromDirectMemory(pointer, offset + DURABLE_OFFSET);
+
     if (BOOLEAN_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_OFFSET)) {
       final int size = INT_SERIALIZER.deserializeFromDirectMemory(pointer, offset + EMBEDDED_SIZE_OFFSET);
       final Set<OIdentifiable> underlying = new HashSet<OIdentifiable>(Math.max((int) (size / .75f) + 1, 16));
@@ -202,13 +215,13 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
         p += RID_SIZE;
       }
 
-      return new OIndexRIDContainer(fileId, underlying);
+      return new OIndexRIDContainer(fileId, underlying, durable);
     } else {
       final long pageIndex = LONG_SERIALIZER.deserializeFromDirectMemory(pointer, offset + SBTREE_ROOTINDEX_OFFSET);
       final int pageOffset = INT_SERIALIZER.deserializeFromDirectMemory(pointer, offset + SBTREE_ROOTOFFSET_OFFSET);
       final OBonsaiBucketPointer rootPointer = new OBonsaiBucketPointer(pageIndex, pageOffset);
-      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer);
-      return new OIndexRIDContainer(fileId, underlying);
+      final OIndexRIDContainerSBTree underlying = new OIndexRIDContainerSBTree(fileId, rootPointer, durable);
+      return new OIndexRIDContainer(fileId, underlying, durable);
     }
   }
 
@@ -227,6 +240,6 @@ public class OStreamSerializerSBTreeIndexRIDContainer implements OStreamSerializ
   }
 
   private int embeddedObjectSerializedSize(int size) {
-    return OLongSerializer.LONG_SIZE + OBooleanSerializer.BOOLEAN_SIZE + OIntegerSerializer.INT_SIZE + size * RID_SIZE;
+    return OLongSerializer.LONG_SIZE + 2 * OBooleanSerializer.BOOLEAN_SIZE + OIntegerSerializer.INT_SIZE + size * RID_SIZE;
   }
 }

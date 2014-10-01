@@ -1,19 +1,28 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db;
+
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -22,17 +31,10 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.util.OBackupable;
 
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 /**
- * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br/>
+ * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
  * Limits:
  * <ul>
  * <li>Maximum records per cluster/class = <b>9.223.372.036 Billions</b>: 2^63 = 9.223.372.036.854.775.808 records</li>
@@ -151,22 +153,6 @@ public interface ODatabase extends OBackupable, Closeable {
    * @return URL of the database
    */
   public String getURL();
-
-  /**
-   * Returns the underlying storage implementation.
-   * 
-   * @return The underlying storage implementation
-   * @see OStorage
-   */
-  public OStorage getStorage();
-
-  /**
-   * Internal only: replace the storage with a new one.
-   * 
-   * @param iNewStorage
-   *          The new storage to use. Usually it's a wrapped instance of the current cluster.
-   */
-  public void replaceStorage(OStorage iNewStorage);
 
   /**
    * Returns the level1 cache. Cannot be null.
@@ -382,10 +368,6 @@ public interface ODatabase extends OBackupable, Closeable {
    *          the listener to unregister
    */
   public void unregisterListener(ODatabaseListener iListener);
-
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
-
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock);
 
   public ORecordMetadata getRecordMetadata(final ORID rid);
 

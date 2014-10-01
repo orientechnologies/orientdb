@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.server.hazelcast;
 
 import com.hazelcast.core.IQueue;
@@ -85,7 +89,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   @Override
   public ODistributedResponse send2Nodes(final ODistributedRequest iRequest, final Collection<String> iClusterNames,
-      final Collection<String> iNodes) {
+      final Collection<String> iNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode) {
     checkForServerOnline(iRequest);
 
     final String databaseName = iRequest.getDatabaseName();
@@ -127,7 +131,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
           availableNodes++;
     }
 
-    final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes);
+    final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes, iExecutionMode);
 
     final int queueSize = iNodes.size();
     int expectedSynchronousResponses = availableNodes;
@@ -150,8 +154,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
 
-    try {
-      requestLock.lock();
+//    try {
+//      requestLock.lock();
       try {
         // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
         // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
@@ -170,9 +174,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
         }
 
-      } finally {
-        requestLock.unlock();
-      }
+//      } finally {
+//        requestLock.unlock();
+//      }
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sent request %s", iRequest);
@@ -214,13 +218,13 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, false);
     workers.add(listenerThread);
     listenerThread.start();
-//
-//    // CREATE WORKER THREADS FOR GENERIC REQUESTS
-//    for (int i = 1; i < numWorkers - 1; ++i) {
-//      listenerThread = new ODistributedWorker(this, requestQueue, databaseName, i, false);
-//      workers.add(listenerThread);
-//      listenerThread.start();
-//    }
+    //
+    // // CREATE WORKER THREADS FOR GENERIC REQUESTS
+    // for (int i = 1; i < numWorkers - 1; ++i) {
+    // listenerThread = new ODistributedWorker(this, requestQueue, databaseName, i, false);
+    // workers.add(listenerThread);
+    // listenerThread.start();
+    // }
 
     return this;
   }
@@ -304,9 +308,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   protected int calculateQuorum(final ODistributedRequest iRequest, final Collection<String> clusterNames,
-      final ODistributedConfiguration cfg, final int iAvailableNodes) {
+      final ODistributedConfiguration cfg, final int iAvailableNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode) {
 
-    if (iAvailableNodes == 0)
+    if (iAvailableNodes == 0 && iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
       throw new ODistributedException("Quorum cannot be reached because there are no nodes available");
 
     final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();
@@ -483,7 +487,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       // EXECUTE ONLY IF THE RECORD HASN'T BEEN DELETED YET
       executeLastPendingRequest = ((ODeleteRecordTask) task).getRid().getRecord() != null;
     } else if (task instanceof OUpdateRecordTask) {
-      final ORecord<?> rec = ((OUpdateRecordTask) task).getRid().getRecord();
+      final ORecord rec = ((OUpdateRecordTask) task).getRid().getRecord();
       if (rec == null)
         ODistributedServerLog.warn(this, getLocalNodeName(), lastPendingRequest.getSenderNodeName(), DIRECTION.IN,
             "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());

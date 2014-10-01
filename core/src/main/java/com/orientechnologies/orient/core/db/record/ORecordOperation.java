@@ -1,23 +1,28 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -71,8 +76,8 @@ public class ORecordOperation implements OSerializableStream {
         .append("]").toString();
   }
 
-  public ORecordInternal<?> getRecord() {
-    return (ORecordInternal<?>) (record != null ? record.getRecord() : null);
+  public ORecord getRecord() {
+    return (ORecord) (record != null ? record.getRecord() : null);
   }
 
   public byte[] toStream() throws OSerializationException {
@@ -84,8 +89,8 @@ public class ORecordOperation implements OSerializableStream {
       switch (type) {
       case CREATED:
       case UPDATED:
-        stream.set(((ORecordInternal<?>) record.getRecord()).getRecordType());
-        stream.set(((ORecordInternal<?>) record.getRecord()).toStream());
+        stream.set(ORecordInternal.getRecordType(record.getRecord()));
+        stream.set(record.getRecord().toStream());
         break;
       }
 
@@ -106,7 +111,7 @@ public class ORecordOperation implements OSerializableStream {
       case CREATED:
       case UPDATED:
         record = Orient.instance().getRecordFactoryManager().newInstance(stream.getAsByte());
-        ((ORecordInternal<?>) record).fill(rid, OVersionFactory.instance().createVersion(), stream.getAsByteArray(), true);
+        ORecordInternal.fill((ORecord) record, rid, OVersionFactory.instance().createVersion(), stream.getAsByteArray(), true);
         break;
       }
 

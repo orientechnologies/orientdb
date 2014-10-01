@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
@@ -75,7 +75,7 @@ public class OObjectFetchContext implements OFetchContext {
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
-  public void onBeforeMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  public void onBeforeMap(ODocument iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
     final Map map = (Map) iRootRecord.field(iFieldName);
     Map target = null;
     final Field f = OObjectEntitySerializer.getField(iFieldName, iUserObject.getClass());
@@ -97,36 +97,35 @@ public class OObjectFetchContext implements OFetchContext {
     OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, target);
   }
 
-  public void onBeforeArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
+  public void onBeforeArray(ODocument iRootRecord, String iFieldName, Object iUserObject, OIdentifiable[] iArray)
       throws OFetchException {
     OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName,
         Array.newInstance(iRootRecord.getSchemaClass().getProperty(iFieldName).getLinkedClass().getJavaClass(), iArray.length));
   }
 
-  public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, ORecordSchemaAware<?> iDocument, String iFieldName,
-      Object iUserObject) throws OFetchException {
-  }
-
-  public void onBeforeDocument(ORecordSchemaAware<?> iRecord, ORecordSchemaAware<?> iDocument, String iFieldName, Object iUserObject)
+  public void onAfterDocument(ODocument iRootRecord, ODocument iDocument, String iFieldName, Object iUserObject)
       throws OFetchException {
   }
 
-  public void onAfterArray(ORecordSchemaAware<?> iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
-  }
-
-  public void onAfterMap(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-  }
-
-  public void onBeforeDocument(ORecordSchemaAware<?> iRecord, String iFieldName, final Object iUserObject) throws OFetchException {
-  }
-
-  public void onAfterDocument(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
+  public void onBeforeDocument(ODocument iRecord, ODocument iDocument, String iFieldName, Object iUserObject)
       throws OFetchException {
+  }
+
+  public void onAfterArray(ODocument iRootRecord, String iFieldName, Object iUserObject) throws OFetchException {
+  }
+
+  public void onAfterMap(ODocument iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  }
+
+  public void onBeforeDocument(ODocument iRecord, String iFieldName, final Object iUserObject) throws OFetchException {
+  }
+
+  public void onAfterDocument(ODocument iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
   }
 
   @SuppressWarnings({ "rawtypes", "unchecked" })
-  public void onBeforeCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject,
-      final Iterable<?> iterable) throws OFetchException {
+  public void onBeforeCollection(ODocument iRootRecord, String iFieldName, final Object iUserObject, final Iterable<?> iterable)
+      throws OFetchException {
     if (iterable instanceof ORidBag)
       throw new IllegalStateException(OType.LINKBAG.name() + " can not be directly mapped to any Java collection.");
 
@@ -167,14 +166,13 @@ public class OObjectFetchContext implements OFetchContext {
     OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, target);
   }
 
-  public void onAfterCollection(ORecordSchemaAware<?> iRootRecord, String iFieldName, final Object iUserObject)
-      throws OFetchException {
+  public void onAfterCollection(ODocument iRootRecord, String iFieldName, final Object iUserObject) throws OFetchException {
   }
 
-  public void onAfterFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
+  public void onAfterFetch(ODocument iRootRecord) throws OFetchException {
   }
 
-  public void onBeforeFetch(ORecordSchemaAware<?> iRootRecord) throws OFetchException {
+  public void onBeforeFetch(ODocument iRootRecord) throws OFetchException {
   }
 
   public void onBeforeStandardField(Object iFieldValue, String iFieldName, Object iUserObject) {
