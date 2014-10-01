@@ -220,7 +220,7 @@ public class OMultiValue {
   }
 
   /**
-   * Returns an Iterable<Object> object to browse the multi-value instance (array, collection or map)
+   * Returns an <code>Iterable<Object></code> object to browse the multi-value instance (array, collection or map)
    * 
    * @param iObject
    *          Multi-value object (array, collection or map)
@@ -248,7 +248,7 @@ public class OMultiValue {
   }
 
   /**
-   * Returns an Iterator<Object> object to browse the multi-value instance (array, collection or map)
+   * Returns an <code>Iterator<Object></code> object to browse the multi-value instance (array, collection or map)
    * 
    * @param iObject
    *          Multi-value object (array, collection or map)

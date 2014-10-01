@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.db.record.ridbag;
 
@@ -49,29 +49,29 @@ import java.util.UUID;
 
 /**
  * A collection that contain links to {@link OIdentifiable}. Bag is similar to set but can contain several entering of the same
- * object.<br/>
+ * object.<br>
  * 
- * Could be tree based and embedded representation.<br/>
+ * Could be tree based and embedded representation.<br>
  * <ul>
  * <li>
- * <b>Embedded</b> stores its content directly to the document that owns it.<br/>
- * It better fits for cases when only small amount of links are stored to the bag.<br/>
+ * <b>Embedded</b> stores its content directly to the document that owns it.<br>
+ * It better fits for cases when only small amount of links are stored to the bag.<br>
  * </li>
  * <li>
- * <b>Tree-based</b> implementation stores its content in a separate data structure called {@link OSBTreeBonsai}.<br/>
- * It fits great for cases when you have a huge amount of links.<br/>
+ * <b>Tree-based</b> implementation stores its content in a separate data structure called {@link OSBTreeBonsai}.<br>
+ * It fits great for cases when you have a huge amount of links.<br>
  * </li>
  * </ul>
- * <br/>
+ * <br>
  * The representation is automatically converted to tree-based implementation when top threshold is reached. And backward to
- * embedded one when size is decreased to bottom threshold. <br/>
+ * embedded one when size is decreased to bottom threshold. <br>
  * The thresholds could be configured by {@link OGlobalConfiguration#RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD} and
- * {@link OGlobalConfiguration#RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD}. <br/>
- * <br/>
- * This collection is used to efficiently manage relationships in graph model.<br/>
- * <br/>
+ * {@link OGlobalConfiguration#RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD}. <br>
+ * <br>
+ * This collection is used to efficiently manage relationships in graph model.<br>
+ * <br>
  * Does not implement {@link Collection} interface because some operations could not be efficiently implemented and that's why
- * should be avoided.<br/>
+ * should be avoided.<br>
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  * @author Andrey Lomakin
@@ -202,11 +202,14 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
         final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
+
+        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners())
+          delegate.addChangeListener(listener);
+
         owner.setDirty();
 
         oldDelegate.setAutoConvertToRecord(oldAutoConvert);
         oldDelegate.requestDelete();
-
       } else if (delegate.size() <= bottomThreshold && !isEmbedded()) {
         ORidBagDelegate oldDelegate = delegate;
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
@@ -218,6 +221,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
         final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
+
+        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners())
+          delegate.addChangeListener(listener);
+
         owner.setDirty();
 
         oldDelegate.setAutoConvertToRecord(oldAutoConvert);

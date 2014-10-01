@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.util.OBackupable;
 
 /**
- * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br/>
+ * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
  * Limits:
  * <ul>
  * <li>Maximum records per cluster/class = <b>9.223.372.036 Billions</b>: 2^63 = 9.223.372.036.854.775.808 records</li>

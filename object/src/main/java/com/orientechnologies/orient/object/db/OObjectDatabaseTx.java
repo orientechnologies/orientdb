@@ -347,7 +347,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   /**
    * Saves an object to the databasein synchronous mode . First checks if the object is new or not. In case it's new a new ODocument
    * is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is introspected using the Java
-   * Reflection to extract the field values. <br/>
+   * Reflection to extract the field values. <br>
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    */
   public <RET> RET save(final Object iContent) {
@@ -357,7 +357,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   /**
    * Saves an object to the database specifying the mode. First checks if the object is new or not. In case it's new a new ODocument
    * is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is introspected using the Java
-   * Reflection to extract the field values. <br/>
+   * Reflection to extract the field values. <br>
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    */
   public <RET> RET save(final Object iContent, OPERATION_MODE iMode, boolean iForceCreate,
@@ -368,7 +368,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   /**
    * Saves an object in synchronous mode to the database forcing a record cluster where to store it. First checks if the object is
    * new or not. In case it's new a new ODocument is created and bound to the object, otherwise the ODocument is retrieved and
-   * updated. The object is introspected using the Java Reflection to extract the field values. <br/>
+   * updated. The object is introspected using the Java Reflection to extract the field values. <br>
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    * 
    * Before to use the specified cluster a check is made to know if is allowed and figures in the configured and the record is valid
@@ -383,7 +383,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   /**
    * Saves an object to the database forcing a record cluster where to store it. First checks if the object is new or not. In case
    * it's new a new ODocument is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is
-   * introspected using the Java Reflection to extract the field values. <br/>
+   * introspected using the Java Reflection to extract the field values. <br>
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    * 
    * Before to use the specified cluster a check is made to know if is allowed and figures in the configured and the record is valid

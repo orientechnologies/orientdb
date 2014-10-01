@@ -57,7 +57,7 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     String[] urlParts = checkSyntax(
         iRequest.url,
         4,
-        "Syntax error: gephi/<database>/<language>/<query-text>[/<limit>][/<fetchPlan>].<br/>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
+        "Syntax error: gephi/<database>/<language>/<query-text>[/<limit>][/<fetchPlan>].<br>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
 
     final String language = urlParts[2];
     final String text = urlParts[3];

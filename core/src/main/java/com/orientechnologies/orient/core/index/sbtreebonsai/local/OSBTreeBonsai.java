@@ -31,19 +31,19 @@ import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
 
 /**
- * The tree that have similar structure to {@link OSBTree} and designed to store small entries. <br/>
- * <br/>
- * The tree algorithm is the same as in {@link OSBTree}, but it have tiny buckets.<br/>
+ * The tree that have similar structure to {@link OSBTree} and designed to store small entries. <br>
+ * <br>
+ * The tree algorithm is the same as in {@link OSBTree}, but it have tiny buckets.<br>
  * The {@link ODiskCache} could contain several buckets. That's why there is no huge resource consuming when you have lots of
- * OSBTreeBonsai that contain only few records.<br/>
- * <br/>
+ * OSBTreeBonsai that contain only few records.<br>
+ * <br>
  * <code>
- * +--------------------------------------------------------------------------------------------+<br/>
- * | DISK CACHE PAGE                                                                            |<br/>
- * |+---------------+ +---------------+ +---------------+ +---------------+ +---------------+   |<br/>
- * || Bonsai Bucket | | Bonsai Bucket | | Bonsai Bucket | | Bonsai Bucket | | Bonsai Bucket |...|<br/>
- * |+---------------+ +---------------+ +---------------+ +---------------+ +---------------+   |<br/>
- * +--------------------------------------------------------------------------------------------+<br/>
+ * +--------------------------------------------------------------------------------------------+<br>
+ * | DISK CACHE PAGE                                                                            |<br>
+ * |+---------------+ +---------------+ +---------------+ +---------------+ +---------------+   |<br>
+ * || Bonsai Bucket | | Bonsai Bucket | | Bonsai Bucket | | Bonsai Bucket | | Bonsai Bucket |...|<br>
+ * |+---------------+ +---------------+ +---------------+ +---------------+ +---------------+   |<br>
+ * +--------------------------------------------------------------------------------------------+<br>
  * </code>
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>

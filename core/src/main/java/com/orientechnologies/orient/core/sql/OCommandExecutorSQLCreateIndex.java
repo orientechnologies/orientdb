@@ -41,7 +41,7 @@ import java.util.*;
  * SQL CREATE INDEX command: Create a new index against a property.
  * <p/>
  * <p>
- * Supports following grammar: <br/>
+ * Supports following grammar: <br>
  * "CREATE" "INDEX" &lt;indexName&gt; ["ON" &lt;className&gt; "(" &lt;propName&gt; ("," &lt;propName&gt;)* ")"] &lt;indexType&gt;
  * [&lt;keyType&gt; ("," &lt;keyType&gt;)*]
  * </p>

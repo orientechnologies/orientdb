@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Contains the user settings about security and permissions roles.<br/>
+ * Contains the user settings about security and permissions roles.<br>
  * Allowed operation are the classic CRUD, namely:
  * <ul>
  * <li>CREATE</li>

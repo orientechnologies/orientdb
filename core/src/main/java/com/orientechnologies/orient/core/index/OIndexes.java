@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * </p>
  * 
  * <p>
- * In addition to implementing this interface datasouces should have a services file:<br/>
+ * In addition to implementing this interface datasouces should have a services file:<br>
  * <code>META-INF/services/com.orientechnologies.orient.core.index.OIndexFactory</code>
  * </p>
  * 
@@ -44,7 +44,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * </p>
  * 
  * <p>
- * Example:<br/>
+ * Example:<br>
  * <code>org.mycompany.index.MyIndexFactory</code>
  * </p>
  * 

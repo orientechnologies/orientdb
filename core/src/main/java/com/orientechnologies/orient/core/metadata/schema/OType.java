@@ -54,7 +54,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
- * Generic representation of a type.<br/>
+ * Generic representation of a type.<br>
  * allowAssignmentFrom accepts any class, but Array.class means that the type accepts generic Arrays.
  * 
  * @author Luca Garulli
