@@ -25,8 +25,8 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  */
 public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract {
 
-  private final OCollectionNetworkSerializer networkSerializer;
-  private boolean                            remoteCreationAllowed = false;
+  private final OCollectionNetworkSerializer             networkSerializer;
+  private boolean                                        remoteCreationAllowed = false;
 
   private ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections    = new ThreadLocal<Map<UUID, WeakReference<ORidBag>>>() {
                                                                                  @Override
@@ -49,22 +49,29 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   protected OSBTreeBonsaiRemote<OIdentifiable, Integer> createTree(int clusterId) {
     if (remoteCreationAllowed) {
       OStorageRemote storage = (OStorageRemote) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying();
-
+      OChannelBinaryAsynchClient client = null;
       try {
-        OChannelBinaryAsynchClient client = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI);
+        client = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CREATE_SBTREE_BONSAI);
         client.writeInt(clusterId);
         storage.endRequest(client);
-
-        storage.beginResponse(client);
-        OBonsaiCollectionPointer pointer = networkSerializer.readCollectionPointer(client);
-        storage.endResponse(client);
+        OBonsaiCollectionPointer pointer;
+        try {
+          storage.beginResponse(client);
+          pointer = networkSerializer.readCollectionPointer(client);
+        } finally {
+          storage.endResponse(client);
+        }
 
         OBinarySerializer<OIdentifiable> keySerializer = OLinkSerializer.INSTANCE;
         OBinarySerializer<Integer> valueSerializer = OIntegerSerializer.INSTANCE;
 
         return new OSBTreeBonsaiRemote<OIdentifiable, Integer>(pointer, keySerializer, valueSerializer);
       } catch (IOException e) {
+        storage.getEngine().getConnectionManager().remove(client);
         throw new ODatabaseException("Can't create sb-tree bonsai.", e);
+      } catch (RuntimeException e2) {
+        storage.getEngine().getConnectionManager().release(client);
+        throw e2;
       }
     } else {
       throw new UnsupportedOperationException("Creation of SB-Tree from remote storage is not allowed");
@@ -93,7 +100,7 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   @Override
   public void updateCollectionPointer(UUID uuid, OBonsaiCollectionPointer pointer) {
     final WeakReference<ORidBag> reference = pendingCollections.get().get(uuid);
-   if (reference == null) {
+    if (reference == null) {
       OLogManager.instance().warn(this, "Update of collection pointer is received but collection is not registered");
       return;
     }
