@@ -56,6 +56,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   private byte                                 currentStatus;
   private int                                  currentSessionId;
   private volatile OAsynchChannelServiceThread serviceThread;
+  private boolean                              released;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int iProtocolVersion) throws IOException {
@@ -432,5 +433,13 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           this,
           "Error during exception serialization, serialized exception is not Throwable, exception type is "
               + (throwable != null ? throwable.getClass().getName() : "null"));
+  }
+
+  public void setReleased(boolean release) {
+    this.released = release;
+  }
+
+  public boolean isReleased() {
+    return released;
   }
 }
