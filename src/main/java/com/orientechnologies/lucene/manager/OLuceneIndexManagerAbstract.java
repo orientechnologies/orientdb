@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
@@ -37,6 +38,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SearcherManager;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
+import org.apache.lucene.store.RAMDirectory;
 import org.apache.lucene.util.Version;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
@@ -130,13 +132,14 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         closeIndex();
       }
       ODatabaseRecordInternal database = getDatabase();
-      final OLocalPaginatedStorage storageLocalAbstract = (OLocalPaginatedStorage) database.getStorage().getUnderlying();
-      File f = new File(getIndexPath(storageLocalAbstract));
+      final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
+      if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
 
-      OLuceneIndexUtils.deleteFolder(f);
-
-      f = new File(getIndexBasePath(storageLocalAbstract));
-      OLuceneIndexUtils.deleteFolderIfEmpty(f);
+        File f = new File(getIndexPath((OLocalPaginatedStorage) storageLocalAbstract));
+        OLuceneIndexUtils.deleteFolder(f);
+        f = new File(getIndexBasePath((OLocalPaginatedStorage) storageLocalAbstract));
+        OLuceneIndexUtils.deleteFolderIfEmpty(f);
+      }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting Lucene index", e);
     }
@@ -306,9 +309,14 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   private void reOpen(ODocument metadata) throws IOException {
     ODatabaseRecordInternal database = getDatabase();
 
-    final OLocalPaginatedStorage storageLocalAbstract = (OLocalPaginatedStorage) database.getStorage().getUnderlying();
-    String pathname = getIndexPath(storageLocalAbstract);
-    Directory dir = NIOFSDirectory.open(new File(pathname));
+    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
+    Directory dir = null;
+    if (storageLocalAbstract instanceof OLocalPaginatedStorage) {
+      String pathname = getIndexPath((OLocalPaginatedStorage) storageLocalAbstract);
+      dir = NIOFSDirectory.open(new File(pathname));
+    } else {
+      dir = new RAMDirectory();
+    }
     IndexWriter indexWriter = createIndexWriter(dir, metadata);
     mgrWriter = new TrackingIndexWriter(indexWriter);
     searcherManager = new SearcherManager(indexWriter, true, null);
