@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Created by enricorisa on 26/09/14.
  */
-public class LuceneCreateIndexTest extends LuceneSingleFieldTest {
+public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
 
   public LuceneCreateIndexTest() {
     this(false);

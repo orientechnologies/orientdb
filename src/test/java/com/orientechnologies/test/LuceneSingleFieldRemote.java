@@ -18,28 +18,14 @@
 
 package com.orientechnologies.test;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.List;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 /**
  * Created by enricorisa on 19/09/14.
  */
 @Test(enabled = false)
-public class LuceneSingleFieldRemote extends LuceneSingleFieldTest {
+public class LuceneSingleFieldRemote extends LuceneSingleFieldEmbeddedTest {
 
   public LuceneSingleFieldRemote() {
     super(true);

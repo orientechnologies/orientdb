@@ -39,15 +39,16 @@ import java.util.List;
  * Created by enricorisa on 19/09/14.
  */
 @Test
-public class LuceneSingleFieldTest extends BaseLuceneTest {
+public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
 
-  public LuceneSingleFieldTest() {
+  public LuceneSingleFieldEmbeddedTest() {
 
   }
 
-  public LuceneSingleFieldTest(boolean remote) {
+  public LuceneSingleFieldEmbeddedTest(boolean remote) {
     super(remote);
   }
+
 
   @Test
   public void loadAndTest() {
