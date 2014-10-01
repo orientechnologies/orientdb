@@ -69,13 +69,24 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         localStorageService.add("Timeline", dbTime);
     }
 
-    $scope.timeline = dbTime[Database.getName()];
+    if (!dbTime[Database.getName()]) {
+        dbTime[Database.getName()] = new Object
+        localStorageService.add("Timeline", dbTime);
+    } else if (dbTime[Database.getName()] instanceof Array) {
+        dbTime[Database.getName()] = new Object
+        localStorageService.add("Timeline", dbTime);
+
+    }
+    $scope.timeline = dbTime[Database.getName()][Database.currentUser()];
+
     if (!$scope.timeline) {
         $scope.timeline = new Array;
         var localTime = localStorageService.get("Timeline");
-        localTime[Database.getName()] = $scope.timeline;
+        if (!localTime[Database.getName()][Database.currentUser()]) {
+            localTime[Database.getName()][Database.currentUser()] = new Array;
+        }
+        localTime[Database.getName()][Database.currentUser()] = $scope.timeline;
         localStorageService.add("Timeline", localTime);
-
 
     }
     $scope.tm = $scope.timeline;
@@ -217,7 +228,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
                     $scope.timeline.splice($scope.timeline.length - 1, 1);
                 }
                 var dbTime = localStorageService.get("Timeline");
-                dbTime[Database.getName()] = $scope.timeline;
+                dbTime[Database.getName()][[Database.currentUser()]] = $scope.timeline;
                 localStorageService.add("Timeline", dbTime);
 
                 Spinner.stopSpinner();
@@ -249,7 +260,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
             success: function () {
                 $scope.timeline = new Array;
                 var dbTime = localStorageService.get("Timeline");
-                dbTime[Database.getName()] = $scope.timeline;
+                dbTime[Database.getName()][Database.currentUser()] = $scope.timeline;
                 localStorageService.add("Timeline", dbTime);
             }
         });
@@ -260,7 +271,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         var idx = $scope.timeline.indexOf(item);
         $scope.timeline.splice(idx, 1);
         var dbTime = localStorageService.get("Timeline");
-        dbTime[Database.getName()] = $scope.timeline;
+        dbTime[Database.getName()][Database.currentUser()] = $scope.timeline;
         localStorageService.add("Timeline", dbTime);
     }
 

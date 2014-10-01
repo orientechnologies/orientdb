@@ -387,6 +387,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     }
     $scope.clear = function () {
         $scope.graph.clear();
+        Graph.data = [];
     }
     $scope.queryText = Graph.query;
     $scope.tmpGraphOptions = {
