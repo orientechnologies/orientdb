@@ -474,7 +474,7 @@ schemaModule.controller("IndexController", ['$scope', '$routeParams', '$location
         nameInddd.replace(')', '');
         var sql = 'CREATE INDEX ' + $scope.nameIndexToShow + ' ON ' + $scope.classInject + ' ( ' + proppps + ' ) ' + $scope.newIndex['type'];
         $scope.newIndex['name'] = $scope.nameIndexToShow;
-        $scope.newIndex['fields'] = proppps;
+        $scope.newIndex['fields'] = proppps.split(",");
         Spinner.startSpinnerPopup();
         CommandApi.queryText({database: $routeParams.database, language: 'sql', text: sql, limit: $scope.limit, verbose: false}, function (data) {
             $scope.$hide();
