@@ -40,8 +40,10 @@ public class OMultiValue {
    * @return true if it's an array, a collection or a map, otherwise false
    */
   public static boolean isMultiValue(final Class<?> iType) {
-    return OCollection.class.isAssignableFrom(iType) || Collection.class.isAssignableFrom(iType)
-        || (iType.isArray() || Map.class.isAssignableFrom(iType) || OMultiCollectionIterator.class.isAssignableFrom(iType));
+    return OCollection.class.isAssignableFrom(iType)
+        || Collection.class.isAssignableFrom(iType)
+        || (iType.isArray() || Map.class.isAssignableFrom(iType) || OMultiCollectionIterator.class.isAssignableFrom(iType) || OCollection.class
+            .isAssignableFrom(iType));
   }
 
   /**
