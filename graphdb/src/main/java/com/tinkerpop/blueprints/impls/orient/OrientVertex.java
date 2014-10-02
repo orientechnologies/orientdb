@@ -118,6 +118,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
   public static Object createLink(final OrientBaseGraph iGraph, final ODocument iFromVertex, final OIdentifiable iTo,
       final String iFieldName) {
     final Object out;
+    OType outType = iFromVertex.fieldType(iFieldName);
     Object found = iFromVertex.field(iFieldName);
 
     final OClass linkClass = iFromVertex.getSchemaClass();
@@ -132,14 +133,17 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
           && (prop == null || propType == OType.LINK || "true".equalsIgnoreCase(prop.getCustom("ordered")))) {
         // CREATE ONLY ONE LINK
         out = iTo;
+        outType = OType.LINK;
       } else if (propType == OType.LINKLIST || (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered")))) {
         final Collection coll = new ORecordLazyList(iFromVertex);
         coll.add(iTo);
         out = coll;
+        outType = OType.LINKLIST;
       } else if (propType == null || propType == OType.LINKBAG) {
         final ORidBag bag = new ORidBag();
         bag.add(iTo);
         out = bag;
+        outType = OType.LINKBAG;
       } else
         throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
             + " can not be used for link creation.");
@@ -154,11 +158,13 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         coll.add(found);
         coll.add(iTo);
         out = coll;
+        outType = OType.LINKLIST;
       } else {
         final ORidBag bag = new ORidBag();
         bag.add((OIdentifiable) found);
         bag.add(iTo);
         out = bag;
+        outType = OType.LINKBAG;
       }
     } else if (found instanceof ORidBag) {
       // ADD THE LINK TO THE COLLECTION
@@ -175,7 +181,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     if (out != null)
       // OVERWRITE IT
-      iFromVertex.field(iFieldName, out);
+      iFromVertex.field(iFieldName, out, outType);
 
     return out;
   }
