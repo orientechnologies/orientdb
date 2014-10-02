@@ -100,19 +100,22 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   public void importDatabase(@ConsoleParameter(name = "options", description = "Import options") String text) throws IOException {
     checkForDatabase();
 
-    message("\nImporting database " + text + "...");
-
     final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
     final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
     final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() : text;
 
     if (fileName.endsWith(".graphml")) {
+      message("\nImporting GRAPHML database from " + text + "...");
+
       try {
         final Map<String, List<String>> opts = parseOptions(options);
 
         final OrientGraph g = new OrientGraph((com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx) currentDatabase);
+        g.setUseLog(false);
+        g.setWarnOnForceClosingTx(false);
         new OGraphMLReader(g).inputGraph(g, fileName);
         g.commit();
+        commit();
 
       } catch (ODatabaseImportException e) {
         printError(e);

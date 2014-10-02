@@ -47,12 +47,12 @@ import java.util.Map;
  * @author Joshua Shinavier (http://fortytwo.net)
  */
 public class OGraphMLReader {
-  private static final String   LABELS       = "labels";
+  private static final String   LABELS           = "labels";
   private final OrientBaseGraph graph;
-
-  private String                vertexIdKey  = null;
-  private String                edgeIdKey    = null;
-  private String                edgeLabelKey = null;
+  private int                   vertexLabelIndex = 0;
+  private String                vertexIdKey      = null;
+  private String                edgeIdKey        = null;
+  private String                edgeLabelKey     = null;
 
   /**
    * @param graph
@@ -72,8 +72,8 @@ public class OGraphMLReader {
    * @throws IOException
    *           thrown when the GraphML data is not correctly formatted
    */
-  public static void inputGraph(final Graph inputGraph, final InputStream graphMLInputStream) throws IOException {
-    OGraphMLReader.inputGraph(inputGraph, graphMLInputStream, 1000, null, null, null);
+  public void inputGraph(final Graph inputGraph, final InputStream graphMLInputStream) throws IOException {
+    inputGraph(inputGraph, graphMLInputStream, 1000, null, null, null);
   }
 
   /**
@@ -86,8 +86,8 @@ public class OGraphMLReader {
    * @throws IOException
    *           thrown when the GraphML data is not correctly formatted
    */
-  public static void inputGraph(final Graph inputGraph, final String filename) throws IOException {
-    OGraphMLReader.inputGraph(inputGraph, filename, 1000, null, null, null);
+  public void inputGraph(final Graph inputGraph, final String filename) throws IOException {
+    inputGraph(inputGraph, filename, 1000, null, null, null);
   }
 
   /**
@@ -108,11 +108,11 @@ public class OGraphMLReader {
    * @throws IOException
    *           thrown when the GraphML data is not correctly formatted
    */
-  public static void inputGraph(final Graph inputGraph, final String filename, int bufferSize, String vertexIdKey,
-      String edgeIdKey, String edgeLabelKey) throws IOException {
+  public void inputGraph(final Graph inputGraph, final String filename, int bufferSize, String vertexIdKey, String edgeIdKey,
+      String edgeLabelKey) throws IOException {
     FileInputStream fis = new FileInputStream(filename);
     try {
-      OGraphMLReader.inputGraph(inputGraph, fis, bufferSize, vertexIdKey, edgeIdKey, edgeLabelKey);
+      inputGraph(inputGraph, fis, bufferSize, vertexIdKey, edgeIdKey, edgeLabelKey);
     } finally {
       fis.close();
     }
@@ -136,7 +136,7 @@ public class OGraphMLReader {
    * @throws IOException
    *           thrown when the GraphML data is not correctly formatted
    */
-  public static void inputGraph(final Graph inputGraph, final InputStream graphMLInputStream, int bufferSize, String vertexIdKey,
+  public void inputGraph(final Graph inputGraph, final InputStream graphMLInputStream, int bufferSize, String vertexIdKey,
       String edgeIdKey, String edgeLabelKey) throws IOException {
 
     XMLInputFactory inputFactory = XMLInputFactory.newInstance();
@@ -188,7 +188,11 @@ public class OGraphMLReader {
               if (vertexLabel.startsWith(":"))
                 // REMOVE : AS PREFIX
                 vertexLabel = vertexLabel.substring(1);
-              vertexLabel = "class:" + vertexLabel;
+
+              final String[] vertexLabels = vertexLabel.split(",");
+
+              // GET ONLY FIRST LABEL AS CLASS
+              vertexLabel = "class:" + vertexLabels[vertexLabelIndex];
             }
             if (vertexIdKey != null)
               vertexMappedIdMap.put(vertexId, vertexId);
@@ -295,22 +299,12 @@ public class OGraphMLReader {
     }
   }
 
-  private static Object typeCastValue(String key, String value, Map<String, String> keyTypes) {
-    String type = keyTypes.get(key);
-    if (null == type || type.equals(GraphMLTokens.STRING))
-      return value;
-    else if (type.equals(GraphMLTokens.FLOAT))
-      return Float.valueOf(value);
-    else if (type.equals(GraphMLTokens.INT))
-      return Integer.valueOf(value);
-    else if (type.equals(GraphMLTokens.DOUBLE))
-      return Double.valueOf(value);
-    else if (type.equals(GraphMLTokens.BOOLEAN))
-      return Boolean.valueOf(value);
-    else if (type.equals(GraphMLTokens.LONG))
-      return Long.valueOf(value);
-    else
-      return value;
+  public int getVertexLabelIndex() {
+    return vertexLabelIndex;
+  }
+
+  public void setVertexLabelIndex(int vertexLabelIndex) {
+    this.vertexLabelIndex = vertexLabelIndex;
   }
 
   /**
@@ -346,7 +340,7 @@ public class OGraphMLReader {
    *           thrown when the GraphML data is not correctly formatted
    */
   public void inputGraph(final InputStream graphMLInputStream) throws IOException {
-    OGraphMLReader.inputGraph(this.graph, graphMLInputStream, 1000, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
+    inputGraph(this.graph, graphMLInputStream, 1000, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
   }
 
   /**
@@ -358,7 +352,7 @@ public class OGraphMLReader {
    *           thrown when the GraphML data is not correctly formatted
    */
   public void inputGraph(final String filename) throws IOException {
-    OGraphMLReader.inputGraph(this.graph, filename, 1000, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
+    inputGraph(this.graph, filename, 1000, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
   }
 
   /**
@@ -372,7 +366,7 @@ public class OGraphMLReader {
    *           thrown when the GraphML data is not correctly formatted
    */
   public void inputGraph(final InputStream graphMLInputStream, int bufferSize) throws IOException {
-    OGraphMLReader.inputGraph(this.graph, graphMLInputStream, bufferSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
+    inputGraph(this.graph, graphMLInputStream, bufferSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
   }
 
   /**
@@ -386,6 +380,24 @@ public class OGraphMLReader {
    *           thrown when the GraphML data is not correctly formatted
    */
   public void inputGraph(final String filename, int bufferSize) throws IOException {
-    OGraphMLReader.inputGraph(this.graph, filename, bufferSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
+    inputGraph(this.graph, filename, bufferSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
+  }
+
+  private Object typeCastValue(String key, String value, Map<String, String> keyTypes) {
+    String type = keyTypes.get(key);
+    if (null == type || type.equals(GraphMLTokens.STRING))
+      return value;
+    else if (type.equals(GraphMLTokens.FLOAT))
+      return Float.valueOf(value);
+    else if (type.equals(GraphMLTokens.INT))
+      return Integer.valueOf(value);
+    else if (type.equals(GraphMLTokens.DOUBLE))
+      return Double.valueOf(value);
+    else if (type.equals(GraphMLTokens.BOOLEAN))
+      return Boolean.valueOf(value);
+    else if (type.equals(GraphMLTokens.LONG))
+      return Long.valueOf(value);
+    else
+      return value;
   }
 }
