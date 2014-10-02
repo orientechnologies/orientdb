@@ -189,7 +189,7 @@ public class OGraphMLReader {
                 // REMOVE : AS PREFIX
                 vertexLabel = vertexLabel.substring(1);
 
-              final String[] vertexLabels = vertexLabel.split(",");
+              final String[] vertexLabels = vertexLabel.split(":");
 
               // GET ONLY FIRST LABEL AS CLASS
               vertexLabel = "class:" + vertexLabels[vertexLabelIndex];
