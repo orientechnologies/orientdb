@@ -294,6 +294,8 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     var data = [];
 
 
+    $scope.fullscreen = false;
+    $scope.additionalClass = '';
     $scope.database = Database;
     Database.setWiki("Graph-Editor.html")
     $scope.dirty = false;
@@ -302,6 +304,18 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
     })
     $rootScope.$on('graphConfig:onSave', function (val) {
         $scope.saveConfig();
+    })
+
+    $scope.$watch("fullscreen", function (val) {
+        if (val) {
+            $scope.additionalClass = 'panel-graph-fullscreen';
+            $scope.graph.fullScreen(true);
+        } else {
+            if ($scope.graph) {
+                $scope.graph.fullScreen(false);
+            }
+            $scope.additionalClass = '';
+        }
     })
     $scope.editorOptions = {
         lineWrapping: true,

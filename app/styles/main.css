@@ -644,7 +644,7 @@ ul.arrayrid > li {
 .container-notification {
     position: fixed;
     width: 100%;
-    z-index: 1000;
+    z-index: 1051;
     left: 0;
     right: 0;
     margin-left: auto;

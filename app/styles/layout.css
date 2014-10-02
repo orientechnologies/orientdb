@@ -241,7 +241,7 @@ body div.container-studio {
     top: 0px;
     padding-top: 50px;
     left: 0px;
-    z-index: 1000;
+    z-index: 1052;
     border-right: 1px solid #222326;
     box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.5);
     -webkit-transform: translateX(-100%);
@@ -316,7 +316,33 @@ input.search-query {
     padding-top: 10px;
 }
 
+.panel-graph-fullscreen .panel-body .row:last-child {
+    height: 100%;
+}
+
+.panel-graph-fullscreen .panel-body .row .col-md-12 {
+    height: 100%;
+}
+
+.panel-graph-fullscreen .panel-body .row .col-md-12 .graph-container {
+    height: 100%;
+}
+
+.panel-graph-fullscreen .panel-body {
+    height: 100%;
+}
+
+.panel-graph-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1050;
+    width: 100%;
+    height: 100%;
+}
+
 .panel-graph {
+
     background-color: #EEEEEE;
 }
 
