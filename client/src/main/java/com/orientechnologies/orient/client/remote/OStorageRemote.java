@@ -1441,7 +1441,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    */
   public void endResponse(final OChannelBinaryAsynchClient iNetwork) {
     iNetwork.endResponse();
-    iNetwork.setReleased(true);
     engine.getConnectionManager().release(iNetwork);
   }
 
@@ -1534,7 +1533,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     if (exception instanceof OException) {
       // Release on concurrent modification exception created some issue. to double check
-      if (iNetwork != null && !iNetwork.isReleased())
+      if (iNetwork != null)
         engine.getConnectionManager().release(iNetwork);
 
       // RE-THROW IT
@@ -1811,7 +1810,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    */
   protected OChannelBinaryAsynchClient beginRequest(final byte iCommand) throws IOException {
     final OChannelBinaryAsynchClient network = getAvailableNetwork(getCurrentServerURL());
-    network.setReleased(false);
     network.writeByte(iCommand);
     network.writeInt(getSessionId());
 

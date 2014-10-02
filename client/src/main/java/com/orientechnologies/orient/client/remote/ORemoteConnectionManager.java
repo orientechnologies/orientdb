@@ -50,8 +50,9 @@ public class ORemoteConnectionManager implements OChannelListener {
   }
 
   public void close() {
-    for (Map.Entry<String, OResourcePool<String, OChannelBinaryAsynchClient>> entry : connections.entrySet())
+    for (Map.Entry<String, OResourcePool<String, OChannelBinaryAsynchClient>> entry : connections.entrySet()) {
       entry.getValue().close();
+    }
 
     connections.clear();
   }
@@ -91,7 +92,13 @@ public class ORemoteConnectionManager implements OChannelListener {
 
     try {
       // RETURN THE RESOURCE
-      return pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration, iListener);
+      OChannelBinaryAsynchClient ret = pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration, iListener);
+      ret.setReleased(false);
+      return ret;
+    } catch (RuntimeException e) {
+      // ERROR ON RETRIEVING THE INSTANCE FROM THE POOL
+      connections.remove(iServerURL);
+      throw e;
     } catch (Exception e) {
       // ERROR ON RETRIEVING THE INSTANCE FROM THE POOL
       OLogManager.instance().error(this, "Error on retrieving the connection from pool: " + iServerURL, e);
@@ -106,8 +113,12 @@ public class ORemoteConnectionManager implements OChannelListener {
       if (!conn.isConnected()) {
         OLogManager.instance().debug(this, "Network connection pool is receiving a closed connection to reuse: discard it");
         pool.remove(conn);
-      } else
-        pool.returnResource(conn);
+      } else {
+        if (!conn.isReleased()) {
+          conn.setReleased(true);
+          pool.returnResource(conn);
+        }
+      }
     }
   }
 
