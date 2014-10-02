@@ -955,6 +955,14 @@ span.badge-edge {
     border: none;
     border-radius: 0 0;
 }
+.panelAlerts .alert-warning {
+    background: #ff8000;
+    color: white;
+    text-shadow: none;
+    box-shadow: 0 0 2px #000000;
+    border: none;
+    border-radius: 0 0;
+}
 
 .panelAlerts .alert .close {
     position: relative;

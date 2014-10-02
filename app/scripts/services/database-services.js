@@ -340,6 +340,7 @@ database.factory('Database', function (DatabaseApi, localStorageService) {
         isVertex: function (clazz) {
             var sup = clazz;
             var iterator = clazz;
+
             while ((iterator = this.getSuperClazz(iterator)) != "") {
                 sup = iterator;
             }

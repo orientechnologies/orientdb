@@ -6,14 +6,20 @@ notification.factory('Notification', function ($timeout, $rootScope) {
     var notiService = {
         notifications: new Array,
         errors: new Array,
+        warnings: new Array,
 
         push: function (notification) {
             this.notifications.splice(0, this.notifications.length);
             this.errors.splice(0, this.errors.length);
+            this.warnings.splice(0, this.warnings.length);
+
 
             if (notification.error) {
                 this.errors.push(notification);
-            } else {
+            } else if (notification.warning) {
+                this.warnings.push(notification);
+            }
+            else {
                 this.notifications.push(notification);
             }
             var self = this;
@@ -35,6 +41,7 @@ notification.factory('Notification', function ($timeout, $rootScope) {
         clear: function () {
             this.notifications.splice(0, this.notifications.length);
             this.errors.splice(0, this.errors.length);
+            this.warnings.splice(0, this.warnings.length);
         }
 
     }

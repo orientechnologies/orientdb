@@ -285,9 +285,7 @@ GrapgController.controller("VertexModalBrowseController", ['$scope', '$routePara
 
 
     }
-//    $timeout(function () {
-//        $scope.loaded = true;
-//    }, 2000);
+
 }]);
 
 GrapgController.controller("GraphController", ['$scope', '$routeParams', '$location', '$modal', '$q', 'Database', 'CommandApi', 'Spinner', 'Aside', 'DocumentApi', 'localStorageService', 'Graph', 'Icon', 'GraphConfig', 'Notification', '$rootScope', function ($scope, $routeParams, $location, $modal, $q, Database, CommandApi, Spinner, Aside, DocumentApi, localStorageService, Graph, Icon, GraphConfig, Notification, $rootScope) {
@@ -406,8 +404,14 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             });
             $scope.graph.on('edge/create', function (v1, v2) {
 
-
-                $scope.showModalNewEdge(v1, v2);
+                if (v2['@rid'].startsWith("#-")) {
+                    $scope.$apply(function () {
+                        Notification.push({content: 'Cannot connect ' + v1['@rid'] + ' to a temporary node', autoHide: true, warning: true});
+                        $scope.graph.endEdgeCreation();
+                    });
+                } else {
+                    $scope.showModalNewEdge(v1, v2);
+                }
             });
             $scope.graph.on('edge/click', function (e) {
 
@@ -421,11 +425,19 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             });
             $scope.graph.on('node/dblclick', function (v) {
 
-                var q = "select expand(bothE())  from " + v['@rid'];
-                CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: 'sql', text: q, limit: -1, shallow: false, verbose: false}, function (data) {
+                if (v['@rid'].startsWith("#-")) {
 
-                    $scope.graph.data(data.result).redraw();
-                })
+                    $scope.$apply(function () {
+                        Notification.push({content: 'Cannot expand a temporary node', autoHide: true, warning: true});
+                    });
+
+                } else {
+                    var q = "select expand(bothE())  from " + v['@rid'];
+                    CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: 'sql', text: q, limit: -1, shallow: false, verbose: false}, function (data) {
+
+                        $scope.graph.data(data.result).redraw();
+                    })
+                }
             });
 
             $scope.graph.on('node/load', function (v, callback) {
@@ -488,7 +500,15 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
             {
                 name: '\uf044',
                 onClick: function (v) {
-                    $scope.showModal(v, v.source["@rid"]);
+                    if (v['@rid'].startsWith("#-")) {
+
+                        $scope.$apply(function () {
+                            Notification.push({content: 'Cannot edit a temporary node', autoHide: true, warning: true});
+                        });
+
+                    } else {
+                        $scope.showModal(v, v.source["@rid"]);
+                    }
                 }
             },
 
@@ -510,21 +530,29 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                                     name: (name != "" ? name : "E"),
                                     onClick: function (v, label) {
 
-                                        if (label == "E") {
-                                            label = "";
+                                        if (v['@rid'].startsWith("#-")) {
+
+                                            $scope.$apply(function () {
+                                                Notification.push({content: 'Cannot navigate relationship of a temporary node', autoHide: true, warning: true});
+                                            });
+
+                                        } else {
+                                            if (label == "E") {
+                                                label = "";
+                                            }
+                                            else {
+                                                label = "'" + label + "'";
+                                            }
+
+                                            var props = { rid: v['@rid'], label: label };
+                                            var query = "select expand(unionAll(outE({{label}}),out({{label}})) )  from {{rid}}"
+                                            var queryText = S(query).template(props).s;
+
+                                            CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: 'sql', text: queryText, limit: -1, shallow: false, verbose: false}, function (data) {
+
+                                                $scope.graph.data(data.result).redraw();
+                                            })
                                         }
-                                        else {
-                                            label = "'" + label + "'";
-                                        }
-
-                                        var props = { rid: v['@rid'], label: label };
-                                        var query = "select expand(unionAll(outE({{label}}),out({{label}})) )  from {{rid}}"
-                                        var queryText = S(query).template(props).s;
-
-                                        CommandApi.queryText({database: $routeParams.database, contentType: 'JSON', language: 'sql', text: queryText, limit: -1, shallow: false, verbose: false}, function (data) {
-
-                                            $scope.graph.data(data.result).redraw();
-                                        })
                                     }
                                 }
                             )
@@ -548,17 +576,25 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                             placeholder: "Delete",
                             onClick: function (v, label) {
 
-                                var recordID = v['@rid']
-                                Utilities.confirm($scope, $modal, $q, {
-                                    title: 'Warning!',
-                                    body: 'You are removing Vertex ' + recordID + '. Are you sure?',
-                                    success: function () {
-                                        var command = "DELETE Vertex " + recordID;
-                                        CommandApi.queryText({database: $routeParams.database, language: 'sql', text: command, verbose: false}, function (data) {
-                                            $scope.graph.removeVertex(v);
-                                        });
-                                    }
-                                });
+                                if (v['@rid'].startsWith("#-")) {
+
+                                    $scope.$apply(function () {
+                                        Notification.push({content: 'Cannot delete a temporary node', autoHide: true, warning: true});
+                                    });
+
+                                } else {
+                                    var recordID = v['@rid']
+                                    Utilities.confirm($scope, $modal, $q, {
+                                        title: 'Warning!',
+                                        body: 'You are removing Vertex ' + recordID + '. Are you sure?',
+                                        success: function () {
+                                            var command = "DELETE Vertex " + recordID;
+                                            CommandApi.queryText({database: $routeParams.database, language: 'sql', text: command, verbose: false}, function (data) {
+                                                $scope.graph.removeVertex(v);
+                                            });
+                                        }
+                                    });
+                                }
                             }
                         },
                         {
@@ -578,7 +614,16 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                 placeholder: "Connect",
                 onClick: function (v) {
 
-                    $scope.graph.startEdge();
+                    if (v['@rid'].startsWith("#-")) {
+
+                        $scope.$apply(function () {
+                            Notification.push({content: 'Cannot connect a temporary node', autoHide: true, warning: true});
+                        });
+
+                    } else {
+
+                        $scope.graph.startEdge();
+                    }
                 }
             },
             {
