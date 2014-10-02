@@ -207,7 +207,7 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
         }
     });
     if (!found) {
-        $scope.properties.push({name: 'useLightweightEdges', value: 'false' });
+        $scope.properties.push({name: 'useLightweightEdges', value: 'true' });
     }
 
     $scope.canChange = ["clusterSelection", "minimumClusters", "localeCountry", "useLightweightEdges", "conflictStrategy"];
