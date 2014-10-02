@@ -19,7 +19,9 @@ package com.orientechnologies.lucene.manager;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.lucene.shape.OShapeFactory;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -57,6 +59,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Version;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -126,7 +129,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
         final SpatialOperation strategy = newKey.getOperation() != null ? newKey.getOperation() : SpatialOperation.Intersects;
 
         if (SpatialOperation.Intersects.equals(strategy))
-          return searchIntersect(newKey, newKey.getMaxDistance(), newKey.getLimit());
+          return searchIntersect(newKey, newKey.getMaxDistance(), newKey.getContext());
         else if (SpatialOperation.IsWithin.equals(strategy))
           return searchWithin(newKey);
 
@@ -140,7 +143,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     return null;
   }
 
-  public Object searchIntersect(OCompositeKey key, double distance, Integer limit) throws IOException {
+  public Object searchIntersect(OCompositeKey key, double distance, OCommandContext context) throws IOException {
 
     double lat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class)).doubleValue();
     double lng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class)).doubleValue();
@@ -156,14 +159,24 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     ValueSource valueSource = strategy.makeDistanceValueSource(p);
     Sort distSort = new Sort(valueSource.getSortField(false)).rewrite(searcher);
 
-    int limitDoc = limit != null ? limit : Integer.MAX_VALUE;
+    Integer limit = null;
+    if (context != null) {
+      limit = (Integer) context.getVariable("$limit");
+    }
+    int limitDoc = (limit != null && limit > 0) ? limit : Integer.MAX_VALUE;
     TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limitDoc, distSort);
     ScoreDoc[] scoreDocs = topDocs.scoreDocs;
 
     for (ScoreDoc s : scoreDocs) {
-
       Document doc = searcher.doc(s.doc);
-      result.add(new ORecordId(doc.get(RID)));
+      Point docPoint = (Point) ctx.readShape(doc.get(strategy.getFieldName()));
+      double docDistDEG = ctx.getDistCalc().distance(args.getShape().getCenter(), docPoint);
+      final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
+      result.add(new OContextualRecordId(doc.get(RID)).setContext(new HashMap<String, Object>() {
+        {
+          put("distance", docDistInKM);
+        }
+      }));
 
     }
     return result;

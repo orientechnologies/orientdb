@@ -146,7 +146,6 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       for (final ScoreDoc score : hits) {
         Document ret = searcher.doc(score.doc);
         String rId = ret.get(RID);
-        // results.add(new ORecordId(rId));
         results.add(new OContextualRecordId(rId).setContext(new HashMap<String, Object>() {
           {
             put("score", score.score);

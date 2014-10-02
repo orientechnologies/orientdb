@@ -48,6 +48,7 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
   @Override
   public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
       Object iRight, OCommandContext iContext) {
+
     SpatialContext ctx = SpatialContext.GEO;
     Object[] points = parseParams(iRecord, iCondition);
     Point p = ctx.makePoint((Double) points[3], (Double) points[2]);
@@ -55,7 +56,11 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
     double docDistDEG = ctx.getDistCalc().distance(p, (Double) points[1], (Double) points[0]);
     double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
     iContext.setVariable("$distance", docDistInKM);
-    return true;
+    if (iContext.getVariable("$luceneIndex") != null) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   private Object[] parseParams(OIdentifiable iRecord, OSQLFilterCondition iCondition) {
@@ -106,12 +111,14 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
         }
       }
     }
-    Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setLimit(limit));
+    Object indexResult = index.get(new OSpatialCompositeKey(keyParams).setMaxDistance(distance).setContext(iContext));
     if (indexResult == null || indexResult instanceof OIdentifiable)
       cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, new OSpatialCompositeKey(keyParams));
     else
       cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OSpatialCompositeKey(
           keyParams));
+
+    iContext.setVariable("$luceneIndex", true);
     return cursor;
   }
 

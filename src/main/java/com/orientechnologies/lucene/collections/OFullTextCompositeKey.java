@@ -27,19 +27,10 @@ import java.util.List;
 /**
  * Created by enricorisa on 16/06/14.
  */
-public class OFullTextCompositeKey extends OCompositeKey {
-  OCommandContext context;
+public class OFullTextCompositeKey extends OLuceneCompositeKey {
 
   public OFullTextCompositeKey(final List<?> keys) {
     super(keys);
   }
 
-  public OFullTextCompositeKey setContext(OCommandContext context) {
-    this.context = context;
-    return this;
-  }
-
-  public OCommandContext getContext() {
-    return context;
-  }
 }

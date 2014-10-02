@@ -18,15 +18,18 @@ package com.orientechnologies.lucene.operator;
 
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEqualityNotNulls;
+import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
 import org.apache.lucene.spatial.query.SpatialOperation;
 
 import java.util.ArrayList;
@@ -34,17 +37,28 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class OLuceneWithinOperator extends OQueryOperatorEqualityNotNulls {
+public class OLuceneWithinOperator extends OQueryTargetOperator {
 
   public OLuceneWithinOperator() {
-    super("WITHIN", 5, false, 1, true);
+    super("WITHIN", 5, false);
   }
 
-  @Override
-  protected boolean evaluateExpression(OIdentifiable iRecord, OSQLFilterCondition iCondition, Object iLeft, Object iRight,
-      OCommandContext iContext) {
-    return true;
+    @Override
+    public Collection<OIdentifiable> filterRecords(ODatabaseComplex<?> iRecord, List<String> iTargetClasses, OSQLFilterCondition iCondition, Object iLeft, Object iRight) {
+        return null;
+    }
+
+    @Override
+  public Object evaluateRecord(OIdentifiable iRecord, ODocument iCurrentResult, OSQLFilterCondition iCondition, Object iLeft,
+      Object iRight, OCommandContext iContext) {
+    if (iContext.getVariable("$luceneIndex") != null) {
+      return true;
+    } else {
+      return false;
+    }
   }
+
+
 
   @Override
   public OIndexReuseType getIndexReuseType(Object iLeft, Object iRight) {
@@ -63,6 +77,8 @@ public class OLuceneWithinOperator extends OQueryOperatorEqualityNotNulls {
     else
       cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), new OSpatialCompositeKey(
           keyParams));
+
+    iContext.setVariable("$luceneIndex", true);
     return cursor;
   }
 

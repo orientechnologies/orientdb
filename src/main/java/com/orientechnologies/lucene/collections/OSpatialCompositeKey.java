@@ -21,11 +21,10 @@ import org.apache.lucene.spatial.query.SpatialOperation;
 
 import java.util.List;
 
-public class OSpatialCompositeKey extends OCompositeKey {
+public class OSpatialCompositeKey extends OLuceneCompositeKey {
 
   private double           maxDistance;
 
-  private Integer          limit;
   private SpatialOperation operation;
 
   public OSpatialCompositeKey(final List<?> keys) {
@@ -50,12 +49,4 @@ public class OSpatialCompositeKey extends OCompositeKey {
     return operation;
   }
 
-  public Integer getLimit() {
-    return limit;
-  }
-
-  public OSpatialCompositeKey setLimit(Integer limit) {
-    this.limit = limit;
-    return this;
-  }
 }
