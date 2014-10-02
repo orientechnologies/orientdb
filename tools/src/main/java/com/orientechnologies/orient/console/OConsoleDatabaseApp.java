@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.console;
 
 import java.io.BufferedReader;
@@ -28,17 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
@@ -680,7 +671,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   /***
    * Creates a function.
-   * 
+   *
    * @author Claudio Tesoriero
    * @param iCommandText
    *          the command text to execute
@@ -1507,7 +1498,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         compare = new ODatabaseCompare(iDb1URL, iDb2URL, iUserName, iUserPassword, this);
 
       compare.setAutoDetectExportImportMap(autoDiscoveringMappingData != null ? Boolean.valueOf(autoDiscoveringMappingData) : true);
-			compare.setCompareIndexMetadata(true);
+      compare.setCompareIndexMetadata(true);
       compare.compare();
     } catch (ODatabaseExportException e) {
       printError(e);
@@ -1519,7 +1510,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       throws IOException {
     checkForDatabase();
 
-    message("\nImporting " + text + "...");
+    message("\nImporting database " + text + "...");
 
     final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
     final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
@@ -2239,4 +2230,25 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     return result;
   }
+
+  protected Map<String, List<String>> parseOptions(final String iOptions) {
+    final Map<String, List<String>> options = new HashMap<String, List<String>>();
+    if (iOptions != null) {
+      final List<String> opts = OStringSerializerHelper.smartSplit(iOptions, ' ');
+      for (String o : opts) {
+        final int sep = o.indexOf('=');
+        if (sep == -1) {
+          OLogManager.instance().warn(this, "Unrecognized option %s, skipped", o);
+          continue;
+        }
+
+        final String option = o.substring(0, sep);
+        final List<String> items = OStringSerializerHelper.smartSplit(o.substring(sep + 1), ' ');
+
+        options.put(o, items);
+      }
+    }
+    return options;
+  }
+
 }
