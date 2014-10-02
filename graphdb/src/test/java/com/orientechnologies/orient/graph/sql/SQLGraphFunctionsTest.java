@@ -89,15 +89,15 @@ public class SQLGraphFunctionsTest {
 
     graph.setAutoStartTx(true);
 
-    graph.command(new OCommandSQL("create vertex tc1 SET id='1', name='name1'")).execute();
-    graph.command(new OCommandSQL("create vertex tc1 SET id='2', name='name2'")).execute();
+    OrientVertex v1 = graph.command(new OCommandSQL("create vertex tc1 SET id='1', name='name1'")).execute();
+    OrientVertex v2 = graph.command(new OCommandSQL("create vertex tc1 SET id='2', name='name2'")).execute();
 
     graph.commit();
 
     int tc1Id = graph.getRawGraph().getClusterIdByName("tc1");
     int edge1Id = graph.getRawGraph().getClusterIdByName("edge1");
 
-    graph.command(new OCommandSQL("create edge edge1 from #" + tc1Id + ":0 to #" + tc1Id + ":1 set f='fieldValue';")).execute();
+    Iterable<OrientEdge> e = graph.command(new OCommandSQL("create edge edge1 from #" + tc1Id + ":0 to #" + tc1Id + ":1 set f='fieldValue';")).execute();
     graph.commit();
 
     List<ODocument> result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select gremlin('current.outE') from tc1"));
