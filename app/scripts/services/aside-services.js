@@ -15,13 +15,16 @@ aside.factory('Aside', function ($rootScope) {
             this.params.tpl = params.template;
             this.params.title = params.title;
             this.params.absolute = params.absolute != undefined ? params.absolute : true;
-
+            this.params.fullscreen = params.fullscreen != undefined ? params.fullscreen : false;
             if (params.show) {
                 this.params.cls = 'show';
                 $rootScope.$broadcast("aside:open");
             } else {
                 $rootScope.$broadcast("aside:close");
                 this.params.cls = '';
+            }
+            if (params.fullscreen) {
+                this.params.cls += " oaside-fullscreen";
             }
             this.params.loading = true;
             if (!this.params.scope.$$phase && !this.params.scope.$root.$$phase) {
@@ -47,6 +50,17 @@ aside.factory('Aside', function ($rootScope) {
             } else {
                 $rootScope.$broadcast("aside:open");
             }
+
+        },
+        fullScreen: function (val) {
+            if (val) {
+                if (this.params.cls)
+                    this.params.cls += " oaside-fullscreen";
+            } else {
+                if (this.params.cls)
+                    this.params.cls = this.params.cls.replace("oaside-fullscreen", "");
+            }
+            console.log(this.params.cls);
 
         },
         isOpen: function () {

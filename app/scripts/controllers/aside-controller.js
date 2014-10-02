@@ -7,6 +7,7 @@ aside.controller("AsideController", ['$scope', '$routeParams', '$http', '$locati
 }]);
 aside.controller("AsideManagerController", ['$scope', '$routeParams', '$http', '$location', 'Aside', '$rootScope', function ($scope, $routeParams, $http, $location, Aside, $rootScope) {
 
+
     $rootScope.$on('aside:open', function () {
         if (Aside.isAbsolute() == false) {
             $scope.asideClass = "col-md-3";

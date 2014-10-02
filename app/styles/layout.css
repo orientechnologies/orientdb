@@ -232,6 +232,7 @@ body div.container-studio {
     color: white;
 }
 
+
 .oaside {
     background-color: #30333a;
     /*background-color: #222326;*/
@@ -241,14 +242,17 @@ body div.container-studio {
     top: 0px;
     padding-top: 50px;
     left: 0px;
-    z-index: 1052;
+    z-index: 1001;
     border-right: 1px solid #222326;
     box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.5);
     -webkit-transform: translateX(-100%);
     transform: translateX(-100%);
     -ms-transform: translateX(-100%);
 }
-
+.oaside-fullscreen {
+    z-index: 1053;
+    padding-top: 0px;
+}
 .oaside .close {
     color: white;
     opacity: .8;

@@ -310,10 +310,12 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
         if (val) {
             $scope.additionalClass = 'panel-graph-fullscreen';
             $scope.graph.fullScreen(true);
+            Aside.fullScreen(true);
         } else {
             if ($scope.graph) {
                 $scope.graph.fullScreen(false);
             }
+            Aside.fullScreen(false);
             $scope.additionalClass = '';
         }
     })
@@ -413,7 +415,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                 if (Aside.isOpen()) {
                     $scope.doc = v.source;
                     var title = $scope.doc['@class'] + "-" + $scope.doc['@rid'] + "- Version " + $scope.doc['@version'];
-                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideVertex.html', show: true});
+                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideVertex.html', show: true, fullscreen: $scope.fullscreen});
                 }
             });
             $scope.graph.on('edge/create', function (v1, v2) {
@@ -432,7 +434,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                 if (Aside.isOpen()) {
                     var title = "Edge (" + e.label + ")";
                     $scope.doc = e.edge;
-                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideEdge.html', show: true});
+                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideEdge.html', show: true, fullscreen: $scope.fullscreen});
                 }
 
 
@@ -479,7 +481,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
 
                     var title = "Edge (" + e.label + ")";
                     $scope.doc = e.edge;
-                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideEdge.html', show: true});
+                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideEdge.html', show: true, fullscreen: $scope.fullscreen});
                 }
             },
             {
@@ -686,7 +688,7 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                 onClick: function (v) {
                     $scope.doc = v.source;
                     var title = $scope.doc['@class'] + "-" + $scope.doc['@rid'] + "- Version " + $scope.doc['@version'];
-                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideVertex.html', show: true});
+                    Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideVertex.html', show: true, fullscreen: $scope.fullscreen});
 
                 }
             }
