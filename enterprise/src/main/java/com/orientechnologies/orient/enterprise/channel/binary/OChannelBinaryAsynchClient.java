@@ -56,7 +56,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   private byte                                 currentStatus;
   private int                                  currentSessionId;
   private volatile OAsynchChannelServiceThread serviceThread;
-  private boolean                              released;
 
   public OChannelBinaryAsynchClient(final String remoteHost, final int remotePort, final String iDatabaseName,
       final OContextConfiguration iConfig, final int iProtocolVersion) throws IOException {
@@ -67,51 +66,54 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       final OContextConfiguration iConfig, final int protocolVersion, final ORemoteServerEventListener asynchEventListener)
       throws IOException {
     super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
-
-    maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES.getValueAsInteger();
-    serverURL = remoteHost + ":" + remotePort;
-    if (iDatabaseName != null)
-      serverURL += "/" + iDatabaseName;
-    socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
-
-    socket.setPerformancePreferences(0, 2, 1);
-
-    socket.setKeepAlive(true);
-    socket.setSendBufferSize(socketBufferSize);
-    socket.setReceiveBufferSize(socketBufferSize);
     try {
-      socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
-      setReadResponseTimeout();
-      connected();
-    } catch (java.net.SocketTimeoutException e) {
+
+      maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES.getValueAsInteger();
+      serverURL = remoteHost + ":" + remotePort;
+      if (iDatabaseName != null)
+        serverURL += "/" + iDatabaseName;
+      socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
+
+      socket.setPerformancePreferences(0, 2, 1);
+
+      socket.setKeepAlive(true);
+      socket.setSendBufferSize(socketBufferSize);
+      socket.setReceiveBufferSize(socketBufferSize);
+      try {
+        socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
+        setReadResponseTimeout();
+        connected();
+      } catch (java.net.SocketTimeoutException e) {
+        throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
+      }
+      try {
+        inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
+        outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
+
+        in = new DataInputStream(inStream);
+        out = new DataOutputStream(outStream);
+
+        srvProtocolVersion = readShort();
+      } catch (IOException e) {
+        throw new ONetworkProtocolException("Cannot read protocol version from remote server " + socket.getRemoteSocketAddress()
+            + ": " + e);
+      }
+
+      if (srvProtocolVersion != protocolVersion) {
+        OLogManager.instance().warn(
+            this,
+            "The Client driver version is different than Server version: client=" + protocolVersion + ", server="
+                + srvProtocolVersion
+                + ". You could not use the full features of the newer version. Assure to have the same versions on both");
+      }
+
+      if (asynchEventListener != null)
+        serviceThread = new OAsynchChannelServiceThread(asynchEventListener, this);
+    } catch (RuntimeException e) {
       if (socket.isConnected())
         socket.close();
-      throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
+      throw e;
     }
-    try {
-      inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
-      outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
-
-      in = new DataInputStream(inStream);
-      out = new DataOutputStream(outStream);
-
-      srvProtocolVersion = readShort();
-    } catch (IOException e) {
-      socket.close();
-      throw new ONetworkProtocolException("Cannot read protocol version from remote server " + socket.getRemoteSocketAddress()
-          + ": " + e);
-    }
-
-    if (srvProtocolVersion != protocolVersion) {
-      OLogManager.instance().warn(
-          this,
-          "The Client driver version is different than Server version: client=" + protocolVersion + ", server="
-              + srvProtocolVersion
-              + ". You could not use the full features of the newer version. Assure to have the same versions on both");
-    }
-
-    if (asynchEventListener != null)
-      serviceThread = new OAsynchChannelServiceThread(asynchEventListener, this);
   }
 
   @SuppressWarnings("unchecked")
@@ -435,11 +437,4 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
               + (throwable != null ? throwable.getClass().getName() : "null"));
   }
 
-  public void setReleased(boolean release) {
-    this.released = release;
-  }
-
-  public boolean isReleased() {
-    return released;
-  }
 }
