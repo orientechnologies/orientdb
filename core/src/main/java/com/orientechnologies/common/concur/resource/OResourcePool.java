@@ -1,33 +1,35 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.common.concur.resource;
 
-import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.concur.lock.OLockException;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.concur.lock.OLockException;
 
 /**
  * Generic non reentrant implementation about pool of resources. It pre-allocates a semaphore of maxResources. Resources are lazily
@@ -41,10 +43,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class OResourcePool<K, V> {
   protected final Semaphore             sem;
-  protected final Queue<V>              resources = new ConcurrentLinkedQueue<V>();
+  protected final Queue<V>              resources    = new ConcurrentLinkedQueue<V>();
+  protected final Queue<V>              resourcesOut = new ConcurrentLinkedQueue<V>();
   protected final Collection<V>         unmodifiableresources;
   protected OResourcePoolListener<K, V> listener;
-  protected volatile int                created     = 0;
+  protected volatile int                created      = 0;
 
   public OResourcePool(final int maxResources, final OResourcePoolListener<K, V> listener) {
     if (maxResources < 1)
@@ -83,11 +86,10 @@ public class OResourcePool<K, V> {
 
     // NO AVAILABLE RESOURCES: CREATE A NEW ONE
     try {
-      if (res == null) {
+      if (res == null)
         res = listener.createNewResource(key, additionalArgs);
-        created++;
-      }
-
+      resourcesOut.add(res);
+      created++;
       return res;
     } catch (RuntimeException e) {
       sem.release();
@@ -109,8 +111,10 @@ public class OResourcePool<K, V> {
   }
 
   public boolean returnResource(final V res) {
-    resources.add(res);
-    sem.release();
+    if (resourcesOut.remove(res)) {
+      resources.add(res);
+      sem.release();
+    }
     return true;
   }
 
@@ -122,9 +126,17 @@ public class OResourcePool<K, V> {
     sem.drainPermits();
   }
 
+  public Collection<V> getAllResources() {
+    List<V> all = new ArrayList<V>(resources);
+    all.addAll(resourcesOut);
+    return all;
+  }
+
   public void remove(final V res) {
-    this.resources.remove(res);
-    sem.release();
+    if (resourcesOut.remove(res)) {
+      this.resources.remove(res);
+      sem.release();
+    }
   }
 
   public int getCreatedInstancesInPool() {

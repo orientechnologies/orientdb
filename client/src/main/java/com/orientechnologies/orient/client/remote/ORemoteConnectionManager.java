@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.io.OIOException;
@@ -30,12 +36,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsyn
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelListener;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Manages network connections against OrientDB servers. All the connection pools are managed in a Map<url,pool>, but in the future
@@ -85,6 +85,7 @@ public class ORemoteConnectionManager implements OChannelListener {
             public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final OChannelBinaryAsynchClient iValue) {
               return true;
             }
+
           });
 
       final OResourcePool<String, OChannelBinaryAsynchClient> prev = connections.putIfAbsent(iServerURL, pool);
@@ -98,17 +99,14 @@ public class ORemoteConnectionManager implements OChannelListener {
     try {
       // RETURN THE RESOURCE
       OChannelBinaryAsynchClient ret = pool.getResource(iServerURL, timeout, clientConfiguration, iConfiguration, iListener);
-      ret.setReleased(false);
       return ret;
 
     } catch (RuntimeException e) {
       // ERROR ON RETRIEVING THE INSTANCE FROM THE POOL
-      connections.remove(iServerURL);
       throw e;
     } catch (Exception e) {
       // ERROR ON RETRIEVING THE INSTANCE FROM THE POOL
       OLogManager.instance().error(this, "Error on retrieving the connection from pool: " + iServerURL, e);
-      connections.remove(iServerURL);
     }
     return null;
   }
@@ -118,27 +116,22 @@ public class ORemoteConnectionManager implements OChannelListener {
     if (pool != null) {
       if (!conn.isConnected()) {
         OLogManager.instance().debug(this, "Network connection pool is receiving a closed connection to reuse: discard it");
-        pool.remove(conn);
+        remove(conn);
       } else {
-        if (!conn.isReleased()) {
-          conn.setReleased(true);
-          pool.returnResource(conn);
-        }
+        pool.returnResource(conn);
       }
     }
   }
 
   public void remove(final OChannelBinaryAsynchClient conn) {
-    if (conn.isConnected()) {
-      try {
-        conn.unlock();
-      } catch (Exception e) {
-      }
+    try {
+      conn.unlock();
+    } catch (Exception e) {
+    }
 
-      try {
-        conn.close();
-      } catch (Exception e) {
-      }
+    try {
+      conn.close();
+    } catch (Exception e) {
     }
 
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(conn.getServerURL());
@@ -146,11 +139,19 @@ public class ORemoteConnectionManager implements OChannelListener {
       throw new IllegalStateException("Connection cannot be released because the pool doesn't exist anymore");
 
     pool.remove(conn);
+
   }
 
   @Override
   public void onChannelClose(final OChannel channel) {
-    remove((OChannelBinaryAsynchClient) channel);
+    OChannelBinaryAsynchClient conn = (OChannelBinaryAsynchClient) channel;
+
+    final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(conn.getServerURL());
+    if (pool == null)
+      throw new IllegalStateException("Connection cannot be released because the pool doesn't exist anymore");
+
+    pool.remove(conn);
+
   }
 
   public Set<String> getURLs() {
@@ -190,7 +191,7 @@ public class ORemoteConnectionManager implements OChannelListener {
   }
 
   protected void closePool(final OResourcePool<String, OChannelBinaryAsynchClient> pool) {
-    final List<OChannelBinaryAsynchClient> conns = new ArrayList<OChannelBinaryAsynchClient>(pool.getResources());
+    final List<OChannelBinaryAsynchClient> conns = new ArrayList<OChannelBinaryAsynchClient>(pool.getAllResources());
     for (OChannelBinaryAsynchClient c : conns)
       try {
         c.close();
