@@ -15,15 +15,17 @@
  */
 package com.orientechnologies.common.concur.resource;
 
-import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.concur.lock.OLockException;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.concur.lock.OLockException;
 
 /**
  * Generic non reentrant implementation about pool of resources. It pre-allocates a semaphore of maxResources. Resources are lazily
@@ -37,7 +39,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class OResourcePool<K, V> {
   protected final Semaphore             sem;
-  protected final Queue<V>              resources = new ConcurrentLinkedQueue<V>();
+  protected final Queue<V>              resources    = new ConcurrentLinkedQueue<V>();
+  protected final Queue<V>              resourcesOut = new ConcurrentLinkedQueue<V>();
   protected final Collection<V>         unmodifiableresources;
   protected OResourcePoolListener<K, V> listener;
 
@@ -80,7 +83,7 @@ public class OResourcePool<K, V> {
     try {
       if (res == null)
         res = listener.createNewResource(key, additionalArgs);
-
+      resourcesOut.add(res);
       return res;
     } catch (RuntimeException e) {
       sem.release();
@@ -102,8 +105,10 @@ public class OResourcePool<K, V> {
   }
 
   public boolean returnResource(final V res) {
-    resources.add(res);
-    sem.release();
+    if (resourcesOut.remove(res)) {
+      resources.add(res);
+      sem.release();
+    }
     return true;
   }
 
@@ -115,8 +120,16 @@ public class OResourcePool<K, V> {
     sem.drainPermits();
   }
 
+  public Collection<V> getAllResources() {
+    List<V> all = new ArrayList<V>(resources);
+    all.addAll(resourcesOut);
+    return all;
+  }
+
   public void remove(final V res) {
-    this.resources.remove(res);
-    sem.release();
+    if (resourcesOut.remove(res)) {
+      this.resources.remove(res);
+      sem.release();
+    }
   }
 }
