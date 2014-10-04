@@ -156,8 +156,12 @@ public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OR
   protected boolean getNextPartial() {
     if (iteratorOfInternalCollections != null)
       while (iteratorOfInternalCollections.hasNext()) {
-        final Object next = iteratorOfInternalCollections.next();
+        Object next = iteratorOfInternalCollections.next();
         if (next != null) {
+
+          if (next instanceof Iterable<?>)
+            next = ((Iterable) next).iterator();
+
           if (next instanceof Iterator<?>) {
             if (next instanceof OResettable)
               ((OResettable) next).reset();
