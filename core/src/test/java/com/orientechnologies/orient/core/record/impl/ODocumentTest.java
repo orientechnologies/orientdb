@@ -1,12 +1,14 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -175,4 +177,18 @@ public class ODocumentTest {
       db.drop();
     }
   }
+
+  @Test
+  public void testChangeTypeOnValueSet() throws Exception {
+      ODocument doc = new ODocument();
+      doc.field("link", new ORecordId(1, new OClusterPositionLong(2)));
+      ORecordSerializer ser = ODatabaseDocumentTx.getDefaultSerializer();
+      byte[] bytes = ser.toStream(doc, false);
+      doc = new ODocument();
+      ser.fromStream(bytes, doc, null);
+      assertEquals(doc.fieldType("link"), OType.LINK);
+      doc.field("link", new ORidBag());
+      assertNotEquals(doc.fieldType("link"), OType.LINK);
+  }
+
 }
