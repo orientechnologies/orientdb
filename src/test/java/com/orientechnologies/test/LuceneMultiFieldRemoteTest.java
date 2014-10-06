@@ -18,23 +18,29 @@
 
 package com.orientechnologies.test;
 
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
  * Created by enricorisa on 23/09/14.
  */
-@Test(enabled = false)
-public class LuceneMultiFieldRemote extends LuceneMultiFieldTest {
+@Test(groups = "remote")
+public class LuceneMultiFieldRemoteTest extends LuceneMultiFieldTest {
 
-  public LuceneMultiFieldRemote() {
+  public LuceneMultiFieldRemoteTest() {
     super(true);
   }
 
-
-    @BeforeClass
-    @Override
-    public void init() {
+  @BeforeClass
+  @Override
+  public void init() {
     super.init();
-    }
+  }
+
+  @AfterClass
+  @Override
+  public void deInit() {
+    deInitDB();
+  }
 }

@@ -38,17 +38,16 @@ import java.util.List;
 /**
  * Created by enricorisa on 19/09/14.
  */
-@Test
+@Test(groups = "embedded")
 public class LuceneSingleFieldEmbeddedTest extends BaseLuceneTest {
 
   public LuceneSingleFieldEmbeddedTest() {
-
+    super(false);
   }
 
   public LuceneSingleFieldEmbeddedTest(boolean remote) {
     super(remote);
   }
-
 
   @Test
   public void loadAndTest() {

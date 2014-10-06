@@ -126,6 +126,8 @@
                         -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
                         -Dstorage.configuration.syncOnUpdate=false
                     </argLine>
+
+                    <groups>embedded</groups>
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                     </systemPropertyVariables>

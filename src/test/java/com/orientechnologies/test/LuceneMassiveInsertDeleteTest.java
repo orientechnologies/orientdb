@@ -34,7 +34,15 @@ import java.util.List;
 /**
  * Created by enricorisa on 23/09/14.
  */
+@Test(groups = "embedded")
 public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
+
+  public LuceneMassiveInsertDeleteTest(boolean remote) {
+    super(remote);
+  }
+
+  public LuceneMassiveInsertDeleteTest() {
+  }
 
   @Override
   protected String getDatabaseName() {
@@ -50,7 +58,7 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
     song.setSuperClass(v);
     song.createProperty("name", OType.STRING);
 
-    song.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
+    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
 
   }
 

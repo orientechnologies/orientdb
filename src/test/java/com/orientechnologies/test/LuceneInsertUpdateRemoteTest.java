@@ -18,23 +18,20 @@
 
 package com.orientechnologies.test;
 
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-/**
- * Created by enricorisa on 19/09/14.
- */
-@Test(enabled = false)
-public class LuceneSingleFieldRemote extends LuceneSingleFieldEmbeddedTest {
+@Test(groups = "remote")
+public class LuceneInsertUpdateRemoteTest extends LuceneInsertUpdateTest {
 
-  public LuceneSingleFieldRemote() {
+  public LuceneInsertUpdateRemoteTest() {
     super(true);
   }
 
-
-    @BeforeClass
-    @Override
-    public void init() {
-    super.init();
-    }
+  @Test
+  @Override
+  public void testInsertUpdateWithIndex() throws Exception {
+    databaseDocumentTx.close();
+    databaseDocumentTx.open("admin", "admin");
+    super.testInsertUpdateWithIndex();
+  }
 }

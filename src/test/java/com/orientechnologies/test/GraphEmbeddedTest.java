@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
@@ -33,10 +34,18 @@ import org.testng.annotations.Test;
 /**
  * Created by enricorisa on 03/09/14.
  */
-@Test
+@Test(groups = "embedded")
 public class GraphEmbeddedTest extends BaseLuceneTest {
 
   private OrientGraph graph;
+
+  public GraphEmbeddedTest() {
+
+  }
+
+  public GraphEmbeddedTest(boolean remote) {
+    super(remote);
+  }
 
   @BeforeClass
   public void init() {
@@ -46,7 +55,8 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
     type.createProperty("latitude", OType.DOUBLE);
     type.createProperty("longitude", OType.DOUBLE);
     type.createProperty("name", OType.STRING);
-    type.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
+
+    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
 
   }
 

@@ -18,9 +18,12 @@
 
 package com.orientechnologies.test;
 
+import com.orientechnologies.orient.core.OOrientListener;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import org.testng.annotations.Test;
@@ -29,6 +32,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -45,7 +49,8 @@ public abstract class BaseLuceneTest {
   protected OServer             server;
   private boolean               remote;
   protected ODatabaseDocumentTx serverDatabase;
-
+  private Process               process;
+  private String                buildDirectory;
   private final ExecutorService pool = Executors.newFixedThreadPool(1);
 
   public BaseLuceneTest() {
@@ -60,32 +65,15 @@ public abstract class BaseLuceneTest {
   @Test(enabled = false)
   public void initDB() {
 
-    String buildDirectory = System.getProperty("buildDirectory", ".");
+    buildDirectory = System.getProperty("buildDirectory", ".");
     if (buildDirectory == null)
       buildDirectory = ".";
 
     if (remote) {
       try {
-        final String finalBuildDirectory = buildDirectory;
-        Future<Boolean> iServer = pool.submit(new Callable<Boolean>() {
-          @Override
-          public Boolean call() throws Exception {
-            System.setProperty("ORIENTDB_HOME", finalBuildDirectory);
-            server = OServerMain.create();
-            server.startup(ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml"));
-            server.activate();
-            serverDatabase = Orient.instance().getDatabaseFactory()
-                .createDatabase("graph", getStoragePath(getDatabaseName(), "plocal"));
-            if (serverDatabase.exists()) {
-              serverDatabase.open("admin", "admin");
-              serverDatabase.drop();
-            }
-            serverDatabase.create();
-            return true;
-          }
-        });
 
-        iServer.get();
+        startServer();
+
         url = "remote:localhost/" + getDatabaseName();
         databaseDocumentTx = new ODatabaseDocumentTx(url);
         databaseDocumentTx.open("admin", "admin");
@@ -105,40 +93,32 @@ public abstract class BaseLuceneTest {
 
   }
 
+  protected void startServer() throws IOException, InterruptedException {
+    String javaExec = System.getProperty("java.home") + "/bin/java";
+    System.setProperty("ORIENTDB_HOME", buildDirectory);
+
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
+        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName(), getDatabaseName());
+    processBuilder.inheritIO();
+
+    process = processBuilder.start();
+    Thread.sleep(5000);
+  }
+
   protected void restart() {
 
-    if (server != null) {
-
-      databaseDocumentTx.close();
-      try {
-        Future<Boolean> iServer = pool.submit(new Callable<Boolean>() {
-          @Override
-          public Boolean call() throws Exception {
-
-            server.shutdown();
-            server = OServerMain.create();
-
-            server.startup(ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml"));
-            server.activate();
-
-            return true;
-          }
-        });
-        iServer.get();
-        url = "remote:localhost/" + getDatabaseName();
-
-        databaseDocumentTx = new ODatabaseDocumentTx(url);
-        databaseDocumentTx.open("admin", "admin");
-        ODatabaseRecordThreadLocal.INSTANCE
-            .set((com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal) databaseDocumentTx);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+    process.destroy();
+    try {
+      startServer();
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
     }
 
   }
 
-  protected String getStoragePath(final String databaseName, final String storageMode) {
+  protected static String getStoragePath(final String databaseName, final String storageMode) {
     final String path;
     if (storageMode.equals(OEngineLocalPaginated.NAME)) {
       path = storageMode + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + databaseName;
@@ -153,20 +133,7 @@ public abstract class BaseLuceneTest {
   @Test(enabled = false)
   public void deInitDB() {
     if (remote) {
-      if (serverDatabase.exists()) {
-        if (!serverDatabase.isClosed()) {
-          serverDatabase.drop();
-        } else {
-          serverDatabase = Orient.instance().getDatabaseFactory()
-              .createDatabase("graph", getStoragePath(getDatabaseName(), "plocal"));
-          serverDatabase.open("admin", "admin");
-          serverDatabase.drop();
-        }
-
-      }
-      if (server != null) {
-        server.shutdown();
-      }
+      process.destroy();
 
     } else {
       databaseDocumentTx.drop();
@@ -174,4 +141,44 @@ public abstract class BaseLuceneTest {
   }
 
   protected abstract String getDatabaseName();
+
+  public static final class RemoteDBRunner {
+    public static void main(String[] args) throws Exception {
+      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
+
+      if (args.length > 0) {
+        OServer server = OServerMain.create();
+        server.startup(ClassLoader.getSystemResourceAsStream("orientdb-server-config.xml"));
+        server.activate();
+        final ODatabaseDocumentTx db = Orient.instance().getDatabaseFactory()
+            .createDatabase("graph", getStoragePath(args[0], "plocal"));
+
+        if (db.exists()) {
+          db.open("admin", "admin");
+          db.drop();
+        }
+        db.create();
+
+        Orient.instance().registerListener(new OOrientListener() {
+          @Override
+          public void onStorageRegistered(OStorage iStorage) {
+
+          }
+
+          @Override
+          public void onStorageUnregistered(OStorage iStorage) {
+
+          }
+
+          @Override
+          public void onShutdown() {
+            db.drop();
+          }
+        });
+        while (true)
+          Thread.sleep(1000);
+      }
+
+    }
+  }
 }

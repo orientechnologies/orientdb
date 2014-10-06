@@ -27,7 +27,7 @@ import java.io.InputStream;
 /**
  * Created by enricorisa on 26/09/14.
  */
-@Test(enabled = false)
+@Test(groups = "remote")
 public class LuceneCreateIndexRemote extends LuceneCreateIndexTest {
 
   public LuceneCreateIndexRemote() {

@@ -21,6 +21,8 @@ package com.orientechnologies.test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -39,12 +41,14 @@ import com.orientechnologies.orient.core.tx.OTransaction;
  * Created by enricorisa on 28/06/14.
  */
 
-@Test
+@Test(groups = "embedded")
 public class LuceneInsertMultithreadTest {
 
-  private final static int  THREADS = 10;
-  private final static int  CYCLE   = 1000;
+  private final static int  THREADS  = 10;
+  private final static int  RTHREADS = 1;
+  private final static int  CYCLE    = 1000;
   private ODatabaseDocument databaseDocumentTx;
+
   private static String     url;
   static {
     String buildDirectory = System.getProperty("buildDirectory", ".");
@@ -72,11 +76,11 @@ public class LuceneInsertMultithreadTest {
       db = new ODatabaseDocumentTx(url);
       db.open("admin", "admin");
       db.declareIntent(new OIntentMassiveInsert());
-      db.begin(OTransaction.TXTYPE.NOTX);
+      db.begin();
       for (int i = 0; i < cycle; i++) {
         ODocument doc = new ODocument("City");
 
-        doc.field("name", "Sono andato a scuola e quindi boh.");
+        doc.field("name", "Rome");
 
         db.save(doc);
         if (i % commitBuf == 0) {
@@ -105,11 +109,11 @@ public class LuceneInsertMultithreadTest {
       databaseDocumentTx.open("admin", "admin");
       OSchema schema = databaseDocumentTx.getMetadata().getSchema();
       OIndex idx = schema.getClass("City").getClassIndex("City.name");
-      List<String> keys = new ArrayList<String>();
-      keys.add("andato");
 
       for (int i = 0; i < cycle; i++) {
-        Collection<?> coll = (Collection<?>) idx.get("andato");
+
+        Collection<?> coll = (Collection<?>) idx.get("Rome");
+
       }
 
     }
@@ -139,21 +143,17 @@ public class LuceneInsertMultithreadTest {
       oClass.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
     }
 
-    LuceneInsertThread[] opts = new LuceneInsertThread[THREADS];
-
+    Thread[] threads = new Thread[THREADS + RTHREADS];
     for (int i = 0; i < THREADS; ++i)
-      opts[i] = new LuceneInsertThread(CYCLE);
+      threads[i] = new Thread(new LuceneInsertThread(CYCLE), "ConcurrentWriteTest" + i);
 
-    Thread read = new Thread(new LuceneReadThread(CYCLE));
-    Thread[] threads = new Thread[THREADS + 1];
-    for (int i = 0; i < THREADS; ++i)
-      threads[i] = new Thread(opts[i], "ConcurrentTest" + i);
+    for (int i = THREADS; i < THREADS + RTHREADS; ++i)
+      threads[i] = new Thread(new LuceneReadThread(CYCLE), "ConcurrentReadTest" + i);
 
-    threads[THREADS] = read;
-    for (int i = 0; i < THREADS + 1; ++i)
+    for (int i = 0; i < THREADS + RTHREADS; ++i)
       threads[i].start();
 
-    for (int i = 0; i < THREADS + 1; ++i)
+    for (int i = 0; i < THREADS + RTHREADS; ++i)
       threads[i].join();
 
     OIndex idx = schema.getClass("City").getClassIndex("City.name");

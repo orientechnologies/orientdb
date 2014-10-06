@@ -33,10 +33,20 @@ import org.testng.annotations.Test;
 /**
  * Created by enricorisa on 02/10/14.
  */
+
+@Test(groups = "embedded")
 public class LuceneQueryErrorTest extends BaseLuceneTest {
+
+  public LuceneQueryErrorTest() {
+  }
+
+  public LuceneQueryErrorTest(boolean remote) {
+    super(remote);
+  }
+
   @Override
   protected String getDatabaseName() {
-    return null;
+    return "queryError";
   }
 
   @BeforeClass

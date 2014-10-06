@@ -131,7 +131,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
         if (SpatialOperation.Intersects.equals(strategy))
           return searchIntersect(newKey, newKey.getMaxDistance(), newKey.getContext());
         else if (SpatialOperation.IsWithin.equals(strategy))
-          return searchWithin(newKey);
+          return searchWithin(newKey, newKey.getContext());
 
       } else if (key instanceof OCompositeKey)
         return searchIntersect((OCompositeKey) key, 0, null);
@@ -182,7 +182,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     return result;
   }
 
-  public Object searchWithin(OSpatialCompositeKey key) throws IOException {
+  public Object searchWithin(OSpatialCompositeKey key, OCommandContext context) throws IOException {
 
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
 
@@ -192,8 +192,13 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
     IndexSearcher searcher = getSearcher();
 
+    Integer limit = null;
+    if (context != null) {
+      limit = (Integer) context.getVariable("$limit");
+    }
+    int limitDoc = (limit != null && limit > 0) ? limit : Integer.MAX_VALUE;
     Filter filter = strategy.makeFilter(args);
-    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, Integer.MAX_VALUE);
+    TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limitDoc);
 
     ScoreDoc[] scoreDocs = topDocs.scoreDocs;
     for (ScoreDoc s : scoreDocs) {

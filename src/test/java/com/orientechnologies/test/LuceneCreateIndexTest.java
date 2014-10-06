@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import java.io.InputStream;
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.List;
 /**
  * Created by enricorisa on 26/09/14.
  */
+@Test(groups = "embedded")
 public class LuceneCreateIndexTest extends LuceneSingleFieldEmbeddedTest {
 
   public LuceneCreateIndexTest() {

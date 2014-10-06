@@ -46,7 +46,16 @@ import java.util.zip.ZipInputStream;
 /**
  * Created by enricorisa on 02/10/14.
  */
+@Test(groups = "embedded")
 public class LuceneSpatialQueryTest extends BaseLuceneTest {
+
+  public LuceneSpatialQueryTest() {
+  }
+
+  public LuceneSpatialQueryTest(boolean remote) {
+    super(remote);
+  }
+
   @Override
   protected String getDatabaseName() {
     return "luceneSpatial";

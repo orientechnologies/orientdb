@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 /**
  * Created by enricorisa on 19/09/14.
  */
-@Test
+@Test(groups = "embedded")
 public class LuceneMultiFieldTest extends BaseLuceneTest {
 
   public LuceneMultiFieldTest() {

@@ -39,7 +39,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Created by enricorisa on 28/06/14.
  */
 
-@Test
+@Test(groups = "embedded")
 public class LuceneInsertUpdateTransactionTest extends BaseLuceneTest {
 
   public LuceneInsertUpdateTransactionTest() {
@@ -52,7 +52,7 @@ public class LuceneInsertUpdateTransactionTest extends BaseLuceneTest {
 
   @Override
   protected String getDatabaseName() {
-    return "insertUpdate";
+    return "insertUpdateTransaction";
   }
 
   @BeforeClass

@@ -18,66 +18,61 @@
 
 package com.orientechnologies.test;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 /**
  * Created by enricorisa on 28/06/14.
  */
 
-@Test
-public class LuceneInsertUpdateTest {
-
-  private ODatabaseDocument databaseDocumentTx;
-  private static String     url;
-  static {
-    String buildDirectory = System.getProperty("buildDirectory", ".");
-    if (buildDirectory == null)
-      buildDirectory = ".";
-
-    url = "plocal:" + buildDirectory + "/inserUpdate";
-
-  }
+@Test(groups = "embedded")
+public class LuceneInsertUpdateTest extends BaseLuceneTest {
 
   public LuceneInsertUpdateTest() {
     super();
   }
 
+  public LuceneInsertUpdateTest(boolean remote) {
+    super(remote);
+  }
+
+  @Override
+  protected String getDatabaseName() {
+    return "insertUpdate";
+  }
+
+  @BeforeClass
+  public void init() {
+    initDB();
+
+    OSchema schema = databaseDocumentTx.getMetadata().getSchema();
+    OClass oClass = schema.createClass("City");
+
+    oClass.createProperty("name", OType.STRING);
+    databaseDocumentTx.command(new OCommandSQL("create index City.name on City (name) FULLTEXT ENGINE LUCENE")).execute();
+  }
+
+  @AfterClass
+  public void deInit() {
+    deInitDB();
+  }
+
   @Test
   public void testInsertUpdateWithIndex() throws Exception {
 
-    databaseDocumentTx = new ODatabaseDocumentTx(url);
-    if (!url.contains("remote:") && databaseDocumentTx.exists()) {
-      databaseDocumentTx.open("admin", "admin");
-      databaseDocumentTx.drop();
-      databaseDocumentTx.create();
-    } else {
-      databaseDocumentTx.create();
-    }
-
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
-    if (schema.getClass("City") == null) {
-      OClass oClass = schema.createClass("City");
-
-      oClass.createProperty("name", OType.STRING);
-      oClass.createIndex("City.name", "FULLTEXT", null, null, "LUCENE", new String[] { "name" });
-    }
 
     ODocument doc = new ODocument("City");
     doc.field("name", "Rome");
@@ -111,6 +106,5 @@ public class LuceneInsertUpdateTest {
     coll = (Collection<?>) idx.get("Berlin");
     Assert.assertEquals(coll.size(), 1);
 
-    databaseDocumentTx.drop();
   }
 }
