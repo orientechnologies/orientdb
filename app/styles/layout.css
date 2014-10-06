@@ -434,13 +434,13 @@ text.vicon {
 }
 
 .subHeader th {
-    border-left: 1px solid #d3d3d3 !important;
-    border-right: 1px solid #d3d3d3 !important;
+    border-left: 1px solid #929292 !important;
+    border-right: 1px solid #929292 !important;
     border-bottom: 1px solid #d3d3d3 !important;
 }
 
 tr.queryfield-header > th.header-divider {
-    border-left: 1px solid #d3d3d3 !important;
+    border-left: 1px solid #929292 !important;
 }
 
 table.result-table > thead > tr > th {
