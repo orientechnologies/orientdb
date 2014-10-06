@@ -44,16 +44,8 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.imageio.spi.ServiceRegistry;
-
-import com.orientechnologies.common.console.annotation.ConsoleCommand;
-import com.orientechnologies.common.console.annotation.ConsoleParameter;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.common.util.OArrays;
-
 public class OConsoleApplication {
-  protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" }; ;
+  protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" };
   protected final StringBuilder   commandBuffer   = new StringBuilder(2048);
   protected InputStream           in              = System.in;                       // System.in;
   protected PrintStream           out             = System.out;
@@ -456,7 +448,7 @@ public class OConsoleApplication {
 
   /**
    * Returns a map of all console method and the object they can be called on.
-   * 
+   *
    * @return Map&lt;Method,Object&gt;
    */
   protected Map<Method, Object> getConsoleMethods() {
