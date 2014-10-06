@@ -655,8 +655,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   /**
-   * Returns the document as Map String,Object . If the document has identity, then the @rid entry is valued. If the
-   * document has a class, then the @class entry is valued.
+   * Returns the document as Map String,Object . If the document has identity, then the @rid entry is valued. If the document has a
+   * class, then the @class entry is valued.
    * 
    * @since 2.0
    */
@@ -931,8 +931,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   /**
    * Deprecated. Use fromMap(Map) instead.<br>
-   * Fills a document passing the field names/values as a Map String,Object  where the keys are the field names and the
-   * values are the field values.
+   * Fills a document passing the field names/values as a Map String,Object where the keys are the field names and the values are
+   * the field values.
    *
    * @see #fromMap(Map)
    *
@@ -943,8 +943,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   /**
-   * Fills a document passing the field names/values as a Map String,Object  where the keys are the field names and the
-   * values are the field values. It accepts also @rid for record id and @class for class name.
+   * Fills a document passing the field names/values as a Map String,Object where the keys are the field names and the values are
+   * the field values. It accepts also @rid for record id and @class for class name.
    * 
    * @since 2.0
    */
@@ -1021,6 +1021,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     final boolean knownProperty = _fieldValues.containsKey(iFieldName);
     final Object oldValue = _fieldValues.get(iFieldName);
+    final OType oldType = fieldType(iFieldName);
 
     if (knownProperty)
       // CHECK IF IS REALLY CHANGED
@@ -1031,7 +1032,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       } else {
         try {
           if (iPropertyValue.equals(oldValue)) {
-            final OType oldType = fieldType(iFieldName);
             if (iFieldType == null || iFieldType.length == 0 || iFieldType[0] == oldType) {
               if (!(iPropertyValue instanceof ORecordElement))
                 // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
@@ -1073,6 +1073,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         ridBag.setOwner(null); // in order to avoid IllegalStateException when ridBag changes the owner (ODocument.merge)
         ridBag.setOwner(this);
       }
+    }
+    if (oldType != fieldType && oldType != null) {
+      // can be made in a better way, but "keeping type" issue should be solved before
+      if (iPropertyValue == null || fieldType != null || oldType != OType.getTypeByValue(iPropertyValue))
+        setFieldType(iFieldName, fieldType);
     }
 
     removeCollectionChangeListener(iFieldName, _fieldValues.get(iFieldName));
