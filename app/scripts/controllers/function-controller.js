@@ -5,6 +5,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.listClass = 'fa-mail-reply';
     $scope.logLevel = ""
     $scope.isCode = true;
+    $scope.isDirty = false;
     $scope.listClasses = $scope.database.listClasses();
     $scope.editorOptions = {
         lineWrapping: true,
@@ -111,6 +112,26 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     })
     $rootScope.$on("aside:open", function () {
         $scope.listClass = 'fa-mail-reply';
+    })
+
+    $scope.canSave = function (form) {
+
+        return !$scope.isDirty || form.$invalid;
+    }
+    $scope.$watch("functionToExecute.code", function (newVal, oldVal) {
+        if (oldVal && oldVal != newVal) {
+            $scope.isDirty = true;
+        }
+    })
+    $scope.$watch("functionToExecute.name", function (newVal, oldVal) {
+        if (oldVal && oldVal != newVal) {
+            $scope.isDirty = true;
+        }
+    })
+    $scope.$watchCollection("functionToExecute.parameters", function (newVal, oldVal) {
+        if (oldVal && oldVal != newVal) {
+            $scope.isDirty = true;
+        }
     })
     $scope.copyFunction = function () {
         if ($scope.functionToExecute != undefined) {

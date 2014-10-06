@@ -1,7 +1,8 @@
 <div class="row">
     <div class="panel panel-default panel-function panel-orient">
         <div class="panel-heading">
-            <button class="btn btn-xs btn-warning btn-trasparent" ng-click="showAllFunctions()"><i class="fa " ng-class="listClass"></i>
+            <button class="btn btn-xs btn-warning btn-trasparent" ng-click="showAllFunctions()"><i class="fa "
+                                                                                                   ng-class="listClass"></i>
             </button>
             &nbsp;Functions Management
             <a href="{{ database.getWiki() }}" class="btn btn-trasparent btn-help"
@@ -13,11 +14,13 @@
                bs-tooltip>
                 <i class="fa fa-question fa-lg"></i>
             </a>
+
             <div class="panel-actions">
                 <div class="btn-toolbar">
 
                     <div class="btn-group">
-                        <button type="submit" class="btn btn-sm btn-primary" ng-disabled="propertyForm.$invalid"
+                        <button type="submit" class="btn btn-sm btn-primary" ng-class="{'btn-success' : isDirty }"
+                                ng-disabled="canSave(functionForm);"
                                 ng-click="saveFunction()"><i class="fa fa-save"></i> Save
                         </button>
                     </div>
