@@ -19,18 +19,6 @@
  */
 package com.orientechnologies.orient.console;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -43,6 +31,7 @@ import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
@@ -87,8 +76,24 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
+  protected static final int          DEFAULT_WIDTH = 150;
+  private int                         windowSize    = DEFAULT_WIDTH;
   protected ODatabaseDocumentInternal currentDatabase;
   protected String                    currentDatabaseName;
   protected ORecord                   currentRecord;
@@ -115,15 +120,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         Runtime.getRuntime().addShutdownHook(new Thread() {
           @Override
           public void run() {
-            try {
-              stty("echo");
-            } catch (Exception ignored) {
-            }
+            restoreTerminal();
           }
         });
 
       } catch (Exception ignored) {
       }
+
+      new OSignalHandler().installDefaultSignals(new SignalHandler() {
+        public void handle(Signal signal) {
+          restoreTerminal();
+        }
+      });
 
       final OConsoleDatabaseApp console = new OConsoleDatabaseApp(args);
       if (tty)
@@ -132,14 +140,18 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       result = console.run();
 
     } finally {
-      try {
-        stty("echo");
-      } catch (Exception ignored) {
-      }
+      restoreTerminal();
     }
 
     Orient.instance().shutdown();
     System.exit(result);
+  }
+
+  protected static void restoreTerminal() {
+    try {
+      stty("echo");
+    } catch (Exception ignored) {
+    }
   }
 
   protected static boolean setTerminalToCBreak() throws IOException, InterruptedException {
@@ -2014,9 +2026,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.setValue(2);
 
     properties.put("limit", "20");
-    properties.put("width", "132");
+    properties.put("width", "150");
     properties.put("debug", "false");
-    properties.put("maxBinaryDisplay", "160");
+    properties.put("maxBinaryDisplay", "150");
     properties.put("verbose", "2");
     properties.put("ignoreErrors", "false");
     properties.put("backupCompressionLevel", "9"); // 9 = MAX
@@ -2038,7 +2050,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   protected void dumpResultSet(final int limit) {
-    new OTableFormatter(this).setMaxWidthSize(Integer.parseInt(properties.get("width"))).writeRecords(currentResultSet, limit);
+    new OTableFormatter(this).setMaxWidthSize(getWindowSize()).writeRecords(currentResultSet, limit);
   }
 
   protected float getElapsedSecs(final long start) {
@@ -2135,6 +2147,32 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
   }
 
+  protected Map<String, List<String>> parseOptions(final String iOptions) {
+    final Map<String, List<String>> options = new HashMap<String, List<String>>();
+    if (iOptions != null) {
+      final List<String> opts = OStringSerializerHelper.smartSplit(iOptions, ' ');
+      for (String o : opts) {
+        final int sep = o.indexOf('=');
+        if (sep == -1) {
+          OLogManager.instance().warn(this, "Unrecognized option %s, skipped", o);
+          continue;
+        }
+
+        final String option = o.substring(0, sep);
+        final List<String> items = OStringSerializerHelper.smartSplit(o.substring(sep + 1), ' ');
+
+        options.put(o, items);
+      }
+    }
+    return options;
+  }
+
+  protected int getWindowSize() {
+    if (properties.containsKey("width"))
+      return Integer.parseInt(properties.get("width"));
+    return windowSize;
+  }
+
   private void dumpRecordDetails() {
     if (currentRecord == null)
       return;
@@ -2196,7 +2234,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   }
 
   private void browseRecords(final int limit, final OIdentifiableIterator<?> it) {
-    final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(Integer.parseInt(properties.get("width")));
+    final OTableFormatter tableFormatter = new OTableFormatter(this).setMaxWidthSize(getWindowSize());
 
     currentResultSet.clear();
     while (it.hasNext() && currentResultSet.size() <= limit)
@@ -2230,25 +2268,4 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     return result;
   }
-
-  protected Map<String, List<String>> parseOptions(final String iOptions) {
-    final Map<String, List<String>> options = new HashMap<String, List<String>>();
-    if (iOptions != null) {
-      final List<String> opts = OStringSerializerHelper.smartSplit(iOptions, ' ');
-      for (String o : opts) {
-        final int sep = o.indexOf('=');
-        if (sep == -1) {
-          OLogManager.instance().warn(this, "Unrecognized option %s, skipped", o);
-          continue;
-        }
-
-        final String option = o.substring(0, sep);
-        final List<String> items = OStringSerializerHelper.smartSplit(o.substring(sep + 1), ' ');
-
-        options.put(o, items);
-      }
-    }
-    return options;
-  }
-
 }
