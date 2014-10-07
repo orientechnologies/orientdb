@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.util.ArrayList;
@@ -201,33 +201,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   public OClass createClass(final String iClassName, final OClass iSuperClass) {
     return createClass(iClassName, iSuperClass, (int[]) null);
-  }
-
-  public OClass createClass(final String className, final OClass superClass, final OStorage.CLUSTER_TYPE type) {
-    OClass result;
-
-    int[] clusterIds = null;
-    int retry = 0;
-
-    while (true)
-      try {
-        acquireSchemaWriteLock();
-        try {
-          if (getDatabase().getTransaction().isActive())
-            throw new IllegalStateException("Cannot create class " + className + " inside a transaction");
-
-          result = doCreateClass(className, superClass, (int[]) null, retry);
-        } finally {
-          releaseSchemaWriteLock();
-        }
-
-        break;
-      } catch (ClusterIdsAreEmptyException e) {
-        clusterIds = createClusters(className);
-        retry++;
-      }
-
-    return result;
   }
 
   public OClass createClass(final String className, final int iDefaultClusterId) {
@@ -477,7 +450,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   private int[] createClusters(String className) {
     className = className.toLowerCase();
 
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
     final OStorage storage = database.getStorage();
 
     int[] clusterIds;// CREATE A NEW CLUSTER(S)
@@ -487,12 +460,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     if (minimumClusters <= 1) {
       clusterIds[0] = database.getClusterIdByName(className);
       if (clusterIds[0] == -1)
-        clusterIds[0] = database.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), className, null, null);
+        clusterIds[0] = database.addCluster(className);
     } else
       for (int i = 0; i < minimumClusters; ++i) {
         clusterIds[i] = database.getClusterIdByName(className + "_" + i);
         if (clusterIds[i] == -1)
-          clusterIds[i] = database.addCluster(CLUSTER_TYPE.PHYSICAL.toString(), className + "_" + i, null, null);
+          clusterIds[i] = database.addCluster(className + "_" + i);
       }
     return clusterIds;
   }
@@ -1158,5 +1131,5 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   private static final class ClusterIdsAreEmptyException extends Exception {
-  }	
+  }
 }
