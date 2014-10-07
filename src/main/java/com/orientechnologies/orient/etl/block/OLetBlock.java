@@ -26,18 +26,27 @@ import com.orientechnologies.orient.etl.OETLProcessor;
 public class OLetBlock extends OAbstractBlock {
   protected String     name;
   protected OSQLFilter expression;
+  protected Object     value;
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[{name:{optional:false,description:'Variable name'}},"
-        + "{value:{optional:false,description:'Variable value'}}]}");
+        + "{value:{optional:true,description:'Variable value'}}"
+        + "{expression:{optional:true,description:'Expression to evaluate'}}" + "]}");
   }
 
   @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
+  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
+
     name = iConfiguration.field("name");
-    expression = new OSQLFilter((String) iConfiguration.field("value"), iContext, null);
+    if (iConfiguration.containsField("value")) {
+      value = iConfiguration.field("value");
+    } else
+      expression = new OSQLFilter((String) iConfiguration.field("expression"), iContext, null);
+
+    if (value == null && expression == null)
+      throw new IllegalArgumentException("'value' or 'expression' parameter are mandatory in Let Transformer");
   }
 
   @Override
@@ -47,6 +56,9 @@ public class OLetBlock extends OAbstractBlock {
 
   @Override
   public void executeBlock() {
-    context.setVariable(name, expression.evaluate(null, null, context));
+    if (expression != null)
+      context.setVariable(name, expression.evaluate(null, null, context));
+    else
+      context.setVariable(name, resolve(value));
   }
 }

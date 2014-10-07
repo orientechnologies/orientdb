@@ -103,7 +103,7 @@ public abstract class OAbstractETLComponent implements OETLComponent {
 
     Object value = null;
     if (iContent instanceof String) {
-      if (((String) iContent).startsWith("$"))
+      if (((String) iContent).startsWith("$") && !((String) iContent).startsWith(OSystemVariableResolver.VAR_BEGIN))
         value = context.getVariable(iContent.toString());
       else
         value = OVariableParser.resolveVariables((String) iContent, OSystemVariableResolver.VAR_BEGIN,
