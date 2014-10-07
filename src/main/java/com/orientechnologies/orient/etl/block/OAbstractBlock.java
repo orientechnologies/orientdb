@@ -19,7 +19,6 @@
 package com.orientechnologies.orient.etl.block;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.etl.OAbstractETLComponent;
 
 /**
@@ -28,7 +27,7 @@ import com.orientechnologies.orient.etl.OAbstractETLComponent;
 public abstract class OAbstractBlock extends OAbstractETLComponent implements OBlock {
   @Override
   public void execute() {
-    if (!skip())
+    if (!skip(null))
       executeBlock();
   }
 
@@ -38,16 +37,4 @@ public abstract class OAbstractBlock extends OAbstractETLComponent implements OB
   }
 
   protected abstract void executeBlock();
-
-  protected boolean skip() {
-    if (ifFilter != null) {
-      final Object result = ifFilter.evaluate(null, null, context);
-      if (!(result instanceof Boolean))
-        throw new OConfigurationException("'if' expression in Transformer " + getName() + " returned '" + result
-            + "' instead of boolean");
-
-      return !((Boolean) result).booleanValue();
-    }
-    return false;
-  }
 }

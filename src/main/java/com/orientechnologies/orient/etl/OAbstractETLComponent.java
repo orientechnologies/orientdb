@@ -22,6 +22,8 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
@@ -32,18 +34,16 @@ import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 public abstract class OAbstractETLComponent implements OETLComponent {
   protected OETLProcessor            processor;
   protected OBasicCommandContext     context;
-  protected OSQLFilter               ifFilter;
   protected OETLProcessor.LOG_LEVELS logLevel;
   protected String                   output = null;
+  protected String                   ifExpression;
 
   @Override
   public void configure(final OETLProcessor iProcessor, final ODocument iConfiguration, final OBasicCommandContext iContext) {
     processor = iProcessor;
     context = iContext;
 
-    final String ifExpression = (String) resolve(iConfiguration.field("if"));
-    if (ifExpression != null)
-      ifFilter = new OSQLFilter(ifExpression, iContext, null);
+    ifExpression = iConfiguration.field("if");
 
     if (iConfiguration.containsField("log"))
       logLevel = OETLProcessor.LOG_LEVELS.valueOf(iConfiguration.field("log").toString().toUpperCase());
@@ -70,6 +70,29 @@ public abstract class OAbstractETLComponent implements OETLComponent {
   @Override
   public String toString() {
     return getName();
+  }
+
+  protected boolean skip(final Object input) {
+    final OSQLFilter ifFilter = getIfFilter();
+    if (ifFilter != null) {
+      final ODocument doc = input instanceof OIdentifiable ? (ODocument) ((OIdentifiable) input).getRecord() : null;
+
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "Evaluating conditional expression if=%s...", ifFilter);
+
+      final Object result = ifFilter.evaluate(doc, null, context);
+      if (!(result instanceof Boolean))
+        throw new OConfigurationException("'if' expression in Transformer " + getName() + " returned '" + result
+            + "' instead of boolean");
+
+      return !((Boolean) result).booleanValue();
+    }
+    return false;
+  }
+
+  protected OSQLFilter getIfFilter() {
+    if (ifExpression != null)
+      return new OSQLFilter(ifExpression, context, null);
+    return null;
   }
 
   protected String getCommonConfigurationParameters() {
