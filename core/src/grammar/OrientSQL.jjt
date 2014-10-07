@@ -1,0 +1,853 @@
+/* Copyright (c) 2011, Luigi Dell'Aquila
+ * All rights reserved.
+ *
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+options {
+	TRACK_TOKENS = true;
+  	JDK_VERSION = "1.5";
+  	MULTI=true;
+  	VISITOR=true;
+  	STATIC=false;
+  	NODE_PREFIX="O";
+}
+
+PARSER_BEGIN(OrientSql)
+
+package com.orientechnologies.orient.core.sql.parser;
+
+/** Orient Database Sql grammar. */
+public class OrientSql {
+
+    /** Main entry point. For development purpose only */
+  public static void main(String args[]) {
+    System.out.println("Reading from standard input...");
+    OrientSql t = new OrientSql(System.in);
+    try {
+      SimpleNode n = t.OrientGrammar();
+      n.dump("");
+      System.out.println("Thank you.");
+    } catch (Exception e) {
+      System.out.println("Oops.");
+      System.out.println(e.getMessage());
+      e.printStackTrace();
+    }
+  }
+
+}
+
+PARSER_END(OrientSql)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+
+
+/* reserved words */
+TOKEN:
+{
+	< SELECT: ( "s" | "S" ) ( "e" | "E" ) ( "l" | "L" ) ( "e" | "E" ) ( "c" | "C" ) ( "t" | "T" ) >
+	|
+	< TRAVERSE: ( "t" | "T") ( "r" | "R") ( "a" | "A") ( "v" | "V") ( "e" | "E") ( "r" | "R") ( "s" | "S") ( "e" | "E") >
+	|
+	< INSERT: ( "i" | "I" ) ( "n" | "N" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) >
+	|
+	< UPDATE: ( "u" | "U" ) ( "p" | "P" ) ( "d" | "D" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
+	|
+	< DELETE: ( "d" | "D" ) ( "e" | "E" ) ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) ( "e" | "E" ) >
+	|
+	< FROM: ( "f" | "F" ) ( "r" | "R" ) ( "o" | "O" ) ( "m" | "M" ) >
+	|
+	< WHERE: ( "w" | "W" ) ( "h" | "H" ) ( "e" | "E" ) ( "r" | "R" ) ( "e" | "E" ) >
+	|
+	< WHILE: ( "w" | "W" ) ( "h" | "H" ) ( "i" | "I" ) ( "l" | "L" ) ( "e" | "E" ) >
+	|
+	< INTO: ( "i" | "I" ) ( "n" | "N" ) ( "t" | "T" ) ( "o" | "O" ) >
+	|
+	< VALUES: ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) ( "s" | "S" )>
+	|
+	< SET: ( "s" | "S" ) ( "e" | "E" ) ( "t" | "T" ) >
+	|
+	< ADD: ( "a" | "A" ) ( "d" | "D" ) ( "d" | "D" ) >
+	|
+	< REMOVE: ( "r" | "R" ) ( "e" | "E" ) ( "m" | "M" ) ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) >
+	|
+	< AND: ( "a" | "A" ) ( "n" | "N" ) ( "d" | "D" ) >
+	|
+	< OR: ( "o" | "O" ) ( "r" | "R" ) >
+	|
+	< NULL: ( "N" | "n" ) ( "U" | "u" ) ( "L" | "l" ) ( "L" | "l" ) >
+	|
+	< ORDER: ( "o" | "O" ) ( "r" | "R" ) ( "d" | "D" ) ( "e" | "E" ) ( "r" | "R" ) >
+	|
+	< BY: ( "b" | "B" ) ( "y" | "Y" ) >
+	|
+	< LIMIT: ( "l" | "L" ) ( "i" | "I" ) ( "m" | "M" ) ( "i" | "I" ) ( "t" | "T" ) >
+	|
+	< RANGE: ( "r" | "R" ) ( "a" | "A" ) ( "n" | "N" ) ( "g" | "G" ) ( "e" | "E" )>
+	|
+	< ASC: ( "a" | "A" ) ( "s" | "S" ) ( "c" | "C" ) >
+	|
+	< AS: ( "a" | "A" ) ( "s" | "S" ) >
+	|
+	< DESC: ( "d" | "D" ) ( "e" | "E" ) ( "s" | "S" ) ( "c" | "C" ) >
+	|
+	< THIS: "@this" >
+	|
+	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> >
+	|
+	< #RID_ATTR: "@rid" >
+	|
+	< #CLASS_ATTR: "@class" >
+	|
+	< #VERSION_ATTR: "@version" >
+	|
+	< #SIZE_ATTR: "@size" >
+	|
+	< #TYPE_ATTR: "@type" >
+}
+
+
+/* LITERALS */
+
+TOKEN :
+{
+  < INTEGER_LITERAL:
+        <DECIMAL_LITERAL> (["l","L"])?
+      | <HEX_LITERAL> (["l","L"])?
+      | <OCTAL_LITERAL> (["l","L"])?
+  >
+|
+  < #DECIMAL_LITERAL: ["1"-"9"] (["0"-"9"])* >
+|
+  < #HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ >
+|
+  < #OCTAL_LITERAL: "0" (["0"-"7"])* >
+|
+  < FLOATING_POINT_LITERAL:
+        <DECIMAL_FLOATING_POINT_LITERAL>
+      | <HEXADECIMAL_FLOATING_POINT_LITERAL>
+  >
+|
+  < #DECIMAL_FLOATING_POINT_LITERAL:
+        (["0"-"9"])+ "." (["0"-"9"])* (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
+      | "." (["0"-"9"])+ (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
+      | (["0"-"9"])+ <DECIMAL_EXPONENT> (["f","F","d","D"])?
+      | (["0"-"9"])+ (<DECIMAL_EXPONENT>)? ["f","F","d","D"]
+  >
+|
+  < #DECIMAL_EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
+|
+  < #HEXADECIMAL_FLOATING_POINT_LITERAL:
+        "0" ["x", "X"] (["0"-"9","a"-"f","A"-"F"])+ (".")? <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
+      | "0" ["x", "X"] (["0"-"9","a"-"f","A"-"F"])* "." (["0"-"9","a"-"f","A"-"F"])+ <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
+  >
+|
+  < #HEXADECIMAL_EXPONENT: ["p","P"] (["+","-"])? (["0"-"9"])+ >
+|
+  < CHARACTER_LITERAL:
+      "'"
+      (   (~["'","\\","\n","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )
+      "'"
+  >
+|
+  < STRING_LITERAL:
+      (
+	      "\""
+	      (   (~["\"","\\","\n","\r"])
+	        | ("\\"
+	            ( ["n","t","b","r","f","\\","'","\""]
+	            | ["0"-"7"] ( ["0"-"7"] )?
+	            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+	            )
+	          )
+	      )*
+	      "\""
+      )
+      |
+      (
+	      "'"
+	      (   (~["\'","\\","\n","\r"])
+	        | ("\\"
+	            ( ["n","t","b","r","f","\\","'","\""]
+	            | ["0"-"7"] ( ["0"-"7"] )?
+	            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+	            )
+	          )
+	      )*
+	      "'"
+      )
+  >
+}
+
+
+
+/* SEPARATORS */
+
+TOKEN :
+{
+  < LPAREN: "(" >
+| < RPAREN: ")" >
+| < LBRACE: "{" >
+| < RBRACE: "}" >
+| < LBRACKET: "[" >
+| < RBRACKET: "]" >
+| < SEMICOLON: ";" >
+| < COMMA: "," >
+| < DOT: "." >
+| < AT: "@" >
+}
+
+/* OPERATORS */
+
+TOKEN :
+{
+
+  < EQ: "=" >
+| < LT: "<" >
+| < GT: ">" >
+| < BANG: "!" >
+| < TILDE: "~" >
+| < HOOK: "?" >
+| < COLON: ":" >
+| < LE: "<=" >
+| < GE: ">=" >
+| < NE: "!=" >
+| < NEQ: "<>" >
+| < SC_OR: "||" >
+| < SC_AND: "&&" >
+| < INCR: "++" >
+| < DECR: "--" >
+| < PLUS: "+" >
+| < MINUS: "-" >
+| < STAR: "*" >
+| < SLASH: "/" >
+| < BIT_AND: "&" >
+| < BIT_OR: "|" >
+| < XOR: "^" >
+| < REM: "%" >
+| < LSHIFT: "<<" >
+| < PLUSASSIGN: "+=" >
+| < MINUSASSIGN: "-=" >
+| < STARASSIGN: "*=" >
+| < SLASHASSIGN: "/=" >
+| < ANDASSIGN: "&=" >
+| < ORASSIGN: "|=" >
+| < XORASSIGN: "^=" >
+| < REMASSIGN: "%=" >
+| < LSHIFTASSIGN: "<<=" >
+| < RSIGNEDSHIFTASSIGN: ">>=" >
+| < RUNSIGNEDSHIFTASSIGN: ">>>=" >
+| < ELLIPSIS: "..." >
+| < NOT: ( "N" | "n") ( "O" | "o") ( "T" | "t")  >
+| < LIKE: ( "L" | "l") ( "I" | "i") ( "K" | "k") ( "E" | "e") >
+| < IS: "is" | "IS" | "Is" | "iS" >
+| < IN: "in" | "IN" | "In" | "iN" >
+| < BETWEEN: ( "B" | "b") ( "E" | "e") ( "T" | "t") ( "W" | "w") ( "E" | "e") ( "E" | "e") ( "N" | "n")>
+| < CONTAINS: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) >
+| < CONTAINSALL: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "A" | "a" ) ( "L" | "l" ) ( "L" | "l" ) >
+| < CONTAINSKEY: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "K" | "k" ) ( "E" | "e" ) ( "Y" | "y" ) >
+| < CONTAINSVALUE: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "V" | "v" ) ( "A" | "a" ) ( "L" | "l" ) ( "U" | "u" ) ( "E" | "e" ) >
+| < CONTAINSTEXT: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "X" | "x" ) ( "T" | "t" ) >
+| < MATCHES: ( "M" | "m") ( "A" | "a") ( "T" | "t") ( "C" | "c") ( "H" | "h") ( "E" | "e") ( "S" | "s") >
+}
+
+
+
+TOKEN :
+{
+  < IDENTIFIER: <LETTER> (<PART_LETTER>)* >
+|
+  < #LETTER:
+      [  "A"-"Z",
+         "_",
+         "a"-"z"
+      ]
+  >
+|
+  < #PART_LETTER:
+      [  "0"-"9",
+         "A"-"Z",
+         "_",
+         "a"-"z"
+      ]
+  >
+}
+
+
+void Rid():
+{}
+{
+	 LOOKAHEAD(4)
+	 "#" <INTEGER_LITERAL> <COLON> <INTEGER_LITERAL>
+	 |
+	 LOOKAHEAD(3)
+	 <INTEGER_LITERAL> <COLON> <INTEGER_LITERAL>
+}
+
+/** Root production. */
+SimpleNode OrientGrammar() :
+{}
+{
+  Statement() <EOF>
+  { return jjtThis; }
+}
+
+void Statement():
+{}
+{
+	(
+		SelectStatement()
+		|
+		TraverseStatement()
+        |
+		DeleteStatement()
+		|
+		InsertStatement()
+		|
+		UpdateStatement()
+	)
+}
+
+
+void SelectStatement():
+{}
+{
+	<SELECT>
+	[ Projection() ]
+	<FROM>
+	FromClause()
+	[ <WHERE> WhereClause() ]
+	[ OrderBy() ]
+	[ Limit() ]
+	[ Range() ]
+}
+
+void TraverseStatement():
+{}
+{
+	<TRAVERSE>
+	[ Projection() ]
+	<FROM>
+	FromClause()
+	[ <WHILE> WhereClause() ]
+}
+
+
+void DeleteStatement():
+{}
+{
+	<DELETE>
+	<FROM>
+	<IDENTIFIER>
+	[ <WHERE> WhereClause() ]
+}
+
+void UpdateStatement():
+{}
+{
+	<UPDATE>
+	(
+		<IDENTIFIER>
+		|
+		Cluster()
+		|
+		IndexIdentifier()
+	)
+	(
+		( <SET> UpdateItem() ( "," UpdateItem() )* )
+	)
+	[ <WHERE> WhereClause() ]
+}
+
+void UpdateItem():
+{}
+{
+	<IDENTIFIER> <EQ>
+	(
+		<NULL>
+		|
+		<STRING_LITERAL>
+		|
+		LOOKAHEAD(Rid())
+		Rid()
+		|
+		LOOKAHEAD(2)
+		<INTEGER_LITERAL>
+		|
+		<FLOATING_POINT_LITERAL>
+		|
+		<CHARACTER_LITERAL>
+		|
+		<LBRACKET> Rid() ("," Rid())* <RBRACKET>
+	)
+
+}
+
+void UpdateAddItem():
+{}
+{
+	<IDENTIFIER> <EQ>
+	(
+		<STRING_LITERAL>
+		|
+		LOOKAHEAD(Rid())
+		Rid()
+		|
+		LOOKAHEAD(2)
+		<INTEGER_LITERAL>
+		|
+		<FLOATING_POINT_LITERAL>
+		|
+		<CHARACTER_LITERAL>
+		|
+		<LBRACKET> Rid() ("," Rid())* <RBRACKET>
+	)
+
+}
+
+
+void InsertStatement():
+{}
+{
+	<INSERT>
+	<INTO>
+	( <IDENTIFIER> | Cluster() )
+	<LPAREN> <IDENTIFIER> ("," <IDENTIFIER>) <RPAREN>
+	<VALUES>
+	<LPAREN> InsertExpression() ("," InsertExpression()) <RPAREN>
+}
+
+void InsertExpression():
+{}
+{
+	<NULL>
+	|
+	<STRING_LITERAL>
+	|
+	LOOKAHEAD(2)
+	<INTEGER_LITERAL>
+	|
+	<FLOATING_POINT_LITERAL>
+	|
+	LOOKAHEAD(Rid())
+	Rid()
+	|
+	<CHARACTER_LITERAL>
+	|
+	<LBRACKET> Rid() ("," Rid())* <RBRACKET>
+}
+
+void InputParameter():
+{}
+{
+	"?"
+}
+
+void Projection():
+{}
+{
+	 	ProjectionItem()  ( "," ProjectionItem() )*
+}
+
+void ProjectionItem():
+{}
+{
+	"*"
+	|
+	(
+		(
+
+			<NULL>
+			|
+			<INTEGER_LITERAL>
+			|
+			<STRING_LITERAL>
+			|
+			<FLOATING_POINT_LITERAL>
+			|
+			<CHARACTER_LITERAL>
+			|
+			LOOKAHEAD( FunctionCall() )
+			FunctionCall()
+			|
+			DottedIdentifier()
+			|
+			RecordAttribute()
+			|
+			ThisOperation()
+			|
+			InputParameter()
+		)
+		[<AS> Alias() ]
+	)
+}
+
+void FilterItem():
+{}
+{
+	<NULL>
+	|
+	Any()
+	|
+	All()
+	|
+	<INTEGER_LITERAL>
+	|
+	<STRING_LITERAL>
+	|
+	<FLOATING_POINT_LITERAL>
+	|
+	<CHARACTER_LITERAL>
+	|
+	LOOKAHEAD( FunctionCall() )
+	FunctionCall()
+	|
+	DottedIdentifier()
+	|
+	RecordAttribute()
+	|
+	ThisOperation()
+	|
+	InputParameter()
+}
+
+void Alias():
+{}
+{
+	<IDENTIFIER>
+}
+
+void Any():
+{}
+{
+	"any()"
+}
+
+void All():
+{}
+{
+	"all()"
+}
+
+void RecordAttribute():
+{}
+{
+	<RECORD_ATTRIBUTE>
+}
+
+void ThisOperation():
+{}
+{
+	<THIS> ( FieldOperator() )*
+}
+
+void FunctionCall():
+{}
+{
+	<IDENTIFIER>
+	<LPAREN>
+
+	(
+		"*"
+		|
+		(
+			FilterItem()
+			( "," FilterItem() )*
+		)
+	)
+	<RPAREN> ( FieldOperator() )*
+}
+
+void FieldOperator():
+{}
+{
+	( <DOT> <IDENTIFIER> <LPAREN> [ FilterItem() ( "," FilterItem() )* ] <RPAREN> )
+	|
+	( "[" <STRING_LITERAL> "]" )
+}
+
+void DottedIdentifier():
+{}
+{
+	LOOKAHEAD(4)
+	<IDENTIFIER> ( "[" WhereClause() "]" )+
+	|
+	LOOKAHEAD(4)
+	<IDENTIFIER> ( FieldOperator() )+
+	|
+   	<IDENTIFIER> [ <DOT> DottedIdentifier() ]
+}
+
+void FromClause():
+{}
+{
+	FromItem()
+}
+
+void FromItem():
+{}
+{
+	Rid()
+	|
+	<LBRACKET> Rid() ("," Rid())* <RBRACKET>
+	|
+	Cluster()
+	|
+	IndexIdentifier()
+	|
+	<IDENTIFIER>
+}
+
+void Cluster():
+{}
+{
+	"cluster:" <IDENTIFIER>
+}
+
+void IndexIdentifier():
+{}
+{
+	"index:" <IDENTIFIER>
+}
+
+void WhereClause():
+{}
+{
+	OrBlock()
+}
+
+void OrBlock():
+{}
+{
+	AndBlock() ( <OR> AndBlock() )*
+}
+
+void AndBlock():
+{}
+{
+	( NotBlock() ) ( <AND> ( NotBlock() ) )*
+}
+
+void NotBlock():
+{}
+{
+	[ <NOT> ] ( ConditionBlock() | ParenthesisBlock() )
+}
+
+void ParenthesisBlock():
+{}
+{
+	<LPAREN> OrBlock() <RPAREN>
+}
+
+void ConditionBlock():
+{}
+{
+	LOOKAHEAD( IsNotNullCondition() )
+	IsNotNullCondition()
+	|
+	LOOKAHEAD( IsNullCondition() )
+	IsNullCondition()
+	|
+	LOOKAHEAD( BinaryCondition() )
+	BinaryCondition()
+	|
+	LOOKAHEAD( BetweenCondition() )
+	BetweenCondition()
+	|
+	LOOKAHEAD( ContainsCondition() )
+	ContainsCondition()
+	|
+	LOOKAHEAD( ContainsTextCondition() )
+	ContainsTextCondition()
+	|
+	LOOKAHEAD( MatchesCondition() )
+	MatchesCondition()
+}
+
+void CompareOperator():
+{}
+{
+		EqualsCompareOperator()
+      | LtOperator()
+      | GtOperator()
+      | NeOperator()
+      | NeqOperator()
+      | GeOperator()
+      | LeOperator()
+      | InOperator()
+      | NotInOperator()
+      | LikeOperator()
+      | ContainsKeyOperator()
+      | ContainsValueOperator()
+}
+
+
+void LtOperator():
+{}
+{
+	<LT>
+}
+
+void GtOperator():
+{}
+{
+	<GT>
+}
+
+void NeOperator():
+{}
+{
+	<NE>
+}
+
+void NeqOperator():
+{}
+{
+	<NEQ>
+}
+
+void GeOperator():
+{}
+{
+	<GE>
+}
+
+void LeOperator():
+{}
+{
+	<LE>
+}
+
+void InOperator():
+{}
+{
+	<IN>
+}
+
+void NotInOperator():
+{}
+{
+	<NOT> <IN>
+}
+
+void LikeOperator():
+{}
+{
+	<LIKE>
+}
+
+void ContainsKeyOperator():
+{}
+{
+	<CONTAINSKEY>
+}
+
+void ContainsValueOperator():
+{}
+{
+	<CONTAINSVALUE>
+}
+
+void EqualsCompareOperator():
+{}
+{
+	<EQ>
+}
+
+void BinaryCondition():
+{}
+{
+ 	FilterItem() CompareOperator() ( LOOKAHEAD(Rid()) Rid() | LOOKAHEAD(FilterItem())  FilterItem())
+}
+
+void BetweenCondition():
+{}
+{
+	FilterItem() <BETWEEN> FilterItem() <AND> FilterItem()
+}
+
+void IsNullCondition():
+{}
+{
+	FilterItem() <IS> <NULL>
+}
+
+void IsNotNullCondition():
+{}
+{
+	FilterItem() <IS> <NOT> <NULL>
+}
+
+void ContainsCondition():
+{}
+{
+	FilterItem() <CONTAINS> <LPAREN> OrBlock() <RPAREN>
+}
+
+void ContainsAllCondition():
+{}
+{
+	FilterItem() <CONTAINSALL> <LPAREN> OrBlock() <RPAREN>
+}
+
+void ContainsTextCondition():
+{}
+{
+	FilterItem() <CONTAINSTEXT> ( <STRING_LITERAL> | DottedIdentifier() )
+}
+
+void MatchesCondition():
+{}
+{
+	FilterItem() <MATCHES> <STRING_LITERAL>
+}
+
+void OrderBy():
+{}
+{
+	<ORDER> <BY> <IDENTIFIER> ( "," <IDENTIFIER> )* [ <DESC> | <ASC> ]
+}
+
+void Limit():
+{}
+{
+	<LIMIT> <INTEGER_LITERAL>
+}
+
+void Range():
+{}
+{
+	<RANGE>
+	Rid() [ "," Rid() ]
+}
+
+
+
+
+
