@@ -47,7 +47,7 @@ public class OETLPipeline {
       final OETLProcessor.LOG_LEVELS iLogLevel, final int iMaxRetries) {
     logLevel = iLogLevel;
     processor = iProcessor;
-    context = (OBasicCommandContext) new OBasicCommandContext(iProcessor.getContext());
+    context = new OBasicCommandContext();
 
     transformers = iTransformers;
     loader = iLoader;
