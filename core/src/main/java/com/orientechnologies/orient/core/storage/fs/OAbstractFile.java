@@ -122,7 +122,7 @@ public abstract class OAbstractFile implements OFile {
 
   public abstract void writeByte(long iOffset, byte iValue) throws IOException;
 
-  public abstract void write(long iOffset, byte[] iSourceBuffer) throws IOException;
+  public abstract long write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
   protected abstract void init() throws IOException;
 

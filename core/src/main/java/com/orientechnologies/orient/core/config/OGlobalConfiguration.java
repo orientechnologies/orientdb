@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.io.OFileUtils;
@@ -90,6 +90,16 @@ public enum OGlobalConfiguration {
 
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
+
+  DISK_CACHE_FREE_SPACE_LIMIT(
+      "storage.diskCache.diskFreeSpaceLimit",
+      "Minimum amount of space on disk after which database will "
+          + "work only in read mode, in megabytes. You need free space on disk which is sum of this parameter and maximum size of WAL on disk.",
+      Long.class, 100),
+
+  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
+      "Interval, in seconds, after which storage periodically "
+          + "checks whether amount of free space enough to work in write mode", Integer.class, 5),
 
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
