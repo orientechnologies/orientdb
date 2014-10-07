@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
@@ -49,10 +49,7 @@ import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFact
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -111,7 +108,7 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
+public abstract class OAbstractPaginatedStorage extends OStorageEmbedded implements OWOWCache.LowDiskSpaceListener {
   protected static String[]                      ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda", ".odh",
       ".otx", ".ocs", ".oef", ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
       OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
@@ -131,6 +128,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
   private volatile boolean                       wereDataRestoredAfterOpen            = false;
   private boolean                                makeFullCheckPointAfterClusterCreate = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
                                                                                           .getValueAsBoolean();
+  private volatile boolean                       lowDiskSpace                         = false;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
     super(name, filePath, mode);
@@ -430,6 +428,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
   public int addCluster(String clusterName, boolean forceListBased, final Object... parameters) {
     checkOpeness();
+    checkLowDiskSpace();
 
     lock.acquireExclusiveLock();
     try {
@@ -445,6 +444,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
   }
 
   public int addCluster(String clusterName, int requestedId, boolean forceListBased, Object... parameters) {
+    checkLowDiskSpace();
 
     lock.acquireExclusiveLock();
     try {
@@ -467,6 +467,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
   }
 
   public boolean dropCluster(final int clusterId, final boolean iTruncate) {
+    checkLowDiskSpace();
+
     lock.acquireExclusiveLock();
     try {
 
@@ -606,6 +608,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId rid, final byte[] content,
       ORecordVersion recordVersion, final byte recordType, final int mode, final ORecordCallback<OClusterPosition> callback) {
     checkOpeness();
+    checkLowDiskSpace();
 
     final long timer = Orient.instance().getProfiler().startChrono();
 
@@ -721,6 +724,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId rid, boolean updateContent, byte[] content,
       final ORecordVersion version, final byte recordType, final int mode, ORecordCallback<ORecordVersion> callback) {
     checkOpeness();
+    checkLowDiskSpace();
 
     final long timer = Orient.instance().getProfiler().startChrono();
 
@@ -823,6 +827,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId rid, final ORecordVersion version, final int mode,
       ORecordCallback<Boolean> callback) {
     checkOpeness();
+    checkLowDiskSpace();
 
     final long timer = Orient.instance().getProfiler().startChrono();
 
@@ -888,6 +893,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
   @Override
   public OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final int mode, ORecordCallback<Boolean> callback) {
     checkOpeness();
+    checkLowDiskSpace();
 
     final long timer = Orient.instance().getProfiler().startChrono();
 
@@ -1022,6 +1028,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
   }
 
   public void commit(final OTransaction clientTx, Runnable callback) {
+    checkLowDiskSpace();
+
     modificationLock.requestModificationLock();
     try {
       lock.acquireExclusiveLock();
@@ -1381,6 +1389,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     }
   }
 
+  @Override
+  public void lowDiskSpace() {
+    lowDiskSpace = true;
+  }
+
   protected void undoOperation(List<OLogSequenceNumber> operationUnit) throws IOException {
     for (int i = operationUnit.size() - 1; i >= 0; i--) {
       OWALRecord record = writeAheadLog.read(operationUnit.get(i));
@@ -1477,7 +1490,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
     if (storageTx != null && storageTx.getClientTx().getId() != clientTx.getId())
       rollback(clientTx);
 
-		assert atomicOperationsManager.getCurrentOperation() == null;
+    assert atomicOperationsManager.getCurrentOperation() == null;
 
     atomicOperationsManager.startAtomicOperation();
     transaction.set(new OStorageTransaction(clientTx));
@@ -1663,6 +1676,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
       super.close(force, onDelete);
 
+      diskCache.removeLowDiskSpaceListener(this);
       if (!onDelete)
         diskCache.close();
       else
@@ -2029,7 +2043,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
     long recordsProcessed = 0;
     int reportInterval = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
-		final int batchSize = OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger();
+    final int batchSize = OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger();
 
     Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits = new HashMap<OOperationUnitId, List<OLogSequenceNumber>>();
     List<OWALRecord> batch = new ArrayList<OWALRecord>();
@@ -2156,5 +2170,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded {
 
       undoOperation(operationUnit);
     }
+  }
+
+  private void checkLowDiskSpace() {
+    if (lowDiskSpace)
+      throw new OLowDiskSpaceException(
+          "You have very limited amount of free space, as result all data modification operations are prohibited."
+              + " Please stop database, make room for additional data files on your disk and start it again. Meanwhile storage will work in read only mode.");
   }
 }
