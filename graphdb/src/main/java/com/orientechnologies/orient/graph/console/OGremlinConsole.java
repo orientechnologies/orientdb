@@ -113,7 +113,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
         final OrientGraph g = new OrientGraph((com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx) currentDatabase);
         g.setUseLog(false);
         g.setWarnOnForceClosingTx(false);
-        new OGraphMLReader(g).inputGraph(g, fileName);
+        new OGraphMLReader(g).setOptions(opts).inputGraph(g, fileName);
         g.commit();
         commit();
 
