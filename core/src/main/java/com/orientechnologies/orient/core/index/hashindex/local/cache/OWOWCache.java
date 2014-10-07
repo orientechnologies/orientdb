@@ -181,6 +181,9 @@ public class OWOWCache {
   }
 
   private void addAllocatedSpace(long diff) {
+		if (diff == 0)
+			return;
+
     allocatedSpace.addAndGet(diff);
 
     final long ts = System.currentTimeMillis();
