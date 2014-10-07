@@ -101,11 +101,13 @@ TOKEN:
 	|
 	< ORDER: ( "o" | "O" ) ( "r" | "R" ) ( "d" | "D" ) ( "e" | "E" ) ( "r" | "R" ) >
 	|
+	< GROUP: ( "g" | "G" ) ( "r" | "R" ) ( "o" | "O" ) ( "u" | "U" ) ( "p" | "P" ) >
+	|
 	< BY: ( "b" | "B" ) ( "y" | "Y" ) >
 	|
 	< LIMIT: ( "l" | "L" ) ( "i" | "I" ) ( "m" | "M" ) ( "i" | "I" ) ( "t" | "T" ) >
 	|
-	< RANGE: ( "r" | "R" ) ( "a" | "A" ) ( "n" | "N" ) ( "g" | "G" ) ( "e" | "E" )>
+	< SKIP: ( "s" | "S" ) ( "k" | "K" ) ( "i" | "I" ) ( "p" | "P" ) >
 	|
 	< ASC: ( "a" | "A" ) ( "s" | "S" ) ( "c" | "C" ) >
 	|
@@ -347,8 +349,9 @@ void SelectStatement():
 	FromClause()
 	[ <WHERE> WhereClause() ]
 	[ OrderBy() ]
+	[ GroupBy() ]
+	[ Skip() ]
 	[ Limit() ]
-	[ Range() ]
 }
 
 void TraverseStatement():
@@ -840,17 +843,22 @@ void OrderBy():
 	<ORDER> <BY> <IDENTIFIER> ( "," <IDENTIFIER> )* [ <DESC> | <ASC> ]
 }
 
+void GroupBy():
+{}
+{
+	<GROUP> <BY> <IDENTIFIER> ( "," <IDENTIFIER> )* ]
+}
+
 void Limit():
 {}
 {
 	<LIMIT> <INTEGER_LITERAL>
 }
 
-void Range():
+void Skip():
 {}
 {
-	<RANGE>
-	Rid() [ "," Rid() ]
+	<SKIP> <INTEGER_LITERAL>
 }
 
 
