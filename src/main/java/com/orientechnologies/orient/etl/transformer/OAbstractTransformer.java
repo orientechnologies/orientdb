@@ -45,7 +45,7 @@ public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent
 
       context.setVariable(output, result);
     }
-    
+
     log(OETLProcessor.LOG_LEVELS.DEBUG, "Transformer output (same as input): " + input);
     return input;
   }
@@ -55,6 +55,9 @@ public abstract class OAbstractTransformer extends OAbstractETLPipelineComponent
   protected boolean skip(final Object input) {
     if (ifFilter != null && input instanceof OIdentifiable) {
       final ODocument doc = ((OIdentifiable) input).getRecord();
+
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "Evaluating if=%s...", ifFilter);
+
       final Object result = ifFilter.evaluate(doc, null, context);
       if (!(result instanceof Boolean))
         throw new OConfigurationException("'if' expression in Transformer " + getName() + " returned '" + result

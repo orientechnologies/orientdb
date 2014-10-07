@@ -20,6 +20,7 @@ package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -45,7 +46,7 @@ public class OCommandTransformer extends OAbstractTransformer {
 
     if (iConfiguration.containsField("language"))
       language = ((String) iConfiguration.field("language")).toLowerCase();
-    command = (String) resolve(iConfiguration.field("command"));
+    command = (String) iConfiguration.field("command");
   }
 
   @Override
@@ -56,15 +57,17 @@ public class OCommandTransformer extends OAbstractTransformer {
   @Override
   public Object executeTransform(final Object input) {
 
-    OCommandRequest cmd = null;
+    final OCommandRequest cmd;
+
+    String runtimeCommand = (String) resolve(command);
 
     if (language.equals("sql")) {
-      cmd = new OCommandSQL(command);
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "executing command=%s...", command);
+      cmd = new OCommandSQL(runtimeCommand);
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "executing command=%s...", runtimeCommand);
     } else if (language.equals("gremlin")) {
-      cmd = new OCommandGremlin(command);
+      cmd = new OCommandGremlin(runtimeCommand);
     } else
-      throw new OTransformException(getName() + ": language '" + language + "' not supported");
+      cmd = new OCommandScript(language, runtimeCommand);
 
     cmd.setContext(context);
 

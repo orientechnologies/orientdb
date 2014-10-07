@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.block;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.etl.OAbstractETLComponent;
 
@@ -29,6 +30,11 @@ public abstract class OAbstractBlock extends OAbstractETLComponent implements OB
   public void execute() {
     if (!skip())
       executeBlock();
+  }
+
+  @Override
+  public void setContext(final OBasicCommandContext iContext) {
+    context = iContext;
   }
 
   protected abstract void executeBlock();

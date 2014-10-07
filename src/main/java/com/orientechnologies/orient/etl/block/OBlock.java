@@ -18,11 +18,14 @@
 
 package com.orientechnologies.orient.etl.block;
 
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.etl.OETLComponent;
 
 /**
  * ETL Generic Block.
  */
 public interface OBlock extends OETLComponent {
-  public void execute();
+  void execute();
+
+  void setContext(OBasicCommandContext context);
 }

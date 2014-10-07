@@ -438,6 +438,10 @@ public class OETLProcessor implements OETLComponent {
     return logLevel;
   }
 
+  public OBasicCommandContext getContext() {
+    return context;
+  }
+
   protected void executeSequentially() {
     try {
       begin();
