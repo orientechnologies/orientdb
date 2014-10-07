@@ -443,7 +443,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *          Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
    * @return The new OrientVertex created
    */
-  public OrientVertex addVertex(final Object id, final Object... prop) {
+  public OrientVertex addVertex(Object id, final Object... prop) {
     String className = null;
     String clusterName = null;
     Object[] fields = null;
@@ -459,6 +459,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           else if (s.startsWith(CLUSTER_PREFIX))
             // GET THE CLASS NAME
             clusterName = s.substring(CLUSTER_PREFIX.length());
+          else
+            id = s;
         }
       }
 

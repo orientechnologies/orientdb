@@ -88,6 +88,9 @@ public abstract class AbstractServerClusterTest {
     System.out.println("Starting test against " + serverInstance.size() + " server nodes...");
 
     for (ServerRun server : serverInstance) {
+      System.out.println("\n******************************************************************************************");
+      System.out.println("STARTING SERVER -> " + server.getServerId() + "...");
+      System.out.println("******************************************************************************************\n");
       server.startServer(getDistributedServerConfiguration(server));
       try {
         Thread.sleep(delayServerStartup * serverInstance.size());
@@ -107,16 +110,22 @@ public abstract class AbstractServerClusterTest {
       Assert.assertNotNull(cfg);
     }
 
+    System.out.println("\n******************************************************************************************");
     System.out.println("Executing test...");
+    System.out.println("******************************************************************************************\n");
 
     try {
       executeTest();
     } finally {
+      System.out.println("\n******************************************************************************************");
       System.out.println("Shutting down nodes...");
+      System.out.println("******************************************************************************************\n");
       for (ServerRun server : serverInstance)
         server.shutdownServer();
       Hazelcast.shutdownAll();
+      System.out.println("\n******************************************************************************************");
       System.out.println("Test finished");
+      System.out.println("******************************************************************************************\n");
     }
   }
 

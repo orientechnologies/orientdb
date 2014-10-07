@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.graph.console;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.Vertex;
@@ -35,6 +36,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -50,9 +52,10 @@ public class OGraphMLReader {
   private static final String   LABELS           = "labels";
   private final OrientBaseGraph graph;
   private int                   vertexLabelIndex = 0;
-  private String                vertexIdKey      = null;
+  private String                vertexIdKey      = "id";
   private String                edgeIdKey        = null;
   private String                edgeLabelKey     = null;
+  private boolean               storeVertexIds   = false;
 
   /**
    * @param graph
@@ -87,7 +90,7 @@ public class OGraphMLReader {
    *           thrown when the GraphML data is not correctly formatted
    */
   public void inputGraph(final Graph inputGraph, final String filename) throws IOException {
-    inputGraph(inputGraph, filename, 1000, null, null, null);
+    inputGraph(inputGraph, filename, 1000, vertexIdKey, null, null);
   }
 
   /**
@@ -146,12 +149,15 @@ public class OGraphMLReader {
 
       final OrientBaseGraph graph = (OrientBaseGraph) inputGraph;
 
+      if (storeVertexIds)
+        graph.setSaveOriginalIds(storeVertexIds);
+
       Map<String, String> keyIdMap = new HashMap<String, String>();
       Map<String, String> keyTypesMaps = new HashMap<String, String>();
       // <Mapped ID String, ID Object>
 
       // <Default ID String, Mapped ID String>
-      Map<String, String> vertexMappedIdMap = new HashMap<String, String>();
+      Map<String, ORID> vertexMappedIdMap = new HashMap<String, ORID>();
 
       // Buffered Vertex Data
       String vertexId = null;
@@ -192,10 +198,10 @@ public class OGraphMLReader {
               final String[] vertexLabels = vertexLabel.split(":");
 
               // GET ONLY FIRST LABEL AS CLASS
-              vertexLabel = "class:" + vertexLabels[vertexLabelIndex];
-            }
-            if (vertexIdKey != null)
-              vertexMappedIdMap.put(vertexId, vertexId);
+              vertexLabel = vertexId + ",class:" + vertexLabels[vertexLabelIndex];
+            } else
+              vertexLabel = vertexId;
+
             inVertex = true;
             vertexProps = new HashMap<String, Object>();
 
@@ -211,18 +217,17 @@ public class OGraphMLReader {
 
             for (int i = 0; i < 2; i++) { // i=0 => outVertex, i=1 => inVertex
               if (vertexIdKey == null) {
-                edgeEndVertices[i] = graph.getVertex(vertexIds[i]);
+                edgeEndVertices[i] = null;
               } else {
                 edgeEndVertices[i] = graph.getVertex(vertexMappedIdMap.get(vertexIds[i]));
               }
 
               if (null == edgeEndVertices[i]) {
                 edgeEndVertices[i] = graph.addVertex(vertexLabel);
+                if (vertexIdKey != null) {
+                  mapId(vertexMappedIdMap, vertexIds[i], (ORID) edgeEndVertices[i].getId());
+                }
                 bufferCounter++;
-                if (vertexIdKey != null)
-                  // Default to standard ID system (in case no mapped
-                  // ID is found later)
-                  vertexMappedIdMap.put(vertexIds[i], vertexIds[i]);
               }
             }
 
@@ -240,8 +245,6 @@ public class OGraphMLReader {
               if (inVertex == true) {
                 if ((vertexIdKey != null) && (key.equals(vertexIdKey))) {
                   // Should occur at most once per Vertex
-                  // Assumes single ID prop per Vertex
-                  vertexMappedIdMap.put(vertexId, value);
                   vertexId = value;
                 } else
                   vertexProps.put(attributeName, typeCastValue(key, value, keyTypesMaps));
@@ -260,9 +263,15 @@ public class OGraphMLReader {
           String elementName = reader.getName().getLocalPart();
 
           if (elementName.equals(GraphMLTokens.NODE)) {
-            Vertex currentVertex = graph.getVertex(vertexId);
+            ORID currentVertex = null;
+
+            if (vertexIdKey != null)
+              vertexMappedIdMap.get(vertexId);
+
             if (currentVertex == null) {
-              graph.addVertex(vertexLabel, vertexProps);
+              final OrientVertex v = graph.addVertex(vertexLabel, vertexProps);
+              if (vertexIdKey != null)
+                mapId(vertexMappedIdMap, vertexId, v.getIdentity());
               bufferCounter++;
             }
 
@@ -381,6 +390,21 @@ public class OGraphMLReader {
    */
   public void inputGraph(final String filename, int bufferSize) throws IOException {
     inputGraph(this.graph, filename, bufferSize, this.vertexIdKey, this.edgeIdKey, this.edgeLabelKey);
+  }
+
+  public OGraphMLReader setOptions(final Map<String, List<String>> opts) {
+    for (Map.Entry<String, List<String>> opt : opts.entrySet()) {
+      if (opt.getKey().equalsIgnoreCase("storeVertexIds")) {
+        storeVertexIds = Boolean.parseBoolean(opt.getValue().get(0));
+      }
+    }
+    return this;
+  }
+
+  protected void mapId(final Map<String, ORID> vertexMappedIdMap, final String vertexId, final ORID rid) {
+    if (vertexMappedIdMap.containsKey(vertexId))
+      throw new IllegalArgumentException("Vertex with id '" + vertexId + "' has been already loaded");
+    vertexMappedIdMap.put(vertexId, rid);
   }
 
   private Object typeCastValue(String key, String value, Map<String, String> keyTypes) {
