@@ -12,8 +12,8 @@ import java.lang.reflect.Field;
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 10/7/14
  */
-@Test
-public class LocalPaginatedStorageTest {
+@Test(enabled = false)
+public class LocalPaginatedStorageVerification {
   public void testReadOnlyMode() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory");
     if (buildDirectory == null || buildDirectory.isEmpty())
