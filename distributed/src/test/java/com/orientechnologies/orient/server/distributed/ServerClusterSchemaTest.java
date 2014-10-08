@@ -28,6 +28,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import junit.framework.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -41,6 +42,7 @@ public class ServerClusterSchemaTest extends AbstractServerClusterTest {
   }
 
   @Test
+  @Ignore
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);

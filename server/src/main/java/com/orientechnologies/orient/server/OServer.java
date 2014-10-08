@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -47,6 +48,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.server.config.*;
+import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -567,6 +569,26 @@ public class OServer {
           database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
           database.open(iUser, iPassword);
         }
+      }
+
+    return database;
+  }
+
+  public ODatabaseInternal openDatabase(final ODatabaseInternal database) {
+    if (database.isClosed())
+      if (database.getStorage() instanceof ODirectMemoryStorage)
+        database.create();
+      else {
+        final OServerUserConfiguration replicatorUser = getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
+        try {
+          serverLogin(replicatorUser.name, replicatorUser.password, "database.passthrough");
+        } catch (OSecurityException ex) {
+          throw ex;
+        }
+
+        // SERVER AUTHENTICATED, BYPASS SECURITY
+        database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+        database.open(replicatorUser.name, replicatorUser.password);
       }
 
     return database;
