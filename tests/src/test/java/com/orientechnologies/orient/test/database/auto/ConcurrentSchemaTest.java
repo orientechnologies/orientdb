@@ -19,40 +19,39 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.test.ConcurrentTestHelper;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.test.ConcurrentTestHelper;
 
 @Test
 public class ConcurrentSchemaTest extends DocumentDBBaseTest {
-  private final static int THREADS       = 10;
-  private final static int CYCLES        = 50;
+  private final static int THREADS                  = 10;
+  private final static int CYCLES                   = 50;
 
-  private final AtomicLong threadCounter = new AtomicLong();
-  private final AtomicLong counter       = new AtomicLong();
+  private final AtomicLong createClassThreadCounter = new AtomicLong();
+  private final AtomicLong dropClassThreadCounter   = new AtomicLong();
+  private final AtomicLong counter                  = new AtomicLong();
 
-  class CommandExecutor implements Callable<Void> {
-
+  class CreateClassCommandExecutor implements Callable<Void> {
     long   id;
     String url;
 
-    public CommandExecutor(String url) {
+    public CreateClassCommandExecutor(String url) {
       this.url = url;
     }
 
     @Override
     public Void call() {
-      this.id = threadCounter.getAndIncrement();
-//      System.out.println("Assigned id " + id + " to thread " + Thread.currentThread().getId());
-
+      this.id = createClassThreadCounter.getAndIncrement();
       for (int i = 0; i < CYCLES; i++) {
         ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
         try {
@@ -74,6 +73,35 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
     }
   }
 
+  class DropClassCommandExecutor implements Callable<Void> {
+    long   id;
+    String url;
+
+    public DropClassCommandExecutor(String url) {
+      this.url = url;
+    }
+
+    @Override
+    public Void call() {
+      this.id = dropClassThreadCounter.getAndIncrement();
+      for (int i = 0; i < CYCLES; i++) {
+        ODatabaseDocumentTx db = new ODatabaseDocumentTx(url).open("admin", "admin");
+        try {
+          final String clsName = "ConcurrentClassTest-" + id + "-" + i;
+
+          Assert.assertTrue(database.getMetadata().getSchema().existsClass(clsName));
+          database.getMetadata().getSchema().dropClass(clsName);
+          Assert.assertFalse(database.getMetadata().getSchema().existsClass(clsName));
+
+          counter.decrementAndGet();
+        } finally {
+          db.close();
+        }
+      }
+      return null;
+    }
+  }
+
   @Parameters(value = "url")
   public ConcurrentSchemaTest(@Optional String url) {
     super(url);
@@ -81,14 +109,16 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
 
   @Test
   public void concurrentCommands() throws Exception {
-    System.out.println("Spanning " + THREADS + " threads...");
+    System.out.println("Create classes, spanning " + THREADS + " threads...");
 
     ConcurrentTestHelper.test(THREADS, new ConcurrentTestHelper.TestFactory<Void>() {
       @Override
       public Callable<Void> createWorker() {
-        return new CommandExecutor(url);
+        return new CreateClassCommandExecutor(url);
       }
     });
+
+    System.out.println("Create classes, checking...");
 
     for (int id = 0; id < THREADS; ++id) {
       for (int i = 0; i < CYCLES; ++i) {
@@ -97,8 +127,17 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
       }
     }
 
-    System.out.println("Done! Total classes created in parallel: " + counter.get());
+    System.out.println("Dropping classes, spanning " + THREADS + " threads...");
 
-    Assert.assertEquals(counter.get(), CYCLES * THREADS);
+    ConcurrentTestHelper.test(THREADS, new ConcurrentTestHelper.TestFactory<Void>() {
+      @Override
+      public Callable<Void> createWorker() {
+        return new DropClassCommandExecutor(url);
+      }
+    });
+
+    System.out.println("Done!");
+
+    Assert.assertEquals(counter.get(), 0);
   }
 }
