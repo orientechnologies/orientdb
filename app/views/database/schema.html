@@ -127,7 +127,7 @@
                                             ng-model="result['clusterSelection']">
                                     </select>
                                 </td>
-                                <td ng-click="openClass(result)">{{result['records']}}</td>
+                                <td ng-click="openClass(result)">{{result['records'] | number }}</td>
                                 <td>
                                     <button href="javascript:void(0)" class="btn btn-primary btn-xs"
                                             ng-click="rename(result)">
