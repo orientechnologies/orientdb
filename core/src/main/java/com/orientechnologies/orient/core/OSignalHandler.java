@@ -50,7 +50,7 @@ public class OSignalHandler implements SignalHandler {
   }
 
   public void installDefaultSignals(final SignalHandler iListener) {
-    listenTo("HUP", iListener);
+    //listenTo("HUP", iListener); // DISABLED HUB BECAUSE ON WINDOWS IT'S USED INTERNALLY AND CAUSED JVM KILL
     listenTo("INT", iListener);
     // listenTo("KILL",iListener);
     listenTo("TERM", iListener);
