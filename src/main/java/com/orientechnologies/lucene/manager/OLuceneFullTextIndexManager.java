@@ -141,8 +141,11 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       if (context != null) {
         limit = (Integer) context.getVariable("$limit");
       }
-      TopDocs docs = searcher.search(query, (limit != null && limit > 0) ? limit : Integer.MAX_VALUE);
+
+      final TopDocs docs = searcher.search(query, (limit != null && limit > 0) ? limit : Integer.MAX_VALUE);
       ScoreDoc[] hits = docs.scoreDocs;
+      sendTotalHits(context, docs);
+
       for (final ScoreDoc score : hits) {
         Document ret = searcher.doc(score.doc);
         String rId = ret.get(RID);

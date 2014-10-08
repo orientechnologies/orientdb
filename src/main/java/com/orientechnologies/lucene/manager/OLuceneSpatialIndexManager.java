@@ -200,6 +200,7 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
     Filter filter = strategy.makeFilter(args);
     TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limitDoc);
 
+    sendTotalHits(context, topDocs);
     ScoreDoc[] scoreDocs = topDocs.scoreDocs;
     for (ScoreDoc s : scoreDocs) {
       Document doc = searcher.doc(s.doc);

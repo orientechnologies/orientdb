@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -32,10 +33,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.TrackingIndexWriter;
-import org.apache.lucene.search.ControlledRealTimeReopenThread;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.search.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 import org.apache.lucene.store.RAMDirectory;
@@ -328,6 +326,18 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
     nrt.setDaemon(true);
     nrt.start();
     flush();
+  }
+
+  protected void sendTotalHits(OCommandContext context, TopDocs docs) {
+    if (context != null) {
+
+      if (context.getVariable("totalHits") == null) {
+        context.setVariable("totalHits", docs.totalHits);
+      } else {
+        context.setVariable("totalHits", null);
+      }
+      context.setVariable((indexName + ".totalHits").replace(".", "_"), docs.totalHits);
+    }
   }
 
   private String getIndexPath(OLocalPaginatedStorage storageLocalAbstract) {

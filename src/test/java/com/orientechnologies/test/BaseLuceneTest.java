@@ -50,7 +50,7 @@ public abstract class BaseLuceneTest {
   private boolean               remote;
   protected ODatabaseDocumentTx serverDatabase;
   private Process               process;
-  private String                buildDirectory;
+  protected String                buildDirectory;
   private final ExecutorService pool = Executors.newFixedThreadPool(1);
 
   public BaseLuceneTest() {

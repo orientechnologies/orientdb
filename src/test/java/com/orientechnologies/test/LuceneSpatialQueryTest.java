@@ -19,6 +19,7 @@
 package com.orientechnologies.test;
 
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import junit.framework.Assert;
 import org.testng.annotations.AfterClass;
@@ -39,6 +40,7 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.TimerTask;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -82,6 +84,21 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
       databaseDocumentTx.declareIntent(new OIntentMassiveInsert());
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
+
+        Orient.instance().getTimer().schedule(new TimerTask() {
+          @Override
+          public void run() {
+
+            Runtime runtime = Runtime.getRuntime();
+
+            StringBuilder sb = new StringBuilder();
+            long maxMemory = runtime.maxMemory();
+            long allocatedMemory = runtime.totalMemory();
+            long freeMemory = runtime.freeMemory();
+            OLogManager.instance().info(this, "Memory Stats :  free [%d] , allocated [%d] , max [%d] total free [%d]",
+                freeMemory / 1024, allocatedMemory / 1024, maxMemory / 1024, (freeMemory + (maxMemory - allocatedMemory)) / 1024);
+          }
+        }, 10000, 10000);
         if (entry.getName().equals("location.csv")) {
 
           InputStream stream = zipFile.getInputStream(entry);
