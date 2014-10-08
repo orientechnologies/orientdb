@@ -138,7 +138,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         }
     };
 
-    $scope.query = function () {
+    $scope.query = function (explain) {
 
         var queryBuffer = "" + $scope.queryText;
         var selection = $scope.cm.getSelection();
@@ -173,6 +173,9 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         if ($scope.selectedContentType == 'CSV')
             conttype = 'text/csv';
 
+        if (explain) {
+            queryBuffer = "explain " + queryBuffer;
+        }
         CommandApi.queryText({database: $routeParams.database, contentType: conttype, language: $scope.language, text: queryBuffer, limit: $scope.limit, shallow: $scope.shallow, verbose: false}, function (data) {
 
             if (data.result) {
