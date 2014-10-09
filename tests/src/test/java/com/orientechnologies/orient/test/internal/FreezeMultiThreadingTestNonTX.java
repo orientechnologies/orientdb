@@ -484,8 +484,6 @@ public class FreezeMultiThreadingTestNonTX {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
     OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.setValue(1000);
     // OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.setValue(50);
 

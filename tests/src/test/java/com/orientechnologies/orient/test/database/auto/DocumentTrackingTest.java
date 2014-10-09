@@ -234,8 +234,6 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
   public void testDocumentEmbeddedListTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
 
-    database.getLocalCache().setEnable(false);
-
     final ODocument document = new ODocument();
 
     final List<String> list = new ArrayList<String>();
@@ -264,14 +262,10 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
-
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentEmbeddedMapTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
-
-    database.getLocalCache().setEnable(false);
 
     final ODocument document = new ODocument();
 
@@ -301,14 +295,10 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedmap" });
-
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentEmbeddedSetTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
-
-    database.getLocalCache().setEnable(false);
 
     final ODocument document = new ODocument();
 
@@ -339,13 +329,10 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedset" });
 
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentLinkSetTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
-
-    database.getLocalCache().setEnable(false);
 
     final ODocument docOne = new ODocument();
     docOne.save();
@@ -374,14 +361,10 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     Assert.assertNotNull(timeLine);
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "linkset" });
-
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentLinkListTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
-
-    database.getLocalCache().setEnable(false);
 
     final ODocument docOne = new ODocument();
     docOne.save();
@@ -410,14 +393,10 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     Assert.assertNotNull(timeLine);
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "linklist" });
-
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentLinkMapTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
-
-    database.getLocalCache().setEnable(false);
 
     final ODocument docOne = new ODocument();
     docOne.save();
@@ -444,8 +423,6 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     Assert.assertNotNull(timeLine);
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "linkmap" });
-
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentEmbeddedListTrackingAfterSaveWitClass() {

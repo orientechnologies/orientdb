@@ -50,27 +50,6 @@ public abstract class OAbstractRecordCache {
     underlying = impl;
   }
 
-  /**
-   * Tell whether cache is enabled
-   * 
-   * @return {@code true} if cache enabled at call time, otherwise - {@code false}
-   */
-  public boolean isEnabled() {
-    return underlying.isEnabled();
-  }
-
-  /**
-   * Switch cache state between enabled and disabled
-   * 
-   * @param enable
-   *          pass {@code true} to enable, otherwise - {@code false}
-   */
-  public void setEnable(final boolean enable) {
-    if (enable)
-      underlying.enable();
-    else
-      underlying.disable();
-  }
 
   /**
    * Remove record with specified identifier
@@ -127,14 +106,6 @@ public abstract class OAbstractRecordCache {
     return underlying.size();
   }
 
-  /**
-   * Maximum number of items cache should keep
-   * 
-   * @return non-negative integer
-   */
-  public int getMaxSize() {
-    return underlying.limit();
-  }
 
   /**
    * All operations running at cache initialization stage
@@ -143,28 +114,12 @@ public abstract class OAbstractRecordCache {
     underlying.startup();
 
     Orient.instance().getProfiler()
-        .registerHookValue(profilerPrefix + "enabled", "Cache enabled", METRIC_TYPE.ENABLED, new OProfilerHookValue() {
-          public Object getValue() {
-            return isEnabled();
-          }
-        }, profilerMetadataPrefix + "enabled");
-
-    Orient.instance().getProfiler()
         .registerHookValue(profilerPrefix + "current", "Number of entries in cache", METRIC_TYPE.SIZE, new OProfilerHookValue() {
           public Object getValue() {
             return getSize();
           }
         }, profilerMetadataPrefix + "current");
 
-    Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue(profilerPrefix + "max", "Maximum number of entries in cache", METRIC_TYPE.SIZE,
-            new OProfilerHookValue() {
-              public Object getValue() {
-                return getMaxSize();
-              }
-            }, profilerMetadataPrefix + "max");
   }
 
   /**
