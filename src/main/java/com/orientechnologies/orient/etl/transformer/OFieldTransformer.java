@@ -19,6 +19,8 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.etl.OETLProcessor;
@@ -55,22 +57,28 @@ public class OFieldTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    if (input instanceof ODocument) {
-      if (setOperation) {
-        if (sqlFilter == null)
-          // ONLY THE FIRST TIME
-          sqlFilter = new OSQLFilter(expression, context, null);
+    if (input instanceof OIdentifiable) {
+      final ORecord rec = ((OIdentifiable) input).getRecord();
 
-        final Object newValue = sqlFilter.evaluate((ODocument) input, null, context);
+      if (rec instanceof ODocument) {
+        final ODocument doc = (ODocument) rec;
 
-        // SET THE TRANSFORMED FIELD BACK
-        ((ODocument) input).field(fieldName, newValue);
+        if (setOperation) {
+          if (sqlFilter == null)
+            // ONLY THE FIRST TIME
+            sqlFilter = new OSQLFilter(expression, context, null);
 
-        log(OETLProcessor.LOG_LEVELS.DEBUG, "set %s=%s in document=%s", fieldName, newValue, input);
-      } else {
-        final Object prev = ((ODocument) input).removeField(fieldName);
+          final Object newValue = sqlFilter.evaluate(doc, null, context);
 
-        log(OETLProcessor.LOG_LEVELS.DEBUG, "removed %s (value=%s) from document=%s", fieldName, prev, input);
+          // SET THE TRANSFORMED FIELD BACK
+          doc.field(fieldName, newValue);
+
+          log(OETLProcessor.LOG_LEVELS.DEBUG, "set %s=%s in document=%s", fieldName, newValue, doc);
+        } else {
+          final Object prev = doc.removeField(fieldName);
+
+          log(OETLProcessor.LOG_LEVELS.DEBUG, "removed %s (value=%s) from document=%s", fieldName, prev, doc);
+        }
       }
     }
 
