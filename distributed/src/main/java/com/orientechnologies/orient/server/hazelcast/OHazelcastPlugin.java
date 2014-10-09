@@ -955,6 +955,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   protected void assignNodeName() {
+    // ORIENTDB_NODE_NAME ENV VARIABLE OR JVM SETTING
     nodeName = OSystemVariableResolver.resolveVariable(NODE_NAME_ENV);
 
     if (nodeName != null) {
@@ -972,13 +973,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       System.out.println();
       System.out.println();
-      System.out.println("+----------------------------------------------------+");
-      System.out.println("|    WARNING: FIRST DISTRIBUTED RUN CONFIGURATION    |");
-      System.out.println("+----------------------------------------------------+");
-      System.out.println("| This is the first time that the server is running  |");
-      System.out.println("| as distributed. Please type the name you want      |");
-      System.out.println("| to assign to the current server node.              |");
-      System.out.println("+----------------------------------------------------+");
+      System.out.println("+---------------------------------------------------------------+");
+      System.out.println("|         WARNING: FIRST DISTRIBUTED RUN CONFIGURATION          |");
+      System.out.println("+---------------------------------------------------------------+");
+      System.out.println("| This is the first time that the server is running as          |");
+      System.out.println("| distributed. Please type the name you want to assign to the   |");
+      System.out.println("| current server node.                                          |");
+      System.out.println("|                                                               |");
+      System.out.println("| To avoid this message set the environment variable or JVM     |");
+      System.out.println("| setting ORIENTDB_NODE_NAME to the server node name to use.    |");
+      System.out.println("+---------------------------------------------------------------+");
       System.out.print("\nNode name [BLANK=auto generate it]: ");
 
       OConsoleReader reader = new DefaultConsoleReader();

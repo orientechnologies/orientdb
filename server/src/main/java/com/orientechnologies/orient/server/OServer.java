@@ -698,6 +698,7 @@ public class OServer {
   }
 
   protected void createDefaultServerUsers() throws IOException {
+    // ORIENTDB_ROOT_PASSWORD ENV OR JVM SETTING
     String rootPassword = OSystemVariableResolver.resolveVariable(ROOT_PASSWORD_VAR);
 
     if (rootPassword != null) {
@@ -715,13 +716,16 @@ public class OServer {
 
       System.out.println();
       System.out.println();
-      System.out.println("+----------------------------------------------------+");
-      System.out.println("|          WARNING: FIRST RUN CONFIGURATION          |");
-      System.out.println("+----------------------------------------------------+");
-      System.out.println("| This is the first time the server is running.      |");
-      System.out.println("| Please type a password of your choice for the      |");
-      System.out.println("| 'root' user or leave it blank to auto-generate it. |");
-      System.out.println("+----------------------------------------------------+");
+      System.out.println("+---------------------------------------------------------------+");
+      System.out.println("|                WARNING: FIRST RUN CONFIGURATION               |");
+      System.out.println("+---------------------------------------------------------------+");
+      System.out.println("| This is the first time the server is running. Please type a   |");
+      System.out.println("| password of your choice for the 'root' user or leave it blank |");
+      System.out.println("| to auto-generate it.                                          |");
+      System.out.println("|                                                               |");
+      System.out.println("| To avoid this message set the environment variable or JVM     |");
+      System.out.println("| setting ORIENTDB_ROOT_PASSWORD to the root password to use.   |");
+      System.out.println("+---------------------------------------------------------------+");
       System.out.print("\nRoot password [BLANK=auto generate it]: ");
 
       OConsoleReader reader = new DefaultConsoleReader();
