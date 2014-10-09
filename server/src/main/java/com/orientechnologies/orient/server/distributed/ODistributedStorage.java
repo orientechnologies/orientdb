@@ -411,7 +411,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (nodes.isEmpty()) {
         // DON'T REPLICATE OR DISTRIBUTE
-        runInDistributedMode(new Callable() {
+        return (OStorageOperationResult<OPhysicalPosition>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
           @Override
           public Object call() throws Exception {
             return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
@@ -448,7 +448,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       final OStorageOperationResult<OPhysicalPosition> localResult;
 
-      localResult = (OStorageOperationResult<OPhysicalPosition>) runInDistributedMode(new Callable() {
+      localResult = (OStorageOperationResult<OPhysicalPosition>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
           return wrapped.createRecord(iRecordId, iContent, iRecordVersion, iRecordType, iMode, iCallback);
@@ -491,7 +491,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       // CHECK IF LOCAL NODE OWNS THE DATA AND READ-QUORUM = 1: GET IT LOCALLY BECAUSE IT'S FASTER
       if (nodes.isEmpty() || nodes.contains(dManager.getLocalNodeName()) && dbCfg.getReadQuorum(clusterName) <= 1) {
         // DON'T REPLICATE
-        runInDistributedMode(new Callable() {
+        return (OStorageOperationResult<ORawBuffer>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
           @Override
           public Object call() throws Exception {
             return wrapped.readRecord(iRecordId, iFetchPlan, iIgnoreCache, iCallback, loadTombstones, LOCKING_STRATEGY.DEFAULT);
@@ -541,7 +541,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       if (nodes.isEmpty()) {
 
         // DON'T REPLICATE OR DISTRIBUTE
-        return (OStorageOperationResult<ORecordVersion>) runInDistributedMode(new Callable() {
+        return (OStorageOperationResult<ORecordVersion>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
           @Override
           public Object call() throws Exception {
             return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
@@ -573,7 +573,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
 
       final OStorageOperationResult<ORecordVersion> localResult;
-      localResult = (OStorageOperationResult<ORecordVersion>) runInDistributedMode(new Callable() {
+      localResult = (OStorageOperationResult<ORecordVersion>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
           return wrapped.updateRecord(iRecordId, updateContent, iContent, iVersion, iRecordType, iMode, iCallback);
@@ -618,7 +618,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       if (nodes.isEmpty()) {
         // DON'T REPLICATE OR DISTRIBUTE
-        return (OStorageOperationResult<Boolean>) runInDistributedMode(new Callable() {
+        return (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
           @Override
           public Object call() throws Exception {
             return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
@@ -644,7 +644,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
 
       final OStorageOperationResult<Boolean> localResult;
-      localResult = (OStorageOperationResult<Boolean>) runInDistributedMode(new Callable() {
+      localResult = (OStorageOperationResult<Boolean>) ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
         @Override
         public Object call() throws Exception {
           return wrapped.deleteRecord(iRecordId, iVersion, iMode, iCallback);
@@ -1159,20 +1159,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         throw (OException) t.getCause();
     }
     throw new OStorageException(String.format(iMessage, iParams), e);
-  }
-
-  protected Object runInDistributedMode(Callable iCall) throws Exception {
-    final RUN_MODE currentRunningMode = OScenarioThreadLocal.INSTANCE.get();
-    if (currentRunningMode != RUN_MODE.RUNNING_DISTRIBUTED)
-      OScenarioThreadLocal.INSTANCE.set(RUN_MODE.RUNNING_DISTRIBUTED);
-
-    try {
-      return iCall.call();
-    } finally {
-
-      if (currentRunningMode != RUN_MODE.RUNNING_DISTRIBUTED)
-        OScenarioThreadLocal.INSTANCE.set(RUN_MODE.DEFAULT);
-    }
   }
 
   private OFreezableStorage getFreezableStorage() {

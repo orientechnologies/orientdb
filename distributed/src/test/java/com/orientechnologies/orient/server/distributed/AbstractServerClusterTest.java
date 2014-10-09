@@ -17,8 +17,8 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.Hazelcast;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -126,6 +126,7 @@ public abstract class AbstractServerClusterTest {
       System.out.println("\n******************************************************************************************");
       System.out.println("Test finished");
       System.out.println("******************************************************************************************\n");
+      deleteServers();
     }
   }
 
@@ -137,7 +138,7 @@ public abstract class AbstractServerClusterTest {
    * @param db
    *          Current database
    */
-  protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db) {
+  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
   }
 
   protected abstract void executeTest() throws Exception;
@@ -157,11 +158,11 @@ public abstract class AbstractServerClusterTest {
     final ServerRun master = it.next();
 
     if (iCreateDatabase) {
-      final ODatabaseDocumentTx db = master.createDatabase(getDatabaseName());
+      final OrientBaseGraph graph = master.createDatabase(getDatabaseName());
       try {
-        onAfterDatabaseCreation(db);
+        onAfterDatabaseCreation(graph);
       } finally {
-        db.close();
+        graph.shutdown();
       }
     }
 
@@ -174,6 +175,11 @@ public abstract class AbstractServerClusterTest {
       if (iCopyDatabaseToNodes)
         master.copyDatabase(getDatabaseName(), replicaSrv.getDatabasePath(getDatabaseName()));
     }
+  }
+
+  protected void deleteServers() {
+    for (ServerRun s : serverInstance)
+      s.deleteNode();
   }
 
   protected String getDistributedServerConfiguration(final ServerRun server) {

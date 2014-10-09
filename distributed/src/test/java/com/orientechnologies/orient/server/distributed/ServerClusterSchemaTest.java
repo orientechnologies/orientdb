@@ -20,6 +20,10 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import junit.framework.Assert;
+
+import org.junit.Test;
+
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -27,9 +31,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import junit.framework.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
 
 /**
  * Start 3 servers and wait for external commands
@@ -38,11 +39,10 @@ public class ServerClusterSchemaTest extends AbstractServerClusterTest {
   final static int SERVERS = 3;
 
   public String getDatabaseName() {
-    return "distributed";
+    return "distributed-schema";
   }
 
   @Test
-  @Ignore
   public void test() throws Exception {
     init(SERVERS);
     prepare(false);
@@ -68,6 +68,8 @@ public class ServerClusterSchemaTest extends AbstractServerClusterTest {
     }
 
     for (int s = 0; s < SERVERS; ++s) {
+      System.out.println("Checking vertices classes on server " + s + "...");
+
       OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
       OrientGraphNoTx g = factory.getNoTx();
 
@@ -82,6 +84,8 @@ public class ServerClusterSchemaTest extends AbstractServerClusterTest {
     }
 
     for (int s = 0; s < SERVERS; ++s) {
+      System.out.println("Add vertices on server " + s + "...");
+
       OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
       OrientGraphNoTx g = factory.getNoTx();
 
@@ -100,6 +104,8 @@ public class ServerClusterSchemaTest extends AbstractServerClusterTest {
     }
 
     for (int s = 0; s < SERVERS; ++s) {
+      System.out.println("Add vertices in TX on server " + s + "...");
+
       OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + s + "/databases/" + getDatabaseName());
       OrientGraph g = factory.getTx();
 

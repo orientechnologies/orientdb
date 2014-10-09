@@ -26,8 +26,8 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -153,7 +153,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public Collection<OClass> getClasses() {
-    return new HashSet<OClass>(getData().classes.values());
+    return new ArrayList<OClass>(getData().classes.values());
   }
 
   public void load() {

@@ -214,7 +214,8 @@
 //   * @param db
 //   *          Current database
 //   */
-//  protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db) {
+//  @Override
+//  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
 //    System.out.println("Creating database schema...");
 //
 //    // CREATE BASIC SCHEMA
