@@ -405,12 +405,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         iDatabase.replaceStorage(storage);
 
-        // final boolean distribCfgDirty = installNodeClusters(iDatabase, cfg);
-        //
-        // if (distribCfgDirty) {
-        // OLogManager.instance().warn(this, "Distributed configuration modified");
-        // updateCachedDatabaseConfiguration(iDatabase.getName(), cfg.serialize(), true, true);
-        // }
+        final boolean distribCfgDirty = installDbClustersForLocalNode(iDatabase, cfg);
+
+        if (distribCfgDirty) {
+          OLogManager.instance().warn(this, "Distributed configuration modified");
+          updateCachedDatabaseConfiguration(iDatabase.getName(), cfg.serialize(), true, true);
+        }
       }
 
     }
@@ -875,11 +875,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         if (db != null) {
           db.close();
           final OStorage stg = Orient.instance().getStorage(databaseName);
-          if( stg!=null)
+          if (stg != null)
             stg.close();
 
           distrDatabase.configureDatabase(false, true);
-          final boolean distribCfgDirty = installNodeClusters(db, cfg);
+          final boolean distribCfgDirty = installDbClustersForLocalNode(db, cfg);
           if (distribCfgDirty) {
             OLogManager.instance().warn(this, "Distributed configuration modified");
             updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
@@ -897,7 +897,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   }
 
-  protected boolean installNodeClusters(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg) {
+  protected boolean installDbClustersForLocalNode(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg) {
     if (iDatabase.isClosed())
       getServerInstance().openDatabase(iDatabase);
 
@@ -934,9 +934,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             cfg.setMasterServer(newClusterName, nodeName);
           } else {
 
-            // final Lock lock = getLock(iDatabase.getName() + ".schema");
-            // lock.lock();
-            // try {
             // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
             OLogManager.instance().warn(this, "class %s, creation of new local cluster '%s'", c, newClusterName);
 
@@ -950,10 +947,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
             OLogManager.instance().warn(this, "class %s, set mastership of cluster '%s' (id=%d) to '%s'", c, newClusterName,
                 iDatabase.getClusterIdByName(newClusterName), nodeName);
             cfg.setMasterServer(newClusterName, nodeName);
-
-            // } finally {
-            // lock.unlock();
-            // }
           }
         }
       }
@@ -1114,7 +1107,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       }
       db.close();
 
-//      Orient.instance().unregisterStorageByName(db.getURL().substring(db.getStorage().getType().length() + 1));
+      // Orient.instance().unregisterStorageByName(db.getURL().substring(db.getStorage().getType().length() + 1));
 
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "installed database '%s'", databaseName);
 
