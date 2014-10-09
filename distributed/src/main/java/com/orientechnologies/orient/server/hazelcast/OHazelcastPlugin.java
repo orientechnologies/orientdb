@@ -19,25 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -63,6 +44,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
@@ -85,6 +67,25 @@ import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTa
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -404,55 +405,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         iDatabase.replaceStorage(storage);
 
-        // OVERWRITE CLUSTER SELECTION STRATEGY
-        final String nodeName = getLocalNodeName();
-        final ODistributedConfiguration dbCfg = getDatabaseConfiguration(iDatabase.getName());
-
-        final OSchema schema = ((ODatabaseComplexInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
-
-        final Set<String> cfgClusterNames = new HashSet<String>();
-        for (String c : cfg.getClusterNames())
-          cfgClusterNames.add(c);
-
-        boolean distribCfgDirty = false;
-        for (OClass c : schema.getClasses()) {
-          ((OClassImpl) c).setClusterSelectionInternal(new OLocalClusterStrategy(this, iDatabase.getName(), c));
-
-          if (!c.isAbstract()) {
-            final int[] clusterIds = c.getClusterIds();
-            final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
-            for (int clusterId : clusterIds)
-              clusterNames.add(iDatabase.getClusterNameById(clusterId));
-
-            String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
-            if (bestCluster == null) {
-              distribCfgDirty = true;
-              // TRY TO FIND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL NODE
-              final String newClusterName = (c.getName() + "_" + getLocalNodeName()).toLowerCase();
-
-              if (cfgClusterNames.contains(newClusterName)) {
-                // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN
-                OLogManager.instance().warn(this, "class %s, change mastership of cluster '%s' to local node '%s'", c,
-                    newClusterName, nodeName);
-                cfg.setMasterServer(newClusterName, nodeName);
-              } else {
-                // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
-                OLogManager.instance().warn(this, "class %s, creation of new local cluster '%s'", c, newClusterName);
-
-                OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
-                try {
-                  c.addCluster(newClusterName);
-                } finally {
-                  OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
-                }
-
-                OLogManager.instance().warn(this, "class %s, set mastership of cluster '%s' (id=%d) to '%s'", c, newClusterName,
-                    iDatabase.getClusterIdByName(newClusterName), nodeName);
-                cfg.setMasterServer(newClusterName, nodeName);
-              }
-            }
-          }
-        }
+        final boolean distribCfgDirty = installDbClustersForLocalNode(iDatabase, cfg);
 
         if (distribCfgDirty) {
           OLogManager.instance().warn(this, "Distributed configuration modified");
@@ -917,8 +870,22 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           }
         }
 
-        installDatabaseOnLocalNode(distrDatabase, databaseName, dbPath, r.getKey(), fileName);
-        distrDatabase.configureDatabase(false, true);
+        final ODatabaseDocumentTx db = installDatabaseOnLocalNode(distrDatabase, databaseName, dbPath, r.getKey(), fileName);
+
+        if (db != null) {
+          db.close();
+          final OStorage stg = Orient.instance().getStorage(databaseName);
+          if (stg != null)
+            stg.close();
+
+          distrDatabase.configureDatabase(false, true);
+          final boolean distribCfgDirty = installDbClustersForLocalNode(db, cfg);
+          if (distribCfgDirty) {
+            OLogManager.instance().warn(this, "Distributed configuration modified");
+            updateCachedDatabaseConfiguration(db.getName(), cfg.serialize(), true, true);
+          }
+          db.close();
+        }
 
         return true;
 
@@ -930,7 +897,65 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   }
 
+  protected boolean installDbClustersForLocalNode(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg) {
+    if (iDatabase.isClosed())
+      getServerInstance().openDatabase(iDatabase);
+
+    // OVERWRITE CLUSTER SELECTION STRATEGY
+    final String nodeName = getLocalNodeName();
+    final ODistributedConfiguration dbCfg = getDatabaseConfiguration(iDatabase.getName());
+
+    final OSchema schema = ((ODatabaseComplexInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
+
+    final Set<String> cfgClusterNames = new HashSet<String>();
+    for (String c : cfg.getClusterNames())
+      cfgClusterNames.add(c);
+
+    boolean distribCfgDirty = false;
+    for (OClass c : schema.getClasses()) {
+      ((OClassImpl) c).setClusterSelectionInternal(new OLocalClusterStrategy(this, iDatabase.getName(), c));
+
+      if (!c.isAbstract()) {
+        final int[] clusterIds = c.getClusterIds();
+        final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
+        for (int clusterId : clusterIds)
+          clusterNames.add(iDatabase.getClusterNameById(clusterId));
+
+        String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
+        if (bestCluster == null) {
+          distribCfgDirty = true;
+          // TRY TO FIND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL NODE
+          final String newClusterName = (c.getName() + "_" + getLocalNodeName()).toLowerCase();
+
+          if (cfgClusterNames.contains(newClusterName)) {
+            // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN
+            OLogManager.instance().warn(this, "class %s, change mastership of cluster '%s' to local node '%s'", c, newClusterName,
+                nodeName);
+            cfg.setMasterServer(newClusterName, nodeName);
+          } else {
+
+            // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
+            OLogManager.instance().warn(this, "class %s, creation of new local cluster '%s'", c, newClusterName);
+
+            OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+            try {
+              c.addCluster(newClusterName);
+            } finally {
+              OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+            }
+
+            OLogManager.instance().warn(this, "class %s, set mastership of cluster '%s' (id=%d) to '%s'", c, newClusterName,
+                iDatabase.getClusterIdByName(newClusterName), nodeName);
+            cfg.setMasterServer(newClusterName, nodeName);
+          }
+        }
+      }
+    }
+    return distribCfgDirty;
+  }
+
   protected void assignNodeName() {
+    // ORIENTDB_NODE_NAME ENV VARIABLE OR JVM SETTING
     nodeName = OSystemVariableResolver.resolveVariable(NODE_NAME_ENV);
 
     if (nodeName != null) {
@@ -948,13 +973,16 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       System.out.println();
       System.out.println();
-      System.out.println("+----------------------------------------------------+");
-      System.out.println("|    WARNING: FIRST DISTRIBUTED RUN CONFIGURATION    |");
-      System.out.println("+----------------------------------------------------+");
-      System.out.println("| This is the first time that the server is running  |");
-      System.out.println("| as distributed. Please type the name you want      |");
-      System.out.println("| to assign to the current server node.              |");
-      System.out.println("+----------------------------------------------------+");
+      System.out.println("+---------------------------------------------------------------+");
+      System.out.println("|         WARNING: FIRST DISTRIBUTED RUN CONFIGURATION          |");
+      System.out.println("+---------------------------------------------------------------+");
+      System.out.println("| This is the first time that the server is running as          |");
+      System.out.println("| distributed. Please type the name you want to assign to the   |");
+      System.out.println("| current server node.                                          |");
+      System.out.println("|                                                               |");
+      System.out.println("| To avoid this message set the environment variable or JVM     |");
+      System.out.println("| setting ORIENTDB_NODE_NAME to the server node name to use.    |");
+      System.out.println("+---------------------------------------------------------------+");
       System.out.print("\nNode name [BLANK=auto generate it]: ");
 
       OConsoleReader reader = new DefaultConsoleReader();
@@ -1064,8 +1092,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     return chunk.buffer.length;
   }
 
-  protected void installDatabaseOnLocalNode(final OHazelcastDistributedDatabase distrDatabase, final String databaseName,
-      final String dbPath, final String iNode, final String iDatabaseCompressedFile) {
+  protected ODatabaseDocumentTx installDatabaseOnLocalNode(final OHazelcastDistributedDatabase distrDatabase,
+      final String databaseName, final String dbPath, final String iNode, final String iDatabaseCompressedFile) {
     ODistributedServerLog.warn(this, getLocalNodeName(), iNode, DIRECTION.IN, "installing database '%s' to: %s...", databaseName,
         dbPath);
 
@@ -1081,16 +1109,19 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       } finally {
         in.close();
       }
-
       db.close();
-      Orient.instance().unregisterStorageByName(db.getURL().substring(db.getStorage().getType().length() + 1));
+
+      // Orient.instance().unregisterStorageByName(db.getURL().substring(db.getStorage().getType().length() + 1));
 
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "installed database '%s'", databaseName);
+
+      return db;
 
     } catch (IOException e) {
       ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.IN, "error on copying database '%s' on local server", e,
           databaseName);
     }
+    return null;
   }
 
   @Override

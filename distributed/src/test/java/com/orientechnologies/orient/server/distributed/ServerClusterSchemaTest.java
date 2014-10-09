@@ -20,11 +20,6 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import junit.framework.Assert;
-
-import org.junit.Ignore;
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -32,6 +27,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+import junit.framework.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Start 3 servers and wait for external commands

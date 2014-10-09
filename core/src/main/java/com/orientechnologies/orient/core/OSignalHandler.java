@@ -23,7 +23,9 @@ package com.orientechnologies.orient.core;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 public class OSignalHandler implements SignalHandler {
   public OSignalHandler() {
@@ -42,6 +44,14 @@ public class OSignalHandler implements SignalHandler {
     if (s.equals("SIGKILL") || s.equals("SIGHUP") || s.equals("SIGINT") || s.equals("SIGTERM")) {
       Orient.instance().shutdown();
       System.exit(1);
+    } else if (s.equals("SIGTRAP")) {
+      System.out.println();
+      OGlobalConfiguration.dumpConfiguration(System.out);
+      System.out.println();
+      Orient.instance().getProfiler().dump();
+      System.out.println();
+      OIOUtils.dump(System.out);
+      System.out.println();
     }
   }
 
@@ -50,9 +60,10 @@ public class OSignalHandler implements SignalHandler {
   }
 
   public void installDefaultSignals(final SignalHandler iListener) {
-    //listenTo("HUP", iListener); // DISABLED HUB BECAUSE ON WINDOWS IT'S USED INTERNALLY AND CAUSED JVM KILL
+    // listenTo("HUP", iListener); // DISABLED HUB BECAUSE ON WINDOWS IT'S USED INTERNALLY AND CAUSED JVM KILL
     listenTo("INT", iListener);
     // listenTo("KILL",iListener);
     listenTo("TERM", iListener);
+    listenTo("TRAP", iListener);
   }
 }
