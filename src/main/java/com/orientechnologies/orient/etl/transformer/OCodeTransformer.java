@@ -21,6 +21,7 @@ package com.orientechnologies.orient.etl.transformer;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorScript;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
@@ -67,7 +68,10 @@ public class OCodeTransformer extends OAbstractTransformer {
     if (input == null)
       return null;
 
-    params.put("record", input);
+    params.put("input", input);
+    if (input instanceof OIdentifiable)
+      params.put("record", ((OIdentifiable) input).getRecord());
+
     Object result = cmd.executeInContext(context, params);
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "executed code=%s, result=%s", cmd, result);
