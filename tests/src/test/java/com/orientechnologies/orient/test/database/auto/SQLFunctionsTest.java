@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -34,12 +35,7 @@ import org.testng.annotations.*;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @Test(groups = "sql-select")
 public class SQLFunctionsTest extends DocumentDBBaseTest {
@@ -114,6 +110,42 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
       Assert.assertNotNull(d.field("total"));
       Assert.assertTrue(((Number) d.field("total")).longValue() > 0);
     }
+  }
+
+  public void queryCountExtendsRestricted() {
+    OClass restricted = database.getMetadata().getSchema().getClass("ORestricted");
+    Assert.assertNotNull(restricted);
+
+    database.getMetadata().getSchema().createClass("QueryCountExtendsRestrictedClass", restricted);
+
+    OUser admin = database.getMetadata().getSecurity().getUser("admin");
+    OUser reader = database.getMetadata().getSecurity().getUser("reader");
+
+    ODocument docAdmin = new ODocument("QueryCountExtendsRestrictedClass");
+    docAdmin.field("_allowRead", new HashSet<OIdentifiable>(Arrays.asList(admin.getDocument().getIdentity())));
+    docAdmin.save();
+
+    ODocument docReader = new ODocument("QueryCountExtendsRestrictedClass");
+    docReader.field("_allowRead", new HashSet<OIdentifiable>(Arrays.asList(reader.getDocument().getIdentity())));
+    docReader.save();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
+    ODocument count = result.get(0);
+    Assert.assertEquals(2L, count.field("count"));
+
+    database.close();
+    database.open("admin", "admin");
+
+    result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
+    count = result.get(0);
+    Assert.assertEquals(2L, count.field("count"));
+
+    database.close();
+    database.open("reader", "reader");
+
+    result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
+    count = result.get(0);
+    Assert.assertEquals(1L, count.field("count"));
   }
 
   @Test
