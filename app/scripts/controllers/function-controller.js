@@ -40,7 +40,7 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
     $scope.consoleValue = '';                           //code of the function
     $scope.nameFunction = '';                           //name of the function
     $scope.selectedLanguage = '';                       //language of the function
-    $scope.languages = ['SQL', 'Javascript'];
+    $scope.languages = ['SQL', 'Javascript', 'Groovy'];
     $scope.functionToExecute = undefined;
 
     DatabaseApi.getAvailableLanguages($routeParams.database).then(function (data) {
@@ -160,11 +160,9 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.resultExecute = '';
 
         if ($scope.functionToExecute != undefined) {
-            var functionNamee = $scope.nameFunction;
-            var buildedParams = '';
-            for (i in $scope.parametersToExecute) {
-                buildedParams = buildedParams.concat($scope.parametersToExecute[i] + '/');
-            }
+            var encodedParams = new Array();
+            $scope.parametersToExecute.forEach(function(param) { encodedParams.push(encodeURIComponent(param)); });
+            var buildedParams = encodedParams.join('/');
             Spinner.start();
             FunctionApi.executeFunction({database: $routeParams.database, functionName: $scope.nameFunction, parameters: buildedParams, limit: $scope.limit}, function (data) {
                 if (data.result) {
