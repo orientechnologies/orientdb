@@ -84,7 +84,8 @@ public class OJDBCExtractor extends OAbstractExtractor {
   @Override
   public void begin() {
     try {
-      stm = conn.createStatement();
+      stm = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+      stm.setFetchSize(Integer.MIN_VALUE);
       if (queryCount != null) {
         // GET THE TOTAL COUNTER
         final ResultSet countRs = stm.executeQuery(query);
