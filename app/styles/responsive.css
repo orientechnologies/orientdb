@@ -14,6 +14,30 @@
     }
 }
 
+@media (min-height: 10px) and (max-height: 768px) {
+    .console_class_functions .CodeMirror {
+        height: 300px;
+    }
+}
+
+@media (min-height: 769px) {
+    .console_class_functions .CodeMirror {
+        height: 400px;
+    }
+}
+
+@media (min-height: 900px) {
+    .console_class_functions .CodeMirror {
+        height: 550px;
+    }
+}
+
+@media (min-width: 768px) {
+    .query-hint-mobile {
+        display: none;
+    }
+}
+
 @media (min-width: 768px) {
     .query-hint-mobile {
         display: none;
