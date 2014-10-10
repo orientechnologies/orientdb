@@ -440,7 +440,7 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
                         }
                         return false;
                     });
-                    if (PAGE != LIMIT ) {
+                    if (PAGE != LIMIT) {
                         var expand = '<span class="label label-primary badge-edge"><a ng-click="collapse()" href="javascript:void(0)">..Less</a></span>';
                         html += expand;
                     }
@@ -586,6 +586,10 @@ Widget.directive('autofill', function ($timeout) {
                     ngModel.$setViewValue(newVal);
                 }
             }, 500);
+
+            scope.$on("autofill:update", function () {
+                ngModel.$setViewValue(elem.val());
+            });
         }
     }
 });
