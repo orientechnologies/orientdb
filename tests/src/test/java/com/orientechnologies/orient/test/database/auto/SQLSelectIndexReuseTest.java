@@ -171,8 +171,8 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
 
     final ODocument document = result.get(0);
-    Assert.assertEquals(document.<Integer>field("prop1").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop2").intValue(), 2);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop2").intValue(), 2);
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.2"), oldcompositeIndexUsed2 + 1);
@@ -189,8 +189,8 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
 
     final ODocument document = result.get(0);
-    Assert.assertEquals(document.<Integer>field("prop1").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop2").intValue(), 2);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop2").intValue(), 2);
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage);
   }
 
@@ -687,8 +687,8 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
 
     final ODocument document = result.get(0);
-    Assert.assertEquals(document.<Integer>field("prop1").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop2").intValue(), 2);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop2").intValue(), 2);
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.2"), oldcompositeIndexUsed2 + 1);
@@ -1685,7 +1685,7 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
 
     final ODocument document = result.get(0);
-    Assert.assertEquals(document.<Integer>field("prop3").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop3").intValue(), 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed);
   }
@@ -1705,7 +1705,7 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
 
     final ODocument document = result.get(0);
-    Assert.assertEquals(document.<Integer>field("prop3").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop3").intValue(), 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed);
   }
@@ -2021,9 +2021,9 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
 
     final ODocument document = result.get(0);
-    Assert.assertEquals(document.<Integer>field("prop1").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop2").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop3").intValue(), 11);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop2").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop3").intValue(), 11);
 
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
@@ -2053,9 +2053,9 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
 
     final ODocument document = result.get(0);
-    Assert.assertEquals(document.<Integer>field("prop1").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop2").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop4").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop2").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop4").intValue(), 1);
 
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
@@ -2085,9 +2085,9 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
 
     final ODocument document = result.get(0);
-    Assert.assertEquals(document.<Integer>field("prop1").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop2").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop5").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop2").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop5").intValue(), 1);
 
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
@@ -2247,8 +2247,8 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
 
     final ODocument document = result.get(0);
-    Assert.assertEquals(document.<Integer>field("prop1").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop2").intValue(), 2);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop2").intValue(), 2);
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.2"), oldcompositeIndexUsed2 + 1);
@@ -2408,9 +2408,9 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
 
     final ODocument document = result.get(0);
-    Assert.assertEquals(document.<Integer>field("prop1").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop2").intValue(), 2);
-    Assert.assertEquals(document.<Integer>field("prop4").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop2").intValue(), 2);
+    Assert.assertEquals(document.<Integer> field("prop4").intValue(), 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.2"), oldcompositeIndexUsed2 + 1);
@@ -2428,10 +2428,10 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(result.size(), 1);
 
     final ODocument document = result.get(0);
-    Assert.assertEquals(document.<Integer>field("prop1").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop2").intValue(), 2);
-    Assert.assertEquals(document.<Integer>field("prop4").intValue(), 1);
-    Assert.assertEquals(document.<Integer>field("prop6").intValue(), 2);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop2").intValue(), 2);
+    Assert.assertEquals(document.<Integer> field("prop4").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop6").intValue(), 2);
 
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
   }
@@ -2441,7 +2441,7 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     for (final ODocument docItem : docList) {
       boolean containsAllFields = true;
       for (final String fieldName : document.fieldNames()) {
-        if (!document.<Object>field(fieldName).equals(docItem.<Object>field(fieldName))) {
+        if (!document.<Object> field(fieldName).equals(docItem.<Object> field(fieldName))) {
           containsAllFields = false;
           break;
         }
