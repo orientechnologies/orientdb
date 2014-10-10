@@ -48,8 +48,6 @@ public class LocalPaginatedStorageCreateCrashRestore {
 
   @BeforeClass
   public void beforeClass() throws Exception {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageCreateCrashRestore";
 
@@ -195,8 +193,6 @@ public class LocalPaginatedStorageCreateCrashRestore {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class
           .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-create-config.xml"));

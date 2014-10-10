@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.db.tool;
 
 import java.io.File;
@@ -92,7 +92,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
     writer = new OJSONWriter(new OutputStreamWriter(gzipOS));
     writer.beginObject();
-    iDatabase.getLocalCache().setEnable(false);
   }
 
   public ODatabaseExport(final ODatabaseRecordInternal iDatabase, final OutputStream iOutputStream,
@@ -101,7 +100,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
     writer = new OJSONWriter(new OutputStreamWriter(iOutputStream));
     writer.beginObject();
-    iDatabase.getLocalCache().setEnable(false);
   }
 
   @Override
@@ -113,8 +111,6 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   public ODatabaseExport exportDatabase() {
     try {
       listener.onMessage("\nStarted export of database '" + database.getName() + "' to " + fileName + "...");
-
-      database.getLocalCache().setEnable(false);
 
       long time = System.currentTimeMillis();
 
@@ -457,7 +453,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     OSchemaProxy s = (OSchemaProxy) database.getMetadata().getSchema();
     writer.writeAttribute(2, true, "version", s.getVersion());
 
-   if (!s.getClasses().isEmpty()) {
+    if (!s.getClasses().isEmpty()) {
       writer.beginCollection(2, true, "classes");
 
       final List<OClass> classes = new ArrayList<OClass>(s.getClasses());

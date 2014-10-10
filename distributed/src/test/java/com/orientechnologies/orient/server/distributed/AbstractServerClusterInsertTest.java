@@ -20,6 +20,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -27,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import junit.framework.Assert;
 
 import java.util.ArrayList;
@@ -46,44 +49,230 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
   protected static final int delayWriter = 0;
   protected static final int delayReader = 1000;
   protected static final int writerCount = 5;
-  protected int              count       = 1000;
+  protected int              count       = 100;
   protected long             beginInstances;
+  private OIndex<?>          idx;
+
+  class Writer implements Callable<Void> {
+    private final String databaseUrl;
+    private int          serverId;
+
+    public Writer(final int iServerId, final String db) {
+      serverId = iServerId;
+      databaseUrl = db;
+    }
+
+    @Override
+    public Void call() throws Exception {
+      String name = Integer.toString(serverId);
+      for (int i = 0; i < count; i++) {
+        final ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(databaseUrl, "admin", "admin");
+        try {
+          if ((i + 1) % 100 == 0)
+            System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+
+          final ODocument person = createRecord(database, i);
+          updateRecord(database, i);
+          checkRecord(database, i);
+          checkIndex(database, (String) person.field("name"), person.getIdentity());
+
+          Thread.sleep(delayWriter);
+
+        } catch (InterruptedException e) {
+          System.out.println("Writer received interrupt (db=" + database.getURL());
+          Thread.currentThread().interrupt();
+          break;
+        } catch (Exception e) {
+          System.out.println("Writer received exception (db=" + database.getURL());
+          e.printStackTrace();
+          break;
+        } finally {
+          database.close();
+        }
+      }
+
+      System.out.println("\nWriter " + name + " END");
+      return null;
+    }
+
+    private ODocument createRecord(ODatabaseDocumentTx database, int i) {
+      final int uniqueId = count * serverId + i;
+
+      ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
+          "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
+      database.save(person);
+
+      Assert.assertTrue(person.getIdentity().isPersistent());
+
+      return person;
+    }
+
+    private void updateRecord(ODatabaseDocumentTx database, int i) {
+      ODocument doc = loadRecord(database, i);
+      doc.field("updated", true);
+      doc.save();
+    }
+
+    private void checkRecord(ODatabaseDocumentTx database, int i) {
+      ODocument doc = loadRecord(database, i);
+      Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
+    }
+
+    private void checkIndex(ODatabaseDocumentTx database, final String key, final ORID rid) {
+      final List<OIdentifiable> result = database.command(new OCommandSQL("select from index:Person.name where key = ?")).execute(
+          key);
+      Assert.assertNotNull(result);
+      Assert.assertEquals(result.size(), 1);
+      Assert.assertNotNull(result.get(0).getRecord());
+      Assert.assertEquals(((ODocument) result.get(0)).field("rid"), rid);
+    }
+
+    private ODocument loadRecord(ODatabaseDocumentTx database, int i) {
+      final int uniqueId = count * serverId + i;
+
+      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId
+          + "'"));
+      if (result.size() == 0)
+        Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
+      else if (result.size() > 1)
+        Assert.assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
+
+      return result.get(0);
+    }
+  }
+
+  class Reader implements Callable<Void> {
+    private final String    databaseUrl;
+    public volatile boolean running = true;
+
+    public Reader(final String db) {
+      databaseUrl = db;
+    }
+
+    @Override
+    public Void call() throws Exception {
+      try {
+        while (running) {
+          try {
+            printStats(databaseUrl);
+            Thread.sleep(delayReader);
+
+          } catch (Exception e) {
+            running = false;
+            break;
+          }
+        }
+
+      } finally {
+        printStats(databaseUrl);
+      }
+      return null;
+    }
+  }
 
   public String getDatabaseName() {
     return "distributed";
+  }
+
+  public void executeTest() throws Exception {
+
+    ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(serverInstance.get(0)), "admin", "admin");
+    try {
+      new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
+      new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
+      new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
+
+      List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
+      beginInstances = result.get(0).field("count");
+    } finally {
+      database.close();
+    }
+
+    System.out.println("Creating Writers and Readers threads...");
+
+    final ExecutorService writerExecutors = Executors.newCachedThreadPool();
+    final ExecutorService readerExecutors = Executors.newCachedThreadPool();
+
+    int i = 0;
+    List<Callable<Void>> writerWorkers = new ArrayList<Callable<Void>>();
+    for (ServerRun server : serverInstance) {
+      for (int j = 0; j < writerCount; j++) {
+        Writer writer = new Writer(i++, getDatabaseURL(server));
+        writerWorkers.add(writer);
+      }
+
+    }
+    List<Future<Void>> futures = writerExecutors.invokeAll(writerWorkers);
+
+    List<Reader> readerWorkers = new ArrayList<Reader>();
+    for (ServerRun server : serverInstance) {
+      Reader reader = new Reader(getDatabaseURL(server));
+      readerWorkers.add(reader);
+    }
+
+    List<Future<Void>> rFutures = readerExecutors.invokeAll(readerWorkers);
+
+    System.out.println("Threads started, waiting for the end");
+
+    for (Future<Void> future : futures) {
+      future.get();
+    }
+
+    writerExecutors.shutdown();
+    Assert.assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
+
+    System.out.println("All writer threads have finished, shutting down readers");
+
+    readerExecutors.shutdown();
+    for (Reader r : readerWorkers) {
+      r.running = false;
+    }
+    for (Future<Void> future : rFutures) {
+      future.cancel(true);
+    }
+
+    Assert.assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
+
+    System.out.println("All threads have finished, shutting down server instances");
+
+    for (ServerRun server : serverInstance) {
+      printStats(getDatabaseURL(server));
+    }
+
+    checkInsertedEntries();
+    checkIndexedEntries();
+    dropIndexNode1();
+    recreateIndexNode2();
   }
 
   protected abstract String getDatabaseURL(ServerRun server);
 
   /**
    * Event called right after the database has been created and right before to be replicated to the X servers
-   * 
+   *
    * @param db
    *          Current database
    */
-  protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db) {
+  @Override
+  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
     System.out.println("Creating database schema...");
 
     // CREATE BASIC SCHEMA
-    OClass personClass = db.getMetadata().getSchema().createClass("Person");
+    OClass personClass = db.getRawGraph().getMetadata().getSchema().createClass("Person");
     personClass.createProperty("id", OType.STRING);
     personClass.createProperty("name", OType.STRING);
     personClass.createProperty("birthday", OType.DATE);
     personClass.createProperty("children", OType.INTEGER);
 
-    final OSchema schema = db.getMetadata().getSchema();
+    final OSchema schema = db.getRawGraph().getMetadata().getSchema();
     OClass person = schema.getClass("Person");
-    person.createIndex("Person.name", INDEX_TYPE.UNIQUE, "name");
+    idx = person.createIndex("Person.name", INDEX_TYPE.UNIQUE, "name");
 
     OClass customer = schema.createClass("Customer", person);
     customer.createProperty("totalSold", OType.DECIMAL);
 
     OClass provider = schema.createClass("Provider", person);
     provider.createProperty("totalPurchased", OType.DECIMAL);
-
-    new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
-    new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
-    new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
   }
 
   private void dropIndexNode1() {
@@ -132,55 +321,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     }
   }
 
-  public void executeTest() throws Exception {
-
-    ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(serverInstance.get(0)), "admin", "admin");
-    try {
-      List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
-      beginInstances = result.get(0).field("count");
-    } finally {
-      database.close();
-    }
-
-    System.out.println("Creating Writers and Readers threads...");
-
-    final ExecutorService executor = Executors.newCachedThreadPool();
-
-    int i = 0;
-    List<Callable<Void>> workers = new ArrayList<Callable<Void>>();
-    for (ServerRun server : serverInstance) {
-      for (int j = 0; j < writerCount; j++) {
-        Writer writer = new Writer(i++, getDatabaseURL(server));
-        workers.add(writer);
-      }
-
-      Reader reader = new Reader(getDatabaseURL(server));
-      workers.add(reader);
-    }
-
-    List<Future<Void>> futures = executor.invokeAll(workers);
-
-    System.out.println("Threads started, waiting for the end");
-
-    executor.shutdown();
-    Assert.assertTrue(executor.awaitTermination(10, TimeUnit.MINUTES));
-
-    for (Future<Void> future : futures) {
-      future.get();
-    }
-
-    System.out.println("All threads have finished, shutting down server instances");
-
-    for (ServerRun server : serverInstance) {
-      printStats(getDatabaseURL(server));
-    }
-
-    checkInsertedEntries();
-    checkIndexedEntries();
-    dropIndexNode1();
-    recreateIndexNode2();
-  }
-
   private void checkIndexedEntries() {
     ODatabaseDocumentTx database;
     for (ServerRun server : serverInstance) {
@@ -224,109 +364,6 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
       } finally {
         database.close();
       }
-    }
-  }
-
-  class Writer implements Callable<Void> {
-    private final String databaseUrl;
-    private int          serverId;
-
-    public Writer(final int iServerId, final String db) {
-      serverId = iServerId;
-      databaseUrl = db;
-    }
-
-    @Override
-    public Void call() throws Exception {
-      String name = Integer.toString(serverId);
-      for (int i = 0; i < count; i++) {
-        final ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(databaseUrl, "admin", "admin");
-        try {
-          if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
-
-          createRecord(database, i);
-          updateRecord(database, i);
-          checkRecord(database, i);
-
-          Thread.sleep(delayWriter);
-
-        } catch (InterruptedException e) {
-          System.out.println("Writer received interrupt (db=" + database.getURL());
-          Thread.currentThread().interrupt();
-          break;
-        } catch (Exception e) {
-          System.out.println("Writer received exception (db=" + database.getURL());
-          e.printStackTrace();
-          break;
-        } finally {
-          database.close();
-        }
-      }
-
-      System.out.println("\nWriter " + name + " END");
-      return null;
-    }
-
-    private void createRecord(ODatabaseDocumentTx database, int i) {
-      final int uniqueId = count * serverId + i;
-
-      ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
-          "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
-      database.save(person);
-
-      Assert.assertTrue(person.getIdentity().isPersistent());
-    }
-
-    private void updateRecord(ODatabaseDocumentTx database, int i) {
-      ODocument doc = loadRecord(database, i);
-      doc.field("updated", true);
-      doc.save();
-    }
-
-    private void checkRecord(ODatabaseDocumentTx database, int i) {
-      ODocument doc = loadRecord(database, i);
-      Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
-    }
-
-    private ODocument loadRecord(ODatabaseDocumentTx database, int i) {
-      final int uniqueId = count * serverId + i;
-
-      List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId
-          + "'"));
-      if (result.size() == 0)
-        Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
-      else if (result.size() > 1)
-        Assert.assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
-
-      return result.get(0);
-    }
-  }
-
-  class Reader implements Callable<Void> {
-    private final String databaseUrl;
-
-    public Reader(final String db) {
-      databaseUrl = db;
-    }
-
-    @Override
-    public Void call() throws Exception {
-      try {
-        while (!Thread.interrupted()) {
-          try {
-            printStats(databaseUrl);
-            Thread.sleep(delayReader);
-
-          } catch (Exception e) {
-            break;
-          }
-        }
-
-      } finally {
-        printStats(databaseUrl);
-      }
-      return null;
     }
   }
 

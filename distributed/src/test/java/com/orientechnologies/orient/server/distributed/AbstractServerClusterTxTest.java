@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import junit.framework.Assert;
 
 import java.util.ArrayList;
@@ -141,6 +142,10 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
 
     ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(serverInstance.get(0)), "admin", "admin");
     try {
+      new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
+      new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
+      new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
+
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
       beginInstances = result.get(0).field("count");
     } finally {
@@ -189,17 +194,18 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
    * @param db
    *          Current database
    */
-  protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db) {
+  @Override
+  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
     System.out.println("Creating database schema...");
 
     // CREATE BASIC SCHEMA
-    OClass personClass = db.getMetadata().getSchema().createClass("Person");
+    OClass personClass = db.getRawGraph().getMetadata().getSchema().createClass("Person");
     personClass.createProperty("id", OType.STRING);
     personClass.createProperty("name", OType.STRING);
     personClass.createProperty("birthday", OType.DATE);
     personClass.createProperty("children", OType.INTEGER);
 
-    final OSchema schema = db.getMetadata().getSchema();
+    final OSchema schema = db.getRawGraph().getMetadata().getSchema();
     OClass person = schema.getClass("Person");
     person.createIndex("Person.name", INDEX_TYPE.UNIQUE, "name");
 
@@ -208,10 +214,6 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterT
 
     OClass provider = schema.createClass("Provider", person);
     provider.createProperty("totalPurchased", OType.DECIMAL);
-
-    new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
-    new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
-    new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
   }
 
   protected ODocument createRecord(ODatabaseDocumentTx database, int serverId, int i) {

@@ -1,25 +1,27 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.common.log;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -46,16 +48,18 @@ public class OLogFormatter extends Formatter {
     final StringBuilder buffer = new StringBuilder(512);
     buffer.append(record.getMessage());
 
-    Throwable current = record.getThrown();
+    final Throwable current = record.getThrown();
+    if (current != null) {
+      buffer.append(EOL);
 
-    while (current != null) {
-      buffer.append(EOL).append(current.getMessage());
+      StringWriter writer = new StringWriter();
+      PrintWriter printWriter = new PrintWriter(writer);
 
-      for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace()) {
-        buffer.append(EOL).append("-> ");
-        buffer.append(stackTraceElement.toString());
-      }
-      current = current.getCause();
+      current.printStackTrace(printWriter);
+      printWriter.flush();
+
+      buffer.append(writer.getBuffer());
+      printWriter.close();
     }
 
     return buffer.toString();
@@ -72,9 +76,7 @@ public class OLogFormatter extends Formatter {
     synchronized (dateFormat) {
       buffer.append(dateFormat.format(new Date()));
     }
-    buffer.append(' ');
-    buffer.append(iLevel.getName().substring(0, 4));
-    buffer.append(' ');
+    buffer.append(String.format(" %-5s ", iLevel.getName()));
 
     // FORMAT THE MESSAGE
     try {
