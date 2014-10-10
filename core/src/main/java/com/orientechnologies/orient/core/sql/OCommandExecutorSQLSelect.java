@@ -65,6 +65,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -890,8 +891,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               && "*".equals(rf.configuredParameters[0])) {
 
             boolean restrictedClasses = false;
+            final OUser user = getDatabase().getUser();
 
-            if (parsedTarget.getTargetClasses() != null) {
+            if (parsedTarget.getTargetClasses() != null
+                && user.checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) == null) {
               for (OClass cls : parsedTarget.getTargetClasses().keySet()) {
                 if (cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
                   restrictedClasses = true;

@@ -19,6 +19,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -127,6 +129,12 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     OUser admin = database.getMetadata().getSecurity().getUser("admin");
     OUser reader = database.getMetadata().getSecurity().getUser("reader");
 
+    ORole byPassRestrictedRole = database.getMetadata().getSecurity()
+        .createRole("byPassRestrictedRole", ORole.ALLOW_MODES.DENY_ALL_BUT);
+    byPassRestrictedRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ);
+
+    database.getMetadata().getSecurity().createUser("superReader", "superReader", "reader", "byPassRestrictedRole");
+
     ODocument docAdmin = new ODocument("QueryCountExtendsRestrictedClass");
     docAdmin.field("_allowRead", new HashSet<OIdentifiable>(Arrays.asList(admin.getDocument().getIdentity())));
     docAdmin.save();
@@ -152,7 +160,14 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
     count = result.get(0);
     Assert.assertEquals(1L, count.field("count"));
-  }
+
+    database.close();
+    database.open("superReader", "superReader");
+
+		result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
+		count = result.get(0);
+		Assert.assertEquals(2L, count.field("count"));
+	}
 
   @Test
   public void queryCountWithConditions() {
