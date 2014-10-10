@@ -1,11 +1,11 @@
 package com.orientechnologies.orient.core.db.record;
 
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.util.Iterator;
 
-import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -103,4 +103,11 @@ public class ORecordLazySetTest {
     assertEquals(set.size(), 3);
   }
 
+  @Test()
+  public void testDocumentNotEmbedded() {
+    ORecordLazySet set = new ORecordLazySet(new ODocument());
+    ODocument doc = new ODocument();
+    set.add(doc);
+    assertFalse(doc.isEmbedded());
+  }
 }
