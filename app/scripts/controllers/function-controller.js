@@ -242,6 +242,10 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
         $scope.logLevel = '';
         if ($scope.functionToExecute['language'] != undefined && $scope.functionToExecute['name'] != undefined && $scope.functionToExecute['name'] != '') {
             if ($scope.isNewFunction == true) {
+
+//                if ($scope.functionToExecute['language'] == 'javascript') {
+//                    $scope.functionToExecute['code'] = $scope.functionToExecute['code'].replace(/\//g, "\\/");
+//                }
                 DocumentApi.createDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute).then(function (data) {
                     $scope.getListFunction();
                     $scope.isNewFunction = false;
@@ -251,6 +255,9 @@ schemaModule.controller("FunctionController", ['$scope', '$routeParams', '$locat
 
             }
             else {
+//                if ($scope.functionToExecute['language'] == 'javascript') {
+//                    $scope.functionToExecute['code'] = $scope.functionToExecute['code'].replace(/\//g, "\\/");
+//                }
                 DocumentApi.updateDocument($scope.database.getName(), $scope.functionToExecute['@rid'], $scope.functionToExecute).then(function (data) {
                     var oldParams = JSON.stringify($scope.parametersToExecute);
                     $scope.getListFunction().then(function () {
