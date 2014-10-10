@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -36,6 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OModificationLock;
@@ -71,6 +73,8 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteD
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.DirtyFinder;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -108,8 +112,6 @@ import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Andrey Lomakin
@@ -725,9 +727,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     checkOpeness();
 
     final OCluster cluster = getClusterById(rid.getClusterId());
-    lock.acquireSharedLock();
+    lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
     try {
-      lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
+      lock.acquireSharedLock();
       try {
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
         if (ppos == null)
@@ -735,12 +737,12 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
         return new ORecordMetadata(rid, ppos.recordVersion);
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
+        lock.releaseSharedLock();
       }
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
     } finally {
-      lock.releaseSharedLock();
+      lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.SHARED);
     }
 
     return null;
@@ -766,10 +768,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       modificationLock.requestModificationLock();
       try {
-        lock.acquireSharedLock();
+        // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
+        lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
         try {
-          // GET THE SHARED LOCK AND GET AN EXCLUSIVE LOCK AGAINST THE RECORD
-          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          lock.acquireSharedLock();
           try {
             // UPDATE IT
             final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
@@ -824,7 +826,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
             return new OStorageOperationResult<ORecordVersion>(ppos.recordVersion);
 
           } finally {
-            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+            lock.releaseSharedLock();
           }
         } catch (IOException e) {
           OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
@@ -835,7 +837,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
           return new OStorageOperationResult<ORecordVersion>(recordVersion);
         } finally {
-          lock.releaseSharedLock();
+          lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
         }
       } finally {
         modificationLock.releaseModificationLock();
@@ -859,9 +861,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       modificationLock.requestModificationLock();
       try {
-        lock.acquireSharedLock();
+        lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
         try {
-          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          lock.acquireSharedLock();
           try {
             final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
 
@@ -892,10 +894,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
             return new OStorageOperationResult<Boolean>(true);
           } finally {
-            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+            lock.releaseSharedLock();
           }
         } finally {
-          lock.releaseSharedLock();
+          lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
         }
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
@@ -923,9 +925,9 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       modificationLock.requestModificationLock();
       try {
-        lock.acquireSharedLock();
+        lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
         try {
-          lockManager.acquireLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+          lock.acquireSharedLock();
           try {
             final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
 
@@ -949,10 +951,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
             return new OStorageOperationResult<Boolean>(true);
           } finally {
-            lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
+            lock.releaseSharedLock();
           }
         } finally {
-          lock.releaseSharedLock();
+          lockManager.releaseLock(Thread.currentThread(), rid, OLockManager.LOCK.EXCLUSIVE);
         }
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
@@ -993,28 +995,27 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       modificationLock.requestModificationLock();
 
     try {
-      if (exclusiveLock) {
-        lock.acquireExclusiveLock();
-      } else
-        lock.acquireSharedLock();
+      lockManager.acquireLock(Thread.currentThread(), rid, exclusiveLock ? OLockManager.LOCK.EXCLUSIVE : OLockManager.LOCK.SHARED);
       try {
-        lockManager
-            .acquireLock(Thread.currentThread(), rid, exclusiveLock ? OLockManager.LOCK.EXCLUSIVE : OLockManager.LOCK.SHARED);
+        if (exclusiveLock) {
+          lock.acquireExclusiveLock();
+        } else
+          lock.acquireSharedLock();
         try {
           return callable.call();
         } finally {
-          lockManager.releaseLock(Thread.currentThread(), rid, exclusiveLock ? OLockManager.LOCK.EXCLUSIVE
-              : OLockManager.LOCK.SHARED);
+          if (exclusiveLock) {
+            lock.releaseExclusiveLock();
+          } else
+            lock.releaseSharedLock();
         }
       } catch (RuntimeException e) {
         throw e;
       } catch (Exception e) {
         throw new OException("Error on nested call in lock", e);
       } finally {
-        if (exclusiveLock) {
-          lock.releaseExclusiveLock();
-        } else
-          lock.releaseSharedLock();
+        lockManager
+            .releaseLock(Thread.currentThread(), rid, exclusiveLock ? OLockManager.LOCK.EXCLUSIVE : OLockManager.LOCK.SHARED);
       }
     } finally {
       if (exclusiveLock)
@@ -1064,50 +1065,71 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   public void commit(final OTransaction clientTx, Runnable callback) {
     modificationLock.requestModificationLock();
+    Set<ORecord<?>> allToLock = new TreeSet<ORecord<?>>();
     try {
-      lock.acquireExclusiveLock();
+      // This should be a tree set to guaranty the order.
+      for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries()) {
+        DirtyFinder.findDirties(txEntry.getRecord(), allToLock);
+      }
+      for (ORecord<?> oRecord : allToLock) {
+        if (!oRecord.getIdentity().isNew())
+          lockManager.acquireLock(Thread.currentThread(), oRecord.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
+      }
+
       try {
-        if (writeAheadLog == null)
-          throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
+        lock.acquireExclusiveLock();
+        try {
+          if (writeAheadLog == null)
+            throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
 
-        dirtyFlag.makeDirty();
-        startStorageTx(clientTx);
+          dirtyFlag.makeDirty();
+          startStorageTx(clientTx);
 
-        final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
+          final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
-        while (clientTx.getCurrentRecordEntries().iterator().hasNext()) {
-          for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries())
-            tmpEntries.add(txEntry);
+          while (clientTx.getCurrentRecordEntries().iterator().hasNext()) {
+            for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries())
+              tmpEntries.add(txEntry);
 
-          clientTx.clearRecordEntries();
+            clientTx.clearRecordEntries();
 
-          for (ORecordOperation txEntry : tmpEntries)
-            // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-            commitEntry(clientTx, txEntry);
+            for (ORecordOperation txEntry : tmpEntries)
+              // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
+              commitEntry(clientTx, txEntry);
+          }
+
+          if (callback != null)
+            callback.run();
+
+          endStorageTx();
+
+          OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), true);
+
+        } catch (Exception e) {
+          // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
+          OLogManager.instance().debug(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e,
+              clientTx.getId());
+          rollback(clientTx);
+          if (e instanceof OException)
+            throw ((OException) e);
+          else
+            throw new OStorageException("Error during transaction commit.", e);
+        } finally {
+          transaction.set(null);
+          lock.releaseExclusiveLock();
         }
-
-        if (callback != null)
-          callback.run();
-
-        endStorageTx();
-
-        OTransactionAbstract.updateCacheFromEntries(clientTx, clientTx.getAllRecordEntries(), true);
-
-      } catch (Exception e) {
-        // WE NEED TO CALL ROLLBACK HERE, IN THE LOCK
-        OLogManager.instance().debug(this, "Error during transaction commit, transaction will be rolled back (tx-id=%d)", e,
-            clientTx.getId());
-        rollback(clientTx);
-        if (e instanceof OException)
-          throw ((OException) e);
-        else
-          throw new OStorageException("Error during transaction commit.", e);
       } finally {
-        transaction.set(null);
-        lock.releaseExclusiveLock();
+        modificationLock.releaseModificationLock();
       }
     } finally {
-      modificationLock.releaseModificationLock();
+      for (ORecord<?> locked : allToLock) {
+        try {
+          lockManager.releaseLock(Thread.currentThread(), locked.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
+        } catch (Exception e) {
+          OLogManager.instance().debug(this, "Error on record unlock", e);
+        }
+      }
+
     }
   }
 
@@ -1470,44 +1492,43 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
     clusterSegment.getExternalModificationLock().requestModificationLock();
     try {
-      if (atomicLock)
-        lock.acquireSharedLock();
 
+      switch (iLockingStrategy) {
+      case DEFAULT:
+      case KEEP_SHARED_LOCK:
+        rid.lock(false);
+        break;
+      case NONE:
+        // DO NOTHING
+        break;
+      case KEEP_EXCLUSIVE_LOCK:
+        rid.lock(true);
+      }
       try {
-        switch (iLockingStrategy) {
-        case DEFAULT:
-        case KEEP_SHARED_LOCK:
-          rid.lock(false);
-          break;
-        case NONE:
-          // DO NOTHING
-          break;
-        case KEEP_EXCLUSIVE_LOCK:
-          rid.lock(true);
-        }
 
+        if (atomicLock)
+          lock.acquireSharedLock();
         try {
           return clusterSegment.readRecord(rid.clusterPosition);
         } finally {
-          switch (iLockingStrategy) {
-          case DEFAULT:
-            rid.unlock();
-            break;
-
-          case KEEP_EXCLUSIVE_LOCK:
-          case NONE:
-          case KEEP_SHARED_LOCK:
-            // DO NOTHING
-            break;
-          }
+          if (atomicLock)
+            lock.releaseSharedLock();
         }
-
       } catch (IOException e) {
         OLogManager.instance().error(this, "Error on reading record " + rid + " (cluster: " + clusterSegment + ')', e);
         return null;
       } finally {
-        if (atomicLock)
-          lock.releaseSharedLock();
+        switch (iLockingStrategy) {
+        case DEFAULT:
+          rid.unlock();
+          break;
+
+        case KEEP_EXCLUSIVE_LOCK:
+        case NONE:
+        case KEEP_SHARED_LOCK:
+          // DO NOTHING
+          break;
+        }
       }
     } finally {
       clusterSegment.getExternalModificationLock().releaseModificationLock();

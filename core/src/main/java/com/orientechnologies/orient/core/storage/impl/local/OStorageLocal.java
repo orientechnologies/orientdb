@@ -1765,22 +1765,22 @@ public class OStorageLocal extends OStorageLocalAbstract {
     // USUALLY BROWSING OPERATIONS (QUERY) AVOID ATOMIC LOCKING
     // TO IMPROVE PERFORMANCES BY LOCKING THE ENTIRE CLUSTER FROM THE
     // OUTSIDE.
-    if (iAtomicLock)
-      lock.acquireSharedLock();
 
+    switch (iLockingStrategy) {
+    case DEFAULT:
+    case KEEP_SHARED_LOCK:
+      iRid.lock(false);
+      break;
+    case NONE:
+      // DO NOTHING
+      break;
+    case KEEP_EXCLUSIVE_LOCK:
+      throw new IllegalStateException("Exclusive locking not supported on read() in 'local' storage. Use plocal instead.");
+      // lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+    }
     try {
-      switch (iLockingStrategy) {
-      case DEFAULT:
-      case KEEP_SHARED_LOCK:
-        iRid.lock(false);
-        break;
-      case NONE:
-        // DO NOTHING
-        break;
-      case KEEP_EXCLUSIVE_LOCK:
-        throw new IllegalStateException("Exclusive locking not supported on read() in 'local' storage. Use plocal instead.");
-        // lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
-      }
+      if (iAtomicLock)
+        lock.acquireSharedLock();
 
       try {
         final OPhysicalPosition ppos = iClusterSegment.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
@@ -1796,24 +1796,24 @@ public class OStorageLocal extends OStorageLocalAbstract {
         return new ORawBuffer(data.getRecord(ppos.dataSegmentPos), ppos.recordVersion, ppos.recordType);
 
       } finally {
-        switch (iLockingStrategy) {
-        case DEFAULT:
-          iRid.unlock();
-          break;
-        case NONE:
-        case KEEP_SHARED_LOCK:
-        case KEEP_EXCLUSIVE_LOCK:
-          // DO NOTHING
-          break;
-        }
+        if (iAtomicLock)
+          lock.releaseSharedLock();
       }
 
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on reading record " + iRid + " (cluster: " + iClusterSegment + ')', e);
       return null;
     } finally {
-      if (iAtomicLock)
-        lock.releaseSharedLock();
+      switch (iLockingStrategy) {
+      case DEFAULT:
+        iRid.unlock();
+        break;
+      case NONE:
+      case KEEP_SHARED_LOCK:
+      case KEEP_EXCLUSIVE_LOCK:
+        // DO NOTHING
+        break;
+      }
 
       Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
     }

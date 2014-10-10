@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.core.storage.impl.memory;
 
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.OLockManager.LOCK;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -34,6 +35,8 @@ import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.DirtyFinder;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -59,6 +62,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 
 /**
@@ -389,9 +393,9 @@ public class OStorageMemory extends OStorageEmbedded {
 
     final OCluster cluster = getClusterById(iRid.clusterId);
 
-    lock.acquireSharedLock();
+    lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
     try {
-      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      lock.acquireSharedLock();
       try {
 
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
@@ -446,13 +450,13 @@ public class OStorageMemory extends OStorageEmbedded {
         return new OStorageOperationResult<ORecordVersion>(ppos.recordVersion);
 
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+        lock.releaseSharedLock();
       }
     } catch (IOException e) {
       throw new OStorageException("Error on update record " + iRid, e);
 
     } finally {
-      lock.releaseSharedLock();
+      lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
 
       Orient.instance().getProfiler().stopChrono(PROFILER_UPDATE_RECORD, "Update a record to database", timer, "db.*.updateRecord");
     }
@@ -469,9 +473,9 @@ public class OStorageMemory extends OStorageEmbedded {
     final OCluster cluster = getClusterById(rid.clusterId);
     final ODataSegmentMemory data = getDataSegmentById(dataSegmentId);
 
-    lock.acquireSharedLock();
+    lockManager.acquireLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
     try {
-      lockManager.acquireLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
+      lock.acquireSharedLock();
       try {
         OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
         if (ppos == null) {
@@ -511,10 +515,10 @@ public class OStorageMemory extends OStorageEmbedded {
         }
 
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
+        lock.releaseSharedLock();
       }
     } finally {
-      lock.releaseSharedLock();
+      lockManager.releaseLock(Thread.currentThread(), rid, LOCK.EXCLUSIVE);
     }
 
     return false;
@@ -522,21 +526,21 @@ public class OStorageMemory extends OStorageEmbedded {
 
   @Override
   public <V> V callInRecordLock(Callable<V> callable, ORID rid, boolean exclusiveLock) {
-    lock.acquireSharedLock();
 
+    lockManager.acquireLock(Thread.currentThread(), rid, exclusiveLock ? LOCK.EXCLUSIVE : LOCK.SHARED);
     try {
-      lockManager.acquireLock(Thread.currentThread(), rid, exclusiveLock ? LOCK.EXCLUSIVE : LOCK.SHARED);
+      lock.acquireSharedLock();
       try {
         return callable.call();
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), rid, exclusiveLock ? LOCK.EXCLUSIVE : LOCK.SHARED);
+        lock.releaseSharedLock();
       }
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
       throw new OException("Error on nested call in lock", e);
     } finally {
-      lock.releaseSharedLock();
+      lockManager.releaseLock(Thread.currentThread(), rid, exclusiveLock ? LOCK.EXCLUSIVE : LOCK.SHARED);
     }
   }
 
@@ -676,31 +680,52 @@ public class OStorageMemory extends OStorageEmbedded {
 
   @Override
   public void commit(final OTransaction iTx, Runnable callback) {
-    lock.acquireExclusiveLock();
+    Set<ORecord<?>> allToLock = new TreeSet<ORecord<?>>();
     try {
-
-      final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
-
-      while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-        for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-          tmpEntries.add(txEntry);
-
-        iTx.clearRecordEntries();
-
-        for (ORecordOperation txEntry : tmpEntries)
-          // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-          commitEntry(iTx, txEntry);
-
-        tmpEntries.clear();
+      // This should be a tree set to guaranty the order.
+      for (ORecordOperation txEntry : iTx.getCurrentRecordEntries()) {
+        DirtyFinder.findDirties(txEntry.getRecord(), allToLock);
+      }
+      for (ORecord<?> oRecord : allToLock) {
+        if (!oRecord.getIdentity().isNew())
+          lockManager.acquireLock(Thread.currentThread(), oRecord.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
       }
 
-      // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
-      OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), true);
-    } catch (IOException e) {
-      rollback(iTx);
+      lock.acquireExclusiveLock();
+      try {
 
+        final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
+
+        while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+          for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+            tmpEntries.add(txEntry);
+
+          iTx.clearRecordEntries();
+
+          for (ORecordOperation txEntry : tmpEntries)
+            // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
+            commitEntry(iTx, txEntry);
+
+          tmpEntries.clear();
+        }
+
+        // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT
+        OTransactionAbstract.updateCacheFromEntries(iTx, iTx.getAllRecordEntries(), true);
+      } catch (IOException e) {
+        rollback(iTx);
+
+      } finally {
+        lock.releaseExclusiveLock();
+      }
     } finally {
-      lock.releaseExclusiveLock();
+      for (ORecord<?> locked : allToLock) {
+        try {
+          lockManager.releaseLock(Thread.currentThread(), locked.getIdentity(), OLockManager.LOCK.EXCLUSIVE);
+        } catch (Exception e) {
+          OLogManager.instance().debug(this, "Error on record unlock", e);
+        }
+      }
+
     }
   }
 
@@ -863,19 +888,19 @@ public class OStorageMemory extends OStorageEmbedded {
       boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
     final long timer = Orient.instance().getProfiler().startChrono();
 
-    lock.acquireSharedLock();
+    switch (iLockingStrategy) {
+    case DEFAULT:
+    case KEEP_SHARED_LOCK:
+      iRid.lock(false);
+      break;
+    case NONE:
+      // DO NOTHING
+      break;
+    case KEEP_EXCLUSIVE_LOCK:
+      iRid.lock(true);
+    }
     try {
-      switch (iLockingStrategy) {
-      case DEFAULT:
-      case KEEP_SHARED_LOCK:
-        iRid.lock(false);
-        break;
-      case NONE:
-        // DO NOTHING
-        break;
-      case KEEP_EXCLUSIVE_LOCK:
-        iRid.lock(true);
-      }
+      lock.acquireSharedLock();
 
       try {
         final OClusterPosition lastPos = iClusterSegment.getLastPosition();
@@ -897,22 +922,22 @@ public class OStorageMemory extends OStorageEmbedded {
         return new ORawBuffer(dataSegment.readRecord(ppos.dataSegmentPos), ppos.recordVersion, ppos.recordType);
 
       } finally {
-        switch (iLockingStrategy) {
-        case DEFAULT:
-          iRid.unlock();
-          break;
-        case NONE:
-        case KEEP_SHARED_LOCK:
-        case KEEP_EXCLUSIVE_LOCK:
-          // DO NOTHING
-          break;
-        }
+        lock.releaseSharedLock();
       }
     } catch (IOException e) {
       throw new OStorageException("Error on read record in cluster: " + iClusterSegment.getId(), e);
 
     } finally {
-      lock.releaseSharedLock();
+      switch (iLockingStrategy) {
+      case DEFAULT:
+        iRid.unlock();
+        break;
+      case NONE:
+      case KEEP_SHARED_LOCK:
+      case KEEP_EXCLUSIVE_LOCK:
+        // DO NOTHING
+        break;
+      }
 
       Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
     }
@@ -923,9 +948,9 @@ public class OStorageMemory extends OStorageEmbedded {
 
     final OCluster cluster = getClusterById(iRid.clusterId);
 
-    lock.acquireSharedLock();
+    lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
     try {
-      lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+      lock.acquireSharedLock();
       try {
 
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(iRid.clusterPosition));
@@ -960,13 +985,13 @@ public class OStorageMemory extends OStorageEmbedded {
         return true;
 
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
+        lock.releaseSharedLock();
       }
     } catch (IOException e) {
       throw new OStorageException("Error on delete record " + iRid, e);
 
     } finally {
-      lock.releaseSharedLock();
+      lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
 
       Orient.instance().getProfiler()
           .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");

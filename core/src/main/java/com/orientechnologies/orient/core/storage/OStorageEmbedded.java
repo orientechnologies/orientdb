@@ -1,4 +1,5 @@
 /*
+<<<<<<< HEAD
  * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,6 +13,25 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+=======
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+>>>>>>> dc9016e... refactor for improve record locking.
  */
 package com.orientechnologies.orient.core.storage;
 
@@ -184,18 +204,22 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   }
 
   public void acquireWriteLock(final ORID iRid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be tacken inside a storage lock";
     lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
   }
 
   public void releaseWriteLock(final ORID iRid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
     lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.EXCLUSIVE);
   }
 
   public void acquireReadLock(final ORID iRid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be tacken inside a storage lock";
     lockManager.acquireLock(Thread.currentThread(), iRid, LOCK.SHARED);
   }
 
   public void releaseReadLock(final ORID iRid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
     lockManager.releaseLock(Thread.currentThread(), iRid, LOCK.SHARED);
   }
 
@@ -211,9 +235,9 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
     checkOpeness();
 
     final OCluster cluster = getClusterById(rid.getClusterId());
-    lock.acquireSharedLock();
+    lockManager.acquireLock(Thread.currentThread(), rid, LOCK.SHARED);
     try {
-      lockManager.acquireLock(Thread.currentThread(), rid, LOCK.SHARED);
+      lock.acquireSharedLock();
       try {
         final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.getClusterPosition()));
         if (ppos == null || ppos.dataSegmentId < 0)
@@ -221,12 +245,12 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
         return new ORecordMetadata(rid, ppos.recordVersion);
       } finally {
-        lockManager.releaseLock(Thread.currentThread(), rid, LOCK.SHARED);
+        lock.releaseSharedLock();
       }
     } catch (IOException ioe) {
       OLogManager.instance().error(this, "Retrieval of record  '" + rid + "' cause: " + ioe.getMessage(), ioe);
     } finally {
-      lock.releaseSharedLock();
+      lockManager.releaseLock(Thread.currentThread(), rid, LOCK.SHARED);
     }
 
     return null;

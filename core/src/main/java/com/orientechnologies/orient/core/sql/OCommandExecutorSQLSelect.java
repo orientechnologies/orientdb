@@ -476,12 +476,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK)
           noCache = true;
         record = getDatabase().load(id.getIdentity(), null, noCache, false, localLockingStrategy);
-        if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
-          Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
-          for (String key : ridContext.keySet()) {
-            context.setVariable(key, ridContext.get(key));
-          }
-        }
       }
 
       context.updateMetric("recordReads", +1);
