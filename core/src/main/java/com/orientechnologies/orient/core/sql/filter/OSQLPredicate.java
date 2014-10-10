@@ -112,7 +112,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     return rootCondition.evaluate(iRecord, iCurrentResult, iContext);
   }
 
-  private Object extractConditions(final OSQLFilterCondition iParentCondition) {
+  protected Object extractConditions(final OSQLFilterCondition iParentCondition) {
     final int oldPosition = parserGetCurrentPosition();
     parserNextWord(true, " )=><,\r\n");
     final String word = parserGetLastWord();

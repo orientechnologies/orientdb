@@ -20,19 +20,6 @@
 
 package com.orientechnologies.orient.core.db.raw;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TimeZone;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -44,7 +31,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -68,6 +54,18 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TimeZone;
+import java.util.concurrent.Callable;
 
 /**
  * Lower level ODatabase implementation. It's extended or wrapped by all the others.
@@ -750,34 +748,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
   @Override
   public ORecordMetadata getRecordMetadata(final ORID rid) {
     return storage.getRecordMetadata(rid);
-  }
-
-  public void callOnOpenListeners() {
-    // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-      it.next().onOpen(getDatabaseOwner());
-
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : getListenersCopy())
-      try {
-        listener.onOpen(getDatabaseOwner());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error on invoking onOpen() against listener: %s", t, listener);
-      }
-  }
-
-  public void callOnCloseListeners() {
-    // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-      it.next().onClose(getDatabaseOwner());
-
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : getListenersCopy())
-      try {
-        listener.onClose(getDatabaseOwner());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error on invoking onClose() against listener: %s", t, listener);
-      }
   }
 
   public long getSize() {

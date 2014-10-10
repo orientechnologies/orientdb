@@ -42,7 +42,6 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
   private final static int THREADS            = 256;
   private final static int MAX_RETRIES        = 100;
   private final AtomicLong counter            = new AtomicLong();
-  private boolean          localCacheEnabled;
   private boolean          mvccEnabled;
   private long             startedOn;
   private AtomicLong       totalRetries       = new AtomicLong();
@@ -147,18 +146,14 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
   @BeforeClass
   public void init() {
-    localCacheEnabled = OGlobalConfiguration.CACHE_LOCAL_ENABLED.getValueAsBoolean();
     mvccEnabled = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
 
-    if (localCacheEnabled)
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
     if (!mvccEnabled)
       OGlobalConfiguration.DB_MVCC.setValue(true);
   }
 
   @AfterClass
   public void deinit() {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(localCacheEnabled);
     OGlobalConfiguration.DB_MVCC.setValue(mvccEnabled);
   }
 

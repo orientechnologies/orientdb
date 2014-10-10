@@ -24,8 +24,10 @@ import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.common.util.OArrays;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -58,6 +60,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -988,6 +991,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
 
       addClusterClassMap(cls);
+
+      // WAKE UP DB LIFECYCLE LISTENER
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+        it.next().onCreateClass(database, cls);
 
       return cls;
     } finally {

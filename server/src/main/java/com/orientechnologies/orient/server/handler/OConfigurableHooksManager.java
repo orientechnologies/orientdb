@@ -26,7 +26,8 @@ import com.orientechnologies.common.log.OLogManager;
  import com.orientechnologies.orient.core.db.ODatabaseInternal;
  import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
  import com.orientechnologies.orient.core.hook.ORecordHook;
- import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.server.config.OServerConfiguration;
  import com.orientechnologies.orient.server.config.OServerHookConfiguration;
  import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 
@@ -92,7 +93,15 @@ import com.orientechnologies.common.log.OLogManager;
    public void onClose(ODatabaseInternal iDatabase) {
    }
 
-   public String getName() {
+  @Override
+  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
+  }
+
+  @Override
+  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
+  }
+
+  public String getName() {
      return "HookRegisters";
    }
  }

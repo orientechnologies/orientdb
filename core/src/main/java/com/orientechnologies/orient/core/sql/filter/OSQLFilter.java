@@ -27,16 +27,16 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Parsed query. It's built once a query is parsed.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
   public OSQLFilter(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
     super();
 
-    if( iText == null )
+    if (iText == null) {
       throw new IllegalArgumentException("Filter expression is null");
+    }
 
     context = iContext;
     parserText = iText;
@@ -55,8 +55,10 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
 
     } catch (OQueryParsingException e) {
       if (e.getText() == null)
-        // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
+      // QUERY EXCEPTION BUT WITHOUT TEXT: NEST IT
+      {
         throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), e);
+      }
 
       throw e;
     } catch (Throwable t) {
@@ -65,8 +67,9 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
   }
 
   public Object evaluate(final ORecord iRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
-    if (rootCondition == null)
+    if (rootCondition == null) {
       return true;
+    }
 
     return rootCondition.evaluate(iRecord, iCurrentResult, iContext);
   }
@@ -77,8 +80,9 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
 
   @Override
   public String toString() {
-    if (rootCondition != null)
+    if (rootCondition != null) {
       return "Parsed: " + rootCondition.toString();
+    }
     return "Unparsed: " + parserText;
   }
 }

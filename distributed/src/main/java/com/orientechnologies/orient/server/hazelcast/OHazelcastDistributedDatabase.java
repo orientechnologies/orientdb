@@ -154,8 +154,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
 
-//    try {
-//      requestLock.lock();
+    try {
+      requestLock.lock();
       try {
         // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
         // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
@@ -174,9 +174,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
         }
 
-//      } finally {
-//        requestLock.unlock();
-//      }
+      } finally {
+        requestLock.unlock();
+      }
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sent request %s", iRequest);
