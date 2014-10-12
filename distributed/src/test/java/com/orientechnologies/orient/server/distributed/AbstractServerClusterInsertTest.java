@@ -37,6 +37,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -50,21 +51,25 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
   protected static final int delayReader = 1000;
   protected static final int writerCount = 5;
   protected int              count       = 100;
+  protected long             expected;
   protected long             beginInstances;
-  private OIndex<?>          idx;
+  protected OIndex<?>        idx;
+  protected CountDownLatch   runningWriters;
 
   class Writer implements Callable<Void> {
     private final String databaseUrl;
     private int          serverId;
+    private int          threadId;
 
-    public Writer(final int iServerId, final String db) {
+    public Writer(final int iServerId, final int iThreadId, final String db) {
       serverId = iServerId;
+      threadId = iThreadId;
       databaseUrl = db;
     }
 
     @Override
     public Void call() throws Exception {
-      String name = Integer.toString(serverId);
+      String name = Integer.toString(threadId);
       for (int i = 0; i < count; i++) {
         final ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(databaseUrl, "admin", "admin");
         try {
@@ -88,6 +93,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
           break;
         } finally {
           database.close();
+          runningWriters.countDown();
         }
       }
 
@@ -96,7 +102,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     }
 
     private ODocument createRecord(ODatabaseDocumentTx database, int i) {
-      final int uniqueId = count * serverId + i;
+      final int uniqueId = count * threadId + i;
 
       ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
           "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
@@ -128,7 +134,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     }
 
     private ODocument loadRecord(ODatabaseDocumentTx database, int i) {
-      final int uniqueId = count * serverId + i;
+      final int uniqueId = count * threadId + i;
 
       List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId
           + "'"));
@@ -142,8 +148,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
   }
 
   class Reader implements Callable<Void> {
-    private final String    databaseUrl;
-    public volatile boolean running = true;
+    private final String databaseUrl;
 
     public Reader(final String db) {
       databaseUrl = db;
@@ -152,13 +157,12 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     @Override
     public Void call() throws Exception {
       try {
-        while (running) {
+        while (runningWriters.getCount() > 0) {
           try {
             printStats(databaseUrl);
             Thread.sleep(delayReader);
 
           } catch (Exception e) {
-            running = false;
             break;
           }
         }
@@ -193,20 +197,24 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     final ExecutorService writerExecutors = Executors.newCachedThreadPool();
     final ExecutorService readerExecutors = Executors.newCachedThreadPool();
 
-    int i = 0;
+    runningWriters = new CountDownLatch(serverInstance.size() * writerCount);
+    expected = writerCount * count * serverInstance.size() + beginInstances;
+
+    int serverId = 0;
+    int threadId = 0;
     List<Callable<Void>> writerWorkers = new ArrayList<Callable<Void>>();
     for (ServerRun server : serverInstance) {
       for (int j = 0; j < writerCount; j++) {
-        Writer writer = new Writer(i++, getDatabaseURL(server));
+        Callable writer = createWriter(serverId, threadId++, getDatabaseURL(server));
         writerWorkers.add(writer);
       }
-
+      serverId++;
     }
     List<Future<Void>> futures = writerExecutors.invokeAll(writerWorkers);
 
-    List<Reader> readerWorkers = new ArrayList<Reader>();
+    List<Callable<Void>> readerWorkers = new ArrayList<Callable<Void>>();
     for (ServerRun server : serverInstance) {
-      Reader reader = new Reader(getDatabaseURL(server));
+      Callable<Void> reader = createReader(getDatabaseURL(server));
       readerWorkers.add(reader);
     }
 
@@ -223,15 +231,12 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
 
     System.out.println("All writer threads have finished, shutting down readers");
 
-    readerExecutors.shutdown();
-    for (Reader r : readerWorkers) {
-      r.running = false;
-    }
     for (Future<Void> future : rFutures) {
-      future.cancel(true);
+      future.get();
     }
 
-    Assert.assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
+    readerExecutors.shutdown();
+    Assert.assertTrue(readerExecutors.awaitTermination(1, TimeUnit.MINUTES));
 
     System.out.println("All threads have finished, shutting down server instances");
 
@@ -243,6 +248,10 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     checkIndexedEntries();
     dropIndexNode1();
     recreateIndexNode2();
+  }
+
+  protected Callable<Void> createReader(String databaseURL) {
+    return new Reader(databaseURL);
   }
 
   protected abstract String getDatabaseURL(ServerRun server);
@@ -275,7 +284,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     provider.createProperty("totalPurchased", OType.DECIMAL);
   }
 
-  private void dropIndexNode1() {
+  protected void dropIndexNode1() {
     ServerRun server = serverInstance.get(0);
     ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
     try {
@@ -297,14 +306,14 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     }
   }
 
-  private void recreateIndexNode2() {
+  protected void recreateIndexNode2() {
     // RE-CREATE INDEX ON NODE 1
     ServerRun server = serverInstance.get(1);
     ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
     try {
       Object result = database.command(new OCommandSQL("create index Person.name on Person (name) unique")).execute();
       System.out.println("recreateIndexNode2: Node2 created index: " + result);
-      Assert.assertEquals((long) (count * serverInstance.size()) + beginInstances, result);
+      Assert.assertEquals(expected, result);
     } finally {
       database.close();
     }
@@ -314,26 +323,35 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
     try {
       final long indexSize = database.getMetadata().getIndexManager().getIndex("Person.name").getSize();
-      Assert.assertEquals((long) (count * serverInstance.size()) + beginInstances, indexSize);
+      Assert.assertEquals(expected, indexSize);
       System.out.println("recreateIndexNode2: Node1 has the index too, ok");
     } finally {
       database.close();
     }
   }
 
-  private void checkIndexedEntries() {
+  protected void checkIndexedEntries() {
     ODatabaseDocumentTx database;
     for (ServerRun server : serverInstance) {
       database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
       try {
         final long indexSize = database.getMetadata().getIndexManager().getIndex("Person.name").getSize();
-        Assert.assertEquals((long) (count * serverInstance.size()) + beginInstances, indexSize);
+
+        if (indexSize != expected) {
+          // ERROR: DUMP ALL THE RECORDS
+          List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select from index:Person.name"));
+          int i = 0;
+          for (ODocument d : result) {
+            System.out.println((i++) + ": " + ((OIdentifiable) d.field("rid")).getRecord());
+          }
+        }
+
+        Assert.assertEquals(expected, indexSize);
 
         System.out.println("From metadata: indexes " + indexSize + " items");
 
         List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from index:Person.name"));
-        Assert.assertEquals((long) (count * serverInstance.size()) + beginInstances,
-            ((Long) result.get(0).field("count")).longValue());
+        Assert.assertEquals(expected, ((Long) result.get(0).field("count")).longValue());
 
         System.out.println("From sql: indexes " + indexSize + " items");
       } finally {
@@ -342,7 +360,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     }
   }
 
-  private void checkInsertedEntries() {
+  protected void checkInsertedEntries() {
     ODatabaseDocumentTx database;
     int i;
     for (ServerRun server : serverInstance) {
@@ -351,7 +369,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
         List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
         final long total = result.get(0).field("count");
 
-        if (total != (long) (count * serverInstance.size()) + beginInstances) {
+        if (total != expected) {
           // ERROR: DUMP ALL THE RECORDS
           result = database.query(new OSQLSynchQuery<OIdentifiable>("select from Person"));
           i = 0;
@@ -360,11 +378,15 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
           }
         }
 
-        Assert.assertEquals((long) (count * serverInstance.size()) + beginInstances, total);
+        Assert.assertEquals(expected, total);
       } finally {
         database.close();
       }
     }
+  }
+
+  protected Callable<Void> createWriter(final int serverId, final int threadId, String databaseURL) {
+    return new Writer(serverId, threadId, databaseURL);
   }
 
   private void printStats(final String databaseUrl) {

@@ -117,6 +117,8 @@ public abstract class AbstractServerClusterTest {
     try {
       executeTest();
     } finally {
+      onAfterExecution();
+
       System.out.println("\n******************************************************************************************");
       System.out.println("Shutting down nodes...");
       System.out.println("******************************************************************************************\n");
@@ -129,6 +131,10 @@ public abstract class AbstractServerClusterTest {
       deleteServers();
     }
   }
+
+  protected void onAfterExecution() {
+  }
+
 
   protected abstract String getDatabaseName();
 

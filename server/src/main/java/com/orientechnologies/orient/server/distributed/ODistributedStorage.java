@@ -764,14 +764,21 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       return;
     }
 
-    final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-    if (!dbCfg.isReplicationActive(null, dManager.getLocalNodeName())) {
-      // DON'T REPLICATE
-      wrapped.commit(iTx, callback);
-      return;
-    }
-
     try {
+      final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
+      if (!dbCfg.isReplicationActive(null, dManager.getLocalNodeName())) {
+        // DON'T REPLICATE
+        ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+          @Override
+          public Object call() throws Exception {
+            wrapped.commit(iTx, callback);
+            return null;
+          }
+        });
+
+        return;
+      }
+
       final OTxTask txTask = new OTxTask();
       final Set<String> involvedClusters = new HashSet<String>();
 
@@ -818,7 +825,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       if (executionModeSynch == null)
         executionModeSynch = Boolean.TRUE;
 
-      if (executionModeSynch && !iTx.hasRecordCreation()) {
+      //if (executionModeSynch && !iTx.hasRecordCreation()) {
+      if (executionModeSynch) {
         // SYNCHRONOUS CALL: REPLICATE IT
         final Object result = dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE);
         if (result instanceof List<?>) {
@@ -864,7 +872,13 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return;
       }
 
-      wrapped.commit(iTx, callback);
+      ODistributedAbstractPlugin.runInDistributedMode(new Callable() {
+        @Override
+        public Object call() throws Exception {
+          wrapped.commit(iTx, callback);
+          return null;
+        }
+      });
 
       nodes.remove(dManager.getLocalNodeName());
       if (!nodes.isEmpty()) {
