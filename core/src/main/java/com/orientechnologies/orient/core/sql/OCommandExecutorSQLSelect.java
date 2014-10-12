@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -452,7 +453,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
       } else {
-        record = getDatabase().load(id.getIdentity(), null, false, false, localLockingStrategy);
+        boolean noCache = false;
+        if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
+            || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK)
+          noCache = true;
+        record = getDatabase().load(id.getIdentity(), null, noCache, false, localLockingStrategy);
         if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
           Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
           for (String key : ridContext.keySet()) {
