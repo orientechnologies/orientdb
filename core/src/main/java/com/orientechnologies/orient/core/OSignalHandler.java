@@ -64,6 +64,10 @@ public class OSignalHandler implements SignalHandler {
     listenTo("INT", iListener);
     // listenTo("KILL",iListener);
     listenTo("TERM", iListener);
-    listenTo("TRAP", iListener);
+    try {
+      listenTo("TRAP", iListener);
+    } catch (IllegalArgumentException e) {
+      // NOT AVAILABLE
+    }
   }
 }
