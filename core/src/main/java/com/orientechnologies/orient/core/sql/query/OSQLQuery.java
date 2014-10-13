@@ -153,11 +153,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
           newMap.put(mapEntry.getKey(), mapEntry.getValue().getIdentity());
         }
         newParams.put(entry.getKey(), newMap);
-      } else if (entry.getValue() instanceof OIdentifiable) {
-        if (!((OIdentifiable) entry.getValue()).getIdentity().isPersistent()
-            && ((OIdentifiable) entry.getValue()).getIdentity().isValid()) {
-          throw new ODatabaseException("Impossible use as query parameter a not persistent record");
-        }
+      } else if (entry.getValue() instanceof ORecord) {
         newParams.put(entry.getKey(), ((OIdentifiable) entry.getValue()).getIdentity());
       } else
         newParams.put(entry.getKey(), entry.getValue());
