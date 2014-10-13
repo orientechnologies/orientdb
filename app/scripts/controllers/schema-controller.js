@@ -287,15 +287,27 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
     }
     $scope.saveProperty = function (properties) {
 
+
         for (result in properties) {
 
             var keyName = properties[result]['name'];
             var arrayToUpdate = $scope.modificati[keyName];
 
-            if (!$scope.recursiveSaveProperty(arrayToUpdate, clazz, properties, result, keyName)) {
-
-                return;
+            if (arrayToUpdate) {
+                arrayToUpdate.forEach(function (v) {
+                    var val = properties[result][v];
+                    PropertyAlterApi.changeProperty($routeParams.database, { clazz: $scope.class2show, property: keyName, name: v, value: val}).then(function (data) {
+                        var noti = S("The {{prop}} value of the property {{name}} has been modified to {{newVal}}").template({ name: keyName, prop: v, newVal: val}).s;
+                        Notification.push({content: noti});
+                    })
+                });
             }
+
+//
+//            if (!$scope.recursiveSaveProperty(arrayToUpdate, clazz, properties, result, keyName)) {
+//
+//                return;
+//            }
         }
         $scope.modificati = new Array;
         $scope.database.refreshMetadata($routeParams.database);
@@ -600,6 +612,11 @@ schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$locat
     $scope.property = {"name": "", "alias": null, "superclass": null, "abstract": false}
     $scope.database = Database;
     $scope.listClasses = $scope.database.listNameOfClasses();
+//    if ($scope.database.hasClass("V") && $scope.database.hasClass("E")) {
+//        $scope.listClasses.splice($scope.listClasses.indexOf("V"), 1)
+//        $scope.listClasses.splice($scope.listClasses.indexOf("E"), 1)
+//        $scope.isGraph = true;
+//    }
 
     $scope.saveNewClass = function () {
         var sql = 'CREATE CLASS ' + $scope.property['name'];

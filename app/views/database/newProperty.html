@@ -58,9 +58,9 @@
                                 <label class="control-label col-md-2">Min</label>
 
                                 <div class="col-md-10">
-                                    <input type="text" class="form-control"
+                                    <input type="text" class="form-control" ng-model="property['min']"
                                            ng-show="property['type'] != 'DATE' && property['type'] != 'DATETIME'">
-                                    <input type="text" bs-datepicker class="form-control" ng-model="result['max']"
+                                    <input type="text" bs-datepicker class="form-control" ng-model="property['min']"
                                            ng-show="property['type'] == 'DATE' || property['type'] == 'DATETIME'">
                                 </div>
                             </div>
@@ -68,9 +68,9 @@
                                 <label class="control-label col-md-2">Max</label>
 
                                 <div class="col-md-10">
-                                    <input type="text" class="form-control"
+                                    <input type="text" class="form-control" ng-model="property['max']"
                                            ng-show="property['type'] != 'DATE' && property['type'] != 'DATETIME'">
-                                    <input type="text" bs-datepicker class="form-control" ng-model="result['min']"
+                                    <input type="text" bs-datepicker class="form-control" ng-model="property['max']"
                                            ng-show="property['type'] == 'DATE' || property['type'] == 'DATETIME'">
                                 </div>
                             </div>
