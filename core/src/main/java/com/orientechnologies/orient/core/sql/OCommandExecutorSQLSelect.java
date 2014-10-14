@@ -968,7 +968,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             final OUser user = getDatabase().getUser();
 
             if (parsedTarget.getTargetClasses() != null
-                && user.checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) == null) {
+                && user != null && user.checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) == null) {
               for (OClass cls : parsedTarget.getTargetClasses().keySet()) {
                 if (cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
                   restrictedClasses = true;
