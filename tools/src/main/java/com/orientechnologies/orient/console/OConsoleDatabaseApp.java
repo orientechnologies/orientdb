@@ -92,8 +92,8 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-  protected static final int          DEFAULT_WIDTH = 150;
-  private int                         windowSize    = DEFAULT_WIDTH;
+  protected static final int          DEFAULT_WIDTH      = 150;
+  private int                         windowSize         = DEFAULT_WIDTH;
   protected ODatabaseDocumentInternal currentDatabase;
   protected String                    currentDatabaseName;
   protected ORecord                   currentRecord;
@@ -103,6 +103,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   private int                         lastPercentStep;
   private String                      currentDatabaseUserName;
   private String                      currentDatabaseUserPassword;
+  private int                         collectionMaxItems = 10;
 
   public OConsoleDatabaseApp(final String[] args) {
     super(args);
@@ -1684,7 +1685,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     if (iOptions == null || iOptions.length() <= 0) {
-      iOptions = "rid,version,class,type,attribSameRow,keepTypes,alwaysFetchEmbedded,fetchPlan:*:0";
+      iOptions = "rid,version,class,type,keepTypes,alwaysFetchEmbedded,fetchPlan:*:0,prettyPrint";
     }
 
     try {
@@ -2028,6 +2029,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     properties.put("limit", "20");
     properties.put("width", "150");
     properties.put("debug", "false");
+    properties.put("collectionMaxItems", "10");
     properties.put("maxBinaryDisplay", "150");
     properties.put("verbose", "2");
     properties.put("ignoreErrors", "false");
@@ -2173,15 +2175,23 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     return windowSize;
   }
 
+  protected int getCollectionMaxItems() {
+    if (properties.containsKey("collectionMaxItems"))
+      return Integer.parseInt(properties.get("collectionMaxItems"));
+    return collectionMaxItems;
+  }
+
   private void dumpRecordDetails() {
     if (currentRecord == null)
       return;
     else if (currentRecord instanceof ODocument) {
       ODocument rec = (ODocument) currentRecord;
-      message("\n--------------------------------------------------");
-      message("\nODocument - Class: %s   id: %s   v.%s", rec.getClassName(), rec.getIdentity().toString(), rec.getRecordVersion()
-          .toString());
-      message("\n--------------------------------------------------");
+      message("\n+-------------------------------------------------------------------------------------------------+");
+      message("\n| Document - @class: %-37s @rid: %-15s @version: %-6s |", rec.getClassName(), rec.getIdentity().toString(), rec
+          .getRecordVersion().toString());
+      message("\n+-------------------------------------------------------------------------------------------------+");
+      message("\n| %24s | %-68s |", "Name", "Value");
+      message("\n+-------------------------------------------------------------------------------------------------+");
       Object value;
       for (String fieldName : rec.fieldNames()) {
         value = rec.field(fieldName);
@@ -2192,23 +2202,34 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
           while (((Iterator<?>) value).hasNext())
             coll.add(((Iterator<?>) value).next());
           value = coll;
+        } else if (OMultiValue.isMultiValue(value)) {
+          final int size = OMultiValue.getSize(value);
+          if (size < getCollectionMaxItems()) {
+            final StringBuilder buffer = new StringBuilder(50);
+            for (Object o : OMultiValue.getMultiValueIterable(value)) {
+              if (buffer.length() > 0)
+                buffer.append(',');
+              buffer.append(o);
+            }
+            value = "[" + buffer.toString() + "]";
+          }
         }
 
-        message("\n%20s : %-20s", fieldName, value);
+        message("\n| %24s | %-68s |", fieldName, value);
       }
 
     } else if (currentRecord instanceof ORecordFlat) {
       ORecordFlat rec = (ORecordFlat) currentRecord;
-      message("\n--------------------------------------------------");
-      message("\nFlat - record id: %s   v.%s", rec.getIdentity().toString(), rec.getRecordVersion().toString());
-      message("\n--------------------------------------------------");
+      message("\n+-------------------------------------------------------------------------------------------------+");
+      message("\n| Flat     - @rid: %s @version: %s", rec.getIdentity().toString(), rec.getRecordVersion().toString());
+      message("\n+-------------------------------------------------------------------------------------------------+");
       message(rec.value());
 
     } else if (currentRecord instanceof ORecordBytes) {
       ORecordBytes rec = (ORecordBytes) currentRecord;
-      message("\n--------------------------------------------------");
-      message("\nBytes - record id: %s   v.%s", rec.getIdentity().toString(), rec.getRecordVersion().toString());
-      message("\n--------------------------------------------------");
+      message("\n+-------------------------------------------------------------------------------------------------+");
+      message("\n| Bytes    - @rid: %s @version: %s", rec.getIdentity().toString(), rec.getRecordVersion().toString());
+      message("\n+-------------------------------------------------------------------------------------------------+");
 
       final byte[] value = rec.toStream();
       final int max = Math.min(Integer.parseInt(properties.get("maxBinaryDisplay")), Array.getLength(value));
@@ -2217,10 +2238,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       }
 
     } else {
-      message("\n--------------------------------------------------");
-      message("\n%s - record id: %s   v.%s", currentRecord.getClass().getSimpleName(), currentRecord.getIdentity().toString(),
+      message("\n+-------------------------------------------------------------------------------------------------+");
+      message("\n| %s - record id: %s   v.%s", currentRecord.getClass().getSimpleName(), currentRecord.getIdentity().toString(),
           currentRecord.getRecordVersion().toString());
     }
+    message("\n+-------------------------------------------------------------------------------------------------+");
     out.println();
   }
 
