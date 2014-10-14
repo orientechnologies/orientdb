@@ -2474,7 +2474,7 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
 
     final List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>(
-            "select * from sqlSelectHashIndexReuseTestClass where (prop1 = 1 and prop2  = 2) and ( prop4 = 3 or prop4 = 1 )"))
+            "select * from sqlSelectHashIndexReuseTestClass where (prop1 = 1 and prop2  = 2) and (prop4 = 3 or prop4 = 1)"))
         .execute();
 
     Assert.assertEquals(result.size(), 1);

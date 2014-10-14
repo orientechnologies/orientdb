@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.filter;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -64,6 +64,32 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     } catch (Throwable t) {
       throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
     }
+
+    this.rootCondition = resetOperatorPrecedence(rootCondition);
+  }
+
+  private OSQLFilterCondition resetOperatorPrecedence(OSQLFilterCondition iCondition) {
+    if (iCondition == null) {
+      return iCondition;
+    }
+    if (iCondition.left != null && iCondition.left instanceof OSQLFilterCondition) {
+      iCondition.left = resetOperatorPrecedence((OSQLFilterCondition) iCondition.left);
+    }
+
+    if (iCondition.right != null && iCondition.right instanceof OSQLFilterCondition) {
+      OSQLFilterCondition right = (OSQLFilterCondition) iCondition.right;
+      iCondition.right = resetOperatorPrecedence(right);
+      if (iCondition.operator != null) {
+        if (!right.inBraces && right.operator != null && right.operator.precedence < iCondition.operator.precedence) {
+          OSQLFilterCondition newLeft = new OSQLFilterCondition(iCondition.left, iCondition.operator, right.left);
+          right.setLeft(newLeft);
+          resetOperatorPrecedence(right);
+          return right;
+        }
+      }
+    }
+
+    return iCondition;
   }
 
   public Object evaluate(final ORecord iRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
