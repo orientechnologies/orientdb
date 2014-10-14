@@ -1,0 +1,229 @@
+
+path.edge {
+    cursor: default;
+    stroke: #D4D6D7;
+    stroke-width: 3px;
+    fill : none;
+}
+
+path.lightweight {
+    stroke-dasharray: 10, 2;
+}
+
+path.end-arrow {
+    fill: #D4D6D7;
+}
+
+path.start-arrow {
+    fill: #D4D6D7;
+}
+
+path.end-arrow-hover {
+    fill: red;
+}
+
+path.start-arrow-hover {
+    fill: red;
+}
+
+svg:not(.active):not(.ctrl) path.edge {
+    cursor: pointer;
+}
+
+.vertex {
+    cursor: pointer;
+}
+
+.vertex circle {
+    fill: #F25A29;
+    stroke: #DC4717;
+}
+
+.vertex text {
+    fill: white;
+
+}
+
+text.vlabel {
+    text-anchor: middle;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+path.edge-hover {
+    stroke: red;
+}
+
+text.elabel:hover {
+    fill: red;
+}
+
+text.elabel {
+    text-anchor: middle;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+.selected-vertex {
+    fill: #f5F6F6;
+    stroke: rgba(151, 151, 151, 0.2);
+    stroke-width: 3px;
+}
+
+.selected-vertex-none {
+    display: none;
+}
+
+.menu-hide {
+    display: none;
+}
+
+path.menu-path {
+    cursor: pointer;
+    fill: rgba(0, 0, 0, 0.80);
+    stroke: rgba(0, 0, 0, 0.80);
+}
+
+circle.selected-edge {
+    fill: rgba(0, 0, 0, 0.80);
+    stroke: rgba(0, 0, 0, 0.80);
+}
+
+rect.selected-edge {
+    fill: rgba(0, 0, 0, 0.80);
+    stroke: rgba(0, 0, 0, 0.80);
+}
+
+path.menu-path:hover {
+    fill: rgba(0, 0, 0);
+}
+
+text.menu-text {
+    text-anchor: middle;
+    fill: white;
+    cursor: pointer;
+
+}
+
+text.submenu-text {
+    text-anchor: middle;
+    fill: white;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+textPath.submenu-text {
+    text-anchor: middle;
+    fill: white;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+.treenode {
+    cursor: pointer;
+}
+
+.treenode circle {
+    fill: #fff;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+}
+
+.treenode text {
+    font: 10px sans-serif;
+}
+
+.treelink {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 1.5px;
+}
+
+.tree-text-container {
+    fill: rgba(0, 0, 0, 0.80);
+    stroke: rgba(0, 0, 0, 0.80);
+}
+
+.treenode-root {
+    display: none;
+}
+
+path.enode-link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 1.5px;
+}
+
+text.tree-text-menu {
+    fill: white;
+}
+
+text.tree-text-menu:hover {
+    fill: #008CBA;
+}
+
+path.dragline {
+    fill: none;
+    stroke: #000;
+    stroke-width: 4px;
+    cursor: default;
+}
+
+text.more-text:hover {
+    fill: #008CBA;
+}
+
+text.more-text {
+    fill: white;
+}
+
+rect.more-text-container {
+    fill: rgba(0, 0, 0, 0.80);
+    stroke: rgba(0, 0, 0, 0.80);
+}
+
+path.emore-link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 1.5px;
+}
+
+.enode-root {
+    display: none;
+}
+
+.emore-root {
+    display: none;
+}
+
+.edgeMore .root rect {
+    fill: transparent;
+    stroke: transparent;
+}
+
+.enode circle {
+    fill: rgba(0, 0, 0, 0.80);
+    stroke: rgba(0, 0, 0, 0.80);
+}
+
+.emore text {
+    text-anchor: middle;
+    cursor: pointer;
+    font-size: 10px;
+}
+
+.enode text {
+    text-anchor: middle;
+    fill: white;
+    cursor: pointer;
+}
+
+.edgeMenu {
+
+}
+
+.legend circle {
+    fill: #F25A29;
+    stroke: #DC4717;
+}
+
