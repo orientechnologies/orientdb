@@ -54,6 +54,31 @@ public class OSQLFilter extends OSQLPredicate implements OCommandPredicate {
     } catch (Throwable t) {
       throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
     }
+    this.rootCondition = resetOperatorPrecedence(rootCondition);
+  }
+
+  private OSQLFilterCondition resetOperatorPrecedence(OSQLFilterCondition iCondition) {
+    if (iCondition == null) {
+      return iCondition;
+    }
+    if (iCondition.left != null && iCondition.left instanceof OSQLFilterCondition) {
+      iCondition.left = resetOperatorPrecedence((OSQLFilterCondition) iCondition.left);
+    }
+
+    if (iCondition.right != null && iCondition.right instanceof OSQLFilterCondition) {
+      OSQLFilterCondition right = (OSQLFilterCondition) iCondition.right;
+      iCondition.right = resetOperatorPrecedence(right);
+      if (iCondition.operator != null) {
+        if (!right.inBraces && right.operator != null && right.operator.precedence < iCondition.operator.precedence) {
+          OSQLFilterCondition newLeft = new OSQLFilterCondition(iCondition.left, iCondition.operator, right.left);
+          right.setLeft(newLeft);
+          resetOperatorPrecedence(right);
+          return right;
+        }
+      }
+    }
+
+    return iCondition;
   }
 
   public Object evaluate(final ORecord<?> iRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
