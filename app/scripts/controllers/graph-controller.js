@@ -743,6 +743,9 @@ GrapgController.controller("GraphController", ['$scope', '$routeParams', '$locat
                 v.edge = doc;
             } else if (v.source) {
                 v.source = doc;
+                $scope.doc = v.source;
+                var title = $scope.doc['@class'] + "-" + $scope.doc['@rid'] + "- Version " + $scope.doc['@version'];
+                Aside.show({scope: $scope, title: title, template: 'views/database/graph/asideVertex.html', show: true, fullscreen: $scope.fullscreen});
             }
         }
         $modal({template: 'views/database/modalEdit.html', persist: false, show: true, scope: modalScope, modalClass: 'editEdge'});
