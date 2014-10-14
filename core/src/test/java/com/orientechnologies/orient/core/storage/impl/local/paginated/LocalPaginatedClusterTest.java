@@ -57,9 +57,9 @@ public class LocalPaginatedClusterTest {
                                                                    + OLongSerializer.LONG_SIZE;
   public OPaginatedCluster           paginatedCluster;
   protected String                   buildDirectory;
-  protected OReadWriteDiskCache               diskCache;
+  protected OReadWriteDiskCache      diskCache;
   protected OAtomicOperationsManager atomicOperationsManager;
-	private OContextConfiguration contextConfiguration = new OContextConfiguration();
+  private OContextConfiguration      contextConfiguration      = new OContextConfiguration();
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -80,24 +80,26 @@ public class LocalPaginatedClusterTest {
     storageConfiguration.binaryFormatVersion = Integer.MAX_VALUE;
     when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
-		when(storageConfiguration.getContextConfiguration()).thenReturn(contextConfiguration);
+    when(storageConfiguration.getContextConfiguration()).thenReturn(contextConfiguration);
+		when(storage.getStoragePath()).thenReturn(buildDirectory);
+
+    OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
+    when(storage.getVariableParser()).thenReturn(variableParser);
 
     diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 2648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
     atomicOperationsManager = new OAtomicOperationsManager(null);
 
-    OStorageVariableParser variableParser = new OStorageVariableParser(buildDirectory);
-
     when(storage.getDiskCache()).thenReturn(diskCache);
     when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);
-    when(storage.getVariableParser()).thenReturn(variableParser);
+
     when(storage.getConfiguration()).thenReturn(storageConfiguration);
     when(storage.getMode()).thenReturn("rw");
-    when(storage.getStoragePath()).thenReturn(buildDirectory);
+
 
     when(storageConfiguration.getDirectory()).thenReturn(buildDirectory);
 
-		paginatedCluster.configure(storage, 5, "paginatedClusterTest", buildDirectory, -1);
+    paginatedCluster.configure(storage, 5, "paginatedClusterTest", buildDirectory, -1);
     paginatedCluster.create(-1);
   }
 

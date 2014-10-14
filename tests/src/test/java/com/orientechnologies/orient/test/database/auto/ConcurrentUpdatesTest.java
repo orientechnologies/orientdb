@@ -167,11 +167,8 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
   @BeforeClass
   public void init() {
-    level1CacheEnabled = OGlobalConfiguration.CACHE_LOCAL_ENABLED.getValueAsBoolean();
     mvccEnabled = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
 
-    if (level1CacheEnabled)
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
 
     if (!mvccEnabled)
       OGlobalConfiguration.DB_MVCC.setValue(true);
@@ -179,7 +176,6 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void deinit() {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(level1CacheEnabled);
     OGlobalConfiguration.DB_MVCC.setValue(mvccEnabled);
   }
 

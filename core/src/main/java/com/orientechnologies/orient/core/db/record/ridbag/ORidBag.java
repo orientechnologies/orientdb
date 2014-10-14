@@ -190,8 +190,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     final ORecordSerializationContext context = ORecordSerializationContext.getContext();
     if (context != null) {
-      if (delegate.size() >= topThreshold && isEmbedded()
-          && ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager() != null) {
+      if (isEmbedded() && ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager() != null
+          && delegate.size() >= topThreshold) {
         ORidBagDelegate oldDelegate = delegate;
         delegate = new OSBTreeRidBag();
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
@@ -210,7 +210,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
         oldDelegate.setAutoConvertToRecord(oldAutoConvert);
         oldDelegate.requestDelete();
-      } else if (delegate.size() <= bottomThreshold && !isEmbedded()) {
+      } else if (bottomThreshold >= 0 && !isEmbedded() && delegate.size() <= bottomThreshold) {
         ORidBagDelegate oldDelegate = delegate;
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
         oldDelegate.setAutoConvertToRecord(false);

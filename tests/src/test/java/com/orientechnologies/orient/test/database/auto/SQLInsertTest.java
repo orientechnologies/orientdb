@@ -239,13 +239,16 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     if (schema.getClass("test") == null)
       schema.createClass("test");
 
+    final List<ODocument> usersCount = database.query(new OSQLSynchQuery<ODocument>("select count(*) from OUser"));
+    final long uCount = usersCount.get(0).field("count");
+
     ODocument doc = (ODocument) database.command(new OCommandSQL("INSERT INTO test SET names = (select name from OUser)"))
         .execute();
 
     Assert.assertTrue(doc != null);
     Assert.assertNotNull(doc.field("names"));
     Assert.assertTrue(doc.field("names") instanceof Collection);
-    Assert.assertEquals(((Collection<?>) doc.field("names")).size(), 3);
+    Assert.assertEquals(((Collection<?>) doc.field("names")).size(), uCount);
   }
 
   @Test

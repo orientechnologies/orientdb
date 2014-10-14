@@ -15,6 +15,23 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -35,14 +52,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -121,6 +130,13 @@ public class SQLSelectTest extends AbstractSelectTest {
     for (ODocument d : result) {
       Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
+  }
+
+  @Test
+  public void testQueryCount() {
+    final long vertexesCount = database.countClass("V");
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
+    Assert.assertEquals(result.get(0).field("count"), vertexesCount);
   }
 
   @Test
@@ -1688,5 +1704,13 @@ public class SQLSelectTest extends AbstractSelectTest {
     }
 
     Assert.assertTrue(classResult.isEmpty());
+  }
+
+  public void testQueryPerameterNotPersistent() {
+    ODocument doc = new ODocument();
+    doc.field("test", "test");
+    database.query(new OSQLSynchQuery<Object>("select from OUser where @rid = ?"), doc);
+    Assert.assertTrue(doc.isDirty());
+
   }
 }

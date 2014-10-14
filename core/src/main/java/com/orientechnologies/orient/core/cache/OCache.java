@@ -56,28 +56,6 @@ public interface OCache {
   void shutdown();
 
   /**
-   * Tell whether cache is enabled
-   * 
-   * @return {@code true} if cache enabled at call time, otherwise - {@code false}
-   */
-  boolean isEnabled();
-
-  /**
-   * Enable cache
-   * 
-   * @return {@code true} - if enabled, {@code false} - otherwise (already enabled)
-   */
-  boolean enable();
-
-  /**
-   * Disable cache. None of record management methods will cause effect on cache in disabled state. Only cache info methods
-   * available at that state.
-   * 
-   * @return {@code true} - if disabled, {@code false} - otherwise (already disabled)
-   */
-  boolean disable();
-
-  /**
    * Look up for record in cache by it's identifier
    * 
    * @param id
@@ -116,12 +94,6 @@ public interface OCache {
    */
   int size();
 
-  /**
-   * Maximum number of items cache should keep
-   * 
-   * @return non-negative number
-   */
-  int limit();
 
   /**
    * Keys of all stored in cache records

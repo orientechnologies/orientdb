@@ -15,49 +15,29 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://www.orientechnologies.com
- *
+ *  
  */
+package com.orientechnologies.orient.server.distributed;
 
-package com.orientechnologies.orient.core.cache;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.orientechnologies.orient.core.id.ORID;
+import org.junit.Test;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * Distributed TX test against "plocal" protocol.
  */
-public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements OCache {
-  protected final T cache;
+public class ServerClusterLocalGraphTest extends AbstractServerClusterGraphTest {
+  @Test
+  public void test() throws Exception {
+    init(3);
+    prepare(false);
+    execute();
+  }
 
-  public OAbstractMapCache(T cache) {
-    this.cache = cache;
+  protected String getDatabaseURL(final ServerRun server) {
+    return "plocal:" + server.getDatabasePath(getDatabaseName());
   }
 
   @Override
-  public void startup() {
-  }
-
-  @Override
-  public void shutdown() {
-    cache.clear();
-  }
-
-  @Override
-  public void clear() {
-    cache.clear();
-  }
-
-  @Override
-  public int size() {
-    return cache.size();
-  }
-
-  @Override
-  public Collection<ORID> keys() {
-    return new ArrayList<ORID>(cache.keySet());
+  public String getDatabaseName() {
+    return "distributed-graph";
   }
 }

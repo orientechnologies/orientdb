@@ -25,14 +25,6 @@ public class TestOrientBulkInsert {
   }
 
   public TestOrientBulkInsert() throws InterruptedException {
-    // FIXME Eric_08.05.2013
-    // Mit der 1.3 von Orientdb gab es Memory Leak probleme beim inserten der Photos
-    // Mit den folgenden Parametern und dem Aufruf von
-    // this.dbWrapper.setMassiveInserts();
-    // wurde es besser aber immer noch nicht 100%
-    //
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false); // Turn off cache
-
     OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.setValue(0); // Turn off cache
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(0);
 

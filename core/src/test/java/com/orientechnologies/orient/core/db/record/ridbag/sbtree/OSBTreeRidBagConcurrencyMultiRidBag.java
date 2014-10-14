@@ -37,7 +37,6 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
 
   private volatile boolean                                           cont                = true;
 
-  private boolean                                                    firstLevelCache;
   private int                                                        linkbagCacheSize;
   private int                                                        evictionSize;
 
@@ -46,7 +45,6 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
 
   @BeforeMethod
   public void beforeMethod() {
-    firstLevelCache = OGlobalConfiguration.CACHE_LOCAL_ENABLED.getValueAsBoolean();
     linkbagCacheSize = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.getValueAsInteger();
     evictionSize = OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.getValueAsInteger();
     topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
@@ -55,14 +53,12 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
 
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
     OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.setValue(1000);
     OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.setValue(100);
   }
 
   @AfterMethod
   public void afterMethod() {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(firstLevelCache);
     OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_SIZE.setValue(linkbagCacheSize);
     OGlobalConfiguration.SBTREEBONSAI_LINKBAG_CACHE_EVICTION_SIZE.setValue(evictionSize);
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);

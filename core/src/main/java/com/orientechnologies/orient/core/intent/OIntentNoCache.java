@@ -35,9 +35,6 @@ public class OIntentNoCache implements OIntent {
   private boolean previousRetainObjects;
 
   public void begin(final ODatabaseRaw iDatabase) {
-    previousLocalCacheEnabled = iDatabase.getDatabaseOwner().getLocalCache().isEnabled();
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(false);
-
     ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseRecord) {
@@ -55,7 +52,6 @@ public class OIntentNoCache implements OIntent {
   }
 
   public void end(final ODatabaseRaw iDatabase) {
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(previousLocalCacheEnabled);
     ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseRecord) {

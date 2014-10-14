@@ -61,8 +61,6 @@ public class LocalPaginatedStorageMixCrashRestore {
 
   @BeforeClass
   public void beforeClass() throws Exception {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageMixCrashRestore";
 
@@ -86,8 +84,6 @@ public class LocalPaginatedStorageMixCrashRestore {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class
           .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-mix-config.xml"));
