@@ -133,6 +133,13 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   @Test
+  public void testQueryCount() {
+    final long vertexesCount = database.countClass("V");
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
+    Assert.assertEquals(result.get(0).field("count"), vertexesCount);
+  }
+
+  @Test
   public void querySchemaAndLike() {
     List<ODocument> result1 = executeQuery("select * from cluster:profile where name like 'Gi%'", database);
 
