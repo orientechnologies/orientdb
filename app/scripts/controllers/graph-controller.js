@@ -821,6 +821,18 @@ GrapgController.controller("VertexAsideController", ['$scope', '$routeParams', '
                 })
                 $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', eval('\'\\u' + mapped.toString(16) + '\''));
             }
+        } else {
+            $scope.graph.changeClazzConfig($scope.doc['@class'], 'icon', null);
+            var val = null;
+            if ($scope.graph.getClazzConfig($scope.doc['@class'])) {
+                if ($scope.graph.getClazzConfig($scope.doc['@class'])['display']) {
+                    val = $scope.graph.getClazzConfig($scope.doc['@class'])['display'];
+                }
+            }
+            if (!val) {
+                val = "@rid";
+            }
+            $scope.graph.changeClazzConfig($scope.doc['@class'], 'display', val);
         }
     })
     $scope.$watch('config.fill', function (val) {
