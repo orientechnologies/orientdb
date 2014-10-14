@@ -180,32 +180,76 @@ public class OCommandExecutorSQLSelectTest {
     List<ODocument> qResult = db
         .command(
             new OCommandSQL(
-                "select * from bar where name ='a' and foo = 1 or name='b' or name=c and foo = 3 and other = 4 or name = e and foo = 5 or name = m and foo > 2 "))
+                "select * from bar where name ='a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
         .execute();
 
 
     List<ODocument> qResult2 = db
         .command(
             new OCommandSQL(
-                "select * from bar where (name ='a' and foo = 1) or name='b' or (name=c and foo = 3 and other = 4) or (name = e and foo = 5) or (name = m and foo > 2)"))
+                "select * from bar where (name ='a' and foo = 1) or name='b' or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
     List<ODocument> qResult3 = db
         .command(
             new OCommandSQL(
-                "select * from bar where (name ='a' and foo = 1) or (name='b') or (name=c and foo = 3 and other = 4) or (name = e and foo = 5) or (name = m and foo > 2)"))
+                "select * from bar where (name ='a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other = 4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
     List<ODocument> qResult4 = db
         .command(
             new OCommandSQL(
-                "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name=c and foo = 3 and other = 4)) or (name = e and foo = 5) or (name = m and foo > 2)"))
+                "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4)) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
         .execute();
 
     List<ODocument> qResult5 = db
         .command(
             new OCommandSQL(
-                "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name=c and foo = 3 and other = 4) or (name = e and foo = 5)) or (name = m and foo > 2)"))
+                "select * from bar where (name ='a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other = 4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)"))
+        .execute();
+
+
+    assertEquals(qResult.size(), qResult2.size());
+    assertEquals(qResult.size(), qResult3.size());
+    assertEquals(qResult.size(), qResult4.size());
+    assertEquals(qResult.size(), qResult5.size());
+
+
+
+  }
+
+
+  @Test
+  public void testOperatorPriority3() {
+    List<ODocument> qResult = db
+        .command(
+            new OCommandSQL(
+                "select * from bar where name <> 'a' and foo = 1 or name='b' or name='c' and foo = 3 and other = 4 or name = 'e' and foo = 5 or name = 'm' and foo > 2 "))
+        .execute();
+
+
+    List<ODocument> qResult2 = db
+        .command(
+            new OCommandSQL(
+                "select * from bar where (name <> 'a' and foo = 1) or name='b' or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
+        .execute();
+
+    List<ODocument> qResult3 = db
+        .command(
+            new OCommandSQL(
+                "select * from bar where ( name <> 'a' and foo = 1) or (name='b') or (name='c' and foo = 3 and other <>  4) or (name ='e' and foo = 5) or (name = 'm' and foo > 2)"))
+        .execute();
+
+    List<ODocument> qResult4 = db
+        .command(
+            new OCommandSQL(
+                "select * from bar where (name <> 'a' and foo = 1) or ( (name='b') or (name='c' and foo = 3 and other <>  4)) or  (name = 'e' and foo = 5) or (name = 'm' and foo > 2)"))
+        .execute();
+
+    List<ODocument> qResult5 = db
+        .command(
+            new OCommandSQL(
+                "select * from bar where (name <> 'a' and foo = 1) or ((name='b') or (name='c' and foo = 3 and other <>  4) or (name = 'e' and foo = 5)) or (name = 'm' and foo > 2)"))
         .execute();
 
 
