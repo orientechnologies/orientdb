@@ -121,11 +121,15 @@ public class OETLPipeline {
       } catch (ONeedRetryException e) {
         loader.rollback();
         retry++;
-        processor.out(OETLProcessor.LOG_LEVELS.INFO, "Error in pipeline execution, retry = %d/%d", retry, maxRetries);
+        processor.out(OETLProcessor.LOG_LEVELS.INFO, "Error in pipeline execution, retry = %d/%d (exception=%s)", retry,
+            maxRetries, e);
       } catch (OETLProcessHaltedException e) {
+        processor.out(OETLProcessor.LOG_LEVELS.INFO, "Pipeline execution halted");
         loader.rollback();
         throw e;
       } catch (Exception e) {
+        processor.out(OETLProcessor.LOG_LEVELS.INFO, "Error in Pipeline execution: %s", e);
+        e.printStackTrace();
         loader.rollback();
         throw new OETLProcessHaltedException(e);
       }
