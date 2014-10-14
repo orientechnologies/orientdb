@@ -55,6 +55,7 @@ public class OSQLFilterCondition {
   protected Object            left;
   protected OQueryOperator    operator;
   protected Object            right;
+  protected boolean inBraces = false;
 
   public OSQLFilterCondition(final Object iLeft, final OQueryOperator iOperator) {
     this.left = iLeft;

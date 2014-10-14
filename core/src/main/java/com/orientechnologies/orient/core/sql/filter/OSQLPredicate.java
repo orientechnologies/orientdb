@@ -113,6 +113,8 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     parserNextWord(true, " )=><,\r\n");
     final String word = parserGetLastWord();
 
+    boolean inBraces = word.length() > 0 && word.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN;
+
     if (word.length() > 0 && (word.equalsIgnoreCase("SELECT") || word.equalsIgnoreCase("TRAVERSE"))) {
       // SUB QUERY
       final StringBuilder embedded = new StringBuilder();
@@ -145,6 +147,8 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         currentCondition = parentCondition;
       }
     }
+
+    currentCondition.inBraces = inBraces;
 
     // END OF TEXT
     return currentCondition;
@@ -265,6 +269,10 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         if (!parserSkipWhiteSpaces() || parserGetCurrentChar() == ')') {
           braces--;
           parserMoveCurrentPosition(+1);
+        }
+
+        if(subCondition instanceof OSQLFilterCondition){
+          ((OSQLFilterCondition) subCondition).inBraces = true;
         }
 
         result[i] = subCondition;
