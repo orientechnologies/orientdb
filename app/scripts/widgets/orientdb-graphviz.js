@@ -946,7 +946,7 @@ var OrientGraph = (function () {
 
         this.isVertex = function (elem) {
             if (typeof elem == 'object') {
-                return !(elem['in'] && elem['out']);
+                return !(elem['in'] && elem['out']) && elem['@rid'];
             } else {
                 var cid = elem.replace("#", "").split(":")[0];
                 var cfg = self.clusterClass[cid];
@@ -1606,7 +1606,8 @@ var OrientGraph = (function () {
                             }
                         }
                         inspectVertex(elem, v);
-                    } else {
+                    } else if (elem['in'] && elem['out']) {
+                        console.log(elem);
                         var v1 = self.get(elem['in']);
                         if (!v1) {
                             v1 = new OVertex(self, elem['in']);

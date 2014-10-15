@@ -60,8 +60,6 @@ aside.factory('Aside', function ($rootScope) {
                 if (this.params.cls)
                     this.params.cls = this.params.cls.replace("oaside-fullscreen", "");
             }
-            console.log(this.params.cls);
-
         },
         isOpen: function () {
             return this.params.cls == "show";
