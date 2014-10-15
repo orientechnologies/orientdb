@@ -44,7 +44,6 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
-import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -69,7 +68,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -279,9 +277,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         setSessionId(null, -1);
       } finally {
         endRequest(network);
+        engine.getConnectionManager().release(network);
       }
-
-      engine.getConnectionManager().remove(network);
 
       if (!checkForClose(iForce))
         return;
@@ -1062,6 +1059,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
           if (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+            for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+              committedEntries.add(txEntry);
             while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
               for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
                 tmpEntries.add(txEntry);
@@ -1071,14 +1070,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               if (tmpEntries.size() > 0) {
                 for (ORecordOperation txEntry : tmpEntries) {
                   commitEntry(network, txEntry);
-                  committedEntries.add(txEntry);
                 }
                 tmpEntries.clear();
               }
             }
           } else if (committedEntries.size() > 0) {
-            for (ORecordOperation txEntry : committedEntries)
-              commitEntry(network, txEntry);
+            tmpEntries.addAll(committedEntries);
+            while (!tmpEntries.isEmpty()) {
+              iTx.clearRecordEntries();
+              for (ORecordOperation txEntry : tmpEntries) {
+                commitEntry(network, txEntry);
+              }
+              tmpEntries.clear();
+              for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+                tmpEntries.add(txEntry);
+            }
           }
 
           // END OF RECORD ENTRIES
@@ -1112,8 +1118,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               rop.getRecord().getRecordVersion().copyFrom(network.readVersion());
           }
 
-          committedEntries.clear();
-
           if (network.getSrvProtocolVersion() >= 20)
             readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
 
@@ -1121,6 +1125,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endResponse(network);
         }
 
+        committedEntries.clear();
         // SET ALL THE RECORDS AS UNDIRTY
         for (ORecordOperation txEntry : iTx.getAllRecordEntries())
           ORecordInternal.unsetDirty(txEntry.getRecord());
