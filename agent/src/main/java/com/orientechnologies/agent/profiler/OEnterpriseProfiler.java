@@ -22,8 +22,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.profiler.OProfilerMBean;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -45,8 +43,9 @@ import java.util.TimerTask;
  * @author Luca Garulli
  * @copyrights Orient Technologies.com
  */
-public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerMBean, OMemoryWatchDog.Listener {
+public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerMBean {
   protected final static Timer        timer                   = new Timer(true);
+  protected final static int          BUFFER_SIZE             = 2048;
   protected final List<OProfilerData> snapshots               = new ArrayList<OProfilerData>();
   protected final int                 metricProcessors        = Runtime.getRuntime().availableProcessors();
   protected Date                      lastReset               = new Date();
@@ -82,7 +81,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
   }
 
   public void shutdown() {
-    Orient.instance().getMemoryWatchDog().removeListener(this);
     super.shutdown();
     hooks.clear();
 
@@ -210,7 +208,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
   }
 
   public String toJSON(final String iQuery, final String iPar1) {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(BUFFER_SIZE * 5);
 
     Map<String, Object> hookValuesSnapshots = null;
 
@@ -277,7 +275,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
   }
 
   public String metadataToJSON() {
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(BUFFER_SIZE);
 
     buffer.append("{ \"metadata\": {\n  ");
     boolean first = true;
@@ -311,7 +309,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
     acquireSharedLock();
     try {
 
-      final StringBuilder buffer = new StringBuilder();
+      final StringBuilder buffer = new StringBuilder(BUFFER_SIZE);
       buffer.append("\nOrientDB profiler dump of ");
       buffer.append(new Date(now));
       buffer.append(" after ");
@@ -424,7 +422,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
     if (recordingFrom < 0)
       return "HookValues: <no recording>";
 
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(BUFFER_SIZE);
 
     acquireSharedLock();
     try {
@@ -534,20 +532,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
     }
   }
 
-  @Override
-  public void lowMemory(final long l, final long l2) {
-    acquireExclusiveLock();
-    try {
-      synchronized (snapshots) {
-        snapshots.clear();
-      }
-      realTime.clear();
-      lastSnapshot = null;
-    } finally {
-      releaseExclusiveLock();
-    }
-  }
-
   /**
    * Must be not called inside a lock.
    */
@@ -653,6 +637,5 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
         }
       });
     }
-    Orient.instance().getMemoryWatchDog().addListener(this);
   }
 }
