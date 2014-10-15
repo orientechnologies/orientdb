@@ -55,6 +55,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
   protected int          rsColumns;
   protected List<String> columnNames = null;
   protected List<OType>  columnTypes = null;
+  protected int          fetchSize   = 1000;
 
   @Override
   public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
@@ -66,6 +67,8 @@ public class OJDBCExtractor extends OAbstractExtractor {
     userPassword = (String) resolve(iConfiguration.field("userPassword"));
     query = (String) resolve(iConfiguration.field("query"));
     queryCount = (String) resolve(iConfiguration.field("queryCount"));
+    if (iConfiguration.containsField("fetchSize"))
+      fetchSize = (Integer) resolve(iConfiguration.field("fetchSize"));
 
     try {
       Class.forName(driverClass).newInstance();
@@ -85,7 +88,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
   public void begin() {
     try {
       stm = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-      stm.setFetchSize(Integer.MIN_VALUE);
+      stm.setFetchSize(fetchSize);
       if (queryCount != null) {
         // GET THE TOTAL COUNTER
         final ResultSet countRs = stm.executeQuery(query);
@@ -234,6 +237,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
     return new ODocument().fromJSON("{parameters:[{driver:{optional:false,description:'JDBC Driver class'}},"
         + "{url:{optional:false,description:'Connection URL'}}," + "{userName:{optional:false,description:'User name'}},"
         + "{userPassword:{optional:false,description:'User password'}},"
+        + "{fetchSize:{optional:true,description:'JDBC cursor fetch size. Default is 1000'}},"
         + "{query:{optional:false,description:'Query that extract records'}},"
         + "{queryCount:{optional:true,description:'Query that returns the count to have a correct progress status'}}],"
         + "output:'ODocument'}");
