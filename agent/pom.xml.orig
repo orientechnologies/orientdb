@@ -5,7 +5,11 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>agent</artifactId>
-    <version>1.7.9</version>
+<<<<<<< HEAD
+    <version>1.7.4</version>
+=======
+    <version>1.7.1</version>
+>>>>>>> distributed
     <packaging>jar</packaging>
 
     <name>agent</name>
@@ -14,7 +18,11 @@
     <properties>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
-        <orientdb.version>1.7.9</orientdb.version>
+<<<<<<< HEAD
+        <orientdb.version>1.7.4</orientdb.version>
+=======
+        <orientdb.version>1.7.4-SNAPSHOT</orientdb.version>
+>>>>>>> distributed
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -64,7 +72,7 @@
                     <replacements>
                         <replacement>
                             <token>@LICENSE@</token>
-                            <value>@LICENSE@</value>
+                            <value>${license}</value>
                         </replacement>
                     </replacements>
                 </configuration>
@@ -114,12 +122,7 @@
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-enterprise</artifactId>
-            <version>${orientdb.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-server</artifactId>
+            <artifactId>orientdb-graphdb</artifactId>
             <version>${orientdb.version}</version>
         </dependency>
         <dependency>
@@ -129,7 +132,12 @@
         </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-graphdb</artifactId>
+            <artifactId>orientdb-enterprise</artifactId>
+            <version>${orientdb.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-server</artifactId>
             <version>${orientdb.version}</version>
         </dependency>
     </dependencies>

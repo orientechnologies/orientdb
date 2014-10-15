@@ -32,7 +32,7 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>agent</artifactId>
-            <version>1.7.4</version>
+            <version>1.7.9</version>
         </dependency>
 	</dependencies>
 </project>

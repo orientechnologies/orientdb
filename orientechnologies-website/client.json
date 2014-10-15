@@ -28,13 +28,25 @@
                 "clientId" : 51,
                 "servers" : 1,
                 "name" : "Warner Music Group",
-                "expiration"  : "2014-08-08"
+                "expiration"  : "2014-11-04"
             },
             {
                 "clientId" : 53,
                 "servers" : 2,
                 "name" : "Kubique",
                 "expiration"  : "2015-07-17"
+            },
+            {
+                "clientId" : 54,
+                "servers" : 2,
+                "name" : "E-Financial Careers",
+                "expiration"  : "2014-09-12"
+            },
+            {
+                "clientId" : 56,
+                "servers" : 3,
+                "name" : "ExxonMobil",
+                "expiration"  : "2015-10-13"
             },
             {
                 "clientId" : 10000,
