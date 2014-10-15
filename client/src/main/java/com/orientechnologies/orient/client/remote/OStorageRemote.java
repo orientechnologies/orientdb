@@ -1059,6 +1059,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
           if (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+            for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+              committedEntries.add(txEntry);
             while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
               for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
                 tmpEntries.add(txEntry);
@@ -1068,14 +1070,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               if (tmpEntries.size() > 0) {
                 for (ORecordOperation txEntry : tmpEntries) {
                   commitEntry(network, txEntry);
-                  committedEntries.add(txEntry);
                 }
                 tmpEntries.clear();
               }
             }
           } else if (committedEntries.size() > 0) {
-            for (ORecordOperation txEntry : committedEntries)
-              commitEntry(network, txEntry);
+            tmpEntries.addAll(committedEntries);
+            while (!tmpEntries.isEmpty()) {
+              iTx.clearRecordEntries();
+              for (ORecordOperation txEntry : tmpEntries) {
+                commitEntry(network, txEntry);
+              }
+              tmpEntries.clear();
+              for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+                tmpEntries.add(txEntry);
+            }
           }
 
           // END OF RECORD ENTRIES
@@ -1109,8 +1118,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               rop.getRecord().getRecordVersion().copyFrom(network.readVersion());
           }
 
-          committedEntries.clear();
-
           if (network.getSrvProtocolVersion() >= 20)
             readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
 
@@ -1118,6 +1125,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endResponse(network);
         }
 
+        committedEntries.clear();
         // SET ALL THE RECORDS AS UNDIRTY
         for (ORecordOperation txEntry : iTx.getAllRecordEntries())
           txEntry.getRecord().unsetDirty();
