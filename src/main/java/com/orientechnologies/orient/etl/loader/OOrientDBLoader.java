@@ -18,11 +18,10 @@
 
 package com.orientechnologies.orient.etl.loader;
 
-import java.util.List;
-
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -38,6 +37,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.List;
 
 /**
  * ETL Loader that saves record into OrientDB database.
@@ -349,7 +350,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         break;
       }
       pipeline.setDocumentDatabase(documentDatabase);
-    }
+    } else
+      ODatabaseRecordThreadLocal.INSTANCE.set(documentDatabase);
 
     if (className != null) {
       schemaClass = getOrCreateClass(className, null);
