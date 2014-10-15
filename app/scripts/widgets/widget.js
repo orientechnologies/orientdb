@@ -430,7 +430,7 @@ Widget.directive('ridrender', function (Database, $http, $compile) {
                             html += link;
 
                             if (i == PAGE) {
-                                scope.moreVal = value.length - PAGE;
+                                scope.moreVal = (value.length - 1) - PAGE;
                                 var expand = '<span class="label label-primary badge-edge"><a ng-click="expand()" href="javascript:void(0)">..More({{moreVal}})</a></span>';
                                 html += expand;
                                 return true;
