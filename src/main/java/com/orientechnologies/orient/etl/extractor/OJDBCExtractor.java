@@ -55,7 +55,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
   protected int          rsColumns;
   protected List<String> columnNames = null;
   protected List<OType>  columnTypes = null;
-  protected int          fetchSize   = 1000;
+  protected int          fetchSize   = Integer.MIN_VALUE;
 
   @Override
   public void configure(OETLProcessor iProcessor, ODocument iConfiguration, OBasicCommandContext iContext) {
